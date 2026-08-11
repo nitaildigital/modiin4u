@@ -1,0 +1,53 @@
+name: modiin4u
+description: "מודיעין בשבילך — סופר-אפליקציה עירונית מבוססת AI"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Routing
+  go_router: ^15.1.2
+
+  # Backend
+  supabase_flutter: ^2.9.0
+
+  # UI
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.17
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+
+  # Map
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # Utils
+  intl: ^0.20.2
+  url_launcher: ^6.3.1
+  share_plus: ^10.1.4
+  flutter_rating_bar: ^4.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  riverpod_generator: ^2.6.3
+  build_runner: ^2.4.15
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
