@@ -25,6 +25,44 @@ class _EventsScreenState extends State<EventsScreen> {
     'חינם',
   ];
 
+  static const _allEvents = [
+    ('הופעת שלמה ארצי', '15.8', '21:00', 'היכל התרבות', '₪180', 'מוזיקה', 234),
+    ('סיפורייה בספרייה', '16.8', '10:30', 'ספרייה עירונית', 'חינם', 'ילדים ומשפחה', 56),
+    ('ישיבת מועצה פתוחה', '18.8', '19:30', 'בניין העירייה', 'חינם', 'עירייה וקהילה', 128),
+    ('יוגה בפארק ענבה', '14.8', '07:00', 'פארק ענבה', 'חינם', 'ספורט', 89),
+    ('פסטיבל בירה מודיעין', '22.8', '18:00', 'פארק המוזיקה', '₪50', 'מוזיקה', 412),
+    ('סדנת בישול ילדים', '17.8', '16:00', 'מתנ"ס אבני חן', '₪60', 'ילדים ומשפחה', 34),
+    ('ריצת ערב קהילתית', '19.8', '19:00', 'אגם ענבה', 'חינם', 'ספורט', 167),
+    ('שוק אוכל רחוב', '23.8', '12:00', 'המע"ר', '₪20 כניסה', 'קולינריה', 298),
+  ];
+
+  List<(String, String, String, String, String, String, int)> get _filteredEvents {
+    return _allEvents.where((e) {
+      final (_, date, _, _, price, type, _) = e;
+      if (_selectedType != 'הכל') {
+        if (_selectedType == 'חינם') {
+          if (price != 'חינם') return false;
+        } else if (type != _selectedType) {
+          return false;
+        }
+      }
+      if (_selectedDate != 'הכל') {
+        final day = int.tryParse(date.split('.')[0]) ?? 0;
+        switch (_selectedDate) {
+          case 'היום':
+            if (day != 12) return false;
+          case 'מחר':
+            if (day != 13) return false;
+          case 'סוף השבוע':
+            if (day < 15 || day > 16) return false;
+          case 'השבוע':
+            if (day < 12 || day > 18) return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -99,20 +137,10 @@ class _EventsScreenState extends State<EventsScreen> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList.separated(
-                itemCount: 8,
+                itemCount: _filteredEvents.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
-                  final events = [
-                    ('הופעת שלמה ארצי', '15.8', '21:00', 'היכל התרבות', '₪180', 'מוזיקה', 234),
-                    ('סיפורייה בספרייה', '16.8', '10:30', 'ספרייה עירונית', 'חינם', 'ילדים ומשפחה', 56),
-                    ('ישיבת מועצה פתוחה', '18.8', '19:30', 'בניין העירייה', 'חינם', 'עירייה', 128),
-                    ('יוגה בפארק ענבה', '14.8', '07:00', 'פארק ענבה', 'חינם', 'ספורט', 89),
-                    ('פסטיבל בירה מודיעין', '22.8', '18:00', 'פארק המוזיקה', '₪50', 'מוזיקה', 412),
-                    ('סדנת בישול ילדים', '17.8', '16:00', 'מתנ"ס אבני חן', '₪60', 'ילדים ומשפחה', 34),
-                    ('ריצת ערב קהילתית', '19.8', '19:00', 'אגם ענבה', 'חינם', 'ספורט', 167),
-                    ('שוק אוכל רחוב', '23.8', '12:00', 'המע"ר', '₪20 כניסה', 'קולינריה', 298),
-                  ];
-                  final (title, date, time, location, price, type, interested) = events[index];
+                  final (title, date, time, location, price, type, interested) = _filteredEvents[index];
                   final isFree = price == 'חינם';
                   final isMunicipal = type == 'עירייה';
 

@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 
-class DealDetailScreen extends StatelessWidget {
+class DealDetailScreen extends StatefulWidget {
   final String dealId;
 
   const DealDetailScreen({super.key, required this.dealId});
+
+  @override
+  State<DealDetailScreen> createState() => _DealDetailScreenState();
+}
+
+class _DealDetailScreenState extends State<DealDetailScreen> {
+  bool _isRedeemed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -83,25 +91,49 @@ class DealDetailScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.qr_code),
-                        label: Text('מימוש ההטבה', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600)),
-                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                      ),
+                      child: _isRedeemed
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(50),
+                                border: Border.all(color: AppColors.success),
+                              ),
+                              child: Column(
+                                children: [
+                                  const Icon(Icons.qr_code_2, size: 100, color: AppColors.navy),
+                                  const SizedBox(height: 12),
+                                  Text('MOD-20OFF-7X4K', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy, letterSpacing: 2)),
+                                  const SizedBox(height: 8),
+                                  Text('הראו קוד זה לקופה', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.success, fontWeight: FontWeight.w500)),
+                                ],
+                              ),
+                            )
+                          : ElevatedButton.icon(
+                              onPressed: () => setState(() => _isRedeemed = true),
+                              icon: const Icon(Icons.qr_code),
+                              label: Text('מימוש ההטבה', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600)),
+                              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                            ),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=31.8935,35.0110');
+                            if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          },
                           icon: const Icon(Icons.navigation_outlined, size: 18),
                           label: Text('ניווט', style: GoogleFonts.rubik()),
                         ),
                         const SizedBox(width: 12),
                         OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            final uri = Uri(scheme: 'tel', path: '0501234567');
+                            if (await canLaunchUrl(uri)) await launchUrl(uri);
+                          },
                           icon: const Icon(Icons.phone, size: 18),
                           label: Text('התקשרו', style: GoogleFonts.rubik()),
                         ),

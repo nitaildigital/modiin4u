@@ -122,16 +122,16 @@ class ProfileScreen extends ConsumerWidget {
               child: Transform.translate(
                 offset: const Offset(0, -20),
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                  decoration: BoxDecoration(
+                    color: context.cardBg,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('פעולות מהירות', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.grayMeta)),
+                        Text('פעולות מהירות', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.isDark ? const Color(0xFF9E9E9E) : AppColors.grayMeta)),
                         const SizedBox(height: 12),
                         Row(
                           children: [
@@ -157,7 +157,7 @@ class ProfileScreen extends ConsumerWidget {
                           label: 'הביקורות שלי',
                           subtitle: '7 ביקורות',
                           color: AppColors.turquoise,
-                          onTap: () {},
+                          onTap: () => _showReviewsSheet(context),
                         ),
                         _MenuCard(
                           icon: Icons.apartment_outlined,
@@ -173,14 +173,14 @@ class ProfileScreen extends ConsumerWidget {
                           icon: Icons.help_outline,
                           label: 'עזרה ותמיכה',
                           color: AppColors.grayMeta,
-                          onTap: () {},
+                          onTap: () => context.push('/settings'),
                         ),
                         _MenuCard(
                           icon: Icons.info_outline,
                           label: 'אודות האפליקציה',
                           subtitle: 'גרסה 1.0.0',
                           color: AppColors.grayMeta,
-                          onTap: () {},
+                          onTap: () => _showAboutDialog(context),
                         ),
                         const SizedBox(height: 20),
                         GestureDetector(
@@ -212,6 +212,113 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+void _showReviewsSheet(BuildContext context) {
+  final reviews = [
+    ('מסעדת נאיתאי', 5.0, 'אוכל מעולה, שירות אדיב!'),
+    ('קפה גרג', 4.0, 'קפה טוב, אווירה נעימה'),
+    ('פיצה פרגו', 4.5, 'הפיצה הכי טובה במודיעין'),
+    ('מספרת שיער חיים', 5.0, 'תספורת מושלמת, ממליץ בחום'),
+    ('סופר יוחננוף', 3.5, 'מגוון רחב, מחירים סבירים'),
+    ('חנות פרחים ורדים', 4.0, 'זרים יפים, משלוח מהיר'),
+    ('מוסך רונן', 4.5, 'אמין ומקצועי'),
+  ];
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => Directionality(
+      textDirection: TextDirection.rtl,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.85,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, controller) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              child: Column(
+                children: [
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(height: 16),
+                  Text('הביקורות שלי', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.separated(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
+                itemCount: reviews.length,
+                separatorBuilder: (_, __) => const Divider(color: AppColors.border, height: 24),
+                itemBuilder: (_, i) {
+                  final (name, rating, text) = reviews[i];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: Text(name, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy))),
+                          Row(children: List.generate(5, (s) => Icon(s < rating.round() ? Icons.star_rounded : Icons.star_outline_rounded, size: 16, color: AppColors.gold))),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(text, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _showAboutDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (ctx) => Directionality(
+      textDirection: TextDirection.rtl,
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(gradient: AppColors.cyanGradient, borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.location_city, color: AppColors.white, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text('מודיעין בשבילך', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy))),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('גרסה 1.0.0', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.turquoise)),
+            const SizedBox(height: 12),
+            Text(
+              'סופר-אפליקציה עירונית למודיעין-מכבים-רעות.\n\nעסקים, אירועים, חדשות, נדל"ן, שירותים עירוניים ועוד — הכל במקום אחד.',
+              style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayText, height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            Text('© 2026 מודיעין בשבילך', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayLight)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('סגירה', style: GoogleFonts.rubik(color: AppColors.turquoise, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _StatItem extends StatelessWidget {

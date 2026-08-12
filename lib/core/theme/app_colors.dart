@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
 
+extension DarkAware on BuildContext {
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
+  Color get cardBg => isDark ? const Color(0xFF1E1E1E) : AppColors.white;
+  Color get textPrimary => isDark ? const Color(0xFFE0E0E0) : AppColors.navy;
+  Color get surfaceDim => isDark ? const Color(0xFF2C2C2C) : AppColors.surfaceLight;
+  Color get borderClr => isDark ? const Color(0xFF2C2C2C) : AppColors.border;
+  Color get scaffoldBg => isDark ? const Color(0xFF121212) : AppColors.white;
+}
+
 class AppColors {
   static const navy = Color(0xFF0A1230);
   static const midBlue = Color(0xFF123A72);

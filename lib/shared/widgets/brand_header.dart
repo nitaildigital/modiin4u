@@ -22,7 +22,7 @@ class BrandHeader extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      color: AppColors.white,
+      color: context.cardBg,
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -46,7 +46,7 @@ class BrandHeader extends ConsumerWidget {
                           style: GoogleFonts.rubik(
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.navy,
+                            color: context.textPrimary,
                           ),
                         ),
                       ],
@@ -83,9 +83,9 @@ class BrandHeader extends ConsumerWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceLight,
+                              color: context.surfaceDim,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.border, width: 1),
+                              border: Border.all(color: context.borderClr, width: 1),
                             ),
                             child: const Icon(Icons.person_outline, size: 20, color: AppColors.grayMeta),
                           ),
@@ -103,7 +103,7 @@ class BrandHeader extends ConsumerWidget {
                 const SizedBox(height: 14),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceLight,
+                    color: context.surfaceDim,
                     borderRadius: BorderRadius.circular(50),
                   ),
                   child: TextField(

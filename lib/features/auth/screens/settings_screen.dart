@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -17,10 +18,51 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _dealsNotifications = true;
   bool _neighborhoodNotifications = true;
   bool _realestateAlerts = false;
-  bool _darkMode = false;
+
+  void _showInfoSheet(BuildContext context, String title, List<String> items) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 20),
+              Text(title, style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+              const SizedBox(height: 16),
+              ...items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('•  ', style: TextStyle(color: AppColors.turquoise, fontSize: 16)),
+                    Expanded(child: Text(item, style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayText, height: 1.5))),
+                  ],
+                ),
+              )),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('סגירה', style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -65,9 +107,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _ToggleItem(
               icon: Icons.dark_mode_outlined,
               label: 'מצב כהה',
-              subtitle: 'יעבור למצב כהה בקרוב',
-              value: _darkMode,
-              onChanged: (v) => setState(() => _darkMode = v),
+              subtitle: isDark ? 'מצב כהה פעיל' : 'מצב בהיר פעיל',
+              value: isDark,
+              onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
             ),
 
             const Divider(color: AppColors.border, indent: 20, endIndent: 20),
@@ -76,22 +118,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _ActionItem(
               icon: Icons.lock_outline,
               label: 'פרטיות ואבטחה',
-              onTap: () {},
+              onTap: () => _showInfoSheet(context, 'פרטיות ואבטחה', [
+                'הנתונים שלכם מאוחסנים בצורה מאובטחת בשרתי Supabase.',
+                'אנחנו לא משתפים מידע אישי עם צדדים שלישיים.',
+                'ניתן למחוק את החשבון ואת כל הנתונים בכל עת.',
+                'אימות דו-שלבי באמצעות SMS.',
+              ]),
             ),
             _ActionItem(
               icon: Icons.description_outlined,
               label: 'תנאי שימוש',
-              onTap: () {},
+              onTap: () => _showInfoSheet(context, 'תנאי שימוש', [
+                'השימוש באפליקציה מותנה בהסכמה לתנאים אלו.',
+                'התכנים באפליקציה מסופקים "כמות שהם" (AS IS).',
+                'חל איסור על שימוש לרעה, פרסום תוכן פוגעני או הטעיית משתמשים.',
+                'מודיעין בשבילך שומרת לעצמה את הזכות לעדכן תנאים אלו.',
+              ]),
             ),
             _ActionItem(
               icon: Icons.shield_outlined,
               label: 'מדיניות פרטיות',
-              onTap: () {},
+              onTap: () => _showInfoSheet(context, 'מדיניות פרטיות', [
+                'אנו אוספים: שם, טלפון, שכונה ופעילות באפליקציה.',
+                'המידע משמש לשיפור החוויה ולהתאמת תוכן רלוונטי.',
+                'אין שיתוף מידע עם מפרסמים ללא הסכמתכם.',
+                'ניתן לבקש עותק של כל המידע שנאסף או למחוק אותו.',
+              ]),
             ),
             _ActionItem(
               icon: Icons.help_outline,
               label: 'עזרה ותמיכה',
-              onTap: () {},
+              onTap: () => _showInfoSheet(context, 'עזרה ותמיכה', [
+                'אימייל: support@modiin4u.co.il',
+                'טלפון: 08-9000000 (א׳-ה׳ 9:00-17:00)',
+                'ניתן לדווח על בעיה טכנית דרך הכפתור למטה.',
+                'זמן תגובה ממוצע: עד 24 שעות.',
+              ]),
             ),
 
             const Divider(color: AppColors.border, indent: 20, endIndent: 20),
@@ -209,7 +271,7 @@ class _ToggleItem extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
+              color: context.surfaceDim,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 20, color: AppColors.midBlue),
@@ -219,7 +281,7 @@ class _ToggleItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+                Text(label, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: context.textPrimary)),
                 Text(subtitle, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
               ],
             ),
@@ -258,14 +320,14 @@ class _ActionItem extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.surfaceLight,
+                color: context.surfaceDim,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, size: 20, color: AppColors.midBlue),
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(label, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+              child: Text(label, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: context.textPrimary)),
             ),
             const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.grayLight),
           ],

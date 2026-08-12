@@ -55,6 +55,7 @@ class _MapScreenState extends State<MapScreen> {
   final _activeLayers = <String>{'עסקים'};
   final _mapController = MapController();
   _MapPoi? _selectedPoi;
+  String _mapSearchQuery = '';
 
   final _layers = [
     ('עסקים', Icons.store, AppColors.turquoise),
@@ -63,8 +64,13 @@ class _MapScreenState extends State<MapScreen> {
     ('נדל"ן', Icons.apartment, AppColors.navy),
   ];
 
-  List<_MapPoi> get _visiblePois =>
-      _pois.where((p) => _activeLayers.contains(p.layer)).toList();
+  List<_MapPoi> get _visiblePois {
+    var pois = _pois.where((p) => _activeLayers.contains(p.layer));
+    if (_mapSearchQuery.isNotEmpty) {
+      pois = pois.where((p) => p.name.contains(_mapSearchQuery) || p.category.contains(_mapSearchQuery));
+    }
+    return pois.toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +143,10 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                     child: TextField(
                       textDirection: TextDirection.rtl,
+                      onChanged: (val) => setState(() {
+                        _mapSearchQuery = val;
+                        _selectedPoi = null;
+                      }),
                       decoration: InputDecoration(
                         hintText: 'חפשו מקום, עסק, כתובת...',
                         hintTextDirection: TextDirection.rtl,

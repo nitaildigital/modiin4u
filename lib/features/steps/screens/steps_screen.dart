@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 
 class StepsScreen extends StatelessWidget {
@@ -246,9 +247,9 @@ class _WalkingRoutes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final routes = [
-      ('טיילת אגם ענבה', '3.5 ק"מ', 'קל'),
-      ('מסלול פארק ענבה', '5.2 ק"מ', 'בינוני'),
-      ('הליכה עירונית — המע"ר', '2.8 ק"מ', 'קל'),
+      ('טיילת אגם ענבה', '3.5 ק"מ', 'קל', '31.8960,35.0125'),
+      ('מסלול פארק ענבה', '5.2 ק"מ', 'בינוני', '31.8935,35.0110'),
+      ('הליכה עירונית — המע"ר', '2.8 ק"מ', 'קל', '31.8990,35.0145'),
     ];
 
     return Column(
@@ -257,7 +258,7 @@ class _WalkingRoutes extends StatelessWidget {
         Text('מסלולי הליכה מומלצים', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
         const SizedBox(height: 12),
         ...routes.map((r) {
-          final (name, distance, difficulty) = r;
+          final (name, distance, difficulty, coords) = r;
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Container(
@@ -288,7 +289,13 @@ class _WalkingRoutes extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.navigation_outlined, size: 18, color: AppColors.turquoise),
+                  GestureDetector(
+                    onTap: () async {
+                      final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$coords');
+                      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    },
+                    child: const Icon(Icons.navigation_outlined, size: 18, color: AppColors.turquoise),
+                  ),
                 ],
               ),
             ),

@@ -1,7 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -28,6 +30,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
   bool _hasStorage = false;
   bool _hasBalcony = false;
   bool _isRenovated = false;
+  final List<Uint8List> _images = [];
 
   final _neighborhoods = [
     'הנחלים', 'אבני חן', 'נופים', 'המע"ר', 'הכרמים', 'מוריה', 'הפרחים', 'משואה',
@@ -122,6 +125,59 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                         _buildFeatureChip('מרפסת', _hasBalcony, (v) => setState(() => _hasBalcony = v)),
                         _buildFeatureChip('משופץ', _isRenovated, (v) => setState(() => _isRenovated = v)),
                       ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildLabel('תמונות הנכס'),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 100,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          ..._images.asMap().entries.map((entry) => Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.memory(entry.value, width: 100, height: 100, fit: BoxFit.cover),
+                                ),
+                                Positioned(
+                                  top: 4, right: 4,
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _images.removeAt(entry.key)),
+                                    child: Container(
+                                      width: 24, height: 24,
+                                      decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
+                                      child: const Icon(Icons.close, size: 14, color: AppColors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                          GestureDetector(
+                            onTap: _pickImages,
+                            child: Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceLight,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.add_photo_alternate_outlined, size: 28, color: AppColors.turquoise),
+                                  const SizedBox(height: 4),
+                                  Text('הוסיפו', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 20),
                     _buildLabel('תיאור'),
@@ -286,6 +342,15 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickImages() async {
+    final picker = ImagePicker();
+    final images = await picker.pickMultiImage(maxWidth: 1024, maxHeight: 1024, imageQuality: 80);
+    for (final img in images) {
+      final bytes = await img.readAsBytes();
+      setState(() => _images.add(bytes));
+    }
   }
 
   void _submitListing() {

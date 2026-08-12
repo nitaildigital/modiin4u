@@ -86,61 +86,74 @@ class _GameCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLocked = name == 'בקרוב...';
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.5),
-      ),
-      child: Stack(
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: isLocked ? 0.05 : 0.1),
-                  borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: isLocked
+          ? null
+          : () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$name — בקרוב! 🎮', style: GoogleFonts.rubik()),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Icon(icon, size: 32, color: color.withValues(alpha: isLocked ? 0.3 : 1)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                name,
-                style: GoogleFonts.rubik(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isLocked ? AppColors.grayLight : AppColors.navy,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (!isLocked)
+              );
+            },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border, width: 0.5),
+        ),
+        child: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(8),
+                    color: color.withValues(alpha: isLocked ? 0.05 : 0.1),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text('שחקו', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
+                  child: Icon(icon, size: 32, color: color.withValues(alpha: isLocked ? 0.3 : 1)),
                 ),
-            ],
-          ),
-          if (isNew)
-            Positioned(
-              top: 10,
-              left: 10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.gold,
-                  borderRadius: BorderRadius.circular(6),
+                const SizedBox(height: 12),
+                Text(
+                  name,
+                  style: GoogleFonts.rubik(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isLocked ? AppColors.grayLight : AppColors.navy,
+                  ),
                 ),
-                child: Text('חדש', style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.white)),
-              ),
+                const SizedBox(height: 8),
+                if (!isLocked)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text('שחקו', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
+                  ),
+              ],
             ),
-        ],
+            if (isNew)
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.gold,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text('חדש', style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.white)),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

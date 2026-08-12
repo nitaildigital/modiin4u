@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -16,6 +17,21 @@ class ListingDetailScreen extends ConsumerStatefulWidget {
 
 class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   double _mortgagePercent = 75;
+  final _imagePageController = PageController();
+  int _currentImagePage = 0;
+
+  static const _imageColors = [
+    Color(0xFFE8F4FD), Color(0xFFFCE4EC), Color(0xFFE8F5E9),
+    Color(0xFFF3E5F5), Color(0xFFFFF3E0), Color(0xFFE0F7FA),
+    Color(0xFFFBE9E7), Color(0xFFE8EAF6), Color(0xFFF1F8E9),
+    Color(0xFFEDE7F6), Color(0xFFFFF8E1), Color(0xFFE0F2F1),
+  ];
+
+  @override
+  void dispose() {
+    _imagePageController.dispose();
+    super.dispose();
+  }
 
   int get _priceNum => 2450000;
   double get _mortgageAmount => _priceNum * (_mortgagePercent / 100);
@@ -45,15 +61,38 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
-              expandedHeight: 250,
+              expandedHeight: 280,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Container(
-                      color: AppColors.midBlue.withValues(alpha: 0.08),
-                      child: Center(child: Icon(Icons.apartment, size: 80, color: AppColors.midBlue.withValues(alpha: 0.15))),
+                    PageView.builder(
+                      controller: _imagePageController,
+                      itemCount: 12,
+                      onPageChanged: (i) => setState(() => _currentImagePage = i),
+                      itemBuilder: (context, index) {
+                        return Container(
+                          color: _imageColors[index],
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                [Icons.apartment, Icons.living, Icons.kitchen, Icons.bathroom, Icons.bed, Icons.balcony,
+                                 Icons.garage, Icons.elevator, Icons.chair, Icons.window, Icons.roofing, Icons.park][index],
+                                size: 56,
+                                color: AppColors.midBlue.withValues(alpha: 0.25),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                ['סלון', 'מטבח', 'חדר שינה', 'אמבטיה', 'חדר ילדים', 'מרפסת',
+                                 'חניה', 'לובי', 'פינת אוכל', 'נוף', 'גג', 'חצר'][index],
+                                style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayMeta),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     Positioned(
                       top: 90, right: 16,
@@ -68,7 +107,25 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(6)),
-                        child: Text('1/12', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.white)),
+                        child: Text('${_currentImagePage + 1}/12', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.white)),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 12,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(12, (i) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          width: _currentImagePage == i ? 16 : 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: _currentImagePage == i ? AppColors.white : AppColors.white.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        )),
                       ),
                     ),
                   ],
@@ -82,7 +139,10 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                     ref.read(authProvider.notifier).toggleFavoriteListing(widget.listingId);
                   },
                 ),
-                IconButton(icon: const Icon(Icons.share), onPressed: () {}),
+                IconButton(
+                  icon: const Icon(Icons.share),
+                  onPressed: () => Share.share('דירת 4 חדרים, 110 מ"ר, הפרחים (מירומי)\n2,450,000 ₪\nמודיעין בשבילך'),
+                ),
               ],
             ),
             SliverToBoxAdapter(

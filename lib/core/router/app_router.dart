@@ -26,15 +26,40 @@ import '../../features/deals/screens/deal_detail_screen.dart';
 import '../../features/games/screens/games_screen.dart';
 import '../../features/steps/screens/steps_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
+import '../../features/onboarding/screens/splash_screen.dart';
+import '../../features/onboarding/screens/onboarding_screen.dart';
+import '../../features/home/screens/search_results_screen.dart';
 import '../../shared/widgets/shell_scaffold.dart';
+
+CustomTransitionPage<void> _slideTransition(Widget child, GoRouterState state) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final tween = Tween(begin: const Offset(1, 0), end: Offset.zero).chain(CurveTween(curve: Curves.easeOutCubic));
+      return SlideTransition(position: animation.drive(tween), child: child);
+    },
+    transitionDuration: const Duration(milliseconds: 300),
+  );
+}
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(
+      path: '/splash',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const OnboardingScreen(),
+    ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => ShellScaffold(child: child),
@@ -80,15 +105,15 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/business/:id',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => BusinessDetailScreen(
-        businessId: state.pathParameters['id']!,
+      pageBuilder: (context, state) => _slideTransition(
+        BusinessDetailScreen(businessId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(
       path: '/article/:id',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => ArticleScreen(
-        articleId: state.pathParameters['id']!,
+      pageBuilder: (context, state) => _slideTransition(
+        ArticleScreen(articleId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(
@@ -99,22 +124,22 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/event/:id',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => EventDetailScreen(
-        eventId: state.pathParameters['id']!,
+      pageBuilder: (context, state) => _slideTransition(
+        EventDetailScreen(eventId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(
       path: '/professional/:id',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => ProfessionalDetailScreen(
-        professionalId: state.pathParameters['id']!,
+      pageBuilder: (context, state) => _slideTransition(
+        ProfessionalDetailScreen(professionalId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(
       path: '/listing/:id',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => ListingDetailScreen(
-        listingId: state.pathParameters['id']!,
+      pageBuilder: (context, state) => _slideTransition(
+        ListingDetailScreen(listingId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(
@@ -135,8 +160,8 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/deal/:id',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => DealDetailScreen(
-        dealId: state.pathParameters['id']!,
+      pageBuilder: (context, state) => _slideTransition(
+        DealDetailScreen(dealId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(
@@ -162,17 +187,17 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/login',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const LoginScreen(),
+      pageBuilder: (context, state) => _slideTransition(const LoginScreen(), state),
     ),
     GoRoute(
       path: '/profile',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const ProfileScreen(),
+      pageBuilder: (context, state) => _slideTransition(const ProfileScreen(), state),
     ),
     GoRoute(
       path: '/edit-profile',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const EditProfileScreen(),
+      pageBuilder: (context, state) => _slideTransition(const EditProfileScreen(), state),
     ),
     GoRoute(
       path: '/favorites',
@@ -188,6 +213,14 @@ final appRouter = GoRouter(
       path: '/settings',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/search',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final query = state.uri.queryParameters['q'] ?? '';
+        return SearchResultsScreen(query: query);
+      },
     ),
   ],
 );

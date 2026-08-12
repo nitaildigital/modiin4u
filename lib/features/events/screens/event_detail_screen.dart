@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 
-class EventDetailScreen extends StatelessWidget {
+class EventDetailScreen extends StatefulWidget {
   final String eventId;
 
   const EventDetailScreen({super.key, required this.eventId});
+
+  @override
+  State<EventDetailScreen> createState() => _EventDetailScreenState();
+}
+
+class _EventDetailScreenState extends State<EventDetailScreen> {
+  bool _isAttending = false;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +82,7 @@ class EventDetailScreen extends StatelessWidget {
                 ),
               ),
               actions: [
-                IconButton(icon: const Icon(Icons.share), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.share), onPressed: () => Share.share('הופעת שלמה ארצי\n15.8.2026 · 21:00\nהיכל התרבות מודיעין\nמודיעין בשבילך')),
               ],
             ),
             SliverToBoxAdapter(
@@ -95,23 +104,42 @@ class EventDetailScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.check_circle_outline),
-                            label: Text('אני מגיע/ה', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
+                            onPressed: () {
+                              setState(() => _isAttending = !_isAttending);
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(_isAttending ? 'נרשמת לאירוע!' : 'ביטלת הרשמה', style: GoogleFonts.rubik()),
+                                backgroundColor: _isAttending ? AppColors.success : AppColors.grayMeta,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ));
+                            },
+                            icon: Icon(_isAttending ? Icons.check_circle : Icons.check_circle_outline),
+                            label: Text(_isAttending ? 'רשום/ה!' : 'אני מגיע/ה', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
+                              backgroundColor: _isAttending ? AppColors.success : null,
                             ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('האירוע נוסף ליומן', style: GoogleFonts.rubik()),
+                              backgroundColor: AppColors.turquoise,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ));
+                          },
                           icon: const Icon(Icons.calendar_today, size: 18),
                           label: Text('ליומן', style: GoogleFonts.rubik()),
                         ),
                         const SizedBox(width: 10),
                         OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=31.8932,35.0145');
+                            if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          },
                           icon: const Icon(Icons.navigation_outlined, size: 18),
                           label: Text('ניווט', style: GoogleFonts.rubik()),
                         ),

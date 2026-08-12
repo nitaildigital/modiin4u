@@ -14,6 +14,38 @@ class BusinessesScreen extends StatefulWidget {
 class _BusinessesScreenState extends State<BusinessesScreen> {
   String _selectedCategory = 'הכל';
   final _selectedFilters = <String>{};
+  String _searchQuery = '';
+
+  static const _allBusinesses = [
+    (name: 'מסעדת נאיתאי', category: 'תאילנדי', catGroup: 'מסעדות', rating: 4.6, reviews: 87, isOpen: true, kosher: 'כשר', neighborhood: 'המע"ר', hasDelivery: false, hasOutdoor: true, hasParking: true, accessible: true),
+    (name: 'פיצה פרגו', category: 'פיצה', catGroup: 'מסעדות', rating: 4.5, reviews: 64, isOpen: true, kosher: 'כשר', neighborhood: 'הפרחים', hasDelivery: true, hasOutdoor: false, hasParking: false, accessible: true),
+    (name: 'קפה גרג', category: 'בית קפה', catGroup: 'קפה', rating: 4.3, reviews: 42, isOpen: true, kosher: null, neighborhood: 'נופים', hasDelivery: false, hasOutdoor: true, hasParking: true, accessible: true),
+    (name: 'בורגרס בר', category: 'המבורגרים', catGroup: 'מסעדות', rating: 4.7, reviews: 95, isOpen: false, kosher: null, neighborhood: 'מוריה', hasDelivery: true, hasOutdoor: true, hasParking: false, accessible: false),
+    (name: 'סושי מודיעין', category: 'סושי', catGroup: 'מסעדות', rating: 4.4, reviews: 58, isOpen: true, kosher: 'כשר', neighborhood: 'אבני חן', hasDelivery: true, hasOutdoor: false, hasParking: true, accessible: true),
+    (name: 'המאפייה של שלומי', category: 'מאפייה', catGroup: 'חנויות', rating: 4.8, reviews: 112, isOpen: true, kosher: 'כשר', neighborhood: 'המע"ר', hasDelivery: false, hasOutdoor: false, hasParking: false, accessible: true),
+    (name: 'ביסטרו 770', category: 'איטלקי', catGroup: 'מסעדות', rating: 4.2, reviews: 34, isOpen: false, kosher: null, neighborhood: 'הנחלים', hasDelivery: false, hasOutdoor: true, hasParking: true, accessible: true),
+    (name: 'מסעדת ג\'ויה', category: 'ים תיכוני', catGroup: 'מסעדות', rating: 4.5, reviews: 76, isOpen: true, kosher: 'כשר', neighborhood: 'משואה', hasDelivery: true, hasOutdoor: true, hasParking: true, accessible: true),
+    (name: 'הסטייקיה', category: 'בשרים', catGroup: 'מסעדות', rating: 4.1, reviews: 48, isOpen: true, kosher: null, neighborhood: 'המגינים', hasDelivery: false, hasOutdoor: false, hasParking: true, accessible: false),
+    (name: 'בית הפלאפל', category: 'ישראלי', catGroup: 'מסעדות', rating: 4.6, reviews: 156, isOpen: true, kosher: 'כשר', neighborhood: 'השבטים', hasDelivery: true, hasOutdoor: true, hasParking: false, accessible: true),
+  ];
+
+  List<int> get _filteredIndices {
+    final indices = <int>[];
+    for (var i = 0; i < _allBusinesses.length; i++) {
+      final b = _allBusinesses[i];
+      if (_selectedCategory != 'הכל' && b.catGroup != _selectedCategory && b.category != _selectedCategory) continue;
+      if (_searchQuery.isNotEmpty && !b.name.contains(_searchQuery) && !b.category.contains(_searchQuery) && !b.neighborhood.contains(_searchQuery)) continue;
+      if (_selectedFilters.contains('פתוח עכשיו') && !b.isOpen) continue;
+      if (_selectedFilters.contains('משלוחים') && !b.hasDelivery) continue;
+      if (_selectedFilters.contains('ישיבה בחוץ') && !b.hasOutdoor) continue;
+      if (_selectedFilters.contains('כשר') && b.kosher == null) continue;
+      if (_selectedFilters.contains('חניה') && !b.hasParking) continue;
+      if (_selectedFilters.contains('נגישות') && !b.accessible) continue;
+      if (_selectedFilters.contains('4+') && b.rating < 4.0) continue;
+      indices.add(i);
+    }
+    return indices;
+  }
 
   final _categories = [
     'הכל',
@@ -39,6 +71,9 @@ class _BusinessesScreenState extends State<BusinessesScreen> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
+      child: RefreshIndicator(
+        onRefresh: () async { await Future.delayed(const Duration(milliseconds: 800)); },
+        color: AppColors.turquoise,
       child: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -92,6 +127,7 @@ class _BusinessesScreenState extends State<BusinessesScreen> {
                 ),
                 child: TextField(
                   textDirection: TextDirection.rtl,
+                  onChanged: (val) => setState(() => _searchQuery = val),
                   decoration: InputDecoration(
                     hintText: 'חפשו בשפה חופשית... "סושי כשר פתוח עכשיו"',
                     hintTextDirection: TextDirection.rtl,
@@ -151,7 +187,7 @@ class _BusinessesScreenState extends State<BusinessesScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '42 תוצאות',
+                    '${_filteredIndices.length} תוצאות',
                     style: GoogleFonts.rubik(
                       fontSize: 13,
                       color: AppColors.grayText,
@@ -186,60 +222,45 @@ class _BusinessesScreenState extends State<BusinessesScreen> {
               ),
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList.separated(
-              itemCount: 10,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return BusinessCard(
-                  name: [
-                    'מסעדת נאיתאי',
-                    'פיצה פרגו',
-                    'קפה גרג',
-                    'בורגרס בר',
-                    'סושי מודיעין',
-                    'המאפייה של שלומי',
-                    'ביסטרו 770',
-                    'מסעדת ג\'ויה',
-                    'הסטייקיה',
-                    'בית הפלאפל'
-                  ][index],
-                  category: [
-                    'תאילנדי',
-                    'פיצה',
-                    'בית קפה',
-                    'המבורגרים',
-                    'סושי',
-                    'מאפייה',
-                    'איטלקי',
-                    'ים תיכוני',
-                    'בשרים',
-                    'ישראלי'
-                  ][index],
-                  rating: 4.0 + (index % 10) / 10,
-                  reviewCount: 15 + index * 7,
-                  isOpen: index % 3 != 2,
-                  kosher: index % 2 == 0 ? 'כשר' : null,
-                  neighborhood: [
-                    'המע"ר',
-                    'הפרחים',
-                    'נופים',
-                    'מוריה',
-                    'אבני חן',
-                    'המע"ר',
-                    'הנחלים',
-                    'משואה',
-                    'המגינים',
-                    'השבטים'
-                  ][index],
-                  onTap: () => context.push('/business/demo_$index'),
-                );
-              },
-            ),
-          ),
+          _filteredIndices.isEmpty
+            ? SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 60),
+                  child: Column(
+                    children: [
+                      Icon(Icons.search_off, size: 56, color: AppColors.grayLight.withValues(alpha: 0.4)),
+                      const SizedBox(height: 16),
+                      Text('לא נמצאו עסקים', style: GoogleFonts.rubik(fontSize: 16, color: AppColors.grayMeta)),
+                      const SizedBox(height: 8),
+                      Text('נסו לשנות את הסינון או החיפוש', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight)),
+                    ],
+                  ),
+                ),
+              )
+            : SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList.separated(
+                  itemCount: _filteredIndices.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, idx) {
+                    final i = _filteredIndices[idx];
+                    final b = _allBusinesses[i];
+                    return BusinessCard(
+                      name: b.name,
+                      category: b.category,
+                      rating: b.rating,
+                      reviewCount: b.reviews,
+                      isOpen: b.isOpen,
+                      kosher: b.kosher,
+                      neighborhood: b.neighborhood,
+                      onTap: () => context.push('/business/demo_$i'),
+                    );
+                  },
+                ),
+              ),
           const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
+      ),
       ),
     );
   }

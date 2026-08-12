@@ -22,6 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _selectedNeighborhood;
   bool _otpSent = false;
   bool _isLoading = false;
+  int _resendCooldown = 0;
 
   @override
   void dispose() {
@@ -167,7 +168,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _isLoading = true;
           });
           Future.delayed(const Duration(milliseconds: 800), () {
-            if (mounted) setState(() { _isLoading = false; _otpSent = true; });
+            if (mounted) {
+              setState(() { _isLoading = false; _otpSent = true; });
+              _startResendCooldown();
+            }
           });
         }),
         const SizedBox(height: 24),
@@ -297,15 +301,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: 20),
         Center(
           child: TextButton(
-            onPressed: () {},
+            onPressed: _resendCooldown > 0 ? null : _resendOtp,
             child: Text.rich(
               TextSpan(
                 text: 'לא קיבלתם? ',
                 style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta),
                 children: [
                   TextSpan(
-                    text: 'שלחו שוב',
-                    style: GoogleFonts.rubik(fontSize: 14, color: AppColors.turquoise, fontWeight: FontWeight.w600),
+                    text: _resendCooldown > 0 ? 'שלחו שוב ($_resendCooldown)' : 'שלחו שוב',
+                    style: GoogleFonts.rubik(
+                      fontSize: 14,
+                      color: _resendCooldown > 0 ? AppColors.grayLight : AppColors.turquoise,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -394,9 +402,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  void _socialLogin(String provider) {
+    setState(() => _isLoading = true);
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
+      ref.read(authProvider.notifier).login(
+        name: provider == 'Google' ? 'משתמש Google' : 'משתמש Apple',
+        phone: '050-0000000',
+        neighborhood: null,
+      );
+      context.go('/');
+    });
+  }
+
   Widget _buildSocialButton(String label, IconData icon, Color color) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => _socialLogin(label),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
@@ -459,6 +480,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
         }),
       ],
+    );
+  }
+
+  void _startResendCooldown() {
+    setState(() => _resendCooldown = 30);
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      setState(() => _resendCooldown--);
+      return _resendCooldown > 0;
+    });
+  }
+
+  void _resendOtp() {
+    if (_resendCooldown > 0) return;
+    _startResendCooldown();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('קוד אימות חדש נשלח ל-${_phoneController.text}', style: GoogleFonts.rubik()),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 

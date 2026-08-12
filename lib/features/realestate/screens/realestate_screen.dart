@@ -76,6 +76,9 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
       child: Scaffold(
         backgroundColor: AppColors.white,
         body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () async { await Future.delayed(const Duration(milliseconds: 800)); },
+            color: AppColors.turquoise,
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
@@ -116,6 +119,7 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
               _buildArticlesSection(),
               const SizedBox(height: 100),
             ],
+          ),
           ),
         ),
       ),

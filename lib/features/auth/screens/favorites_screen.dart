@@ -86,18 +86,26 @@ class _BusinessFavorites extends StatelessWidget {
       );
     }
 
-    final demoBusinesses = [
-      ('מסעדת נאיתאי', 'תאילנדי · הפרחים', '4.8', Icons.restaurant),
-      ('קפה גרג', 'בית קפה · המע"ר', '4.6', Icons.coffee),
-      ('פיצה פרגו', 'פיצה · נופים', '4.5', Icons.local_pizza),
-    ];
+    const allBusinesses = {
+      'demo_0': ('מסעדת נאיתאי', 'תאילנדי · המע"ר', '4.6', Icons.restaurant),
+      'demo_1': ('פיצה פרגו', 'פיצה · הפרחים', '4.5', Icons.local_pizza),
+      'demo_2': ('קפה גרג', 'בית קפה · נופים', '4.3', Icons.coffee),
+      'demo_3': ('בורגרס בר', 'המבורגרים · מוריה', '4.7', Icons.lunch_dining),
+      'demo_4': ('סושי מודיעין', 'סושי · אבני חן', '4.4', Icons.set_meal),
+      'demo_5': ('המאפייה של שלומי', 'מאפייה · המע"ר', '4.8', Icons.bakery_dining),
+      'demo_6': ('ביסטרו 770', 'איטלקי · הנחלים', '4.2', Icons.dinner_dining),
+      'demo_7': ('מסעדת ג\'ויה', 'ים תיכוני · משואה', '4.5', Icons.restaurant),
+      'demo_8': ('הסטייקיה', 'בשרים · המגינים', '4.1', Icons.restaurant),
+      'demo_9': ('בית הפלאפל', 'ישראלי · השבטים', '4.6', Icons.fastfood),
+    };
+    const fallback = ('עסק', 'קטגוריה · שכונה', '4.0', Icons.store);
 
     return ListView.separated(
       padding: const EdgeInsets.all(20),
-      itemCount: ids.length > demoBusinesses.length ? demoBusinesses.length : ids.length,
+      itemCount: ids.length,
       separatorBuilder: (_, __) => const Divider(color: AppColors.border, height: 1),
       itemBuilder: (context, index) {
-        final (name, info, rating, icon) = demoBusinesses[index % demoBusinesses.length];
+        final (name, info, rating, icon) = allBusinesses[ids[index]] ?? fallback;
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
           leading: Container(
@@ -148,18 +156,22 @@ class _ListingFavorites extends StatelessWidget {
       );
     }
 
-    final demoListings = [
-      ('4 חדרים · 110 מ"ר', 'הפרחים', '2,450,000 ₪'),
-      ('5 חדרים · 140 מ"ר', 'אבני חן', '3,100,000 ₪'),
-      ('דופלקס · 6 חדרים', 'נופים', '4,200,000 ₪'),
-    ];
+    const allListings = {
+      'listing_0': ('4 חדרים · 110 מ"ר', 'הפרחים', '2,450,000 ₪'),
+      'listing_1': ('5 חדרים · 140 מ"ר', 'אבני חן', '3,100,000 ₪'),
+      'listing_2': ('דופלקס · 6 חדרים', 'נופים', '4,200,000 ₪'),
+      'listing_3': ('3 חדרים · 85 מ"ר', 'מוריה', '1,950,000 ₪'),
+      'listing_4': ('פנטהאוז · 7 חדרים', 'המע"ר', '5,800,000 ₪'),
+      'listing_5': ('4 חדרים · 120 מ"ר', 'הנחלים', '2,700,000 ₪'),
+    };
+    const fallback = ('דירה', 'שכונה', '- ₪');
 
     return ListView.separated(
       padding: const EdgeInsets.all(20),
-      itemCount: ids.length > demoListings.length ? demoListings.length : ids.length,
+      itemCount: ids.length,
       separatorBuilder: (_, __) => const Divider(color: AppColors.border, height: 1),
       itemBuilder: (context, index) {
-        final (specs, neighborhood, price) = demoListings[index % demoListings.length];
+        final (specs, neighborhood, price) = allListings[ids[index]] ?? fallback;
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
           leading: Container(

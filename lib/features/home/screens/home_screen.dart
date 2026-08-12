@@ -2,24 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/brand_header.dart';
+import '../../../shared/widgets/shimmer_loading.dart';
 import '../widgets/category_row.dart';
 import '../widgets/news_preview.dart';
 import '../widgets/municipal_alert_strip.dart';
 import 'package:go_router/go_router.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
+
+  Future<void> _onRefresh() async {
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) setState(() => _isLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: CustomScrollView(
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: const Color(0xFF17A9D0),
+        child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: BrandHeader(
               searchHint: 'חפשו עסק, מסעדה, שירות...',
-              onSearch: (query) {},
+              onSearch: (query) {
+                if (query.trim().isNotEmpty) {
+                  context.push('/search?q=${Uri.encodeComponent(query.trim())}');
+                }
+              },
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -34,38 +63,47 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
-          const SliverToBoxAdapter(child: NewsPreview()),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              title: 'מומלץ בשבילך',
-              onSeeAll: () => context.go('/businesses'),
+          if (_isLoading) ...[
+            const SliverToBoxAdapter(child: ShimmerLoading(type: ShimmerType.carousel, itemCount: 3)),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: ShimmerLoading(type: ShimmerType.carousel, itemCount: 3)),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: ShimmerLoading(type: ShimmerType.card, itemCount: 2)),
+          ] else ...[
+            const SliverToBoxAdapter(child: NewsPreview()),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: _SectionHeader(
+                title: 'מומלץ בשבילך',
+                onSeeAll: () => context.go('/businesses'),
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-          SliverToBoxAdapter(child: _RecommendedBusinesses()),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              title: 'אירועים קרובים',
-              onSeeAll: () => context.go('/events'),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            SliverToBoxAdapter(child: _RecommendedBusinesses()),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: _SectionHeader(
+                title: 'אירועים קרובים',
+                onSeeAll: () => context.go('/events'),
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-          SliverToBoxAdapter(child: _UpcomingEvents()),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          SliverToBoxAdapter(
-            child: _SectionHeader(
-              title: 'הטבות חמות',
-              onSeeAll: () => context.go('/deals'),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            SliverToBoxAdapter(child: _UpcomingEvents()),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: _SectionHeader(
+                title: 'הטבות חמות',
+                onSeeAll: () => context.go('/deals'),
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-          SliverToBoxAdapter(child: _HotDeals()),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          SliverToBoxAdapter(child: _QuickAccessGrid()),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            SliverToBoxAdapter(child: _HotDeals()),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(child: _QuickAccessGrid()),
+          ],
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
+      ),
       ),
     );
   }
@@ -89,7 +127,7 @@ class _SectionHeader extends StatelessWidget {
             style: GoogleFonts.rubik(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.navy,
+              color: context.textPrimary,
             ),
           ),
           if (onSeeAll != null)
@@ -134,10 +172,10 @@ class _UpcomingEvents extends StatelessWidget {
               width: 220,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: const [
-                  BoxShadow(color: AppColors.cardShadow, blurRadius: 12, offset: Offset(0, 4)),
+                boxShadow: [
+                  BoxShadow(color: context.isDark ? Colors.black26 : AppColors.cardShadow, blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -149,7 +187,7 @@ class _UpcomingEvents extends StatelessWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceLight,
+                          color: context.surfaceDim,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(icon, size: 18, color: AppColors.turquoise),
@@ -158,7 +196,7 @@ class _UpcomingEvents extends StatelessWidget {
                       Expanded(
                         child: Text(
                           title,
-                          style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy),
+                          style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -203,10 +241,10 @@ class _HotDeals extends StatelessWidget {
               width: 200,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: const [
-                  BoxShadow(color: AppColors.cardShadow, blurRadius: 12, offset: Offset(0, 4)),
+                boxShadow: [
+                  BoxShadow(color: context.isDark ? Colors.black26 : AppColors.cardShadow, blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -221,7 +259,7 @@ class _HotDeals extends StatelessWidget {
                     child: Text(discount, style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.white)),
                   ),
                   const Spacer(),
-                  Text(business, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                  Text(business, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
                   const SizedBox(height: 2),
                   Text(expiry, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayMeta)),
                 ],
@@ -251,7 +289,7 @@ class _QuickAccessGrid extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('גישה מהירה', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy)),
+          Text('גישה מהירה', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
           const SizedBox(height: 12),
           GridView.count(
             crossAxisCount: 3,
@@ -266,9 +304,9 @@ class _QuickAccessGrid extends StatelessWidget {
                 onTap: () => context.push(route),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceLight,
+                    color: context.surfaceDim,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: context.borderClr, width: 1),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -277,7 +315,7 @@ class _QuickAccessGrid extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         label,
-                        style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.navy),
+                        style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w500, color: context.textPrimary),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -316,10 +354,10 @@ class _RecommendedBusinesses extends StatelessWidget {
             child: Container(
               width: 160,
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: const [
-                  BoxShadow(color: AppColors.cardShadow, blurRadius: 12, offset: Offset(0, 4)),
+                boxShadow: [
+                  BoxShadow(color: context.isDark ? Colors.black26 : AppColors.cardShadow, blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -328,7 +366,7 @@ class _RecommendedBusinesses extends StatelessWidget {
                   Container(
                     height: 100,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceLight,
+                      color: context.surfaceDim,
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(14),
                       ),
@@ -351,7 +389,7 @@ class _RecommendedBusinesses extends StatelessWidget {
                           style: GoogleFonts.rubik(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.navy,
+                            color: context.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

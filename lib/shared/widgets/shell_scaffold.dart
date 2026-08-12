@@ -23,9 +23,9 @@ class ShellScaffold extends StatelessWidget {
       child: Scaffold(
         body: child,
         bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(
-              top: BorderSide(color: AppColors.border, width: 0.5),
+              top: BorderSide(color: context.borderClr, width: 0.5),
             ),
           ),
           child: BottomNavigationBar(

@@ -1,7 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/neighborhoods.dart';
 import '../providers/auth_provider.dart';
@@ -17,6 +19,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   String? _selectedNeighborhood;
+  Uint8List? _avatarBytes;
 
   @override
   void initState() {
@@ -32,6 +35,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 512, maxHeight: 512, imageQuality: 80);
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      setState(() => _avatarBytes = bytes);
+    }
   }
 
   @override
@@ -50,25 +62,27 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             children: [
               Center(
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: _pickAvatar,
                   child: Stack(
                     children: [
                       Container(
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
-                          gradient: AppColors.cyanGradient,
+                          gradient: _avatarBytes == null ? AppColors.cyanGradient : null,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(color: const Color(0xFF00EEFF).withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6)),
                           ],
                         ),
-                        child: Center(
-                          child: Text(
-                            ref.watch(authProvider)?.initials ?? '?',
-                            style: GoogleFonts.rubik(fontSize: 34, fontWeight: FontWeight.w700, color: AppColors.white),
-                          ),
-                        ),
+                        child: _avatarBytes != null
+                            ? ClipOval(child: Image.memory(_avatarBytes!, fit: BoxFit.cover, width: 100, height: 100))
+                            : Center(
+                                child: Text(
+                                  ref.watch(authProvider)?.initials ?? '?',
+                                  style: GoogleFonts.rubik(fontSize: 34, fontWeight: FontWeight.w700, color: AppColors.white),
+                                ),
+                              ),
                       ),
                       Positioned(
                         bottom: 0,
