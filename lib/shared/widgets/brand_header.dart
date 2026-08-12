@@ -1,124 +1,143 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
-class BrandHeader extends StatelessWidget {
+class BrandHeader extends ConsumerWidget {
   final String? searchHint;
   final ValueChanged<String>? onSearch;
-  final double height;
 
   const BrandHeader({
     super.key,
     this.searchHint,
     this.onSearch,
-    this.height = 260,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
+    final isLoggedIn = user != null;
+
+    return Container(
       width: double.infinity,
-      height: height,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              'assets/images/hero_anaba.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  decoration: const BoxDecoration(
-                    gradient: AppColors.brandGradient,
+      color: AppColors.white,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isLoggedIn)
+                          Text(
+                            'היי ${user.name.split(' ').first}',
+                            style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta),
+                          ),
+                        Text(
+                          'מודיעין בשבילך',
+                          style: GoogleFonts.rubik(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.navy.withValues(alpha: 0.75),
-                    AppColors.midBlue.withValues(alpha: 0.65),
-                    AppColors.turquoise.withValues(alpha: 0.55),
-                  ],
-                ),
-              ),
-            ),
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'מודיעין בשבילך',
-                      style: GoogleFonts.rubik(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.white,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 8,
+                  GestureDetector(
+                    onTap: () {
+                      if (isLoggedIn) {
+                        context.push('/profile');
+                      } else {
+                        context.push('/login');
+                      }
+                    },
+                    child: isLoggedIn
+                        ? Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              gradient: AppColors.brandGradient,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                user.initials,
+                                style: GoogleFonts.rubik(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceLight,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.border, width: 1),
+                            ),
+                            child: const Icon(Icons.person_outline, size: 20, color: AppColors.grayMeta),
                           ),
-                        ],
+                  ),
+                ],
+              ),
+              if (!isLoggedIn) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'הכל על העיר שלך — במקום אחד',
+                  style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta),
+                ),
+              ],
+              if (searchHint != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: TextField(
+                    textDirection: TextDirection.rtl,
+                    onSubmitted: onSearch,
+                    decoration: InputDecoration(
+                      hintText: searchHint,
+                      hintTextDirection: TextDirection.rtl,
+                      hintStyle: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight),
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Icon(Icons.search, color: AppColors.grayLight, size: 20),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'הכל על העיר שלך — במקום אחד',
-                      style: GoogleFonts.rubik(
-                        fontSize: 14,
-                        color: AppColors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                    if (searchHint != null) ...[
-                      const SizedBox(height: 18),
-                      Container(
+                      prefixIconConstraints: const BoxConstraints(minWidth: 44),
+                      suffixIcon: Container(
+                        margin: const EdgeInsets.all(6),
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          color: AppColors.turquoise.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(50),
                         ),
-                        child: TextField(
-                          textDirection: TextDirection.rtl,
-                          onSubmitted: onSearch,
-                          decoration: InputDecoration(
-                            hintText: searchHint,
-                            hintTextDirection: TextDirection.rtl,
-                            prefixIcon: const Icon(
-                              Icons.auto_awesome,
-                              color: AppColors.turquoise,
-                            ),
-                            suffixIcon: const Icon(
-                              Icons.search,
-                              color: AppColors.grayLight,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                          ),
-                        ),
+                        child: const Icon(Icons.auto_awesome, color: AppColors.turquoise, size: 16),
                       ),
-                    ],
-                  ],
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            ],
+          ),
         ),
       ),
     );

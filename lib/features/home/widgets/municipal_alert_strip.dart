@@ -11,18 +11,15 @@ class MunicipalAlertStrip extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.turquoise.withValues(alpha: 0.06),
+        color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: AppColors.turquoise.withValues(alpha: 0.2),
-        ),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.info_outline,
-            size: 20,
-            color: AppColors.midBlue,
+            size: 18,
+            color: AppColors.grayMeta,
           ),
           const SizedBox(width: 10),
           Expanded(

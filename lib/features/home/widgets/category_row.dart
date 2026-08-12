@@ -13,11 +13,15 @@ class _CategoryItem {
 
 const _categories = [
   _CategoryItem(Icons.restaurant, 'לאכול', '/businesses'),
-  _CategoryItem(Icons.nightlife, 'לבלות', '/businesses'),
+  _CategoryItem(Icons.nightlife, 'לבלות', '/events'),
   _CategoryItem(Icons.map, 'מפה', '/map'),
-  _CategoryItem(Icons.apartment, 'נדל"ן', '/businesses'),
+  _CategoryItem(Icons.apartment, 'נדל"ן', '/realestate'),
   _CategoryItem(Icons.build, 'מקצוענים', '/businesses'),
-  _CategoryItem(Icons.local_offer, 'הטבות', '/businesses'),
+  _CategoryItem(Icons.local_offer, 'הטבות', '/deals'),
+  _CategoryItem(Icons.people, 'קהילה', '/community'),
+  _CategoryItem(Icons.sports_esports, 'משחקים', '/games'),
+  _CategoryItem(Icons.directions_walk, 'צעדים', '/steps'),
+  _CategoryItem(Icons.local_parking, 'חניה', '/parking'),
 ];
 
 class CategoryRow extends StatelessWidget {
@@ -31,23 +35,24 @@ class CategoryRow extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: _categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final cat = _categories[index];
           return GestureDetector(
             onTap: () => context.go(cat.route),
             child: SizedBox(
-              width: 70,
+              width: 64,
               child: Column(
                 children: [
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 52,
+                    height: 52,
                     decoration: BoxDecoration(
-                      color: AppColors.midBlue.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(16),
+                      color: AppColors.surfaceLight,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.border, width: 1),
                     ),
-                    child: Icon(cat.icon, color: AppColors.midBlue, size: 28),
+                    child: Icon(cat.icon, color: AppColors.midBlue, size: 24),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -55,7 +60,7 @@ class CategoryRow extends StatelessWidget {
                     style: GoogleFonts.rubik(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.navy,
+                      color: AppColors.grayMeta,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,

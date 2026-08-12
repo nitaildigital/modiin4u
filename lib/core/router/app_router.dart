@@ -9,11 +9,17 @@ import '../../features/map/screens/map_screen.dart';
 import '../../features/municipal/screens/municipal_screen.dart';
 import '../../features/municipal/screens/parking_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/profile_screen.dart';
+import '../../features/auth/screens/edit_profile_screen.dart';
+import '../../features/auth/screens/favorites_screen.dart';
+import '../../features/auth/screens/notifications_screen.dart';
+import '../../features/auth/screens/settings_screen.dart';
 import '../../features/events/screens/events_screen.dart';
 import '../../features/events/screens/event_detail_screen.dart';
 import '../../features/professionals/screens/professional_detail_screen.dart';
 import '../../features/realestate/screens/realestate_screen.dart';
 import '../../features/realestate/screens/listing_detail_screen.dart';
+import '../../features/realestate/screens/new_listing_screen.dart';
 import '../../features/community/screens/community_screen.dart';
 import '../../features/deals/screens/deals_screen.dart';
 import '../../features/deals/screens/deal_detail_screen.dart';
@@ -63,6 +69,12 @@ final appRouter = GoRouter(
             child: MunicipalScreen(),
           ),
         ),
+        GoRoute(
+          path: '/realestate',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: RealEstateScreen(),
+          ),
+        ),
       ],
     ),
     GoRoute(
@@ -99,16 +111,16 @@ final appRouter = GoRouter(
       ),
     ),
     GoRoute(
-      path: '/realestate',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const RealEstateScreen(),
-    ),
-    GoRoute(
       path: '/listing/:id',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => ListingDetailScreen(
         listingId: state.pathParameters['id']!,
       ),
+    ),
+    GoRoute(
+      path: '/new-listing',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const NewListingScreen(),
     ),
     GoRoute(
       path: '/community',
@@ -151,6 +163,31 @@ final appRouter = GoRouter(
       path: '/login',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/profile',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: '/edit-profile',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: '/favorites',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const FavoritesScreen(),
+    ),
+    GoRoute(
+      path: '/notifications',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const NotificationsScreen(),
+    ),
+    GoRoute(
+      path: '/settings',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const SettingsScreen(),
     ),
   ],
 );
