@@ -22,8 +22,8 @@ class _DealsScreenState extends State<DealsScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('הטבות', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-          backgroundColor: AppColors.white,
-          foregroundColor: AppColors.navy,
+          backgroundColor: context.cardBg,
+          foregroundColor: context.textPrimary,
           elevation: 0,
         ),
         body: CustomScrollView(
@@ -46,7 +46,7 @@ class _DealsScreenState extends State<DealsScreen> {
                       selectedColor: AppColors.turquoise,
                       labelStyle: GoogleFonts.rubik(
                         fontSize: 13,
-                        color: sel ? AppColors.white : AppColors.navy,
+                        color: sel ? AppColors.white : context.textPrimary,
                         fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
                       ),
                       visualDensity: VisualDensity.compact,
@@ -96,9 +96,9 @@ class _DealsScreenState extends State<DealsScreen> {
                     onTap: () => context.push('/deal/demo_$index'),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border, width: 0.5),
+                        border: Border.all(color: context.borderClr, width: 0.5),
                       ),
                       child: Row(
                         children: [
@@ -132,7 +132,7 @@ class _DealsScreenState extends State<DealsScreen> {
                                       Expanded(
                                         child: Text(
                                           business,
-                                          style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy),
+                                          style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: context.textPrimary),
                                         ),
                                       ),
                                       if (isExclusive)
@@ -200,16 +200,16 @@ class _QuickChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.borderClr),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: AppColors.grayLight),
           const SizedBox(width: 6),
-          Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.navy)),
+          Text(label, style: GoogleFonts.rubik(fontSize: 12, color: context.textPrimary)),
         ],
       ),
     );

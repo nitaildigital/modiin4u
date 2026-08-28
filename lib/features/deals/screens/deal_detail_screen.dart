@@ -60,7 +60,7 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('קפה גרג', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                              Text('קפה גרג', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
                               Row(
                                 children: [
                                   Icon(Icons.location_on_outlined, size: 14, color: AppColors.grayLight),
@@ -79,7 +79,7 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
                       style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy),
                     ),
                     const SizedBox(height: 16),
-                    Text('תנאי מימוש', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('תנאי מימוש', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     const SizedBox(height: 8),
                     _TermRow(Icons.calendar_today, 'תוקף: עד 18.8.2026'),
                     const SizedBox(height: 6),
@@ -101,7 +101,7 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
                               ),
                               child: Column(
                                 children: [
-                                  const Icon(Icons.qr_code_2, size: 100, color: AppColors.navy),
+                                  const Icon(Icons.qr_code_2, size: 100, color: AppColors.midBlue),
                                   const SizedBox(height: 12),
                                   Text('MOD-20OFF-7X4K', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy, letterSpacing: 2)),
                                   const SizedBox(height: 8),
@@ -140,7 +140,7 @@ class _DealDetailScreenState extends State<DealDetailScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text('עוד הטבות מקפה גרג', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('עוד הטבות מקפה גרג', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     const SizedBox(height: 12),
                     _MoreDeal('מאפה + קפה ב-25 ₪', 'כל יום עד 12:00'),
                     const SizedBox(height: 8),
@@ -186,9 +186,9 @@ class _MoreDeal extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(color: context.borderClr, width: 0.5),
       ),
       child: Row(
         children: [
@@ -196,7 +196,7 @@ class _MoreDeal extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
                 Text(subtitle, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
               ],
             ),

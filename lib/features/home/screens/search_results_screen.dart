@@ -50,7 +50,7 @@ class SearchResultsScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         query.isEmpty ? 'הכל' : '"$query"',
-                        style: GoogleFonts.rubik(fontSize: 15, color: AppColors.navy),
+                        style: GoogleFonts.rubik(fontSize: 15, color: context.textPrimary),
                       ),
                     ),
                     Text(
@@ -92,7 +92,7 @@ class SearchResultsScreen extends StatelessWidget {
                             ),
                             child: Icon(result.icon, size: 22, color: AppColors.turquoise),
                           ),
-                          title: Text(result.title, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.navy)),
+                          title: Text(result.title, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w500, color: context.textPrimary)),
                           subtitle: Text(result.subtitle, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
                           trailing: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

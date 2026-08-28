@@ -74,7 +74,7 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: context.scaffoldBg,
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: () async { await Future.delayed(const Duration(milliseconds: 800)); },
@@ -321,14 +321,14 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(50),
                 border: Border.all(color: AppColors.filterBorderColor),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(cat.label, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.navy)),
+                  Text(cat.label, style: GoogleFonts.rubik(fontSize: 13, color: context.textPrimary)),
                   const SizedBox(width: 4),
                   const Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.grayMeta),
                 ],
@@ -346,7 +346,7 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Text(title, style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy)),
+            child: Text(title, style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
           ),
           if (actionLabel != null)
             GestureDetector(
@@ -542,9 +542,9 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
             child: Container(
               width: 140,
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.cardBorderColor),
+                border: Border.all(color: context.borderClr),
               ),
               child: Column(
                 children: [
@@ -559,7 +559,7 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Text(_neighborhoods[index], style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                    child: Text(_neighborhoods[index], style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
                   ),
                 ],
               ),
@@ -583,7 +583,7 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('כתבות ומדריכים', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy)),
+          Text('כתבות ומדריכים', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
           const SizedBox(height: 14),
           ...articles.map((article) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
@@ -591,7 +591,7 @@ class _RealEstateScreenState extends ConsumerState<RealEstateScreen> {
               onTap: () => context.push('/article/${article.id}'),
               child: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(color: context.cardBg, borderRadius: BorderRadius.circular(16)),
                 child: Row(
                   children: [
                     Container(
@@ -645,9 +645,9 @@ class _PropertyCard extends StatelessWidget {
     return Container(
       width: 175,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.cardBorderColor),
+        border: Border.all(color: context.borderClr),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -690,7 +690,7 @@ class _PropertyCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(listing.price, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                Text(listing.price, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: context.textPrimary)),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -740,9 +740,9 @@ class _CompactCard extends StatelessWidget {
     return Container(
       height: 95,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cardBorderColor),
+        border: Border.all(color: context.borderClr),
       ),
       child: Row(
         children: [
@@ -753,7 +753,7 @@ class _CompactCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(listing.price, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                  Text(listing.price, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: context.textPrimary)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -820,7 +820,7 @@ class _FeaturePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(50),
         boxShadow: [BoxShadow(color: const Color(0xFF003742).withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 2))],
       ),
@@ -829,7 +829,7 @@ class _FeaturePill extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: AppColors.turquoise),
           const SizedBox(width: 4),
-          Text(label, style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.navy)),
+          Text(label, style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w500, color: context.textPrimary)),
         ],
       ),
     );

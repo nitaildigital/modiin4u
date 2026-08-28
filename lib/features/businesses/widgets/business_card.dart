@@ -32,9 +32,9 @@ class BusinessCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          border: Border.all(color: context.borderClr, width: 0.5),
         ),
         child: Row(
           children: [
@@ -67,7 +67,7 @@ class BusinessCard extends StatelessWidget {
                             style: GoogleFonts.rubik(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.navy,
+                              color: context.textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -94,7 +94,7 @@ class BusinessCard extends StatelessWidget {
                           style: GoogleFonts.rubik(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.navy,
+                            color: context.textPrimary,
                           ),
                         ),
                         const SizedBox(width: 4),

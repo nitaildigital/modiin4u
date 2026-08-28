@@ -29,13 +29,16 @@ class _NewsScreenState extends State<NewsScreen> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
+      child: RefreshIndicator(
+        onRefresh: () async { await Future.delayed(const Duration(milliseconds: 800)); },
+        color: AppColors.turquoise,
       child: CustomScrollView(
         slivers: [
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: AppColors.white,
-            foregroundColor: AppColors.navy,
+            backgroundColor: context.cardBg,
+            foregroundColor: context.textPrimary,
             title: Text(
               'חדשות מודיעין',
               style: GoogleFonts.rubik(fontWeight: FontWeight.w700),
@@ -79,7 +82,7 @@ class _NewsScreenState extends State<NewsScreen> {
                       style: GoogleFonts.rubik(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.navy,
+                        color: context.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -119,7 +122,7 @@ class _NewsScreenState extends State<NewsScreen> {
                           style: GoogleFonts.rubik(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.navy,
+                            color: context.textPrimary,
                           ),
                         ),
                         Text(
@@ -159,7 +162,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     selectedColor: AppColors.turquoise,
                     labelStyle: GoogleFonts.rubik(
                       fontSize: 13,
-                      color: selected ? AppColors.white : AppColors.navy,
+                      color: selected ? AppColors.white : context.textPrimary,
                       fontWeight:
                           selected ? FontWeight.w600 : FontWeight.w400,
                     ),
@@ -217,9 +220,9 @@ class _NewsScreenState extends State<NewsScreen> {
                   onTap: () => context.push('/article/demo_$index'),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: context.cardBg,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border, width: 0.5),
+                      border: Border.all(color: context.borderClr, width: 0.5),
                     ),
                     child: Row(
                       children: [
@@ -269,7 +272,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                   style: GoogleFonts.rubik(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.navy,
+                                    color: context.textPrimary,
                                     height: 1.3,
                                   ),
                                   maxLines: 2,
@@ -296,6 +299,7 @@ class _NewsScreenState extends State<NewsScreen> {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
+      ),
       ),
     );
   }

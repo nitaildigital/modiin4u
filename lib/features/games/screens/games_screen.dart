@@ -12,8 +12,8 @@ class GamesScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text('משחקים', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-          backgroundColor: AppColors.white,
-          foregroundColor: AppColors.navy,
+          backgroundColor: context.cardBg,
+          foregroundColor: context.textPrimary,
           elevation: 0,
         ),
         body: ListView(
@@ -50,7 +50,7 @@ class GamesScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Text('משחקים', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy)),
+            Text('משחקים', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
             const SizedBox(height: 12),
             GridView.count(
               shrinkWrap: true,
@@ -100,9 +100,9 @@ class _GameCard extends StatelessWidget {
             },
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 0.5),
+          border: Border.all(color: context.borderClr, width: 0.5),
         ),
         child: Stack(
           children: [
@@ -124,7 +124,7 @@ class _GameCard extends StatelessWidget {
                   style: GoogleFonts.rubik(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isLocked ? AppColors.grayLight : AppColors.navy,
+                    color: isLocked ? AppColors.grayLight : context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),

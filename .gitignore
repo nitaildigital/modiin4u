@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Games (Unity projects — managed separately)
+games/
+
+# Package lock (npm)
+package-lock.json

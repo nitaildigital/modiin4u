@@ -63,7 +63,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               style: GoogleFonts.rubik(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.navy,
+                                color: context.textPrimary,
                               ),
                             ),
                             Text(
@@ -96,7 +96,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       style: GoogleFonts.rubik(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -198,7 +198,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       style: GoogleFonts.rubik(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -218,7 +218,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       style: GoogleFonts.rubik(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -227,7 +227,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.midBlue.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.borderClr),
                       ),
                       child: Center(
                         child: Column(
@@ -249,16 +249,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       style: GoogleFonts.rubik(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border, width: 0.5),
+                        border: Border.all(color: context.borderClr, width: 0.5),
                       ),
                       child: Row(
                         children: [
@@ -277,7 +277,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                   style: GoogleFonts.rubik(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.navy,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                                 Text(
@@ -297,7 +297,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       style: GoogleFonts.rubik(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -340,7 +340,7 @@ class _InfoRow extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+            Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
             Text(subtitle, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
           ],
         ),
@@ -361,9 +361,9 @@ class _SimilarEvent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(color: context.borderClr, width: 0.5),
       ),
       child: Row(
         children: [
@@ -377,13 +377,13 @@ class _SimilarEvent extends StatelessWidget {
             child: Center(
               child: Text(
                 date.split('.')[0],
-                style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy),
+                style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary),
               ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+            child: Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: context.textPrimary)),
           ),
           Text(price, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.turquoise, fontWeight: FontWeight.w600)),
         ],

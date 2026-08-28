@@ -100,7 +100,7 @@ class BusinessDetailScreen extends ConsumerWidget {
                             style: GoogleFonts.rubik(
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.navy,
+                              color: context.textPrimary,
                             ),
                           ),
                         ),
@@ -142,7 +142,7 @@ class BusinessDetailScreen extends ConsumerWidget {
                           style: GoogleFonts.rubik(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.navy,
+                            color: context.textPrimary,
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -436,7 +436,7 @@ class _Section extends StatelessWidget {
           style: GoogleFonts.rubik(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: AppColors.navy,
+            color: context.textPrimary,
           ),
         ),
         const SizedBox(height: 10),
@@ -467,7 +467,7 @@ class _HoursRow extends StatelessWidget {
             hours,
             style: GoogleFonts.rubik(
               fontSize: 14,
-              color: hours == 'סגור' ? AppColors.error : AppColors.navy,
+              color: hours == 'סגור' ? AppColors.error : context.textPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),

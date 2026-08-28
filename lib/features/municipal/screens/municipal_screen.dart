@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 
 class MunicipalScreen extends StatelessWidget {
@@ -14,8 +16,8 @@ class MunicipalScreen extends StatelessWidget {
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: AppColors.white,
-            foregroundColor: AppColors.navy,
+            backgroundColor: context.cardBg,
+            foregroundColor: context.textPrimary,
             title: Text(
               'מידע עירוני',
               style: GoogleFonts.rubik(fontWeight: FontWeight.w700),
@@ -26,9 +28,9 @@ class MunicipalScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.borderClr),
                 ),
                 child: TextField(
                   textDirection: TextDirection.rtl,
@@ -78,7 +80,7 @@ class MunicipalScreen extends StatelessWidget {
                 style: GoogleFonts.rubik(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
+                  color: context.textPrimary,
                 ),
               ),
             ),
@@ -92,19 +94,75 @@ class MunicipalScreen extends StatelessWidget {
               crossAxisSpacing: 12,
               childAspectRatio: 1,
               children: [
-                _CategoryTile(Icons.local_parking, 'חניה וחניונים'),
-                _CategoryTile(Icons.nightlight_round, 'שבת וחגים'),
-                _CategoryTile(Icons.account_balance, 'מוסדות ציבור'),
-                _CategoryTile(Icons.local_hospital, 'בריאות'),
-                _CategoryTile(Icons.school, 'חינוך'),
-                _CategoryTile(Icons.directions_bus, 'תחבורה'),
-                _CategoryTile(Icons.shield, 'חירום ומיגון'),
-                _CategoryTile(Icons.park, 'פארקים'),
-                _CategoryTile(Icons.description, 'טפסים ושירותים'),
+                _CategoryTile(Icons.local_parking, 'חניה וחניונים', () => context.push('/parking')),
+                _CategoryTile(Icons.nightlight_round, 'שבת וחגים', () => _showInfoSheet(context, 'שבת וחגים', ['כניסת שבת: 19:12', 'יציאת שבת: 20:17', 'חג קרוב: ראש השנה — 22.09'])),
+                _CategoryTile(Icons.account_balance, 'מוסדות ציבור', () => _showInfoSheet(context, 'מוסדות ציבור', ['עיריית מודיעין: 08-9726000', 'ביטוח לאומי: 08-9261111', 'דואר מודיעין: 08-9260222'])),
+                _CategoryTile(Icons.local_hospital, 'בריאות', () => _showInfoSheet(context, 'בריאות', ['מד"א: 101', 'טרם מודיעין: 08-9500900', 'מכבי: *3555', 'כללית: *2700'])),
+                _CategoryTile(Icons.school, 'חינוך', () => _showInfoSheet(context, 'חינוך', ['מנהל חינוך: 08-9726100', 'מתנ"ס מודיעין: 08-9728500', 'ספריה עירונית: 08-9726200'])),
+                _CategoryTile(Icons.directions_bus, 'תחבורה', () => _showInfoSheet(context, 'תחבורה', ['קו 1: המע"ר ↔ נופים (כל 15 דק)', 'קו 2: רכבת ↔ מרכז (כל 20 דק)', 'מוקד תחבורה: *8787'])),
+                _CategoryTile(Icons.shield, 'חירום ומיגון', () => _showInfoSheet(context, 'חירום ומיגון', ['משטרה: 100', 'מד"א: 101', 'כיבוי: 102', 'עורף: 104', 'מוקד עירוני: 106'])),
+                _CategoryTile(Icons.park, 'פארקים', () => _showInfoSheet(context, 'פארקים', ['פארק ענבה — פתוח 24/7', 'פארק אפק — 06:00-22:00', 'גן הכלבים — מרכז העיר'])),
+                _CategoryTile(Icons.description, 'טפסים ושירותים', () => _showInfoSheet(context, 'טפסים ושירותים', ['ארנונה: 08-9726050', 'רישוי עסקים: 08-9726070', 'בנייה והיתרים: 08-9726060'])),
               ],
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _showReportSheet(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.report_problem_outlined, size: 18, color: AppColors.error),
+                            const SizedBox(width: 6),
+                            Text('דיווח תקלה', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.error)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final uri = Uri(scheme: 'tel', path: '106');
+                        if (await canLaunchUrl(uri)) await launchUrl(uri);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.turquoise.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.turquoise.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.phone, size: 18, color: AppColors.turquoise),
+                            const SizedBox(width: 6),
+                            Text('מוקד 106', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.turquoise)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -113,7 +171,7 @@ class MunicipalScreen extends StatelessWidget {
                 style: GoogleFonts.rubik(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
+                  color: context.textPrimary,
                 ),
               ),
             ),
@@ -152,9 +210,9 @@ class MunicipalScreen extends StatelessWidget {
                 return Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border, width: 0.5),
+                    border: Border.all(color: context.borderClr, width: 0.5),
                   ),
                   child: Row(
                     children: [
@@ -177,7 +235,7 @@ class MunicipalScreen extends StatelessWidget {
                               style: GoogleFonts.rubik(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.navy,
+                                color: context.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -204,6 +262,105 @@ class MunicipalScreen extends StatelessWidget {
   }
 }
 
+void _showInfoSheet(BuildContext context, String title, List<String> items) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => Directionality(
+      textDirection: TextDirection.rtl,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            Text(title, style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+            const SizedBox(height: 16),
+            ...items.map((item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.turquoise, shape: BoxShape.circle)),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(item, style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayText, height: 1.4))),
+                ],
+              ),
+            )),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _showReportSheet(BuildContext context) {
+  final categories = ['תאורה', 'כבישים ומדרכות', 'ניקיון', 'גינון', 'מפגע בטיחותי', 'אחר'];
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => Directionality(
+      textDirection: TextDirection.rtl,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            Text('דיווח תקלה', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+            const SizedBox(height: 4),
+            Text('בחרו קטגוריה ותארו את התקלה', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: categories.map((c) => ChoiceChip(
+                label: Text(c),
+                selected: false,
+                onSelected: (_) {},
+              )).toList(),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              textDirection: TextDirection.rtl,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'תארו את התקלה...',
+                hintTextDirection: TextDirection.rtl,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('הדיווח נשלח בהצלחה!', textDirection: TextDirection.rtl)),
+                  );
+                },
+                icon: const Icon(Icons.send),
+                label: Text('שליחת דיווח', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.turquoise,
+                  foregroundColor: AppColors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _QuickInfoCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -222,9 +379,9 @@ class _QuickInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(color: context.borderClr, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +405,7 @@ class _QuickInfoCard extends StatelessWidget {
             style: GoogleFonts.rubik(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppColors.navy,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
@@ -268,41 +425,45 @@ class _QuickInfoCard extends StatelessWidget {
 class _CategoryTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const _CategoryTile(this.icon, this.label);
+  const _CategoryTile(this.icon, this.label, [this.onTap]);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 0.5),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.midBlue.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: context.borderClr, width: 0.5),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.midBlue.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 24, color: AppColors.midBlue),
             ),
-            child: Icon(icon, size: 24, color: AppColors.midBlue),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: GoogleFonts.rubik(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.navy,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.rubik(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: context.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

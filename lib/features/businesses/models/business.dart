@@ -20,16 +20,21 @@ class BusinessHours {
   }
 }
 
+enum BusinessStatus { pending, active, suspended, rejected }
+
 class Business {
   final String id;
   final String name;
+  final String slug;
   final String category;
   final String? subcategory;
   final String? description;
+  final String? metaDescription;
   final String? phone;
   final String? website;
   final String? instagram;
   final String? whatsapp;
+  final String? email;
   final String address;
   final String neighborhood;
   final double latitude;
@@ -48,17 +53,23 @@ class Business {
   final bool hasParking;
   final bool petFriendly;
   final bool openOnShabbat;
+  final BusinessStatus status;
+  final String? ownerId;
+  final DateTime createdAt;
 
-  const Business({
+  Business({
     required this.id,
     required this.name,
+    this.slug = '',
     required this.category,
     this.subcategory,
     this.description,
+    this.metaDescription,
     this.phone,
     this.website,
     this.instagram,
     this.whatsapp,
+    this.email,
     required this.address,
     required this.neighborhood,
     required this.latitude,
@@ -77,7 +88,87 @@ class Business {
     this.hasParking = false,
     this.petFriendly = false,
     this.openOnShabbat = false,
-  });
+    this.status = BusinessStatus.active,
+    this.ownerId,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  Business copyWith({
+    String? name,
+    String? slug,
+    String? category,
+    String? subcategory,
+    String? description,
+    String? metaDescription,
+    String? phone,
+    String? website,
+    String? instagram,
+    String? whatsapp,
+    String? email,
+    String? address,
+    String? neighborhood,
+    double? latitude,
+    double? longitude,
+    String? imageUrl,
+    String? logoUrl,
+    List<String>? tags,
+    List<BusinessHours>? hours,
+    double? rating,
+    int? reviewCount,
+    String? kosherStatus,
+    String? priceLevel,
+    bool? hasDelivery,
+    bool? hasOutdoorSeating,
+    bool? isAccessible,
+    bool? hasParking,
+    bool? petFriendly,
+    bool? openOnShabbat,
+    BusinessStatus? status,
+    String? ownerId,
+  }) {
+    return Business(
+      id: id,
+      name: name ?? this.name,
+      slug: slug ?? this.slug,
+      category: category ?? this.category,
+      subcategory: subcategory ?? this.subcategory,
+      description: description ?? this.description,
+      metaDescription: metaDescription ?? this.metaDescription,
+      phone: phone ?? this.phone,
+      website: website ?? this.website,
+      instagram: instagram ?? this.instagram,
+      whatsapp: whatsapp ?? this.whatsapp,
+      email: email ?? this.email,
+      address: address ?? this.address,
+      neighborhood: neighborhood ?? this.neighborhood,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      imageUrl: imageUrl ?? this.imageUrl,
+      logoUrl: logoUrl ?? this.logoUrl,
+      tags: tags ?? this.tags,
+      hours: hours ?? this.hours,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      kosherStatus: kosherStatus ?? this.kosherStatus,
+      priceLevel: priceLevel ?? this.priceLevel,
+      hasDelivery: hasDelivery ?? this.hasDelivery,
+      hasOutdoorSeating: hasOutdoorSeating ?? this.hasOutdoorSeating,
+      isAccessible: isAccessible ?? this.isAccessible,
+      hasParking: hasParking ?? this.hasParking,
+      petFriendly: petFriendly ?? this.petFriendly,
+      openOnShabbat: openOnShabbat ?? this.openOnShabbat,
+      status: status ?? this.status,
+      ownerId: ownerId ?? this.ownerId,
+      createdAt: createdAt,
+    );
+  }
+
+  String get statusLabel => switch (status) {
+    BusinessStatus.pending => 'ממתין לאישור',
+    BusinessStatus.active => 'פעיל',
+    BusinessStatus.suspended => 'מושהה',
+    BusinessStatus.rejected => 'נדחה',
+  };
 
   bool get isOpenNow {
     final now = DateTime.now();

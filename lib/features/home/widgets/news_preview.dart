@@ -178,7 +178,7 @@ class _ListNewsCard extends StatelessWidget {
                     style: GoogleFonts.rubik(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.navy,
+                      color: context.textPrimary,
                       height: 1.3,
                     ),
                     maxLines: 2,

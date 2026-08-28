@@ -51,7 +51,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: context.scaffoldBg,
         appBar: AppBar(
           title: Text('עריכת פרטים', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
         ),

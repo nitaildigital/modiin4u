@@ -151,7 +151,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('2,450,000 ₪', style: GoogleFonts.rubik(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('2,450,000 ₪', style: GoogleFonts.rubik(fontSize: 28, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     const SizedBox(height: 6),
                     Text('רח׳ הנרקיס 12, הפרחים (מירומי)', style: GoogleFonts.rubik(fontSize: 15, color: AppColors.grayText)),
                     const SizedBox(height: 4),
@@ -188,7 +188,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text('מאפייני הנכס', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('מאפייני הנכס', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8, runSpacing: 8,
@@ -198,7 +198,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text('תיאור', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('תיאור', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     const SizedBox(height: 8),
                     Text(
                       'דירת 4 חדרים מרווחת ומוארת בשכונת הפרחים. '
@@ -209,18 +209,18 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayText, height: 1.6),
                     ),
                     const SizedBox(height: 24),
-                    Text('מחשבון משכנתא', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('מחשבון משכנתא', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     const SizedBox(height: 10),
                     _buildMortgageCalculator(),
                     const SizedBox(height: 24),
-                    Text('פרטי איש קשר', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('פרטי איש קשר', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border, width: 0.5),
+                        border: Border.all(color: context.borderClr, width: 0.5),
                       ),
                       child: Row(
                         children: [
@@ -234,7 +234,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('דוד כהן', style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                                Text('דוד כהן', style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: context.textPrimary)),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
@@ -255,7 +255,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text('נכסים דומים בשכונה', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('נכסים דומים בשכונה', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 170,
@@ -273,9 +273,9 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                           return Container(
                             width: 180,
                             decoration: BoxDecoration(
-                              color: AppColors.white,
+                              color: context.cardBg,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border, width: 0.5),
+                              border: Border.all(color: context.borderClr, width: 0.5),
                             ),
                             child: Column(
                               children: [
@@ -293,7 +293,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(price, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                                      Text(price, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: context.textPrimary)),
                                       Text(specs, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
                                     ],
                                   ),
@@ -338,7 +338,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('אחוז מימון', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
-              Text('${_mortgagePercent.round()}%', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+              Text('${_mortgagePercent.round()}%', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
             ],
           ),
           Slider(
@@ -353,7 +353,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('סכום מימון', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
-              Text('$mortgageFormatted ₪', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+              Text('$mortgageFormatted ₪', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -361,7 +361,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('ריבית משוערת', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
-              Text('4.5%', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+              Text('4.5%', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -370,7 +370,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('החזר חודשי משוער', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+              Text('החזר חודשי משוער', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
               Text('~$formatted ₪', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.turquoise)),
             ],
           ),
@@ -412,7 +412,7 @@ class _SpecIcon extends StatelessWidget {
           children: [
             Icon(icon, size: 22, color: AppColors.midBlue),
             const SizedBox(height: 4),
-            Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
+            Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
             Text(label, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
           ],
         ),

@@ -84,9 +84,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                    decoration: BoxDecoration(
+                      color: context.cardBg,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                     ),
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
@@ -112,7 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         Text(
           'הרשמה חינם',
-          style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.navy),
+          style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: context.textPrimary),
         ),
         const SizedBox(height: 6),
         Text(
@@ -219,7 +219,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Center(
           child: Text(
             'הזינו את הקוד',
-            style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.navy),
+            style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: context.textPrimary),
           ),
         ),
         const SizedBox(height: 8),
@@ -232,7 +232,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Center(
           child: Text(
             _phoneController.text,
-            style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy),
+            style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: context.textPrimary),
             textDirection: TextDirection.ltr,
           ),
         ),
@@ -421,16 +421,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.borderClr),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 22, color: color),
             const SizedBox(width: 8),
-            Text(label, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+            Text(label, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: context.textPrimary)),
           ],
         ),
       ),
@@ -448,7 +448,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('למה להירשם?', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
+        Text('למה להירשם?', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
         const SizedBox(height: 14),
         ...benefits.map((b) {
           final (icon, title, subtitle) = b;
@@ -470,7 +470,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                      Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
                       Text(subtitle, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
                     ],
                   ),

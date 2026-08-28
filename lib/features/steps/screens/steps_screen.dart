@@ -13,8 +13,8 @@ class StepsScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text('מד צעדים', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-          backgroundColor: AppColors.white,
-          foregroundColor: AppColors.navy,
+          backgroundColor: context.cardBg,
+          foregroundColor: context.textPrimary,
           elevation: 0,
         ),
         body: ListView(
@@ -43,9 +43,9 @@ class _DailyProgress extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(color: context.borderClr, width: 0.5),
       ),
       child: Column(
         children: [
@@ -69,7 +69,7 @@ class _DailyProgress extends StatelessWidget {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('7,200', style: GoogleFonts.rubik(fontSize: 32, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text('7,200', style: GoogleFonts.rubik(fontSize: 32, fontWeight: FontWeight.w700, color: context.textPrimary)),
                     Text('מתוך 10,000', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
                   ],
                 ),
@@ -77,7 +77,7 @@ class _DailyProgress extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text('צעדים היום', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy)),
+          Text('צעדים היום', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: context.textPrimary)),
           const SizedBox(height: 4),
           Text('7.2 נקודות נצברו', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.turquoise)),
         ],
@@ -95,14 +95,14 @@ class _WeeklyChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(color: context.borderClr, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('השבוע', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
+          Text('השבוע', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
           const SizedBox(height: 16),
           SizedBox(
             height: 120,
@@ -164,9 +164,9 @@ class _NeighborhoodCompetition extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(color: context.borderClr, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,7 +175,7 @@ class _NeighborhoodCompetition extends StatelessWidget {
             children: [
               const Icon(Icons.emoji_events, color: AppColors.gold, size: 22),
               const SizedBox(width: 8),
-              Text('תחרות שכונות — אוגוסט', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
+              Text('תחרות שכונות — אוגוסט', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
             ],
           ),
           const SizedBox(height: 14),
@@ -198,7 +198,7 @@ class _NeighborhoodCompetition extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: Text(name, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+                    child: Text(name, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: context.textPrimary)),
                   ),
                   Text(
                     '$steps צעדים',
@@ -232,7 +232,7 @@ class _PersonalLeaderboard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('המיקום שלך', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                Text('המיקום שלך', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
                 Text('#23 בשכונת הפרחים · 72,000 צעדים החודש', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
               ],
             ),
@@ -255,7 +255,7 @@ class _WalkingRoutes extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('מסלולי הליכה מומלצים', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
+        Text('מסלולי הליכה מומלצים', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
         const SizedBox(height: 12),
         ...routes.map((r) {
           final (name, distance, difficulty, coords) = r;
@@ -264,9 +264,9 @@ class _WalkingRoutes extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.cardBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border, width: 0.5),
+                border: Border.all(color: context.borderClr, width: 0.5),
               ),
               child: Row(
                 children: [
@@ -284,7 +284,7 @@ class _WalkingRoutes extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(name, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                        Text(name, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
                         Text('$distance · $difficulty', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
                       ],
                     ),

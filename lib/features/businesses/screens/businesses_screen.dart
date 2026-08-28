@@ -80,8 +80,8 @@ class _BusinessesScreenState extends State<BusinessesScreen> {
             floating: true,
             pinned: true,
             expandedHeight: 130,
-            backgroundColor: AppColors.white,
-            foregroundColor: AppColors.navy,
+            backgroundColor: context.cardBg,
+            foregroundColor: context.textPrimary,
             title: Text(
               'עסקים ושירותים',
               style: GoogleFonts.rubik(fontWeight: FontWeight.w700),
@@ -106,7 +106,7 @@ class _BusinessesScreenState extends State<BusinessesScreen> {
                           setState(() => _selectedCategory = cat),
                       selectedColor: AppColors.turquoise,
                       labelStyle: GoogleFonts.rubik(
-                        color: selected ? AppColors.white : AppColors.navy,
+                        color: selected ? AppColors.white : context.textPrimary,
                         fontWeight:
                             selected ? FontWeight.w600 : FontWeight.w400,
                       ),
@@ -121,9 +121,9 @@ class _BusinessesScreenState extends State<BusinessesScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.borderClr),
                 ),
                 child: TextField(
                   textDirection: TextDirection.rtl,

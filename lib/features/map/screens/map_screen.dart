@@ -135,7 +135,7 @@ class _MapScreenState extends State<MapScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: context.cardBg,
                       borderRadius: BorderRadius.circular(50),
                       boxShadow: const [
                         BoxShadow(color: AppColors.cardShadow, blurRadius: 12, offset: Offset(0, 4)),
@@ -186,7 +186,7 @@ class _MapScreenState extends State<MapScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: active ? color.withValues(alpha: 0.12) : AppColors.white,
+                            color: active ? color.withValues(alpha: 0.12) : context.cardBg,
                             borderRadius: BorderRadius.circular(50),
                             border: Border.all(color: active ? color : AppColors.border),
                             boxShadow: const [
@@ -262,7 +262,7 @@ class _MapScreenState extends State<MapScreen> {
             child: Container(
               height: 90,
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: context.cardBg,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, -2)),
@@ -284,10 +284,10 @@ class _MapScreenState extends State<MapScreen> {
                       width: 150,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _selectedPoi == poi ? poi.color : AppColors.border,
+                          color: _selectedPoi == poi ? poi.color : context.borderClr,
                           width: _selectedPoi == poi ? 1.5 : 1,
                         ),
                       ),
@@ -310,7 +310,7 @@ class _MapScreenState extends State<MapScreen> {
                               children: [
                                 Text(
                                   poi.name,
-                                  style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.navy),
+                                  style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600, color: context.textPrimary),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -350,7 +350,7 @@ class _MapFab extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(12),
           boxShadow: const [
             BoxShadow(color: AppColors.cardShadow, blurRadius: 8),
@@ -374,7 +374,7 @@ class _PoiCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(color: AppColors.cardShadow, blurRadius: 16, offset: Offset(0, 4)),
@@ -399,7 +399,7 @@ class _PoiCard extends StatelessWidget {
               children: [
                 Text(
                   poi.name,
-                  style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy),
+                  style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: context.textPrimary),
                 ),
                 const SizedBox(height: 2),
                 Text(

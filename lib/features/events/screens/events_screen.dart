@@ -70,8 +70,8 @@ class _EventsScreenState extends State<EventsScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('לבלות', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-          backgroundColor: AppColors.white,
-          foregroundColor: AppColors.navy,
+          backgroundColor: context.cardBg,
+          foregroundColor: context.textPrimary,
           elevation: 0,
           actions: [
             IconButton(
@@ -100,7 +100,7 @@ class _EventsScreenState extends State<EventsScreen> {
                       selectedColor: AppColors.turquoise,
                       labelStyle: GoogleFonts.rubik(
                         fontSize: 13,
-                        color: sel ? AppColors.white : AppColors.navy,
+                        color: sel ? AppColors.white : context.textPrimary,
                         fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
                       ),
                       visualDensity: VisualDensity.compact,
@@ -148,9 +148,9 @@ class _EventsScreenState extends State<EventsScreen> {
                     onTap: () => context.push('/event/demo_$index'),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border, width: 0.5),
+                        border: Border.all(color: context.borderClr, width: 0.5),
                       ),
                       child: Row(
                         children: [
@@ -173,7 +173,7 @@ class _EventsScreenState extends State<EventsScreen> {
                                   style: GoogleFonts.rubik(
                                     fontSize: 24,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.navy,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                                 Text(
@@ -197,7 +197,7 @@ class _EventsScreenState extends State<EventsScreen> {
                                     style: GoogleFonts.rubik(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.navy,
+                                      color: context.textPrimary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -240,7 +240,7 @@ class _EventsScreenState extends State<EventsScreen> {
                                           style: GoogleFonts.rubik(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
-                                            color: isFree ? AppColors.success : AppColors.navy,
+                                            color: isFree ? AppColors.success : context.textPrimary,
                                           ),
                                         ),
                                       ),
