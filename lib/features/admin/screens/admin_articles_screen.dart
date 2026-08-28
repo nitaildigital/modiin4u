@@ -454,7 +454,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> with
       ),
       _field('תקציר', _excerpt, maxLines: 2),
       // Cover image
-      _field('קישור תמונת כריכה', _coverImageUrl, hint: 'https://...'),
+      _field('קישור תמונת כריכה', _coverImageUrl),
       if (_coverImageUrl.text.isNotEmpty) ...[
         ClipRRect(
           borderRadius: BorderRadius.circular(8),

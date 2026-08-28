@@ -535,9 +535,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
       Text('תמונות', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       Row(children: [
-        Expanded(child: _field('לוגו URL', _logoUrl, hint: 'https://...')),
+        Expanded(child: _field('לוגו URL', _logoUrl)),
         const SizedBox(width: 12),
-        Expanded(child: _field('תמונת כריכה URL', _coverImageUrl, hint: 'https://...')),
+        Expanded(child: _field('תמונת כריכה URL', _coverImageUrl)),
       ]),
       if (_logoUrl.text.isNotEmpty || _coverImageUrl.text.isNotEmpty)
         Row(children: [
