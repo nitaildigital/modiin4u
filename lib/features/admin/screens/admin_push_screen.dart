@@ -245,6 +245,15 @@ class _PushTable extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(children: [
+                  // Image thumbnail
+                  if (n['image_url'] != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.network(n['image_url'] as String, width: 44, height: 44, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(width: 44, height: 44, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(6)), child: const Icon(Icons.broken_image, size: 18, color: AppColors.grayLight))),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
                   Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(n['title'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis),
                     Text(n['body'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight), maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -305,6 +314,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
 
   late final TextEditingController _title;
   late final TextEditingController _body;
+  late final TextEditingController _imageUrl;
   late final TextEditingController _targetValue;
   late final TextEditingController _scheduledAt;
 
@@ -320,6 +330,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     final n = widget.notification;
     _title = TextEditingController(text: n?['title'] as String? ?? '');
     _body = TextEditingController(text: n?['body'] as String? ?? '');
+    _imageUrl = TextEditingController(text: n?['image_url'] as String? ?? '');
     _targetValue = TextEditingController(text: n?['target_value'] as String? ?? '');
     _scheduledAt = TextEditingController(text: n?['scheduled_at'] as String? ?? '');
 
@@ -330,7 +341,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
 
   @override
   void dispose() {
-    _title.dispose(); _body.dispose(); _targetValue.dispose(); _scheduledAt.dispose();
+    _title.dispose(); _body.dispose(); _imageUrl.dispose(); _targetValue.dispose(); _scheduledAt.dispose();
     super.dispose();
   }
 
@@ -359,6 +370,15 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                 child: ListView(padding: const EdgeInsets.all(20), children: [
                   _field('כותרת *', _title, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
                   _field('תוכן ההודעה *', _body, maxLines: 4, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
+                  _field('קישור תמונה', _imageUrl, hint: 'https://...'),
+                  if (_imageUrl.text.isNotEmpty) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(_imageUrl.text, height: 120, width: double.infinity, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(height: 60, alignment: Alignment.center, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: Text('תמונה לא נמצאה', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayLight)))),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   const SizedBox(height: 8),
                   Row(children: [
                     Expanded(child: DropdownButtonFormField<String>(
@@ -462,6 +482,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     final fields = <String, dynamic>{
       'title': _title.text,
       'body': _body.text,
+      'image_url': _imageUrl.text.isEmpty ? null : _imageUrl.text,
       'type': _type,
       'status': sendNow ? 'sent' : _status,
       'target_audience': _targetAudience,

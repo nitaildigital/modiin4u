@@ -86,6 +86,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push1', 'title': '🔥 מבזק: אזהרת חום כבד',
     'body': 'טמפרטורות של מעל 40 מעלות צפויות בימים הקרובים. שתו מים, הימנעו משהייה בשמש.',
+    'image_url': 'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=800',
     'type': 'breaking', 'status': 'sent',
     'target_audience': 'all', 'target_value': null,
     'sent_at': '2026-08-22T06:30:00Z', 'scheduled_at': null,
@@ -95,6 +96,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push2', 'title': '🎵 הופעת שלמה ארצי — כרטיסים אחרונים!',
     'body': 'נותרו 50 כרטיסים אחרונים להופעה בהיכל התרבות ב-15.9. הזמינו עכשיו!',
+    'image_url': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800',
     'type': 'event', 'status': 'sent',
     'target_audience': 'all', 'target_value': null,
     'sent_at': '2026-08-25T10:00:00Z', 'scheduled_at': null,
@@ -104,6 +106,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push3', 'title': '🏃 מרתון מודיעין — ההרשמה נפתחה',
     'body': 'הרשמו עכשיו למרתון מודיעין 2026! מסלולים של 5, 10, 21 ו-42 ק"מ. הנחה למוקדמים.',
+    'image_url': 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800',
     'type': 'event', 'status': 'sent',
     'target_audience': 'all', 'target_value': null,
     'sent_at': '2026-08-18T08:00:00Z', 'scheduled_at': null,
@@ -113,6 +116,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push4', 'title': '🏢 חניון חדש ליד הרכבת',
     'body': 'חניון חדש בן 500 מקומות נפתח ליד תחנת הרכבת. חניה חינם בחודש הראשון!',
+    'image_url': 'https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?w=800',
     'type': 'municipal', 'status': 'sent',
     'target_audience': 'all', 'target_value': null,
     'sent_at': '2026-08-01T07:00:00Z', 'scheduled_at': null,
@@ -122,6 +126,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push5', 'title': '🍕 הנחה 20% בפיצה פרגו!',
     'body': 'השבוע בלבד — 20% הנחה על כל התפריט בפיצה פרגו. הזמינו עכשיו!',
+    'image_url': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800',
     'type': 'deal', 'status': 'sent',
     'target_audience': 'neighborhood', 'target_value': 'מרכז העיר',
     'sent_at': '2026-08-20T12:00:00Z', 'scheduled_at': null,
@@ -131,6 +136,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push6', 'title': '📋 ישיבת מועצה פתוחה — מחר',
     'body': 'ישיבת מועצת העיר הפתוחה לציבור — מחר ב-19:30 בבניין העירייה. נושאים: תקציב ותחבורה.',
+    'image_url': null,
     'type': 'municipal', 'status': 'sent',
     'target_audience': 'all', 'target_value': null,
     'sent_at': '2026-09-17T10:00:00Z', 'scheduled_at': null,
@@ -140,6 +146,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push7', 'title': '🎉 פסטיבל בירה מודיעין — מחר!',
     'body': 'מחר בפארק המוזיקה מ-18:00. 20+ מבשלות בירה, אוכל רחוב ומוזיקה. אל תפספסו!',
+    'image_url': 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=800',
     'type': 'event', 'status': 'scheduled',
     'target_audience': 'all', 'target_value': null,
     'sent_at': null, 'scheduled_at': '2026-09-21T10:00:00Z',
@@ -149,6 +156,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push8', 'title': '🎨 סדנת ציור למבוגרים — מקומות אחרונים',
     'body': 'נותרו 3 מקומות בסדנת הציור בגלריית האמנות ב-20.9. הרשמו!',
+    'image_url': 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800',
     'type': 'event', 'status': 'scheduled',
     'target_audience': 'all', 'target_value': null,
     'sent_at': null, 'scheduled_at': '2026-09-18T09:00:00Z',
@@ -158,6 +166,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push9', 'title': '🏫 פתיחת שנת הלימודים — תזכורת',
     'body': 'שנת הלימודים מתחילה ב-1 בספטמבר. כל מה שצריך לדעת — בכתבה המלאה.',
+    'image_url': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800',
     'type': 'general', 'status': 'draft',
     'target_audience': 'role', 'target_value': 'הורים',
     'sent_at': null, 'scheduled_at': null,
@@ -167,6 +176,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push10', 'title': '🚌 שינויים בקווי אוטובוס',
     'body': 'קו 100 מתוגבר ב-50%, קו 101 משנה מסלול. פרטים מלאים באפליקציה.',
+    'image_url': null,
     'type': 'municipal', 'status': 'sent',
     'target_audience': 'all', 'target_value': null,
     'sent_at': '2026-07-25T07:00:00Z', 'scheduled_at': null,
@@ -176,6 +186,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push11', 'title': '⚽ הקבוצה העירונית עלתה ליגה!',
     'body': 'מזל טוב! הקבוצה העירונית ניצחה 2-0 ועלתה לליגה הארצית. קראו עוד.',
+    'image_url': 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800',
     'type': 'breaking', 'status': 'sent',
     'target_audience': 'all', 'target_value': null,
     'sent_at': '2026-08-10T15:00:00Z', 'scheduled_at': null,
@@ -185,6 +196,7 @@ final _mockNotifications = <Map<String, dynamic>>[
   {
     'id': 'push12', 'title': '🛍️ שוק אוכל רחוב — סוף השבוע',
     'body': 'שוק אוכל רחוב עם 30 דוכנים במע"ר. יום שישי מ-12:00. כניסה ₪20.',
+    'image_url': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800',
     'type': 'event', 'status': 'draft',
     'target_audience': 'all', 'target_value': null,
     'sent_at': null, 'scheduled_at': null,

@@ -114,6 +114,8 @@ final _mockCategories = <Map<String, dynamic>>[
 final _mockBusinesses = <Map<String, dynamic>>[
   {
     'id': 'b1', 'name': 'פיצה פרגו', 'slug': 'pizza-frago',
+    'logo_url': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200',
     'short_description': 'פיצריה איטלקית אותנטית במרכז מודיעין',
     'full_description': 'פיצריה איטלקית אותנטית עם תנור אבן. מגוון פיצות, פסטות ומנות איטלקיות. משלוחים לכל רחבי מודיעין.',
     'phone': '08-9712345', 'email': 'info@pizzafrago.co.il', 'website': 'https://pizzafrago.co.il',
@@ -132,6 +134,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b2', 'name': 'סופר פארם מודיעין', 'slug': 'super-pharm-modiin',
+    'logo_url': 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=1200',
     'short_description': 'תרופות, קוסמטיקה ומוצרי טיפוח',
     'phone': '08-9714567', 'address': 'מרכז עזריאלי מודיעין', 'neighborhood_id': 'n4',
     'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
@@ -140,6 +144,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b3', 'name': 'סטודיו שרה — יוגה ופילאטיס', 'slug': 'studio-sara-yoga',
+    'logo_url': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1588286840104-8957b019727f?w=1200',
     'short_description': 'שיעורי יוגה ופילאטיס לכל הרמות',
     'phone': '053-5556666', 'address': 'רח׳ האלון 8', 'neighborhood_id': 'n1',
     'neighborhoods': {'id': 'n1', 'name': 'אבני חן', 'slug': 'avnei-hen'},
@@ -148,6 +154,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b4', 'name': 'ביסטרו מודיעין', 'slug': 'bistro-modiin',
+    'logo_url': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=1200',
     'short_description': 'מסעדת שף חדשה — מטבח ים תיכוני',
     'phone': '08-9719999', 'address': 'רח׳ הנרקיס 3', 'neighborhood_id': 'n2',
     'neighborhoods': {'id': 'n2', 'name': 'מורשת', 'slug': 'moreshet'},
@@ -156,6 +164,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b5', 'name': 'קפה לנדוור', 'slug': 'cafe-landwer',
+    'logo_url': 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=1200',
     'short_description': 'בית קפה עם ארוחות בוקר ועוגות',
     'phone': '08-9715678', 'address': 'רח׳ לב העיר 5', 'neighborhood_id': 'n4',
     'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
@@ -166,6 +176,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b6', 'name': 'ד"ר אבי כהן — רפואת שיניים', 'slug': 'dr-avi-cohen-dental',
+    'logo_url': 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=1200',
     'short_description': 'מרפאת שיניים מתקדמת — כל הטיפולים',
     'phone': '08-9713456', 'email': 'clinic@dravidental.co.il',
     'address': 'רח׳ הדקל 18', 'neighborhood_id': 'n1',
@@ -176,6 +188,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b7', 'name': 'חנות הספרים של רונית', 'slug': 'ronit-bookstore',
+    'logo_url': 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1200',
     'short_description': 'ספרים בעברית ובאנגלית לכל הגילאים',
     'phone': '08-9716789', 'address': 'מרכז מסחרי מורשת', 'neighborhood_id': 'n2',
     'neighborhoods': {'id': 'n2', 'name': 'מורשת', 'slug': 'moreshet'},
@@ -185,6 +199,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b8', 'name': 'קרוספיט מודיעין', 'slug': 'crossfit-modiin',
+    'logo_url': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1200',
     'short_description': 'מועדון קרוספיט עם מאמנים מוסמכים',
     'phone': '050-8889999', 'website': 'https://crossfitmodiin.co.il',
     'address': 'אזור תעשייה מודיעין', 'neighborhood_id': 'n13',
@@ -195,6 +211,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b9', 'name': 'מספרת טיפ-טופ', 'slug': 'tip-top-hair',
+    'logo_url': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200',
     'short_description': 'מספרה לנשים וגברים — תספורות, צבע, החלקות',
     'phone': '08-9718765', 'address': 'רח׳ השקמה 22', 'neighborhood_id': 'n3',
     'neighborhoods': {'id': 'n3', 'name': 'בוכמן', 'slug': 'buchman'},
@@ -204,6 +222,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b10', 'name': 'גן ילדים שמש', 'slug': 'gan-shemesh',
+    'logo_url': 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200',
     'short_description': 'גן ילדים פרטי גילאי 3-6 — גישה חינוכית מתקדמת',
     'phone': '054-2223333', 'email': 'gan@shemesh.co.il',
     'address': 'רח׳ הזית 7', 'neighborhood_id': 'n7',
@@ -214,6 +234,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b11', 'name': 'אופטיקה ראיית עיניים', 'slug': 'optika-modiin',
+    'logo_url': 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1577401239170-897c3a09de2d?w=1200',
     'short_description': 'משקפיים, עדשות מגע ובדיקות ראייה',
     'phone': '08-9711111', 'address': 'קניון עזריאלי, קומה 1', 'neighborhood_id': 'n4',
     'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
@@ -222,6 +244,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b12', 'name': 'שיפוצניק מודיעין — ארז', 'slug': 'shipuznik-erez',
+    'logo_url': 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200',
     'short_description': 'שיפוצים, צביעה, חשמל ואינסטלציה',
     'phone': '052-4445555', 'whatsapp': '0524445555',
     'address': 'שירות ניידת — כל מודיעין', 'neighborhood_id': 'n4',
@@ -231,6 +255,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b13', 'name': 'סושי מודיעין', 'slug': 'sushi-modiin',
+    'logo_url': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=1200',
     'short_description': 'סושי טרי — מגוון מנות יפניות ואסייתיות',
     'phone': '08-9714321', 'address': 'רח׳ הגפן 14', 'neighborhood_id': 'n8',
     'neighborhoods': {'id': 'n8', 'name': 'הכרמים', 'slug': 'hakramim'},
@@ -241,6 +267,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b14', 'name': 'חוגי רובוטיקה — TechKids', 'slug': 'techkids-robotics',
+    'logo_url': 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200',
     'short_description': 'חוגי רובוטיקה ותכנות לילדים גילאי 6-16',
     'phone': '050-6667777', 'website': 'https://techkids.co.il',
     'address': 'מתנ"ס בוכמן', 'neighborhood_id': 'n3',
@@ -251,6 +279,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b15', 'name': 'מאפייה הירושלמית', 'slug': 'jerusalem-bakery',
+    'logo_url': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=1200',
     'short_description': 'לחם טרי, בורקסים ומאפים מסורתיים',
     'phone': '08-9717654', 'address': 'רח׳ הזיתים 3', 'neighborhood_id': 'n5',
     'neighborhoods': {'id': 'n5', 'name': 'רמת מודיעין', 'slug': 'ramat-modiin'},
@@ -261,6 +291,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b16', 'name': 'עורכת דין — מיכל רוזנברג', 'slug': 'adv-michal-rosenberg',
+    'logo_url': 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=1200',
     'short_description': 'דיני משפחה, נדל"ן וצוואות',
     'phone': '08-9719876', 'email': 'michal@rosenberg-law.co.il',
     'address': 'מגדלי העיר, קומה 7', 'neighborhood_id': 'n4',
@@ -271,6 +303,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b17', 'name': 'בורגר סטיישן', 'slug': 'burger-station',
+    'logo_url': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200',
     'short_description': 'המבורגרים גורמה ונקניקיות ביתיות',
     'phone': '08-9712222', 'address': 'רח׳ הדס 9', 'neighborhood_id': 'n2',
     'neighborhoods': {'id': 'n2', 'name': 'מורשת', 'slug': 'moreshet'},
@@ -281,6 +315,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b18', 'name': 'מכון כושר HolmES', 'slug': 'holmes-gym',
+    'logo_url': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200',
     'short_description': 'מכון כושר מתקדם עם שיעורי סטודיו',
     'phone': '08-9713333', 'website': 'https://holmesgym.co.il',
     'address': 'מרכז ספורט מודיעין', 'neighborhood_id': 'n13',
@@ -291,6 +327,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b19', 'name': 'פרחי נועם', 'slug': 'pirchei-noam',
+    'logo_url': 'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=1200',
     'short_description': 'חנות פרחים ועיצוב אירועים',
     'phone': '054-8889999', 'instagram': '@pirchei_noam',
     'address': 'רח׳ הכלנית 2', 'neighborhood_id': 'n7',
@@ -301,6 +339,8 @@ final _mockBusinesses = <Map<String, dynamic>>[
   },
   {
     'id': 'b20', 'name': 'טכנאי מחשבים — דני', 'slug': 'dani-tech',
+    'logo_url': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=200&h=200&fit=crop',
+    'cover_image_url': 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1200',
     'short_description': 'תיקון מחשבים, טלפונים ומכשירים חכמים',
     'phone': '050-1112222', 'whatsapp': '0501112222',
     'address': 'שירות עד הבית', 'neighborhood_id': 'n4',

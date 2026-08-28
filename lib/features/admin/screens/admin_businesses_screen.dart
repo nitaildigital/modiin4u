@@ -216,7 +216,15 @@ class _BusinessTable extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(children: [
-                  // Name + slug
+                  // Logo + Name
+                  if (biz['logo_url'] != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.network(biz['logo_url'] as String, width: 38, height: 38, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(width: 38, height: 38, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(6)), child: const Icon(Icons.store, size: 18, color: AppColors.grayLight))),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
                   Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(biz['name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
                     Text(biz['slug'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
@@ -338,6 +346,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
 
+  // Images
+  late final TextEditingController _logoUrl;
+  late final TextEditingController _coverImageUrl;
   // Basic info
   late final TextEditingController _name;
   late final TextEditingController _slug;
@@ -383,6 +394,8 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
     _tabs = TabController(length: 3, vsync: this);
     final b = widget.business;
 
+    _logoUrl = TextEditingController(text: b?['logo_url'] as String? ?? '');
+    _coverImageUrl = TextEditingController(text: b?['cover_image_url'] as String? ?? '');
     _name = TextEditingController(text: b?['name'] as String? ?? '');
     _slug = TextEditingController(text: b?['slug'] as String? ?? '');
     _shortDesc = TextEditingController(text: b?['short_description'] as String? ?? '');
@@ -421,6 +434,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
   @override
   void dispose() {
     _tabs.dispose();
+    _logoUrl.dispose(); _coverImageUrl.dispose();
     _name.dispose(); _slug.dispose(); _shortDesc.dispose(); _fullDesc.dispose();
     _phone.dispose(); _email.dispose(); _website.dispose(); _whatsapp.dispose(); _instagram.dispose();
     _address.dispose(); _lat.dispose(); _lng.dispose();
@@ -517,6 +531,25 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
       _field('Slug *', _slug, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
       _field('תיאור קצר', _shortDesc, maxLines: 2),
       _field('תיאור מלא', _fullDesc, maxLines: 4),
+      const SizedBox(height: 16),
+      Text('תמונות', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      const SizedBox(height: 8),
+      Row(children: [
+        Expanded(child: _field('לוגו URL', _logoUrl, hint: 'https://...')),
+        const SizedBox(width: 12),
+        Expanded(child: _field('תמונת כריכה URL', _coverImageUrl, hint: 'https://...')),
+      ]),
+      if (_logoUrl.text.isNotEmpty || _coverImageUrl.text.isNotEmpty)
+        Row(children: [
+          if (_logoUrl.text.isNotEmpty) ...[
+            ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(_logoUrl.text, width: 64, height: 64, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(width: 64, height: 64, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.broken_image, size: 20, color: AppColors.grayLight)))),
+            const SizedBox(width: 12),
+          ],
+          if (_coverImageUrl.text.isNotEmpty)
+            Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(_coverImageUrl.text, height: 64, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(height: 64, alignment: Alignment.center, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.broken_image, size: 20, color: AppColors.grayLight))))),
+        ]),
       const SizedBox(height: 16),
       Text('קשר', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
@@ -669,6 +702,8 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
     setState(() => _saving = true);
 
     final fields = <String, dynamic>{
+      'logo_url': _logoUrl.text.isEmpty ? null : _logoUrl.text,
+      'cover_image_url': _coverImageUrl.text.isEmpty ? null : _coverImageUrl.text,
       'name': _name.text,
       'slug': _slug.text,
       'short_description': _shortDesc.text.isEmpty ? null : _shortDesc.text,

@@ -165,6 +165,7 @@ class _ArticleTable extends StatelessWidget {
         decoration: BoxDecoration(color: AppColors.surfaceLight, border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5)))),
         child: Row(children: [
           _Col('כותרת', flex: 4),
+          if (isWide) _Col('קטגוריה', flex: 2),
           if (isWide) _Col('סטטוס', flex: 1),
           if (isWide) _Col('צפיות', flex: 1),
           _Col('SEO', flex: 1),
@@ -186,11 +187,23 @@ class _ArticleTable extends StatelessWidget {
             final isBreaking = a['is_breaking'] as bool? ?? false;
             final publishedAt = a['published_at'] as String?;
 
+            final coverUrl = a['cover_image_url'] as String?;
+            final categoryName = a['category_name'] as String?;
+
             return InkWell(
               onTap: () => onTap(a),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(children: [
+                  // Cover image thumbnail
+                  if (coverUrl != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.network(coverUrl, width: 52, height: 36, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(width: 52, height: 36, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(6)), child: const Icon(Icons.broken_image, size: 16, color: AppColors.grayLight))),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
                   Expanded(flex: 4, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
                       if (isBreaking) Padding(padding: const EdgeInsets.only(left: 6), child: Icon(Icons.bolt, size: 14, color: AppColors.error)),
@@ -199,6 +212,14 @@ class _ArticleTable extends StatelessWidget {
                     ]),
                     Text(a['slug'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
                   ])),
+                  // Category
+                  if (isWide) Expanded(flex: 2, child: categoryName != null
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(color: AppColors.midBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                        child: Text(categoryName, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.midBlue), overflow: TextOverflow.ellipsis),
+                      )
+                    : Text('—', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayLight))),
                   if (isWide) Expanded(flex: 1, child: _StatusPill(status)),
                   if (isWide) Expanded(flex: 1, child: Text('$views', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
                   Expanded(flex: 1, child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -260,8 +281,10 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> with
   late final TextEditingController _slug;
   late final TextEditingController _body;
   late final TextEditingController _excerpt;
+  late final TextEditingController _coverImageUrl;
   late final TextEditingController _source;
   late final TextEditingController _credit;
+  String? _categoryId;
 
   // SEO
   late final TextEditingController _seoTitle;
@@ -294,8 +317,10 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> with
     _slug = TextEditingController(text: a?['slug'] as String? ?? '');
     _body = TextEditingController(text: a?['body'] as String? ?? '');
     _excerpt = TextEditingController(text: a?['excerpt'] as String? ?? '');
+    _coverImageUrl = TextEditingController(text: a?['cover_image_url'] as String? ?? '');
     _source = TextEditingController(text: a?['source'] as String? ?? '');
     _credit = TextEditingController(text: a?['credit'] as String? ?? '');
+    _categoryId = a?['category_id'] as String?;
 
     _seoTitle = TextEditingController(text: a?['seo_title'] as String? ?? '');
     _metaDesc = TextEditingController(text: a?['meta_description'] as String? ?? '');
@@ -319,7 +344,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> with
   void dispose() {
     _tabs.dispose();
     _title.dispose(); _subtitle.dispose(); _slug.dispose(); _body.dispose(); _excerpt.dispose();
-    _source.dispose(); _credit.dispose();
+    _coverImageUrl.dispose(); _source.dispose(); _credit.dispose();
     _seoTitle.dispose(); _metaDesc.dispose(); _metaKeywords.dispose(); _focusKeyword.dispose();
     _ogTitle.dispose(); _ogDesc.dispose();
     super.dispose();
@@ -405,11 +430,39 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> with
   }
 
   Widget _buildContentTab() {
+    final categories = ref.watch(articleCategoriesProvider);
     return ListView(padding: const EdgeInsets.all(20), children: [
       _field('כותרת *', _title, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
       _field('כותרת משנה', _subtitle),
       _field('Slug *', _slug, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
+      // Category dropdown
+      categories.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (_, __) => const SizedBox.shrink(),
+        data: (cats) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: DropdownButtonFormField<String?>(
+            value: _categoryId,
+            decoration: InputDecoration(labelText: 'קטגוריה', labelStyle: GoogleFonts.rubik(fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+            items: [
+              DropdownMenuItem<String?>(value: null, child: Text('ללא קטגוריה', style: GoogleFonts.rubik(fontSize: 13))),
+              ...cats.map((c) => DropdownMenuItem(value: c['id'] as String, child: Text(c['name'] as String, style: GoogleFonts.rubik(fontSize: 13)))),
+            ],
+            onChanged: (v) => setState(() => _categoryId = v),
+          ),
+        ),
+      ),
       _field('תקציר', _excerpt, maxLines: 2),
+      // Cover image
+      _field('קישור תמונת כריכה', _coverImageUrl, hint: 'https://...'),
+      if (_coverImageUrl.text.isNotEmpty) ...[
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(_coverImageUrl.text, height: 140, width: double.infinity, fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(height: 60, alignment: Alignment.center, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: Text('תמונה לא נמצאה', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayLight)))),
+        ),
+        const SizedBox(height: 12),
+      ],
       _field('תוכן *', _body, maxLines: 12, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
       Row(children: [
         Expanded(child: _field('מקור', _source)),
@@ -507,6 +560,8 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> with
       'excerpt': _excerpt.text.isEmpty ? null : _excerpt.text,
       'source': _source.text.isEmpty ? null : _source.text,
       'credit': _credit.text.isEmpty ? null : _credit.text,
+      'cover_image_url': _coverImageUrl.text.isEmpty ? null : _coverImageUrl.text,
+      'category_id': _categoryId,
       'status': asDraft ? 'draft' : _status,
       'is_breaking': _isBreaking,
       'is_featured': _isFeatured,

@@ -31,6 +31,7 @@ import 'admin_audit_screen.dart';
 import 'admin_trash_screen.dart';
 import 'admin_home_builder_screen.dart';
 import 'admin_flags_screen.dart';
+import 'admin_analytics_screen.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -146,7 +147,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   Widget _buildSection() {
     return switch (_selectedSection) {
-      0 => _OverviewSection(),
+      0 => const AdminAnalyticsScreen(),
       1 => const _UsersSection(),
       2 => const AdminBusinessesScreen(),
       3 => const AdminArticlesScreen(),

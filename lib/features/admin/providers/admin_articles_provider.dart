@@ -97,6 +97,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a1', 'title': 'פארק ענבה — שדרוג חדש לתושבים',
     'subtitle': 'פארק ענבה עובר מתיחת פנים', 'slug': 'anaba-park-upgrade',
+    'cover_image_url': 'https://images.unsplash.com/photo-1588714477688-cf28a50e94f7?w=1200',
+    'category_id': 'ac1', 'category_name': 'עירייה ומוניציפלי',
     'body': 'עיריית מודיעין מכבים רעות השיקה היום את תוכנית השדרוג של פארק ענבה. התוכנית כוללת מגרשי משחקים חדשים, שבילי אופניים משודרגים, תאורה חדשה ושטחי דשא מורחבים.',
     'excerpt': 'פארק ענבה עובר מתיחת פנים עם מגרשי משחקים חדשים ושבילים משודרגים.',
     'status': 'published', 'published_at': '2026-08-15T08:00:00Z',
@@ -111,6 +113,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a2', 'title': 'פתיחת מרכז מסחרי חדש במע"ר',
     'subtitle': 'מרכז בן 3 קומות צפוי להיפתח בקרוב', 'slug': 'new-commercial-center-maar',
+    'cover_image_url': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200',
+    'category_id': 'ac2', 'category_name': 'עסקים',
     'body': 'מרכז מסחרי חדש בן 3 קומות צפוי להיפתח בחודשים הקרובים במע"ר מודיעין. המרכז יכלול חנויות אופנה, מסעדות, קולנוע ושטחי בילוי.',
     'status': 'published', 'published_at': '2026-08-12T09:00:00Z',
     'view_count': 890,
@@ -120,6 +124,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a3', 'title': 'קבוצת הכדורגל העירונית עלתה ליגה',
     'subtitle': 'ניצחון 2-0 אתמול', 'slug': 'modiin-fc-promotion',
+    'cover_image_url': 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200',
+    'category_id': 'ac3', 'category_name': 'ספורט',
     'body': 'הקבוצה העירונית ניצחה אתמול 2-0 ועלתה לליגה הארצית. זהו הישג היסטורי לקבוצה שהוקמה לפני 5 שנים בלבד.',
     'status': 'published', 'published_at': '2026-08-10T14:00:00Z',
     'is_breaking': true, 'push_worthy': true,
@@ -129,6 +135,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a4', 'title': 'טיפים לקיץ בטוח — מדריך הורים',
     'subtitle': 'כללי בטיחות חשובים לימי הקיץ', 'slug': 'summer-safety-tips',
+    'cover_image_url': 'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=1200',
+    'category_id': 'ac6', 'category_name': 'בטיחות',
     'body': 'עם הגעת הקיץ חשוב לשמור על כללי בטיחות בבריכה, בים ובפארקים. מדריך מקיף להורים.',
     'status': 'draft',
     'meta_description': 'מדריך בטיחות קיץ להורים — טיפים, הנחיות ומידע.',
@@ -138,6 +146,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a5', 'title': 'שנת הלימודים החדשה: כל מה שצריך לדעת',
     'subtitle': 'פתיחת שנת הלימודים תשפ"ז', 'slug': 'school-year-2027-guide',
+    'cover_image_url': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200',
+    'category_id': 'ac4', 'category_name': 'חינוך',
     'body': 'מדריך מקיף להורים לקראת פתיחת שנת הלימודים. מועדי רישום, רשימות ציוד, ותחבורה.',
     'status': 'published', 'published_at': '2026-08-05T07:00:00Z',
     'is_featured': true, 'is_pinned': true,
@@ -148,6 +158,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a6', 'title': 'חניון חדש ייפתח ליד הרכבת',
     'subtitle': 'פתרון החניה לנוסעי הרכבת', 'slug': 'new-parking-train-station',
+    'cover_image_url': 'https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?w=1200',
+    'category_id': 'ac1', 'category_name': 'עירייה ומוניציפלי',
     'body': 'העירייה הודיעה על פתיחת חניון חדש בן 500 מקומות ליד תחנת הרכבת מודיעין מרכז.',
     'status': 'published', 'published_at': '2026-08-01T10:00:00Z',
     'view_count': 1567,
@@ -157,6 +169,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a7', 'title': 'פסטיבל הבירה הראשון של מודיעין',
     'subtitle': 'אירוע ראשון מסוגו בעיר', 'slug': 'modiin-beer-festival',
+    'cover_image_url': 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=1200',
+    'category_id': 'ac7', 'category_name': 'תרבות ובילוי',
     'body': 'פסטיבל בירה ראשון מסוגו יתקיים בפארק ענבה בסוף אוגוסט. יותר מ-20 מבשלות בירה ישתתפו.',
     'status': 'published', 'published_at': '2026-07-28T10:00:00Z',
     'view_count': 2890,
@@ -166,6 +180,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a8', 'title': 'עדכון: קווי אוטובוס חדשים למודיעין',
     'subtitle': 'קווים 100 ו-101 ישתנו', 'slug': 'bus-routes-update',
+    'cover_image_url': 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=1200',
+    'category_id': 'ac1', 'category_name': 'עירייה ומוניציפלי',
     'body': 'משרד התחבורה הודיע על שינויים בקווי האוטובוס המשרתים את מודיעין. קו 100 יתוגבר ב-50% וקו 101 ישנה מסלול.',
     'status': 'published', 'published_at': '2026-07-25T10:00:00Z',
     'view_count': 1890,
@@ -176,6 +192,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a9', 'title': 'סקירה: 5 המסעדות החדשות הטובות ביותר',
     'subtitle': 'פתחו בחודשים האחרונים', 'slug': 'top-5-new-restaurants',
+    'cover_image_url': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200',
+    'category_id': 'ac2', 'category_name': 'עסקים',
     'body': 'סוקרים את 5 המסעדות החדשות שנפתחו לאחרונה במודיעין ומדרגים אותן. מאסייתי ועד איטלקי.',
     'status': 'published', 'published_at': '2026-07-20T10:00:00Z',
     'is_sponsored': true,
@@ -185,6 +203,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a10', 'title': 'תוכנית עירונית: גינות קהילתיות בכל שכונה',
     'subtitle': 'פרויקט ירוק חדש של העירייה', 'slug': 'community-gardens-project',
+    'cover_image_url': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200',
+    'category_id': 'ac5', 'category_name': 'קהילה',
     'body': 'העירייה משיקה תוכנית להקמת גינות קהילתיות בכל שכונה. תושבים יוכלו לגדל ירקות ופרחים.',
     'status': 'draft',
     'view_count': 0,
@@ -193,6 +213,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a11', 'title': 'מרתון מודיעין 2026 — ההרשמה נפתחה',
     'subtitle': 'מסלולים של 5, 10 ו-42 ק"מ', 'slug': 'modiin-marathon-2026',
+    'cover_image_url': 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=1200',
+    'category_id': 'ac3', 'category_name': 'ספורט',
     'body': 'ההרשמה למרתון מודיעין 2026 נפתחה. השנה עם מסלולים חדשים ופרסים מוגדלים. מועד האירוע: 15 בנובמבר.',
     'status': 'published', 'published_at': '2026-08-18T10:00:00Z',
     'is_featured': true,
@@ -203,6 +225,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a12', 'title': 'בית ספר חדש ייפתח בשכונת נופים',
     'subtitle': 'תלמידי כיתות א-ו', 'slug': 'new-school-nofim',
+    'cover_image_url': 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200',
+    'category_id': 'ac4', 'category_name': 'חינוך',
     'body': 'בית ספר יסודי חדש ייפתח בשכונת נופים בשנת הלימודים הבאה. בית הספר יכיל 24 כיתות ויכלול מעבדות מדע ואולם ספורט.',
     'status': 'published', 'published_at': '2026-07-15T10:00:00Z',
     'view_count': 2340,
@@ -211,6 +235,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a13', 'title': 'מחירי הנדל"ן במודיעין — סיכום רבעון 2',
     'subtitle': 'עלייה של 3% ברבעון', 'slug': 'realestate-q2-summary',
+    'cover_image_url': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200',
+    'category_id': 'ac8', 'category_name': 'נדל"ן',
     'body': 'מחירי הדירות במודיעין עלו ב-3% ברבעון השני. הדירות היקרות ביותר באבני חן, הנגישות ביותר ברמת מודיעין.',
     'status': 'archived',
     'view_count': 5670,
@@ -219,6 +245,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a14', 'title': 'מזג אוויר קיצוני: אזהרת חום כבד',
     'subtitle': 'טמפרטורות של מעל 40 מעלות', 'slug': 'extreme-heat-warning',
+    'cover_image_url': 'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=1200',
+    'category_id': 'ac6', 'category_name': 'בטיחות',
     'body': 'השירות המטאורולוגי מזהיר מפני חום כבד צפוי בימים הקרובים. טיפים להתמודדות ומקומות מוצללים.',
     'status': 'published', 'published_at': '2026-08-22T06:00:00Z',
     'is_breaking': true, 'push_worthy': true,
@@ -228,6 +256,8 @@ final _mockArticles = <Map<String, dynamic>>[
   {
     'id': 'a15', 'title': 'רשת מכבי שפתחה סניף חדש במודיעין',
     'subtitle': 'שירותים רפואיים מורחבים', 'slug': 'maccabi-new-branch',
+    'cover_image_url': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200',
+    'category_id': 'ac5', 'category_name': 'קהילה',
     'body': 'רשת מכבי שירותי בריאות פתחה סניף חדש במרכז העיר עם שעות פעילות מורחבות ומרפאת ילדים.',
     'status': 'draft',
     'view_count': 0,
