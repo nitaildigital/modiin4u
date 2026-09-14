@@ -1,251 +1,502 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
-import '../providers/auth_provider.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
-class FavoritesScreen extends ConsumerStatefulWidget {
+/// Favorites screen – horizontal filter chips (All, Restaurants, Events,
+/// Bars, Apartments, News) and a scrollable list of favorited items,
+/// each with image thumbnail, info rows, type badge, and red heart icon.
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
-  ConsumerState<FavoritesScreen> createState() => _FavoritesScreenState();
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritesScreenState extends ConsumerState<FavoritesScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  int _activeFilter = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
+  // ── Filter chips ──
+  static const _filters = [
+    _FilterDef('All', IconsaxPlusLinear.element_3),
+    _FilterDef('Restaurants', IconsaxPlusLinear.shop),
+    _FilterDef('Events', IconsaxPlusLinear.calendar_1),
+    _FilterDef('Bars', IconsaxPlusLinear.coffee),
+    _FilterDef('Apartments', IconsaxPlusLinear.building_3),
+    _FilterDef('News', IconsaxPlusLinear.document_text),
+  ];
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  // ── Demo favorites ──
+  static final _allFavorites = <_FavoriteItem>[
+    _FavoriteItem(
+      title: 'Premium Noga Café',
+      location: 'Tel Aviv, Israel',
+      rating: 4.8,
+      reviewCount: 128,
+      typeName: 'Cafe',
+      typeColor: const Color(0xFF006BF6),
+      category: 'Restaurants',
+    ),
+    _FavoriteItem(
+      title: 'Modiin Music Festival',
+      location: 'Modiin Amphitheater',
+      date: 'May 24, 2026',
+      typeName: 'Event',
+      typeColor: const Color(0xFF7247ED),
+      category: 'Events',
+    ),
+    _FavoriteItem(
+      title: 'The Corner Bar',
+      location: 'Emek HaEla St, Modiin',
+      rating: 4.4,
+      reviewCount: 128,
+      typeName: 'Bar',
+      typeColor: const Color(0xFFCC0001),
+      category: 'Bars',
+    ),
+    _FavoriteItem(
+      title: '₪3,650,000',
+      location: 'Weizmann Street Modiin',
+      area: '140 m²',
+      rooms: '6 Rooms',
+      typeName: 'Apartments',
+      typeColor: const Color(0xFF1E40B5),
+      category: 'Apartments',
+    ),
+    _FavoriteItem(
+      title: 'The Garden Kitchen',
+      location: 'Shlomo Hamelech St, Modiin',
+      rating: 4.5,
+      reviewCount: 132,
+      typeName: 'Restaurant',
+      typeColor: const Color(0xFF31AC4E),
+      category: 'Restaurants',
+    ),
+    _FavoriteItem(
+      title: 'New Walking and Cycling Path Opens in Modiin',
+      date: 'May 24, 2026',
+      typeName: 'News',
+      typeColor: const Color(0xFF1E40B5),
+      category: 'News',
+    ),
+  ];
+
+  List<_FavoriteItem> get _filteredItems {
+    if (_activeFilter == 0) return _allFavorites;
+    final category = _filters[_activeFilter].label;
+    return _allFavorites.where((f) => f.category == category).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authProvider);
+    final items = _filteredItems;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('מועדפים', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-          bottom: TabBar(
-            controller: _tabController,
-            labelColor: AppColors.turquoise,
-            unselectedLabelColor: AppColors.grayMeta,
-            labelStyle: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.rubik(fontSize: 14),
-            indicatorColor: AppColors.turquoise,
-            indicatorSize: TabBarIndicatorSize.label,
-            tabs: const [
-              Tab(text: 'עסקים'),
-              Tab(text: 'נדל"ן'),
-            ],
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 430),
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+
+                // ═══════════════════════════════════
+                // Back button + title
+                // ═══════════════════════════════════
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Icon(
+                            IconsaxPlusLinear.arrow_left,
+                            size: 24,
+                            color: Color(0xFF3D3D3D),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'Favorites',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ═══════════════════════════════════
+                // Filter chips (horizontal scroll)
+                // ═══════════════════════════════════
+                SizedBox(
+                  height: 40,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: _filters.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final f = _filters[index];
+                      final active = index == _activeFilter;
+                      return GestureDetector(
+                        onTap: () => setState(() => _activeFilter = index),
+                        child: Container(
+                          height: 36,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: index == 0 ? 15 : 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? const Color(0xFFEEF4FD)
+                                : Colors.white,
+                            border: Border.all(
+                              color: active
+                                  ? const Color(0xFF123A72)
+                                      .withValues(alpha: 0.8)
+                                  : const Color(0xFFE7E7E7),
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                f.icon,
+                                size: 16,
+                                color: active
+                                    ? const Color(0xFF123A72)
+                                    : const Color(0xFF6D6D6D),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                f.label,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: active
+                                      ? FontWeight.w500
+                                      : FontWeight.w400,
+                                  color: active
+                                      ? const Color(0xFF123A72)
+                                      : const Color(0xFF6D6D6D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // ═══════════════════════════════════
+                // Favorites list
+                // ═══════════════════════════════════
+                Expanded(
+                  child: items.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: items.length,
+                          itemBuilder: (_, i) =>
+                              _FavoriteCard(item: items[i]),
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _BusinessFavorites(
-              ids: user?.favoriteBusinessIds ?? [],
-              onRemove: (id) => ref.read(authProvider.notifier).toggleFavoriteBusiness(id),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF5F5F5),
+              shape: BoxShape.circle,
             ),
-            _ListingFavorites(
-              ids: user?.favoriteListingIds ?? [],
-              onRemove: (id) => ref.read(authProvider.notifier).toggleFavoriteListing(id),
+            child: const Icon(
+              IconsaxPlusLinear.heart,
+              size: 32,
+              color: Color(0xFF6D6D6D),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'No favorites yet',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Save places and items you love',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _BusinessFavorites extends StatelessWidget {
-  final List<String> ids;
-  final ValueChanged<String> onRemove;
+// ═══════════════════════════════════════════════
+// Data models
+// ═══════════════════════════════════════════════
 
-  const _BusinessFavorites({required this.ids, required this.onRemove});
-
-  @override
-  Widget build(BuildContext context) {
-    if (ids.isEmpty) {
-      return _EmptyState(
-        icon: Icons.store_outlined,
-        title: 'אין עסקים מועדפים',
-        subtitle: 'שמרו עסקים שאהבתם וחזרו אליהם בקלות',
-        buttonLabel: 'גלו עסקים',
-        onTap: () => context.go('/businesses'),
-      );
-    }
-
-    const allBusinesses = {
-      'demo_0': ('מסעדת נאיתאי', 'תאילנדי · המע"ר', '4.6', Icons.restaurant),
-      'demo_1': ('פיצה פרגו', 'פיצה · הפרחים', '4.5', Icons.local_pizza),
-      'demo_2': ('קפה גרג', 'בית קפה · נופים', '4.3', Icons.coffee),
-      'demo_3': ('בורגרס בר', 'המבורגרים · מוריה', '4.7', Icons.lunch_dining),
-      'demo_4': ('סושי מודיעין', 'סושי · אבני חן', '4.4', Icons.set_meal),
-      'demo_5': ('המאפייה של שלומי', 'מאפייה · המע"ר', '4.8', Icons.bakery_dining),
-      'demo_6': ('ביסטרו 770', 'איטלקי · הנחלים', '4.2', Icons.dinner_dining),
-      'demo_7': ('מסעדת ג\'ויה', 'ים תיכוני · משואה', '4.5', Icons.restaurant),
-      'demo_8': ('הסטייקיה', 'בשרים · המגינים', '4.1', Icons.restaurant),
-      'demo_9': ('בית הפלאפל', 'ישראלי · השבטים', '4.6', Icons.fastfood),
-    };
-    const fallback = ('עסק', 'קטגוריה · שכונה', '4.0', Icons.store);
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: ids.length,
-      separatorBuilder: (_, __) => const Divider(color: AppColors.border, height: 1),
-      itemBuilder: (context, index) {
-        final (name, info, rating, icon) = allBusinesses[ids[index]] ?? fallback;
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          leading: Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppColors.midBlue, size: 24),
-          ),
-          title: Text(name, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy)),
-          subtitle: Row(
-            children: [
-              Text(info, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
-              const SizedBox(width: 8),
-              const Icon(Icons.star_rounded, size: 14, color: AppColors.gold),
-              const SizedBox(width: 2),
-              Text(rating, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
-            ],
-          ),
-          trailing: IconButton(
-            icon: const Icon(Icons.favorite, color: AppColors.error, size: 20),
-            onPressed: () => onRemove(ids[index]),
-          ),
-          onTap: () => context.push('/business/${ids[index]}'),
-        );
-      },
-    );
-  }
-}
-
-class _ListingFavorites extends StatelessWidget {
-  final List<String> ids;
-  final ValueChanged<String> onRemove;
-
-  const _ListingFavorites({required this.ids, required this.onRemove});
-
-  @override
-  Widget build(BuildContext context) {
-    if (ids.isEmpty) {
-      return _EmptyState(
-        icon: Icons.apartment_outlined,
-        title: 'אין נכסים שמורים',
-        subtitle: 'שמרו דירות שעניינו אתכם ועקבו אחרי שינויי מחיר',
-        buttonLabel: 'חפשו נכסים',
-        onTap: () => context.push('/realestate'),
-      );
-    }
-
-    const allListings = {
-      'listing_0': ('4 חדרים · 110 מ"ר', 'הפרחים', '2,450,000 ₪'),
-      'listing_1': ('5 חדרים · 140 מ"ר', 'אבני חן', '3,100,000 ₪'),
-      'listing_2': ('דופלקס · 6 חדרים', 'נופים', '4,200,000 ₪'),
-      'listing_3': ('3 חדרים · 85 מ"ר', 'מוריה', '1,950,000 ₪'),
-      'listing_4': ('פנטהאוז · 7 חדרים', 'המע"ר', '5,800,000 ₪'),
-      'listing_5': ('4 חדרים · 120 מ"ר', 'הנחלים', '2,700,000 ₪'),
-    };
-    const fallback = ('דירה', 'שכונה', '- ₪');
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: ids.length,
-      separatorBuilder: (_, __) => const Divider(color: AppColors.border, height: 1),
-      itemBuilder: (context, index) {
-        final (specs, neighborhood, price) = allListings[ids[index]] ?? fallback;
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          leading: Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.apartment, color: AppColors.midBlue, size: 24),
-          ),
-          title: Text(price, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navy)),
-          subtitle: Text('$specs · $neighborhood', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
-          trailing: IconButton(
-            icon: const Icon(Icons.favorite, color: AppColors.error, size: 20),
-            onPressed: () => onRemove(ids[index]),
-          ),
-          onTap: () => context.push('/listing/${ids[index]}'),
-        );
-      },
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
+class _FilterDef {
+  final String label;
   final IconData icon;
-  final String title;
-  final String subtitle;
-  final String buttonLabel;
-  final VoidCallback onTap;
+  const _FilterDef(this.label, this.icon);
+}
 
-  const _EmptyState({
-    required this.icon,
+class _FavoriteItem {
+  final String title;
+  final String? location;
+  final String? date;
+  final double? rating;
+  final int? reviewCount;
+  final String? area;
+  final String? rooms;
+  final String typeName;
+  final Color typeColor;
+  final String category;
+
+  const _FavoriteItem({
     required this.title,
-    required this.subtitle,
-    required this.buttonLabel,
-    required this.onTap,
+    this.location,
+    this.date,
+    this.rating,
+    this.reviewCount,
+    this.area,
+    this.rooms,
+    required this.typeName,
+    required this.typeColor,
+    required this.category,
   });
+}
+
+// ═══════════════════════════════════════════════
+// Favorite card – 120×100 image + info + heart
+// ═══════════════════════════════════════════════
+
+class _FavoriteCard extends StatelessWidget {
+  final _FavoriteItem item;
+  const _FavoriteCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceLight,
-                shape: BoxShape.circle,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Image thumbnail ──
+          Container(
+            width: 120,
+            height: 100,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
               ),
-              child: Icon(icon, size: 32, color: AppColors.grayMeta),
             ),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy),
+          ),
+          const SizedBox(width: 12),
+
+          // ── Info column ──
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  item.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF0A1230),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Location row
+                if (item.location != null) ...[
+                  Row(
+                    children: [
+                      const Icon(
+                        IconsaxPlusLinear.location,
+                        size: 14,
+                        color: Color(0xFF6D6D6D),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          item.location!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: const Color(0xFF6D6D6D),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Date row (events & news)
+                if (item.date != null) ...[
+                  Row(
+                    children: [
+                      const Icon(
+                        IconsaxPlusLinear.calendar_1,
+                        size: 14,
+                        color: Color(0xFF888888),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        item.date!,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Rating row (businesses)
+                if (item.rating != null) ...[
+                  Row(
+                    children: [
+                      const Icon(
+                        IconsaxPlusBold.star_1,
+                        size: 16,
+                        color: Color(0xFFFFC107),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item.rating!.toString(),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '(${item.reviewCount})',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Area + rooms row (apartments)
+                if (item.area != null) ...[
+                  Row(
+                    children: [
+                      const Icon(
+                        IconsaxPlusLinear.ruler,
+                        size: 14,
+                        color: Color(0xFF6D6D6D),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item.area!,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                      const SizedBox(width: 31),
+                      const Icon(
+                        IconsaxPlusLinear.house_2,
+                        size: 14,
+                        color: Color(0xFF6D6D6D),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item.rooms ?? '',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Type badge
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: item.typeColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    item.typeName,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta),
+          ),
+
+          // ── Heart icon ──
+          const Padding(
+            padding: EdgeInsets.only(left: 12),
+            child: Icon(
+              IconsaxPlusBold.heart,
+              size: 20,
+              color: Color(0xFFEB3F3C),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: onTap,
-              child: Text(buttonLabel, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600)),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

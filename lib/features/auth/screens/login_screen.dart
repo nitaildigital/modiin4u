@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/constants/neighborhoods.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -15,505 +13,346 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phoneController = TextEditingController();
-  final _nameController = TextEditingController();
-  final _otpControllers = List.generate(4, (_) => TextEditingController());
-  final _otpFocusNodes = List.generate(4, (_) => FocusNode());
-  String? _selectedNeighborhood;
-  bool _otpSent = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _rememberMe = false;
+  bool _obscurePassword = true;
   bool _isLoading = false;
-  int _resendCooldown = 0;
 
   @override
   void dispose() {
-    _phoneController.dispose();
-    _nameController.dispose();
-    for (final c in _otpControllers) {
-      c.dispose();
-    }
-    for (final f in _otpFocusNodes) {
-      f.dispose();
-    }
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(gradient: AppColors.brandGradient),
-          child: SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: AppColors.white),
-                        onPressed: () => context.pop(),
-                      ),
-                    ],
-                  ),
-                ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: bottomInset > 0 ? 40 : 80,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (bottomInset == 0) ...[
-                        Text(
-                          'מודיעין בשבילך',
-                          style: GoogleFonts.rubik(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.white),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'הצטרפו לקהילת התושבים',
-                          style: GoogleFonts.rubik(fontSize: 15, color: AppColors.white.withValues(alpha: 0.8)),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: context.cardBg,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                    ),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: _otpSent ? _buildOtpStep() : _buildRegistrationStep(),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegistrationStep() {
-    return Column(
-      key: const ValueKey('register'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'הרשמה חינם',
-          style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: context.textPrimary),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'קבלו קופונים, התראות, שמרו מועדפים, וכתבו ביקורות',
-          style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta, height: 1.4),
-        ),
-        const SizedBox(height: 28),
-        _buildInputField(
-          controller: _nameController,
-          icon: Icons.person_outline,
-          label: 'שם מלא',
-          hint: 'איך קוראים לכם?',
-        ),
-        const SizedBox(height: 16),
-        _buildInputField(
-          controller: _phoneController,
-          icon: Icons.phone_outlined,
-          label: 'טלפון נייד',
-          hint: '050-0000000',
-          keyboardType: TextInputType.phone,
-          textDirection: TextDirection.ltr,
-        ),
-        const SizedBox(height: 16),
-        Text('שכונה', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.grayMeta)),
-        const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: DropdownButtonFormField<String>(
-            value: _selectedNeighborhood,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.location_on_outlined, color: AppColors.grayMeta, size: 20),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            ),
-            hint: Text('בחרו שכונה (אופציונלי)', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight)),
-            items: neighborhoods.map((n) {
-              return DropdownMenuItem(value: n.name, child: Text(n.displayName, style: GoogleFonts.rubik(fontSize: 14)));
-            }).toList(),
-            onChanged: (val) => setState(() => _selectedNeighborhood = val),
-          ),
-        ),
-        const SizedBox(height: 28),
-        _buildGradientButton('שלחו קוד אימות', () {
-          if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
-            _showError('יש למלא שם וטלפון');
-            return;
-          }
-          setState(() {
-            _isLoading = true;
-          });
-          Future.delayed(const Duration(milliseconds: 800), () {
-            if (mounted) {
-              setState(() { _isLoading = false; _otpSent = true; });
-              _startResendCooldown();
-            }
-          });
-        }),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            const Expanded(child: Divider(color: AppColors.border)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('או התחברו עם', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight)),
-            ),
-            const Expanded(child: Divider(color: AppColors.border)),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildSocialButton('Google', Icons.g_mobiledata, const Color(0xFFEA4335))),
-            const SizedBox(width: 12),
-            Expanded(child: _buildSocialButton('Apple', Icons.apple, AppColors.navy)),
-          ],
-        ),
-        const SizedBox(height: 32),
-        _buildBenefitsSection(),
-      ],
-    );
-  }
-
-  Widget _buildOtpStep() {
-    return Column(
-      key: const ValueKey('otp'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Center(
-          child: Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppColors.turquoise.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.sms_outlined, size: 32, color: AppColors.turquoise),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: Text(
-            'הזינו את הקוד',
-            style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: context.textPrimary),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Center(
-          child: Text(
-            'שלחנו קוד אימות ב-SMS למספר',
-            style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta),
-          ),
-        ),
-        Center(
-          child: Text(
-            _phoneController.text,
-            style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: context.textPrimary),
-            textDirection: TextDirection.ltr,
-          ),
-        ),
-        const SizedBox(height: 32),
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(4, (index) {
-              return Container(
-                width: 60,
-                height: 64,
-                margin: const EdgeInsets.symmetric(horizontal: 6),
-                child: TextField(
-                  controller: _otpControllers[index],
-                  focusNode: _otpFocusNodes[index],
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  maxLength: 1,
-                  style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.navy),
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    counterText: '',
-                    filled: true,
-                    fillColor: AppColors.surfaceLight,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppColors.turquoise, width: 2),
-                    ),
-                  ),
-                  onChanged: (val) {
-                    if (val.isNotEmpty && index < 3) {
-                      _otpFocusNodes[index + 1].requestFocus();
-                    } else if (val.isEmpty && index > 0) {
-                      _otpFocusNodes[index - 1].requestFocus();
-                    }
-                    if (index == 3 && val.isNotEmpty) {
-                      FocusScope.of(context).unfocus();
-                    }
-                  },
-                ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 32),
-        _buildGradientButton('אישור והרשמה', () {
-          setState(() => _isLoading = true);
-          Future.delayed(const Duration(milliseconds: 600), () {
-            ref.read(authProvider.notifier).login(
-              name: _nameController.text,
-              phone: _phoneController.text,
-              neighborhood: _selectedNeighborhood,
-            );
-            context.go('/');
-          });
-        }),
-        const SizedBox(height: 20),
-        Center(
-          child: TextButton(
-            onPressed: _resendCooldown > 0 ? null : _resendOtp,
-            child: Text.rich(
-              TextSpan(
-                text: 'לא קיבלתם? ',
-                style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta),
-                children: [
-                  TextSpan(
-                    text: _resendCooldown > 0 ? 'שלחו שוב ($_resendCooldown)' : 'שלחו שוב',
-                    style: GoogleFonts.rubik(
-                      fontSize: 14,
-                      color: _resendCooldown > 0 ? AppColors.grayLight : AppColors.turquoise,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Center(
-          child: TextButton(
-            onPressed: () => setState(() => _otpSent = false),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.grayMeta),
-                const SizedBox(width: 4),
-                Text('חזרה', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta)),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required IconData icon,
-    required String label,
-    required String hint,
-    TextInputType? keyboardType,
-    TextDirection? textDirection,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.grayMeta)),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          textDirection: textDirection,
-          style: GoogleFonts.rubik(fontSize: 15),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.rubik(color: AppColors.grayLight),
-            filled: true,
-            fillColor: AppColors.surfaceLight,
-            prefixIcon: Icon(icon, color: AppColors.grayMeta, size: 20),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.turquoise, width: 1.5),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGradientButton(String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: _isLoading ? null : onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: AppColors.cyanGradient,
-          borderRadius: BorderRadius.circular(50),
-          boxShadow: [
-            BoxShadow(color: const Color(0xFF00EEFF).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: Center(
-          child: _isLoading
-              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2.5))
-              : Text(label, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.white)),
-        ),
-      ),
-    );
-  }
-
-  void _socialLogin(String provider) {
+  void _signIn() {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showError('Please enter your email and password');
+      return;
+    }
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 1200), () {
+    Future.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;
       ref.read(authProvider.notifier).login(
-        name: provider == 'Google' ? 'משתמש Google' : 'משתמש Apple',
-        phone: '050-0000000',
+        name: _emailController.text.split('@').first,
+        phone: '',
         neighborhood: null,
       );
       context.go('/');
     });
   }
 
-  Widget _buildSocialButton(String label, IconData icon, Color color) {
-    return GestureDetector(
-      onTap: () => _socialLogin(label),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: context.cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.borderClr),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.inter()),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
           children: [
-            Icon(icon, size: 22, color: color),
-            const SizedBox(width: 8),
-            Text(label, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: context.textPrimary)),
+            // Top bar with back button
+            Padding(
+              padding: const EdgeInsets.only(left: 12, top: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    child: const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Icon(
+                        Icons.arrow_back_ios_new,
+                        size: 16,
+                        color: Color(0xFF333333),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 34),
+                    // Title
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        'Hi, Welcome Back! 👋',
+                        style: GoogleFonts.rubik(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                          height: 1.21,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Subtitle
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        'Hello again, you\'ve been missed!',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    // Email field
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: _buildTextField(
+                        label: 'Email',
+                        controller: _emailController,
+                        hint: 'Enter your email',
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Password field
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: _buildTextField(
+                        label: 'Password',
+                        controller: _passwordController,
+                        hint: 'Please enter password',
+                        isPassword: true,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Remember Me & Forgot Password
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Remember Me
+                          GestureDetector(
+                            onTap: () =>
+                                setState(() => _rememberMe = !_rememberMe),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 18,
+                                  height: 18,
+                                  decoration: BoxDecoration(
+                                    color: _rememberMe
+                                        ? AppColors.midBlue
+                                        : Colors.white,
+                                    border: Border.all(
+                                      color: _rememberMe
+                                          ? AppColors.midBlue
+                                          : const Color(0xFF7B899A),
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: _rememberMe
+                                      ? const Icon(Icons.check,
+                                          size: 14, color: Colors.white)
+                                      : null,
+                                ),
+                                const SizedBox(width: 9),
+                                Text(
+                                  'Remember Me',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Forgot Password
+                          GestureDetector(
+                            onTap: () {
+                              // TODO: Forgot password flow
+                            },
+                            child: Text(
+                              'Forgot Password?',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.midBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    // Sign In button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _signIn,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.midBlue,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor:
+                                AppColors.midBlue.withValues(alpha: 0.6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : Text(
+                                  'Sign In',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Don't have an account? Sign Up
+                    Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          context.pop();
+                          context.push('/signup');
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Don't have an account?",
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: const Color(0xFF3D3D3D),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Sign Up',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.midBlue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Bottom decorative image
+            ClipRRect(
+              child: Image.asset(
+                'assets/images/hero_anaba.jpg',
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox(height: 200),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBenefitsSection() {
-    final benefits = [
-      (Icons.local_offer, 'קופונים והטבות', 'הנחות בלעדיות מעסקים מקומיים'),
-      (Icons.notifications_active, 'התראות חכמות', 'עדכונים מותאמים לשכונה שלכם'),
-      (Icons.favorite, 'שמירת מועדפים', 'עסקים, נכסים ואירועים במקום אחד'),
-      (Icons.emoji_events, 'נקודות ופרסים', 'צברו נקודות על מעורבות בקהילה'),
-    ];
-
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    bool isPassword = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('למה להירשם?', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
-        const SizedBox(height: 14),
-        ...benefits.map((b) {
-          final (icon, title, subtitle) = b;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.cyanGradient,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, size: 20, color: AppColors.white),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
-                      Text(subtitle, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
-                    ],
-                  ),
-                ),
-              ],
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF4F4F4F),
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: isPassword && _obscurePassword,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF1F1F1F),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF6D6D6D),
             ),
-          );
-        }),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFC6C6C6)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFC6C6C6)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.midBlue, width: 1.5),
+            ),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      size: 20,
+                      color: const Color(0xFF6D6D6D),
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                  )
+                : null,
+          ),
+        ),
       ],
-    );
-  }
-
-  void _startResendCooldown() {
-    setState(() => _resendCooldown = 30);
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
-      setState(() => _resendCooldown--);
-      return _resendCooldown > 0;
-    });
-  }
-
-  void _resendOtp() {
-    if (_resendCooldown > 0) return;
-    _startResendCooldown();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('קוד אימות חדש נשלח ל-${_phoneController.text}', style: GoogleFonts.rubik()),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: GoogleFonts.rubik()),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
     );
   }
 }
