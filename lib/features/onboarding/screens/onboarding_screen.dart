@@ -1,187 +1,230 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/theme/app_colors.dart';
 
-
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final _controller = PageController();
-  int _currentPage = 0;
-
-  static const _pages = [
-    (
-      icon: Icons.location_city,
-      title: 'ברוכים הבאים למודיעין בשבילך',
-      subtitle: 'כל מה שצריך על העיר שלך — במקום אחד.\nעסקים, חדשות, אירועים, נדל"ן ועוד.',
-      color: Color(0xFF123A72),
-    ),
-    (
-      icon: Icons.star_rounded,
-      title: 'גלו את הטוב ביותר',
-      subtitle: 'ביקורות אמיתיות מתושבים מאומתים,\nהטבות בלעדיות ודירוגים שאפשר לסמוך עליהם.',
-      color: Color(0xFF17A9D0),
-    ),
-    (
-      icon: Icons.people_rounded,
-      title: 'הצטרפו לקהילה',
-      subtitle: 'צברו נקודות, השתתפו באירועים,\nותהיו חלק מהקהילה הדיגיטלית של מודיעין.',
-      color: Color(0xFF2ECC71),
-    ),
-  ];
-
-  void _next() {
-    if (_currentPage < _pages.length - 1) {
-      _controller.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
-    } else {
-      _completeOnboarding();
-    }
-  }
-
-  Future<void> _completeOnboarding() async {
+  Future<void> _skip(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_seen_onboarding', true);
-    if (mounted) context.go('/');
+    if (context.mounted) context.go('/');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            PageView.builder(
-              controller: _controller,
-              itemCount: _pages.length,
-              onPageChanged: (i) => setState(() => _currentPage = i),
-              itemBuilder: (context, index) {
-                final page = _pages[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [page.color, page.color.withValues(alpha: 0.7)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Column(
-                      children: [
-                        const Spacer(flex: 2),
-                        Container(
-                          width: 140,
-                          height: 140,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(page.icon, size: 70, color: Colors.white),
-                        ),
-                        const SizedBox(height: 48),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Text(
-                            page.title,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.rubik(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white, height: 1.3),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Text(
-                            page.subtitle,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.rubik(fontSize: 16, color: Colors.white.withValues(alpha: 0.85), height: 1.6),
-                          ),
-                        ),
-                        const Spacer(flex: 3),
-                      ],
-                    ),
-                  ),
-                );
-              },
+    return Scaffold(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Background image
+          Image.asset(
+            'assets/images/get_started_bg.png',
+            fit: BoxFit.cover,
+          ),
+          // Dark overlay for readability
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.25),
+                  Colors.black.withValues(alpha: 0.55),
+                ],
+              ),
             ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          ),
+          // Content
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 14),
+                // Skip button (top-right)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      if (_currentPage < _pages.length - 1)
-                        TextButton(
-                          onPressed: _completeOnboarding,
-                          child: Text('דלג', style: GoogleFonts.rubik(fontSize: 14, color: Colors.white70)),
-                        )
-                      else
-                        const SizedBox.shrink(),
+                      GestureDetector(
+                        onTap: () => _skip(context),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Skip',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                const SizedBox(height: 30),
+                // Logo
+                SvgPicture.asset(
+                  'assets/images/logo_white.svg',
+                  width: 164,
+                  height: 88,
+                ),
+                const SizedBox(height: 40),
+                // Title
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 26),
+                  child: Text(
+                    'Everything in Modiin,\nin one place.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.rubik(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      height: 1.22,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Subtitle
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 58),
+                  child: Text(
+                    'Discover restaurants, businesses, events, deals, real estate and more.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      height: 1.21,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Bottom buttons
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(_pages.length, (i) {
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: _currentPage == i ? 28 : 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: _currentPage == i ? Colors.white : Colors.white.withValues(alpha: 0.35),
-                              borderRadius: BorderRadius.circular(4),
+                      // Sign In button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: () => context.push('/login'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.midBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
                             ),
-                          );
-                        }),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Sign In',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 28),
-                      GestureDetector(
-                        onTap: _next,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(50),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 12, offset: const Offset(0, 4))],
+                      const SizedBox(height: 12),
+                      // Continue with Google button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            // TODO: Google sign-in
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            elevation: 0,
                           ),
-                          child: Center(
-                            child: Text(
-                              _currentPage < _pages.length - 1 ? 'הבא' : 'בואו נתחיל!',
-                              style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: _pages[_currentPage].color),
+                          icon: Image.network(
+                            'https://www.google.com/favicon.ico',
+                            width: 24,
+                            height: 24,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.g_mobiledata,
+                              size: 24,
+                              color: Color(0xFF4285F4),
                             ),
                           ),
+                          label: Text(
+                            'Continue with Google',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 21),
+                      // Don't have an account? Sign Up
+                      GestureDetector(
+                        onTap: () => context.push('/signup'),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account?",
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Sign Up',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Terms text
+                      Text(
+                        'By creating an account of signing up, you are agree to your Terms of Service and Privacy Policy',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                          height: 1.4,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 24),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

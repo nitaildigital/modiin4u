@@ -1,377 +1,506 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:share_plus/share_plus.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../auth/providers/auth_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
+import 'web_listing_detail_screen.dart';
 
-class ListingDetailScreen extends ConsumerStatefulWidget {
+class ListingDetailScreen extends StatelessWidget {
   final String listingId;
-
   const ListingDetailScreen({super.key, required this.listingId});
 
   @override
-  ConsumerState<ListingDetailScreen> createState() => _ListingDetailScreenState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return WebListingDetailContent(listingId: listingId);
+        }
+        return _MobileListingDetailContent(listingId: listingId);
+      },
+    );
+  }
 }
 
-class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
-  double _mortgagePercent = 75;
-  final _imagePageController = PageController();
-  int _currentImagePage = 0;
+class _MobileListingDetailContent extends StatefulWidget {
+  final String listingId;
+  const _MobileListingDetailContent({required this.listingId});
 
-  static const _imageColors = [
-    Color(0xFFE8F4FD), Color(0xFFFCE4EC), Color(0xFFE8F5E9),
-    Color(0xFFF3E5F5), Color(0xFFFFF3E0), Color(0xFFE0F7FA),
-    Color(0xFFFBE9E7), Color(0xFFE8EAF6), Color(0xFFF1F8E9),
-    Color(0xFFEDE7F6), Color(0xFFFFF8E1), Color(0xFFE0F2F1),
+  @override
+  State<_MobileListingDetailContent> createState() => _MobileListingDetailContentState();
+}
+
+class _MobileListingDetailContentState extends State<_MobileListingDetailContent> {
+  int _selectedThumb = 0;
+  bool _aboutExpanded = false;
+
+  // ── Mock data ──
+  static const _price = '₪3,650,000';
+  static const _address = '21 Sderot El Melachot, Modi\'in Maccabim-Re\'ut';
+  static const _distance = '2.1 km away';
+  static const _area = 140;
+  static const _bedrooms = 3;
+  static const _bathrooms = 3;
+  static const _agentName = 'Zeev Schumacher';
+  static const _agentCompany = 'RGF Properties, Modiin';
+  static const _aboutProperty =
+      'New directly from the contractor, mini penthouse 6 rooms, '
+      'excellent location in Avni Chen neighborhood, back apartment!! '
+      'Occupancy 4 months from signing the contract, built 140 m², '
+      'balcony 18 m². Payment schedule 20/80 without attachments.';
+
+  static const _aboutNeighborhood1 =
+      'Moriah is one of the southernmost neighborhoods of Modi\'in-Maccabim-Re\'ut. '
+      'Formerly known as Buchman South, the neighborhood began to be populated in 2007 '
+      'and is characterized primarily by private homes and semi-detached houses.';
+
+  static const _aboutNeighborhood2 =
+      'The neighborhood takes its name from women from ancient Jewish history, '
+      'including the four matriarchs and biblical heroines, which is also reflected '
+      'in many of the street names throughout the neighborhood. Today, Moriah combines '
+      'residential living with parks, recreation, education and neighborhood shopping. '
+      'Its southern location also places residents close to major roads and the city\'s '
+      'southern open spaces.';
+
+  static const _specs = [
+    _Spec('Balcony', 'Yes', IconsaxPlusBold.element_3),
+    _Spec('Parking', 'Yes', IconsaxPlusBold.car),
+    _Spec('Elevator', 'Yes', IconsaxPlusBold.arrow_3),
+    _Spec('Protected Space', 'Yes', IconsaxPlusBold.shield_tick),
+  ];
+
+  static const _nearbyListings = [
+    _NearbyListing('₪3,790,000', '84 Menachem Begin Road', 133, 4, 2, true, false),
+    _NearbyListing('₪5,690,000', '73 Sarah Amano Street', 145, 4, 3, false, false),
+    _NearbyListing('₪3,050,000', '37 Ella Valley Street, Modiin', 145, 4, 3, false, false),
   ];
 
   @override
-  void dispose() {
-    _imagePageController.dispose();
-    super.dispose();
-  }
-
-  int get _priceNum => 2450000;
-  double get _mortgageAmount => _priceNum * (_mortgagePercent / 100);
-  double get _monthlyPayment {
-    final principal = _mortgageAmount;
-    const rate = 0.045 / 12;
-    const months = 25 * 12;
-    return principal * rate * _pow(1 + rate, months) / (_pow(1 + rate, months) - 1);
-  }
-
-  static double _pow(double base, int exp) {
-    double result = 1;
-    for (var i = 0; i < exp; i++) {
-      result *= base;
-    }
-    return result;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authProvider);
-    final isFav = user?.favoriteListingIds.contains(widget.listingId) ?? false;
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 430),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ═══════════════════════════════════
+                // 1. Hero image
+                // ═══════════════════════════════════
+                _buildHeroImage(),
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 280,
-              pinned: true,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    PageView.builder(
-                      controller: _imagePageController,
-                      itemCount: 12,
-                      onPageChanged: (i) => setState(() => _currentImagePage = i),
-                      itemBuilder: (context, index) {
-                        return Container(
-                          color: _imageColors[index],
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                [Icons.apartment, Icons.living, Icons.kitchen, Icons.bathroom, Icons.bed, Icons.balcony,
-                                 Icons.garage, Icons.elevator, Icons.chair, Icons.window, Icons.roofing, Icons.park][index],
-                                size: 56,
-                                color: AppColors.midBlue.withValues(alpha: 0.25),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                ['סלון', 'מטבח', 'חדר שינה', 'אמבטיה', 'חדר ילדים', 'מרפסת',
-                                 'חניה', 'לובי', 'פינת אוכל', 'נוף', 'גג', 'חצר'][index],
-                                style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayMeta),
-                              ),
-                            ],
+                // ═══════════════════════════════════
+                // 2. Image thumbnails
+                // ═══════════════════════════════════
+                const SizedBox(height: 16),
+                _buildThumbnailRow(),
+
+                // ═══════════════════════════════════
+                // 3. Price
+                // ═══════════════════════════════════
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                  child: Text(
+                    _price,
+                    style: GoogleFonts.rubik(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+
+                // ═══════════════════════════════════
+                // 4. Address + distance
+                // ═══════════════════════════════════
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Row(
+                    children: [
+                      const Icon(IconsaxPlusLinear.location,
+                          size: 16, color: Color(0xFF888888)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _address,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF6D6D6D),
                           ),
-                        );
-                      },
-                    ),
-                    Positioned(
-                      top: 90, right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(6)),
-                        child: Text('ללא תיווך · פרטי', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.white)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      bottom: 12, left: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(6)),
-                        child: Text('${_currentImagePage + 1}/12', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.white)),
+                      Text(
+                        _distance,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      bottom: 12,
-                      left: 0,
-                      right: 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(12, (i) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          width: _currentImagePage == i ? 16 : 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: _currentImagePage == i ? AppColors.white : AppColors.white.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        )),
+                    ],
+                  ),
+                ),
+
+                // ═══════════════════════════════════
+                // 5. Stats row: Area / Bedrooms / Bathrooms
+                // ═══════════════════════════════════
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  child: Row(
+                    children: [
+                      _StatCard(
+                        icon: IconsaxPlusLinear.maximize_3,
+                        value: '$_area',
+                        unit: 'm²',
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      _StatCard(
+                        icon: IconsaxPlusLinear.building_3,
+                        value: '$_bedrooms',
+                        unit: 'Bedrooms',
+                      ),
+                      const SizedBox(width: 10),
+                      _StatCard(
+                        icon: IconsaxPlusLinear.courthouse,
+                        value: '$_bathrooms',
+                        unit: 'Bathrooms',
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              actions: [
-                IconButton(
-                  icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? AppColors.error : null),
-                  onPressed: () {
-                    if (user == null) return;
-                    ref.read(authProvider.notifier).toggleFavoriteListing(widget.listingId);
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.share),
-                  onPressed: () => Share.share('דירת 4 חדרים, 110 מ"ר, הפרחים (מירומי)\n2,450,000 ₪\nמודיעין בשבילך'),
-                ),
+
+                // ═══════════════════════════════════
+                // 6. Agent section
+                // ═══════════════════════════════════
+                _buildAgentSection(),
+
+                // ═══════════════════════════════════
+                // 7. About This Property
+                // ═══════════════════════════════════
+                _buildSection('About This Property', _aboutProperty),
+
+                // ═══════════════════════════════════
+                // 8. Property Specifications (2×2 grid)
+                // ═══════════════════════════════════
+                _buildSpecsGrid(),
+
+                // ═══════════════════════════════════
+                // 9. Where You'll Be (map)
+                // ═══════════════════════════════════
+                _buildMapSection(),
+
+                // ═══════════════════════════════════
+                // 10. About Moriah (neighborhood)
+                // ═══════════════════════════════════
+                _buildNeighborhoodSection(),
+
+                // ═══════════════════════════════════
+                // 11. Properties in Moriah
+                // ═══════════════════════════════════
+                _buildNearbyProperties(),
+
+                const SizedBox(height: 40),
               ],
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('2,450,000 ₪', style: GoogleFonts.rubik(fontSize: 28, fontWeight: FontWeight.w700, color: context.textPrimary)),
-                    const SizedBox(height: 6),
-                    Text('רח׳ הנרקיס 12, הפרחים (מירומי)', style: GoogleFonts.rubik(fontSize: 15, color: AppColors.grayText)),
-                    const SizedBox(height: 4),
-                    Text('4 חדרים · 110 מ"ר · קומה 3', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayText)),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        _SpecIcon(Icons.bed_outlined, '4', 'חדרים'),
-                        _SpecIcon(Icons.square_foot, '110', 'מ"ר'),
-                        _SpecIcon(Icons.stairs, '3', 'קומה'),
-                        _SpecIcon(Icons.shield_outlined, '✓', 'ממ"ד'),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _launchPhone('0501234567'),
-                            icon: const Icon(Icons.phone),
-                            label: Text('התקשרו למוכר', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
-                            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _launchWhatsApp('0501234567', 'שלום, ראיתי את המודעה שלך באפליקציית מודיעין בשבילך ואשמח לפרטים נוספים.'),
-                            icon: const Icon(Icons.chat, size: 18),
-                            label: Text('וואטסאפ', style: GoogleFonts.rubik(fontSize: 13)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Text('מאפייני הנכס', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8, runSpacing: 8,
-                      children: [
-                        _PropTag('מרפסת שמש'), _PropTag('חניה פרטית'), _PropTag('מעלית'),
-                        _PropTag('מחסן'), _PropTag('משופצת'), _PropTag('מיזוג מרכזי'), _PropTag('סורגים'),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Text('תיאור', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'דירת 4 חדרים מרווחת ומוארת בשכונת הפרחים. '
-                      'הדירה עברה שיפוץ מלא לפני שנתיים וכוללת מטבח חדש, '
-                      'שני חדרי רחצה, ממ"ד, מרפסת שמש גדולה וחניה פרטית.\n\n'
-                      'קרובה לבתי ספר, גנים, מרכז מסחרי ותחבורה ציבורית. '
-                      'מיקום שקט ומשפחתי.',
-                      style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayText, height: 1.6),
-                    ),
-                    const SizedBox(height: 24),
-                    Text('מחשבון משכנתא', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
-                    const SizedBox(height: 10),
-                    _buildMortgageCalculator(),
-                    const SizedBox(height: 24),
-                    Text('פרטי איש קשר', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: context.cardBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: context.borderClr, width: 0.5),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 22,
-                            backgroundColor: AppColors.success.withValues(alpha: 0.1),
-                            child: const Icon(Icons.person, color: AppColors.success),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('דוד כהן', style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: context.textPrimary)),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                                  child: Text('בעלים פרטי', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w500)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.phone, color: AppColors.turquoise),
-                            onPressed: () => _launchPhone('0501234567'),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.chat, color: AppColors.success),
-                            onPressed: () => _launchWhatsApp('0501234567', 'שלום, ראיתי את המודעה שלך'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text('נכסים דומים בשכונה', style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: context.textPrimary)),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 170,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: 3,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemBuilder: (context, index) {
-                          final similar = [
-                            ('3 חדרים · 90 מ"ר', '2,100,000 ₪'),
-                            ('4 חדרים · 115 מ"ר', '2,550,000 ₪'),
-                            ('5 חדרים · 135 מ"ר', '2,900,000 ₪'),
-                          ];
-                          final (specs, price) = similar[index];
-                          return Container(
-                            width: 180,
-                            decoration: BoxDecoration(
-                              color: context.cardBg,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: context.borderClr, width: 0.5),
-                            ),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: AppColors.midBlue.withValues(alpha: 0.06),
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                                    ),
-                                    child: Center(child: Icon(Icons.apartment, size: 36, color: AppColors.midBlue.withValues(alpha: 0.2))),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(price, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: context.textPrimary)),
-                                      Text(specs, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMortgageCalculator() {
-    final formatted = _monthlyPayment.round().toString().replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    );
-    final mortgageFormatted = _mortgageAmount.round().toString().replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    );
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.turquoise.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.turquoise.withValues(alpha: 0.15)),
-      ),
-      child: Column(
+  // ───────────────────────────────────────────────
+  // Hero image (260px) with gradient + nav buttons
+  // ───────────────────────────────────────────────
+  Widget _buildHeroImage() {
+    return SizedBox(
+      height: 260,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
+          // Image placeholder with gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment(0.0, -0.5),
+                end: Alignment(0.0, 1.0),
+                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+              ),
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Icon(
+                    IconsaxPlusBold.home_2,
+                    size: 80,
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
+                ),
+                // Dark bottom gradient
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0.0, 1.0],
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.4),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Back button (top-left)
+          Positioned(
+            left: 12,
+            top: 51,
+            child: GestureDetector(
+              onTap: () => context.pop(),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  IconsaxPlusLinear.arrow_left,
+                  size: 20,
+                  color: Color(0xFF3D3D3D),
+                ),
+              ),
+            ),
+          ),
+
+          // Heart button (top-right)
+          Positioned(
+            right: 12,
+            top: 51,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                IconsaxPlusLinear.heart,
+                size: 20,
+                color: Color(0xFF3D3D3D),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────
+  // Image thumbnail row
+  // ───────────────────────────────────────────────
+  Widget _buildThumbnailRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: List.generate(5, (index) {
+          final isSelected = _selectedThumb == index;
+          return Padding(
+            padding: EdgeInsets.only(right: index < 4 ? 8 : 0),
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedThumb = index),
+              child: Container(
+                width: 66,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Color.lerp(
+                    const Color(0xFF0058B5),
+                    const Color(0xFF010A36),
+                    index * 0.2,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                  border: isSelected
+                      ? Border.all(
+                          color: const Color(0xFF123A72), width: 2)
+                      : null,
+                ),
+                child: Center(
+                  child: Icon(
+                    IconsaxPlusBold.image,
+                    size: 18,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────
+  // Agent section
+  // ───────────────────────────────────────────────
+  Widget _buildAgentSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Agent',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F6F6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                // Avatar placeholder
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFFD0D0D0),
+                  ),
+                  child: const Icon(IconsaxPlusBold.user,
+                      size: 20, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _agentName,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _agentCompany,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 37,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF123A72),
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Contact',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────
+  // Generic section: title + body text
+  // ───────────────────────────────────────────────
+  Widget _buildSection(String title, String body) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            body,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF3D3D3D),
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────
+  // Property Specifications 2×2 grid
+  // ───────────────────────────────────────────────
+  Widget _buildSpecsGrid() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Property Specifications',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Row 1
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('אחוז מימון', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
-              Text('${_mortgagePercent.round()}%', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
+              Expanded(child: _SpecCard(spec: _specs[0])),
+              const SizedBox(width: 12),
+              Expanded(child: _SpecCard(spec: _specs[1])),
             ],
           ),
-          Slider(
-            value: _mortgagePercent,
-            min: 25,
-            max: 75,
-            divisions: 10,
-            activeColor: AppColors.turquoise,
-            onChanged: (val) => setState(() => _mortgagePercent = val),
-          ),
+          const SizedBox(height: 12),
+          // Row 2
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('סכום מימון', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
-              Text('$mortgageFormatted ₪', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('ריבית משוערת', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
-              Text('4.5%', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Divider(color: AppColors.border),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('החזר חודשי משוער', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
-              Text('~$formatted ₪', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.turquoise)),
+              Expanded(child: _SpecCard(spec: _specs[2])),
+              const SizedBox(width: 12),
+              Expanded(child: _SpecCard(spec: _specs[3])),
             ],
           ),
         ],
@@ -379,41 +508,313 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     );
   }
 
-  Future<void> _launchPhone(String phone) async {
-    final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+  // ───────────────────────────────────────────────
+  // Where You'll Be (map preview)
+  // ───────────────────────────────────────────────
+  Widget _buildMapSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Where You\'ll Be',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 230,
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  // Map placeholder
+                  Container(
+                    color: const Color(0xFFE8F0F8),
+                    child: Center(
+                      child: Icon(
+                        IconsaxPlusBold.map_1,
+                        size: 60,
+                        color: const Color(0xFF123A72)
+                            .withValues(alpha: 0.15),
+                      ),
+                    ),
+                  ),
+
+                  // Pin marker
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black
+                                .withValues(alpha: 0.25),
+                            blurRadius: 2.74,
+                            offset: const Offset(0, 2.74),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 26,
+                          height: 26,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF006BF6),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            IconsaxPlusLinear.user,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // "Sign up with Email" floating button on map
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 17,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(50),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black
+                                  .withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              IconsaxPlusLinear.map_1,
+                              size: 16,
+                              color: Color(0xFF0A1230),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'View on Map',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF0A1230),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _launchWhatsApp(String phone, String message) async {
-    final formatted = phone.replaceFirst('0', '972');
-    final uri = Uri.parse('https://wa.me/$formatted?text=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  // ───────────────────────────────────────────────
+  // About Moriah (neighborhood) with fade + Read More
+  // ───────────────────────────────────────────────
+  Widget _buildNeighborhoodSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'About Moriah',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _aboutNeighborhood1,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF3D3D3D),
+                      height: 1.6,
+                    ),
+                  ),
+                  if (_aboutExpanded) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _aboutNeighborhood2,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF3D3D3D),
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                  if (!_aboutExpanded) const SizedBox(height: 80),
+                ],
+              ),
+              // White gradient overlay (only when collapsed)
+              if (!_aboutExpanded)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 120,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x00FFFFFF),
+                          Color(0xFFFFFFFF),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          // Read More button
+          Center(
+            child: GestureDetector(
+              onTap: () =>
+                  setState(() => _aboutExpanded = !_aboutExpanded),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(
+                      color: const Color(0xFF123A72)),
+                  borderRadius: BorderRadius.circular(60),
+                ),
+                child: Text(
+                  _aboutExpanded ? 'Show Less' : 'Read More',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF123A72),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────
+  // Properties in Moriah
+  // ───────────────────────────────────────────────
+  Widget _buildNearbyProperties() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Properties in Moriah',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...List.generate(_nearbyListings.length, (index) {
+            final listing = _nearbyListings[index];
+            return Padding(
+              padding: EdgeInsets.only(
+                  bottom: index < _nearbyListings.length - 1 ? 16 : 0),
+              child: _NearbyListingCard(listing: listing),
+            );
+          }),
+        ],
+      ),
+    );
   }
 }
 
-class _SpecIcon extends StatelessWidget {
+// ═══════════════════════════════════════════════
+// Stat card (area / bedrooms / bathrooms)
+// ═══════════════════════════════════════════════
+class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
-  final String label;
-  const _SpecIcon(this.icon, this.value, this.label);
+  final String unit;
+
+  const _StatCard({
+    required this.icon,
+    required this.value,
+    required this.unit,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(color: AppColors.midBlue.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(10)),
+        height: 77,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE7E7E7)),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, size: 22, color: AppColors.midBlue),
-            const SizedBox(height: 4),
-            Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
-            Text(label, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+            Icon(icon, size: 20, color: const Color(0xFF4F4F4F)),
+            Row(
+              children: [
+                Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  unit,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF3D3D3D),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -421,16 +822,293 @@ class _SpecIcon extends StatelessWidget {
   }
 }
 
-class _PropTag extends StatelessWidget {
-  final String label;
-  const _PropTag(this.label);
+// ═══════════════════════════════════════════════
+// Spec data model
+// ═══════════════════════════════════════════════
+class _Spec {
+  final String name;
+  final String value;
+  final IconData icon;
+
+  const _Spec(this.name, this.value, this.icon);
+}
+
+// ═══════════════════════════════════════════════
+// Spec card (Balcony/Parking/Elevator/Protected Space)
+// ═══════════════════════════════════════════════
+class _SpecCard extends StatelessWidget {
+  final _Spec spec;
+  const _SpecCard({required this.spec});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: AppColors.midBlue.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(8)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.midBlue)),
+      height: 124,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(spec.icon, size: 32, color: const Color(0xFF123A72)),
+          const SizedBox(height: 12),
+          Text(
+            spec.name,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            spec.value,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: Colors.black,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Nearby listing data model
+// ═══════════════════════════════════════════════
+class _NearbyListing {
+  final String price;
+  final String address;
+  final int area;
+  final int rooms;
+  final int floor;
+  final bool isNew;
+  final bool viaBroker;
+
+  const _NearbyListing(
+    this.price,
+    this.address,
+    this.area,
+    this.rooms,
+    this.floor,
+    this.isNew,
+    this.viaBroker,
+  );
+}
+
+// ═══════════════════════════════════════════════
+// Nearby listing card
+// ═══════════════════════════════════════════════
+class _NearbyListingCard extends StatelessWidget {
+  final _NearbyListing listing;
+  const _NearbyListingCard({required this.listing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Image
+        SizedBox(
+          height: 200,
+          width: double.infinity,
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    IconsaxPlusBold.home_2,
+                    size: 48,
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
+                ),
+              ),
+
+              // Heart button
+              Positioned(
+                right: 12,
+                top: 12,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    IconsaxPlusLinear.heart,
+                    size: 20,
+                    color: Color(0xFF123A72),
+                  ),
+                ),
+              ),
+
+              // New badge
+              if (listing.isNew)
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF17A9D0),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Text(
+                      'New',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Via Broker badge
+              if (listing.viaBroker)
+                Positioned(
+                  left: 12,
+                  bottom: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCCD6EE),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Text(
+                      'Via Broker',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF0033AC),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        // Details
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Price + FOR SALE
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    listing.price,
+                    style: GoogleFonts.rubik(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF0A1230),
+                    ),
+                  ),
+                  Text(
+                    'FOR SALE',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF17A9D0),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Address
+              Row(
+                children: [
+                  const Icon(IconsaxPlusBold.location,
+                      size: 16, color: Color(0xFF17A9D0)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      listing.address,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF5F5E5A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Area / Rooms / Floor chips
+              Row(
+                children: [
+                  _DetailChip(
+                    icon: IconsaxPlusLinear.maximize_3,
+                    text: '${listing.area} m²',
+                  ),
+                  const SizedBox(width: 31),
+                  _DetailChip(
+                    icon: IconsaxPlusLinear.building_3,
+                    text: '${listing.rooms} Rooms',
+                  ),
+                  const SizedBox(width: 31),
+                  _DetailChip(
+                    icon: IconsaxPlusLinear.building_4,
+                    text: 'Floor ${listing.floor}',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Detail chip (area / rooms / floor) for nearby cards
+// ═══════════════════════════════════════════════
+class _DetailChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _DetailChip({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: const Color(0xFF3D3D3D),
+          ),
+        ),
+      ],
     );
   }
 }

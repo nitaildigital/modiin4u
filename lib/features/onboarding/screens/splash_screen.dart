@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,7 +10,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeIn;
   late Animation<double> _scale;
@@ -19,11 +19,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.8, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+    _scale = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
     _controller.forward();
-
     _navigateAfterDelay();
   }
 
@@ -50,47 +54,65 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.brandGradient),
-        child: Center(
-          child: FadeTransition(
-            opacity: _fadeIn,
-            child: ScaleTransition(
-              scale: _scale,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: const Icon(Icons.location_city, size: 52, color: Colors.white),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'מודיעין בשבילך',
-                    style: GoogleFonts.rubik(fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'הכל על העיר שלך — במקום אחד',
-                    style: GoogleFonts.rubik(fontSize: 15, color: Colors.white.withValues(alpha: 0.7)),
-                  ),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF010A36), // dark navy
+              Color(0xFF0058B5), // blue
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Bottom illustrations — left (palm trees)
+            Positioned(
+              left: -28,
+              bottom: 0,
+              child: Opacity(
+                opacity: 0.5,
+                child: Image.asset(
+                  'assets/images/splash_illustration_left.png',
+                  width: 275,
+                  height: 243,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
               ),
             ),
-          ),
+            // Bottom illustrations — right (buildings)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Opacity(
+                opacity: 0.5,
+                child: Image.asset(
+                  'assets/images/splash_illustration_right.png',
+                  width: 92,
+                  height: 217,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+            // Centered logo
+            Center(
+              child: FadeTransition(
+                opacity: _fadeIn,
+                child: ScaleTransition(
+                  scale: _scale,
+                  child: SvgPicture.asset(
+                    'assets/images/logo_white.svg',
+                    width: 164,
+                    height: 88,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

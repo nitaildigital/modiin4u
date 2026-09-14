@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/models/user_model.dart';
 import '../../businesses/models/business.dart';
@@ -43,38 +44,38 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   int _selectedSection = 0;
 
-  static const _sections = [
+  static final _sections = [
     // ── ראשי ──
-    ('סקירה', Icons.dashboard),
-    ('משתמשים', Icons.people),
+    ('סקירה', IconsaxPlusLinear.element_3),
+    ('משתמשים', IconsaxPlusLinear.profile_2user),
     // ── תוכן ──
-    ('עסקים', Icons.store),
-    ('כתבות', Icons.article),
-    ('אירועים', Icons.event),
-    ('נדל"ן', Icons.apartment),
+    ('עסקים', IconsaxPlusLinear.shop),
+    ('כתבות', IconsaxPlusLinear.document_text),
+    ('אירועים', IconsaxPlusLinear.calendar),
+    ('נדל"ן', IconsaxPlusLinear.building_3),
     // ── טקסונומיה ──
-    ('קטגוריות', Icons.category),
-    ('תגיות', Icons.label),
-    ('שכונות', Icons.location_city),
-    ('מדיה', Icons.photo_library),
+    ('קטגוריות', IconsaxPlusLinear.category_2),
+    ('תגיות', IconsaxPlusLinear.tag),
+    ('שכונות', IconsaxPlusLinear.building),
+    ('מדיה', IconsaxPlusLinear.gallery),
     // ── מסחר ופרסום ──
-    ('מבצעים', Icons.local_offer),
-    ('הסכמים', Icons.handshake),
-    ('הכנסות', Icons.payments),
-    ('מיקומי פרסום', Icons.ad_units),
-    ('קמפיינים', Icons.campaign),
+    ('מבצעים', IconsaxPlusLinear.discount_shape),
+    ('הסכמים', IconsaxPlusLinear.document),
+    ('הכנסות', IconsaxPlusLinear.wallet_3),
+    ('מיקומי פרסום', IconsaxPlusLinear.monitor_mobbile),
+    ('קמפיינים', IconsaxPlusLinear.magicpen),
     // ── אינטראקציה ──
-    ('ביקורות', Icons.rate_review),
-    ('תגובות', Icons.comment),
-    ('דיווחים', Icons.flag),
-    ('Push', Icons.notifications_active),
+    ('ביקורות', IconsaxPlusLinear.star),
+    ('תגובות', IconsaxPlusLinear.message_text),
+    ('דיווחים', IconsaxPlusLinear.flag),
+    ('Push', IconsaxPlusLinear.notification),
     // ── מערכת ──
-    ('צוות ניהול', Icons.admin_panel_settings),
-    ('יומן פעולות', Icons.history),
-    ('פח מחזור', Icons.delete_outline),
-    ('בונה דף הבית', Icons.dashboard_customize),
-    ('Feature Flags', Icons.toggle_on),
-    ('הגדרות', Icons.settings),
+    ('צוות ניהול', IconsaxPlusLinear.people),
+    ('יומן פעולות', IconsaxPlusLinear.clock),
+    ('פח מחזור', IconsaxPlusLinear.trash),
+    ('בונה דף הבית', IconsaxPlusLinear.element_plus),
+    ('Feature Flags', IconsaxPlusLinear.toggle_on_circle),
+    ('הגדרות', IconsaxPlusLinear.setting_2),
   ];
 
   static const _sectionGroups = {
@@ -93,54 +94,84 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('ניהול — מודיעין בשבילך', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-          backgroundColor: AppColors.navy,
-          foregroundColor: AppColors.white,
-        ),
-        body: isWide
-            ? Row(
-                children: [
-                  _Sidebar(
-                    sections: _sections,
-                    selected: _selectedSection,
-                    onSelect: (i) => setState(() => _selectedSection = i),
-                    sectionGroups: _sectionGroups,
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: _buildSection()),
-                ],
-              )
-            : Column(
-                children: [
-                  SizedBox(
-                    height: 50,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      itemCount: _sections.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 6),
-                      itemBuilder: (context, index) {
-                        final (label, _) = _sections[index];
-                        final sel = index == _selectedSection;
-                        return ChoiceChip(
-                          label: Text(label),
-                          selected: sel,
-                          onSelected: (_) => setState(() => _selectedSection = index),
-                          selectedColor: AppColors.turquoise,
-                          labelStyle: GoogleFonts.rubik(
-                            fontSize: 12,
-                            color: sel ? AppColors.white : AppColors.navy,
-                            fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+        backgroundColor: AppColors.adminContentBg,
+        body: Column(
+          children: [
+            // ── CRM-style top bar ──
+            _AdminTopBar(
+              sectionName: _sections[_selectedSection].$1,
+            ),
+            Expanded(
+              child: isWide
+                  ? Row(
+                      children: [
+                        _Sidebar(
+                          sections: _sections,
+                          selected: _selectedSection,
+                          onSelect: (i) => setState(() => _selectedSection = i),
+                          sectionGroups: _sectionGroups,
+                        ),
+                        Expanded(
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: AppColors.adminContentBg,
+                              borderRadius: BorderRadius.only(topRight: Radius.circular(12)),
+                            ),
+                            child: _buildSection(),
                           ),
-                          visualDensity: VisualDensity.compact,
-                        );
-                      },
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        // Mobile nav chips
+                        Container(
+                          height: 52,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            border: Border(bottom: BorderSide(color: AppColors.adminSidebarBorder, width: 1)),
+                          ),
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            itemCount: _sections.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              final (label, icon) = _sections[index];
+                              final sel = index == _selectedSection;
+                              return GestureDetector(
+                                onTap: () => setState(() => _selectedSection = index),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: sel ? AppColors.adminActiveBg : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: sel ? null : Border.all(color: AppColors.adminSearchBorder, width: 1),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(icon, size: 16, color: sel ? AppColors.midBlue : AppColors.adminTextLight),
+                                      const SizedBox(width: 6),
+                                      Text(label, style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: sel ? FontWeight.w500 : FontWeight.w400,
+                                        color: sel ? AppColors.midBlue : AppColors.adminTextMedium,
+                                      )),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        Expanded(child: _buildSection()),
+                      ],
                     ),
-                  ),
-                  Expanded(child: _buildSection()),
-                ],
-              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -177,7 +208,155 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 }
 
-// ─── Sidebar ───
+// ─── Top Bar (CRM-style) ───
+
+class _AdminTopBar extends StatelessWidget {
+  final String sectionName;
+  const _AdminTopBar({required this.sectionName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 74,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: AppColors.adminSidebarBorder, width: 1)),
+      ),
+      child: Row(
+        children: [
+          // Logo area
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.navy, AppColors.midBlue],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text('M4U', style: GoogleFonts.inter(
+              fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5,
+            )),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('ניהול — מודיעין בשבילך', style: GoogleFonts.rubik(
+                fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.adminTextDark,
+              )),
+              Text(sectionName, style: GoogleFonts.inter(
+                fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.adminTextLight,
+              )),
+            ],
+          ),
+          const Spacer(),
+          // Search input
+          Container(
+            width: 260,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.adminSearchBorder, width: 1),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                Icon(IconsaxPlusLinear.search_normal, size: 18, color: AppColors.adminTextLight),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text('חיפוש...', style: GoogleFonts.inter(
+                    fontSize: 14, color: AppColors.adminTextLight,
+                  )),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Notification bell
+          _TopBarButton(
+            icon: IconsaxPlusLinear.notification,
+            badgeCount: 3,
+            onTap: () {},
+          ),
+          const SizedBox(width: 8),
+          // Settings
+          _TopBarButton(
+            icon: IconsaxPlusLinear.setting_2,
+            onTap: () {},
+          ),
+          const SizedBox(width: 16),
+          // User avatar
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.midBlue, AppColors.turquoise],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(child: Text('NL', style: GoogleFonts.inter(
+              fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white,
+            ))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopBarButton extends StatelessWidget {
+  final IconData icon;
+  final int? badgeCount;
+  final VoidCallback onTap;
+  const _TopBarButton({required this.icon, this.badgeCount, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(7),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: AppColors.adminSidebarBorder, width: 1),
+        ),
+        child: Stack(
+          children: [
+            Center(child: Icon(icon, size: 18, color: AppColors.adminTextMedium)),
+            if (badgeCount != null)
+              Positioned(
+                top: 4,
+                left: 4,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(50),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Center(child: Text('$badgeCount', style: GoogleFonts.inter(
+                    fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white,
+                  ))),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Sidebar (CRM-style) ───
 
 class _Sidebar extends StatelessWidget {
   final List<(String, IconData)> sections;
@@ -193,38 +372,106 @@ class _Sidebar extends StatelessWidget {
     final items = <Widget>[];
     for (int i = 0; i < sections.length; i++) {
       if (sectionGroups.containsKey(i)) {
-        if (i > 0) items.add(const SizedBox(height: 6));
+        if (i > 0) items.add(const SizedBox(height: 16));
         items.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Text(sectionGroups[i]!, style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.grayLight, letterSpacing: 1)),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Text(
+            sectionGroups[i]!,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.adminTextMedium,
+              letterSpacing: 0.5,
+            ),
+          ),
         ));
+        items.add(const SizedBox(height: 4));
       }
       final (label, icon) = sections[i];
       final sel = i == selected;
-      items.add(ListTile(
-        dense: true,
-        visualDensity: const VisualDensity(vertical: -2),
-        leading: Icon(icon, size: 18, color: sel ? AppColors.turquoise : AppColors.grayLight),
-        title: Text(label, style: GoogleFonts.rubik(
-          fontSize: 13,
-          fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-          color: sel ? AppColors.turquoise : AppColors.navy,
-        )),
-        selected: sel,
-        selectedTileColor: AppColors.turquoise.withValues(alpha: 0.06),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        onTap: () => onSelect(i),
-      ));
+      items.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => onSelect(i),
+              borderRadius: BorderRadius.circular(6),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: sel ? AppColors.adminActiveBg : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      sel ? _getFilledIcon(icon) : icon,
+                      size: 18,
+                      color: sel ? AppColors.midBlue : AppColors.adminTextLight,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(label, style: GoogleFonts.rubik(
+                        fontSize: 14,
+                        fontWeight: sel ? FontWeight.w500 : FontWeight.w400,
+                        color: sel ? AppColors.adminTextDark : AppColors.adminTextMedium,
+                      )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return Container(
-      width: 210,
-      color: AppColors.navy.withValues(alpha: 0.03),
+      width: 280,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(left: BorderSide(color: AppColors.adminSidebarBorder, width: 1)),
+      ),
       child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         children: items,
       ),
     );
+  }
+
+  /// Map linear icons to their bold (filled) counterparts for selected state
+  IconData _getFilledIcon(IconData linear) {
+    // Common mappings
+    final map = <IconData, IconData>{
+      IconsaxPlusLinear.element_3: IconsaxPlusBold.element_3,
+      IconsaxPlusLinear.profile_2user: IconsaxPlusBold.profile_2user,
+      IconsaxPlusLinear.shop: IconsaxPlusBold.shop,
+      IconsaxPlusLinear.document_text: IconsaxPlusBold.document_text,
+      IconsaxPlusLinear.calendar: IconsaxPlusBold.calendar,
+      IconsaxPlusLinear.building_3: IconsaxPlusBold.building_3,
+      IconsaxPlusLinear.category_2: IconsaxPlusBold.category_2,
+      IconsaxPlusLinear.tag: IconsaxPlusBold.tag,
+      IconsaxPlusLinear.building: IconsaxPlusBold.building,
+      IconsaxPlusLinear.gallery: IconsaxPlusBold.gallery,
+      IconsaxPlusLinear.discount_shape: IconsaxPlusBold.discount_shape,
+      IconsaxPlusLinear.document: IconsaxPlusBold.document,
+      IconsaxPlusLinear.wallet_3: IconsaxPlusBold.wallet_3,
+      IconsaxPlusLinear.monitor_mobbile: IconsaxPlusBold.monitor_mobbile,
+      IconsaxPlusLinear.magicpen: IconsaxPlusBold.magicpen,
+      IconsaxPlusLinear.star: IconsaxPlusBold.star,
+      IconsaxPlusLinear.message_text: IconsaxPlusBold.message_text,
+      IconsaxPlusLinear.flag: IconsaxPlusBold.flag,
+      IconsaxPlusLinear.notification: IconsaxPlusBold.notification,
+      IconsaxPlusLinear.people: IconsaxPlusBold.people,
+      IconsaxPlusLinear.clock: IconsaxPlusBold.clock,
+      IconsaxPlusLinear.trash: IconsaxPlusBold.trash,
+      IconsaxPlusLinear.element_plus: IconsaxPlusBold.element_plus,
+      IconsaxPlusLinear.toggle_on_circle: IconsaxPlusBold.toggle_on_circle,
+      IconsaxPlusLinear.setting_2: IconsaxPlusBold.setting_2,
+    };
+    return map[linear] ?? linear;
   }
 }
 
@@ -243,11 +490,11 @@ class _OverviewSection extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        // Header
-        Text('סקירה כללית', style: GoogleFonts.rubik(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.navy)),
+        // Header — CRM style
+        Text('סקירה כללית', style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
         const SizedBox(height: 4),
-        Text('נתונים בזמן אמת על כל הפעילות באפליקציה', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayText)),
-        const SizedBox(height: 20),
+        Text('נתונים בזמן אמת על כל הפעילות באפליקציה', style: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight)),
+        const SizedBox(height: 24),
 
         // Top metrics row — scrollable
         SizedBox(
@@ -323,24 +570,42 @@ class _TopMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 185,
-      margin: const EdgeInsets.only(left: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      width: 200,
+      margin: const EdgeInsets.only(left: 15),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.5),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Container(width: 30, height: 30, decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, size: 16, color: color)),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2))],
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
           const Spacer(),
-          if (change != null) Text(change!, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
+          if (change != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: (change!.startsWith('+') ? AppColors.success : AppColors.error).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(change!, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
+            ),
         ]),
         const Spacer(),
-        Text(value, style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.navy)),
-        Text(sub, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+        Text(value, style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        const SizedBox(height: 2),
+        Text(sub, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
       ]),
     );
   }
@@ -356,15 +621,30 @@ class _UsersChartCard extends StatelessWidget {
       child: Expanded(child: Padding(
         padding: const EdgeInsets.only(right: 8, top: 12),
         child: LineChart(LineChartData(
-          gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 5, getDrawingHorizontalLine: (_) => FlLine(color: AppColors.border, strokeWidth: 0.5)),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: 5,
+            getDrawingHorizontalLine: (_) => const FlLine(color: AppColors.adminCardBorder, strokeWidth: 0.5),
+          ),
           titlesData: FlTitlesData(
             rightTitles: const AxisTitles(),
             topTitles: const AxisTitles(),
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30, interval: 5, getTitlesWidget: (v, _) => Text('${v.toInt()}', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)))),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 24, interval: 5, getTitlesWidget: (v, _) {
-              final day = v.toInt() + 1;
-              return Text('$day/8', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight));
-            })),
+            leftTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              interval: 5,
+              getTitlesWidget: (v, _) => Text('${v.toInt()}', style: GoogleFonts.inter(fontSize: 10, color: AppColors.adminTextLight)),
+            )),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 24,
+              interval: 5,
+              getTitlesWidget: (v, _) {
+                final day = v.toInt() + 1;
+                return Text('$day/8', style: GoogleFonts.inter(fontSize: 10, color: AppColors.adminTextLight));
+              },
+            )),
           ),
           borderData: FlBorderData(show: false),
           minY: 0, maxY: 25,
@@ -372,15 +652,29 @@ class _UsersChartCard extends StatelessWidget {
             LineChartBarData(
               spots: List.generate(30, (i) => FlSpot(i.toDouble(), (5 + sin(i * 0.4) * 4 + (i / 6)).clamp(1, 22).toDouble())),
               isCurved: true, curveSmoothness: 0.3,
-              color: AppColors.turquoise,
-              barWidth: 2.5,
+              color: AppColors.midBlue,
+              barWidth: 3,
               dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(show: true, color: AppColors.turquoise.withValues(alpha: 0.08)),
+              belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.midBlue.withValues(alpha: 0.15),
+                    AppColors.midBlue.withValues(alpha: 0.02),
+                  ],
+                ),
+              ),
             ),
           ],
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
-              getTooltipItems: (spots) => spots.map((s) => LineTooltipItem('${s.y.toInt()} רישומים', GoogleFonts.rubik(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600))).toList(),
+              getTooltipColor: (_) => AppColors.navy,
+              getTooltipItems: (spots) => spots.map((s) => LineTooltipItem(
+                '${s.y.toInt()} רישומים',
+                GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+              )).toList(),
             ),
           ),
         )),
@@ -437,12 +731,25 @@ class _FunnelRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Container(width: 28, height: 28, decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Center(child: Text('$count', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w700, color: color)))),
-      const SizedBox(width: 10),
+      Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+        child: Center(child: Text('$count', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: color))),
+      ),
+      const SizedBox(width: 12),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.navy)),
-        const SizedBox(height: 4),
-        ClipRRect(borderRadius: BorderRadius.circular(3), child: LinearProgressIndicator(value: total > 0 ? count / total : 0, backgroundColor: AppColors.border.withValues(alpha: 0.3), color: color, minHeight: 6)),
+        Text(label, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.adminTextDark)),
+        const SizedBox(height: 5),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: total > 0 ? count / total : 0,
+            backgroundColor: AppColors.adminProgressBg,
+            color: color,
+            minHeight: 8,
+          ),
+        ),
       ])),
     ]);
   }
@@ -455,8 +762,9 @@ class _FunnelStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(child: Column(children: [
-      Text(value, style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy)),
-      Text(label, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+      Text(value, style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+      const SizedBox(height: 2),
+      Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
     ]));
   }
 }
@@ -510,11 +818,11 @@ class _LegendDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 6),
-      Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.navy)),
-      const SizedBox(width: 6),
-      Text('$pct ($count)', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
+      const SizedBox(width: 8),
+      Text(label, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.adminTextDark)),
+      const SizedBox(width: 8),
+      Text('$pct ($count)', style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
     ]);
   }
 }
@@ -557,13 +865,21 @@ class _ActivityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final pct = total > 0 ? (count / total * 100).toInt() : 0;
     return Row(children: [
-      SizedBox(width: 60, child: Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.navy))),
-      const SizedBox(width: 8),
-      Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(3), child: LinearProgressIndicator(value: total > 0 ? count / total : 0, backgroundColor: AppColors.border.withValues(alpha: 0.3), color: color, minHeight: 8))),
+      SizedBox(width: 60, child: Text(label, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.adminTextDark))),
       const SizedBox(width: 10),
-      Text('$count', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navy)),
-      const SizedBox(width: 4),
-      SizedBox(width: 32, child: Text('$pct%', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText))),
+      Expanded(child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: LinearProgressIndicator(
+          value: total > 0 ? count / total : 0,
+          backgroundColor: AppColors.adminProgressBg,
+          color: color,
+          minHeight: 8,
+        ),
+      )),
+      const SizedBox(width: 12),
+      Text('$count', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+      const SizedBox(width: 6),
+      SizedBox(width: 36, child: Text('$pct%', style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight))),
     ]);
   }
 }
@@ -583,23 +899,69 @@ class _PendingCard extends StatelessWidget {
       subtitle: '${pending.length} פריטים',
       child: Expanded(child: pending.isEmpty
         ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.check_circle_outline, size: 40, color: AppColors.success.withValues(alpha: 0.5)),
-            const SizedBox(height: 8),
-            Text('אין פריטים ממתינים', style: GoogleFonts.rubik(color: AppColors.grayText)),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(IconsaxPlusBold.tick_circle, size: 24, color: AppColors.success.withValues(alpha: 0.5)),
+            ),
+            const SizedBox(height: 10),
+            Text('אין פריטים ממתינים', style: GoogleFonts.inter(color: AppColors.adminTextLight, fontSize: 14)),
           ]))
         : ListView.separated(
             itemCount: pending.length,
-            separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
+            separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.adminCardBorder),
             itemBuilder: (_, i) {
               final b = pending[i];
-              return ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text(b.name, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
-                subtitle: Text(b.category, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
-                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                  IconButton(icon: const Icon(Icons.check, size: 18, color: AppColors.success), onPressed: () => ref.read(adminBusinessesProvider.notifier).setStatus(b.id, BusinessStatus.active)),
-                  IconButton(icon: const Icon(Icons.close, size: 18, color: AppColors.error), onPressed: () => ref.read(adminBusinessesProvider.notifier).setStatus(b.id, BusinessStatus.rejected)),
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: const BoxDecoration(
+                  border: Border(right: BorderSide(color: AppColors.gold, width: 3)),
+                ),
+                child: Row(children: [
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.gold.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(IconsaxPlusBold.shop, size: 18, color: AppColors.gold),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(b.name, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
+                    Text(b.category, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
+                  ])),
+                  InkWell(
+                    onTap: () => ref.read(adminBusinessesProvider.notifier).setStatus(b.id, BusinessStatus.active),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.check, size: 16, color: AppColors.success),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  InkWell(
+                    onTap: () => ref.read(adminBusinessesProvider.notifier).setStatus(b.id, BusinessStatus.rejected),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.close, size: 16, color: AppColors.error),
+                    ),
+                  ),
                 ]),
               );
             },
@@ -625,22 +987,44 @@ class _RecentActivityCard extends StatelessWidget {
         const SizedBox(height: 8),
         ...reviews.take(4).map((r) {
           final bizName = businesses.where((b) => b.id == r.businessId).firstOrNull?.name ?? '';
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+          final accentColor = r.rating >= 4 ? AppColors.success : r.rating >= 3 ? AppColors.gold : AppColors.error;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 2),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                right: BorderSide(color: accentColor, width: 3),
+                bottom: const BorderSide(color: AppColors.adminDashBorder, width: 0.5, strokeAlign: BorderSide.strokeAlignCenter),
+              ),
+            ),
             child: Row(children: [
-              CircleAvatar(radius: 16, backgroundColor: AppColors.turquoise.withValues(alpha: 0.1), child: Text(r.userName.isNotEmpty ? r.userName[0] : '?', style: GoogleFonts.rubik(color: AppColors.turquoise, fontWeight: FontWeight.w700, fontSize: 13))),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
+              // CRM-style: icon square with rounded corners
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Center(child: Icon(IconsaxPlusBold.star, size: 18, color: accentColor)),
+              ),
+              const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${r.userName} העיר על $bizName', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500)),
-                Text(r.text ?? '', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text('${r.userName} העיר על $bizName', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
+                const SizedBox(height: 2),
+                Text(r.text ?? '', style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight), maxLines: 1, overflow: TextOverflow.ellipsis),
               ])),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: (r.rating >= 4 ? AppColors.success : AppColors.gold).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.star, size: 12, color: r.rating >= 4 ? AppColors.success : AppColors.gold),
-                  const SizedBox(width: 2),
-                  Text('${r.rating}', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600, color: r.rating >= 4 ? AppColors.success : AppColors.gold)),
+                  Icon(IconsaxPlusBold.star_1, size: 12, color: accentColor),
+                  const SizedBox(width: 3),
+                  Text('${r.rating}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: accentColor)),
                 ]),
               ),
             ]),
@@ -662,17 +1046,20 @@ class _CardShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 0.5),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navy)),
-        if (subtitle != null) Text(subtitle!, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
-        const SizedBox(height: 4),
+        Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
+        if (subtitle != null) ...[
+          const SizedBox(height: 2),
+          Text(subtitle!, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
+        ],
+        const SizedBox(height: 8),
         child,
       ]),
     );
@@ -702,61 +1089,132 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
+        // ── CRM-style header bar ──
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: AppColors.adminCardBorder, width: 1)),
+          ),
           child: Row(children: [
-            Expanded(child: TextField(
-              decoration: InputDecoration(hintText: 'חיפוש לפי שם, טלפון, אימייל...', prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.symmetric(horizontal: 12)),
-              onChanged: (v) => setState(() => _search = v),
-            )),
-            const SizedBox(width: 12),
-            DropdownButton<UserRole?>(
-              value: _roleFilter,
-              hint: Text('תפקיד', style: GoogleFonts.rubik()),
-              items: [
-                DropdownMenuItem(value: null, child: Text('הכל', style: GoogleFonts.rubik())),
-                ...UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(switch (r) { UserRole.admin => 'מנהל', UserRole.businessOwner => 'בעל עסק', UserRole.user => 'תושב' }, style: GoogleFonts.rubik()))),
-              ],
-              onChanged: (v) => setState(() => _roleFilter = v),
+            Expanded(
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.adminSearchBorder, width: 1),
+                ),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'חיפוש לפי שם, טלפון, אימייל...',
+                    hintStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight),
+                    prefixIcon: Icon(IconsaxPlusLinear.search_normal, size: 18, color: AppColors.adminTextLight),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  style: GoogleFonts.inter(fontSize: 14),
+                  onChanged: (v) => setState(() => _search = v),
+                ),
+              ),
             ),
             const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed: () => _showUserDialog(context, ref),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text('משתמש חדש', style: GoogleFonts.rubik()),
-              style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise),
+            Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.adminSearchBorder, width: 1),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<UserRole?>(
+                  value: _roleFilter,
+                  hint: Text('תפקיד', style: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextMedium)),
+                  icon: Icon(IconsaxPlusLinear.arrow_down_1, size: 16, color: AppColors.adminTextLight),
+                  items: [
+                    DropdownMenuItem(value: null, child: Text('הכל', style: GoogleFonts.inter(fontSize: 14))),
+                    ...UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(switch (r) { UserRole.admin => 'מנהל', UserRole.businessOwner => 'בעל עסק', UserRole.user => 'תושב' }, style: GoogleFonts.inter(fontSize: 14)))),
+                  ],
+                  onChanged: (v) => setState(() => _roleFilter = v),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              height: 40,
+              child: FilledButton.icon(
+                onPressed: () => _showUserDialog(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text('משתמש חדש', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.midBlue,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
             ),
           ]),
         ),
+        // ── User list ──
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(0),
             itemCount: filtered.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.adminCardBorder),
             itemBuilder: (context, i) {
               final u = filtered[i];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: u.isBanned ? AppColors.error.withValues(alpha: 0.15) : AppColors.turquoise.withValues(alpha: 0.12),
-                  child: Text(u.initials, style: GoogleFonts.rubik(color: u.isBanned ? AppColors.error : AppColors.turquoise, fontWeight: FontWeight.w700, fontSize: 13)),
+              return Container(
+                color: Colors.white,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: u.isBanned
+                          ? AppColors.error.withValues(alpha: 0.1)
+                          : AppColors.midBlue.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Center(child: Text(
+                      u.initials,
+                      style: GoogleFonts.inter(
+                        color: u.isBanned ? AppColors.error : AppColors.midBlue,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    )),
+                  ),
+                  title: Row(children: [
+                    Text(u.name, style: GoogleFonts.rubik(fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.adminTextDark)),
+                    const SizedBox(width: 8),
+                    _RoleBadge(u.role),
+                    if (u.isBanned) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text('חסום', style: GoogleFonts.inter(fontSize: 11, color: AppColors.error, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ]),
+                  subtitle: Text(
+                    '${u.phone} • ${u.email} • ${u.neighborhood ?? "—"}',
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight),
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (v) => _handleUserAction(v, u),
+                    icon: Icon(IconsaxPlusLinear.more, size: 20, color: AppColors.adminTextLight),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: GoogleFonts.inter(fontSize: 14))),
+                      PopupMenuItem(value: 'ban', child: Text(u.isBanned ? 'בטל חסימה' : 'חסום משתמש', style: GoogleFonts.inter(fontSize: 14))),
+                      PopupMenuItem(value: 'makeBusinessOwner', child: Text('הפוך לבעל עסק', style: GoogleFonts.inter(fontSize: 14))),
+                      PopupMenuItem(value: 'delete', child: Text('מחק', style: GoogleFonts.inter(fontSize: 14, color: AppColors.error))),
+                    ],
+                  ),
+                  onTap: () => _showUserDialog(context, ref, user: u),
                 ),
-                title: Row(children: [
-                  Text(u.name, style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
-                  const SizedBox(width: 8),
-                  _RoleBadge(u.role),
-                  if (u.isBanned) ...[const SizedBox(width: 6), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)), child: Text('חסום', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.error, fontWeight: FontWeight.w600)))],
-                ]),
-                subtitle: Text('${u.phone} • ${u.email} • ${u.neighborhood ?? "—"}', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (v) => _handleUserAction(v, u),
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'edit', child: Text('עריכה')),
-                    PopupMenuItem(value: 'ban', child: Text(u.isBanned ? 'בטל חסימה' : 'חסום משתמש')),
-                    const PopupMenuItem(value: 'makeBusinessOwner', child: Text('הפוך לבעל עסק')),
-                    const PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(color: AppColors.error))),
-                  ],
-                ),
-                onTap: () => _showUserDialog(context, ref, user: u),
               );
             },
           ),
@@ -999,16 +1457,18 @@ class _SettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       children: [
-        Text('הגדרות אפליקציה', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy)),
-        const SizedBox(height: 16),
-        _SettingsTile('שם האפליקציה', 'מודיעין בשבילך', Icons.apps),
-        _SettingsTile('גרסה', '1.0.0', Icons.info_outline),
-        _SettingsTile('התראות Push', 'פעיל', Icons.notifications_active),
-        _SettingsTile('תחזוקה', 'כבוי', Icons.build),
-        _SettingsTile('מפתח API — מפות', '••••••••', Icons.map),
-        _SettingsTile('Supabase URL', 'https://xxx.supabase.co', Icons.cloud),
+        Text('הגדרות אפליקציה', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        const SizedBox(height: 4),
+        Text('ניהול הגדרות כלליות של המערכת', style: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight)),
+        const SizedBox(height: 20),
+        _SettingsTile('שם האפליקציה', 'מודיעין בשבילך', IconsaxPlusLinear.mobile),
+        _SettingsTile('גרסה', '1.0.0', IconsaxPlusLinear.info_circle),
+        _SettingsTile('התראות Push', 'פעיל', IconsaxPlusLinear.notification, statusColor: AppColors.success),
+        _SettingsTile('תחזוקה', 'כבוי', IconsaxPlusLinear.setting_3, statusColor: AppColors.adminTextLight),
+        _SettingsTile('מפתח API — מפות', '••••••••', IconsaxPlusLinear.map),
+        _SettingsTile('Supabase URL', 'https://xxx.supabase.co', IconsaxPlusLinear.cloud),
       ],
     );
   }
@@ -1018,18 +1478,47 @@ class _SettingsTile extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  const _SettingsTile(this.label, this.value, this.icon);
+  final Color? statusColor;
+  const _SettingsTile(this.label, this.value, this.icon, {this.statusColor});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.turquoise),
-        title: Text(label, style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
-        subtitle: Text(value, style: GoogleFonts.rubik(color: AppColors.grayText, fontSize: 13)),
-        trailing: const Icon(Icons.edit, size: 18, color: AppColors.grayLight),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
+      child: Row(children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.midBlue.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 20, color: AppColors.midBlue),
+        ),
+        const SizedBox(width: 14),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: GoogleFonts.rubik(fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.adminTextDark)),
+            const SizedBox(height: 2),
+            Row(children: [
+              if (statusColor != null) ...[
+                Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+                const SizedBox(width: 6),
+              ],
+              Expanded(child: Text(value, style: GoogleFonts.inter(color: AppColors.adminTextLight, fontSize: 13), overflow: TextOverflow.ellipsis)),
+            ]),
+          ],
+        )),
+        Icon(IconsaxPlusLinear.edit_2, size: 18, color: AppColors.adminTextLight),
+      ]),
     );
   }
 }
@@ -1048,14 +1537,28 @@ class _MetricCard extends StatelessWidget {
     return Container(
       width: 200,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border, width: 0.5)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(width: 36, height: 36, decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, size: 20, color: color)),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2))],
+          ),
+          child: Icon(icon, size: 20, color: color),
+        ),
         const SizedBox(height: 12),
-        Text(value, style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.navy)),
-        Text(title, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
+        Text(value, style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text(title, style: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight)),
         const SizedBox(height: 4),
-        Text(subtitle, style: GoogleFonts.rubik(fontSize: 11, color: color)),
+        Text(subtitle, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: color)),
       ]),
     );
   }
@@ -1070,12 +1573,15 @@ class _RoleBadge extends StatelessWidget {
     final (label, color) = switch (role) {
       UserRole.admin => ('מנהל', AppColors.error),
       UserRole.businessOwner => ('בעל עסק', AppColors.midBlue),
-      UserRole.user => ('תושב', AppColors.grayLight),
+      UserRole.user => ('תושב', AppColors.adminTextLight),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(label, style: GoogleFonts.inter(fontSize: 11, color: color, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -1088,9 +1594,12 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(label, style: GoogleFonts.inter(fontSize: 11, color: color, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -1128,7 +1637,10 @@ void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
           ),
         ]))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('ביטול', style: GoogleFonts.inter(color: AppColors.adminTextMedium)),
+          ),
           FilledButton(
             onPressed: () {
               final notifier = ref.read(adminUsersProvider.notifier);
@@ -1139,8 +1651,11 @@ void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
               }
               Navigator.pop(ctx);
             },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise),
-            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.rubik()),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.midBlue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
           ),
         ],
       ),
@@ -1196,7 +1711,10 @@ void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? busines
           TextField(controller: tagsC, decoration: const InputDecoration(labelText: 'תגיות (מופרדות בפסיק)')),
         ]))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('ביטול', style: GoogleFonts.inter(color: AppColors.adminTextMedium)),
+          ),
           FilledButton(
             onPressed: () {
               final notifier = ref.read(adminBusinessesProvider.notifier);
@@ -1208,8 +1726,11 @@ void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? busines
               }
               Navigator.pop(ctx);
             },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise),
-            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.rubik()),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.midBlue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
           ),
         ],
       ),
@@ -1286,7 +1807,10 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
           ]),
         ]))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('ביטול', style: GoogleFonts.inter(color: AppColors.adminTextMedium)),
+          ),
           FilledButton(
             onPressed: () {
               final notifier = ref.read(adminArticlesProvider.notifier);
@@ -1298,8 +1822,11 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
               }
               Navigator.pop(ctx);
             },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise),
-            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.rubik()),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.midBlue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
           ),
         ],
       ),

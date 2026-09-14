@@ -1,290 +1,597 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
-class EventsScreen extends StatefulWidget {
+/// Events discovery screen – category circles, vertical event cards
+/// with date badges, time/location/price, and interest counts.
+class EventsScreen extends StatelessWidget {
   const EventsScreen({super.key});
 
-  @override
-  State<EventsScreen> createState() => _EventsScreenState();
-}
-
-class _EventsScreenState extends State<EventsScreen> {
-  bool _isCalendarView = false;
-  String _selectedDate = 'הכל';
-  String _selectedType = 'הכל';
-
-  final _dateFilters = ['הכל', 'היום', 'מחר', 'סוף השבוע', 'השבוע'];
-  final _typeFilters = [
-    'הכל',
-    'עירייה וקהילה',
-    'מוזיקה',
-    'ילדים ומשפחה',
-    'ספורט',
-    'חינם',
+  // ── Event categories ──
+  static const _categories = [
+    _Category('All Events', 157),
+    _Category('Municipal &\nCommunity', 32),
+    _Category('Music', 24),
+    _Category('Kids & Family', 45),
+    _Category('Sports', 15),
+    _Category('Free', 41),
   ];
 
-  static const _allEvents = [
-    ('הופעת שלמה ארצי', '15.8', '21:00', 'היכל התרבות', '₪180', 'מוזיקה', 234),
-    ('סיפורייה בספרייה', '16.8', '10:30', 'ספרייה עירונית', 'חינם', 'ילדים ומשפחה', 56),
-    ('ישיבת מועצה פתוחה', '18.8', '19:30', 'בניין העירייה', 'חינם', 'עירייה וקהילה', 128),
-    ('יוגה בפארק ענבה', '14.8', '07:00', 'פארק ענבה', 'חינם', 'ספורט', 89),
-    ('פסטיבל בירה מודיעין', '22.8', '18:00', 'פארק המוזיקה', '₪50', 'מוזיקה', 412),
-    ('סדנת בישול ילדים', '17.8', '16:00', 'מתנ"ס אבני חן', '₪60', 'ילדים ומשפחה', 34),
-    ('ריצת ערב קהילתית', '19.8', '19:00', 'אגם ענבה', 'חינם', 'ספורט', 167),
-    ('שוק אוכל רחוב', '23.8', '12:00', 'המע"ר', '₪20 כניסה', 'קולינריה', 298),
+  // ── Events data ──
+  static const _events = [
+    _Event(
+      'Summer Music Night',
+      'Music',
+      'AUG', 21,
+      '8:00 PM',
+      'Modiin Amphitheater',
+      '₪50',
+      124,
+    ),
+    _Event(
+      'Modiin Community Festival',
+      'Municipal & Community',
+      'AUG', 22,
+      '10:00 AM',
+      'Modiin City Center',
+      'FREE',
+      86,
+    ),
+    _Event(
+      'Family Fun Day',
+      'Kids & Family',
+      'AUG', 23,
+      '11:00 AM',
+      'Anava Park',
+      '₪20',
+      86,
+    ),
+    _Event(
+      'Live Jazz Evening',
+      'Music',
+      'AUG', 24,
+      '8:30 PM',
+      'Local Cultural Center',
+      '₪60',
+      51,
+    ),
+    _Event(
+      'Kids Cooking Workshop',
+      'Kids & Family',
+      'AUG', 26,
+      '8:30 PM',
+      'Local Cultural Center',
+      '₪60',
+      51,
+    ),
   ];
-
-  List<(String, String, String, String, String, String, int)> get _filteredEvents {
-    return _allEvents.where((e) {
-      final (_, date, _, _, price, type, _) = e;
-      if (_selectedType != 'הכל') {
-        if (_selectedType == 'חינם') {
-          if (price != 'חינם') return false;
-        } else if (type != _selectedType) {
-          return false;
-        }
-      }
-      if (_selectedDate != 'הכל') {
-        final day = int.tryParse(date.split('.')[0]) ?? 0;
-        switch (_selectedDate) {
-          case 'היום':
-            if (day != 12) return false;
-          case 'מחר':
-            if (day != 13) return false;
-          case 'סוף השבוע':
-            if (day < 15 || day > 16) return false;
-          case 'השבוע':
-            if (day < 12 || day > 18) return false;
-        }
-      }
-      return true;
-    }).toList();
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('לבלות', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-          backgroundColor: context.cardBg,
-          foregroundColor: context.textPrimary,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: Icon(_isCalendarView ? Icons.list : Icons.calendar_month),
-              onPressed: () => setState(() => _isCalendarView = !_isCalendarView),
-            ),
-          ],
-        ),
-        body: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 40,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _dateFilters.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final d = _dateFilters[index];
-                    final sel = d == _selectedDate;
-                    return ChoiceChip(
-                      label: Text(d),
-                      selected: sel,
-                      onSelected: (_) => setState(() => _selectedDate = d),
-                      selectedColor: AppColors.turquoise,
-                      labelStyle: GoogleFonts.rubik(
-                        fontSize: 13,
-                        color: sel ? AppColors.white : context.textPrimary,
-                        fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 36,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _typeFilters.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (context, index) {
-                    final t = _typeFilters[index];
-                    final sel = t == _selectedType;
-                    return FilterChip(
-                      label: Text(t, style: GoogleFonts.rubik(fontSize: 12)),
-                      selected: sel,
-                      onSelected: (_) => setState(() => _selectedType = t),
-                      selectedColor: AppColors.turquoise.withValues(alpha: 0.1),
-                      checkmarkColor: AppColors.turquoise,
-                      visualDensity: VisualDensity.compact,
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList.separated(
-                itemCount: _filteredEvents.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final (title, date, time, location, price, type, interested) = _filteredEvents[index];
-                  final isFree = price == 'חינם';
-                  final isMunicipal = type == 'עירייה';
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 430),
+            child: Stack(
+              children: [
+                // ═══════════════════════════════════
+                // Scrollable content
+                // ═══════════════════════════════════
+                SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 100), // space for sticky header
+                      const SizedBox(height: 20),
 
-                  return GestureDetector(
-                    onTap: () => context.push('/event/demo_$index'),
+                      // "Event Categories"
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Event Categories',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1F1F1F),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Category circles row
+                      _buildCategoryRow(),
+                      const SizedBox(height: 24),
+
+                      // "Events in Modiin"
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Events in Modiin',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1F1F1F),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Event cards
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          children: [
+                            for (int i = 0; i < _events.length; i++) ...[
+                              _EventCard(event: _events[i], index: i),
+                              if (i < _events.length - 1)
+                                const SizedBox(height: 12),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 80),
+                    ],
+                  ),
+                ),
+
+                // ═══════════════════════════════════
+                // Frosted sticky header
+                // ═══════════════════════════════════
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildStickyHeader(context),
+                ),
+
+                // ═══════════════════════════════════
+                // Floating "Add to Calendar" button
+                // ═══════════════════════════════════
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 16,
+                  child: Center(
                     child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: context.cardBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: context.borderClr, width: 0.5),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(50),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 72,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              color: isMunicipal
-                                  ? AppColors.midBlue.withValues(alpha: 0.1)
-                                  : AppColors.turquoise.withValues(alpha: 0.08),
-                              borderRadius: const BorderRadius.horizontal(
-                                right: Radius.circular(12),
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  date.split('.')[0],
-                                  style: GoogleFonts.rubik(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                    color: context.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  '.${ date.split('.')[1]}',
-                                  style: GoogleFonts.rubik(
-                                    fontSize: 14,
-                                    color: AppColors.grayText,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    title,
-                                    style: GoogleFonts.rubik(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.textPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.access_time, size: 14, color: AppColors.grayLight),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        time,
-                                        style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Icon(Icons.location_on_outlined, size: 14, color: AppColors.grayLight),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          location,
-                                          style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: isFree
-                                              ? AppColors.success.withValues(alpha: 0.1)
-                                              : AppColors.gold.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          price,
-                                          style: GoogleFonts.rubik(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: isFree ? AppColors.success : context.textPrimary,
-                                          ),
-                                        ),
-                                      ),
-                                      if (isMunicipal) ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.midBlue.withValues(alpha: 0.08),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            'עירייה',
-                                            style: GoogleFonts.rubik(
-                                              fontSize: 11,
-                                              color: AppColors.midBlue,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                      const Spacer(),
-                                      Icon(Icons.people_outline, size: 14, color: AppColors.grayLight),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '$interested',
-                                        style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayLight),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                          const Icon(IconsaxPlusLinear.calendar_1,
+                              size: 16, color: Color(0xFF0A1230)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Add to Calendar',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF0A1230),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Sticky header: back + title + search bar
+  // ═══════════════════════════════════════════════
+  Widget _buildStickyHeader(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+      ),
+      child: Column(
+        children: [
+          // Title row
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 8),
+            child: Row(
+              children: [
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: const Icon(
+                    IconsaxPlusLinear.arrow_left,
+                    size: 24,
+                    color: Color(0xFF3D3D3D),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'Events',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+                const Spacer(),
+                const SizedBox(width: 40), // balance back button
+              ],
+            ),
+          ),
+
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFE7E7E7)),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    IconsaxPlusLinear.search_normal_1,
+                    size: 18,
+                    color: Color(0xFF6D6D6D),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Search events, concerts, activities...',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    IconsaxPlusLinear.setting_4,
+                    size: 20,
+                    color: Color(0xFF123A72),
+                  ),
+                ],
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 30)),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Category circles horizontal row
+  // ═══════════════════════════════════════════════
+  Widget _buildCategoryRow() {
+    return SizedBox(
+      height: 140,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(left: 16, right: 16),
+        itemCount: _categories.length,
+        itemBuilder: (_, i) => _CategoryCircle(category: _categories[i]),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Data models
+// ═══════════════════════════════════════════════
+class _Category {
+  final String name;
+  final int count;
+  const _Category(this.name, this.count);
+}
+
+class _Event {
+  final String title;
+  final String category;
+  final String month;
+  final int day;
+  final String time;
+  final String venue;
+  final String price;
+  final int interested;
+
+  const _Event(
+    this.title,
+    this.category,
+    this.month,
+    this.day,
+    this.time,
+    this.venue,
+    this.price,
+    this.interested,
+  );
+
+  bool get isFree => price == 'FREE';
+}
+
+// ═══════════════════════════════════════════════
+// Category circle (64px avatar + name + count)
+// ═══════════════════════════════════════════════
+class _CategoryCircle extends StatelessWidget {
+  final _Category category;
+  const _CategoryCircle({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 100,
+      child: Column(
+        children: [
+          // Circle avatar
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                IconsaxPlusBold.calendar_1,
+                size: 24,
+                color: Colors.white.withValues(alpha: 0.2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Name
+          Text(
+            category.name,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          // Count
+          Text(
+            '${category.count}',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF5F5E5A),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Event card (361 × 348)
+// ═══════════════════════════════════════════════
+class _EventCard extends StatelessWidget {
+  final _Event event;
+  final int index;
+  const _EventCard({required this.event, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/event/event_$index'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image area with date badge + heart
+          SizedBox(
+            height: 200,
+            child: Stack(
+              children: [
+                // Image placeholder
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      IconsaxPlusBold.calendar_1,
+                      size: 40,
+                      color: Colors.white.withValues(alpha: 0.12),
+                    ),
+                  ),
+                ),
+
+                // Date badge (bottom-left)
+                Positioned(
+                  left: 12,
+                  bottom: 12,
+                  child: Container(
+                    width: 57,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          event.month,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF123A72),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${event.day}',
+                          style: GoogleFonts.inter(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Heart button (top-right)
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(IconsaxPlusLinear.heart,
+                          size: 23, color: Color(0xFF123A72)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Info section
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  event.title,
+                  style: GoogleFonts.rubik(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0A1230),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Category
+                Text(
+                  event.category,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF5F5E5A),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Time + Location row
+                Row(
+                  children: [
+                    // Time
+                    const Icon(IconsaxPlusBold.clock,
+                        size: 16, color: Color(0xFF17A9D0)),
+                    const SizedBox(width: 8),
+                    Text(
+                      event.time,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF5F5E5A),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Location
+                    const Icon(IconsaxPlusBold.location,
+                        size: 16, color: Color(0xFF17A9D0)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        event.venue,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF5F5E5A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Price + Interested row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Price
+                    Text(
+                      event.price,
+                      style: GoogleFonts.rubik(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: event.isFree
+                            ? const Color(0xFF123A72)
+                            : const Color(0xFF0A1230),
+                      ),
+                    ),
+                    // Interested
+                    Row(
+                      children: [
+                        Icon(
+                          IconsaxPlusBold.star_1,
+                          size: 18,
+                          color: const Color(0xFF17A9D0),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${event.interested} interested',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF3D3D3D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

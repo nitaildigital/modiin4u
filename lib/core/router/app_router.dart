@@ -9,17 +9,27 @@ import '../../features/map/screens/map_screen.dart';
 import '../../features/municipal/screens/municipal_screen.dart';
 import '../../features/municipal/screens/parking_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/profile_screen.dart';
 import '../../features/auth/screens/edit_profile_screen.dart';
 import '../../features/auth/screens/favorites_screen.dart';
 import '../../features/auth/screens/notifications_screen.dart';
 import '../../features/auth/screens/settings_screen.dart';
+import '../../features/auth/screens/change_password_screen.dart';
+import '../../features/auth/screens/change_language_screen.dart';
+import '../../features/auth/screens/help_support_screen.dart';
+import '../../features/auth/screens/terms_conditions_screen.dart';
 import '../../features/events/screens/events_screen.dart';
+import '../../features/events/screens/events_map_screen.dart';
 import '../../features/events/screens/event_detail_screen.dart';
 import '../../features/professionals/screens/professional_detail_screen.dart';
 import '../../features/realestate/screens/realestate_screen.dart';
 import '../../features/realestate/screens/listing_detail_screen.dart';
 import '../../features/realestate/screens/new_listing_screen.dart';
+import '../../features/realestate/screens/add_apartment_screen.dart';
+import '../../features/realestate/screens/my_apartments_screen.dart';
+import '../../features/realestate/screens/realestate_map_screen.dart';
+import '../../features/realestate/screens/neighborhood_detail_screen.dart';
 import '../../features/community/screens/community_screen.dart';
 import '../../features/deals/screens/deals_screen.dart';
 import '../../features/deals/screens/deal_detail_screen.dart';
@@ -29,6 +39,8 @@ import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/home/screens/search_results_screen.dart';
+import '../../features/restaurants/screens/restaurants_screen.dart';
+import '../../features/restaurants/screens/restaurants_map_screen.dart';
 import '../../shared/widgets/shell_scaffold.dart';
 
 CustomTransitionPage<void> _slideTransition(Widget child, GoRouterState state) {
@@ -48,7 +60,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/splash',
+  initialLocation: '/neighborhood/1', // TODO: revert to '/splash'
   routes: [
     GoRoute(
       path: '/splash',
@@ -103,6 +115,20 @@ final appRouter = GoRouter(
       ],
     ),
     GoRoute(
+      path: '/restaurants',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        const RestaurantsScreen(), state,
+      ),
+    ),
+    GoRoute(
+      path: '/restaurants-map',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        const RestaurantsMapScreen(), state,
+      ),
+    ),
+    GoRoute(
       path: '/business/:id',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
@@ -120,6 +146,13 @@ final appRouter = GoRouter(
       path: '/events',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const EventsScreen(),
+    ),
+    GoRoute(
+      path: '/events-map',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        const EventsMapScreen(), state,
+      ),
     ),
     GoRoute(
       path: '/event/:id',
@@ -146,6 +179,30 @@ final appRouter = GoRouter(
       path: '/new-listing',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const NewListingScreen(),
+    ),
+    GoRoute(
+      path: '/my-apartments',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const MyApartmentsScreen(), state),
+    ),
+    GoRoute(
+      path: '/add-apartment',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const AddApartmentScreen(), state),
+    ),
+    GoRoute(
+      path: '/realestate-map',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        const RealEstateMapScreen(), state,
+      ),
+    ),
+    GoRoute(
+      path: '/neighborhood/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        NeighborhoodDetailScreen(neighborhoodId: state.pathParameters['id']!), state,
+      ),
     ),
     GoRoute(
       path: '/community',
@@ -190,6 +247,11 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => _slideTransition(const LoginScreen(), state),
     ),
     GoRoute(
+      path: '/signup',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const SignUpScreen(), state),
+    ),
+    GoRoute(
       path: '/profile',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(const ProfileScreen(), state),
@@ -213,6 +275,26 @@ final appRouter = GoRouter(
       path: '/settings',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/change-password',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const ChangePasswordScreen(), state),
+    ),
+    GoRoute(
+      path: '/change-language',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const ChangeLanguageScreen(), state),
+    ),
+    GoRoute(
+      path: '/help-support',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const HelpSupportScreen(), state),
+    ),
+    GoRoute(
+      path: '/terms',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const TermsConditionsScreen(), state),
     ),
     GoRoute(
       path: '/search',

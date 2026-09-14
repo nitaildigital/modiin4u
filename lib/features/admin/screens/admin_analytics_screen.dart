@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_analytics_provider.dart';
 
@@ -35,15 +36,20 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> wit
   Widget build(BuildContext context) {
     return Column(children: [
       Container(
-        color: AppColors.surfaceLight,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: AppColors.adminCardBorder, width: 1)),
+        ),
         child: TabBar(
           controller: _tabs,
           isScrollable: true,
-          labelStyle: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: GoogleFonts.rubik(fontSize: 13),
-          labelColor: AppColors.turquoise,
-          unselectedLabelColor: AppColors.grayText,
-          indicatorColor: AppColors.turquoise,
+          labelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+          unselectedLabelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400),
+          labelColor: AppColors.midBlue,
+          unselectedLabelColor: AppColors.adminTextLight,
+          indicatorColor: AppColors.midBlue,
+          indicatorWeight: 2.5,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 20),
           tabs: const [
             Tab(text: 'זמן אמת'),
             Tab(text: 'משתמשים ומעורבות'),
@@ -703,15 +709,15 @@ class _CardShell extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 0.5),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
         ),
-        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.5)),
+        const Divider(height: 1, color: AppColors.adminCardBorder),
         child,
       ]),
     );
@@ -728,18 +734,28 @@ class _LiveStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: large ? 170 : 145,
-      padding: const EdgeInsets.all(12),
+      width: large ? 180 : 155,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: large ? color.withValues(alpha: 0.08) : Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: large ? color.withValues(alpha: 0.3) : AppColors.border, width: large ? 1.5 : 0.5),
+        color: large ? color.withValues(alpha: 0.06) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: large ? color.withValues(alpha: 0.2) : AppColors.adminCardBorder, width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: large ? 22 : 18, color: color),
-        const SizedBox(height: 8),
-        Text(value, style: GoogleFonts.rubik(fontSize: large ? 24 : 18, fontWeight: FontWeight.w700, color: AppColors.navy)),
-        Text(label, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+        Container(
+          width: large ? 40 : 36,
+          height: large ? 40 : 36,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: large ? 22 : 18, color: color),
+        ),
+        const SizedBox(height: 10),
+        Text(value, style: GoogleFonts.inter(fontSize: large ? 32 : 22, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        const SizedBox(height: 2),
+        Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
       ]),
     );
   }
@@ -754,22 +770,33 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 165,
-      padding: const EdgeInsets.all(14),
+      width: 170,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 6),
-          Expanded(child: Text(label, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText), overflow: TextOverflow.ellipsis)),
+          Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
+          const SizedBox(width: 8),
+          Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight), overflow: TextOverflow.ellipsis)),
         ]),
-        const SizedBox(height: 8),
-        Text(value, style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
-        if (change != null) Text(change!, style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
+        const SizedBox(height: 10),
+        Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        if (change != null) ...[
+          const SizedBox(height: 2),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: (change!.startsWith('+') ? AppColors.success : AppColors.error).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(change!, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
+          ),
+        ],
       ]),
     );
   }

@@ -1,267 +1,247 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
-import '../widgets/business_card.dart';
 
-class BusinessesScreen extends StatefulWidget {
+class BusinessesScreen extends StatelessWidget {
   const BusinessesScreen({super.key});
 
-  @override
-  State<BusinessesScreen> createState() => _BusinessesScreenState();
-}
-
-class _BusinessesScreenState extends State<BusinessesScreen> {
-  String _selectedCategory = 'הכל';
-  final _selectedFilters = <String>{};
-  String _searchQuery = '';
-
-  static const _allBusinesses = [
-    (name: 'מסעדת נאיתאי', category: 'תאילנדי', catGroup: 'מסעדות', rating: 4.6, reviews: 87, isOpen: true, kosher: 'כשר', neighborhood: 'המע"ר', hasDelivery: false, hasOutdoor: true, hasParking: true, accessible: true),
-    (name: 'פיצה פרגו', category: 'פיצה', catGroup: 'מסעדות', rating: 4.5, reviews: 64, isOpen: true, kosher: 'כשר', neighborhood: 'הפרחים', hasDelivery: true, hasOutdoor: false, hasParking: false, accessible: true),
-    (name: 'קפה גרג', category: 'בית קפה', catGroup: 'קפה', rating: 4.3, reviews: 42, isOpen: true, kosher: null, neighborhood: 'נופים', hasDelivery: false, hasOutdoor: true, hasParking: true, accessible: true),
-    (name: 'בורגרס בר', category: 'המבורגרים', catGroup: 'מסעדות', rating: 4.7, reviews: 95, isOpen: false, kosher: null, neighborhood: 'מוריה', hasDelivery: true, hasOutdoor: true, hasParking: false, accessible: false),
-    (name: 'סושי מודיעין', category: 'סושי', catGroup: 'מסעדות', rating: 4.4, reviews: 58, isOpen: true, kosher: 'כשר', neighborhood: 'אבני חן', hasDelivery: true, hasOutdoor: false, hasParking: true, accessible: true),
-    (name: 'המאפייה של שלומי', category: 'מאפייה', catGroup: 'חנויות', rating: 4.8, reviews: 112, isOpen: true, kosher: 'כשר', neighborhood: 'המע"ר', hasDelivery: false, hasOutdoor: false, hasParking: false, accessible: true),
-    (name: 'ביסטרו 770', category: 'איטלקי', catGroup: 'מסעדות', rating: 4.2, reviews: 34, isOpen: false, kosher: null, neighborhood: 'הנחלים', hasDelivery: false, hasOutdoor: true, hasParking: true, accessible: true),
-    (name: 'מסעדת ג\'ויה', category: 'ים תיכוני', catGroup: 'מסעדות', rating: 4.5, reviews: 76, isOpen: true, kosher: 'כשר', neighborhood: 'משואה', hasDelivery: true, hasOutdoor: true, hasParking: true, accessible: true),
-    (name: 'הסטייקיה', category: 'בשרים', catGroup: 'מסעדות', rating: 4.1, reviews: 48, isOpen: true, kosher: null, neighborhood: 'המגינים', hasDelivery: false, hasOutdoor: false, hasParking: true, accessible: false),
-    (name: 'בית הפלאפל', category: 'ישראלי', catGroup: 'מסעדות', rating: 4.6, reviews: 156, isOpen: true, kosher: 'כשר', neighborhood: 'השבטים', hasDelivery: true, hasOutdoor: true, hasParking: false, accessible: true),
-  ];
-
-  List<int> get _filteredIndices {
-    final indices = <int>[];
-    for (var i = 0; i < _allBusinesses.length; i++) {
-      final b = _allBusinesses[i];
-      if (_selectedCategory != 'הכל' && b.catGroup != _selectedCategory && b.category != _selectedCategory) continue;
-      if (_searchQuery.isNotEmpty && !b.name.contains(_searchQuery) && !b.category.contains(_searchQuery) && !b.neighborhood.contains(_searchQuery)) continue;
-      if (_selectedFilters.contains('פתוח עכשיו') && !b.isOpen) continue;
-      if (_selectedFilters.contains('משלוחים') && !b.hasDelivery) continue;
-      if (_selectedFilters.contains('ישיבה בחוץ') && !b.hasOutdoor) continue;
-      if (_selectedFilters.contains('כשר') && b.kosher == null) continue;
-      if (_selectedFilters.contains('חניה') && !b.hasParking) continue;
-      if (_selectedFilters.contains('נגישות') && !b.accessible) continue;
-      if (_selectedFilters.contains('4+') && b.rating < 4.0) continue;
-      indices.add(i);
-    }
-    return indices;
-  }
-
-  final _categories = [
-    'הכל',
-    'מסעדות',
-    'ברים',
-    'קפה',
-    'חנויות',
-    'מקצוענים',
-    'נדל"ן',
-  ];
-
-  final _quickFilters = [
-    'פתוח עכשיו',
-    'משלוחים',
-    'ישיבה בחוץ',
-    'כשר',
-    'חניה',
-    'נגישות',
-    '4+',
+  static const _categories = [
+    _Category('Bars', '24 businesses', Color(0xFF2D1B4E), Color(0xFF4A2D6E)),
+    _Category(
+        'Coffee Shops', '38 businesses', Color(0xFF3E2723), Color(0xFF5D4037)),
+    _Category(
+        'Restaurants', '126 businesses', Color(0xFF1B3A2D), Color(0xFF2E5A47)),
+    _Category('Aesthetics &\nGrooming', '42 businesses', Color(0xFF4E1B3A),
+        Color(0xFF6E2D54)),
+    _Category('Sports &\nFitness', '31 businesses', Color(0xFF1A237E),
+        Color(0xFF283593)),
+    _Category(
+        'Hairdressers', '27 businesses', Color(0xFF4E342E), Color(0xFF6D4C41)),
+    _Category(
+        'Services', '51 businesses', Color(0xFF263238), Color(0xFF37474F)),
+    _Category('Education', '19 businesses', Color(0xFF1B5E20),
+        Color(0xFF2E7D32)),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: RefreshIndicator(
-        onRefresh: () async { await Future.delayed(const Duration(milliseconds: 800)); },
-        color: AppColors.turquoise,
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            floating: true,
-            pinned: true,
-            expandedHeight: 130,
-            backgroundColor: context.cardBg,
-            foregroundColor: context.textPrimary,
-            title: Text(
-              'עסקים ושירותים',
-              style: GoogleFonts.rubik(fontWeight: FontWeight.w700),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 430),
+            child: Column(
+          children: [
+            const SizedBox(height: 12),
+
+            // ── Title ──
+            Text(
+              'Filter Your Discover Feed',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
             ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
+
+            const SizedBox(height: 16),
+
+            // ── Search bar ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
-                height: 56,
-                padding: const EdgeInsets.only(bottom: 10),
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFE7E7E7)),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 16),
+                    const Icon(
+                      IconsaxPlusLinear.search_normal_1,
+                      size: 18,
+                      color: Color(0xFF6D6D6D),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Search businesses in Modiin...',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ── Category grid ──
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 13,
+                    mainAxisSpacing: 13,
+                    childAspectRatio: 174 / 170,
+                  ),
                   itemCount: _categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final cat = _categories[index];
-                    final selected = cat == _selectedCategory;
-                    return ChoiceChip(
-                      label: Text(cat),
-                      selected: selected,
-                      onSelected: (_) =>
-                          setState(() => _selectedCategory = cat),
-                      selectedColor: AppColors.turquoise,
-                      labelStyle: GoogleFonts.rubik(
-                        color: selected ? AppColors.white : context.textPrimary,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
-                      ),
+                    return _CategoryCard(
+                      category: cat,
+                      onTap: () {
+                        // TODO: Navigate to filtered business list
+                      },
                     );
                   },
                 ),
               ),
             ),
+          ],
+        ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Category data model
+// ═══════════════════════════════════════════════
+class _Category {
+  final String name;
+  final String count;
+  final Color colorStart;
+  final Color colorEnd;
+
+  const _Category(this.name, this.count, this.colorStart, this.colorEnd);
+}
+
+// ═══════════════════════════════════════════════
+// Category card widget
+// ═══════════════════════════════════════════════
+class _CategoryCard extends StatelessWidget {
+  final _Category category;
+  final VoidCallback onTap;
+
+  const _CategoryCard({required this.category, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              category.colorEnd,
+              category.colorStart,
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Dark bottom gradient overlay (like the Figma design)
+            Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: context.cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.borderClr),
-                ),
-                child: TextField(
-                  textDirection: TextDirection.rtl,
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  decoration: InputDecoration(
-                    hintText: 'חפשו בשפה חופשית... "סושי כשר פתוח עכשיו"',
-                    hintTextDirection: TextDirection.rtl,
-                    prefixIcon: const Icon(
-                      Icons.auto_awesome,
-                      color: AppColors.turquoise,
-                    ),
-                    suffixIcon: const Icon(Icons.search, color: AppColors.grayLight),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0.5235, 1.0],
+                    colors: [
+                      Colors.transparent,
+                      Color(0xBB000000),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 44,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                itemCount: _quickFilters.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 6),
-                itemBuilder: (context, index) {
-                  final filter = _quickFilters[index];
-                  final selected = _selectedFilters.contains(filter);
-                  return FilterChip(
-                    label: Text(
-                      filter,
-                      style: GoogleFonts.rubik(fontSize: 12),
-                    ),
-                    selected: selected,
-                    onSelected: (val) {
-                      setState(() {
-                        if (val) {
-                          _selectedFilters.add(filter);
-                        } else {
-                          _selectedFilters.remove(filter);
-                        }
-                      });
-                    },
-                    selectedColor: AppColors.turquoise.withValues(alpha: 0.1),
-                    checkmarkColor: AppColors.turquoise,
-                    visualDensity: VisualDensity.compact,
-                  );
-                },
+
+            // Category icon watermark
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Icon(
+                _iconFor(category.name),
+                size: 40,
+                color: Colors.white.withValues(alpha: 0.15),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+            // Text content at bottom
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${_filteredIndices.length} תוצאות',
-                    style: GoogleFonts.rubik(
-                      fontSize: 13,
-                      color: AppColors.grayText,
+                    category.name,
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      height: 1.22,
                     ),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        'מיון:',
-                        style: GoogleFonts.rubik(
-                          fontSize: 13,
-                          color: AppColors.grayText,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'מומלץ AI',
-                        style: GoogleFonts.rubik(
-                          fontSize: 13,
-                          color: AppColors.turquoise,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 18,
-                        color: AppColors.turquoise,
-                      ),
-                    ],
+                  const SizedBox(height: 4),
+                  Text(
+                    category.count,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-          _filteredIndices.isEmpty
-            ? SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 60),
-                  child: Column(
-                    children: [
-                      Icon(Icons.search_off, size: 56, color: AppColors.grayLight.withValues(alpha: 0.4)),
-                      const SizedBox(height: 16),
-                      Text('לא נמצאו עסקים', style: GoogleFonts.rubik(fontSize: 16, color: AppColors.grayMeta)),
-                      const SizedBox(height: 8),
-                      Text('נסו לשנות את הסינון או החיפוש', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight)),
-                    ],
-                  ),
-                ),
-              )
-            : SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList.separated(
-                  itemCount: _filteredIndices.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, idx) {
-                    final i = _filteredIndices[idx];
-                    final b = _allBusinesses[i];
-                    return BusinessCard(
-                      name: b.name,
-                      category: b.category,
-                      rating: b.rating,
-                      reviewCount: b.reviews,
-                      isOpen: b.isOpen,
-                      kosher: b.kosher,
-                      neighborhood: b.neighborhood,
-                      onTap: () => context.push('/business/demo_$i'),
-                    );
-                  },
-                ),
-              ),
-          const SliverToBoxAdapter(child: SizedBox(height: 30)),
-        ],
-      ),
+          ],
+        ),
       ),
     );
+  }
+
+  IconData _iconFor(String name) {
+    switch (name) {
+      case 'Bars':
+        return IconsaxPlusBold.coffee;
+      case 'Coffee Shops':
+        return IconsaxPlusBold.coffee;
+      case 'Restaurants':
+        return IconsaxPlusBold.reserve;
+      case 'Aesthetics &\nGrooming':
+        return IconsaxPlusBold.brush_1;
+      case 'Sports &\nFitness':
+        return IconsaxPlusBold.weight;
+      case 'Hairdressers':
+        return IconsaxPlusBold.scissor;
+      case 'Services':
+        return IconsaxPlusBold.setting_2;
+      case 'Education':
+        return IconsaxPlusBold.book_1;
+      default:
+        return IconsaxPlusBold.shop;
+    }
   }
 }

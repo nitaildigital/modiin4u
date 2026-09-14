@@ -1,307 +1,1233 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
-class StepsScreen extends StatelessWidget {
+/// Step Counter screen – circular progress ring with daily stats,
+/// weekly bar chart, monthly challenge card with progress bar,
+/// neighborhood/city leaderboard, and recommended walking routes.
+class StepsScreen extends StatefulWidget {
   const StepsScreen({super.key});
 
   @override
+  State<StepsScreen> createState() => _StepsScreenState();
+}
+
+class _StepsScreenState extends State<StepsScreen> {
+  int _leaderboardTab = 0; // 0 = Neighborhood, 1 = City
+
+  @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('מד צעדים', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-          backgroundColor: context.cardBg,
-          foregroundColor: context.textPrimary,
-          elevation: 0,
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 430),
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+
+                // ═══════════════════════════════════
+                // Back button (left-aligned)
+                // ═══════════════════════════════════
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: () => context.pop(),
+                      child: const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Icon(
+                          IconsaxPlusLinear.arrow_left,
+                          size: 24,
+                          color: Color(0xFF3D3D3D),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ═══════════════════════════════════
+                // Scrollable content
+                // ═══════════════════════════════════
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 10),
+
+                        // ── Title + subtitle ──
+                        Text(
+                          'Step Counter',
+                          style: GoogleFonts.inter(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Every step makes Modiin better',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF6D6D6D),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildTodayProgress(),
+                        const SizedBox(height: 16),
+
+                        _buildWeeklyChart(),
+                        const SizedBox(height: 16),
+
+                        _buildMonthlyChallenge(),
+                        const SizedBox(height: 16),
+
+                        _buildLeaderboard(),
+                        const SizedBox(height: 16),
+
+                        _buildWalkRoutes(),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Card 1 — Today's Progress
+  // ═══════════════════════════════════════════════
+  Widget _buildTodayProgress() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          // Header row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Today's Progress",
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1F1F1F),
+                ),
+              ),
+              Text(
+                'May 13, 2026',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF5D5D5D),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 23),
+
+          // Ring + right-side stats
+          Row(
+            children: [
+              // Circular progress ring
+              SizedBox(
+                width: 137,
+                height: 137,
+                child: CustomPaint(
+                  painter: _ProgressRingPainter(0.6842),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '6,842',
+                          style: GoogleFonts.inter(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Opacity(
+                          opacity: 0.6,
+                          child: Text(
+                            'steps',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 12.6,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF454545),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 24),
+
+              // Right stats column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Streak
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: Center(
+                            child: Text('🔥', style: TextStyle(fontSize: 24)),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '5 Streak',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Percentage of goal
+                    Text(
+                      '68% of 10,000',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF123A72),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Stats row: kcal | km | hours
+          Row(
+            children: [
+              Expanded(
+                child: _StatColumn(
+                  value: '862',
+                  label: 'kcal',
+                  valueColor: const Color(0xFF5630DF),
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 32,
+                color: const Color(0xFFD1D1D1).withValues(alpha: 0.7),
+              ),
+              Expanded(
+                child: _StatColumn(
+                  value: '7.2',
+                  label: 'km',
+                  valueColor: const Color(0xFFE57F03),
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 32,
+                color: const Color(0xFFD1D1D1).withValues(alpha: 0.7),
+              ),
+              Expanded(
+                child: _StatColumn(
+                  value: '2:19',
+                  label: 'hours',
+                  valueColor: const Color(0xFF286EFD),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Card 2 — This Week (bar chart)
+  // ═══════════════════════════════════════════════
+  Widget _buildWeeklyChart() {
+    const data = <_BarData>[
+      _BarData('Mon', 8200, '8.2K'),
+      _BarData('Tue', 6400, '6.4K'),
+      _BarData('Wed', 8200, '8.2K'),
+      _BarData('Thu', 10100, '10.1K'),
+      _BarData('Fri', 7800, '7.8K'),
+      _BarData('Sat', 6800, '6.8K'),
+      _BarData('Sun', 9200, '9.2K'),
+    ];
+    const double maxSteps = 12000;
+    const double barMaxH = 170;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Text(
+            'This Week',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Chart area
+          SizedBox(
+            height: barMaxH + 60,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Y-axis labels
+                SizedBox(
+                  width: 28,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 15, bottom: 23),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: ['12K', '10K', '8K', '6K', '4K', '2K', '0']
+                          .map((l) => Text(
+                                l,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: const Color(0xFF888888),
+                                ),
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Bars
+                ...data.map((d) {
+                  final barH = (d.steps / maxSteps) * barMaxH;
+                  return Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          d.label,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 15,
+                          height: barH,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF216AD0),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          d.day,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF6D6D6D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Card 3 — Monthly Challenge
+  // ═══════════════════════════════════════════════
+  Widget _buildMonthlyChallenge() {
+    const progress = 82450;
+    const goal = 150000;
+    final fraction = progress / goal; // ~55%
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDF9F5),
+        border: Border.all(color: const Color(0xFFFFE8C3)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          // Top row: icon + info
+          Row(
+            children: [
+              // Trophy / illustration placeholder
+              Container(
+                width: 74,
+                height: 74,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Text('🏆', style: TextStyle(fontSize: 40)),
+                ),
+              ),
+              const SizedBox(width: 17),
+
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'MODIIN MONTHLY CHALLENGE',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.5,
+                        color: const Color(0xFF123A72),
+                      ),
+                    ),
+                    const SizedBox(height: 11),
+                    Text(
+                      'Walk 150,000 steps',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'this month',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF454545),
+                      ),
+                    ),
+                    const SizedBox(height: 11),
+                    // Prize row
+                    Row(
+                      children: [
+                        const Text('🏅', style: TextStyle(fontSize: 16)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Prize: ₪500 Shopping Voucher',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF454545),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Progress bar section
+          Column(
+            children: [
+              // Steps count + percentage
+              Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Text(
+                          '82,450',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '/ 150,000 steps',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF454545),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '55%',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF3D3D3D),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 7),
+
+              // Progress bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  height: 5,
+                  child: LinearProgressIndicator(
+                    value: fraction,
+                    backgroundColor: const Color(0xFFE7E7E7),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFFFFC107),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // View Challenge button
+          Container(
+            width: double.infinity,
+            height: 42,
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFF123A72)),
+              borderRadius: BorderRadius.circular(60),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'View Challenge',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF123A72),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  IconsaxPlusLinear.arrow_right_3,
+                  size: 16,
+                  color: Color(0xFF123A72),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Card 4 — Modiin Step Challenge (Leaderboard)
+  // ═══════════════════════════════════════════════
+  Widget _buildLeaderboard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Text(
+            'Modiin Step Challenge',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Compete with others and climb the ranks',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Tab toggle
+          Row(
+            children: [
+              _buildTabButton('Neighborhood', 0, isLeft: true),
+              _buildTabButton('City', 1, isLeft: false),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Rows
+          if (_leaderboardTab == 0) ..._buildNeighborhoodRows(),
+          if (_leaderboardTab == 1) ..._buildCityRows(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String label, int index, {required bool isLeft}) {
+    final active = _leaderboardTab == index;
+    return GestureDetector(
+      onTap: () => setState(() => _leaderboardTab = index),
+      child: Container(
+        width: 120,
+        height: 36,
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF123A72) : Colors.white,
+          border: active
+              ? null
+              : Border.all(color: const Color(0xFFE7E7E7)),
+          borderRadius: isLeft
+              ? const BorderRadius.horizontal(left: Radius.circular(8))
+              : const BorderRadius.horizontal(right: Radius.circular(8)),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: active ? Colors.white : const Color(0xFF6D6D6D),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildNeighborhoodRows() {
+    const entries = <_LeaderboardEntry>[
+      _LeaderboardEntry(rank: 1, name: 'Moriah', steps: '102,450', color: Color(0xFFFFAC27)),
+      _LeaderboardEntry(rank: 2, name: 'Avnei Chen', steps: '98,210', color: Color(0xFFB0B0B0)),
+      _LeaderboardEntry(rank: 3, name: 'The Birds', steps: '94,840', color: Color(0xFFC59850)),
+    ];
+
+    return [
+      ...entries.map((e) => _NeighborhoodRow(entry: e)),
+      // User's row (highlighted)
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF1F6FD),
+        ),
+        child: Row(
           children: [
-            _DailyProgress(),
-            const SizedBox(height: 20),
-            _WeeklyChart(),
-            const SizedBox(height: 20),
-            _NeighborhoodCompetition(),
-            const SizedBox(height: 20),
-            _PersonalLeaderboard(),
-            const SizedBox(height: 20),
-            _WalkingRoutes(),
-            const SizedBox(height: 30),
+            _RankBadge(rank: 12, color: const Color(0xFF123A72)),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Text(
+                'You (Modiin Center)',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF123A72),
+                ),
+              ),
+            ),
+            Text(
+              '48,620',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1F1F1F),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'steps',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF6D6D6D),
+              ),
+            ),
           ],
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildCityRows() {
+    const entries = <_CityLeaderboardEntry>[
+      _CityLeaderboardEntry(rank: 1, name: 'Daniel Cohen', steps: '82,478', color: Color(0xFFFFAC27)),
+      _CityLeaderboardEntry(rank: 2, name: 'Maya Levi', steps: '75,105', color: Color(0xFFB0B0B0)),
+      _CityLeaderboardEntry(rank: 3, name: 'Amit May', steps: '71,589', color: Color(0xFFC59850)),
+    ];
+
+    return [
+      ...entries.map((e) => _CityRow(entry: e)),
+      // User's row (highlighted)
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF1F6FD),
+        ),
+        child: Row(
+          children: [
+            _RankBadge(rank: 12, color: const Color(0xFF123A72)),
+            const SizedBox(width: 11),
+            // Avatar placeholder
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                ),
+              ),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Text(
+                'You (Modiin Center)',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF123A72),
+                ),
+              ),
+            ),
+            Text(
+              '48,620',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1F1F1F),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'steps',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF6D6D6D),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  // ═══════════════════════════════════════════════
+  // Card 5 — Walk Modiin (walking routes)
+  // ═══════════════════════════════════════════════
+  Widget _buildWalkRoutes() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Walk Modiin',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Recommended walking routes',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Route 1
+          _RouteCard(
+            title: 'Modiin Park → City Center',
+            distance: '4.2 km',
+            duration: '50 min',
+            steps: '+4,800 steps',
+          ),
+
+          // Route 2
+          _RouteCard(
+            title: 'Anava Lake Loop',
+            distance: '3.6 km',
+            duration: '40 min',
+            steps: '+4,200 steps',
+            showBorder: false,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// Circular progress ring painter
+// ═══════════════════════════════════════════════════
+
+class _ProgressRingPainter extends CustomPainter {
+  final double progress;
+  _ProgressRingPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    const strokeWidth = 11.0;
+    final radius = (size.width - strokeWidth) / 2;
+
+    // Track
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = const Color(0xFFF5F2EF)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth,
+    );
+
+    // Progress arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi * progress,
+      false,
+      Paint()
+        ..color = const Color(0xFF216AD0)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressRingPainter old) =>
+      old.progress != progress;
+}
+
+// ═══════════════════════════════════════════════════
+// Stat column (kcal / km / hours)
+// ═══════════════════════════════════════════════════
+
+class _StatColumn extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color valueColor;
+
+  const _StatColumn({
+    required this.value,
+    required this.label,
+    required this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: valueColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Opacity(
+          opacity: 0.6,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF4F4F4F),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// Bar chart data model
+// ═══════════════════════════════════════════════════
+
+class _BarData {
+  final String day;
+  final double steps;
+  final String label;
+  const _BarData(this.day, this.steps, this.label);
+}
+
+// ═══════════════════════════════════════════════════
+// Leaderboard data models
+// ═══════════════════════════════════════════════════
+
+class _LeaderboardEntry {
+  final int rank;
+  final String name;
+  final String steps;
+  final Color color;
+  const _LeaderboardEntry({
+    required this.rank,
+    required this.name,
+    required this.steps,
+    required this.color,
+  });
+}
+
+class _CityLeaderboardEntry {
+  final int rank;
+  final String name;
+  final String steps;
+  final Color color;
+  const _CityLeaderboardEntry({
+    required this.rank,
+    required this.name,
+    required this.steps,
+    required this.color,
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// Rank badge (circular number indicator)
+// ═══════════════════════════════════════════════════
+
+class _RankBadge extends StatelessWidget {
+  final int rank;
+  final Color color;
+  const _RankBadge({required this.rank, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '$rank',
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
       ),
     );
   }
 }
 
-class _DailyProgress extends StatelessWidget {
+// ═══════════════════════════════════════════════════
+// Neighborhood leaderboard row
+// ═══════════════════════════════════════════════════
+
+class _NeighborhoodRow extends StatelessWidget {
+  final _LeaderboardEntry entry;
+  const _NeighborhoodRow({required this.entry});
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.borderClr, width: 0.5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
-      child: Column(
+      child: Row(
         children: [
-          SizedBox(
-            width: 160,
-            height: 160,
-            child: Stack(
-              alignment: Alignment.center,
+          _RankBadge(rank: entry.rank, color: entry.color),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Text(
+              entry.name,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF1F1F1F),
+              ),
+            ),
+          ),
+          Text(
+            entry.steps,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'steps',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// City leaderboard row (with avatar)
+// ═══════════════════════════════════════════════════
+
+class _CityRow extends StatelessWidget {
+  final _CityLeaderboardEntry entry;
+  const _CityRow({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+      ),
+      child: Row(
+        children: [
+          _RankBadge(rank: entry.rank, color: entry.color),
+          const SizedBox(width: 11),
+          // Avatar placeholder
+          Container(
+            width: 32,
+            height: 32,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFD9D9D9),
+            ),
+            child: Center(
+              child: Text(
+                entry.name.split(' ').map((w) => w[0]).join(),
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Text(
+              entry.name,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF1F1F1F),
+              ),
+            ),
+          ),
+          Text(
+            entry.steps,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'steps',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// Walking route card
+// ═══════════════════════════════════════════════════
+
+class _RouteCard extends StatelessWidget {
+  final String title;
+  final String distance;
+  final String duration;
+  final String steps;
+  final bool showBorder;
+
+  const _RouteCard({
+    required this.title,
+    required this.distance,
+    required this.duration,
+    required this.steps,
+    this.showBorder = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: showBorder
+            ? const Border(bottom: BorderSide(color: Color(0xFFE7E7E7)))
+            : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image placeholder
+          Container(
+            width: 95,
+            height: 80,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+              ),
+            ),
+            child: const Center(
+              child: Icon(
+                IconsaxPlusLinear.map_1,
+                size: 28,
+                color: Colors.white54,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 160,
-                  height: 160,
-                  child: CircularProgressIndicator(
-                    value: 0.72,
-                    strokeWidth: 12,
-                    backgroundColor: AppColors.border,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.turquoise),
-                    strokeCap: StrokeCap.round,
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0A1230),
                   ),
                 ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                const SizedBox(height: 9),
+                // Detail rows
+                Row(
                   children: [
-                    Text('7,200', style: GoogleFonts.rubik(fontSize: 32, fontWeight: FontWeight.w700, color: context.textPrimary)),
-                    Text('מתוך 10,000', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
+                    // Distance
+                    const Icon(
+                      IconsaxPlusLinear.location,
+                      size: 14,
+                      color: Color(0xFF6D6D6D),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      distance,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    // Duration
+                    const Icon(
+                      IconsaxPlusLinear.clock,
+                      size: 14,
+                      color: Color(0xFF6D6D6D),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      duration,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 9),
+                // Steps
+                Row(
+                  children: [
+                    const Icon(
+                      IconsaxPlusLinear.activity,
+                      size: 14,
+                      color: Color(0xFF6D6D6D),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      steps,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text('צעדים היום', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: context.textPrimary)),
-          const SizedBox(height: 4),
-          Text('7.2 נקודות נצברו', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.turquoise)),
         ],
       ),
-    );
-  }
-}
-
-class _WeeklyChart extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final days = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
-    final values = [0.8, 0.6, 0.9, 0.72, 0.5, 0.3, 0.1];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: context.borderClr, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('השבוע', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 120,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(7, (i) {
-                final isToday = i == 3;
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${(values[i] * 10).toInt()}K',
-                          style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          height: 80 * values[i],
-                          decoration: BoxDecoration(
-                            color: isToday ? AppColors.turquoise : AppColors.turquoise.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          days[i],
-                          style: GoogleFonts.rubik(
-                            fontSize: 12,
-                            fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
-                            color: isToday ? AppColors.turquoise : AppColors.grayText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NeighborhoodCompetition extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final rankings = [
-      ('הפרחים', '2,340,000', 1),
-      ('נופים', '2,180,000', 2),
-      ('אבני חן', '1,950,000', 3),
-      ('מרכז העיר', '1,820,000', 4),
-      ('מוריה', '1,650,000', 5),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: context.borderClr, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.emoji_events, color: AppColors.gold, size: 22),
-              const SizedBox(width: 8),
-              Text('תחרות שכונות — אוגוסט', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ...rankings.map((r) {
-            final (name, steps, rank) = r;
-            final isTop3 = rank <= 3;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 28,
-                    child: Text(
-                      '$rank',
-                      style: GoogleFonts.rubik(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: isTop3 ? AppColors.gold : AppColors.grayLight,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(name, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: context.textPrimary)),
-                  ),
-                  Text(
-                    '$steps צעדים',
-                    style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
-
-class _PersonalLeaderboard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.turquoise.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.turquoise.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        children: [
-          Text('📍', style: GoogleFonts.rubik(fontSize: 22)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('המיקום שלך', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
-                Text('#23 בשכונת הפרחים · 72,000 צעדים החודש', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WalkingRoutes extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final routes = [
-      ('טיילת אגם ענבה', '3.5 ק"מ', 'קל', '31.8960,35.0125'),
-      ('מסלול פארק ענבה', '5.2 ק"מ', 'בינוני', '31.8935,35.0110'),
-      ('הליכה עירונית — המע"ר', '2.8 ק"מ', 'קל', '31.8990,35.0145'),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('מסלולי הליכה מומלצים', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary)),
-        const SizedBox(height: 12),
-        ...routes.map((r) {
-          final (name, distance, difficulty, coords) = r;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: context.cardBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: context.borderClr, width: 0.5),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.directions_walk, color: AppColors.success, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(name, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
-                        Text('$distance · $difficulty', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () async {
-                      final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$coords');
-                      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    },
-                    child: const Icon(Icons.navigation_outlined, size: 18, color: AppColors.turquoise),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ],
     );
   }
 }

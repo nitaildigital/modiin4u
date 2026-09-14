@@ -14,6 +14,7 @@ class AppColors {
   static const midBlue = Color(0xFF123A72);
   static const turquoise = Color(0xFF17A9D0);
   static const gold = Color(0xFFFAC775);
+  static const orange = Color(0xFFFB7901);
   static const white = Color(0xFFFFFFFF);
   static const grayText = Color(0xFF5F5E5A);
   static const grayMeta = Color(0xFF6B7280);
@@ -49,4 +50,16 @@ class AppColors {
   static const brokerBadgeBg = Color(0xFFE5FDFF);
   static const inactiveTabBg = Color(0xFFF6F6F6);
   static const sectionBg = Color(0xFFF5F5F5);
+
+  // ── Admin Panel (CRM design language) ──
+  static const adminSidebarBorder = Color(0xFFE7E7E7);
+  static const adminCardBorder = Color(0xFFEEEEEE);
+  static const adminSearchBorder = Color(0xFFEDEDED);
+  static const adminProgressBg = Color(0xFFEAEAEA);
+  static const adminDashBorder = Color(0xFFD1D1D1);
+  static const adminTextDark = Color(0xFF181818);
+  static const adminTextMedium = Color(0xFF5D5D5D);
+  static const adminTextLight = Color(0xFF878787);
+  static const adminActiveBg = Color(0xFFE8EEF7); // midBlue tint for active sidebar
+  static const adminContentBg = Color(0xFFFAFBFC); // subtle gray content background
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_articles_provider.dart';
 
@@ -28,12 +29,12 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Column(children: [
-      // ─── Toolbar ───
+      // ─── Toolbar (CRM-style) ───
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        decoration: const BoxDecoration(
           color: Colors.white,
-          border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
+          border: Border(bottom: BorderSide(color: AppColors.adminCardBorder, width: 1)),
         ),
         child: Row(children: [
           SizedBox(
@@ -41,15 +42,15 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
             height: 40,
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.rubik(fontSize: 14),
+              style: GoogleFonts.inter(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש כתבה...',
-                hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
-                prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
+                hintStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight),
+                prefixIcon: Icon(IconsaxPlusLinear.search_normal, size: 18, color: AppColors.adminTextLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.turquoise)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.adminSearchBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.adminSearchBorder)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.midBlue)),
               ),
               onChanged: (v) => _debouncer.run(() {
                 ref.read(adminArticleListProvider.notifier).setSearch(v.isEmpty ? null : v);
@@ -74,16 +75,19 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
             ref.read(adminArticleListProvider.notifier).setStatusFilter('archived');
           }),
           const Spacer(),
-          articlesAsync.whenData((list) => Text('${list.length} כתבות', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          articlesAsync.whenData((list) => Text('${list.length} כתבות', style: GoogleFonts.inter(fontSize: 13, color: AppColors.adminTextLight))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 16),
-          FilledButton.icon(
-            onPressed: () => _showArticleEditor(context, ref),
-            icon: const Icon(Icons.add, size: 18),
-            label: Text('כתבה חדשה', style: GoogleFonts.rubik(fontSize: 13)),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
-              minimumSize: const Size(0, 40),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          SizedBox(
+            height: 40,
+            child: FilledButton.icon(
+              onPressed: () => _showArticleEditor(context, ref),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text('כתבה חדשה', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500)),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.midBlue,
+                minimumSize: const Size(0, 40),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
             ),
           ),
         ]),
@@ -644,18 +648,23 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsets.only(left: 8),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent,
+            color: selected ? AppColors.adminActiveBg : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5),
+            border: Border.all(color: selected ? AppColors.midBlue.withValues(alpha: 0.3) : AppColors.adminSearchBorder, width: 1),
           ),
-          child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(label, style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+            color: selected ? AppColors.midBlue : AppColors.adminTextMedium,
+          )),
         ),
       ),
     );

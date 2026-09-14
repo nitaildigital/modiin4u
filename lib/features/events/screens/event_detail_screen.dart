@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:latlong2/latlong.dart';
 
+/// Event detail screen – hero image, date badge, info section, organizer,
+/// about, what's included, mini-map, "You May Also Like" cards, RSVP bar.
 class EventDetailScreen extends StatefulWidget {
   final String eventId;
-
   const EventDetailScreen({super.key, required this.eventId});
 
   @override
@@ -14,378 +16,1002 @@ class EventDetailScreen extends StatefulWidget {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
-  bool _isAttending = false;
+  bool _isGoing = false;
+
+  // ── Related events (You May Also Like) ──
+  static const _related = [
+    _RelatedEvent(
+      'Modiin Community Festival',
+      'Municipal & Community',
+      'AUG', 22,
+      '10:00 AM',
+      'Modiin City Center',
+      'FREE', 86,
+    ),
+    _RelatedEvent(
+      'Family Fun Day',
+      'Kids & Family',
+      'AUG', 23,
+      '11:00 AM',
+      'Anava Park',
+      '₪20', 86,
+    ),
+    _RelatedEvent(
+      'Live Jazz Evening',
+      'Music',
+      'AUG', 24,
+      '8:30 PM',
+      'Local Cultural Center',
+      '₪60', 51,
+    ),
+    _RelatedEvent(
+      'Kids Cooking Workshop',
+      'Kids & Family',
+      'AUG', 26,
+      '8:30 PM',
+      'Local Cultural Center',
+      '₪60', 51,
+    ),
+  ];
+
+  // What's included items
+  static const _included = [
+    'Live music performances',
+    'Food & refreshments',
+    'Outdoor seating',
+    'Family-friendly atmosphere',
+    'Local artists',
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 220,
-              pinned: true,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topRight,
-                          end: Alignment.bottomLeft,
-                          colors: [
-                            AppColors.navy,
-                            AppColors.midBlue.withValues(alpha: 0.8),
-                          ],
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.music_note,
-                        size: 80,
-                        color: AppColors.white.withValues(alpha: 0.1),
-                      ),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        top: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 430),
+            child: Column(
+              children: [
+                // ═══════════════════════════════════
+                // Scrollable content
+                // ═══════════════════════════════════
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHero(context),
+                        const SizedBox(height: 49), // space for overlapping badges
+                        _buildInfoSection(),
+                        _buildOrganizedBy(),
+                        const SizedBox(height: 24),
+                        _buildAbout(),
+                        const SizedBox(height: 32),
+                        _buildWhatsIncluded(),
+                        const SizedBox(height: 32),
+                        _buildWhereIsIt(),
+                        const SizedBox(height: 32),
+                        _buildYouMayAlsoLike(),
+                        const SizedBox(height: 24),
+                      ],
                     ),
-                    Positioned(
-                      top: 100,
-                      right: 20,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              '15',
-                              style: GoogleFonts.rubik(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w700,
-                                color: context.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              'אוג׳',
-                              style: GoogleFonts.rubik(
-                                fontSize: 13,
-                                color: AppColors.turquoise,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              actions: [
-                IconButton(icon: const Icon(Icons.share), onPressed: () => Share.share('הופעת שלמה ארצי\n15.8.2026 · 21:00\nהיכל התרבות מודיעין\nמודיעין בשבילך')),
+
+                // ═══════════════════════════════════
+                // Sticky RSVP bar
+                // ═══════════════════════════════════
+                _buildBottomBar(),
               ],
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'הופעת שלמה ארצי',
-                      style: GoogleFonts.rubik(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: context.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              setState(() => _isAttending = !_isAttending);
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text(_isAttending ? 'נרשמת לאירוע!' : 'ביטלת הרשמה', style: GoogleFonts.rubik()),
-                                backgroundColor: _isAttending ? AppColors.success : AppColors.grayMeta,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ));
-                            },
-                            icon: Icon(_isAttending ? Icons.check_circle : Icons.check_circle_outline),
-                            label: Text(_isAttending ? 'רשום/ה!' : 'אני מגיע/ה', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              backgroundColor: _isAttending ? AppColors.success : null,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('האירוע נוסף ליומן', style: GoogleFonts.rubik()),
-                              backgroundColor: AppColors.turquoise,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ));
-                          },
-                          icon: const Icon(Icons.calendar_today, size: 18),
-                          label: Text('ליומן', style: GoogleFonts.rubik()),
-                        ),
-                        const SizedBox(width: 10),
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=31.8932,35.0145');
-                            if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
-                          },
-                          icon: const Icon(Icons.navigation_outlined, size: 18),
-                          label: Text('ניווט', style: GoogleFonts.rubik()),
-                        ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Hero image (260px) with date badge + category badge
+  // ═══════════════════════════════════════════════
+  Widget _buildHero(BuildContext context) {
+    return SizedBox(
+      height: 310, // 260 hero + space for overlapping badges
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Hero image
+          Container(
+            width: double.infinity,
+            height: 260,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+              ),
+            ),
+            child: Stack(
+              children: [
+                // Dark overlay gradient
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Color(0x66000000), // 40% black
+                        Colors.transparent,
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    _InfoRow(Icons.access_time, 'יום ו׳, 15.8.2026', '21:00 - 23:30'),
-                    const SizedBox(height: 12),
-                    _InfoRow(Icons.location_on_outlined, 'היכל התרבות מודיעין', 'רח׳ הלוטוס 1, המע"ר'),
-                    const SizedBox(height: 12),
-                    _InfoRow(Icons.confirmation_number_outlined, 'כרטיסים', '₪180 · מכירה באתר'),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 80,
-                          child: Stack(
-                            children: List.generate(4, (i) {
-                              return Positioned(
-                                right: i * 18.0,
-                                child: CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor: [
-                                    AppColors.turquoise,
-                                    AppColors.midBlue,
-                                    AppColors.gold,
-                                    AppColors.navy,
-                                  ][i],
-                                  child: Text(
-                                    ['י', 'ד', 'מ', 'א'][i],
-                                    style: GoogleFonts.rubik(
-                                      fontSize: 11,
-                                      color: AppColors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '234 תושבים מתעניינים',
-                          style: GoogleFonts.rubik(
-                            fontSize: 13,
-                            color: AppColors.turquoise,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                  ),
+                ),
+                // Placeholder icon
+                Center(
+                  child: Icon(
+                    IconsaxPlusBold.calendar_1,
+                    size: 60,
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Back button (top-left)
+          Positioned(
+            left: 12,
+            top: MediaQuery.of(context).padding.top + 7,
+            child: GestureDetector(
+              onTap: () => context.pop(),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(IconsaxPlusLinear.arrow_left,
+                      size: 20, color: Color(0xFF3D3D3D)),
+                ),
+              ),
+            ),
+          ),
+
+          // Share button (top-right second)
+          Positioned(
+            right: 56,
+            top: MediaQuery.of(context).padding.top + 7,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Icon(IconsaxPlusLinear.export_1,
+                    size: 20, color: Color(0xFF3D3D3D)),
+              ),
+            ),
+          ),
+
+          // Heart button (top-right)
+          Positioned(
+            right: 12,
+            top: MediaQuery.of(context).padding.top + 7,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Icon(IconsaxPlusLinear.heart,
+                    size: 20, color: Color(0xFF3D3D3D)),
+              ),
+            ),
+          ),
+
+          // Date badge (overlapping bottom-left)
+          Positioned(
+            left: 12,
+            top: 215,
+            child: Container(
+              width: 81,
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(
+                    color: const Color(0xFF123A72), width: 2),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'AUG',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF123A72),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'על האירוע',
-                      style: GoogleFonts.rubik(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: context.textPrimary,
-                      ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '25',
+                    style: GoogleFonts.inter(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'שלמה ארצי חוזר למודיעין עם מופע מיוחד הכולל את כל הלהיטים הגדולים. '
-                      'ערב של נוסטלגיה, שירה בציבור ורגעים מוזיקליים בלתי נשכחים.\n\n'
-                      'הכניסה מגיל 8 ומעלה. חניה חינם בחניון היכל התרבות.',
-                      style: GoogleFonts.rubik(
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Category badge (right side, below hero)
+          Positioned(
+            right: 13,
+            top: 272,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF17A9D0),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Text(
+                'Music',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Info section – title, time, address, interested, price
+  // ═══════════════════════════════════════════════
+  Widget _buildInfoSection() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE7E7E7)),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title
+          Text(
+            'Summer Music Night',
+            style: GoogleFonts.rubik(
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
+              height: 34 / 28,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Info rows
+          Column(
+            children: [
+              // Time
+              Row(
+                children: [
+                  const Icon(IconsaxPlusLinear.clock,
+                      size: 16, color: Color(0xFF888888)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '8:00 PM – 11:00 PM',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF6D6D6D),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Address
+              Row(
+                children: [
+                  const Icon(IconsaxPlusLinear.location,
+                      size: 16, color: Color(0xFF888888)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '21 Sderot El Melachot, Modi\'in Maccabim-Re\'ut',
+                      style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: AppColors.grayText,
-                        height: 1.6,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // People interested
+              Row(
+                children: [
+                  const Icon(IconsaxPlusLinear.people,
+                      size: 16, color: Color(0xFF888888)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '124 people interested',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Price
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '₪50',
+                style: GoogleFonts.rubik(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  height: 34 / 28,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Price',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF6D6D6D),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Organized by section
+  // ═══════════════════════════════════════════════
+  Widget _buildOrganizedBy() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Organized by',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6F6F6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                // Organizer avatar
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: const Color(0xFFE7E7E7), width: 0.625),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      IconsaxPlusBold.building,
+                      size: 18,
+                      color: Colors.white.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Modiin Community Events',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Community & Municipal Events',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // About This Event
+  // ═══════════════════════════════════════════════
+  Widget _buildAbout() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'About This Event',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Get ready for an unforgettable evening of live music under the '
+            'stars in Modiin. Enjoy performances from local artists, great '
+            'music, food, and a vibrant community atmosphere.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 1.6,
+              color: const Color(0xFF3D3D3D),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Whether you\'re coming with friends, family, or simply looking '
+            'for a great night out, Summer Music Night is the perfect way to '
+            'enjoy the summer evening.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 1.6,
+              color: const Color(0xFF3D3D3D),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // What's Included
+  // ═══════════════════════════════════════════════
+  Widget _buildWhatsIncluded() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'What\'s Included',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...List.generate(_included.length, (i) {
+            return Padding(
+              padding: EdgeInsets.only(
+                  bottom: i < _included.length - 1 ? 14 : 0),
+              child: Row(
+                children: [
+                  const Icon(IconsaxPlusLinear.tick_circle,
+                      size: 16, color: Color(0xFF17A9D0)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _included[i],
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF3D3D3D),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'מיקום',
-                      style: GoogleFonts.rubik(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: context.textPrimary,
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Where Is It? (mini FlutterMap)
+  // ═══════════════════════════════════════════════
+  Widget _buildWhereIsIt() {
+    const venuePosition = LatLng(31.8928, 35.0104);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Where Is It?',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 230,
+              child: Stack(
+                children: [
+                  // Map
+                  IgnorePointer(
+                    child: FlutterMap(
+                      options: const MapOptions(
+                        initialCenter: venuePosition,
+                        initialZoom: 15.5,
                       ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.modiin4u.app',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: venuePosition,
+                              width: 48,
+                              height: 48,
+                              child: _buildMapPin(),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 160,
-                      decoration: BoxDecoration(
-                        color: AppColors.midBlue.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: context.borderClr),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                  ),
+
+                  // "Open in Maps" floating button
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 16,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(50),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.map, size: 36, color: AppColors.midBlue.withValues(alpha: 0.3)),
-                            const SizedBox(height: 6),
+                            const Icon(IconsaxPlusLinear.map,
+                                size: 16, color: Color(0xFF0A1230)),
+                            const SizedBox(width: 6),
                             Text(
-                              'היכל התרבות מודיעין',
-                              style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+                              'Open in Maps',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF0A1230),
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'מארגן',
-                      style: GoogleFonts.rubik(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: context.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: context.cardBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: context.borderClr, width: 0.5),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 22,
-                            backgroundColor: AppColors.midBlue.withValues(alpha: 0.1),
-                            child: const Icon(Icons.business, color: AppColors.midBlue),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'היכל התרבות מודיעין',
-                                  style: GoogleFonts.rubik(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  'אירועים ותרבות',
-                                  style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.grayLight),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'אירועים דומים',
-                      style: GoogleFonts.rubik(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: context.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _SimilarEvent('הופעת עידן רייכל', '22.8', '₪200'),
-                    const SizedBox(height: 8),
-                    _SimilarEvent('פסטיבל ג\'אז מודיעין', '29.8', '₪80'),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _InfoRow(this.icon, this.title, this.subtitle);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.turquoise.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 20, color: AppColors.turquoise),
-        ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
-            Text(subtitle, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
-}
 
-class _SimilarEvent extends StatelessWidget {
-  final String title;
-  final String date;
-  final String price;
-
-  const _SimilarEvent(this.title, this.date, this.price);
-
-  @override
-  Widget build(BuildContext context) {
+  // Blue location pin for the mini-map
+  Widget _buildMapPin() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: context.borderClr, width: 0.5),
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 2.74,
+            offset: const Offset(0, 2.74),
+          ),
+        ],
       ),
-      child: Row(
+      child: Center(
+        child: Container(
+          width: 26,
+          height: 26,
+          decoration: const BoxDecoration(
+            color: Color(0xFF006BF6),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            IconsaxPlusBold.location,
+            size: 14,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // You May Also Like
+  // ═══════════════════════════════════════════════
+  Widget _buildYouMayAlsoLike() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
+          Text(
+            'You May Also Like',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...List.generate(_related.length, (i) {
+            return Padding(
+              padding:
+                  EdgeInsets.only(bottom: i < _related.length - 1 ? 12 : 0),
+              child: _RelatedEventCard(event: _related[i], index: i),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // Bottom RSVP bar
+  // ═══════════════════════════════════════════════
+  Widget _buildBottomBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(
+          top: BorderSide(color: Color(0xFFE7E7E7)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: GestureDetector(
+          onTap: () => setState(() => _isGoing = !_isGoing),
+          child: Container(
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.turquoise.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFF123A72),
+              borderRadius: BorderRadius.circular(60),
             ),
             child: Center(
-              child: Text(
-                date.split('.')[0],
-                style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(IconsaxPlusLinear.tick_circle,
+                      size: 20, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isGoing ? 'Going' : 'I\'m Going',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(title, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: context.textPrimary)),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Data model for related events
+// ═══════════════════════════════════════════════
+class _RelatedEvent {
+  final String title;
+  final String category;
+  final String month;
+  final int day;
+  final String time;
+  final String venue;
+  final String price;
+  final int interested;
+
+  const _RelatedEvent(
+    this.title,
+    this.category,
+    this.month,
+    this.day,
+    this.time,
+    this.venue,
+    this.price,
+    this.interested,
+  );
+
+  bool get isFree => price == 'FREE';
+}
+
+// ═══════════════════════════════════════════════
+// Related event card (same pattern as events list)
+// image 361×200 + date badge + heart + info section
+// ═══════════════════════════════════════════════
+class _RelatedEventCard extends StatelessWidget {
+  final _RelatedEvent event;
+  final int index;
+  const _RelatedEventCard({required this.event, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/event/related_$index'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image area with date badge + heart
+          SizedBox(
+            height: 200,
+            child: Stack(
+              children: [
+                // Image placeholder
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      IconsaxPlusBold.calendar_1,
+                      size: 40,
+                      color: Colors.white.withValues(alpha: 0.12),
+                    ),
+                  ),
+                ),
+
+                // Date badge (bottom-left)
+                Positioned(
+                  left: 12,
+                  bottom: 12,
+                  child: Container(
+                    width: 57,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          event.month,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF123A72),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${event.day}',
+                          style: GoogleFonts.inter(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Heart button (top-right)
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(IconsaxPlusLinear.heart,
+                          size: 23, color: Color(0xFF123A72)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          Text(price, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.turquoise, fontWeight: FontWeight.w600)),
+
+          // Info section
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  event.title,
+                  style: GoogleFonts.rubik(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0A1230),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Category
+                Text(
+                  event.category,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF5F5E5A),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Time + Location row
+                Row(
+                  children: [
+                    const Icon(IconsaxPlusBold.clock,
+                        size: 16, color: Color(0xFF17A9D0)),
+                    const SizedBox(width: 8),
+                    Text(
+                      event.time,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF5F5E5A),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(IconsaxPlusBold.location,
+                        size: 16, color: Color(0xFF17A9D0)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        event.venue,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF5F5E5A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Price + Interested row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      event.price,
+                      style: GoogleFonts.rubik(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: event.isFree
+                            ? const Color(0xFF123A72)
+                            : const Color(0xFF0A1230),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(IconsaxPlusBold.star_1,
+                            size: 18, color: Color(0xFF17A9D0)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${event.interested} interested',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF3D3D3D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
