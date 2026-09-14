@@ -1,6 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Network access (Supabase, Google Fonts, map tiles, images) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- Camera & gallery for image_picker (apartment photos) -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+
     <application
-        android:label="modiin4u"
+        android:label="Modiin4U"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
