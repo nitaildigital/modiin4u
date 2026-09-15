@@ -60,7 +60,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/neighborhood/1', // TODO: revert to '/splash'
+  initialLocation: '/splash',
   routes: [
     GoRoute(
       path: '/splash',
