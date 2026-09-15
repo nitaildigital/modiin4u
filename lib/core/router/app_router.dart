@@ -30,6 +30,7 @@ import '../../features/realestate/screens/add_apartment_screen.dart';
 import '../../features/realestate/screens/my_apartments_screen.dart';
 import '../../features/realestate/screens/realestate_map_screen.dart';
 import '../../features/realestate/screens/neighborhood_detail_screen.dart';
+import '../../features/realestate/screens/realestate_search_screen.dart';
 import '../../features/community/screens/community_screen.dart';
 import '../../features/deals/screens/deals_screen.dart';
 import '../../features/deals/screens/deal_detail_screen.dart';
@@ -202,6 +203,20 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
         NeighborhoodDetailScreen(neighborhoodId: state.pathParameters['id']!), state,
+      ),
+    ),
+    GoRoute(
+      path: '/apartments-sale',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        const RealEstateSearchScreen(listingType: 'sale'), state,
+      ),
+    ),
+    GoRoute(
+      path: '/apartments-rent',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        const RealEstateSearchScreen(listingType: 'rent'), state,
       ),
     ),
     GoRoute(
