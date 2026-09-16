@@ -209,14 +209,22 @@ final appRouter = GoRouter(
       path: '/apartments-sale',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
-        const RealEstateSearchScreen(listingType: 'sale'), state,
+        RealEstateSearchScreen(
+          listingType: 'sale',
+          initialQuery: state.uri.queryParameters['q'] ?? '',
+        ),
+        state,
       ),
     ),
     GoRoute(
       path: '/apartments-rent',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
-        const RealEstateSearchScreen(listingType: 'rent'), state,
+        RealEstateSearchScreen(
+          listingType: 'rent',
+          initialQuery: state.uri.queryParameters['q'] ?? '',
+        ),
+        state,
       ),
     ),
     GoRoute(

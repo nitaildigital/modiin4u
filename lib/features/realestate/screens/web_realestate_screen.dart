@@ -301,9 +301,11 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
 
   void _onSearch() {
     final query = _locationController.text.trim();
-    final mode = _searchMode == 0 ? 'buy' : 'rent';
-    // TODO: navigate to search results with query & mode
-    debugPrint('Search: mode=$mode, query=$query');
+    final path = _searchMode == 0 ? '/apartments-sale' : '/apartments-rent';
+    context.push(Uri(
+      path: path,
+      queryParameters: query.isEmpty ? null : {'q': query},
+    ).toString());
   }
 
   Widget _buildSearchBar() {

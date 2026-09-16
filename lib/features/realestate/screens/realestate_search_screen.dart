@@ -5,18 +5,27 @@ import 'web_realestate_search_screen.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Real Estate Search Screen — wrapper with responsive layout
+// Web-only page; mobile falls back to the app's own flows.
 // ═══════════════════════════════════════════════════════════
 
 class RealEstateSearchScreen extends StatelessWidget {
   final String listingType; // 'sale' or 'rent'
-  const RealEstateSearchScreen({super.key, required this.listingType});
+  final String initialQuery;
+  const RealEstateSearchScreen({
+    super.key,
+    required this.listingType,
+    this.initialQuery = '',
+  });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) {
-          return WebRealEstateSearchContent(listingType: listingType);
+          return WebRealEstateSearchContent(
+            listingType: listingType,
+            initialQuery: initialQuery,
+          );
         }
         return _MobilePlaceholder(listingType: listingType);
       },

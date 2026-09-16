@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_colors.dart';
+import 'realestate_search_data.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Real Estate Search — three-panel layout from Figma
@@ -12,7 +13,12 @@ import '../../../core/theme/app_colors.dart';
 
 class WebRealEstateSearchContent extends StatefulWidget {
   final String listingType; // 'sale' or 'rent'
-  const WebRealEstateSearchContent({super.key, required this.listingType});
+  final String initialQuery;
+  const WebRealEstateSearchContent({
+    super.key,
+    required this.listingType,
+    this.initialQuery = '',
+  });
 
   @override
   State<WebRealEstateSearchContent> createState() =>
@@ -23,32 +29,29 @@ class _WebRealEstateSearchContentState
     extends State<WebRealEstateSearchContent> {
   bool _isHebrew = false;
   final _scrollController = ScrollController();
-  final _searchController = TextEditingController();
+  late final TextEditingController _searchController;
 
-  // Filter state
-  final Map<String, bool> _propertyTypeChecks = {
-    'apartment': false,
-    'penthouse': true,
-    'garden': false,
-    'duplex': true,
-    'villa': false,
-    'studio': false,
-  };
+  late SearchFilters _filters;
 
-  RangeValues _priceRange = const RangeValues(1000000, 10000000);
-  static const double _priceMin = 1000000;
-  static const double _priceMax = 10000000;
+  bool get _isRent => widget.listingType == 'rent';
+  RangeValues get _fullRange => fullPriceRange(isRent: _isRent);
+  double get _priceMin => _fullRange.start;
+  double get _priceMax => _fullRange.end;
 
-  final Map<String, bool> _roomChecks = {
-    '1': false,
-    '2': true,
-    '3': false,
-    '4': true,
-    '5+': false,
-  };
-
-  String _selectedFloor = 'any';
-  String _selectedNeighborhood = 'any';
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController(text: widget.initialQuery);
+    _filters = SearchFilters(
+      priceRange: _fullRange,
+      query: widget.initialQuery,
+    );
+    _searchController.addListener(
+      () => setState(
+        () => _filters = _filters.copyWith(query: _searchController.text),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -58,8 +61,6 @@ class _WebRealEstateSearchContentState
   }
 
   String _t(String en, String he) => _isHebrew ? he : en;
-
-  bool get _isRent => widget.listingType == 'rent';
 
   // ── Nav items ──
   List<_NavItem> get _navItems => [
@@ -87,147 +88,10 @@ class _WebRealEstateSearchContentState
       ];
 
   // ── Listing data ──
-  List<_SearchListing> get _listings => _isRent ? _rentListings : _saleListings;
+  List<SearchListing> get _allListings =>
+      searchListings(isRent: _isRent, isHebrew: _isHebrew);
 
-  List<_SearchListing> get _saleListings => [
-        _SearchListing(
-          title: _t('Mini Penthouse 6 Rooms – Avni Hen',
-              'מיני פנטהאוז 6 חדרים – אבני חן'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '140',
-          rooms: '6',
-          floor: '3',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪4,350,000',
-          imageBg: const Color(0xFFD4E4F7),
-        ),
-        _SearchListing(
-          title:
-              _t('Ha-Rav Kook St, Modiin', 'רח׳ הרב קוק, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '120',
-          rooms: '5',
-          floor: '2',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪3,600,000',
-          imageBg: const Color(0xFFE0D4C8),
-        ),
-        _SearchListing(
-          title: _t('Nachal Shilat, Modiin', 'נחל שילת, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '163',
-          rooms: '6',
-          floor: '4',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪4,800,000',
-          imageBg: const Color(0xFFC8D8E0),
-        ),
-        _SearchListing(
-          title: _t(
-              'Sheshet HaYamim, Modiin', 'ששת הימים, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '135',
-          rooms: '4',
-          floor: '1',
-          type: _t('Garden Apartment', 'דירת גן'),
-          price: '₪4,100,000',
-          imageBg: const Color(0xFFD8E8D4),
-        ),
-        _SearchListing(
-          title: _t('Matityahu Doron St, Modiin',
-              'רח׳ מתתיהו דורון, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '112',
-          rooms: '4',
-          floor: '2',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪3,280,000',
-          imageBg: const Color(0xFFE8EEF4),
-        ),
-        _SearchListing(
-          title: _t('Hein St 6, Modiin', 'רח׳ חן 6, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '112',
-          rooms: '4',
-          floor: '2',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪3,280,000',
-          imageBg: const Color(0xFFF0E4D4),
-        ),
-      ];
-
-  List<_SearchListing> get _rentListings => [
-        _SearchListing(
-          title: _t('Mini Penthouse 6 Rooms – Avni Hen',
-              'מיני פנטהאוז 6 חדרים – אבני חן'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '140',
-          rooms: '6',
-          floor: '3',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪12,500',
-          perMonth: _t('/ In the month', '/ לחודש'),
-          imageBg: const Color(0xFFE4D8F0),
-        ),
-        _SearchListing(
-          title: _t(
-              'Ha-Rav Kook St, Modiin', 'רח׳ הרב קוק, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '120',
-          rooms: '5',
-          floor: '2',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪9,800',
-          perMonth: _t('/ In the month', '/ לחודש'),
-          imageBg: const Color(0xFFD4E0F0),
-        ),
-        _SearchListing(
-          title: _t('Nachal Shilat, Modiin', 'נחל שילת, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '163',
-          rooms: '6',
-          floor: '4',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪14,000',
-          perMonth: _t('/ In the month', '/ לחודש'),
-          imageBg: const Color(0xFFC8D8E0),
-        ),
-        _SearchListing(
-          title: _t(
-              'Sheshet HaYamim, Modiin', 'ששת הימים, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '135',
-          rooms: '4',
-          floor: '1',
-          type: _t('Garden Apartment', 'דירת גן'),
-          price: '₪8,500',
-          perMonth: _t('/ In the month', '/ לחודש'),
-          imageBg: const Color(0xFFD8E8D4),
-        ),
-        _SearchListing(
-          title: _t('Matityahu Doron St, Modiin',
-              'רח׳ מתתיהו דורון, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '112',
-          rooms: '4',
-          floor: '2',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪7,200',
-          perMonth: _t('/ In the month', '/ לחודש'),
-          imageBg: const Color(0xFFE8EEF4),
-        ),
-        _SearchListing(
-          title: _t('Hein St 6, Modiin', 'רח׳ חן 6, מודיעין'),
-          neighborhood: _t('Maccabim Reut', 'מכבים רעות'),
-          area: '112',
-          rooms: '4',
-          floor: '2',
-          type: _t('Standard Apartment', 'דירה רגילה'),
-          price: '₪6,800',
-          perMonth: _t('/ In the month', '/ לחודש'),
-          imageBg: const Color(0xFFF0E4D4),
-        ),
-      ];
+  List<SearchListing> get _listings => applyFilters(_allListings, _filters);
 
   // ── Map pin positions (relative to map area, % of width/height) ──
   static const _mapPins = [
@@ -383,17 +247,13 @@ class _WebRealEstateSearchContentState
               title: _t('Property Type', 'סוג נכס'),
               child: Column(
                 children: [
-                  _buildCheckbox('apartment',
-                      _t('Apartment', 'דירה')),
-                  _buildCheckbox('penthouse',
-                      _t('Penthouse', 'פנטהאוז')),
-                  _buildCheckbox('garden',
-                      _t('Garden Apartment', 'דירת גן')),
-                  _buildCheckbox(
-                      'duplex', _t('Duplex', 'דופלקס')),
-                  _buildCheckbox('villa', _t('Villa', 'וילה')),
-                  _buildCheckbox(
-                      'studio', _t('Studio', 'סטודיו')),
+                  _buildTypeCheckbox('apartment', _t('Apartment', 'דירה')),
+                  _buildTypeCheckbox('penthouse', _t('Penthouse', 'פנטהאוז')),
+                  _buildTypeCheckbox(
+                      'garden', _t('Garden Apartment', 'דירת גן')),
+                  _buildTypeCheckbox('duplex', _t('Duplex', 'דופלקס')),
+                  _buildTypeCheckbox('villa', _t('Villa', 'וילה')),
+                  _buildTypeCheckbox('studio', _t('Studio', 'סטודיו')),
                 ],
               ),
             ),
@@ -409,21 +269,11 @@ class _WebRealEstateSearchContentState
               title: _t('Rooms', 'חדרים'),
               child: Column(
                 children: [
-                  _buildCheckbox(
-                      '1', _t('1 Room', 'חדר 1'),
-                      isRoom: true),
-                  _buildCheckbox(
-                      '2', _t('2 Rooms', '2 חדרים'),
-                      isRoom: true),
-                  _buildCheckbox(
-                      '3', _t('3 Rooms', '3 חדרים'),
-                      isRoom: true),
-                  _buildCheckbox(
-                      '4', _t('4 Rooms', '4 חדרים'),
-                      isRoom: true),
-                  _buildCheckbox(
-                      '5+', _t('5+ Rooms', '5+ חדרים'),
-                      isRoom: true),
+                  _buildRoomCheckbox(1, _t('1 Room', 'חדר 1')),
+                  _buildRoomCheckbox(2, _t('2 Rooms', '2 חדרים')),
+                  _buildRoomCheckbox(3, _t('3 Rooms', '3 חדרים')),
+                  _buildRoomCheckbox(4, _t('4 Rooms', '4 חדרים')),
+                  _buildRoomCheckbox(5, _t('5+ Rooms', '5+ חדרים')),
                 ],
               ),
             ),
@@ -432,16 +282,12 @@ class _WebRealEstateSearchContentState
             _buildFilterSection(
               title: _t('Floor', 'קומה'),
               child: _buildDropdown(
-                value: _selectedFloor == 'any'
-                    ? _t('Any', 'הכל')
-                    : _selectedFloor,
-                onTap: () {
-                  // Toggle through options for demo
-                  setState(() {
-                    _selectedFloor =
-                        _selectedFloor == 'any' ? '1-3' : 'any';
-                  });
-                },
+                value: floorLabel(_isHebrew, _filters.floor),
+                options: floorOptions
+                    .map((f) => floorLabel(_isHebrew, f))
+                    .toList(),
+                onSelected: (i) => setState(
+                    () => _filters = _filters.copyWith(floor: floorOptions[i])),
               ),
             ),
             const SizedBox(height: 16),
@@ -449,19 +295,45 @@ class _WebRealEstateSearchContentState
             _buildFilterSection(
               title: _t('Neighborhood', 'שכונה'),
               child: _buildDropdown(
-                value: _selectedNeighborhood == 'any'
+                value: _filters.neighborhood == 'any'
                     ? _t('Any', 'הכל')
-                    : _selectedNeighborhood,
-                onTap: () {
-                  setState(() {
-                    _selectedNeighborhood =
-                        _selectedNeighborhood == 'any'
-                            ? _t('HaNahalim', 'הנחלים')
-                            : 'any';
-                  });
-                },
+                    : _filters.neighborhood,
+                options: [
+                  _t('Any', 'הכל'),
+                  ...neighborhoodOptions(_isHebrew),
+                ],
+                onSelected: (i) => setState(() {
+                  _filters = _filters.copyWith(
+                    neighborhood:
+                        i == 0 ? 'any' : neighborhoodOptions(_isHebrew)[i - 1],
+                  );
+                }),
               ),
             ),
+            const SizedBox(height: 20),
+            // Clear all
+            if (_filters.activeCount(_fullRange) > 0)
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    _filters = SearchFilters(
+                      priceRange: _fullRange,
+                      query: _searchController.text,
+                    );
+                  }),
+                  child: Text(
+                    _t('Clear all filters', 'נקה את כל הסינונים'),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.midBlue,
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.midBlue,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -519,16 +391,43 @@ class _WebRealEstateSearchContentState
     );
   }
 
-  Widget _buildCheckbox(String key, String label,
-      {bool isRoom = false}) {
-    final checks = isRoom ? _roomChecks : _propertyTypeChecks;
-    final checked = checks[key] ?? false;
+  Widget _buildTypeCheckbox(String key, String label) {
+    final checked = _filters.propertyTypes.contains(key);
+    return _checkboxRow(
+      label: label,
+      checked: checked,
+      onTap: () => setState(() {
+        final next = Set<String>.from(_filters.propertyTypes);
+        checked ? next.remove(key) : next.add(key);
+        _filters = _filters.copyWith(propertyTypes: next);
+      }),
+    );
+  }
+
+  Widget _buildRoomCheckbox(int rooms, String label) {
+    final checked = _filters.rooms.contains(rooms);
+    return _checkboxRow(
+      label: label,
+      checked: checked,
+      onTap: () => setState(() {
+        final next = Set<int>.from(_filters.rooms);
+        checked ? next.remove(rooms) : next.add(rooms);
+        _filters = _filters.copyWith(rooms: next);
+      }),
+    );
+  }
+
+  Widget _checkboxRow({
+    required String label,
+    required bool checked,
+    required VoidCallback onTap,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
-          onTap: () => setState(() => checks[key] = !checked),
+          onTap: onTap,
           child: Row(
             children: [
               Container(
@@ -561,10 +460,11 @@ class _WebRealEstateSearchContentState
   }
 
   Widget _buildPriceRange() {
-    final startFormatted = _formatPrice(_priceRange.start);
-    final endFormatted = _priceRange.end >= _priceMax
-        ? '₪10,000,000+'
-        : _formatPrice(_priceRange.end);
+    final range = _filters.priceRange;
+    final startFormatted = formatPrice(range.start.round());
+    final endFormatted = range.end >= _priceMax
+        ? '${formatPrice(_priceMax.round())}+'
+        : formatPrice(range.end.round());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -588,57 +488,61 @@ class _WebRealEstateSearchContentState
                 const RoundRangeSliderThumbShape(enabledThumbRadius: 9.5),
           ),
           child: RangeSlider(
-            values: _priceRange,
+            values: range,
             min: _priceMin,
             max: _priceMax,
             divisions: 90,
-            onChanged: (values) =>
-                setState(() => _priceRange = values),
+            onChanged: (values) => setState(
+                () => _filters = _filters.copyWith(priceRange: values)),
           ),
         ),
       ],
     );
   }
 
-  String _formatPrice(double value) {
-    final intVal = value.round();
-    if (intVal >= 1000000) {
-      final millions = intVal ~/ 1000000;
-      final thousands = (intVal % 1000000) ~/ 1000;
-      if (thousands > 0) {
-        return '₪$millions,${thousands.toString().padLeft(3, '0')},000';
-      }
-      return '₪$millions,000,000';
-    }
-    return '₪${intVal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
-  }
-
-  Widget _buildDropdown(
-      {required String value, required VoidCallback onTap}) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 42,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE7E7E7)),
-            borderRadius: BorderRadius.circular(8),
+  Widget _buildDropdown({
+    required String value,
+    required List<String> options,
+    required ValueChanged<int> onSelected,
+  }) {
+    return PopupMenuButton<int>(
+      tooltip: '',
+      offset: const Offset(0, 46),
+      position: PopupMenuPosition.under,
+      constraints: const BoxConstraints(minWidth: 254),
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        for (var i = 0; i < options.length; i++)
+          PopupMenuItem(
+            value: i,
+            height: 40,
+            child: Text(options[i],
+                style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: options[i] == value
+                        ? AppColors.midBlue
+                        : const Color(0xFF3D3D3D))),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(value,
-                    style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: const Color(0xFF3D3D3D))),
-              ),
-              const Icon(Icons.keyboard_arrow_down,
-                  size: 18, color: Color(0xFF7B899A)),
-            ],
-          ),
+      ],
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE7E7E7)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(value,
+                  style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: const Color(0xFF3D3D3D))),
+            ),
+            const Icon(Icons.keyboard_arrow_down,
+                size: 18, color: Color(0xFF7B899A)),
+          ],
         ),
       ),
     );
@@ -659,13 +563,15 @@ class _WebRealEstateSearchContentState
           _buildListingsHeader(),
           // Scrollable list
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              itemCount: _listings.length,
-              itemBuilder: (context, index) =>
-                  _buildListingCard(_listings[index]),
-            ),
+            child: _listings.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: _listings.length,
+                    itemBuilder: (context, index) =>
+                        _buildListingCard(_listings[index]),
+                  ),
           ),
         ],
       ),
@@ -689,8 +595,8 @@ class _WebRealEstateSearchContentState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _t('124 Apartments found $typeText',
-                          '124 דירות נמצאו $typeText'),
+                      _t('${_listings.length} Apartments found $typeText',
+                          '${_listings.length} דירות נמצאו $typeText'),
                       style: GoogleFonts.nunito(
                           fontSize: 28,
                           fontWeight: FontWeight.w600,
@@ -745,7 +651,40 @@ class _WebRealEstateSearchContentState
     );
   }
 
-  Widget _buildListingCard(_SearchListing listing) {
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(IconsaxPlusLinear.search_status,
+                size: 48, color: const Color(0xFF7B899A).withValues(alpha: 0.6)),
+            const SizedBox(height: 16),
+            Text(
+              _t('No apartments match your filters',
+                  'אין דירות שתואמות את הסינון'),
+              style: GoogleFonts.nunito(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.navy),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _t('Try widening the price range or clearing a filter.',
+                  'נסו להרחיב את טווח המחירים או להסיר סינון.'),
+              style: GoogleFonts.inter(
+                  fontSize: 14, color: const Color(0xFF5F5E5A)),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListingCard(SearchListing listing) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
@@ -1061,23 +1000,6 @@ class _NavItem {
       required this.route,
       this.hasDropdown = false,
       this.isActive = false});
-}
-
-class _SearchListing {
-  final String title, neighborhood, area, rooms, floor, type, price;
-  final String? perMonth;
-  final Color imageBg;
-  const _SearchListing({
-    required this.title,
-    required this.neighborhood,
-    required this.area,
-    required this.rooms,
-    required this.floor,
-    required this.type,
-    required this.price,
-    this.perMonth,
-    this.imageBg = const Color(0xFFE8EEF4),
-  });
 }
 
 // ═══════════════════════════════════════════════
