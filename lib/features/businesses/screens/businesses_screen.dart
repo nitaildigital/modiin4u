@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import '../../../core/theme/app_colors.dart';
+import 'web_businesses_screen.dart';
 
+/// Businesses – responsive wrapper.
 class BusinessesScreen extends StatelessWidget {
   const BusinessesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebBusinessesContent();
+        return const _MobileBusinessesContent();
+      },
+    );
+  }
+}
+
+/// Business category grid – dark gradient cards with a search bar on top.
+class _MobileBusinessesContent extends StatelessWidget {
+  const _MobileBusinessesContent();
 
   static const _categories = [
     _Category('Bars', '24 businesses', Color(0xFF2D1B4E), Color(0xFF4A2D6E)),
