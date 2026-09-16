@@ -26,6 +26,10 @@ class RestaurantPlace {
   final String? category;
   final bool isKosher;
   final Color marker, imageBg;
+  /// Remote photo from the WordPress export; empty on demo places, which
+  /// keep falling back to the [imageBg] gradient.
+  final String imageUrl;
+  final String phone;
   const RestaurantPlace({
     required this.name,
     required this.type,
@@ -38,6 +42,8 @@ class RestaurantPlace {
     this.isKosher = false,
     required this.marker,
     required this.imageBg,
+    this.imageUrl = '',
+    this.phone = '',
   });
 }
 
@@ -181,6 +187,31 @@ class RestaurantCardState extends State<RestaurantCard> {
     );
   }
 
+  /// The place's photo, falling back to the gradient while it loads, when it
+  /// fails, and on demo places that have none.
+  ///
+  /// `webHtmlElementStrategy`: WordPress serves its uploads without CORS
+  /// headers, so CanvasKit has to hand the URL to a plain <img>.
+  Widget _photo(RestaurantPlace p) {
+    final fallback = DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [p.imageBg, Color.lerp(p.imageBg, Colors.black, 0.2)!],
+        ),
+      ),
+    );
+    if (p.imageUrl.isEmpty) return fallback;
+    return Image.network(
+      p.imageUrl,
+      fit: BoxFit.cover,
+      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+      errorBuilder: (_, _, _) => fallback,
+      loadingBuilder: (context, child, progress) => progress == null ? child : fallback,
+    );
+  }
+
   Widget _buildImageBand(RestaurantPlace p) {
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
@@ -190,20 +221,7 @@ class RestaurantCardState extends State<RestaurantCard> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      p.imageBg,
-                      Color.lerp(p.imageBg, Colors.black, 0.2)!,
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            Positioned.fill(child: _photo(p)),
             // Favorite
             PositionedDirectional(
               top: 12,
@@ -306,39 +324,65 @@ class RestaurantCardState extends State<RestaurantCard> {
   Widget _buildStatsRow(RestaurantPlace p) {
     return Row(
       children: [
-        Flexible(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                IconsaxPlusBold.star_1,
-                size: 16,
-                color: Color(0xFFFFC107),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                p.rating.toString(),
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
+        // Most real listings carry neither a rating nor a review count, and
+        // "0 (0)" reads as a score the place earned rather than one nobody
+        // gave it. Show each half only when there is a number behind it, and
+        // fall back to the view count the site does keep.
+        if (p.rating > 0 || p.reviews > 0)
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  IconsaxPlusBold.star_1,
+                  size: 16,
+                  color: Color(0xFFFFC107),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  '(${p.reviews})',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: const Color(0xFF6D6D6D),
+                const SizedBox(width: 6),
+                if (p.rating > 0)
+                  Text(
+                    p.rating.toStringAsFixed(1),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                if (p.reviews > 0) ...[
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      '(${p.reviews})',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          )
+        else if (p.views != null)
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(IconsaxPlusLinear.eye, size: 16, color: Color(0xFF6D6D6D)),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    '${p.views}',
+                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6D6D6D)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         const SizedBox(width: 12),
         Flexible(
           child: p.deliveryTime != null

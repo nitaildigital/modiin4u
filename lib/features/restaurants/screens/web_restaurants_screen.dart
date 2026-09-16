@@ -5,6 +5,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/restaurant_place_card.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../core/data/wp_content.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Restaurants — full desktop layout from Figma
@@ -25,6 +26,61 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
   int _bannerPage = 0;
   int _categoryPage = 0;
   final _searchController = TextEditingController();
+
+  /// Food and drink listings from the directory. Empty until the asset
+  /// loads and empty if it fails, in which case the demo places stand in.
+  List<WpBusiness> _food = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadWpBusinesses().then((all) {
+      if (!mounted) return;
+      setState(() => _food = all.where(_isFood).toList());
+    });
+  }
+
+  bool get _live => _food.isNotEmpty;
+
+  /// The site has no "restaurant" post type — eateries are businesses
+  /// carrying food categories, so they are matched on those.
+  static const _foodWords = [
+    'מסעד', 'פיצ', 'סושי', 'גריל', 'המבורגר', 'בורגר', 'אסיאתי', 'איטלקי',
+    'שווארמ', 'חומוס', 'פלאפל', 'בשרי', 'חלבי', 'דגים', 'קונדיטור',
+    'בית קפה', 'בתי קפה', 'ארוחת בוקר', 'גלידות', 'ברים', 'קייטרינג', 'מאפ',
+  ];
+
+  static bool _isFood(WpBusiness b) =>
+      b.terms.any((t) => _foodWords.any(t.contains));
+
+  /// Listings whose categories match [words], busiest first.
+  List<WpBusiness> _foodMatching(List<String> words, {int take = 8}) {
+    final matches = _food
+        .where((b) => b.terms.any((t) => words.any(t.contains)))
+        .toList();
+    return matches.take(take).toList();
+  }
+
+  RestaurantPlace _toPlace(WpBusiness b, Color marker) => RestaurantPlace(
+    name: b.title,
+    type: b.primaryTerm,
+    address: b.shortAddress,
+    rating: b.rating ?? 0,
+    reviews: 0,
+    views: b.views,
+    category: b.primaryTerm,
+    isKosher: b.kosher,
+    deliveryTime: b.delivery ? _t('Delivery', 'משלוחים') : null,
+    marker: marker,
+    imageBg: _placePalette[b.id % _placePalette.length],
+    imageUrl: b.image,
+    phone: b.phone,
+  );
+
+  static const _placePalette = [
+    Color(0xFFE3CFC4), Color(0xFFDCE0C4), Color(0xFFC4D4E0), Color(0xFFE0C4D4),
+    Color(0xFFC4E0D8), Color(0xFFE0DCC4), Color(0xFFD4C4E0), Color(0xFFC4C9E0),
+  ];
 
   @override
   void dispose() {
@@ -55,7 +111,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
   ];
 
   // ── Food categories ──
-  List<_Category> get _categories => [
+  List<_Category> get _categoriesDemo => [
     _Category(name: _t('Japanese', 'יפני'), count: 12, imageBg: const Color(0xFFE8D5D0)),
     _Category(name: _t('Sushi', 'סושי'), count: 10, imageBg: const Color(0xFFD5E3E8)),
     _Category(name: _t('Italian', 'איטלקי'), count: 8, imageBg: const Color(0xFFE8E0CE)),
@@ -68,7 +124,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
   ];
 
   // ── Popular restaurants ──
-  List<RestaurantPlace> get _popular => [
+  List<RestaurantPlace> get _popularDemo => [
     RestaurantPlace(
       name: _t('Shipudey Hatikva', 'שיפודי התקווה'),
       type: _t('Restaurant', 'מסעדה'),
@@ -104,7 +160,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
   ];
 
   // ── Coffee shops ──
-  List<RestaurantPlace> get _coffeeShops => [
+  List<RestaurantPlace> get _coffeeShopsDemo => [
     RestaurantPlace(
       name: _t('Fresh Coffee', 'פרש קופי'),
       type: _t('Cafe', 'בית קפה'),
@@ -138,7 +194,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
   ];
 
   // ── Bars ──
-  List<RestaurantPlace> get _bars => [
+  List<RestaurantPlace> get _barsDemo => [
     RestaurantPlace(
       name: _t("Jim's Bar", 'הבר של ג׳ים'),
       type: _t('Bar', 'בר'),
@@ -171,7 +227,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
   ];
 
   // ── Most loved ──
-  List<RestaurantPlace> get _mostLoved => [
+  List<RestaurantPlace> get _mostLovedDemo => [
     RestaurantPlace(
       name: _t('Japan Japan Modiin', 'ג׳פן ג׳פן מודיעין'),
       type: _t('Restaurant', 'מסעדה'),
@@ -210,7 +266,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
   ];
 
   // ── Lunch nearby (delivery time instead of views) ──
-  List<RestaurantPlace> get _lunchNearby => [
+  List<RestaurantPlace> get _lunchNearbyDemo => [
     RestaurantPlace(
       name: _t('Orta Abylai Khan', 'אורטה אביליי חאן'),
       type: _t('Restaurant · Asian', 'מסעדה · אסייתי'),
@@ -247,6 +303,76 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
       marker: kRestaurantGreen, imageBg: const Color(0xFFD2DCD9),
     ),
   ];
+
+  // ═══════════════════════════════════════════════
+  // LIVE CONTENT — the directory's food listings, demo as the fallback
+  // ═══════════════════════════════════════════════
+
+  static const _categoryPalette = [
+    Color(0xFFE8D5D0), Color(0xFFD5E3E8), Color(0xFFE8E0CE), Color(0xFFD9E8D5),
+    Color(0xFFE8DCD0), Color(0xFFD0DFE8), Color(0xFFE8D0D0), Color(0xFFDCE8D0),
+    Color(0xFFE8D8E4),
+  ];
+
+  /// The nine busiest food categories, derived from the listings rather than
+  /// hard-coded — campaign tags are dropped, they are not cuisines.
+  List<_Category> get _categories {
+    if (!_live) return _categoriesDemo;
+    final counts = <String, int>{};
+    for (final b in _food) {
+      for (final t in b.terms) {
+        if (t.contains('מלחמת')) continue;
+        counts[t] = (counts[t] ?? 0) + 1;
+      }
+    }
+    final top = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return [
+      for (var i = 0; i < top.length && i < 9; i++)
+        _Category(
+          name: top[i].key,
+          count: top[i].value,
+          imageBg: _categoryPalette[i % _categoryPalette.length],
+        ),
+    ];
+  }
+
+  List<RestaurantPlace> get _popular => _live
+      ? [
+          for (final b in _foodMatching(const ['מסעד', 'פיצ', 'גריל', 'סושי', 'איטלקי', 'אסיאתי']))
+            _toPlace(b, kRestaurantGreen),
+        ]
+      : _popularDemo;
+
+  List<RestaurantPlace> get _coffeeShops => _live
+      ? [
+          for (final b in _foodMatching(const ['בתי קפה', 'בית קפה', 'ארוחת בוקר', 'קונדיטור', 'גלידות']))
+            _toPlace(b, kCafeBlue),
+        ]
+      : _coffeeShopsDemo;
+
+  List<RestaurantPlace> get _bars => _live
+      ? [for (final b in _foodMatching(const ['ברים', 'בר '])) _toPlace(b, kBarRed)]
+      : _barsDemo;
+
+  /// Only 36 of the food listings carry a rating, so "most loved" ranks by
+  /// rating where there is one and falls back to view count.
+  List<RestaurantPlace> get _mostLoved {
+    if (!_live) return _mostLovedDemo;
+    final rated = _food.where((b) => b.rating != null).toList()
+      ..sort((a, b) {
+        final byRating = b.rating!.compareTo(a.rating!);
+        return byRating != 0 ? byRating : b.views.compareTo(a.views);
+      });
+    return [for (final b in rated.take(10)) _toPlace(b, kHeartRed)];
+  }
+
+  /// Places that deliver — the closest thing the export has to "lunch nearby".
+  List<RestaurantPlace> get _lunchNearby => _live
+      ? [
+          for (final b in _food.where((b) => b.delivery).take(10))
+            _toPlace(b, AppColors.turquoise),
+        ]
+      : _lunchNearbyDemo;
 
   @override
   Widget build(BuildContext context) {
