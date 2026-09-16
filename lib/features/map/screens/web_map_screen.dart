@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/map_pois.dart';
+import '../../../shared/widgets/web_chrome.dart';
 
 const _kBorder = Color(0xFFE7E7E7);
 const _kGrey = Color(0xFF5F5E5A);
@@ -47,16 +47,6 @@ class _WebMapContentState extends State<WebMapContent> {
   }
 
   // ── Nav links ──
-  List<_NavItem> get _navItems => [
-    _NavItem(label: _t('Professionals', 'בעלי מקצוע'), route: '/businesses', hasDropdown: true),
-    _NavItem(label: _t('Modiin News', 'חדשות מודיעין'), route: '/news', hasDropdown: true),
-    _NavItem(label: _t('Events', 'אירועים'), route: '/events'),
-    _NavItem(label: _t('Deals', 'מבצעים'), route: '/deals'),
-    _NavItem(label: _t('Real Estate in Modiin', 'נדל"ן במודיעין'), route: '/realestate'),
-    _NavItem(label: _t('Restaurants in Modiin', 'מסעדות במודיעין'), route: '/restaurants'),
-    _NavItem(label: _t('Businesses in Modiin', 'עסקים במודיעין'), route: '/businesses', hasDropdown: true),
-  ];
-
   String _layerLabel(String layer) => switch (layer) {
     'Businesses' => _t('Businesses', 'עסקים'),
     'Events' => _t('Events', 'אירועים'),
@@ -92,7 +82,10 @@ class _WebMapContentState extends State<WebMapContent> {
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            _buildStickyNavbar(),
+            WebNavbar(
+              isHebrew: _isHebrew,
+              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
+            ),
             Expanded(
               child: Stack(
                 children: [
@@ -169,87 +162,6 @@ class _WebMapContentState extends State<WebMapContent> {
   // ─────────────────────────────────────────────
   // HEADER — 1920 × 80
   // ─────────────────────────────────────────────
-  Widget _buildStickyNavbar() {
-    return Container(
-      height: 80,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _kBorder)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 160),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.go('/'),
-            child: SvgPicture.asset(
-              'assets/images/logo_white.svg',
-              width: 90,
-              height: 48,
-              colorFilter: const ColorFilter.mode(AppColors.midBlue, BlendMode.srcIn),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Row(
-              children: _navItems.map((item) {
-                return Expanded(
-                  child: _NavLinkButton(
-                    label: item.label,
-                    hasDropdown: item.hasDropdown,
-                    onTap: () => context.go(item.route),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(width: 20),
-          // Language toggle
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => setState(() => _isHebrew = !_isHebrew),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                margin: const EdgeInsetsDirectional.only(end: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(IconsaxPlusLinear.global, size: 18, color: AppColors.midBlue),
-                    const SizedBox(width: 6),
-                    Text(_isHebrew ? 'עב | EN' : 'EN | עב',
-                        style: GoogleFonts.inter(
-                            fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // CTA
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
-                decoration: BoxDecoration(
-                  color: AppColors.midBlue,
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Text(_t('Contact Us', 'צור קשר'),
-                    style: GoogleFonts.inter(
-                        fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ─────────────────────────────────────────────
   // MAP
   // ─────────────────────────────────────────────
@@ -967,71 +879,6 @@ Widget _imagePlaceholder(List<Color> colors,
       ),
     ),
   );
-}
-
-class _NavItem {
-  final String label, route;
-  final bool hasDropdown;
-  const _NavItem({required this.label, required this.route, this.hasDropdown = false});
-}
-
-class _NavLinkButton extends StatefulWidget {
-  final String label;
-  final bool hasDropdown;
-  final VoidCallback onTap;
-  const _NavLinkButton({required this.label, this.hasDropdown = false, required this.onTap});
-
-  @override
-  State<_NavLinkButton> createState() => _NavLinkButtonState();
-}
-
-class _NavLinkButtonState extends State<_NavLinkButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: SizedBox(
-          height: 80,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-              decoration: BoxDecoration(
-                color: _hovered ? Colors.black.withValues(alpha: 0.04) : Colors.transparent,
-                borderRadius: BorderRadius.circular(40),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      widget.label,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF0F161E),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (widget.hasDropdown) ...[
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF21272A)),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// 44 × 24 pill switch used by the layer rows.

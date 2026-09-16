@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/web_chrome.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Neighborhood Detail — full desktop layout from Figma
@@ -196,7 +196,7 @@ class _WebNeighborhoodDetailContentState extends State<WebNeighborhoodDetailCont
                     const SizedBox(height: 64),
                     _buildBusinessesSection(),
                     const SizedBox(height: 64),
-                    _buildFooter(),
+                    WebFooter(isHebrew: _isHebrew),
                   ],
                 ),
               ),
@@ -696,183 +696,6 @@ class _WebNeighborhoodDetailContentState extends State<WebNeighborhoodDetailCont
   // ─────────────────────────────────────────────
   // FOOTER — reuse from homepage/realestate pattern
   // ─────────────────────────────────────────────
-  Widget _buildFooter() {
-    return Container(
-      width: double.infinity,
-      color: AppColors.midBlue,
-      padding: const EdgeInsets.only(top: 64),
-      child: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1600),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth > 900) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 3, child: _buildFooterContact()),
-                        const SizedBox(width: 40),
-                        Expanded(flex: 2, child: _buildFooterLinks(_t('Modiin4u', 'מודיעין4u'), [_t('Home', 'בית'), _t('About Us', 'אודותינו'), _t('Contact Us', 'צור קשר'), _t('Privacy Policy', 'מדיניות פרטיות'), _t('Terms of Use', 'תנאי שימוש'), _t('Accessibility Statement', 'הצהרת נגישות')])),
-                        const SizedBox(width: 40),
-                        Expanded(flex: 2, child: _buildFooterLinks(_t('Explore Modiin', 'גלו את מודיעין'), [_t('News', 'חדשות'), _t('Events', 'אירועים'), _t('Businesses', 'עסקים'), _t('Professionals', 'בעלי מקצוע'), _t('Real Estate', 'נדל"ן'), _t('Map', 'מפה'), _t('Restaurants', 'מסעדות'), _t('Deals', 'מבצעים')])),
-                        const SizedBox(width: 40),
-                        Expanded(flex: 2, child: _buildFooterLinks(_t('Popular Categories', 'קטגוריות פופולריות'), [_t('Restaurants', 'מסעדות'), _t('Coffee Shops', 'בתי קפה'), _t('Bars', 'ברים'), _t('Professionals', 'בעלי מקצוע'), _t('Real Estate', 'נדל"ן'), _t('Local Businesses', 'עסקים מקומיים'), _t('Events', 'אירועים'), _t('News', 'חדשות')])),
-                        const SizedBox(width: 40),
-                        Expanded(flex: 3, child: _buildFooterAbout()),
-                      ],
-                    );
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildFooterContact(),
-                      const SizedBox(height: 40),
-                      _buildFooterAbout(),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 40),
-              // Bottom bar
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white24))),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_t('All Rights Reserved to modiin4u.co.il, 2026', 'כל הזכויות שמורות ל-modiin4u.co.il, 2026'),
-                            style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFFE7E7E7))),
-                        Row(
-                          children: [
-                            Text(_t('Terms of Use', 'תנאי שימוש'), style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFFE7E7E7))),
-                            const SizedBox(width: 4),
-                            const Text('|', style: TextStyle(color: Color(0xFFE7E7E7))),
-                            const SizedBox(width: 4),
-                            Text(_t('Privacy Policy', 'מדיניות פרטיות'), style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFFE7E7E7))),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => launchUrl(Uri.parse('https://personaai.me/')),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Powered by ', style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withValues(alpha: 0.6))),
-                              ShaderMask(
-                                shaderCallback: (bounds) => const LinearGradient(
-                                  colors: [Color(0xFF9333EA), Color(0xFFEC4899)],
-                                ).createShader(bounds),
-                                child: Text('PersonaAI', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFooterContact() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(_t('We are here for\nany questions.', 'אנחנו כאן\nלכל שאלה.'),
-            style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w500, color: Colors.white, height: 1.22)),
-        const SizedBox(height: 40),
-        _FooterContactRow(icon: IconsaxPlusLinear.call, label: _t('Phone', 'טלפון'), value: '058-4770195'),
-        _FooterContactRow(icon: IconsaxPlusLinear.sms, label: _t('Email', 'אימייל'), value: 'modiin4uoffice@gmail.com'),
-        _FooterContactRow(icon: IconsaxPlusLinear.message, label: _t('WhatsApp', 'וואטסאפ'), value: '058-4770195'),
-        const SizedBox(height: 16),
-        Text(_t('Our Socials', 'הרשתות שלנו'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-        const SizedBox(height: 19),
-        Row(
-          children: [
-            _socialIcon(child: Text('f', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))),
-            _socialIcon(child: Text('X', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white))),
-            _socialIcon(child: Text('in', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white))),
-            _socialIcon(child: const Icon(IconsaxPlusLinear.instagram, size: 18, color: Colors.white)),
-            _socialIcon(child: const Icon(IconsaxPlusLinear.music, size: 18, color: Colors.white)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _socialIcon({required Widget child}) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 9),
-      child: Container(
-        width: 38, height: 38,
-        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white38)),
-        child: Center(child: child),
-      ),
-    );
-  }
-
-  Widget _buildFooterLinks(String title, List<String> links) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-        const SizedBox(height: 24),
-        ...links.map((link) => Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Text(link, style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withValues(alpha: 0.9))),
-        )),
-      ],
-    );
-  }
-
-  Widget _buildFooterAbout() {
-    final alignment = _isHebrew ? CrossAxisAlignment.start : CrossAxisAlignment.end;
-    final textAlign = _isHebrew ? TextAlign.start : TextAlign.end;
-    return Column(
-      crossAxisAlignment: alignment,
-      children: [
-        SvgPicture.asset('assets/images/logo_white.svg', width: 164, height: 88),
-        const SizedBox(height: 24),
-        Text(_t('Modiin for You', 'מודיעין בשבילך'), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white), textAlign: textAlign),
-        const SizedBox(height: 16),
-        Text(
-          _t('We are not just a news site – we are the beating heart of Modiin! A local media and public relations organization that lives and breathes our city.',
-             'אנחנו לא סתם אתר חדשות – אנחנו הלב הפועם של מודיעין! ארגון מדיה ויחסי ציבור מקומי שחי ונושם את העיר שלנו.'),
-          style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withValues(alpha: 0.85), height: 1.4),
-          textAlign: textAlign,
-        ),
-        const SizedBox(height: 24),
-        Text(_t('Download Our App', 'הורידו את האפליקציה'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white), textAlign: textAlign),
-        const SizedBox(height: 16),
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: Wrap(
-            spacing: 12, runSpacing: 8, alignment: WrapAlignment.end,
-            children: [
-              _AppStoreBtn(store: 'App Store', label: 'Download on the', svgAsset: 'assets/images/apple_logo.svg', isApple: true),
-              _AppStoreBtn(store: 'Google Play', label: 'GET IT ON', svgAsset: 'assets/images/google_play.svg'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════
@@ -1306,68 +1129,3 @@ class _BusinessCardWidgetState extends State<_BusinessCardWidget> {
 // ═══════════════════════════════════════════════
 // FOOTER WIDGETS
 // ═══════════════════════════════════════════════
-
-class _FooterContactRow extends StatelessWidget {
-  final IconData icon;
-  final String label, value;
-  const _FooterContactRow({required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 34),
-      child: Row(
-        children: [
-          Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white38)),
-            child: Center(child: Icon(icon, size: 16, color: Colors.white)),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
-              const SizedBox(height: 4),
-              Text(value, style: GoogleFonts.inter(fontSize: 16, color: Colors.white)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AppStoreBtn extends StatelessWidget {
-  final String store, label, svgAsset;
-  final bool isApple;
-  const _AppStoreBtn({required this.store, required this.label, required this.svgAsset, this.isApple = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SvgPicture.asset(svgAsset, width: 24, height: 24,
-              colorFilter: isApple ? const ColorFilter.mode(Colors.white, BlendMode.srcIn) : null),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.8))),
-              const SizedBox(height: 1),
-              Text(store, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}

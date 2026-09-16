@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/web_chrome.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Modiin News — full desktop layout from Figma
 // (Modiin News — 1920 × 4341)
 // ═══════════════════════════════════════════════════════════
 
-const _kBorder = Color(0xFFE7E7E7);
 const _kLime = Color(0xFFC9F31D);
 const _kBodyGrey = Color(0xFF5F5E5A);
 const _kIconGrey = Color(0xFF6D6D6D);
@@ -29,16 +27,6 @@ class _WebNewsContentState extends State<WebNewsContent> {
   String _t(String en, String he) => _isHebrew ? he : en;
 
   // ── Nav links ──
-  List<_NavItem> get _navItems => [
-    _NavItem(label: _t('Professionals', 'בעלי מקצוע'), route: '/businesses', hasDropdown: true),
-    _NavItem(label: _t('Modiin News', 'חדשות מודיעין'), route: '/news', hasDropdown: true, isActive: true),
-    _NavItem(label: _t('Events', 'אירועים'), route: '/events'),
-    _NavItem(label: _t('Deals', 'מבצעים'), route: '/deals'),
-    _NavItem(label: _t('Real Estate in Modiin', 'נדל"ן במודיעין'), route: '/realestate'),
-    _NavItem(label: _t('Restaurants in Modiin', 'מסעדות במודיעין'), route: '/restaurants'),
-    _NavItem(label: _t('Businesses in Modiin', 'עסקים במודיעין'), route: '/businesses', hasDropdown: true),
-  ];
-
   // ═══════════════════════════════════════════════
   // DEMO CONTENT
   // ═══════════════════════════════════════════════
@@ -303,7 +291,11 @@ class _WebNewsContentState extends State<WebNewsContent> {
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            _buildStickyNavbar(),
+            WebNavbar(
+              isHebrew: _isHebrew,
+              activeId: 'news',
+              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -313,7 +305,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
                     const SizedBox(height: 64),
                     _centered(child: _buildMainRow()),
                     const SizedBox(height: 103),
-                    _buildFooter(),
+                    WebFooter(isHebrew: _isHebrew),
                   ],
                 ),
               ),
@@ -338,86 +330,6 @@ class _WebNewsContentState extends State<WebNewsContent> {
   // ─────────────────────────────────────────────
   // STICKY NAVBAR
   // ─────────────────────────────────────────────
-  Widget _buildStickyNavbar() {
-    return Container(
-      height: 80,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _kBorder)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 160),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.go('/'),
-            child: SvgPicture.asset(
-              'assets/images/logo_white.svg',
-              width: 90,
-              height: 48,
-              colorFilter: const ColorFilter.mode(AppColors.midBlue, BlendMode.srcIn),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Row(
-              children: _navItems.map((item) {
-                return Expanded(
-                  child: _NavLinkButton(
-                    label: item.label,
-                    isActive: item.isActive,
-                    hasDropdown: item.hasDropdown,
-                    onTap: () => context.go(item.route),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(width: 20),
-          // Language toggle
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => setState(() => _isHebrew = !_isHebrew),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                margin: const EdgeInsetsDirectional.only(end: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(IconsaxPlusLinear.global, size: 18, color: AppColors.midBlue),
-                    const SizedBox(width: 6),
-                    Text(_isHebrew ? 'עב | EN' : 'EN | עב',
-                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // CTA
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
-                decoration: BoxDecoration(
-                  color: AppColors.midBlue,
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Text(_t('Contact Us', 'צור קשר'),
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ─────────────────────────────────────────────
   // HERO — 1014 featured card + two 576 stacked cards
   // ─────────────────────────────────────────────
@@ -768,191 +680,6 @@ class _WebNewsContentState extends State<WebNewsContent> {
   // ─────────────────────────────────────────────
   // FOOTER
   // ─────────────────────────────────────────────
-  Widget _buildFooter() {
-    return Container(
-      width: double.infinity,
-      color: AppColors.midBlue,
-      padding: const EdgeInsets.only(top: 64),
-      child: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1600),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth > 900) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 3, child: _buildFooterContact()),
-                        const SizedBox(width: 40),
-                        Expanded(flex: 2, child: _buildFooterLinks(_t('Modiin4u', 'מודיעין4u'), [_t('Home', 'בית'), _t('About Us', 'אודותינו'), _t('Contact Us', 'צור קשר'), _t('Privacy Policy', 'מדיניות פרטיות'), _t('Terms of Use', 'תנאי שימוש'), _t('Accessibility Statement', 'הצהרת נגישות')])),
-                        const SizedBox(width: 40),
-                        Expanded(flex: 2, child: _buildFooterLinks(_t('Explore Modiin', 'גלו את מודיעין'), [_t('News', 'חדשות'), _t('Events', 'אירועים'), _t('Businesses', 'עסקים'), _t('Professionals', 'בעלי מקצוע'), _t('Real Estate', 'נדל"ן'), _t('Map', 'מפה'), _t('Restaurants', 'מסעדות'), _t('Deals', 'מבצעים')])),
-                        const SizedBox(width: 40),
-                        Expanded(flex: 2, child: _buildFooterLinks(_t('Popular Categories', 'קטגוריות פופולריות'), [_t('Restaurants', 'מסעדות'), _t('Coffee Shops', 'בתי קפה'), _t('Bars', 'ברים'), _t('Professionals', 'בעלי מקצוע'), _t('Real Estate', 'נדל"ן'), _t('Local Businesses', 'עסקים מקומיים'), _t('Events', 'אירועים'), _t('News', 'חדשות')])),
-                        const SizedBox(width: 40),
-                        Expanded(flex: 3, child: _buildFooterAbout()),
-                      ],
-                    );
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildFooterContact(),
-                      const SizedBox(height: 40),
-                      _buildFooterAbout(),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white24))),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_t('All Rights Reserved to modiin4u.co.il, 2026', 'כל הזכויות שמורות ל-modiin4u.co.il, 2026'),
-                            style: GoogleFonts.inter(fontSize: 14, color: _kBorder)),
-                        Row(
-                          children: [
-                            Text(_t('Terms of Use', 'תנאי שימוש'), style: GoogleFonts.inter(fontSize: 14, color: _kBorder)),
-                            const SizedBox(width: 4),
-                            const Text('|', style: TextStyle(color: _kBorder)),
-                            const SizedBox(width: 4),
-                            Text(_t('Privacy Policy', 'מדיניות פרטיות'), style: GoogleFonts.inter(fontSize: 14, color: _kBorder)),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => launchUrl(Uri.parse('https://personaai.me/')),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Powered by ', style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withValues(alpha: 0.6))),
-                              ShaderMask(
-                                shaderCallback: (bounds) => const LinearGradient(
-                                  colors: [Color(0xFF9333EA), Color(0xFFEC4899)],
-                                ).createShader(bounds),
-                                child: Text('PersonaAI', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFooterContact() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(_t('We are here for\nany questions.', 'אנחנו כאן\nלכל שאלה.'),
-            style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w500, color: Colors.white, height: 1.22)),
-        const SizedBox(height: 40),
-        _FooterContactRow(icon: IconsaxPlusLinear.call, label: _t('Phone', 'טלפון'), value: '058-4770195'),
-        _FooterContactRow(icon: IconsaxPlusLinear.sms, label: _t('Email', 'אימייל'), value: 'modiin4uoffice@gmail.com'),
-        _FooterContactRow(icon: IconsaxPlusLinear.message, label: _t('WhatsApp', 'וואטסאפ'), value: '058-4770195'),
-        const SizedBox(height: 16),
-        Text(_t('Our Socials', 'הרשתות שלנו'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-        const SizedBox(height: 19),
-        Row(
-          children: [
-            _socialIcon(child: Text('f', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))),
-            _socialIcon(child: Text('X', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white))),
-            _socialIcon(child: Text('in', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white))),
-            _socialIcon(child: const Icon(IconsaxPlusLinear.instagram, size: 18, color: Colors.white)),
-            _socialIcon(child: const Icon(IconsaxPlusLinear.music, size: 18, color: Colors.white)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _socialIcon({required Widget child}) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 9),
-      child: Container(
-        width: 38, height: 38,
-        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white38)),
-        child: Center(child: child),
-      ),
-    );
-  }
-
-  Widget _buildFooterLinks(String title, List<String> links) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-        const SizedBox(height: 24),
-        ...links.map((link) => Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Text(link, style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withValues(alpha: 0.9))),
-        )),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_t('View all', 'הצג הכל'),
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.turquoise)),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right, size: 16, color: AppColors.turquoise),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFooterAbout() {
-    final alignment = _isHebrew ? CrossAxisAlignment.start : CrossAxisAlignment.end;
-    final textAlign = _isHebrew ? TextAlign.start : TextAlign.end;
-    return Column(
-      crossAxisAlignment: alignment,
-      children: [
-        SvgPicture.asset('assets/images/logo_white.svg', width: 164, height: 88),
-        const SizedBox(height: 24),
-        Text(_t('Modiin for You', 'מודיעין בשבילך'), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white), textAlign: textAlign),
-        const SizedBox(height: 16),
-        Text(
-          _t('We are not just a news site – we are the beating heart of Modiin! A local media and public relations organization that lives and breathes our city.',
-             'אנחנו לא סתם אתר חדשות – אנחנו הלב הפועם של מודיעין! ארגון מדיה ויחסי ציבור מקומי שחי ונושם את העיר שלנו.'),
-          style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withValues(alpha: 0.85), height: 1.4),
-          textAlign: textAlign,
-        ),
-        const SizedBox(height: 24),
-        Text(_t('Download Our App', 'הורידו את האפליקציה'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white), textAlign: textAlign),
-        const SizedBox(height: 16),
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: Wrap(
-            spacing: 12, runSpacing: 8, alignment: WrapAlignment.end,
-            children: [
-              _AppStoreBtn(store: 'App Store', label: 'Download on the', svgAsset: 'assets/images/apple_logo.svg', isApple: true),
-              _AppStoreBtn(store: 'Google Play', label: 'GET IT ON', svgAsset: 'assets/images/google_play.svg'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════
@@ -990,12 +717,6 @@ class _Article {
     required this.colors,
     this.excerpt = '',
   });
-}
-
-class _NavItem {
-  final String label, route;
-  final bool hasDropdown, isActive;
-  const _NavItem({required this.label, required this.route, this.hasDropdown = false, this.isActive = false});
 }
 
 /// 372.67 × 404 article card — image, 2-line title, 1-line excerpt, date.
@@ -1116,140 +837,6 @@ class _HoverCardState extends State<_HoverCard> {
           duration: const Duration(milliseconds: 150),
           child: widget.child,
         ),
-      ),
-    );
-  }
-}
-
-class _NavLinkButton extends StatefulWidget {
-  final String label;
-  final bool isActive, hasDropdown;
-  final VoidCallback onTap;
-  const _NavLinkButton({required this.label, this.isActive = false, this.hasDropdown = false, required this.onTap});
-
-  @override
-  State<_NavLinkButton> createState() => _NavLinkButtonState();
-}
-
-class _NavLinkButtonState extends State<_NavLinkButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          height: 80,
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(
-              color: widget.isActive ? AppColors.midBlue : Colors.transparent,
-              width: 3,
-            )),
-          ),
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-              decoration: BoxDecoration(
-                color: _hovered && !widget.isActive ? Colors.black.withValues(alpha: 0.04) : Colors.transparent,
-                borderRadius: BorderRadius.circular(40),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      widget.label,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w500,
-                        color: widget.isActive ? AppColors.midBlue : const Color(0xFF0F161E),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (widget.hasDropdown) ...[
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF21272A)),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FooterContactRow extends StatelessWidget {
-  final IconData icon;
-  final String label, value;
-  const _FooterContactRow({required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 34),
-      child: Row(
-        children: [
-          Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white38)),
-            child: Center(child: Icon(icon, size: 16, color: Colors.white)),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
-                const SizedBox(height: 4),
-                Text(value,
-                    style: GoogleFonts.inter(fontSize: 16, color: Colors.white),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AppStoreBtn extends StatelessWidget {
-  final String store, label, svgAsset;
-  final bool isApple;
-  const _AppStoreBtn({required this.store, required this.label, required this.svgAsset, this.isApple = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SvgPicture.asset(svgAsset, width: 24, height: 24,
-              colorFilter: isApple ? const ColorFilter.mode(Colors.white, BlendMode.srcIn) : null),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.8))),
-              const SizedBox(height: 1),
-              Text(store, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-            ],
-          ),
-        ],
       ),
     );
   }
