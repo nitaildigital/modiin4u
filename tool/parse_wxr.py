@@ -62,7 +62,8 @@ def parse(src):
             el.clear()
             continue
 
-        if ptype not in ('business', 'professionals') or el.findtext('wp:status', '', NS) != 'publish':
+        if ptype not in ('business', 'professionals', 'apartments',
+                         'real-estate-agents') or el.findtext('wp:status', '', NS) != 'publish':
             el.clear()
             continue
 
@@ -139,19 +140,82 @@ def build_business(raw, attachments):
     return out
 
 
+PHONE_RE = re.compile(r'^\+?[\d\-() ]{7,}$')
+
+
+def phone_or_blank(v):
+    """The agents' `contact` field sometimes holds free-text notes, not a number."""
+    v = clean_phone(v)
+    return v if v and PHONE_RE.match(v) else ''
+
+
 def build_professionals(raw, attachments):
+    """Professionals use their own meta keys — `photo-logo` for the picture and
+    `profssional-discription` (sic) for the blurb, not the business ones."""
     out = []
     for p in raw:
         m = p['meta']
         out.append({
             'id': p['id'],
-            'title': m.get('business-name') or p['title'],
-            'description': text(m.get('_description', '')),
+            'title': m.get('name') or p['title'],
+            'description': text(m.get('profssional-discription', ''))[:300],
             'phone': clean_phone(m.get('phone', '')),
-            'address': m.get('address') or '',
-            'image': attachments.get(p['thumb'] or '', ''),
+            'image': attachments.get(m.get('photo-logo', ''), ''),
             'terms': [t for t in p['terms'] if t != 'עסקים באתר'],
             'link': p['link'],
+        })
+    return out
+
+
+def build_apartments(raw, attachments):
+    def flag(m, k):
+        return str(m.get(k, '')).strip().lower() == 'true'
+
+    out = []
+    for a in raw:
+        m = a['meta']
+        price = m.get('price', '')
+        out.append({
+            'id': a['id'],
+            'title': a['title'],
+            'address': m.get('address', ''),
+            'neighborhood': m.get('neighborhood', ''),
+            'price': int(price) if price.isdigit() else None,
+            'type': m.get('apt-type', ''),
+            'vibe': m.get('apt-vibe', ''),
+            'rooms': m.get('room-num', ''),
+            # The site spells these `flor` and `parcking`.
+            'floor': m.get('flor', ''),
+            'meters': m.get('meter', ''),
+            'elevator': flag(m, 'elevator'),
+            'parking': flag(m, 'parcking'),
+            'storage': flag(m, 'apartment-warehouse'),
+            'ac': flag(m, 'air-conditioning'),
+            'terrace': flag(m, 'terrace'),
+            'shelter': flag(m, 'protected-space'),
+            'description': text(m.get('discription', ''))[:400],
+            'seller': m.get('seller-name', ''),
+            'phone': clean_phone(m.get('phone-number', '')),
+            'byAgent': flag(m, 'agent'),
+            'image': attachments.get(m.get('gallery', ''), ''),
+            'lat': float(a['lat']) if a['lat'] else None,
+            'lng': float(a['lng']) if a['lng'] else None,
+            'link': a['link'],
+        })
+    return out
+
+
+def build_agents(raw, attachments):
+    out = []
+    for g in raw:
+        m = g['meta']
+        out.append({
+            'id': g['id'],
+            'title': m.get('name') or g['title'],
+            'phone': phone_or_blank(m.get('contact', '')),
+            'photo': attachments.get(m.get('photo', ''), ''),
+            'logo': attachments.get(m.get('logo', ''), ''),
+            'link': g['link'],
         })
     return out
 
@@ -166,6 +230,8 @@ def main():
     for name, raw, builder in [
         ('wp_business', items['business'], build_business),
         ('wp_professionals', items['professionals'], build_professionals),
+        ('wp_apartments', items['apartments'], build_apartments),
+        ('wp_agents', items['real-estate-agents'], build_agents),
     ]:
         data = builder(raw, attachments)
         path = os.path.abspath(os.path.join(OUT_DIR, name + '.json'))
@@ -173,9 +239,9 @@ def main():
                   ensure_ascii=False, separators=(',', ':'))
         print('%-18s %4d items -> %s' % (name, len(data), path))
         if data:
-            f = lambda k: sum(1 for x in data if x.get(k))
+            n = lambda k: sum(1 for x in data if x.get(k))
             print('   with phone %d | address %d | image %d | coords %d'
-                  % (f('phone'), f('address'), f('image'),
+                  % (n('phone'), n('address'), n('image') or n('photo'),
                      sum(1 for x in data if x.get('lat'))))
 
 

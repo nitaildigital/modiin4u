@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../core/data/wp_content.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Real Estate — full desktop layout from Figma
@@ -17,6 +18,41 @@ class WebRealEstateContent extends StatefulWidget {
 }
 
 class _WebRealEstateContentState extends State<WebRealEstateContent> {
+  /// Listings from the site's apartments directory. Only four are published
+  /// today and all are for sale, so the rent section keeps its demo entries.
+  List<WpApartment> _apartments = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadWpApartments().then((items) {
+      if (mounted) setState(() => _apartments = items);
+    });
+  }
+
+  static const _listingPalette = [
+    Color(0xFFD4E4F7), Color(0xFFE0D4C8), Color(0xFFC8D8E0), Color(0xFFD8E8D4),
+  ];
+
+  _Listing _toListing(WpApartment a, int i) => _Listing(
+    price: a.priceLabel,
+    saleTag: a.type,
+    address: '${a.shortAddress}, ${a.neighborhood}',
+    area: a.meters.isEmpty ? '' : '${a.meters} מ״ר',
+    rooms: a.rooms,
+    floor: a.floor.isEmpty ? '' : _t('Floor ${a.floor}', 'קומה ${a.floor}'),
+    viaBroker: a.byAgent,
+    brokerBadge: a.byAgent ? _t('Via Broker', 'דרך מתווך') : null,
+    imageBg: _listingPalette[i % _listingPalette.length],
+    imageUrl: a.image,
+  );
+
+  List<_Listing> get _saleListings => _apartments.isEmpty
+      ? _saleListingsDemo
+      : [for (var i = 0; i < _apartments.length; i++) _toListing(_apartments[i], i)];
+
+  List<_Listing> get _rentListings => _rentListingsDemo;
+
   int _selectedType = -1;
   int _neighborhoodTab = 0; // 0 = For Rent, 1 = For Sale
   int _searchMode = 0; // 0 = Buy, 1 = Rent
@@ -45,7 +81,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
   ];
 
   // ── Sale listings ──
-  List<_Listing> get _saleListings => [
+  List<_Listing> get _saleListingsDemo => [
     _Listing(price: '₪3,650,000', saleTag: _t('FOR SALE', 'למכירה'),
         address: _t('3 Yona Hanavi Street, Modiin', 'רח׳ יונה הנביא 3, מודיעין'),
         area: '140 m²', rooms: _t('6 Rooms', '6 חדרים'), floor: _t('Floor 3', 'קומה 3'),
@@ -65,7 +101,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
   ];
 
   // ── Rent listings ──
-  List<_Listing> get _rentListings => [
+  List<_Listing> get _rentListingsDemo => [
     _Listing(price: '₪7,500', perMonth: _t('/ In the month', '/ לחודש'), saleTag: _t('FOR RENT', 'להשכרה'),
         address: _t('Weizmann Street Heritage Modiin', 'רח׳ ויצמן מורשת מודיעין'),
         area: '140 m²', rooms: _t('6 Rooms', '6 חדרים'), floor: _t('Floor 3', 'קומה 3'),
@@ -559,9 +595,12 @@ class _Listing {
   final String? perMonth, newBadge, brokerBadge;
   final bool isNew, viaBroker;
   final Color imageBg;
+  /// Remote photo from the WordPress export; empty on demo listings.
+  final String imageUrl;
   const _Listing({required this.price, required this.saleTag, required this.address,
     required this.area, required this.rooms, required this.floor,
-    this.perMonth, this.newBadge, this.brokerBadge, this.isNew = false, this.viaBroker = false, this.imageBg = const Color(0xFFE8EEF4)});
+    this.perMonth, this.newBadge, this.brokerBadge, this.isNew = false, this.viaBroker = false,
+    this.imageBg = const Color(0xFFE8EEF4), this.imageUrl = ''});
 }
 
 class _Neighborhood {
@@ -761,6 +800,13 @@ class _ListingCard extends StatefulWidget {
   State<_ListingCard> createState() => _ListingCardState();
 }
 
+Widget _listingFallback(Color base) => ColoredBox(
+      color: base,
+      child: Center(
+        child: Icon(IconsaxPlusLinear.image, size: 40, color: Colors.black.withValues(alpha: 0.15)),
+      ),
+    );
+
 class _ListingCardState extends State<_ListingCard> {
   bool _hovered = false;
 
@@ -785,13 +831,24 @@ class _ListingCardState extends State<_ListingCard> {
             // Image
             Stack(
               children: [
-                Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: l.imageBg,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                // WordPress serves uploads without CORS headers, so CanvasKit
+                // has to hand the URL to a plain <img>.
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: SizedBox(
+                    height: 200,
+                    width: double.infinity,
+                    child: l.imageUrl.isEmpty
+                        ? _listingFallback(l.imageBg)
+                        : Image.network(
+                            l.imageUrl,
+                            fit: BoxFit.cover,
+                            webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                            errorBuilder: (_, _, _) => _listingFallback(l.imageBg),
+                            loadingBuilder: (context, child, progress) =>
+                                progress == null ? child : _listingFallback(l.imageBg),
+                          ),
                   ),
-                  child: Center(child: Icon(IconsaxPlusLinear.image, size: 40, color: Colors.black.withValues(alpha: 0.15))),
                 ),
                 // Favorite
                 Positioned(

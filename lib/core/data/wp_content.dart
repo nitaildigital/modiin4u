@@ -151,3 +151,159 @@ Future<List<WpBusiness>> loadWpBusinesses() async {
     return const [];
   }
 }
+
+/// A service provider from the site's professionals directory.
+/// These use their own meta keys — `photo-logo`, `profssional-discription`.
+class WpProfessional {
+  final int id;
+  final String title, description, phone, image, link;
+  final List<String> terms;
+
+  const WpProfessional({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.phone,
+    required this.image,
+    required this.link,
+    required this.terms,
+  });
+
+  factory WpProfessional.fromJson(Map<String, dynamic> json) => WpProfessional(
+    id: json['id'] as int,
+    title: (json['title'] ?? '') as String,
+    description: (json['description'] ?? '') as String,
+    phone: (json['phone'] ?? '') as String,
+    image: (json['image'] ?? '') as String,
+    link: (json['link'] ?? '') as String,
+    terms: ((json['terms'] as List?) ?? const []).cast<String>(),
+  );
+
+  String get profession => terms.isEmpty ? '' : terms.first;
+}
+
+/// A listing from the site's apartments directory.
+class WpApartment {
+  final int id;
+  final String title, address, neighborhood, type, vibe, rooms, floor, meters;
+  final String description, seller, phone, image, link;
+  final int? price;
+  final double? lat, lng;
+  final bool elevator, parking, storage, ac, terrace, shelter, byAgent;
+
+  const WpApartment({
+    required this.id,
+    required this.title,
+    required this.address,
+    required this.neighborhood,
+    required this.type,
+    required this.vibe,
+    required this.rooms,
+    required this.floor,
+    required this.meters,
+    required this.description,
+    required this.seller,
+    required this.phone,
+    required this.image,
+    required this.link,
+    required this.elevator,
+    required this.parking,
+    required this.storage,
+    required this.ac,
+    required this.terrace,
+    required this.shelter,
+    required this.byAgent,
+    this.price,
+    this.lat,
+    this.lng,
+  });
+
+  factory WpApartment.fromJson(Map<String, dynamic> json) {
+    String str(String k) => (json[k] ?? '') as String;
+    bool flag(String k) => (json[k] ?? false) as bool;
+    double? asDouble(Object? v) => v == null ? null : (v as num).toDouble();
+    return WpApartment(
+      id: json['id'] as int,
+      title: str('title'),
+      address: str('address'),
+      neighborhood: str('neighborhood'),
+      type: str('type'),
+      vibe: str('vibe'),
+      rooms: str('rooms'),
+      floor: str('floor'),
+      meters: str('meters'),
+      description: str('description'),
+      seller: str('seller'),
+      phone: str('phone'),
+      image: str('image'),
+      link: str('link'),
+      price: json['price'] as int?,
+      lat: asDouble(json['lat']),
+      lng: asDouble(json['lng']),
+      elevator: flag('elevator'),
+      parking: flag('parking'),
+      storage: flag('storage'),
+      ac: flag('ac'),
+      terrace: flag('terrace'),
+      shelter: flag('shelter'),
+      byAgent: flag('byAgent'),
+    );
+  }
+
+  /// "₪4,950,000" — the site stores a bare integer.
+  String get priceLabel {
+    if (price == null) return '';
+    final digits = price!.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buf.write(',');
+      buf.write(digits[i]);
+    }
+    return '₪$buf';
+  }
+
+  String get shortAddress => address.split(',').first.trim();
+}
+
+/// A broker from the site's real-estate-agents directory.
+class WpAgent {
+  final int id;
+  final String title, phone, photo, logo, link;
+
+  const WpAgent({
+    required this.id,
+    required this.title,
+    required this.phone,
+    required this.photo,
+    required this.logo,
+    required this.link,
+  });
+
+  factory WpAgent.fromJson(Map<String, dynamic> json) => WpAgent(
+    id: json['id'] as int,
+    title: (json['title'] ?? '') as String,
+    phone: (json['phone'] ?? '') as String,
+    photo: (json['photo'] ?? '') as String,
+    logo: (json['logo'] ?? '') as String,
+    link: (json['link'] ?? '') as String,
+  );
+}
+
+Future<List<T>> _loadList<T>(String name, T Function(Map<String, dynamic>) parse) async {
+  try {
+    final raw = await rootBundle.loadString('assets/data/$name.json');
+    return (jsonDecode(raw) as List)
+        .map((e) => parse(e as Map<String, dynamic>))
+        .toList();
+  } catch (_) {
+    return const [];
+  }
+}
+
+Future<List<WpProfessional>> loadWpProfessionals() =>
+    _loadList('wp_professionals', WpProfessional.fromJson);
+
+Future<List<WpApartment>> loadWpApartments() =>
+    _loadList('wp_apartments', WpApartment.fromJson);
+
+Future<List<WpAgent>> loadWpAgents() => _loadList('wp_agents', WpAgent.fromJson);

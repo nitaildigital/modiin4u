@@ -52,6 +52,38 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
     loadWpBusinesses().then((items) {
       if (mounted) setState(() => _wp = items);
     });
+    loadWpProfessionals().then((items) {
+      if (mounted) setState(() => _wpPros = items);
+    });
+  }
+
+  List<WpProfessional> _wpPros = const [];
+
+  /// How many listings the results grid shows. 200 at once makes a page so
+  /// long that the sections under it are unreachable, so it grows on demand.
+  static const _pageSize = 24;
+  int _shown = _pageSize;
+
+  /// The site lists six providers and records no ratings for them, so the
+  /// cards show the provider's own blurb where a rating would sit.
+  List<_Professional> get _professionals {
+    if (_wpPros.isEmpty) return _professionalsDemo;
+    final palette = _categoryPalette;
+    return [
+      for (var i = 0; i < _wpPros.length; i++)
+        _Professional(
+          name: _wpPros[i].title,
+          profession: _wpPros[i].profession,
+          rating: 0,
+          reviews: 0,
+          avatarBg: palette[i % palette.length].$2,
+          verified: true,
+          imageUrl: _wpPros[i].image,
+          phone: _wpPros[i].phone,
+          description: _wpPros[i].description,
+          isLive: true,
+        ),
+    ];
   }
 
   bool get _live => _wp.isNotEmpty;
@@ -279,6 +311,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
           delivery: b.delivery,
           views: b.views,
           terms: b.terms,
+          isLive: true,
         ),
     ];
   }
@@ -317,7 +350,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   }
 
   // ── Featured professionals ──
-  List<_Professional> get _professionals => [
+  List<_Professional> get _professionalsDemo => [
     _Professional(name: _t('Adi Ben-Ami', 'עדי בן-עמי'), profession: _t('Interior Designer', 'מעצבת פנים'),
         rating: 4.9, reviews: 87, avatarBg: const Color(0xFFE0CDBE), verified: true),
     _Professional(name: _t('Yaron Cohen', 'ירון כהן'), profession: _t('Electrician', 'חשמלאי'),
@@ -427,7 +460,10 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
           Expanded(
             child: TextField(
               controller: _searchCtrl,
-              onChanged: (v) => setState(() => _query = v.trim()),
+              onChanged: (v) => setState(() {
+                _query = v.trim();
+                _shown = _pageSize;
+              }),
               onSubmitted: (_) => _scrollToResults(),
               style: GoogleFonts.inter(fontSize: 16, color: _kHeading),
               decoration: InputDecoration(
@@ -530,7 +566,10 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                         businessesLabel: _t('businesses', 'עסקים'),
                         isSelected: _selectedCategory == i,
                         onTap: () {
-                          setState(() => _selectedCategory = _selectedCategory == i ? -1 : i);
+                          setState(() {
+                            _selectedCategory = _selectedCategory == i ? -1 : i;
+                            _shown = _pageSize;
+                          });
                           _scrollToResults();
                         },
                       ),
@@ -650,28 +689,32 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 return _FilterPill(
                   label: _filters[i],
                   isSelected: _selectedFilter == i,
-                  onTap: () => setState(() => _selectedFilter = _selectedFilter == i ? -1 : i),
+                  onTap: () => setState(() {
+                    _selectedFilter = _selectedFilter == i ? -1 : i;
+                    _shown = _pageSize;
+                  }),
                 );
               }),
             ),
             const SizedBox(height: 32),
             if (results.isEmpty)
               _buildEmptyResults()
-            else
+            else ...[
               LayoutBuilder(
                 builder: (context, constraints) {
                   const gap = 20.0;
                   const perRow = 4;
                   final cardWidth = (constraints.maxWidth - gap * (perRow - 1)) / perRow;
+                  final visible = results.take(_shown).toList();
                   return Wrap(
                     spacing: gap,
                     runSpacing: gap,
-                    children: List.generate(results.length, (i) {
+                    children: List.generate(visible.length, (i) {
                       return SizedBox(
                         width: cardWidth,
                         height: 372,
                         child: _BusinessCard(
-                          business: results[i],
+                          business: visible[i],
                           openLabel: _t('Open Now', 'פתוח עכשיו'),
                           closedLabel: _t('Closed', 'סגור'),
                           reviewsLabel: _t('reviews', 'ביקורות'),
@@ -686,6 +729,34 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   );
                 },
               ),
+              if (results.length > _shown) ...[
+                const SizedBox(height: 32),
+                Center(
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => setState(
+                          () => _shown = (_shown + _pageSize).clamp(0, results.length)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.midBlue),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Text(
+                          _t('Show more (${results.length - _shown} left)',
+                              'הצג עוד (נותרו ${results.length - _shown})'),
+                          style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.midBlue),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ],
         ),
       ),
@@ -915,6 +986,10 @@ class _Business {
   /// for them and this carries the popularity signal the site does keep.
   final int views;
   final List<String> terms;
+  /// Set for listings built from the export. Inferring this from whether a
+  /// field is filled misreads the real listings that have no categories and
+  /// no phone — they exist, and they were showing demo badges.
+  final bool isLive;
 
   const _Business({
     required this.name,
@@ -935,9 +1010,9 @@ class _Business {
     this.delivery = false,
     this.views = 0,
     this.terms = const [],
+    this.isLive = false,
   });
 
-  bool get isLive => terms.isNotEmpty || phone.isNotEmpty;
   bool get hasRating => rating > 0;
 }
 
@@ -947,6 +1022,11 @@ class _Professional {
   final int reviews;
   final Color avatarBg;
   final bool verified;
+
+  // ── Real providers from the WordPress export ──
+  final String imageUrl, phone, description;
+  final bool isLive;
+
   const _Professional({
     required this.name,
     required this.profession,
@@ -954,6 +1034,10 @@ class _Professional {
     required this.reviews,
     required this.avatarBg,
     required this.verified,
+    this.imageUrl = '',
+    this.phone = '',
+    this.description = '',
+    this.isLive = false,
   });
 }
 
@@ -1471,7 +1555,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    _imagePlaceholder(p.avatarBg, width: 88, height: 88, glyph: 24),
+                    _remoteImage(p.imageUrl, p.avatarBg, width: 88, height: 88, glyph: 24),
                     if (p.verified)
                       PositionedDirectional(
                         end: 0,
@@ -1507,37 +1591,54 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(IconsaxPlusBold.star_1, size: 14, color: AppColors.gold),
-                  const SizedBox(width: 4),
-                  Text(p.rating.toStringAsFixed(1),
-                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: _kHeading)),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text('(${p.reviews})',
-                        style: GoogleFonts.inter(fontSize: 12, color: _kGreyText),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+              // The site records no ratings for providers, so a real card shows
+              // the provider's own blurb where the stars would be.
+              if (p.isLive)
+                SizedBox(
+                  height: 32,
+                  child: Text(
+                    p.description,
+                    style: GoogleFonts.inter(fontSize: 12, color: _kGreyText, height: 1.35),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: _hovered ? AppColors.midBlue : Colors.white,
-                  border: Border.all(color: AppColors.midBlue),
-                  borderRadius: BorderRadius.circular(60),
+                )
+              else
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(IconsaxPlusBold.star_1, size: 14, color: AppColors.gold),
+                    const SizedBox(width: 4),
+                    Text(p.rating.toStringAsFixed(1),
+                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: _kHeading)),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text('(${p.reviews})',
+                          style: GoogleFonts.inter(fontSize: 12, color: _kGreyText),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
                 ),
-                child: Text(widget.contactLabel,
-                    style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: _hovered ? Colors.white : AppColors.midBlue)),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: p.phone.isEmpty ? null : () => launchUrl(Uri.parse('tel:${p.phone}')),
+                child: Container(
+                  width: double.infinity,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _hovered ? AppColors.midBlue : Colors.white,
+                    border: Border.all(color: AppColors.midBlue),
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Text(widget.contactLabel,
+                      style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: _hovered ? Colors.white : AppColors.midBlue)),
+                ),
               ),
             ],
           ),
