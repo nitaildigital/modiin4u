@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../core/data/wp_content.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Modiin News — full desktop layout from Figma
@@ -24,14 +25,55 @@ class WebNewsContent extends StatefulWidget {
 class _WebNewsContentState extends State<WebNewsContent> {
   bool _isHebrew = false;
 
+  /// Real articles exported from the WordPress site. Empty until the asset
+  /// loads, and empty forever if it fails — both cases fall through to the
+  /// demo content below, so the page always renders.
+  List<WpItem> _wp = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadWpItems('wp_news').then((items) {
+      if (mounted) setState(() => _wp = items);
+    });
+  }
+
   String _t(String en, String he) => _isHebrew ? he : en;
+
+  /// The site's own category names, which match this page's sections.
+  static const _kMunicipality = 'עדכוני עירייה';
+  static const _kUrban = 'עירוני';
+  static const _kBusiness = 'עסקים';
+
+  /// Content is published in Hebrew only, so both languages show the
+  /// original title; only the date format follows the toggle.
+  _Article _toArticle(WpItem item, List<Color> colors) => _Article(
+    id: item.id.toString(),
+    title: item.title,
+    excerpt: item.excerpt,
+    date: item.formatDate(isHebrew: _isHebrew),
+    imageUrl: item.image,
+    rtlText: true,
+    colors: colors,
+  );
+
+  /// The [count] most recent real articles in [term], or null when the
+  /// export hasn't loaded or doesn't cover that section.
+  List<_Article>? _wpSection(String term, int count, List<List<Color>> palette) {
+    final matches = _wp.where((i) => i.hasTerm(term)).take(count).toList();
+    if (matches.isEmpty) return null;
+    return [
+      for (var i = 0; i < matches.length; i++)
+        _toArticle(matches[i], palette[i % palette.length]),
+    ];
+  }
 
   // ── Nav links ──
   // ═══════════════════════════════════════════════
   // DEMO CONTENT
   // ═══════════════════════════════════════════════
 
-  _Article get _featured => _Article(
+  _Article get _featuredDemo => _Article(
     id: 'featured',
     title: _t(
       "From now on, we can breathe a sigh of relief: The new municipal initiative that will give women in Modi'in complete confidence and tools for success",
@@ -41,7 +83,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
     colors: const [Color(0xFF1A4E8A), Color(0xFF07112E)],
   );
 
-  List<_Article> get _heroSide => [
+  List<_Article> get _heroSideDemo => [
     _Article(
       id: 'hero_1',
       title: _t(
@@ -62,7 +104,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
     ),
   ];
 
-  List<_Article> get _municipality => [
+  List<_Article> get _municipalityDemo => [
     _Article(
       id: 'muni_0',
       title: _t(
@@ -143,7 +185,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
     ),
   ];
 
-  List<_Article> get _urban => [
+  List<_Article> get _urbanDemo => [
     _Article(
       id: 'urban_0',
       title: _t(
@@ -198,7 +240,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
     ),
   ];
 
-  List<_Article> get _business => [
+  List<_Article> get _businessDemo => [
     _Article(
       id: 'biz_0',
       title: _t(
@@ -278,6 +320,43 @@ class _WebNewsContentState extends State<WebNewsContent> {
       colors: const [Color(0xFF7A3B4A), Color(0xFF1E0A10)],
     ),
   ];
+
+  // ═══════════════════════════════════════════════
+  // LIVE CONTENT — WordPress export first, demo as the fallback
+  // ═══════════════════════════════════════════════
+
+  static const _heroPalette = [
+    [Color(0xFF1A4E8A), Color(0xFF07112E)],
+    [Color(0xFF26607F), Color(0xFF081428)],
+    [Color(0xFF3B5A7A), Color(0xFF0A1428)],
+  ];
+  static const _cardPalette = [
+    [Color(0xFF2E5C8A), Color(0xFF0C1A33)],
+    [Color(0xFF7A3B4A), Color(0xFF1E0A10)],
+    [Color(0xFF3F6B4F), Color(0xFF0E1C14)],
+    [Color(0xFF6B5A3B), Color(0xFF1C160C)],
+    [Color(0xFF4A3B7A), Color(0xFF120E22)],
+    [Color(0xFF2F6B6B), Color(0xFF0B1C1C)],
+  ];
+
+  _Article get _featured =>
+      _wp.isEmpty ? _featuredDemo : _toArticle(_wp.first, _heroPalette[0]);
+
+  List<_Article> get _heroSide {
+    if (_wp.length < 3) return _heroSideDemo;
+    return [
+      _toArticle(_wp[1], _heroPalette[1]),
+      _toArticle(_wp[2], _heroPalette[2]),
+    ];
+  }
+
+  List<_Article> get _municipality =>
+      _wpSection(_kMunicipality, 6, _cardPalette) ?? _municipalityDemo;
+
+  List<_Article> get _urban => _wpSection(_kUrban, 6, _cardPalette) ?? _urbanDemo;
+
+  List<_Article> get _business =>
+      _wpSection(_kBusiness, 6, _cardPalette) ?? _businessDemo;
 
   // ═══════════════════════════════════════════════
   // BUILD
@@ -375,7 +454,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _imagePlaceholder(article.colors, radius: 0, glyphSize: 72),
+            _articleImage(article, radius: 0, glyphSize: 72),
             // Bottom scrim — starts 39px below the top of the card
             Positioned(
               left: 0,
@@ -431,6 +510,8 @@ class _WebNewsContentState extends State<WebNewsContent> {
                       height: 34 / 28,
                       color: Colors.white,
                     ),
+                    textDirection: article.textDirection,
+                    textAlign: article.textAlign,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -453,7 +534,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _imagePlaceholder(article.colors, radius: 0, glyphSize: 48),
+            _articleImage(article, radius: 0, glyphSize: 48),
             Positioned.fill(
               child: DecoratedBox(
                 decoration: const BoxDecoration(
@@ -491,6 +572,8 @@ class _WebNewsContentState extends State<WebNewsContent> {
                       height: 30 / 24,
                       color: Colors.white,
                     ),
+                    textDirection: article.textDirection,
+                    textAlign: article.textAlign,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -686,6 +769,30 @@ class _WebNewsContentState extends State<WebNewsContent> {
 // SHARED PIECES
 // ═══════════════════════════════════════════════
 
+/// Article photo, falling back to the gradient stand-in while it loads,
+/// when it fails, or on demo articles that have no photo at all.
+///
+/// `webHtmlElementStrategy` matters here: the WordPress uploads are served
+/// without CORS headers, so CanvasKit cannot decode them itself and has to
+/// hand the URL to a plain <img> element.
+Widget _articleImage(_Article article, {double radius = 12, double glyphSize = 40}) {
+  final fallback = _imagePlaceholder(article.colors, radius: radius, glyphSize: glyphSize);
+  if (article.imageUrl.isEmpty) return fallback;
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(radius),
+    child: Image.network(
+      article.imageUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+      errorBuilder: (_, _, _) => fallback,
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : fallback,
+    ),
+  );
+}
+
 /// Gradient stand-in until real article photography is wired up.
 Widget _imagePlaceholder(List<Color> colors, {double radius = 12, double glyphSize = 40}) {
   return Container(
@@ -709,6 +816,12 @@ Widget _imagePlaceholder(List<Color> colors, {double radius = 12, double glyphSi
 
 class _Article {
   final String id, title, date, excerpt;
+  /// Remote photo from the WordPress export; empty on demo articles, which
+  /// keep falling back to the [colors] gradient.
+  final String imageUrl;
+  /// Real articles are published in Hebrew whichever way the page toggle is
+  /// set, so their text lays out RTL even while the chrome is in English.
+  final bool rtlText;
   final List<Color> colors;
   const _Article({
     required this.id,
@@ -716,7 +829,12 @@ class _Article {
     required this.date,
     required this.colors,
     this.excerpt = '',
+    this.imageUrl = '',
+    this.rtlText = false,
   });
+
+  TextDirection? get textDirection => rtlText ? TextDirection.rtl : null;
+  TextAlign? get textAlign => rtlText ? TextAlign.right : null;
 }
 
 /// 372.67 × 404 article card — image, 2-line title, 1-line excerpt, date.
@@ -754,7 +872,7 @@ class _ArticleCardState extends State<_ArticleCard> {
                 child: SizedBox(
                   width: widget.width,
                   height: 270,
-                  child: _imagePlaceholder(a.colors, glyphSize: 40),
+                  child: _articleImage(a, glyphSize: 40),
                 ),
               ),
               const SizedBox(height: 16),
@@ -768,6 +886,8 @@ class _ArticleCardState extends State<_ArticleCard> {
                     height: 25 / 20,
                     color: _hovered ? AppColors.midBlue : Colors.black,
                   ),
+                  textDirection: a.textDirection,
+                  textAlign: a.textAlign,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -783,6 +903,8 @@ class _ArticleCardState extends State<_ArticleCard> {
                     height: 1.4,
                     color: _kBodyGrey,
                   ),
+                  textDirection: a.textDirection,
+                  textAlign: a.textAlign,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
