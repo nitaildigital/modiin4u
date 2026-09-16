@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/data/wp_content.dart';
 
 /// Shared map data — used by both the mobile map screen and the web map page.
 final modiinCenter = LatLng(31.8928, 35.0104);
@@ -27,6 +28,10 @@ class MapPoi {
   // Shared
   final String? address;
   final String? imageAsset; // placeholder image path
+  /// Remote photos from the WordPress export; empty on demo POIs.
+  final List<String> photos;
+  /// The site's own blurb; demo POIs fall back to a generated sentence.
+  final String? description;
   // Restaurant / Business
   final double? rating;
   final int? reviewCount;
@@ -53,6 +58,8 @@ class MapPoi {
     this.route,
     this.address,
     this.imageAsset,
+    this.photos = const [],
+    this.description,
     this.rating,
     this.reviewCount,
     this.viewCount,
@@ -221,3 +228,51 @@ final mapPois = [
     area: '90 m²', rooms: '3 Rooms', floor: 'Floor 1',
   ),
 ];
+
+
+// ═══════════════════════════════════════════════
+// REAL BUSINESSES → MAP PINS
+// ═══════════════════════════════════════════════
+
+const _kBusinessLayerColor = Color(0xFF17A9D0);
+
+/// Pin glyph for a business, matched on its category names.
+IconData businessPinIcon(List<String> terms) {
+  bool has(List<String> words) => terms.any((t) => words.any(t.contains));
+  if (has(['קפה', 'ארוחת בוקר', 'גלידות', 'קונדיטור'])) return IconsaxPlusBold.coffee;
+  if (has(['בר', 'אלכוהול', 'קריוקי'])) return IconsaxPlusBold.cup;
+  if (has(['מסעד', 'פיצ', 'סושי', 'גריל', 'המבורגר', 'אסיאתי', 'איטלקי'])) {
+    return IconsaxPlusBold.reserve;
+  }
+  if (has(['אסתטיק', 'טיפוח', 'יופי', 'ספא', 'מספר'])) return IconsaxPlusBold.brush_1;
+  if (has(['ספורט', 'כושר'])) return IconsaxPlusBold.weight;
+  if (has(['דלק', 'רכב', 'פנצ'])) return IconsaxPlusBold.car;
+  if (has(['בריאות', 'רופא', 'מרפא'])) return IconsaxPlusBold.health;
+  if (has(['לימוד', 'חוג', 'גן'])) return IconsaxPlusBold.book_1;
+  return IconsaxPlusBold.shop;
+}
+
+/// The real directory as map pins. Only listings the site geocoded make it
+/// onto the map — 194 of 200 in the current export; the rest have no
+/// coordinates and there is nowhere honest to put them.
+Future<List<MapPoi>> loadBusinessPois() async {
+  final businesses = await loadWpBusinesses();
+  return [
+    for (final b in businesses)
+      if (b.lat != null && b.lng != null)
+        MapPoi(
+          name: b.title,
+          category: b.primaryTerm,
+          position: LatLng(b.lat!, b.lng!),
+          icon: businessPinIcon(b.terms),
+          color: _kBusinessLayerColor,
+          layer: 'Businesses',
+          route: '/business/${b.id}',
+          address: b.shortAddress,
+          rating: b.rating,
+          viewCount: b.views,
+          description: b.description.isEmpty ? null : b.description,
+          photos: [if (b.image.isNotEmpty) b.image, ...b.gallery],
+        ),
+  ];
+}

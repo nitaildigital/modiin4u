@@ -38,6 +38,27 @@ class _WebMapContentState extends State<WebMapContent> {
   String _query = '';
   int _slideIndex = 0;
 
+  /// Real business pins from the WordPress export. Empty until the asset
+  /// loads and empty if it fails, in which case the demo pins stand in.
+  List<MapPoi> _businessPois = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadBusinessPois().then((pois) {
+      if (mounted) setState(() => _businessPois = pois);
+    });
+  }
+
+  /// Real listings replace the demo pins on the Businesses layer only —
+  /// events, parking and real estate have no exported source yet.
+  List<MapPoi> get _allPois => _businessPois.isEmpty
+      ? mapPois
+      : [
+          ..._businessPois,
+          ...mapPois.where((p) => p.layer != 'Businesses'),
+        ];
+
   String _t(String en, String he) => _isHebrew ? he : en;
 
   @override
@@ -55,7 +76,7 @@ class _WebMapContentState extends State<WebMapContent> {
   };
 
   List<MapPoi> get _visiblePois {
-    var pois = mapPois.where((p) => _activeLayers.contains(p.layer));
+    var pois = _allPois.where((p) => _activeLayers.contains(p.layer));
     if (_query.isNotEmpty) {
       final q = _query.toLowerCase();
       pois = pois.where((p) =>
@@ -437,13 +458,31 @@ class _WebMapContentState extends State<WebMapContent> {
 
   Widget _buildGallery(MapPoi poi) {
     final colors = _galleryColors(poi);
+    final photos = poi.photos;
+    // Demo POIs have no photos and kept a hard-coded 18-slide counter.
+    final slideCount = photos.isEmpty ? 18 : photos.length;
     return SizedBox(
       width: 324,
       height: 190,
       child: Stack(
         children: [
           Positioned.fill(
-            child: _imagePlaceholder(colors[_slideIndex % colors.length], radius: 12, glyphSize: 44),
+            child: photos.isEmpty
+                ? _imagePlaceholder(colors[_slideIndex % colors.length], radius: 12, glyphSize: 44)
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      photos[_slideIndex % photos.length],
+                      fit: BoxFit.cover,
+                      width: 324,
+                      height: 190,
+                      // WordPress serves uploads without CORS headers, so
+                      // CanvasKit has to hand these to a plain <img>.
+                      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                      errorBuilder: (_, _, _) => _imagePlaceholder(
+                          colors[_slideIndex % colors.length], radius: 12, glyphSize: 44),
+                    ),
+                  ),
           ),
           // Slide counter
           Positioned(
@@ -457,7 +496,7 @@ class _WebMapContentState extends State<WebMapContent> {
                 borderRadius: BorderRadius.circular(60),
               ),
               child: Text(
-                '${_slideIndex + 1} / 18',
+                '${_slideIndex % slideCount + 1} / $slideCount',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -473,7 +512,7 @@ class _WebMapContentState extends State<WebMapContent> {
             top: 79,
             child: _GalleryArrow(
               icon: Icons.chevron_left,
-              onTap: () => setState(() => _slideIndex = (_slideIndex + 17) % 18),
+              onTap: () => setState(() => _slideIndex = (_slideIndex + slideCount - 1) % slideCount),
             ),
           ),
           Positioned(
@@ -481,7 +520,7 @@ class _WebMapContentState extends State<WebMapContent> {
             top: 79,
             child: _GalleryArrow(
               icon: Icons.chevron_right,
-              onTap: () => setState(() => _slideIndex = (_slideIndex + 1) % 18),
+              onTap: () => setState(() => _slideIndex = (_slideIndex + 1) % slideCount),
             ),
           ),
           // Close
@@ -619,6 +658,9 @@ class _WebMapContentState extends State<WebMapContent> {
 
   Widget _buildThumbnails(MapPoi poi) {
     final colors = _galleryColors(poi);
+    final photos = poi.photos;
+    // Demo POIs kept a hard-coded "+14"; real ones count what they actually have.
+    final extra = photos.isEmpty ? 14 : photos.length - 4;
     return Row(
       children: [
         for (var i = 0; i < 4; i++) ...[
@@ -633,13 +675,26 @@ class _WebMapContentState extends State<WebMapContent> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: _imagePlaceholder(
-                        colors[(i + 1) % colors.length],
-                        radius: 7.2,
-                        glyphSize: 20,
-                      ),
+                      child: i + 1 < photos.length
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(7.2),
+                              child: Image.network(
+                                photos[i + 1],
+                                fit: BoxFit.cover,
+                                width: 75,
+                                height: 75,
+                                webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                                errorBuilder: (_, _, _) => _imagePlaceholder(
+                                    colors[(i + 1) % colors.length], radius: 7.2, glyphSize: 20),
+                              ),
+                            )
+                          : _imagePlaceholder(
+                              colors[(i + 1) % colors.length],
+                              radius: 7.2,
+                              glyphSize: 20,
+                            ),
                     ),
-                    if (i == 3)
+                    if (i == 3 && extra > 0)
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -648,7 +703,7 @@ class _WebMapContentState extends State<WebMapContent> {
                           ),
                           child: Center(
                             child: Text(
-                              '+14',
+                              '+$extra',
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -696,9 +751,13 @@ class _WebMapContentState extends State<WebMapContent> {
       default:
         rows.addAll([
           (_t('Category', 'קטגוריה'), poi.category),
-          (_t('Rating', 'דירוג'), poi.rating?.toStringAsFixed(1) ?? '—'),
-          (_t('Reviews', 'ביקורות'), '${poi.reviewCount ?? 0}'),
-          (_t('Views', 'צפיות'), '${poi.viewCount ?? 0}'),
+          // Real listings have a rating for only some entries and no review
+          // count at all, so both rows appear only when there is something
+          // behind them — "Reviews 0" reads as a fact the site never claimed.
+          if (poi.rating != null) (_t('Rating', 'דירוג'), poi.rating!.toStringAsFixed(1)),
+          if (poi.reviewCount != null)
+            (_t('Reviews', 'ביקורות'), '${poi.reviewCount}'),
+          if (poi.viewCount != null) (_t('Views', 'צפיות'), '${poi.viewCount}'),
         ]);
     }
 
@@ -780,7 +839,11 @@ class _WebMapContentState extends State<WebMapContent> {
     _ => _t('About This Business', 'על העסק'),
   };
 
-  String _aboutText(MapPoi poi) => switch (poi.layer) {
+  /// Real listings carry the site's own blurb; demo POIs fall back to a
+  /// sentence generated from whatever fields they have.
+  String _aboutText(MapPoi poi) => poi.description ?? _generatedAboutText(poi);
+
+  String _generatedAboutText(MapPoi poi) => switch (poi.layer) {
     'Real Estate' => _t(
       'New directly from the contractor, mini penthouse 6 rooms, excellent '
       'location in Avni Chen neighborhood, back apartment!! Occupancy 4 months '
