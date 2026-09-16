@@ -2,11 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'web_municipal_screen.dart';
+
+/// Municipal – responsive wrapper.
+class MunicipalScreen extends StatelessWidget {
+  const MunicipalScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebMunicipalContent();
+        return const _MobileMunicipalContent();
+      },
+    );
+  }
+}
 
 /// Municipal screen – city services hub with quick-info cards
 /// (Shabbat & Parking) and a 3×3 service category grid.
-class MunicipalScreen extends StatelessWidget {
-  const MunicipalScreen({super.key});
+class _MobileMunicipalContent extends StatelessWidget {
+  const _MobileMunicipalContent();
 
   // ── Service grid items ──
   static final _services = [

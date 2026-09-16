@@ -44,6 +44,25 @@ List<WebNavItem> webNavItems(bool isHebrew) {
   ];
 }
 
+/// The 1600px content column every web page lays its sections out in.
+class WebSection extends StatelessWidget {
+  final Widget child;
+  const WebSection({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1648), // 1600 content + 24 padding each side
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────
 // STICKY NAVBAR — 1920 × 80
 // ─────────────────────────────────────────────
