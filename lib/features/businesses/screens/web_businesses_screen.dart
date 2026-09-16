@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/data/wp_content.dart';
 import '../../../shared/widgets/web_chrome.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -20,6 +22,7 @@ const _kOpenBg = Color(0xFFE6F7EE);
 const _kOpenText = Color(0xFF12855A);
 const _kClosedBg = Color(0xFFFDECEC);
 const _kClosedText = Color(0xFFD64545);
+const _kDeliveryBg = Color(0xFFF0F7FD);
 
 class WebBusinessesContent extends StatefulWidget {
   const WebBusinessesContent({super.key});
@@ -38,6 +41,76 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   final _featured = ScrollController();
   final _resultsKey = GlobalKey();
 
+  /// The real directory, exported from the site. Empty until the asset
+  /// loads and empty forever if it fails — both fall through to the demo
+  /// listings below, so the page always renders.
+  List<WpBusiness> _wp = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadWpBusinesses().then((items) {
+      if (mounted) setState(() => _wp = items);
+    });
+  }
+
+  bool get _live => _wp.isNotEmpty;
+
+  /// The eight busiest categories in the directory. The site's term list is
+  /// long and uneven — it carries one-off campaign tags alongside real
+  /// categories — so the cards are derived from what businesses actually use
+  /// rather than hard-coded.
+  List<_Category> get _liveCategories {
+    final counts = <String, int>{};
+    for (final b in _wp) {
+      for (final t in b.terms) {
+        // The site tags businesses that stayed open during each war. Those
+        // are campaign lists, not categories, and they out-count real ones.
+        if (t.contains('מלחמת')) continue;
+        counts[t] = (counts[t] ?? 0) + 1;
+      }
+    }
+    final top = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final palette = _categoryPalette;
+    return [
+      for (var i = 0; i < top.length && i < 8; i++)
+        _Category(
+          name: top[i].key,
+          count: top[i].value,
+          icon: _iconForTerm(top[i].key),
+          start: palette[i % palette.length].$1,
+          end: palette[i % palette.length].$2,
+        ),
+    ];
+  }
+
+  static const _categoryPalette = <(Color, Color)>[
+    (Color(0xFF1B3A2D), Color(0xFF2E5A47)),
+    (Color(0xFF3E2723), Color(0xFF5D4037)),
+    (Color(0xFF2D1B4E), Color(0xFF4A2D6E)),
+    (Color(0xFF4E1B3A), Color(0xFF6E2D54)),
+    (Color(0xFF1A237E), Color(0xFF283593)),
+    (Color(0xFF4E342E), Color(0xFF6D4C41)),
+    (Color(0xFF263238), Color(0xFF37474F)),
+    (Color(0xFF1B5E20), Color(0xFF2E7D32)),
+  ];
+
+  static IconData _iconForTerm(String term) {
+    bool has(List<String> words) => words.any(term.contains);
+    if (has(['מסעד', 'גריל', 'פיצ', 'סושי', 'המבורגר', 'איטלקי', 'אסיאתי'])) {
+      return IconsaxPlusBold.reserve;
+    }
+    if (has(['קפה', 'ארוחת בוקר', 'גלידות', 'קונדיטור'])) return IconsaxPlusBold.coffee;
+    if (has(['בר', 'אלכוהול', 'קריוקי'])) return IconsaxPlusBold.cup;
+    if (has(['אסתטיק', 'טיפוח', 'יופי', 'ספא', 'מספר'])) return IconsaxPlusBold.brush_1;
+    if (has(['ספורט', 'כושר'])) return IconsaxPlusBold.weight;
+    if (has(['דלק', 'רכב', 'פנצ'])) return IconsaxPlusBold.car;
+    if (has(['לימוד', 'חוג', 'גן'])) return IconsaxPlusBold.book_1;
+    if (has(['בריאות', 'רופא', 'מרפא'])) return IconsaxPlusBold.health;
+    return IconsaxPlusBold.shop;
+  }
+
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -49,7 +122,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
 
   // ── Nav links ──
   // ── Categories — 8 gradient cards, 4 per row ──
-  List<_Category> get _categories => [
+  List<_Category> get _categoriesDemo => [
     _Category(name: _t('Restaurants', 'מסעדות'), count: 126, icon: IconsaxPlusBold.reserve,
         start: const Color(0xFF1B3A2D), end: const Color(0xFF2E5A47)),
     _Category(name: _t('Coffee Shops', 'בתי קפה'), count: 38, icon: IconsaxPlusBold.coffee,
@@ -69,7 +142,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   ];
 
   // ── Filter pills — index matches _Business.tags ──
-  List<String> get _filters => [
+  List<String> get _filtersDemo => [
     _t('Open Now', 'פתוח עכשיו'),
     _t('Top Rated', 'המדורגים ביותר'),
     _t('New on Modiin4u', 'חדש במודיעין4u'),
@@ -77,7 +150,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   ];
 
   // ── Directory ──
-  List<_Business> get _businesses => [
+  List<_Business> get _businessesDemo => [
     _Business(
       name: _t('Urban Plate Kitchen & Bar', 'אורבן פלייט קיטשן & בר'),
       categoryIndex: 0, category: _t('Restaurants', 'מסעדות'),
@@ -164,15 +237,82 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
     ),
   ];
 
+  // ═══════════════════════════════════════════════
+  // LIVE DIRECTORY — real listings first, demo as the fallback
+  // ═══════════════════════════════════════════════
+
+  List<_Category> get _categories => _live ? _liveCategories : _categoriesDemo;
+
+  /// Real listings carry kosher/delivery/rating flags, so the pills filter on
+  /// those rather than on the demo data's invented "open now" state.
+  List<String> get _filters => _live
+      ? [
+          _t('Kosher', 'כשר'),
+          _t('Delivery', 'משלוחים'),
+          _t('Rated', 'מדורגים'),
+          _t('Open on Shabbat', 'פתוח בשבת'),
+        ]
+      : _filtersDemo;
+
+  List<_Business> get _businesses {
+    if (!_live) return _businessesDemo;
+    final cats = _liveCategories;
+    final palette = _categoryPalette;
+    return [
+      for (final b in _wp)
+        _Business(
+          name: b.title,
+          category: b.primaryTerm,
+          categoryIndex: cats.indexWhere((c) => b.terms.contains(c.name)),
+          area: b.shortAddress,
+          rating: b.rating ?? 0,
+          reviews: b.views,
+          isOpen: true,
+          tags: const {},
+          imageBg: palette[b.id % palette.length].$1,
+          logoBg: palette[(b.id + 3) % palette.length].$2,
+          imageUrl: b.image,
+          logoUrl: b.logo,
+          phone: b.phone,
+          hours: b.hours,
+          kosher: b.kosher,
+          delivery: b.delivery,
+          views: b.views,
+          terms: b.terms,
+        ),
+    ];
+  }
+
+  bool _matchesFilter(_Business b, int filter) {
+    if (!_live) return b.tags.contains(filter);
+    switch (filter) {
+      case 0:
+        return b.kosher;
+      case 1:
+        return b.delivery;
+      case 2:
+        return b.hasRating;
+      case 3:
+        return b.terms.any((t) => t.contains('פתוח בשבת'));
+      default:
+        return true;
+    }
+  }
+
   List<_Business> get _visibleBusinesses {
     final q = _query.toLowerCase();
     return _businesses.where((b) {
-      if (_selectedCategory >= 0 && b.categoryIndex != _selectedCategory) return false;
-      if (_selectedFilter >= 0 && !b.tags.contains(_selectedFilter)) return false;
+      if (_selectedCategory >= 0) {
+        final name = _categories[_selectedCategory].name;
+        final inCategory = _live ? b.terms.contains(name) : b.categoryIndex == _selectedCategory;
+        if (!inCategory) return false;
+      }
+      if (_selectedFilter >= 0 && !_matchesFilter(b, _selectedFilter)) return false;
       if (q.isEmpty) return true;
       return b.name.toLowerCase().contains(q) ||
           b.category.toLowerCase().contains(q) ||
-          b.area.toLowerCase().contains(q);
+          b.area.toLowerCase().contains(q) ||
+          b.terms.any((t) => t.toLowerCase().contains(q));
     }).toList();
   }
 
@@ -460,6 +600,9 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                     openLabel: _t('Open Now', 'פתוח עכשיו'),
                     closedLabel: _t('Closed', 'סגור'),
                     reviewsLabel: _t('reviews', 'ביקורות'),
+                    viewsLabel: _t('views', 'צפיות'),
+                    kosherLabel: _t('Kosher', 'כשר'),
+                    deliveryLabel: _t('Delivery', 'משלוחים'),
                     viewLabel: _t('View Business', 'לעמוד העסק'),
                     onTap: () => context.push('/business/demo_$i'),
                   ),
@@ -532,6 +675,9 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                           openLabel: _t('Open Now', 'פתוח עכשיו'),
                           closedLabel: _t('Closed', 'סגור'),
                           reviewsLabel: _t('reviews', 'ביקורות'),
+                          viewsLabel: _t('views', 'צפיות'),
+                          kosherLabel: _t('Kosher', 'כשר'),
+                          deliveryLabel: _t('Delivery', 'משלוחים'),
                           viewLabel: _t('View Business', 'לעמוד העסק'),
                           onTap: () => context.push('/business/demo_$i'),
                         ),
@@ -761,6 +907,15 @@ class _Business {
   final bool isOpen;
   final Set<int> tags;
   final Color imageBg, logoBg;
+
+  // ── Populated only for real listings from the WordPress export ──
+  final String imageUrl, logoUrl, phone, hours;
+  final bool kosher, delivery;
+  /// Real listings have a view count but often no rating, so [rating] is 0
+  /// for them and this carries the popularity signal the site does keep.
+  final int views;
+  final List<String> terms;
+
   const _Business({
     required this.name,
     required this.category,
@@ -772,7 +927,18 @@ class _Business {
     required this.tags,
     required this.imageBg,
     required this.logoBg,
+    this.imageUrl = '',
+    this.logoUrl = '',
+    this.phone = '',
+    this.hours = '',
+    this.kosher = false,
+    this.delivery = false,
+    this.views = 0,
+    this.terms = const [],
   });
+
+  bool get isLive => terms.isNotEmpty || phone.isNotEmpty;
+  bool get hasRating => rating > 0;
 }
 
 class _Professional {
@@ -811,6 +977,29 @@ class _Section extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Real photo when the listing has one, gradient stand-in otherwise.
+///
+/// `webHtmlElementStrategy` matters: the WordPress uploads are served with
+/// no CORS headers, so CanvasKit cannot decode them and has to hand the URL
+/// to a plain <img> element.
+Widget _remoteImage(String url, Color base,
+    {double? width, double? height, BorderRadius? radius, double glyph = 28}) {
+  final fallback = _imagePlaceholder(base, width: width, height: height, radius: radius, glyph: glyph);
+  if (url.isEmpty) return fallback;
+  return ClipRRect(
+    borderRadius: radius ?? BorderRadius.circular(999),
+    child: Image.network(
+      url,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+      errorBuilder: (_, _, _) => fallback,
+      loadingBuilder: (context, child, progress) => progress == null ? child : fallback,
+    ),
+  );
 }
 
 /// Gradient stand-in for a photo that has no asset yet.
@@ -1003,6 +1192,7 @@ class _FilterPillState extends State<_FilterPill> {
 class _BusinessCard extends StatefulWidget {
   final _Business business;
   final String openLabel, closedLabel, reviewsLabel, viewLabel;
+  final String kosherLabel, deliveryLabel, viewsLabel;
   final VoidCallback onTap;
   const _BusinessCard({
     required this.business,
@@ -1010,6 +1200,9 @@ class _BusinessCard extends StatefulWidget {
     required this.closedLabel,
     required this.reviewsLabel,
     required this.viewLabel,
+    required this.kosherLabel,
+    required this.deliveryLabel,
+    required this.viewsLabel,
     required this.onTap,
   });
 
@@ -1019,6 +1212,28 @@ class _BusinessCard extends StatefulWidget {
 
 class _BusinessCardState extends State<_BusinessCard> {
   bool _hovered = false;
+
+  Widget _chip(String label, Color bg, Color fg, {bool dot = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (dot) ...[
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: fg),
+            ),
+            const SizedBox(width: 6),
+          ],
+          Text(label,
+              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1047,7 +1262,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                   // Stack's default hardEdge clip cuts it in half.
                   clipBehavior: Clip.none,
                   children: [
-                    _imagePlaceholder(b.imageBg,
+                    _remoteImage(b.imageUrl, b.imageBg,
                         width: double.infinity,
                         height: 168,
                         radius: const BorderRadius.vertical(top: Radius.circular(11)),
@@ -1055,54 +1270,49 @@ class _BusinessCardState extends State<_BusinessCard> {
                     PositionedDirectional(
                       start: 12,
                       top: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: b.isOpen ? _kOpenBg : _kClosedBg,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: b.isOpen ? _kOpenText : _kClosedText,
-                              ),
+                      child: Row(
+                        children: [
+                          // Real listings say what the site actually records —
+                          // kosher and delivery — instead of a live open/closed
+                          // state nothing in the export can back up.
+                          if (b.isLive) ...[
+                            if (b.kosher)
+                              _chip(widget.kosherLabel, _kOpenBg, _kOpenText),
+                            if (b.kosher && b.delivery) const SizedBox(width: 6),
+                            if (b.delivery)
+                              _chip(widget.deliveryLabel, _kDeliveryBg, AppColors.midBlue),
+                          ] else
+                            _chip(
+                              b.isOpen ? widget.openLabel : widget.closedLabel,
+                              b.isOpen ? _kOpenBg : _kClosedBg,
+                              b.isOpen ? _kOpenText : _kClosedText,
+                              dot: true,
                             ),
-                            const SizedBox(width: 6),
-                            Text(b.isOpen ? widget.openLabel : widget.closedLabel,
-                                style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: b.isOpen ? _kOpenText : _kClosedText)),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
-                    PositionedDirectional(
-                      end: 12,
-                      top: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(IconsaxPlusBold.star_1, size: 13, color: AppColors.gold),
-                            const SizedBox(width: 4),
-                            Text(b.rating.toStringAsFixed(1),
-                                style: GoogleFonts.inter(
-                                    fontSize: 12, fontWeight: FontWeight.w600, color: _kHeading)),
-                          ],
+                    if (b.hasRating)
+                      PositionedDirectional(
+                        end: 12,
+                        top: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(IconsaxPlusBold.star_1, size: 13, color: AppColors.gold),
+                              const SizedBox(width: 4),
+                              Text(b.rating.toStringAsFixed(1),
+                                  style: GoogleFonts.inter(
+                                      fontSize: 12, fontWeight: FontWeight.w600, color: _kHeading)),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                     // Logo chip straddling the photo edge
                     PositionedDirectional(
                       start: 16,
@@ -1115,7 +1325,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: _imagePlaceholder(b.logoBg, radius: BorderRadius.circular(9), glyph: 18),
+                        child: _remoteImage(b.logoUrl, b.logoBg, radius: BorderRadius.circular(9), glyph: 18),
                       ),
                     ),
                   ],
@@ -1152,7 +1362,10 @@ class _BusinessCardState extends State<_BusinessCard> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text('${b.reviews} ${widget.reviewsLabel}',
+                      Text(
+                          b.isLive
+                              ? '${b.views} ${widget.viewsLabel}'
+                              : '${b.reviews} ${widget.reviewsLabel}',
                           style: GoogleFonts.inter(fontSize: 12, color: _kGreyText)),
                       const Spacer(),
                       Row(
@@ -1174,14 +1387,28 @@ class _BusinessCardState extends State<_BusinessCard> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: _kBorder),
-                              borderRadius: BorderRadius.circular(60),
+                          // Dials the real number; inert on demo listings,
+                          // which have none.
+                          MouseRegion(
+                            cursor: b.phone.isEmpty
+                                ? SystemMouseCursors.basic
+                                : SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: b.phone.isEmpty
+                                  ? null
+                                  : () => launchUrl(Uri.parse('tel:${b.phone}')),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: _kBorder),
+                                  borderRadius: BorderRadius.circular(60),
+                                ),
+                                child: Icon(IconsaxPlusLinear.call,
+                                    size: 18,
+                                    color: b.phone.isEmpty ? _kIconGrey : AppColors.midBlue),
+                              ),
                             ),
-                            child: const Icon(IconsaxPlusLinear.call, size: 18, color: AppColors.midBlue),
                           ),
                         ],
                       ),
