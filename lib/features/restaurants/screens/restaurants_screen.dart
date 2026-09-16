@@ -33,7 +33,7 @@ class _MobileRestaurantsContent extends StatefulWidget {
 }
 
 class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
-  int _bannerPage = 1; // 0-indexed, starts on second dot active
+  final int _bannerPage = 1; // 0-indexed, starts on second dot active
 
   // ── Cuisine categories ──
   static const _cuisines = [
