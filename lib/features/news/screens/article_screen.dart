@@ -2,14 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'web_article_screen.dart';
 
-/// News article detail screen – hero image, header with category badge +
-/// views, long-form body with inline images, "More Related News" horizontal
-/// scroll, comments section, and a fixed bottom action bar.
+/// News article detail – responsive wrapper.
+/// Desktop (> 1100px) renders the Modiin News Detail web layout;
+/// mobile keeps the app UI.
 class ArticleScreen extends StatelessWidget {
   final String articleId;
 
   const ArticleScreen({super.key, required this.articleId});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return WebArticleContent(articleId: articleId);
+        }
+        return _MobileArticleContent(articleId: articleId);
+      },
+    );
+  }
+}
+
+/// News article detail screen – hero image, header with category badge +
+/// views, long-form body with inline images, "More Related News" horizontal
+/// scroll, comments section, and a fixed bottom action bar.
+class _MobileArticleContent extends StatelessWidget {
+  final String articleId;
+
+  const _MobileArticleContent({required this.articleId});
 
   // ── Body paragraphs ──
   static const _paragraphs = [

@@ -2,11 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'web_news_screen.dart';
 
-/// News feed screen – featured hero article + three horizontal-scroll
-/// category sections: Municipality Updates, Urban, Business.
+/// News feed – responsive wrapper.
+/// Desktop (> 1100px) renders the Modiin News web layout; mobile keeps the app UI.
 class NewsScreen extends StatelessWidget {
   const NewsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebNewsContent();
+        }
+        return const _MobileNewsContent();
+      },
+    );
+  }
+}
+
+/// Mobile news feed – featured hero article + three horizontal-scroll
+/// category sections: Municipality Updates, Urban, Business.
+class _MobileNewsContent extends StatelessWidget {
+  const _MobileNewsContent();
 
   // ── Featured article ──
   static const _featuredTitle =

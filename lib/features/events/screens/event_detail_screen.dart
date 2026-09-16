@@ -4,18 +4,39 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+import 'web_event_detail_screen.dart';
 
-/// Event detail screen – hero image, date badge, info section, organizer,
-/// about, what's included, mini-map, "You May Also Like" cards, RSVP bar.
-class EventDetailScreen extends StatefulWidget {
+/// Event detail screen — responsive wrapper.
+/// Desktop (> 1100px) renders the web detail layout; mobile keeps the app UI.
+class EventDetailScreen extends StatelessWidget {
   final String eventId;
   const EventDetailScreen({super.key, required this.eventId});
 
   @override
-  State<EventDetailScreen> createState() => _EventDetailScreenState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return WebEventDetailContent(eventId: eventId);
+        }
+        return _MobileEventDetailContent(eventId: eventId);
+      },
+    );
+  }
 }
 
-class _EventDetailScreenState extends State<EventDetailScreen> {
+/// Mobile layout – hero image, date badge, info section, organizer,
+/// about, what's included, mini-map, "You May Also Like" cards, RSVP bar.
+class _MobileEventDetailContent extends StatefulWidget {
+  final String eventId;
+  const _MobileEventDetailContent({required this.eventId});
+
+  @override
+  State<_MobileEventDetailContent> createState() =>
+      _MobileEventDetailContentState();
+}
+
+class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
   bool _isGoing = false;
 
   // ── Related events (You May Also Like) ──

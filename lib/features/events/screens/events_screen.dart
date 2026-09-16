@@ -2,11 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'web_events_screen.dart';
+
+/// Events – responsive wrapper.
+class EventsScreen extends StatelessWidget {
+  const EventsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebEventsContent();
+        return const _MobileEventsContent();
+      },
+    );
+  }
+}
 
 /// Events discovery screen – category circles, vertical event cards
 /// with date badges, time/location/price, and interest counts.
-class EventsScreen extends StatelessWidget {
-  const EventsScreen({super.key});
+class _MobileEventsContent extends StatelessWidget {
+  const _MobileEventsContent();
 
   // ── Event categories ──
   static const _categories = [

@@ -4,17 +4,38 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+import 'web_restaurants_map_screen.dart';
 
-/// Restaurants map view – shows restaurant, coffee shop, and bar pins on
-/// the map with a search bar, tappable popup cards, and a "View as List" toggle.
-class RestaurantsMapScreen extends StatefulWidget {
+/// Restaurants map view — responsive wrapper.
+/// Desktop (> 1100px) renders the web search + map layout; mobile keeps the app UI.
+class RestaurantsMapScreen extends StatelessWidget {
   const RestaurantsMapScreen({super.key});
 
   @override
-  State<RestaurantsMapScreen> createState() => _RestaurantsMapScreenState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebRestaurantsMapContent();
+        }
+        return const _MobileRestaurantsMapContent();
+      },
+    );
+  }
 }
 
-class _RestaurantsMapScreenState extends State<RestaurantsMapScreen> {
+/// Mobile layout – shows restaurant, coffee shop, and bar pins on
+/// the map with a search bar, tappable popup cards, and a "View as List" toggle.
+class _MobileRestaurantsMapContent extends StatefulWidget {
+  const _MobileRestaurantsMapContent();
+
+  @override
+  State<_MobileRestaurantsMapContent> createState() =>
+      _MobileRestaurantsMapContentState();
+}
+
+class _MobileRestaurantsMapContentState
+    extends State<_MobileRestaurantsMapContent> {
   int? _selectedPin;
 
   // Modi'in center

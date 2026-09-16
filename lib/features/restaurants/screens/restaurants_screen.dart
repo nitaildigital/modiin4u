@@ -2,18 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'web_restaurants_screen.dart';
 
-/// Restaurants discovery screen — hero banner, cuisine category cards,
-/// vertical restaurant/coffee/bar listings with fade + "View All",
-/// and horizontal "Most Loved" / "Lunch Nearby" rows.
-class RestaurantsScreen extends StatefulWidget {
+/// Restaurants discovery screen — responsive wrapper.
+/// Desktop (> 1100px) renders the full web layout; mobile keeps the app UI.
+class RestaurantsScreen extends StatelessWidget {
   const RestaurantsScreen({super.key});
 
   @override
-  State<RestaurantsScreen> createState() => _RestaurantsScreenState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebRestaurantsContent();
+        }
+        return const _MobileRestaurantsContent();
+      },
+    );
+  }
 }
 
-class _RestaurantsScreenState extends State<RestaurantsScreen> {
+/// Mobile layout — hero banner, cuisine category cards,
+/// vertical restaurant/coffee/bar listings with fade + "View All",
+/// and horizontal "Most Loved" / "Lunch Nearby" rows.
+class _MobileRestaurantsContent extends StatefulWidget {
+  const _MobileRestaurantsContent();
+
+  @override
+  State<_MobileRestaurantsContent> createState() => _MobileRestaurantsContentState();
+}
+
+class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
   int _bannerPage = 1; // 0-indexed, starts on second dot active
 
   // ── Cuisine categories ──

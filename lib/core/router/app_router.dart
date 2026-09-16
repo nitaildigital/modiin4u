@@ -42,6 +42,7 @@ import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/home/screens/search_results_screen.dart';
 import '../../features/restaurants/screens/restaurants_screen.dart';
 import '../../features/restaurants/screens/restaurants_map_screen.dart';
+import '../../features/restaurants/screens/restaurant_detail_screen.dart';
 import '../../shared/widgets/shell_scaffold.dart';
 
 CustomTransitionPage<void> _slideTransition(Widget child, GoRouterState state) {
@@ -127,6 +128,13 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
         const RestaurantsMapScreen(), state,
+      ),
+    ),
+    GoRoute(
+      path: '/restaurant/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        RestaurantDetailScreen(restaurantId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(

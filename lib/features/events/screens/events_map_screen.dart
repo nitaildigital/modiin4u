@@ -4,17 +4,38 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+import 'web_events_category_screen.dart';
 
-/// Events map view – shows event venue pins (purple) on the map
-/// with a search bar, tappable popup cards, and a "View as List" toggle.
-class EventsMapScreen extends StatefulWidget {
+/// Events map view – responsive wrapper.
+/// Desktop (> 1100px) renders the filtered "Event Category" layout;
+/// mobile keeps the existing app map UI.
+class EventsMapScreen extends StatelessWidget {
   const EventsMapScreen({super.key});
 
   @override
-  State<EventsMapScreen> createState() => _EventsMapScreenState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebEventsCategoryContent();
+        }
+        return const _MobileEventsMapContent();
+      },
+    );
+  }
 }
 
-class _EventsMapScreenState extends State<EventsMapScreen> {
+/// Mobile layout – event venue pins (purple) on the map with a search bar,
+/// tappable popup cards, and a "View as List" toggle.
+class _MobileEventsMapContent extends StatefulWidget {
+  const _MobileEventsMapContent();
+
+  @override
+  State<_MobileEventsMapContent> createState() =>
+      _MobileEventsMapContentState();
+}
+
+class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
   int? _selectedPin;
 
   // Modi'in center
