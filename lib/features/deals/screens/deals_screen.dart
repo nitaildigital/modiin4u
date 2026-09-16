@@ -2,11 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'web_deals_screen.dart';
+
+/// Deals – responsive wrapper.
+class DealsScreen extends StatelessWidget {
+  const DealsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebDealsContent();
+        return const _MobileDealsContent();
+      },
+    );
+  }
+}
 
 /// Deals discovery screen – turquoise gradient hero, category circles,
 /// deal cards with discount badges & countdowns, brand grid.
-class DealsScreen extends StatelessWidget {
-  const DealsScreen({super.key});
+class _MobileDealsContent extends StatelessWidget {
+  const _MobileDealsContent();
 
   // ── Deal categories ──
   static const _categories = [
