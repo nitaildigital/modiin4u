@@ -40,10 +40,19 @@ class _WebNewsContentState extends State<WebNewsContent> {
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  /// The site's own category names, which match this page's sections.
-  static const _kMunicipality = 'עדכוני עירייה';
-  static const _kUrban = 'עירוני';
-  static const _kBusiness = 'עסקים';
+  /// Every category the site publishes under, in the order it uses most.
+  /// The page used to hard-code the first three and drop the other six.
+  static const _sections = [
+    ('עדכוני עירייה', 'Municipality Updates'),
+    ('עירוני', 'Urban'),
+    ('עסקים', 'Business'),
+    ('אנשים', 'People'),
+    ('קולינריה', 'Food & Drink'),
+    ('אטרקציות וטיולים במודיעין', 'Attractions & Trips'),
+    ('ספורט וכושר', 'Sport & Fitness'),
+    ('נדל״ן', 'Real Estate'),
+    ('חדשות מודיעין', 'Modiin News'),
+  ];
 
   /// Content is published in Hebrew only, so both languages show the
   /// original title; only the date format follows the toggle.
@@ -350,13 +359,23 @@ class _WebNewsContentState extends State<WebNewsContent> {
     ];
   }
 
-  List<_Article> get _municipality =>
-      _wpSection(_kMunicipality, 6, _cardPalette) ?? _municipalityDemo;
-
-  List<_Article> get _urban => _wpSection(_kUrban, 6, _cardPalette) ?? _urbanDemo;
-
-  List<_Article> get _business =>
-      _wpSection(_kBusiness, 6, _cardPalette) ?? _businessDemo;
+  /// Sections that actually have articles behind them, so a category the
+  /// site has not published to lately leaves no empty heading on the page.
+  List<(String, List<_Article>)> get _liveSections {
+    if (_wp.isEmpty) {
+      return [
+        (_t('Municipality Updates', 'עדכוני עירייה'), _municipalityDemo),
+        (_t('Urban', 'עירוני'), _urbanDemo),
+        (_t('Business', 'עסקים'), _businessDemo),
+      ];
+    }
+    final out = <(String, List<_Article>)>[];
+    for (final (he, en) in _sections) {
+      final articles = _wpSection(he, 6, _cardPalette);
+      if (articles != null) out.add((_t(en, he), articles));
+    }
+    return out;
+  }
 
   // ═══════════════════════════════════════════════
   // BUILD
@@ -654,20 +673,10 @@ class _WebNewsContentState extends State<WebNewsContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSection(
-                title: _t('Municipality Updates', 'עדכוני עירייה'),
-                articles: _municipality,
-              ),
-              const SizedBox(height: 72),
-              _buildSection(
-                title: _t('Urban', 'עירוני'),
-                articles: _urban,
-              ),
-              const SizedBox(height: 72),
-              _buildSection(
-                title: _t('Business', 'עסקים'),
-                articles: _business,
-              ),
+              for (final (title, articles) in _liveSections) ...[
+                _buildSection(title: title, articles: articles),
+                const SizedBox(height: 72),
+              ],
             ],
           ),
         ),

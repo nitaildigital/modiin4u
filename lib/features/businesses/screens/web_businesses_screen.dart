@@ -64,6 +64,9 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   static const _pageSize = 24;
   int _shown = _pageSize;
 
+  /// Whether the category grid is expanded past the first eight.
+  bool _allCategories = false;
+
   /// The site lists six providers and records no ratings for them, so the
   /// cards show the provider's own blurb where a rating would sit.
   List<_Professional> get _professionals {
@@ -92,6 +95,17 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   /// long and uneven — it carries one-off campaign tags alongside real
   /// categories — so the cards are derived from what businesses actually use
   /// rather than hard-coded.
+  /// How many distinct categories the directory actually uses.
+  int get _liveCategoryCount {
+    final seen = <String>{};
+    for (final b in _wp) {
+      for (final t in b.terms) {
+        if (!t.contains('מלחמת')) seen.add(t);
+      }
+    }
+    return seen.length;
+  }
+
   List<_Category> get _liveCategories {
     final counts = <String, int>{};
     for (final b in _wp) {
@@ -105,8 +119,11 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
     final top = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final palette = _categoryPalette;
+    // The site uses 62 categories. Eight fit above the fold; the rest are a
+    // tap away rather than dropped, which is what used to happen.
+    final limit = _allCategories ? top.length : 8;
     return [
-      for (var i = 0; i < top.length && i < 8; i++)
+      for (var i = 0; i < top.length && i < limit; i++)
         _Category(
           name: top[i].key,
           count: top[i].value,
@@ -530,6 +547,37 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   child: Text(_t('Browse by Category', 'עיון לפי קטגוריה'),
                       style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
                 ),
+                if (_live && _liveCategoryCount > 8) ...[
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _allCategories = !_allCategories),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                              _allCategories
+                                  ? IconsaxPlusLinear.arrow_up_2
+                                  : IconsaxPlusLinear.arrow_down_1,
+                              size: 18,
+                              color: AppColors.midBlue),
+                          const SizedBox(width: 6),
+                          Text(
+                            _allCategories
+                                ? _t('Show fewer', 'הצג פחות')
+                                : _t('All $_liveCategoryCount categories',
+                                    'כל $_liveCategoryCount הקטגוריות'),
+                            style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.midBlue),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                ],
                 if (_selectedCategory >= 0)
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
