@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 
 class MunicipalAlertStrip extends StatefulWidget {
@@ -42,7 +42,7 @@ class _MunicipalAlertStripState extends State<MunicipalAlertStrip> {
               children: [
                 Text(
                   'עבודות תשתית ברחוב הפלמ"ח — חסימה חלקית עד 15.8',
-                  style: GoogleFonts.rubik(fontSize: 13, color: const Color(0xFF5C4A1E), height: 1.3),
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: const Color(0xFF5C4A1E), height: 1.3),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -51,7 +51,7 @@ class _MunicipalAlertStripState extends State<MunicipalAlertStrip> {
                   onTap: () => context.push('/municipal'),
                   child: Text(
                     'פרטים נוספים',
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFFD48806),

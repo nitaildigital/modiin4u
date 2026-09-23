@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -224,14 +224,14 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                         const SizedBox(height: 112),
                         Text(
                           _t('Find Your Perfect Home in Modiin', 'מצאו את הבית המושלם במודיעין'),
-                          style: GoogleFonts.nunito(fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white),
+                          style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 14),
                         Text(
                           _t('Discover apartments and homes available for sale and rent.',
                               'גלו דירות ובתים למכירה ולהשכרה.'),
-                          style: GoogleFonts.inter(fontSize: 16, color: Colors.white),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 48),
@@ -292,15 +292,15 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(_t('Location / Neighborhood', 'מיקום / שכונה'),
-                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _locationController,
                   focusNode: _locationFocus,
-                  style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.black),
                   decoration: InputDecoration(
                     hintText: _t('Enter an address, neighborhood or area.', 'הזינו כתובת, שכונה או אזור.'),
-                    hintStyle: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF4F4F4F)),
+                    hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF4F4F4F)),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -330,7 +330,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                   children: [
                     const Icon(IconsaxPlusLinear.search_normal_1, size: 18, color: Colors.white),
                     const SizedBox(width: 8),
-                    Text(_t('Search', 'חיפוש'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                    Text(_t('Search', 'חיפוש'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
                   ],
                 ),
               ),
@@ -350,7 +350,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
       child: Column(
         children: [
           const SizedBox(height: 48),
-          Text(_t('Browse Real Estate', 'חפשו נדל"ן'), style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+          Text(_t('Browse Real Estate', 'חפשו נדל"ן'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
           const SizedBox(height: 32),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -378,10 +378,10 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                         children: [
                           Icon(type.icon, size: 32, color: AppColors.midBlue),
                           const SizedBox(height: 19),
-                          Text(type.name, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black), textAlign: TextAlign.center),
+                          Text(type.name, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black), textAlign: TextAlign.center),
                           const SizedBox(height: 8),
                           Text(_t('${type.count} Properties', '${type.count} נכסים'),
-                              style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6D6D6D)), textAlign: TextAlign.center),
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D)), textAlign: TextAlign.center),
                         ],
                       ),
                     ),
@@ -411,9 +411,9 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                    Text(title, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
                     const SizedBox(height: 10),
-                    Text(subtitle, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                    Text(subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                   ],
                 ),
               ),
@@ -451,7 +451,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
       child: Column(
         children: [
           Text(_t('What We Are Providing', 'מה אנחנו מציעים'),
-              style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
               textAlign: TextAlign.center),
           const SizedBox(height: 32),
           LayoutBuilder(
@@ -503,7 +503,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
       child: Column(
         children: [
           Text(_t('Apartments by Neighborhoods', 'דירות לפי שכונות'),
-              style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
               textAlign: TextAlign.center),
           const SizedBox(height: 32),
           // For Rent / For Sale toggle
@@ -524,7 +524,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                     children: [
                       Icon(IconsaxPlusLinear.key, size: 18, color: _neighborhoodTab == 0 ? Colors.white : AppColors.midBlue),
                       const SizedBox(width: 8),
-                      Text(_t('For Rent', 'להשכרה'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: _neighborhoodTab == 0 ? Colors.white : AppColors.midBlue)),
+                      Text(_t('For Rent', 'להשכרה'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: _neighborhoodTab == 0 ? Colors.white : AppColors.midBlue)),
                     ],
                   ),
                 ),
@@ -543,7 +543,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                     children: [
                       Icon(IconsaxPlusLinear.home_hashtag, size: 18, color: _neighborhoodTab == 1 ? Colors.white : AppColors.midBlue),
                       const SizedBox(width: 8),
-                      Text(_t('For Sale', 'למכירה'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: _neighborhoodTab == 1 ? Colors.white : AppColors.midBlue)),
+                      Text(_t('For Sale', 'למכירה'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: _neighborhoodTab == 1 ? Colors.white : AppColors.midBlue)),
                     ],
                   ),
                 ),
@@ -680,7 +680,7 @@ class _SearchDropdownState extends State<_SearchDropdown> {
                           color: selected ? const Color(0xFFF0F4FA) : Colors.transparent,
                           child: Text(
                             widget.items[i],
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 16,
                               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                               color: selected ? AppColors.midBlue : Colors.black,
@@ -726,12 +726,12 @@ class _SearchDropdownState extends State<_SearchDropdown> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(widget.label, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+              Text(widget.label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
               const SizedBox(height: 4),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(widget.value, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
+                  Text(widget.value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
                   const SizedBox(width: 6),
                   AnimatedRotation(
                     turns: _isOpen ? 0.5 : 0,
@@ -782,7 +782,7 @@ class _ViewAllButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+            Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right, size: 16, color: Colors.white),
           ],
@@ -865,7 +865,7 @@ class _ListingCardState extends State<_ListingCard> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(color: AppColors.turquoise, borderRadius: BorderRadius.circular(50)),
-                    child: Text(l.newBadge ?? 'New', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
+                    child: Text(l.newBadge ?? 'New', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
                   ),
                 ),
                 // Via Broker
@@ -874,7 +874,7 @@ class _ListingCardState extends State<_ListingCard> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(color: const Color(0xFFCCD6EE), borderRadius: BorderRadius.circular(50)),
-                    child: Text(l.brokerBadge ?? 'Via Broker', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF0033AC))),
+                    child: Text(l.brokerBadge ?? 'Via Broker', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF0033AC))),
                   ),
                 ),
               ],
@@ -891,14 +891,14 @@ class _ListingCardState extends State<_ListingCard> {
                     children: [
                       Row(
                         children: [
-                          Text(l.price, style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                          Text(l.price, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy)),
                           if (l.perMonth != null) ...[
                             const SizedBox(width: 8),
-                            Text(l.perMonth!, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                            Text(l.perMonth!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                           ],
                         ],
                       ),
-                      Text(l.saleTag, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.turquoise)),
+                      Text(l.saleTag, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.turquoise)),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -907,7 +907,7 @@ class _ListingCardState extends State<_ListingCard> {
                     children: [
                       const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(l.address, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A)), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                      Expanded(child: Text(l.address, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A)), maxLines: 1, overflow: TextOverflow.ellipsis)),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -916,15 +916,15 @@ class _ListingCardState extends State<_ListingCard> {
                     children: [
                       const Icon(IconsaxPlusLinear.ruler, size: 14, color: Color(0xFF6D6D6D)),
                       const SizedBox(width: 8),
-                      Text(l.area, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF3D3D3D))),
+                      Text(l.area, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF3D3D3D))),
                       const SizedBox(width: 31),
                       const Icon(IconsaxPlusLinear.house, size: 14, color: Color(0xFF6D6D6D)),
                       const SizedBox(width: 8),
-                      Text(l.rooms, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF3D3D3D))),
+                      Text(l.rooms, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF3D3D3D))),
                       const SizedBox(width: 31),
                       const Icon(IconsaxPlusLinear.building_4, size: 14, color: Color(0xFF6D6D6D)),
                       const SizedBox(width: 8),
-                      Text(l.floor, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF3D3D3D))),
+                      Text(l.floor, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF3D3D3D))),
                     ],
                   ),
                 ],
@@ -959,9 +959,9 @@ class _ServiceCard extends StatelessWidget {
         children: [
           Icon(icon, size: 56, color: isHighlighted ? AppColors.midBlue : const Color(0xFF6D6D6D)),
           const SizedBox(height: 20),
-          Text(title, style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w600, color: isHighlighted ? AppColors.midBlue : Colors.black), textAlign: TextAlign.center),
+          Text(title, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 22, fontWeight: FontWeight.w600, color: isHighlighted ? AppColors.midBlue : Colors.black), textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          Text(subtitle, style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF5F5E5A), height: 1.6), textAlign: TextAlign.center),
+          Text(subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF5F5E5A), height: 1.6), textAlign: TextAlign.center),
         ],
       ),
     );
@@ -1011,15 +1011,15 @@ class _NeighborhoodCardState extends State<_NeighborhoodCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.data.name, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                  Text(widget.data.name, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy)),
                   const SizedBox(height: 4),
-                  Text(widget.subtitle, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                  Text(widget.subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
                       const SizedBox(width: 6),
-                      Text(widget.location, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                      Text(widget.location, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                     ],
                   ),
                 ],

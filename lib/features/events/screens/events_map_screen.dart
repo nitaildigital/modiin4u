@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
@@ -232,7 +232,7 @@ class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
                       Expanded(
                         child: Text(
                           'Search events, concerts, activities...',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -298,7 +298,7 @@ class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
                           const SizedBox(width: 6),
                           Text(
                             'View as List',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF0A1230),
@@ -475,7 +475,7 @@ class _EventCard extends StatelessWidget {
                       // Title
                       Text(
                         event.title,
-                        style: GoogleFonts.rubik(
+                        style: TextStyle(fontFamily: AppFonts.rubik, 
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           height: 25 / 20,
@@ -489,7 +489,7 @@ class _EventCard extends StatelessWidget {
                       // Category
                       Text(
                         event.category,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF5F5E5A),
@@ -505,7 +505,7 @@ class _EventCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             event.time,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF5F5E5A),
@@ -524,7 +524,7 @@ class _EventCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               event.venue,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF5F5E5A),
@@ -542,7 +542,7 @@ class _EventCard extends StatelessWidget {
                         children: [
                           Text(
                             event.price,
-                            style: GoogleFonts.rubik(
+                            style: TextStyle(fontFamily: AppFonts.rubik, 
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
                               color: event.isFree
@@ -557,7 +557,7 @@ class _EventCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 '${event.interested} interested',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                   color: const Color(0xFF3D3D3D),
@@ -591,7 +591,7 @@ class _EventCard extends StatelessWidget {
                   children: [
                     Text(
                       'View Full Details',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,

@@ -1,37 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/error_retry.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/skeleton.dart';
+import '../providers/search_providers.dart';
 
-class SearchResultsScreen extends StatelessWidget {
+class SearchResultsScreen extends ConsumerWidget {
   final String query;
 
   const SearchResultsScreen({super.key, required this.query});
 
   @override
-  Widget build(BuildContext context) {
-    final allResults = [
-      _SearchResult('מסעדת נאיתאי', 'מסעדה תאילנדית · המע"ר', Icons.restaurant, '/business/demo_0', 'עסק'),
-      _SearchResult('פיצה פרגו', 'פיצה · המע"ר', Icons.local_pizza, '/business/demo_1', 'עסק'),
-      _SearchResult('קפה גרג', 'בית קפה · הפרחים', Icons.coffee, '/business/demo_2', 'עסק'),
-      _SearchResult('בורגרס בר', 'המבורגרים · המע"ר', Icons.lunch_dining, '/business/demo_3', 'עסק'),
-      _SearchResult('סושי מודיעין', 'סושי · כפר האורנים', Icons.set_meal, '/business/demo_4', 'עסק'),
-      _SearchResult('פסטיבל אוכל רחוב', 'אירוע · פארק ענבה', Icons.event, '/event/demo_0', 'אירוע'),
-      _SearchResult('הופעה — עידן רייכל', 'אירוע · היכל התרבות', Icons.music_note, '/event/demo_1', 'אירוע'),
-      _SearchResult('דירת 4 חדרים הפרחים', 'נדל"ן · 2,450,000 ₪', Icons.apartment, '/listing/1', 'נדל"ן'),
-      _SearchResult('חניה מוניציפלית', 'שירות עירוני', Icons.local_parking, '/parking', 'עירוני'),
-      _SearchResult('שוק קהילתי', 'אירוע · כיכר המייסדים', Icons.storefront, '/event/demo_2', 'אירוע'),
-    ];
-
-    final filtered = query.isEmpty
-        ? allResults
-        : allResults.where((r) => r.title.contains(query) || r.subtitle.contains(query) || r.category.contains(query)).toList();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = searchResultsProvider(query);
+    final results = ref.watch(provider);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('תוצאות חיפוש', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+          title: Text('תוצאות חיפוש', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
         ),
         body: Column(
           children: [
@@ -50,62 +41,84 @@ class SearchResultsScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         query.isEmpty ? 'הכל' : '"$query"',
-                        style: GoogleFonts.rubik(fontSize: 15, color: context.textPrimary),
+                        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, color: context.textPrimary),
                       ),
                     ),
                     Text(
-                      '${filtered.length} תוצאות',
-                      style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta),
+                      '${results.valueOrNull?.length ?? 0} תוצאות',
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta),
                     ),
                   ],
                 ),
               ),
             ),
             Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.search_off, size: 64, color: AppColors.grayLight.withValues(alpha: 0.4)),
-                          const SizedBox(height: 16),
-                          Text('לא נמצאו תוצאות', style: GoogleFonts.rubik(fontSize: 16, color: AppColors.grayMeta)),
-                          const SizedBox(height: 8),
-                          Text('נסו חיפוש אחר', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight)),
-                        ],
+              child: results.when(
+                loading: () => const _SearchSkeleton(),
+                error: (_, _) =>
+                    ErrorRetry(onRetry: () => ref.invalidate(provider)),
+                data: (hits) => hits.isEmpty
+                    ? const EmptyState(
+                        icon: Icons.search_off,
+                        title: 'לא נמצאו תוצאות',
+                        subtitle: 'נסו חיפוש אחר',
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: hits.length,
+                        separatorBuilder: (_, _) =>
+                            const Divider(color: AppColors.border, height: 1),
+                        itemBuilder: (context, index) {
+                          final result = hits[index];
+                          return ListTile(
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 6),
+                            leading: NetworkPhoto(
+                              url: result.imageUrl,
+                              width: 44,
+                              height: 44,
+                              radius: BorderRadius.circular(12),
+                              gradient: [
+                                AppColors.turquoise.withValues(alpha: 0.10),
+                                AppColors.turquoise.withValues(alpha: 0.06),
+                              ],
+                              icon: result.icon,
+                              iconSize: 22,
+                              iconColor: AppColors.turquoise,
+                            ),
+                            title: Text(result.title,
+                                style: TextStyle(
+                                    fontFamily: AppFonts.rubik,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: context.textPrimary)),
+                            subtitle: result.subtitle.isEmpty
+                                ? null
+                                : Text(result.subtitle,
+                                    style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 12,
+                                        color: AppColors.grayMeta),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.midBlue.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(result.category,
+                                  style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 11,
+                                      color: AppColors.midBlue)),
+                            ),
+                            onTap: () => context.push(result.route),
+                          );
+                        },
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const Divider(color: AppColors.border, height: 1),
-                      itemBuilder: (context, index) {
-                        final result = filtered[index];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(vertical: 6),
-                          leading: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: AppColors.turquoise.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(result.icon, size: 22, color: AppColors.turquoise),
-                          ),
-                          title: Text(result.title, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w500, color: context.textPrimary)),
-                          subtitle: Text(result.subtitle, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.midBlue.withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(result.category, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.midBlue)),
-                          ),
-                          onTap: () => context.push(result.route),
-                        );
-                      },
-                    ),
+              ),
             ),
           ],
         ),
@@ -114,12 +127,42 @@ class SearchResultsScreen extends StatelessWidget {
   }
 }
 
-class _SearchResult {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final String route;
-  final String category;
+/// Placeholder rows shaped like the result tiles: the 44px leading square,
+/// two lines, and the category chip on the end.
+class _SearchSkeleton extends StatelessWidget {
+  const _SearchSkeleton();
 
-  const _SearchResult(this.title, this.subtitle, this.icon, this.route, this.category);
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton(
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 6,
+        separatorBuilder: (_, _) =>
+            const Divider(color: AppColors.border, height: 1),
+        itemBuilder: (_, _) => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            children: [
+              SkeletonBox(width: 44, height: 44, radius: 12),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLine(width: 170, fontSize: 15),
+                    SizedBox(height: 8),
+                    SkeletonLine(width: 220, fontSize: 12),
+                  ],
+                ),
+              ),
+              SizedBox(width: 12),
+              SkeletonBox(width: 44, height: 20, radius: 6),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

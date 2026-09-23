@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
@@ -180,7 +180,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
                   const SizedBox(height: 26),
                   Text(
                     _t('Summer Music Night', 'ערב מוזיקה קיצי'),
-                    style: GoogleFonts.nunito(
+                    style: TextStyle(fontFamily: AppFonts.nunito, 
                         fontSize: 48, fontWeight: FontWeight.w600, color: Colors.white, height: 59 / 48),
                   ),
                   const SizedBox(height: 12),
@@ -191,7 +191,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
                       borderRadius: BorderRadius.circular(50),
                     ),
                     child: Text(_t('Music', 'מוזיקה'),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white, height: 17 / 14)),
                   ),
                   const SizedBox(height: 24),
@@ -241,11 +241,11 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(_t('AUG', 'אוג'),
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 18, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 22 / 18)),
           const SizedBox(height: 5.68),
           Text('21',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 32, fontWeight: FontWeight.w600, color: Colors.black, height: 39 / 32)),
         ],
       ),
@@ -262,7 +262,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
           child: _maybeLtr(
             forceLtr,
             Text(text,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white, height: 17 / 14)),
           ),
         ),
@@ -297,7 +297,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
               Icon(icon, size: 16, color: AppColors.midBlue),
               const SizedBox(width: 8),
               Text(label,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
             ],
           ),
@@ -356,7 +356,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_t("You're Invited!", 'אתם מוזמנים!'),
-              style: GoogleFonts.nunito(
+              style: TextStyle(fontFamily: AppFonts.nunito, 
                   fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 30 / 24)),
           const SizedBox(height: 15),
           // Cover + title + meta
@@ -367,7 +367,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
           ),
           const SizedBox(height: 16),
           Text(_t('Summer Music Night', 'ערב מוזיקה קיצי'),
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 22, fontWeight: FontWeight.w600, color: Colors.black, height: 27 / 22)),
           const SizedBox(height: 16),
           _cardMetaRow(IconsaxPlusLinear.clock, '8:00 PM – 11:00 PM', forceLtr: true),
@@ -397,7 +397,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
                     const Icon(IconsaxPlusLinear.tick_circle, size: 20, color: Colors.white),
                     const SizedBox(width: 12),
                     Text(_isGoing ? _t('Going', 'מגיע/ה') : _t("I'm Going", 'אני מגיע/ה'),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5)),
                   ],
                 ),
@@ -420,7 +420,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
                   const Icon(IconsaxPlusLinear.tick_circle, size: 24, color: _kGoingFg),
                   const SizedBox(width: 12),
                   Text(_t("You're going to this event!", 'אתם מגיעים לאירוע הזה!'),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 16, fontWeight: FontWeight.w500, color: _kGoingFg, height: 19 / 16)),
                 ],
               ),
@@ -474,7 +474,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(_t('124 people interested', '124 מתעניינים'),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black, height: 17 / 14)),
               ),
             ],
@@ -491,7 +491,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(_t('Organized by', 'מארגן האירוע'),
-                    style: GoogleFonts.nunito(
+                    style: TextStyle(fontFamily: AppFonts.nunito, 
                         fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 20 / 16)),
                 const SizedBox(height: 16),
                 Row(
@@ -511,11 +511,11 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(_t('Modiin Community Events', 'אירועי קהילה מודיעין'),
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 16, fontWeight: FontWeight.w600, color: _kBodyText, height: 19 / 16)),
                           const SizedBox(height: 6),
                           Text(_t('Community & Municipal Events', 'אירועים קהילתיים ועירוניים'),
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 12, color: _kIconGrey, height: 15 / 12)),
                         ],
                       ),
@@ -540,7 +540,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
           child: _maybeLtr(
             forceLtr,
             Text(text,
-                style: GoogleFonts.inter(fontSize: 14, color: _kBodyText, height: 17 / 14)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBodyText, height: 17 / 14)),
           ),
         ),
       ],
@@ -566,7 +566,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
               Icon(icon, size: 20, color: AppColors.midBlue),
               const SizedBox(width: 8),
               Text(label,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 1.5)),
             ],
           ),
@@ -588,7 +588,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
                 'Enjoy performances from local artists, great music, food, and a vibrant community atmosphere.',
                 'התכוננו לערב בלתי נשכח של מוזיקה חיה תחת כיפת השמיים במודיעין. '
                 'תיהנו מהופעות של אמנים מקומיים, מוזיקה נהדרת, אוכל ואווירה קהילתית תוססת.'),
-            style: GoogleFonts.inter(fontSize: 16, color: _kBodyText, height: 1.6),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kBodyText, height: 1.6),
           ),
         ),
         const SizedBox(height: 24),
@@ -599,7 +599,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
                 'Summer Music Night is the perfect way to enjoy the summer evening.',
                 'בין אם אתם מגיעים עם חברים, עם המשפחה או פשוט מחפשים ערב מוצלח בחוץ — '
                 'ערב מוזיקה קיצי הוא הדרך המושלמת ליהנות מערב הקיץ.'),
-            style: GoogleFonts.inter(fontSize: 16, color: _kBodyText, height: 1.6),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kBodyText, height: 1.6),
           ),
         ),
         const SizedBox(height: 56),
@@ -617,7 +617,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(_included[i],
-                    style: GoogleFonts.inter(fontSize: 16, color: _kBodyText, height: 19 / 16)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kBodyText, height: 19 / 16)),
               ),
             ],
           ),
@@ -632,7 +632,7 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
 
   Widget _sectionTitle(String text) {
     return Text(text,
-        style: GoogleFonts.nunito(
+        style: TextStyle(fontFamily: AppFonts.nunito, 
             fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 30 / 24));
   }
 
@@ -676,13 +676,13 @@ class _WebEventDetailContentState extends State<WebEventDetailContent> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(cells[i].$2,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
                           const SizedBox(height: 4),
                           _maybeLtr(
                             i == 1, // the time range stays LTR
                             Text(cells[i].$3,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 14, color: _kIconGrey, height: 17 / 14)),
                           ),
                         ],
@@ -987,7 +987,7 @@ class _RelatedCardState extends State<_RelatedCard> {
                           borderRadius: BorderRadius.circular(50),
                         ),
                         child: Text(e.category,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white, height: 1.25)),
                       ),
                     ),
@@ -1005,11 +1005,11 @@ class _RelatedCardState extends State<_RelatedCard> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(e.month,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 1.25)),
                             const SizedBox(height: 4),
                             Text(e.day,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black, height: 1.22)),
                           ],
                         ),
@@ -1026,7 +1026,7 @@ class _RelatedCardState extends State<_RelatedCard> {
                     children: [
                       Text(
                         e.title,
-                        style: GoogleFonts.nunito(
+                        style: TextStyle(fontFamily: AppFonts.nunito, 
                             fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy, height: 1.25),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1042,7 +1042,7 @@ class _RelatedCardState extends State<_RelatedCard> {
                           Flexible(
                             child: Text(
                               e.price,
-                              style: GoogleFonts.nunito(
+                              style: TextStyle(fontFamily: AppFonts.nunito, 
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
                                 color: e.isFree ? AppColors.midBlue : AppColors.navy,
@@ -1059,7 +1059,7 @@ class _RelatedCardState extends State<_RelatedCard> {
                               const Icon(IconsaxPlusBold.star_1, size: 18, color: AppColors.turquoise),
                               const SizedBox(width: 4),
                               Text('${e.interested} ${widget.interestedLabel}',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 14, fontWeight: FontWeight.w500, color: _kBodyText, height: 1.21)),
                             ],
                           ),
@@ -1084,7 +1084,7 @@ class _RelatedCardState extends State<_RelatedCard> {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

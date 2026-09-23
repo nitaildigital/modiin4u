@@ -1,7 +1,7 @@
 import 'dart:math';
+import '../../../core/theme/app_fonts.dart';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -66,7 +66,7 @@ class _StepsScreenState extends State<StepsScreen> {
                         // ── Title + subtitle ──
                         Text(
                           'Step Counter',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -75,7 +75,7 @@ class _StepsScreenState extends State<StepsScreen> {
                         const SizedBox(height: 6),
                         Text(
                           'Every step makes Modiin better',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -128,7 +128,7 @@ class _StepsScreenState extends State<StepsScreen> {
             children: [
               Text(
                 "Today's Progress",
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF1F1F1F),
@@ -136,7 +136,7 @@ class _StepsScreenState extends State<StepsScreen> {
               ),
               Text(
                 'May 13, 2026',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: const Color(0xFF5D5D5D),
@@ -161,7 +161,7 @@ class _StepsScreenState extends State<StepsScreen> {
                       children: [
                         Text(
                           '6,842',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                             color: Colors.black,
@@ -173,7 +173,7 @@ class _StepsScreenState extends State<StepsScreen> {
                           child: Text(
                             'steps',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 12.6,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF454545),
@@ -205,7 +205,7 @@ class _StepsScreenState extends State<StepsScreen> {
                         const SizedBox(width: 4),
                         Text(
                           '5 Streak',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -217,7 +217,7 @@ class _StepsScreenState extends State<StepsScreen> {
                     // Percentage of goal
                     Text(
                       '68% of 10,000',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF123A72),
@@ -300,7 +300,7 @@ class _StepsScreenState extends State<StepsScreen> {
           // Header
           Text(
             'This Week',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -325,7 +325,7 @@ class _StepsScreenState extends State<StepsScreen> {
                       children: ['12K', '10K', '8K', '6K', '4K', '2K', '0']
                           .map((l) => Text(
                                 l,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 12,
                                   fontWeight: FontWeight.w400,
                                   color: const Color(0xFF888888),
@@ -346,7 +346,7 @@ class _StepsScreenState extends State<StepsScreen> {
                       children: [
                         Text(
                           d.label,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: Colors.black,
@@ -364,7 +364,7 @@ class _StepsScreenState extends State<StepsScreen> {
                         const SizedBox(height: 8),
                         Text(
                           d.day,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -423,7 +423,7 @@ class _StepsScreenState extends State<StepsScreen> {
                   children: [
                     Text(
                       'MODIIN MONTHLY CHALLENGE',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.5,
@@ -433,7 +433,7 @@ class _StepsScreenState extends State<StepsScreen> {
                     const SizedBox(height: 11),
                     Text(
                       'Walk 150,000 steps',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
@@ -442,7 +442,7 @@ class _StepsScreenState extends State<StepsScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'this month',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF454545),
@@ -456,7 +456,7 @@ class _StepsScreenState extends State<StepsScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Prize: ₪500 Shopping Voucher',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF454545),
@@ -482,7 +482,7 @@ class _StepsScreenState extends State<StepsScreen> {
                       children: [
                         Text(
                           '82,450',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -491,7 +491,7 @@ class _StepsScreenState extends State<StepsScreen> {
                         const SizedBox(width: 4),
                         Text(
                           '/ 150,000 steps',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF454545),
@@ -502,7 +502,7 @@ class _StepsScreenState extends State<StepsScreen> {
                   ),
                   Text(
                     '55%',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF3D3D3D),
@@ -543,7 +543,7 @@ class _StepsScreenState extends State<StepsScreen> {
               children: [
                 Text(
                   'View Challenge',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF123A72),
@@ -580,7 +580,7 @@ class _StepsScreenState extends State<StepsScreen> {
           // Header
           Text(
             'Modiin Step Challenge',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -589,7 +589,7 @@ class _StepsScreenState extends State<StepsScreen> {
           const SizedBox(height: 4),
           Text(
             'Compete with others and climb the ranks',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
@@ -633,7 +633,7 @@ class _StepsScreenState extends State<StepsScreen> {
         child: Center(
           child: Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: active ? Colors.white : const Color(0xFF6D6D6D),
@@ -666,7 +666,7 @@ class _StepsScreenState extends State<StepsScreen> {
             Expanded(
               child: Text(
                 'You (Modiin Center)',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF123A72),
@@ -675,7 +675,7 @@ class _StepsScreenState extends State<StepsScreen> {
             ),
             Text(
               '48,620',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1F1F1F),
@@ -684,7 +684,7 @@ class _StepsScreenState extends State<StepsScreen> {
             const SizedBox(width: 6),
             Text(
               'steps',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF6D6D6D),
@@ -732,7 +732,7 @@ class _StepsScreenState extends State<StepsScreen> {
             Expanded(
               child: Text(
                 'You (Modiin Center)',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF123A72),
@@ -741,7 +741,7 @@ class _StepsScreenState extends State<StepsScreen> {
             ),
             Text(
               '48,620',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1F1F1F),
@@ -750,7 +750,7 @@ class _StepsScreenState extends State<StepsScreen> {
             const SizedBox(width: 6),
             Text(
               'steps',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF6D6D6D),
@@ -778,7 +778,7 @@ class _StepsScreenState extends State<StepsScreen> {
         children: [
           Text(
             'Walk Modiin',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -787,7 +787,7 @@ class _StepsScreenState extends State<StepsScreen> {
           const SizedBox(height: 4),
           Text(
             'Recommended walking routes',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
@@ -882,7 +882,7 @@ class _StatColumn extends StatelessWidget {
         Text(
           value,
           textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: valueColor,
@@ -894,7 +894,7 @@ class _StatColumn extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF4F4F4F),
@@ -968,7 +968,7 @@ class _RankBadge extends StatelessWidget {
       child: Center(
         child: Text(
           '$rank',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 10,
             fontWeight: FontWeight.w600,
             color: Colors.white,
@@ -1001,7 +1001,7 @@ class _NeighborhoodRow extends StatelessWidget {
           Expanded(
             child: Text(
               entry.name,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF1F1F1F),
@@ -1010,7 +1010,7 @@ class _NeighborhoodRow extends StatelessWidget {
           ),
           Text(
             entry.steps,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -1019,7 +1019,7 @@ class _NeighborhoodRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'steps',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
@@ -1061,7 +1061,7 @@ class _CityRow extends StatelessWidget {
             child: Center(
               child: Text(
                 entry.name.split(' ').map((w) => w[0]).join(),
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -1073,7 +1073,7 @@ class _CityRow extends StatelessWidget {
           Expanded(
             child: Text(
               entry.name,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF1F1F1F),
@@ -1082,7 +1082,7 @@ class _CityRow extends StatelessWidget {
           ),
           Text(
             entry.steps,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -1091,7 +1091,7 @@ class _CityRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'steps',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
@@ -1163,7 +1163,7 @@ class _RouteCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0A1230),
@@ -1182,7 +1182,7 @@ class _RouteCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       distance,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         color: const Color(0xFF6D6D6D),
                       ),
@@ -1197,7 +1197,7 @@ class _RouteCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       duration,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         color: const Color(0xFF6D6D6D),
                       ),
@@ -1216,7 +1216,7 @@ class _RouteCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       steps,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         color: const Color(0xFF6D6D6D),
                       ),

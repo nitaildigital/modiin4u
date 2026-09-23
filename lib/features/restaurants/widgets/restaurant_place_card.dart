@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -108,7 +108,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                       children: [
                         Text(
                           p.name,
-                          style: GoogleFonts.nunito(
+                          style: TextStyle(fontFamily: AppFonts.nunito, 
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: AppColors.navy,
@@ -119,7 +119,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                         const SizedBox(height: 6),
                         Text(
                           p.type,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             color: kRGreyText,
                           ),
@@ -138,7 +138,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                             Expanded(
                               child: Text(
                                 p.address,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 14,
                                   color: kRGreyText,
                                 ),
@@ -266,7 +266,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                   ),
                   child: Text(
                     p.category!,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
@@ -299,7 +299,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                       const SizedBox(width: 6),
                       Text(
                         _t('Kosher', 'כשר'),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: Colors.white,
@@ -342,7 +342,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                 if (p.rating > 0)
                   Text(
                     p.rating.toStringAsFixed(1),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: Colors.black,
@@ -353,7 +353,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                   Flexible(
                     child: Text(
                       '(${p.reviews})',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         color: const Color(0xFF6D6D6D),
                       ),
@@ -375,7 +375,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                 Flexible(
                   child: Text(
                     '${p.views}',
-                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6D6D6D)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -398,7 +398,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                     Flexible(
                       child: Text(
                         p.deliveryTime!,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
@@ -421,7 +421,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                     Flexible(
                       child: Text(
                         '${p.views} ${_t('Views', 'צפיות')}',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           color: const Color(0xFF6D6D6D),
                         ),
@@ -459,7 +459,7 @@ class RestaurantCardState extends State<RestaurantCard> {
               const SizedBox(width: 8),
               Text(
                 _t('Contact', 'צור קשר'),
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.midBlue,

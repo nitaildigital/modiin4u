@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -435,13 +435,13 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
       child: Column(
         children: [
           Text(_t('Businesses & Professionals in Modiin', 'עסקים ובעלי מקצוע במודיעין'),
-              style: GoogleFonts.nunito(fontSize: 44, fontWeight: FontWeight.w600, color: Colors.black, height: 1.23),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.black, height: 1.23),
               textAlign: TextAlign.center),
           const SizedBox(height: 14),
           Text(
               _t('Find trusted local businesses, service providers and professionals — all in one place.',
                   'מצאו עסקים מקומיים, נותני שירות ובעלי מקצוע מומלצים – הכל במקום אחד.'),
-              style: GoogleFonts.inter(fontSize: 16, color: _kIconGrey, height: 1.19),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kIconGrey, height: 1.19),
               textAlign: TextAlign.center),
           const SizedBox(height: 40),
           Center(
@@ -482,13 +482,13 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 _shown = _pageSize;
               }),
               onSubmitted: (_) => _scrollToResults(),
-              style: GoogleFonts.inter(fontSize: 16, color: _kHeading),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kHeading),
               decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
                 hintText: _t('Search businesses, services or professionals in Modiin...',
                     'חפשו עסקים, שירותים או בעלי מקצוע במודיעין...'),
-                hintStyle: GoogleFonts.inter(fontSize: 16, color: _kIconGrey),
+                hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kIconGrey),
               ),
             ),
           ),
@@ -521,7 +521,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   borderRadius: BorderRadius.circular(50),
                 ),
                 child: Text(_t('Search', 'חיפוש'),
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
               ),
             ),
           ),
@@ -545,7 +545,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
               children: [
                 Expanded(
                   child: Text(_t('Browse by Category', 'עיון לפי קטגוריה'),
-                      style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                      style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
                 ),
                 if (_live && _liveCategoryCount > 8) ...[
                   MouseRegion(
@@ -567,7 +567,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                                 ? _t('Show fewer', 'הצג פחות')
                                 : _t('All $_liveCategoryCount categories',
                                     'כל $_liveCategoryCount הקטגוריות'),
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.midBlue),
@@ -589,7 +589,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                           const Icon(IconsaxPlusLinear.close_circle, size: 18, color: AppColors.midBlue),
                           const SizedBox(width: 6),
                           Text(_t('Clear category', 'נקה קטגוריה'),
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                         ],
                       ),
@@ -651,10 +651,10 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(_t('Featured in Modiin', 'מומלצים במודיעין'),
-                          style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                          style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
                       const SizedBox(height: 8),
                       Text(_t('Highest rated businesses by Modiin residents', 'העסקים המדורגים ביותר על ידי תושבי מודיעין'),
-                          style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21)),
                     ],
                   ),
                 ),
@@ -720,14 +720,14 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
               categoryName == null
                   ? _t('All Businesses in Modiin', 'כל העסקים במודיעין')
                   : _t('$categoryName in Modiin', '$categoryName במודיעין'),
-              style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
             ),
             const SizedBox(height: 8),
             Text(
               results.length == 1
                   ? _t('1 business found', 'נמצא עסק אחד')
                   : _t('${results.length} businesses found', 'נמצאו ${results.length} עסקים'),
-              style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
             ),
             const SizedBox(height: 24),
             Wrap(
@@ -794,7 +794,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                         child: Text(
                           _t('Show more (${results.length - _shown} left)',
                               'הצג עוד (נותרו ${results.length - _shown})'),
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: AppColors.midBlue),
@@ -825,10 +825,10 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
           Icon(IconsaxPlusLinear.shop, size: 44, color: _kGreyText.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(_t('No businesses match your search', 'לא נמצאו עסקים שתואמים לחיפוש'),
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading)),
           const SizedBox(height: 8),
           Text(_t('Try a different category, filter or search term.', 'נסו קטגוריה, סינון או מילת חיפוש אחרים.'),
-              style: GoogleFonts.inter(fontSize: 14, color: _kGreyText)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
           const SizedBox(height: 20),
           MouseRegion(
             cursor: SystemMouseCursors.click,
@@ -848,7 +848,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   borderRadius: BorderRadius.circular(50),
                 ),
                 child: Text(_t('Reset filters', 'איפוס סינון'),
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
               ),
             ),
           ),
@@ -868,10 +868,10 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t('Top Professionals', 'בעלי המקצוע המובילים'),
-                style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 8),
             Text(_t('Verified service providers, rated by your neighbours', 'נותני שירות מאומתים, מדורגים על ידי השכנים שלכם'),
-                style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21)),
             const SizedBox(height: 32),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -922,13 +922,13 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_t('Own a business in Modiin?', 'יש לכם עסק במודיעין?'),
-                        style: GoogleFonts.nunito(
+                        style: TextStyle(fontFamily: AppFonts.nunito, 
                             fontSize: 32, fontWeight: FontWeight.w600, color: Colors.white, height: 1.25)),
                     const SizedBox(height: 12),
                     Text(
                         _t('List it on Modiin4u and get discovered by thousands of local residents every month.',
                             'הוסיפו אותו למודיעין4u ותתגלו על ידי אלפי תושבים מקומיים מדי חודש.'),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16, color: Colors.white.withValues(alpha: 0.9), height: 1.4)),
                   ],
                 ),
@@ -945,7 +945,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                       borderRadius: BorderRadius.circular(60),
                     ),
                     child: Text(_t('Add Your Business', 'הוסיפו את העסק שלכם'),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
                   ),
                 ),
@@ -1245,13 +1245,13 @@ class _CategoryCardState extends State<_CategoryCard> {
                   children: [
                     Text(
                       c.name,
-                      style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white, height: 1.22),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white, height: 1.22),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
                     Text('${c.count} ${widget.businessesLabel}',
-                        style: GoogleFonts.inter(fontSize: 13, color: Colors.white.withValues(alpha: 0.9))),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: Colors.white.withValues(alpha: 0.9))),
                   ],
                 ),
               ),
@@ -1304,7 +1304,7 @@ class _FilterPillState extends State<_FilterPill> {
             children: [
               Text(
                 widget.label,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: selected ? Colors.white : _kBodyText,
@@ -1361,7 +1361,7 @@ class _BusinessCardState extends State<_BusinessCard> {
             const SizedBox(width: 6),
           ],
           Text(label,
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
         ],
       ),
     );
@@ -1439,7 +1439,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                               const Icon(IconsaxPlusBold.star_1, size: 13, color: AppColors.gold),
                               const SizedBox(width: 4),
                               Text(b.rating.toStringAsFixed(1),
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 12, fontWeight: FontWeight.w600, color: _kHeading)),
                             ],
                           ),
@@ -1471,7 +1471,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                     children: [
                       Text(
                         b.name,
-                        style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1479,7 +1479,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                       Row(
                         children: [
                           Text(b.category,
-                              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                           const SizedBox(width: 6),
                           const Text('•', style: TextStyle(color: _kGreyText, fontSize: 13)),
                           const SizedBox(width: 6),
@@ -1487,7 +1487,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(b.area,
-                                style: GoogleFonts.inter(fontSize: 13, color: _kGreyText),
+                                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kGreyText),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis),
                           ),
@@ -1498,7 +1498,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                           b.isLive
                               ? '${b.views} ${widget.viewsLabel}'
                               : '${b.reviews} ${widget.reviewsLabel}',
-                          style: GoogleFonts.inter(fontSize: 12, color: _kGreyText)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText)),
                       const Spacer(),
                       Row(
                         children: [
@@ -1512,7 +1512,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                                 borderRadius: BorderRadius.circular(60),
                               ),
                               child: Text(widget.viewLabel,
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500,
                                       color: _hovered ? Colors.white : AppColors.midBlue)),
@@ -1625,7 +1625,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
               const SizedBox(height: 16),
               Text(
                 p.name,
-                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: _kHeading),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: _kHeading),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -1633,7 +1633,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
               const SizedBox(height: 4),
               Text(
                 p.profession,
-                style: GoogleFonts.inter(fontSize: 13, color: _kGreyText),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kGreyText),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -1646,7 +1646,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                   height: 32,
                   child: Text(
                     p.description,
-                    style: GoogleFonts.inter(fontSize: 12, color: _kGreyText, height: 1.35),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText, height: 1.35),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -1659,11 +1659,11 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                     const Icon(IconsaxPlusBold.star_1, size: 14, color: AppColors.gold),
                     const SizedBox(width: 4),
                     Text(p.rating.toStringAsFixed(1),
-                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: _kHeading)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w600, color: _kHeading)),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text('(${p.reviews})',
-                          style: GoogleFonts.inter(fontSize: 12, color: _kGreyText),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                     ),
@@ -1682,7 +1682,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                     borderRadius: BorderRadius.circular(60),
                   ),
                   child: Text(widget.contactLabel,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: _hovered ? Colors.white : AppColors.midBlue)),

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../shared/widgets/error_retry.dart';
-import '../../../shared/widgets/shimmer_loading.dart';
 import '../models/business.dart';
 import '../providers/business_providers.dart';
 import '../widgets/business_card.dart';
@@ -34,7 +33,7 @@ class BusinessListScreen extends ConsumerWidget {
         ),
         title: Text(
           title,
-          style: GoogleFonts.rubik(
+          style: TextStyle(fontFamily: AppFonts.rubik, 
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: Colors.black,
@@ -45,9 +44,12 @@ class BusinessListScreen extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 430),
           child: businesses.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.all(16),
-              child: ShimmerLoading(itemCount: 5, type: ShimmerType.list),
+            loading: () => ListView.separated(
+              padding: const EdgeInsets.all(16),
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 6,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (_, _) => const BusinessCardSkeleton(),
             ),
             error: (error, _) =>
                 ErrorRetry(onRetry: () => ref.invalidate(provider)),

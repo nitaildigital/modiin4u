@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -140,7 +140,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         child: Center(
                           child: Text(
                             'Help & Support',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF1F1F1F),
@@ -178,14 +178,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF1F1F1F),
                             ),
                             decoration: InputDecoration(
                               hintText: 'Search for help',
-                              hintStyle: GoogleFonts.inter(
+                              hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF6D6D6D),
@@ -270,7 +270,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                 children: [
                                   Text(
                                     'Still need help?',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: const Color(0xFF0A1230),
@@ -279,7 +279,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     'Contact our support team',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
                                       color: const Color(0xFF6D6D6D),
@@ -304,7 +304,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                 child: Center(
                                   child: Text(
                                     'Contact Us',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.white,
@@ -380,7 +380,7 @@ class _FaqTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     faq.question,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight:
                           expanded ? FontWeight.w600 : FontWeight.w400,
@@ -404,7 +404,7 @@ class _FaqTile extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 faq.answer,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   height: 1.4,

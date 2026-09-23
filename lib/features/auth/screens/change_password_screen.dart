@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -65,7 +65,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         child: Center(
                           child: Text(
                             'Change Password',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -112,7 +112,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           child: Text(
                             'For your security, please choose a strong new password.',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
                               height: 15 / 12,
@@ -177,7 +177,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       child: Center(
                         child: Text(
                           'Change Password',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
@@ -210,7 +210,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -230,14 +230,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: TextField(
                   controller: controller,
                   obscureText: obscure,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF1F1F1F),
                   ),
                   decoration: InputDecoration(
                     hintText: placeholder,
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF6D6D6D),

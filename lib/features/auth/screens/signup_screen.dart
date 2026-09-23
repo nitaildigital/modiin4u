@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/neighborhoods.dart';
 import '../providers/auth_provider.dart';
@@ -19,16 +20,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
 
   AccountType _accountType = AccountType.resident;
   String? _selectedNeighborhood;
   String? _familyStatus;
   String? _hasPet;
   DateTime? _dateOfBirth;
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
   bool _agreedToTerms = false;
   bool _isLoading = false;
 
@@ -37,18 +34,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _signUp() {
-    if (_nameController.text.isEmpty || _emailController.text.isEmpty) {
+  Future<void> _signUp() async {
+    if (_nameController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty) {
       _showError('Please fill in required fields');
-      return;
-    }
-    if (_passwordController.text != _confirmPasswordController.text) {
-      _showError('Passwords do not match');
       return;
     }
     if (!_agreedToTerms) {
@@ -56,21 +48,54 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return;
     }
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (!mounted) return;
-      ref.read(authProvider.notifier).login(
-        name: _nameController.text,
-        phone: _phoneController.text,
-        neighborhood: _selectedNeighborhood,
+    try {
+      // The name travels with the account, so the profile row the database
+      // creates already carries it rather than the part before the @.
+      await ref.read(authProvider.notifier).sendCode(
+        _emailController.text,
+        data: {
+          'full_name': _nameController.text.trim(),
+          if (_phoneController.text.trim().isNotEmpty)
+            'phone': _phoneController.text.trim(),
+        },
       );
-      context.go('/');
-    });
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      await _askForCode();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError(e is AuthException ? e.message : e.toString());
+    }
+  }
+
+  /// The code arrives by email, so it is asked for here rather than on another
+  /// screen — everything they typed is still in front of them.
+  Future<void> _askForCode() async {
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _CodeSheet(email: _emailController.text.trim()),
+    );
+    if (ok != true || !mounted) return;
+
+    // Anything the account metadata does not carry is saved once the session
+    // exists, because until then there is no row to write to.
+    await ref.read(authProvider.notifier).updateProfile(
+      neighborhood: _selectedNeighborhood,
+    );
+    if (!mounted) return;
+    context.go('/');
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: GoogleFonts.inter()),
+        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -115,7 +140,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     // Title
                     Text(
                       'Create Your Account',
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(fontFamily: AppFonts.rubik, 
                         fontSize: 28,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
@@ -126,7 +151,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     // Subtitle
                     Text(
                       "Let's get you started. It only takes a minute.",
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF6D6D6D),
@@ -136,7 +161,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     // Account Type
                     Text(
                       'Account Type',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF4F4F4F),
@@ -199,7 +224,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           .map((n) => DropdownMenuItem(
                               value: n.name,
                               child: Text(n.displayName,
-                                  style: GoogleFonts.inter(fontSize: 14))))
+                                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))))
                           .toList(),
                       onChanged: (val) =>
                           setState(() => _selectedNeighborhood = val),
@@ -218,7 +243,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                     value: s,
                                     child: Text(s,
                                         style:
-                                            GoogleFonts.inter(fontSize: 14))))
+                                            TextStyle(fontFamily: AppFonts.inter, fontSize: 14))))
                                 .toList(),
                             onChanged: (val) =>
                                 setState(() => _familyStatus = val),
@@ -235,7 +260,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                     value: s,
                                     child: Text(s,
                                         style:
-                                            GoogleFonts.inter(fontSize: 14))))
+                                            TextStyle(fontFamily: AppFonts.inter, fontSize: 14))))
                                 .toList(),
                             onChanged: (val) =>
                                 setState(() => _hasPet = val),
@@ -260,28 +285,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           setState(() => _dateOfBirth = date);
                         }
                       },
-                    ),
-                    const SizedBox(height: 20),
-                    // Password
-                    _buildTextField(
-                      label: 'Password',
-                      controller: _passwordController,
-                      hint: 'Create a password',
-                      isPassword: true,
-                      obscure: _obscurePassword,
-                      onToggleObscure: () => setState(
-                          () => _obscurePassword = !_obscurePassword),
-                    ),
-                    const SizedBox(height: 20),
-                    // Confirm Password
-                    _buildTextField(
-                      label: 'Confirm Password',
-                      controller: _confirmPasswordController,
-                      hint: 'Confirm your password',
-                      isPassword: true,
-                      obscure: _obscureConfirm,
-                      onToggleObscure: () =>
-                          setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                     const SizedBox(height: 20),
                     // Terms checkbox
@@ -316,7 +319,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             child: Text.rich(
                               TextSpan(
                                 text: 'I agree to the ',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,
                                   color: Colors.black,
@@ -325,7 +328,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 children: [
                                   TextSpan(
                                     text: 'Terms of Service',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.midBlue,
@@ -334,7 +337,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                   const TextSpan(text: ' and '),
                                   TextSpan(
                                     text: 'Privacy Policy',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.midBlue,
@@ -375,7 +378,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               )
                             : Text(
                                 'Sign Up',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -395,7 +398,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           children: [
                             Text(
                               'Already have an account?',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF3D3D3D),
@@ -404,7 +407,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Sign In',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.midBlue,
@@ -492,7 +495,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             const Spacer(),
             Text(
               title,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF3D3D3D),
@@ -501,7 +504,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             const SizedBox(height: 5),
             Text(
               subtitle,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF6D6D6D),
@@ -528,7 +531,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -539,14 +542,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: isPassword && obscure,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF1F1F1F),
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.inter(
+            hintStyle: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF6D6D6D),
@@ -598,7 +601,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -611,14 +614,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           onChanged: onChanged,
           icon: const Icon(Icons.keyboard_arrow_down,
               size: 20, color: Color(0xFF6D6D6D)),
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF1F1F1F),
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.inter(
+            hintStyle: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF6D6D6D),
@@ -657,7 +660,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -682,7 +685,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   value != null
                       ? '${value.day}/${value.month}/${value.year}'
                       : hint,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: value != null
@@ -697,6 +700,155 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Asks for the 6-digit code and verifies it. Pops true once a session exists.
+class _CodeSheet extends ConsumerStatefulWidget {
+  final String email;
+  const _CodeSheet({required this.email});
+
+  @override
+  ConsumerState<_CodeSheet> createState() => _CodeSheetState();
+}
+
+class _CodeSheetState extends ConsumerState<_CodeSheet> {
+  final _controller = TextEditingController();
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verify() async {
+    if (_controller.text.trim().length < 6) {
+      setState(() => _error = 'Enter the 6-digit code');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authProvider.notifier).verifyCode(
+        email: widget.email,
+        code: _controller.text,
+      );
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e is AuthException ? e.message : 'That code is not right.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        24 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Check your email',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'We sent a 6-digit code to ${widget.email}',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _controller,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16),
+            decoration: InputDecoration(
+              hintText: '6-digit code',
+              errorText: _error,
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 13,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFC6C6C6)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFC6C6C6)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: AppColors.midBlue,
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _busy ? null : _verify,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.midBlue,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.midBlue.withValues(
+                  alpha: 0.6,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                elevation: 0,
+              ),
+              child: _busy
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : Text(
+                      'Confirm',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

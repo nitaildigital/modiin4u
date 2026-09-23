@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -193,7 +193,7 @@ class _WebRealEstateSearchContentState
                         size: 18, color: AppColors.midBlue),
                     const SizedBox(width: 6),
                     Text(_isHebrew ? 'עב | EN' : 'EN | עב',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: AppColors.midBlue)),
@@ -213,7 +213,7 @@ class _WebRealEstateSearchContentState
                 borderRadius: BorderRadius.circular(60),
               ),
               child: Text(_t('Contact Us', 'צור קשר'),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.white)),
@@ -324,7 +324,7 @@ class _WebRealEstateSearchContentState
                   }),
                   child: Text(
                     _t('Clear all filters', 'נקה את כל הסינונים'),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: AppColors.midBlue,
@@ -357,12 +357,12 @@ class _WebRealEstateSearchContentState
           Expanded(
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14, color: AppColors.navy),
               decoration: InputDecoration(
                 hintText: _t(
                     'Search by location...', 'חיפוש לפי מיקום...'),
-                hintStyle: GoogleFonts.inter(
+                hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14, color: const Color(0xFF6D6D6D)),
                 border: InputBorder.none,
                 isDense: true,
@@ -381,7 +381,7 @@ class _WebRealEstateSearchContentState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.navy)),
@@ -449,7 +449,7 @@ class _WebRealEstateSearchContentState
               ),
               const SizedBox(width: 8),
               Text(label,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 13,
                       color: const Color(0xFF3D3D3D))),
             ],
@@ -470,7 +470,7 @@ class _WebRealEstateSearchContentState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('$startFormatted – $endFormatted',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF3D3D3D))),
@@ -517,7 +517,7 @@ class _WebRealEstateSearchContentState
             value: i,
             height: 40,
             child: Text(options[i],
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     color: options[i] == value
                         ? AppColors.midBlue
@@ -536,7 +536,7 @@ class _WebRealEstateSearchContentState
           children: [
             Expanded(
               child: Text(value,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       color: const Color(0xFF3D3D3D))),
             ),
@@ -597,7 +597,7 @@ class _WebRealEstateSearchContentState
                     Text(
                       _t('${_listings.length} Apartments found $typeText',
                           '${_listings.length} דירות נמצאו $typeText'),
-                      style: GoogleFonts.nunito(
+                      style: TextStyle(fontFamily: AppFonts.nunito, 
                           fontSize: 28,
                           fontWeight: FontWeight.w600,
                           color: AppColors.midBlue),
@@ -606,7 +606,7 @@ class _WebRealEstateSearchContentState
                     Text(
                       _t('in Modiin Maccabim Reut',
                           'במודיעין מכבים רעות'),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           color: const Color(0xFF5F5E5A)),
                     ),
@@ -639,7 +639,7 @@ class _WebRealEstateSearchContentState
           Expanded(
             child: Text(
               _t('Sort by: Newest', 'מיון: חדש ביותר'),
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14, color: const Color(0xFF3D3D3D)),
               overflow: TextOverflow.ellipsis,
             ),
@@ -664,7 +664,7 @@ class _WebRealEstateSearchContentState
             Text(
               _t('No apartments match your filters',
                   'אין דירות שתואמות את הסינון'),
-              style: GoogleFonts.nunito(
+              style: TextStyle(fontFamily: AppFonts.nunito, 
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: AppColors.navy),
@@ -674,7 +674,7 @@ class _WebRealEstateSearchContentState
             Text(
               _t('Try widening the price range or clearing a filter.',
                   'נסו להרחיב את טווח המחירים או להסיר סינון.'),
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14, color: const Color(0xFF5F5E5A)),
               textAlign: TextAlign.center,
             ),
@@ -739,7 +739,7 @@ class _WebRealEstateSearchContentState
                               children: [
                                 Text(
                                   listing.title,
-                                  style: GoogleFonts.nunito(
+                                  style: TextStyle(fontFamily: AppFonts.nunito, 
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.navy),
@@ -749,7 +749,7 @@ class _WebRealEstateSearchContentState
                                 const SizedBox(height: 4),
                                 Text(
                                   listing.neighborhood,
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 14,
                                       color:
                                           const Color(0xFF5F5E5A)),
@@ -796,14 +796,14 @@ class _WebRealEstateSearchContentState
                       Row(
                         children: [
                           Text(listing.price,
-                              style: GoogleFonts.nunito(
+                              style: TextStyle(fontFamily: AppFonts.nunito, 
                                   fontSize: 22,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.midBlue)),
                           if (listing.perMonth != null) ...[
                             const SizedBox(width: 6),
                             Text(listing.perMonth!,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 14,
                                     color:
                                         const Color(0xFF5F5E5A))),
@@ -832,7 +832,7 @@ class _WebRealEstateSearchContentState
                                   const SizedBox(width: 6),
                                   Text(
                                     _t('Contact', 'צור קשר'),
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.midBlue),
@@ -861,7 +861,7 @@ class _WebRealEstateSearchContentState
         Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
         const SizedBox(width: 6),
         Text(text,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 12, color: const Color(0xFF3D3D3D))),
       ],
     );
@@ -1058,7 +1058,7 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
                   Flexible(
                     child: Text(
                       widget.label,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 15,
                         fontWeight: widget.isActive
                             ? FontWeight.w600

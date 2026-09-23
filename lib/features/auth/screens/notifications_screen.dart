@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -68,7 +68,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('כל ההתראות סומנו כנקראו', style: GoogleFonts.rubik()),
+        content: Text('כל ההתראות סומנו כנקראו', style: TextStyle(fontFamily: AppFonts.rubik)),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -83,12 +83,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('התראות', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+          title: Text('התראות', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
           actions: [
             if (hasUnread)
               TextButton(
                 onPressed: _markAllRead,
-                child: Text('סמן הכל כנקרא', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.turquoise)),
+                child: Text('סמן הכל כנקרא', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.turquoise)),
               ),
           ],
         ),
@@ -134,7 +134,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               Expanded(
                                 child: Text(
                                   n.title,
-                                  style: GoogleFonts.rubik(
+                                  style: TextStyle(fontFamily: AppFonts.rubik, 
                                     fontSize: 14,
                                     fontWeight: n.isNew ? FontWeight.w600 : FontWeight.w500,
                                     color: context.textPrimary,
@@ -155,12 +155,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           const SizedBox(height: 2),
                           Text(
                             n.body,
-                            style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayMeta),
+                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayMeta),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             n.time,
-                            style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayLight),
+                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayLight),
                           ),
                         ],
                       ),

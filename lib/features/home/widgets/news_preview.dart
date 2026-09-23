@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -88,7 +88,7 @@ class _HeroNewsCard extends StatelessWidget {
                   ),
                   child: Text(
                     'עדכני',
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppColors.navy,
@@ -105,7 +105,7 @@ class _HeroNewsCard extends StatelessWidget {
                   children: [
                     Text(
                       category,
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(fontFamily: AppFonts.rubik, 
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.turquoise,
@@ -114,7 +114,7 @@ class _HeroNewsCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       title,
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(fontFamily: AppFonts.rubik, 
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                         color: AppColors.white,
@@ -175,7 +175,7 @@ class _ListNewsCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: context.textPrimary,
@@ -189,7 +189,7 @@ class _ListNewsCard extends StatelessWidget {
                     children: [
                       Text(
                         category,
-                        style: GoogleFonts.rubik(
+                        style: TextStyle(fontFamily: AppFonts.rubik, 
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: AppColors.turquoise,
@@ -198,7 +198,7 @@ class _ListNewsCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         time,
-                        style: GoogleFonts.rubik(
+                        style: TextStyle(fontFamily: AppFonts.rubik, 
                           fontSize: 12,
                           color: AppColors.grayMeta,
                         ),

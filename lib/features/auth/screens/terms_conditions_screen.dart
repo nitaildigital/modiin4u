@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -43,7 +43,7 @@ class TermsConditionsScreen extends StatelessWidget {
                         child: Center(
                           child: Text(
                             'Terms & Conditions',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF1F1F1F),
@@ -72,7 +72,7 @@ class TermsConditionsScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         'Last updated: 22 May 2026',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF3D3D3D),
@@ -99,7 +99,7 @@ class TermsConditionsScreen extends StatelessWidget {
                           children: [
                             Text(
                               section.title,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF0A1230),
@@ -108,7 +108,7 @@ class TermsConditionsScreen extends StatelessWidget {
                             const SizedBox(height: 12),
                             Text(
                               section.body,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 height: 1.4,

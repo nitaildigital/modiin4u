@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -306,10 +306,10 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_name,
-                style: GoogleFonts.nunito(fontSize: 48, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 48, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23)),
             const SizedBox(height: 14),
             Text(_t('Grill Restaurant · Meat · Kosher', 'מסעדת גריל · בשרים · כשר'),
-                style: GoogleFonts.inter(fontSize: 16, color: Colors.white)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white)),
             const SizedBox(height: 24),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -332,10 +332,10 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                 const Icon(IconsaxPlusLinear.clock, size: 16, color: _kOpenGreen),
                 const SizedBox(width: 8),
                 Text(_t('Open now', 'פתוח עכשיו'),
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: _kOpenGreen)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: _kOpenGreen)),
                 const SizedBox(width: 12),
                 Text(_t('Closes 11:00 PM · See all hours', 'נסגר ב-23:00 · כל שעות הפעילות'),
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
               ],
             ),
             const SizedBox(height: 16),
@@ -345,7 +345,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                 const Icon(IconsaxPlusLinear.location, size: 16, color: AppColors.turquoise),
                 const SizedBox(width: 8),
                 Text(_t('21 Sderot El Melachot, Modi\'in Maccabim-Re\'ut', 'שדרות אל המלאכות 21, מודיעין מכבים-רעות'),
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
               ],
             ),
           ],
@@ -367,7 +367,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
         children: [
           icon,
           const SizedBox(width: 7),
-          Text(label, style: GoogleFonts.inter(fontSize: 14, color: Colors.white)),
+          Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.white)),
         ],
       ),
     );
@@ -415,7 +415,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
             children: [
               Icon(icon, size: 16, color: iconColor),
               const SizedBox(width: 8),
-              Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+              Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
             ],
           ),
         ),
@@ -449,7 +449,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
 
   Widget _sectionTitle(String text) {
     return Text(text,
-        style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 1.25));
+        style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 1.25));
   }
 
   Widget _buildAbout() {
@@ -465,7 +465,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
               'Shipudey Hatikva is a beloved grill restaurant in the heart of Modi\'in, serving the local community for years with warm hospitality and a relaxed family atmosphere. The place is known for its generous portions, its open charcoal grill and the kind of service that makes regulars out of first-time guests.',
               'שיפודי התקווה היא מסעדת גריל אהובה בלב מודיעין, שמשרתת את הקהילה המקומית כבר שנים עם אירוח חם ואווירה משפחתית ונינוחה. המקום מוכר במנות הנדיבות שלו, בגריל הפחמים הפתוח ובשירות שהופך אורחים מזדמנים ללקוחות קבועים.',
             ),
-            style: GoogleFonts.inter(fontSize: 16, color: _kTextDark, height: 1.6),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kTextDark, height: 1.6),
           ),
           const SizedBox(height: 24),
           Text(
@@ -473,7 +473,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
               'Our menu focuses on freshly prepared grilled dishes — skewers, mixed grill, steaks and chicken — alongside a wide selection of Israeli salads, homemade sides and fresh pita straight from the oven. Everything is made daily from quality ingredients, and the kitchen is fully kosher.',
               'התפריט שלנו מתמקד במנות גריל טריות — שיפודים, מעורב, סטייקים ופרגיות — לצד מבחר רחב של סלטים ישראליים, תוספות ביתיות ופיתות חמות מהטאבון. הכול מוכן מדי יום מחומרי גלם איכותיים, והמטבח כשר לחלוטין.',
             ),
-            style: GoogleFonts.inter(fontSize: 16, color: _kTextDark, height: 1.6),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kTextDark, height: 1.6),
           ),
         ],
       ),
@@ -500,7 +500,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                       const Icon(IconsaxPlusLinear.tick_circle, size: 20, color: AppColors.midBlue),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(h, style: GoogleFonts.inter(fontSize: 16, color: _kTextDark)),
+                        child: Text(h, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kTextDark)),
                       ),
                     ],
                   ),
@@ -562,7 +562,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                   ),
                   child: Center(
                     child: Text(_t('Upload', 'העלאה'),
-                        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                   ),
                 ),
               ),
@@ -660,10 +660,10 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(_t('Have you visited $_name?', 'ביקרתם ב$_name?'),
-                    style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black)),
                 const SizedBox(height: 6),
                 Text(_t('Share your recommendation with the Modi\'in community.', 'שתפו את ההמלצה שלכם עם קהילת מודיעין.'),
-                    style: GoogleFonts.inter(fontSize: 14, color: _kTextDark)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextDark)),
               ],
             ),
           ),
@@ -728,12 +728,12 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('4.6',
-                  style: GoogleFonts.inter(fontSize: 48, fontWeight: FontWeight.w600, color: Colors.black, height: 1.2)),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 48, fontWeight: FontWeight.w600, color: Colors.black, height: 1.2)),
               const SizedBox(height: 16),
               _stars(4, size: 24, gap: 7),
               const SizedBox(height: 16),
               Text(_t('Based on 128 reviews', 'מבוסס על 128 ביקורות'),
-                  style: GoogleFonts.inter(fontSize: 16, color: _kTextDark)),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kTextDark)),
             ],
           ),
         ),
@@ -751,7 +751,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                       child: Row(
                         children: [
                           Text('${r.stars}',
-                              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
                           const SizedBox(width: 4),
                           const Icon(IconsaxPlusBold.star_1, size: 16, color: _kGold),
                         ],
@@ -782,7 +782,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                       width: 40,
                       child: Text('${r.percent}%',
                           textAlign: TextAlign.end,
-                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: _kTextGrey)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: _kTextGrey)),
                     ),
                   ],
                 ),
@@ -857,7 +857,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                     ),
                     child: Center(
                       child: Text(_t('Load More', 'טען עוד'),
-                          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                     ),
                   ),
                 ),
@@ -883,7 +883,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
             decoration: const BoxDecoration(color: AppColors.turquoise, shape: BoxShape.circle),
             child: Center(
               child: Text(r.initials,
-                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
             ),
           ),
           const SizedBox(width: 15),
@@ -894,15 +894,15 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                 Row(
                   children: [
                     Text(r.name,
-                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
                     const SizedBox(width: 12),
-                    Text(r.date, style: GoogleFonts.inter(fontSize: 12, color: _kTextGrey)),
+                    Text(r.date, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kTextGrey)),
                   ],
                 ),
                 const SizedBox(height: 7),
                 _stars(r.stars, size: 14, gap: 4.08),
                 const SizedBox(height: 7),
-                Text(r.body, style: GoogleFonts.inter(fontSize: 14, color: _kTextDark, height: 1.4)),
+                Text(r.body, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextDark, height: 1.4)),
               ],
             ),
           ),
@@ -937,10 +937,10 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(_t('Have you been to $_name?', 'הייתם ב$_name?'),
-                      style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black)),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black)),
                   const SizedBox(height: 6),
                   Text(_t('Share your experience with the Modi\'in community.', 'שתפו את החוויה שלכם עם קהילת מודיעין.'),
-                      style: GoogleFonts.inter(fontSize: 14, color: _kTextDark)),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextDark)),
                 ],
               ),
             ),
@@ -962,7 +962,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                       const Icon(IconsaxPlusLinear.edit_2, size: 20, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(_t('Write a Review', 'כתיבת ביקורת'),
-                          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
                     ],
                   ),
                 ),
@@ -994,10 +994,10 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(_t('Location & Hours', 'מיקום ושעות'),
-                    style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                    style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
                 const SizedBox(height: 6),
                 Text(_t('21 Sderot El Melachot, Modi\'in Maccabim-Re\'ut', 'שדרות אל המלאכות 21, מודיעין מכבים-רעות'),
-                    style: GoogleFonts.inter(fontSize: 14, color: _kTextGrey)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextGrey)),
               ],
             ),
           ),
@@ -1056,9 +1056,9 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(h.day,
-                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: _kTextDark)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: _kTextDark)),
                       Text(h.value,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: h.closed ? _kClosedRed : _kTextDark,
@@ -1086,7 +1086,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_t('More Info', 'מידע נוסף'),
-              style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
           const SizedBox(height: 24),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1098,7 +1098,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_t('Website', 'אתר'),
-                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5D5D5D))),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5D5D5D))),
                     const SizedBox(height: 6),
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
@@ -1108,7 +1108,7 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text('shipudeyhatikva.co.il',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                             const SizedBox(width: 6),
                             const Icon(Icons.open_in_new, size: 16, color: AppColors.midBlue),
@@ -1132,10 +1132,10 @@ class _WebRestaurantDetailContentState extends State<WebRestaurantDetailContent>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_t('Call', 'טלפון'),
-                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5D5D5D))),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5D5D5D))),
                     const SizedBox(height: 6),
                     Text('08-975-2533',
-                        style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black)),
                   ],
                 ),
               ),
@@ -1300,7 +1300,7 @@ class _PillButton extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               Text(label,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: solid ? Colors.white : AppColors.midBlue,
@@ -1334,7 +1334,7 @@ class _FilterBox extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: _kTextDark)),
+              Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: _kTextDark)),
               const SizedBox(width: 8),
               const Icon(Icons.keyboard_arrow_down, size: 16, color: _kTextDark),
             ],

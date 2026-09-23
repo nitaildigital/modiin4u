@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -164,7 +164,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
                 decoration: BoxDecoration(color: AppColors.midBlue, borderRadius: BorderRadius.circular(60)),
-                child: Text(_t('Contact Us', 'צרו קשר'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                child: Text(_t('Contact Us', 'צרו קשר'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
               ),
             ),
           ),
@@ -218,7 +218,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(_title,
-                    style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                    style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.navy)),
               ),
               MouseRegion(
                 cursor: SystemMouseCursors.click,
@@ -242,7 +242,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
             children: [
               const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
               const SizedBox(width: 8),
-              Text(_address, style: GoogleFonts.inter(fontSize: 14, color: Colors.black)),
+              Text(_address, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black)),
               const SizedBox(width: 16),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -250,7 +250,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                   color: const Color(0xFF0033AC).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(50),
                 ),
-                child: Text(_saleTag, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF0033AC))),
+                child: Text(_saleTag, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF0033AC))),
               ),
             ],
           ),
@@ -343,7 +343,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                       borderRadius: BorderRadius.circular(60),
                     ),
                     child: Text(_t('Show all photos', 'הצג את כל התמונות'),
-                        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
                   ),
                 ),
               ),
@@ -400,13 +400,13 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_price, style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.navy)),
+        Text(_price, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.navy)),
         const SizedBox(height: 16),
         Row(
           children: [
             const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
             const SizedBox(width: 8),
-            Text(_address, style: GoogleFonts.inter(fontSize: 14, color: Colors.black)),
+            Text(_address, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black)),
           ],
         ),
       ],
@@ -421,7 +421,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_t('Highlights', 'דגשים'),
-            style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
         const SizedBox(height: 32),
         SizedBox(
           width: 683,
@@ -458,9 +458,9 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(h.label, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF5F5E5A))),
+              Text(h.label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF5F5E5A))),
               const SizedBox(height: 6),
-              Text(h.value, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black)),
+              Text(h.value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black)),
             ],
           ),
         ],
@@ -476,12 +476,12 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_t('About This Property', 'על הנכס'),
-            style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
         const SizedBox(height: 24),
         SizedBox(
           width: 620,
           child: Text(_aboutProperty,
-              style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
         ),
       ],
     );
@@ -495,7 +495,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_t('Property Specifications', 'מפרט הנכס'),
-            style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
         const SizedBox(height: 24),
         SizedBox(
           width: 721,
@@ -517,9 +517,9 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                       children: [
                         Icon(spec.icon, size: 32, color: AppColors.midBlue),
                         const SizedBox(height: 16),
-                        Text(spec.label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black), textAlign: TextAlign.center),
+                        Text(spec.label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black), textAlign: TextAlign.center),
                         const SizedBox(height: 8),
-                        Text(spec.value, style: GoogleFonts.inter(fontSize: 14, color: Colors.black), textAlign: TextAlign.center),
+                        Text(spec.value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black), textAlign: TextAlign.center),
                       ],
                     ),
                   ),
@@ -540,7 +540,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_t('Where You\'ll Be', 'היכן תהיו'),
-            style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
         const SizedBox(height: 24),
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -591,7 +591,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_t('About Moriah', 'על שכונת מוריה'),
-              style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
           const SizedBox(height: 24),
           Stack(
             children: [
@@ -599,11 +599,11 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(_aboutNeighborhood1,
-                      style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
                   if (_aboutExpanded) ...[
                     const SizedBox(height: 16),
                     Text(_aboutNeighborhood2,
-                        style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
                   ],
                   if (!_aboutExpanded) const SizedBox(height: 100),
                 ],
@@ -639,7 +639,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                   ),
                   child: Text(
                     _aboutExpanded ? _t('Show Less', 'הצג פחות') : _t('Read More', 'קרא עוד'),
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue),
                   ),
                 ),
               ),
@@ -666,10 +666,10 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_t('Contact This Property', 'צור קשר עם הנכס'),
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy)),
           const SizedBox(height: 8),
           Text(_t('Get in touch with our real estate expert', 'צור קשר עם המומחה לנדל"ן שלנו'),
-              style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF3D3D3D))),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF3D3D3D))),
           const SizedBox(height: 25),
           // Agent row
           Row(
@@ -689,10 +689,10 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Zeev Schumacher',
-                      style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
                   const SizedBox(height: 8),
                   Text(_t('RGF Properties, Modiin', 'RGF נכסים, מודיעין'),
-                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6D6D6D))),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D))),
                 ],
               ),
             ],
@@ -712,7 +712,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                 ),
                 child: Center(
                   child: Text(_t('Contact', 'צור קשר'),
-                      style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
                 ),
               ),
             ),
@@ -733,7 +733,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_t('Properties in Moriah', 'נכסים במוריה'),
-              style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
           const SizedBox(height: 24),
           SizedBox(
             height: 275,
@@ -799,7 +799,7 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_t('Businesses in Moriah', 'עסקים במוריה'),
-              style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
           const SizedBox(height: 24),
           SizedBox(
             height: 262,
@@ -956,7 +956,7 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
             children: [
               Text(
                 widget.label,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: widget.isActive
@@ -1081,14 +1081,14 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
                     children: [
                       Row(
                         children: [
-                          Text(d.price, style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                          Text(d.price, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy)),
                           if (d.perMonth != null) ...[
                             const SizedBox(width: 8),
-                            Text(d.perMonth!, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                            Text(d.perMonth!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                           ],
                         ],
                       ),
-                      Text(d.tag, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.turquoise)),
+                      Text(d.tag, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.turquoise)),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -1108,7 +1108,7 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
                     children: [
                       const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
                       const SizedBox(width: 6),
-                      Text(d.location, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                      Text(d.location, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                     ],
                   ),
                 ],
@@ -1126,7 +1126,7 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
       children: [
         Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
         const SizedBox(width: 8),
-        Text(text, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF3D3D3D))),
+        Text(text, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF3D3D3D))),
       ],
     );
   }
@@ -1178,15 +1178,15 @@ class _BusinessCardWidgetState extends State<_BusinessCardWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(d.name, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                  Text(d.name, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy)),
                   const SizedBox(height: 4),
-                  Text(d.subtitle, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                  Text(d.subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
                       const SizedBox(width: 6),
-                      Text(d.location, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                      Text(d.location, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                     ],
                   ),
                 ],

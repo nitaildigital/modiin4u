@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -159,13 +159,13 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
       child: Column(
         children: [
           Text(_t('Municipal Services in Modiin', 'שירותים עירוניים במודיעין'),
-              style: GoogleFonts.nunito(fontSize: 44, fontWeight: FontWeight.w600, color: Colors.black, height: 1.23),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.black, height: 1.23),
               textAlign: TextAlign.center),
           const SizedBox(height: 14),
           Text(
               _t('Parking, Shabbat times, city departments and emergency numbers — everything the city offers, in one place.',
                   'חניה, זמני שבת, מחלקות העירייה ומספרי חירום – כל מה שהעיר מציעה, במקום אחד.'),
-              style: GoogleFonts.inter(fontSize: 16, color: _kIconGrey, height: 1.19),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kIconGrey, height: 1.19),
               textAlign: TextAlign.center),
           const SizedBox(height: 40),
           Center(
@@ -203,12 +203,12 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _query = v.trim()),
               onSubmitted: (_) => _scrollToServices(),
-              style: GoogleFonts.inter(fontSize: 16, color: _kHeading),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kHeading),
               decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
                 hintText: _t('Search municipal services...', 'חפשו שירותים עירוניים...'),
-                hintStyle: GoogleFonts.inter(fontSize: 16, color: _kIconGrey),
+                hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kIconGrey),
               ),
             ),
           ),
@@ -238,7 +238,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(color: AppColors.midBlue, borderRadius: BorderRadius.circular(50)),
                 child: Text(_t('Search', 'חיפוש'),
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
               ),
             ),
           ),
@@ -258,7 +258,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t('Quick Info', 'במבט מהיר'),
-                style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 24),
             IntrinsicHeight(
               child: Row(
@@ -315,7 +315,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(title,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.3)),
                 ),
               ],
@@ -340,10 +340,10 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
         children: [
           Icon(icon, size: 16, color: _kIconGrey),
           const SizedBox(width: 8),
-          Text(label, style: GoogleFonts.inter(fontSize: 14, color: _kGreyText)),
+          Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
           const Spacer(),
           Text(value,
-              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _kHeading)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w600, color: _kHeading)),
         ],
       ),
     );
@@ -358,7 +358,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
       title: _t('Upcoming Shabbat', 'שבת הקרובה'),
       body: [
         Text(_t('Sep 18–19, 2026', 'י"ח–י"ט אלול, 18–19 בספטמבר'),
-            style: GoogleFonts.inter(fontSize: 14, color: _kGreyText)),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
         const SizedBox(height: 16),
         _infoRow(IconsaxPlusLinear.clock, _t('Candle lighting', 'כניסת שבת'), '18:42'),
         _infoRow(IconsaxPlusLinear.moon, _t('Havdalah', 'צאת שבת'), '19:38'),
@@ -377,13 +377,13 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
       body: [
         Text(_t('Blue-and-white is free for residents with a valid permit.',
                 'כחול-לבן חינם לתושבים עם תו חניה בתוקף.'),
-            style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.4)),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.4)),
         const SizedBox(height: 16),
         _infoRow(IconsaxPlusLinear.clock, _t('Paid hours', 'שעות תשלום'), '08:00–19:00'),
         Row(
           children: [
             Text(_t('Open parking map', 'למפת החניה'),
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right, size: 18, color: AppColors.midBlue),
           ],
@@ -402,16 +402,16 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
       body: [
         Text(_t('Report a fault, a pothole or a street light — 24/7.',
                 'דיווח על תקלה, מפגע או פנס רחוב – 24/7.'),
-            style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.4)),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.4)),
         const SizedBox(height: 16),
         Directionality(
           textDirection: TextDirection.ltr,
           child: Text('106',
-              style: GoogleFonts.nunito(fontSize: 36, fontWeight: FontWeight.w700, color: _kHotlineAccent)),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 36, fontWeight: FontWeight.w700, color: _kHotlineAccent)),
         ),
         const SizedBox(height: 4),
         Text(_t('or 08-9726000', 'או 08-9726000'),
-            style: GoogleFonts.inter(fontSize: 13, color: _kGreyText)),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kGreyText)),
       ],
     );
   }
@@ -429,7 +429,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t('Municipal Services', 'שירותי העירייה'),
-                style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 8),
             Text(
               _query.isEmpty
@@ -438,7 +438,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                       ? _t('1 service matches "$_query"', 'שירות אחד תואם ל"$_query"')
                       : _t('${services.length} services match "$_query"',
                           '${services.length} שירותים תואמים ל"$_query"')),
-              style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
             ),
             const SizedBox(height: 32),
             if (services.isEmpty)
@@ -485,11 +485,11 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           Icon(IconsaxPlusLinear.bank, size: 44, color: _kGreyText.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(_t('No service matches your search', 'לא נמצא שירות שתואם לחיפוש'),
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading)),
           const SizedBox(height: 8),
           Text(_t('Try a different word, or call the municipal hotline on 106.',
                   'נסו מילה אחרת, או התקשרו למוקד העירוני 106.'),
-              style: GoogleFonts.inter(fontSize: 14, color: _kGreyText)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
           const SizedBox(height: 20),
           MouseRegion(
             cursor: SystemMouseCursors.click,
@@ -502,7 +502,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                 decoration: BoxDecoration(color: AppColors.midBlue, borderRadius: BorderRadius.circular(50)),
                 child: Text(_t('Clear search', 'נקו חיפוש'),
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
               ),
             ),
           ),
@@ -522,11 +522,11 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t('Emergency & Service Numbers', 'מספרי חירום ושירות'),
-                style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 8),
             Text(_t('Keep these close — they work from any phone in Israel.',
                     'שמרו אותם בהישג יד – הם פועלים מכל טלפון בישראל.'),
-                style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21)),
             const SizedBox(height: 32),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -567,7 +567,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_t('Modiin-Maccabim-Reut City Hall', 'עיריית מודיעין-מכבים-רעות'),
-                        style: GoogleFonts.nunito(
+                        style: TextStyle(fontFamily: AppFonts.nunito, 
                             fontSize: 32, fontWeight: FontWeight.w600, color: Colors.white, height: 1.25)),
                     const SizedBox(height: 16),
                     Row(
@@ -575,7 +575,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                         const Icon(IconsaxPlusLinear.location, size: 18, color: Colors.white70),
                         const SizedBox(width: 8),
                         Text(_t('1 Dam HaMaccabim St., Modiin', 'רחוב דם המכבים 1, מודיעין'),
-                            style: GoogleFonts.inter(fontSize: 16, color: Colors.white.withValues(alpha: 0.9))),
+                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white.withValues(alpha: 0.9))),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -584,7 +584,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                         const Icon(IconsaxPlusLinear.global, size: 18, color: Colors.white70),
                         const SizedBox(width: 8),
                         Text('modiin.muni.il',
-                            style: GoogleFonts.inter(fontSize: 16, color: Colors.white.withValues(alpha: 0.9))),
+                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white.withValues(alpha: 0.9))),
                       ],
                     ),
                   ],
@@ -597,7 +597,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_t('Reception Hours', 'שעות קבלת קהל'),
-                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                     const SizedBox(height: 16),
                     _hoursRow(_t('Sun, Tue, Thu', 'א׳, ג׳, ה׳'), '08:30–13:00'),
                     _hoursRow(_t('Monday', 'יום ב׳'), '08:30–13:00, 16:00–18:30'),
@@ -622,11 +622,11 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           SizedBox(
             width: 110,
             child: Text(day,
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withValues(alpha: 0.75))),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.white.withValues(alpha: 0.75))),
           ),
           Expanded(
             child: Text(hours,
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
           ),
         ],
       ),
@@ -704,13 +704,13 @@ class _ServiceCardState extends State<_ServiceCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(s.label,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.25),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 6),
                     Text(s.blurb,
-                        style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.35),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.35),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis),
                     if (!live) ...[
@@ -722,7 +722,7 @@ class _ServiceCardState extends State<_ServiceCard> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(widget.comingSoonLabel,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 12, fontWeight: FontWeight.w500, color: _kGreyText)),
                       ),
                     ],
@@ -770,7 +770,7 @@ class _ContactCard extends StatelessWidget {
           const SizedBox(width: 16),
           Expanded(
             child: Text(contact.name,
-                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: _kHeading),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: _kHeading),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis),
           ),
@@ -778,7 +778,7 @@ class _ContactCard extends StatelessWidget {
           Directionality(
             textDirection: TextDirection.ltr,
             child: Text(contact.number,
-                style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
           ),
         ],
       ),

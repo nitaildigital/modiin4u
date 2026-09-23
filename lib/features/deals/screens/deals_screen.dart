@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'web_deals_screen.dart';
@@ -116,7 +116,7 @@ class _MobileDealsContent extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'Explore Deals by Category',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF1F1F1F),
@@ -134,7 +134,7 @@ class _MobileDealsContent extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'Popular Deals in Modiin',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF1F1F1F),
@@ -152,7 +152,7 @@ class _MobileDealsContent extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'Most Popular Brands',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF1F1F1F),
@@ -222,7 +222,7 @@ class _MobileDealsContent extends StatelessWidget {
             child: Center(
               child: Text(
                 'Deals',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: Colors.black,
@@ -240,7 +240,7 @@ class _MobileDealsContent extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 54),
               child: Text(
                 'Best Deals &\nOffers in Modiin',
-                style: GoogleFonts.rubik(
+                style: TextStyle(fontFamily: AppFonts.rubik, 
                   fontSize: 32,
                   fontWeight: FontWeight.w600,
                   height: 39 / 32,
@@ -260,7 +260,7 @@ class _MobileDealsContent extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
                 'Explore local deals, discounts, and limited-time offers across Modiin.',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   height: 19 / 16,
@@ -396,7 +396,7 @@ class _MobileDealsContent extends StatelessWidget {
               ),
               child: Text(
                 'View All',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF123A72),
@@ -495,7 +495,7 @@ class _CategoryCircle extends StatelessWidget {
           // Name
           Text(
             category.name,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.black,
@@ -508,7 +508,7 @@ class _CategoryCircle extends StatelessWidget {
           // Count
           Text(
             '${category.count} Deals',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF5F5E5A),
@@ -606,7 +606,7 @@ class _DealCard extends StatelessWidget {
                     ),
                     child: Text(
                       deal.badge,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -627,7 +627,7 @@ class _DealCard extends StatelessWidget {
                 // Title
                 Text(
                   deal.title,
-                  style: GoogleFonts.rubik(
+                  style: TextStyle(fontFamily: AppFonts.rubik, 
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     height: 25 / 20,
@@ -639,7 +639,7 @@ class _DealCard extends StatelessWidget {
                 // Business name
                 Text(
                   deal.business,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF5F5E5A),
@@ -655,7 +655,7 @@ class _DealCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       deal.location,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF5F5E5A),
@@ -677,7 +677,7 @@ class _DealCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           deal.countdown,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: Colors.black,
@@ -686,7 +686,7 @@ class _DealCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'Time Left',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -703,7 +703,7 @@ class _DealCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             'Residents Only',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFFFB7901),
@@ -726,7 +726,7 @@ class _DealCard extends StatelessWidget {
                   child: Center(
                     child: Text(
                       'View Deal',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -780,7 +780,7 @@ class _BrandCard extends StatelessWidget {
               child: Center(
                 child: Text(
                   brand.discount,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFFE90052),
@@ -813,7 +813,7 @@ class _BrandCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     'Upto 5% Rewards',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,

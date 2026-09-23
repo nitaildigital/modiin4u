@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -106,7 +106,7 @@ class _MyApartmentsScreenState extends State<MyApartmentsScreen> {
                         child: Center(
                           child: Text(
                             'My Apartments',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -150,14 +150,14 @@ class _MyApartmentsScreenState extends State<MyApartmentsScreen> {
                           Expanded(
                             child: TextField(
                               controller: _searchController,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF1F1F1F),
                               ),
                               decoration: InputDecoration(
                                 hintText: 'Search apartments',
-                                hintStyle: GoogleFonts.inter(
+                                hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,
                                   color: const Color(0xFF6D6D6D),
@@ -185,7 +185,7 @@ class _MyApartmentsScreenState extends State<MyApartmentsScreen> {
                         ? Center(
                             child: Text(
                               'No apartments match your search',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 color: const Color(0xFF6D6D6D),
                               ),
@@ -224,7 +224,7 @@ class _MyApartmentsScreenState extends State<MyApartmentsScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Add Apartment',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white,
@@ -270,7 +270,7 @@ class _MyApartmentsScreenState extends State<MyApartmentsScreen> {
         const SizedBox(height: 24),
         Text(
           'No apartments listed yet',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1F1F1F),
@@ -279,7 +279,7 @@ class _MyApartmentsScreenState extends State<MyApartmentsScreen> {
         const SizedBox(height: 12),
         Text(
           'Add your first apartment to get started.',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
@@ -310,7 +310,7 @@ class _MyApartmentsScreenState extends State<MyApartmentsScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'Add Apartment',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
@@ -400,7 +400,7 @@ class _ListingCard extends StatelessWidget {
                     ),
                     child: Text(
                       listing.statusText,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         color: listing.statusColor,
@@ -421,7 +421,7 @@ class _ListingCard extends StatelessWidget {
                 // Title
                 Text(
                   listing.title,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF0A1230),
@@ -440,7 +440,7 @@ class _ListingCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       listing.location,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         color: const Color(0xFF6D6D6D),
                       ),
@@ -452,7 +452,7 @@ class _ListingCard extends StatelessWidget {
                 // Price
                 Text(
                   listing.price,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0A1230),
@@ -463,7 +463,7 @@ class _ListingCard extends StatelessWidget {
                 // Date
                 Text(
                   listing.dateText,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF6D6D6D),

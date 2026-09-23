@@ -1,7 +1,7 @@
 import 'dart:typed_data';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -136,22 +136,22 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                           children: [
                             Text(
                               'קהילת מודיעין-מכבים-רעות',
-                              style: GoogleFonts.rubik(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.white),
+                              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.white),
                             ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
                                 const Icon(Icons.public, size: 14, color: Colors.white70),
                                 const SizedBox(width: 4),
-                                Text('קבוצה ציבורית', style: GoogleFonts.rubik(fontSize: 13, color: Colors.white70)),
+                                Text('קבוצה ציבורית', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: Colors.white70)),
                                 const SizedBox(width: 12),
                                 const Icon(Icons.people, size: 14, color: Colors.white70),
                                 const SizedBox(width: 4),
-                                Text('12,340 חברים', style: GoogleFonts.rubik(fontSize: 13, color: Colors.white70)),
+                                Text('12,340 חברים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: Colors.white70)),
                                 const SizedBox(width: 12),
                                 const Icon(Icons.article_outlined, size: 14, color: Colors.white70),
                                 const SizedBox(width: 4),
-                                Text('48 פוסטים היום', style: GoogleFonts.rubik(fontSize: 13, color: Colors.white70)),
+                                Text('48 פוסטים היום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: Colors.white70)),
                               ],
                             ),
                           ],
@@ -201,7 +201,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                           ),
                           child: Center(
                             child: isLoggedIn
-                                ? Text(user.initials, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.white))
+                                ? Text(user.initials, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.white))
                                 : const Icon(Icons.person, size: 20, color: AppColors.grayMeta),
                           ),
                         ),
@@ -216,7 +216,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                             ),
                             child: Text(
                               'מה חדש? שתפו את הקהילה...',
-                              style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight),
+                              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayLight),
                             ),
                           ),
                         ),
@@ -261,7 +261,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                             child: Center(
                               child: Text(
                                 cat,
-                                style: GoogleFonts.rubik(
+                                style: TextStyle(fontFamily: AppFonts.rubik, 
                                   fontSize: 13,
                                   color: sel ? AppColors.white : AppColors.grayMeta,
                                   fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
@@ -314,7 +314,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             icon: const Icon(Icons.edit, color: AppColors.white, size: 20),
-            label: Text('פוסט חדש', style: GoogleFonts.rubik(fontWeight: FontWeight.w600, color: AppColors.white)),
+            label: Text('פוסט חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600, color: AppColors.white)),
           ),
         ),
       ),
@@ -325,7 +325,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     if (!isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('יש להתחבר כדי לפרסם', style: GoogleFonts.rubik()),
+          content: Text('יש להתחבר כדי לפרסם', style: TextStyle(fontFamily: AppFonts.rubik)),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -361,14 +361,14 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: AppColors.turquoise.withValues(alpha: 0.15),
-                      child: Text(userName.isNotEmpty ? userName[0] : '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.turquoise)),
+                      child: Text(userName.isNotEmpty ? userName[0] : '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.turquoise)),
                     ),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(userName, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: context.textPrimary)),
-                        Text('פוסט ציבורי · קהילת מודיעין', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
+                        Text(userName, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600, color: context.textPrimary)),
+                        Text('פוסט ציבורי · קהילת מודיעין', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta)),
                       ],
                     ),
                   ],
@@ -392,7 +392,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                             borderRadius: BorderRadius.circular(50),
                             border: Border.all(color: sel ? AppColors.turquoise : context.borderClr),
                           ),
-                          child: Center(child: Text(cat, style: GoogleFonts.rubik(fontSize: 13, color: sel ? AppColors.turquoise : AppColors.grayMeta, fontWeight: sel ? FontWeight.w600 : FontWeight.w400))),
+                          child: Center(child: Text(cat, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: sel ? AppColors.turquoise : AppColors.grayMeta, fontWeight: sel ? FontWeight.w600 : FontWeight.w400))),
                         ),
                       );
                     },
@@ -403,10 +403,10 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                   controller: textController,
                   maxLines: 5,
                   textDirection: TextDirection.rtl,
-                  style: GoogleFonts.rubik(fontSize: 15, color: context.textPrimary),
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, color: context.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'מה עובר עליכם?',
-                    hintStyle: GoogleFonts.rubik(fontSize: 15, color: AppColors.grayLight),
+                    hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, color: AppColors.grayLight),
                     filled: true,
                     fillColor: context.surfaceDim,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: context.borderClr)),
@@ -480,7 +480,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                           content: Row(children: [
                             const Icon(Icons.check_circle, color: AppColors.white, size: 20),
                             const SizedBox(width: 10),
-                            Text('הפוסט פורסם!', style: GoogleFonts.rubik()),
+                            Text('הפוסט פורסם!', style: TextStyle(fontFamily: AppFonts.rubik)),
                           ]),
                           backgroundColor: AppColors.success,
                           behavior: SnackBarBehavior.floating,
@@ -490,7 +490,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                         decoration: BoxDecoration(gradient: AppColors.cyanGradient, borderRadius: BorderRadius.circular(50)),
-                        child: Text('פרסום', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.white)),
+                        child: Text('פרסום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.white)),
                       ),
                     ),
                   ],
@@ -529,9 +529,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Text('תגובות', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
+                          Text('תגובות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
                           const SizedBox(width: 6),
-                          Text('(${post.comments.length})', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta)),
+                          Text('(${post.comments.length})', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayMeta)),
                           const Spacer(),
                           IconButton(
                             icon: const Icon(Icons.close, size: 22),
@@ -552,18 +552,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                       CircleAvatar(
                         radius: 16,
                         backgroundColor: AppColors.midBlue.withValues(alpha: 0.15),
-                        child: Text(post.authorInitials, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
+                        child: Text(post.authorInitials, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(post.authorName, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: context.textPrimary)),
+                            Text(post.authorName, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: context.textPrimary)),
                             const SizedBox(height: 2),
                             Text(
                               post.content,
-                              style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+                              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -583,8 +583,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                             children: [
                               Icon(Icons.chat_bubble_outline, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                               const SizedBox(height: 12),
-                              Text('אין תגובות עדיין', style: GoogleFonts.rubik(fontSize: 15, color: AppColors.grayLight)),
-                              Text('היו הראשונים להגיב!', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight)),
+                              Text('אין תגובות עדיין', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, color: AppColors.grayLight)),
+                              Text('היו הראשונים להגיב!', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight)),
                             ],
                           ),
                         )
@@ -600,7 +600,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                                 CircleAvatar(
                                   radius: 16,
                                   backgroundColor: AppColors.turquoise.withValues(alpha: 0.15),
-                                  child: Text(c.authorInitials, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.turquoise)),
+                                  child: Text(c.authorInitials, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.turquoise)),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -616,16 +616,16 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(c.authorName, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: context.textPrimary)),
+                                            Text(c.authorName, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: context.textPrimary)),
                                             const SizedBox(height: 2),
-                                            Text(c.content, style: GoogleFonts.rubik(fontSize: 14, color: context.textPrimary)),
+                                            Text(c.content, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: context.textPrimary)),
                                           ],
                                         ),
                                       ),
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
-                                          Text(c.timeAgo, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                                          Text(c.timeAgo, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                                           const SizedBox(width: 16),
                                           GestureDetector(
                                             onTap: () => setSheetState(() {
@@ -634,11 +634,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                                             }),
                                             child: Text(
                                               'אהבתי${c.likes > 0 ? ' (${c.likes})' : ''}',
-                                              style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: c.isLiked ? AppColors.error : AppColors.grayLight),
+                                              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: c.isLiked ? AppColors.error : AppColors.grayLight),
                                             ),
                                           ),
                                           const SizedBox(width: 16),
-                                          Text('הגב/י', style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)),
+                                          Text('הגב/י', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)),
                                         ],
                                       ),
                                     ],
@@ -662,7 +662,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                         radius: 16,
                         backgroundColor: AppColors.turquoise.withValues(alpha: 0.15),
                         child: isLoggedIn
-                            ? Text(userInitials, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.turquoise))
+                            ? Text(userInitials, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.turquoise))
                             : const Icon(Icons.person, size: 16, color: AppColors.turquoise),
                       ),
                       const SizedBox(width: 10),
@@ -670,10 +670,10 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                         child: TextField(
                           controller: commentController,
                           textDirection: TextDirection.rtl,
-                          style: GoogleFonts.rubik(fontSize: 14, color: context.textPrimary),
+                          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: context.textPrimary),
                           decoration: InputDecoration(
                             hintText: isLoggedIn ? 'כתבו תגובה...' : 'התחברו כדי להגיב',
-                            hintStyle: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight),
+                            hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayLight),
                             filled: true,
                             fillColor: context.surfaceDim,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -880,7 +880,7 @@ class _SheetAction extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: color),
             const SizedBox(width: 4),
-            Text(label, style: GoogleFonts.rubik(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
+            Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: color, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -938,7 +938,7 @@ class _PostCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: catColor.withValues(alpha: 0.15),
-                  child: Text(post.authorInitials, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: catColor)),
+                  child: Text(post.authorInitials, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: catColor)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -947,7 +947,7 @@ class _PostCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(post.authorName, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
+                          Text(post.authorName, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: context.textPrimary)),
                           if (post.isPinned) ...[
                             const SizedBox(width: 6),
                             const Icon(Icons.admin_panel_settings, size: 14, color: AppColors.turquoise),
@@ -956,13 +956,13 @@ class _PostCard extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          Text(post.timeAgo, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                          Text(post.timeAgo, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                           const SizedBox(width: 6),
-                          Text('·', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                          Text('·', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                           const SizedBox(width: 6),
                           Icon(_categoryIcon(), size: 12, color: catColor),
                           const SizedBox(width: 3),
-                          Text(post.category, style: GoogleFonts.rubik(fontSize: 11, color: catColor, fontWeight: FontWeight.w500)),
+                          Text(post.category, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: catColor, fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ],
@@ -980,7 +980,7 @@ class _PostCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.push_pin, size: 11, color: AppColors.turquoise),
                         const SizedBox(width: 3),
-                        Text('מוצמד', style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.turquoise)),
+                        Text('מוצמד', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.turquoise)),
                       ],
                     ),
                   )
@@ -994,7 +994,7 @@ class _PostCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Text(
               post.content,
-              style: GoogleFonts.rubik(fontSize: 14, color: context.textPrimary, height: 1.5),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: context.textPrimary, height: 1.5),
             ),
           ),
 
@@ -1010,7 +1010,7 @@ class _PostCard extends StatelessWidget {
                   children: [
                     Icon(Icons.image_outlined, size: 40, color: catColor.withValues(alpha: 0.3)),
                     const SizedBox(height: 6),
-                    Text(post.imageLabel, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight)),
+                    Text(post.imageLabel, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight)),
                   ],
                 ),
               ),
@@ -1030,17 +1030,17 @@ class _PostCard extends StatelessWidget {
                       child: const Icon(Icons.favorite, size: 10, color: AppColors.white),
                     ),
                     const SizedBox(width: 4),
-                    Text('${post.likes}', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
+                    Text('${post.likes}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta)),
                   ],
                   const Spacer(),
                   if (post.commentsCount > 0)
                     GestureDetector(
                       onTap: onComment,
-                      child: Text('${post.commentsCount} תגובות', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
+                      child: Text('${post.commentsCount} תגובות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta)),
                     ),
                   if (post.shares > 0) ...[
                     const SizedBox(width: 12),
-                    Text('${post.shares} שיתופים', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
+                    Text('${post.shares} שיתופים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta)),
                   ],
                 ],
               ),
@@ -1110,9 +1110,9 @@ class _GroupStat extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: color),
             const SizedBox(width: 6),
-            Text(value, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: color)),
+            Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w700, color: color)),
             const SizedBox(width: 4),
-            Flexible(child: Text(label, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayMeta), overflow: TextOverflow.ellipsis)),
+            Flexible(child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayMeta), overflow: TextOverflow.ellipsis)),
           ],
         ),
       ),
@@ -1145,7 +1145,7 @@ class _ActionBtn extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: color),
             const SizedBox(width: 6),
-            Text(label, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: color)),
+            Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: color)),
           ],
         ),
       ),

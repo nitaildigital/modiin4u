@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'web_listing_detail_screen.dart';
@@ -103,7 +103,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                   child: Text(
                     _price,
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -124,7 +124,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                       Expanded(
                         child: Text(
                           _address,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -134,7 +134,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                       ),
                       Text(
                         _distance,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
@@ -358,7 +358,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
         children: [
           Text(
             'Agent',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -391,7 +391,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                     children: [
                       Text(
                         _agentName,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
@@ -400,7 +400,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                       const SizedBox(height: 4),
                       Text(
                         _agentCompany,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -420,7 +420,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                   child: Center(
                     child: Text(
                       'Contact',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -447,7 +447,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
         children: [
           Text(
             title,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -456,7 +456,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
           const SizedBox(height: 12),
           Text(
             body,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF3D3D3D),
@@ -479,7 +479,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
         children: [
           Text(
             'Property Specifications',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -519,7 +519,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
         children: [
           Text(
             'Where You\'ll Be',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -613,7 +613,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                             const SizedBox(width: 6),
                             Text(
                               'View on Map',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: const Color(0xFF0A1230),
@@ -644,7 +644,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
         children: [
           Text(
             'About Moriah',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -658,7 +658,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                 children: [
                   Text(
                     _aboutNeighborhood1,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF3D3D3D),
@@ -669,7 +669,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                     const SizedBox(height: 12),
                     Text(
                       _aboutNeighborhood2,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF3D3D3D),
@@ -718,7 +718,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                 ),
                 child: Text(
                   _aboutExpanded ? 'Show Less' : 'Read More',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF123A72),
@@ -743,7 +743,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
         children: [
           Text(
             'Properties in Moriah',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -798,7 +798,7 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
@@ -807,7 +807,7 @@ class _StatCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   unit,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF3D3D3D),
@@ -856,7 +856,7 @@ class _SpecCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             spec.name,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.black,
@@ -866,7 +866,7 @@ class _SpecCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             spec.value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: Colors.black,
@@ -971,7 +971,7 @@ class _NearbyListingCard extends StatelessWidget {
                     ),
                     child: Text(
                       'New',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -994,7 +994,7 @@ class _NearbyListingCard extends StatelessWidget {
                     ),
                     child: Text(
                       'Via Broker',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF0033AC),
@@ -1018,7 +1018,7 @@ class _NearbyListingCard extends StatelessWidget {
                 children: [
                   Text(
                     listing.price,
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF0A1230),
@@ -1026,7 +1026,7 @@ class _NearbyListingCard extends StatelessWidget {
                   ),
                   Text(
                     'FOR SALE',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF17A9D0),
@@ -1045,7 +1045,7 @@ class _NearbyListingCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       listing.address,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF5F5E5A),
@@ -1102,7 +1102,7 @@ class _DetailChip extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           text,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF3D3D3D),

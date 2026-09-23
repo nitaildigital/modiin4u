@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import '../../../shared/widgets/error_retry.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/skeleton.dart';
+import '../../businesses/models/business.dart';
+import '../../businesses/providers/business_providers.dart';
+import '../providers/restaurant_providers.dart';
 import 'web_restaurants_screen.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../../favorites/repositories/favorite_repository.dart';
 
 /// Restaurants discovery screen — responsive wrapper.
 /// Desktop (> 1100px) renders the full web layout; mobile keeps the app UI.
@@ -24,119 +33,27 @@ class RestaurantsScreen extends StatelessWidget {
 
 /// Mobile layout — hero banner, cuisine category cards,
 /// vertical restaurant/coffee/bar listings with fade + "View All",
-/// and horizontal "Most Loved" / "Lunch Nearby" rows.
-class _MobileRestaurantsContent extends StatefulWidget {
+/// and a horizontal best-rated row. "Lunch nearby" is left out until the app
+/// can ask for the device location.
+class _MobileRestaurantsContent extends ConsumerStatefulWidget {
   const _MobileRestaurantsContent();
 
   @override
-  State<_MobileRestaurantsContent> createState() => _MobileRestaurantsContentState();
+  ConsumerState<_MobileRestaurantsContent> createState() =>
+      _MobileRestaurantsContentState();
 }
 
-class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
+class _MobileRestaurantsContentState
+    extends ConsumerState<_MobileRestaurantsContent> {
   final int _bannerPage = 1; // 0-indexed, starts on second dot active
 
-  // ── Cuisine categories ──
-  static const _cuisines = [
-    _Cuisine('Japanese', 12),
-    _Cuisine('Sushi', 10),
-    _Cuisine('Italian', 8),
-    _Cuisine('Asian', 9),
-    _Cuisine('Israeli', 14),
-    _Cuisine('Mediterranean', 7),
-    _Cuisine('Burgers', 6),
-  ];
-
   // ── Popular Restaurants ──
-  static const _popularRestaurants = [
-    _Place(
-      'Shipudey Hatikva',
-      'Israeli Dining',
-      'Weizmann Street Heritage Modiin',
-      4.8, 254, 428,
-      isKosher: true,
-      badgeColor: _BadgeColor.green,
-    ),
-    _Place(
-      'Pasta Basta',
-      'Dining',
-      'HaOmanut St 2, Modiin',
-      4.8, 254, 428,
-      badgeColor: _BadgeColor.green,
-    ),
-    _Place(
-      'Sushi Bar Modiin',
-      'Dining',
-      '21 Sderot Modi\'in-Maccabim-Re\'ut, Israel',
-      4.8, 254, 428,
-      badgeColor: _BadgeColor.green,
-    ),
-  ];
 
   // ── Coffee Shops ──
-  static const _coffeeShops = [
-    _Place(
-      'Fresh Coffee',
-      'Israeli Cafe',
-      'HaNahalım St 8, Modiin',
-      4.8, 128, 187,
-      badgeColor: _BadgeColor.blue,
-    ),
-    _Place(
-      '3:16 John Caffe',
-      'Cafe',
-      'HaMaccabim, Modi\'in-Maccabim-Re\'ut, Israel',
-      4.8, 345, 745,
-      badgeColor: _BadgeColor.blue,
-    ),
-    _Place(
-      'Coffee Station',
-      'Cafe',
-      'HaMaccabim, Modi\'in-Maccabim-Re\'ut, Israel',
-      4.8, 345, 745,
-      badgeColor: _BadgeColor.blue,
-    ),
-  ];
 
   // ── Bars ──
-  static const _bars = [
-    _Place(
-      'Jim\'s Bar',
-      'Bar',
-      'HaNahalım St 8, Modiin',
-      4.8, 128, 187,
-      badgeColor: _BadgeColor.red,
-    ),
-    _Place(
-      'The Duke',
-      'Cafe',
-      'Main St 15, Tel Aviv',
-      4.5, 200, 250,
-      badgeColor: _BadgeColor.red,
-    ),
-    _Place(
-      'The Gourmet Burger',
-      'Bar',
-      'King St 3, Jerusalem',
-      4.7, 300, 320,
-      badgeColor: _BadgeColor.red,
-    ),
-  ];
 
   // ── Most Loved (horizontal) ──
-  static const _mostLoved = [
-    _HPlace('Japan Japan Modiin', 'Restaurant', 'Main St 15, Tel Aviv', 4.5, 200, 250),
-    _HPlace('Perry\'s Bar', 'Bar', 'Derech Modiin 6, Modiin', 4.5, 200, 250),
-    _HPlace('Landwer Café', 'Bar', 'HaNahalım St 8, Modiin', 4.5, 200, 250),
-    _HPlace('Sea & Spice', 'Restaurant', 'HaNahalım St 8, Modiin', 4.5, 200, 250),
-  ];
-
-  // ── Lunch Nearby (horizontal, with delivery time) ──
-  static const _lunchNearby = [
-    _HPlace('Orta Abylai Khan', 'Restaurant', 'Main St 15, Tel Aviv', 4.5, 200, null, deliveryTime: '30–40 min'),
-    _HPlace('Japonica Dostyk', 'Restaurant', 'Derech Modiin 6, Modiin', 4.5, 200, null, deliveryTime: '25–35 min'),
-    _HPlace('Marshal Abylai Khana', 'Restaurant', 'HaNahalım St 8, Modiin', 4.5, 200, null, deliveryTime: '30–40 min'),
-    _HPlace('Mangal Doner Kaskelen', 'Restaurant', 'HaNahalım St 8, Modiin', 4.5, 200, null, deliveryTime: '35–45 min'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -170,8 +87,9 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'Explore Modiin',
-                          style: GoogleFonts.inter(
+                          'גלו את מודיעין',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF1F1F1F),
@@ -184,37 +102,27 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
                       _buildCuisineRow(),
                       const SizedBox(height: 24),
 
-                      // Popular Restaurants
+                      // Restaurants
                       _buildVerticalSection(
-                        'Popular Restaurants in Modiin',
-                        _popularRestaurants,
-                        'View All Restaurants',
+                        'מסעדות במודיעין',
+                        'restaurants',
+                        'לכל המסעדות',
                       ),
                       const SizedBox(height: 40),
 
-                      // Coffee Shops
+                      // Cafes and bakeries
                       _buildVerticalSection(
-                        'Coffee Shops in Modiin',
-                        _coffeeShops,
-                        'View All Coffee Shops',
+                        'בתי קפה ומאפיות',
+                        'cafe-bakery',
+                        'לכל בתי הקפה',
                       ),
                       const SizedBox(height: 40),
 
-                      // Bars
-                      _buildVerticalSection(
-                        'Bars in Modiin',
-                        _bars,
-                        'View All Bars',
-                      ),
+                      // Best rated
+                      _buildHorizontalSection('המומלצים ביותר'),
                       const SizedBox(height: 40),
 
-                      // Most Loved
-                      _buildHorizontalSection('Most Loved in Modiin', _mostLoved),
                       const SizedBox(height: 40),
-
-                      // Lunch Nearby
-                      _buildHorizontalSection('Lunch Nearby', _lunchNearby),
-                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
@@ -241,7 +149,9 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
                       onTap: () => context.push('/map'),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(50),
@@ -256,12 +166,16 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(IconsaxPlusLinear.map,
-                                size: 16, color: Color(0xFF0A1230)),
+                            const Icon(
+                              IconsaxPlusLinear.map,
+                              size: 16,
+                              color: Color(0xFF0A1230),
+                            ),
                             const SizedBox(width: 6),
                             Text(
-                              'View on Map',
-                              style: GoogleFonts.inter(
+                              'הצג במפה',
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: const Color(0xFF0A1230),
@@ -287,9 +201,7 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
   Widget _buildStickyHeader() {
     return ClipRect(
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
-        ),
+        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9)),
         child: Column(
           children: [
             // Title
@@ -308,8 +220,9 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
                   ),
                   const Spacer(),
                   Text(
-                    'Restaurants',
-                    style: GoogleFonts.inter(
+                    'מסעדות',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.black,
@@ -342,8 +255,9 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Search restaurant, cuisine, or location...',
-                        style: GoogleFonts.inter(
+                        'חיפוש מסעדה, מטבח או מיקום',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -420,14 +334,37 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
   // Cuisine category horizontal row
   // ═══════════════════════════════════════════════
   Widget _buildCuisineRow() {
+    final cuisines = ref.watch(cuisineCategoriesProvider);
+    final counts =
+        ref.watch(businessCountsByCategoryProvider).valueOrNull ?? const {};
+
     return SizedBox(
       height: 150,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 16, right: 16),
-        itemCount: _cuisines.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemBuilder: (_, i) => _CuisineCard(cuisine: _cuisines[i]),
+      child: cuisines.when(
+        loading: () => Skeleton(
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 4,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (_, _) => const SkeletonBox(width: 120, radius: 12),
+          ),
+        ),
+        error: (_, _) => ErrorRetry(
+          onRetry: () => ref.invalidate(cuisineCategoriesProvider),
+        ),
+        data: (list) => list.isEmpty
+            ? const SizedBox.shrink()
+            : ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: list.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (_, i) => _CuisineCard(
+                  cuisine: _Cuisine.from(list[i], counts[list[i].id]),
+                ),
+              ),
       ),
     );
   }
@@ -435,11 +372,26 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
   // ═══════════════════════════════════════════════
   // Vertical section (3 cards + fade + "View All")
   // ═══════════════════════════════════════════════
-  Widget _buildVerticalSection(
-    String title,
-    List<_Place> places,
-    String viewAllLabel,
-  ) {
+  /// Opens the full list for a section. The section knows its category by
+  /// slug; the list screen addresses it by id, so it is resolved here rather
+  /// than adding a second route that means the same thing.
+  void _openCategory(String slug, String title) {
+    final category = ref.read(categoriesBySlugProvider).valueOrNull?[slug];
+    if (category == null) return;
+    context.push(
+      '/businesses/category/${category.id}?title=${Uri.encodeComponent(title)}',
+    );
+  }
+
+  /// One category's businesses. [slug] names the category in the database,
+  /// so the section follows whatever the admin panel defines.
+  Widget _buildVerticalSection(String title, String slug, String viewAllLabel) {
+    final provider = businessesBySlugProvider(slug);
+    final places = (ref.watch(provider).valueOrNull ?? const <Business>[])
+        .take(3)
+        .map(_Place.from)
+        .toList();
+    if (places.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -447,7 +399,8 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
         children: [
           Text(
             title,
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -478,10 +431,7 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0x00FFFFFF),
-                        Colors.white,
-                      ],
+                      colors: [Color(0x00FFFFFF), Colors.white],
                     ),
                   ),
                 ),
@@ -494,21 +444,20 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
                 bottom: 0,
                 child: Center(
                   child: GestureDetector(
-                    onTap: () {},
+                    onTap: () => _openCategory(slug, title),
                     child: Container(
                       height: 40,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        border: Border.all(
-                            color: const Color(0xFF123A72)),
+                        border: Border.all(color: const Color(0xFF123A72)),
                         borderRadius: BorderRadius.circular(60),
                       ),
                       child: Center(
                         child: Text(
                           viewAllLabel,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF123A72),
@@ -529,7 +478,13 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
   // ═══════════════════════════════════════════════
   // Horizontal section (scroll cards)
   // ═══════════════════════════════════════════════
-  Widget _buildHorizontalSection(String title, List<_HPlace> places) {
+  Widget _buildHorizontalSection(String title) {
+    final places =
+        (ref.watch(topRatedBusinessesProvider).valueOrNull ??
+                const <Business>[])
+            .map(_HPlace.from)
+            .toList();
+    if (places.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -537,7 +492,8 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             title,
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -546,14 +502,15 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 266,
+          // Headroom over the card's fixed content, now that the name and
+          // type lines are bounded to one line each.
+          height: 280,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.only(left: 18, right: 18),
             itemCount: places.length,
             separatorBuilder: (_, _) => const SizedBox(width: 20),
-            itemBuilder: (_, i) =>
-                _HPlaceCard(place: places[i]),
+            itemBuilder: (_, i) => _HPlaceCard(place: places[i]),
           ),
         ),
       ],
@@ -567,12 +524,23 @@ class _MobileRestaurantsContentState extends State<_MobileRestaurantsContent> {
 enum _BadgeColor { green, blue, red }
 
 class _Cuisine {
+  final String id;
   final String name;
-  final int count;
-  const _Cuisine(this.name, this.count);
+
+  /// Null until `entity_categories` links businesses to categories, at which
+  /// point the card picks up its count with no further change here.
+  final int? count;
+
+  final String? imageUrl;
+
+  const _Cuisine(this.id, this.name, this.count, this.imageUrl);
+
+  factory _Cuisine.from(BusinessCategory c, int? count) =>
+      _Cuisine(c.id, c.name, count, c.imageUrl);
 }
 
 class _Place {
+  final String id;
   final String name;
   final String type;
   final String address;
@@ -580,9 +548,11 @@ class _Place {
   final int reviews;
   final int views;
   final bool isKosher;
-  final _BadgeColor badgeColor;
+  final String? imageUrl;
+  final _BadgeColor badgeColor = _BadgeColor.green;
 
   const _Place(
+    this.id,
     this.name,
     this.type,
     this.address,
@@ -590,28 +560,54 @@ class _Place {
     this.reviews,
     this.views, {
     this.isKosher = false,
-    this.badgeColor = _BadgeColor.green,
+    this.imageUrl,
   });
+
+  factory _Place.from(Business b) => _Place(
+    b.id,
+    b.name,
+    b.description ?? '',
+    [b.address, b.neighborhood].where((s) => s.isNotEmpty).join(', '),
+    b.rating,
+    b.reviewCount,
+    0,
+    isKosher: b.kosherLabel != null,
+    imageUrl: b.imageUrl,
+  );
 }
 
 class _HPlace {
+  final String id;
   final String name;
   final String type;
   final String address;
   final double rating;
   final int reviews;
   final int? views;
-  final String? deliveryTime;
+  final String? imageUrl;
+  final String? deliveryTime = null;
 
   const _HPlace(
+    this.id,
     this.name,
     this.type,
     this.address,
     this.rating,
     this.reviews,
-    this.views, {
-    this.deliveryTime,
-  });
+    this.views,
+    this.imageUrl,
+  );
+
+  factory _HPlace.from(Business b) => _HPlace(
+    b.id,
+    b.name,
+    b.description ?? '',
+    [b.address, b.neighborhood].where((s) => s.isNotEmpty).join(', '),
+    b.rating,
+    b.reviewCount,
+    null,
+    b.imageUrl,
+  );
 }
 
 // ═══════════════════════════════════════════════
@@ -633,24 +629,12 @@ class _CuisineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image placeholder
-          Container(
+          NetworkPhoto(
+            url: cuisine.imageUrl,
             height: 90,
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(11)),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-              ),
-            ),
-            child: Center(
-              child: Icon(
-                IconsaxPlusBold.reserve,
-                size: 24,
-                color: Colors.white.withValues(alpha: 0.15),
-              ),
-            ),
+            radius: const BorderRadius.vertical(top: Radius.circular(11)),
+            icon: IconsaxPlusBold.reserve,
+            iconSize: 24,
           ),
           // Label
           Padding(
@@ -660,21 +644,24 @@ class _CuisineCard extends StatelessWidget {
               children: [
                 Text(
                   cuisine.name,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF0A1230),
                   ),
                 ),
                 const SizedBox(height: 2.5),
-                Text(
-                  '${cuisine.count} places',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF5F5E5A),
+                if (cuisine.count != null)
+                  Text(
+                    '${cuisine.count} מקומות',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF5F5E5A),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -692,21 +679,21 @@ class _PlaceCard extends StatelessWidget {
   const _PlaceCard({required this.place});
 
   Color get _badgeCircleColor => switch (place.badgeColor) {
-        _BadgeColor.green => const Color(0xFF31AC4E),
-        _BadgeColor.blue => const Color(0xFF006BF6),
-        _BadgeColor.red => const Color(0xFFCC0001),
-      };
+    _BadgeColor.green => const Color(0xFF31AC4E),
+    _BadgeColor.blue => const Color(0xFF006BF6),
+    _BadgeColor.red => const Color(0xFFCC0001),
+  };
 
   IconData get _badgeIcon => switch (place.badgeColor) {
-        _BadgeColor.green => IconsaxPlusBold.verify,
-        _BadgeColor.blue => IconsaxPlusBold.coffee,
-        _BadgeColor.red => IconsaxPlusBold.cup,
-      };
+    _BadgeColor.green => IconsaxPlusBold.verify,
+    _BadgeColor.blue => IconsaxPlusBold.coffee,
+    _BadgeColor.red => IconsaxPlusBold.cup,
+  };
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/business/restaurant_${place.name.hashCode}'),
+      onTap: () => context.push('/business/${place.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -715,23 +702,12 @@ class _PlaceCard extends StatelessWidget {
             height: 200,
             child: Stack(
               children: [
-                // Image
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      IconsaxPlusBold.reserve,
-                      size: 40,
-                      color: Colors.white.withValues(alpha: 0.12),
-                    ),
+                Positioned.fill(
+                  child: NetworkPhoto(
+                    url: place.imageUrl,
+                    radius: BorderRadius.circular(12),
+                    icon: IconsaxPlusBold.reserve,
+                    iconSize: 40,
                   ),
                 ),
 
@@ -742,8 +718,7 @@ class _PlaceCard extends StatelessWidget {
                     bottom: 12,
                     child: Container(
                       height: 27,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0033AC),
                         borderRadius: BorderRadius.circular(50),
@@ -751,12 +726,16 @@ class _PlaceCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(IconsaxPlusLinear.shield_tick,
-                              size: 14, color: Colors.white),
+                          const Icon(
+                            IconsaxPlusLinear.shield_tick,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                           const SizedBox(width: 6),
                           Text(
-                            'Kosher',
-                            style: GoogleFonts.inter(
+                            'כשר',
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
@@ -771,17 +750,12 @@ class _PlaceCard extends StatelessWidget {
                 Positioned(
                   right: 12,
                   top: 12,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(IconsaxPlusLinear.heart,
-                          size: 23, color: Color(0xFF123A72)),
-                    ),
+                  child: FavoriteButton(
+                    kind: FavoriteKind.business,
+                    id: place.id,
+                    size: 40,
+                    iconSize: 23,
+                    color: const Color(0xFF123A72),
                   ),
                 ),
 
@@ -795,12 +769,10 @@ class _PlaceCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: _badgeCircleColor,
                       shape: BoxShape.circle,
-                      border:
-                          Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: Center(
-                      child: Icon(_badgeIcon,
-                          size: 20, color: Colors.white),
+                      child: Icon(_badgeIcon, size: 20, color: Colors.white),
                     ),
                   ),
                 ),
@@ -817,7 +789,8 @@ class _PlaceCard extends StatelessWidget {
                 // Name + type
                 Text(
                   place.name,
-                  style: GoogleFonts.rubik(
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0A1230),
@@ -826,7 +799,8 @@ class _PlaceCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   place.type,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF5F5E5A),
@@ -837,13 +811,17 @@ class _PlaceCard extends StatelessWidget {
                 // Address
                 Row(
                   children: [
-                    const Icon(IconsaxPlusBold.location,
-                        size: 16, color: Color(0xFF17A9D0)),
+                    const Icon(
+                      IconsaxPlusBold.location,
+                      size: 16,
+                      color: Color(0xFF17A9D0),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         place.address,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF5F5E5A),
@@ -859,12 +837,16 @@ class _PlaceCard extends StatelessWidget {
                 Row(
                   children: [
                     // Star rating
-                    const Icon(IconsaxPlusBold.star_1,
-                        size: 16, color: Color(0xFFFFC107)),
+                    const Icon(
+                      IconsaxPlusBold.star_1,
+                      size: 16,
+                      color: Color(0xFFFFC107),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       place.rating.toString(),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.black,
@@ -873,7 +855,8 @@ class _PlaceCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       '(${place.reviews})',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF6D6D6D),
@@ -882,12 +865,16 @@ class _PlaceCard extends StatelessWidget {
                     const SizedBox(width: 40),
 
                     // Views
-                    const Icon(IconsaxPlusLinear.eye,
-                        size: 16, color: Color(0xFF0A1230)),
+                    const Icon(
+                      IconsaxPlusLinear.eye,
+                      size: 16,
+                      color: Color(0xFF0A1230),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       '${place.views}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.black,
@@ -896,7 +883,8 @@ class _PlaceCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       'Views',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF6D6D6D),
@@ -923,7 +911,7 @@ class _HPlaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/business/h_${place.name.hashCode}'),
+      onTap: () => context.push('/business/${place.id}'),
       child: SizedBox(
         width: 250,
         child: Column(
@@ -934,38 +922,23 @@ class _HPlaceCard extends StatelessWidget {
               height: 150,
               child: Stack(
                 children: [
-                  Container(
+                  NetworkPhoto(
+                    url: place.imageUrl,
                     width: 250,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        IconsaxPlusBold.reserve,
-                        size: 32,
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
-                    ),
+                    height: 150,
+                    radius: BorderRadius.circular(12),
+                    icon: IconsaxPlusBold.reserve,
+                    iconSize: 32,
                   ),
                   Positioned(
                     right: 8,
                     top: 8,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(IconsaxPlusLinear.heart,
-                            size: 19, color: Color(0xFF123A72)),
-                      ),
+                    child: FavoriteButton(
+                      kind: FavoriteKind.business,
+                      id: place.id,
+                      size: 32,
+                      iconSize: 19,
+                      color: const Color(0xFF123A72),
                     ),
                   ),
                 ],
@@ -976,33 +949,43 @@ class _HPlaceCard extends StatelessWidget {
             // Name + type
             Text(
               place.name,
-              style: GoogleFonts.rubik(
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF0A1230),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Text(
               place.type,
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF5F5E5A),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 12),
 
             // Address
             Row(
               children: [
-                const Icon(IconsaxPlusBold.location,
-                    size: 16, color: Color(0xFF17A9D0)),
+                const Icon(
+                  IconsaxPlusBold.location,
+                  size: 16,
+                  color: Color(0xFF17A9D0),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     place.address,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF5F5E5A),
@@ -1017,12 +1000,16 @@ class _HPlaceCard extends StatelessWidget {
             // Rating + views/time row
             Row(
               children: [
-                const Icon(IconsaxPlusBold.star_1,
-                    size: 16, color: Color(0xFFFFC107)),
+                const Icon(
+                  IconsaxPlusBold.star_1,
+                  size: 16,
+                  color: Color(0xFFFFC107),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   place.rating.toString(),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
@@ -1031,7 +1018,8 @@ class _HPlaceCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   '(${place.reviews})',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF6D6D6D),
@@ -1040,12 +1028,16 @@ class _HPlaceCard extends StatelessWidget {
                 const SizedBox(width: 40),
 
                 if (place.views != null) ...[
-                  const Icon(IconsaxPlusLinear.eye,
-                      size: 16, color: Color(0xFF0A1230)),
+                  const Icon(
+                    IconsaxPlusLinear.eye,
+                    size: 16,
+                    color: Color(0xFF0A1230),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     '${place.views}',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: Colors.black,
@@ -1054,19 +1046,24 @@ class _HPlaceCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Views',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF6D6D6D),
                     ),
                   ),
                 ] else if (place.deliveryTime != null) ...[
-                  const Icon(IconsaxPlusLinear.clock,
-                      size: 16, color: Color(0xFF5D5D5D)),
+                  const Icon(
+                    IconsaxPlusLinear.clock,
+                    size: 16,
+                    color: Color(0xFF5D5D5D),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     place.deliveryTime!,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: Colors.black,

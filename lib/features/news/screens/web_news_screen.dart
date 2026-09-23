@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -523,7 +523,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
                 children: [
                   Text(
                     article.title,
-                    style: GoogleFonts.nunito(
+                    style: TextStyle(fontFamily: AppFonts.nunito, 
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       height: 34 / 28,
@@ -585,7 +585,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
                 children: [
                   Text(
                     article.title,
-                    style: GoogleFonts.nunito(
+                    style: TextStyle(fontFamily: AppFonts.nunito, 
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
                       height: 30 / 24,
@@ -629,7 +629,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
           ],
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               height: 24 / 14,
@@ -649,7 +649,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
         const SizedBox(width: 9),
         Text(
           date,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w400,
             height: 17 / 14,
@@ -726,7 +726,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
       children: [
         Text(
           title,
-          style: GoogleFonts.nunito(
+          style: TextStyle(fontFamily: AppFonts.nunito, 
             fontSize: 28,
             fontWeight: FontWeight.w600,
             height: 34 / 28,
@@ -889,7 +889,7 @@ class _ArticleCardState extends State<_ArticleCard> {
                 height: 50,
                 child: Text(
                   a.title,
-                  style: GoogleFonts.nunito(
+                  style: TextStyle(fontFamily: AppFonts.nunito, 
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     height: 25 / 20,
@@ -906,7 +906,7 @@ class _ArticleCardState extends State<_ArticleCard> {
                 height: 21,
                 child: Text(
                   a.excerpt,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     height: 1.4,
@@ -925,7 +925,7 @@ class _ArticleCardState extends State<_ArticleCard> {
                   const SizedBox(width: 9),
                   Text(
                     a.date,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       height: 17 / 14,

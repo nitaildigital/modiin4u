@@ -1,7 +1,7 @@
 import 'dart:typed_data';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
@@ -57,7 +57,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('העלאת מודעה', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+          title: Text('העלאת מודעה', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
         ),
         body: user == null
             ? _buildLoginPrompt()
@@ -171,7 +171,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                                 children: [
                                   const Icon(Icons.add_photo_alternate_outlined, size: 28, color: AppColors.turquoise),
                                   const SizedBox(height: 4),
-                                  Text('הוסיפו', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayMeta)),
+                                  Text('הוסיפו', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta)),
                                 ],
                               ),
                             ),
@@ -204,7 +204,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
                         ),
-                        child: Text('פרסום מודעה', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.white)),
+                        child: Text('פרסום מודעה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.white)),
                       ),
                     ),
                   ],
@@ -223,12 +223,12 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
           children: [
             Icon(Icons.lock_outline, size: 48, color: AppColors.grayMeta.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text('יש להתחבר כדי לפרסם מודעה', style: GoogleFonts.rubik(fontSize: 16, color: AppColors.grayMeta)),
+            Text('יש להתחבר כדי לפרסם מודעה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, color: AppColors.grayMeta)),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => context.push('/login'),
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14)),
-              child: Text('התחברות', style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600)),
+              child: Text('התחברות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -260,7 +260,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
         child: Center(
           child: Text(
             label,
-            style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: isActive ? AppColors.white : AppColors.grayMeta),
+            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: isActive ? AppColors.white : AppColors.grayMeta),
           ),
         ),
       ),
@@ -270,7 +270,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.grayMeta)),
+      child: Text(text, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.grayMeta)),
     );
   }
 
@@ -292,8 +292,8 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         ),
-        hint: Text(hint, style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight)),
-        items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: GoogleFonts.rubik(fontSize: 14)))).toList(),
+        hint: Text(hint, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayLight)),
+        items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)))).toList(),
         onChanged: onChanged,
       ),
     );
@@ -311,7 +311,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.rubik(color: AppColors.grayLight),
+      hintStyle: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayLight),
       filled: true,
       fillColor: AppColors.surfaceLight,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
@@ -337,7 +337,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
               const Icon(Icons.check, size: 14, color: AppColors.turquoise),
               const SizedBox(width: 4),
             ],
-            Text(label, style: GoogleFonts.rubik(fontSize: 13, color: selected ? AppColors.turquoise : AppColors.grayText, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
+            Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: selected ? AppColors.turquoise : AppColors.grayText, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
           ],
         ),
       ),
@@ -357,7 +357,7 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
     if (_priceController.text.isEmpty || _neighborhood == null || _propertyType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('יש למלא את כל השדות הנדרשים', style: GoogleFonts.rubik()),
+          content: Text('יש למלא את כל השדות הנדרשים', style: TextStyle(fontFamily: AppFonts.rubik)),
           backgroundColor: AppColors.error,
         ),
       );
@@ -373,17 +373,17 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
             children: [
               const Icon(Icons.check_circle, color: AppColors.success, size: 28),
               const SizedBox(width: 10),
-              Text('המודעה פורסמה!', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+              Text('המודעה פורסמה!', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
             ],
           ),
-          content: Text('המודעה שלך פורסמה בהצלחה ותופיע בקרוב ברשימת הנכסים.', style: GoogleFonts.rubik(fontSize: 14)),
+          content: Text('המודעה שלך פורסמה בהצלחה ותופיע בקרוב ברשימת הנכסים.', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 context.pop();
               },
-              child: Text('אישור', style: GoogleFonts.rubik(color: AppColors.turquoise, fontWeight: FontWeight.w600)),
+              child: Text('אישור', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.turquoise, fontWeight: FontWeight.w600)),
             ),
           ],
         ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -212,7 +212,7 @@ class _WebEventsContentState extends State<WebEventsContent> {
                         const SizedBox(height: 104),
                         Text(
                           _t('Events & Nightlife in Modiin', 'אירועים וחיי לילה במודיעין'),
-                          style: GoogleFonts.nunito(
+                          style: TextStyle(fontFamily: AppFonts.nunito, 
                               fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23),
                           textAlign: TextAlign.center,
                         ),
@@ -222,7 +222,7 @@ class _WebEventsContentState extends State<WebEventsContent> {
                           child: Text(
                             _t('Discover concerts, community events, nightlife, family activities and more happening around Modiin.',
                                 'גלו הופעות, אירועי קהילה, חיי לילה, פעילויות למשפחה ועוד — הכל סביב מודיעין.'),
-                            style: GoogleFonts.inter(fontSize: 16, color: Colors.white, height: 1.19),
+                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white, height: 1.19),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -265,10 +265,10 @@ class _WebEventsContentState extends State<WebEventsContent> {
             Expanded(
               child: TextField(
                 controller: _searchController,
-                style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.black),
                 decoration: InputDecoration(
                   hintText: _t('Search events, concerts, activities...', 'חפשו אירועים, הופעות, פעילויות...'),
-                  hintStyle: GoogleFonts.inter(fontSize: 16, color: _kPlaceholder),
+                  hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kPlaceholder),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -297,7 +297,7 @@ class _WebEventsContentState extends State<WebEventsContent> {
                       const Icon(IconsaxPlusLinear.search_normal_1, size: 18, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(_t('Search', 'חיפוש'),
-                          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
                     ],
                   ),
                 ),
@@ -318,12 +318,12 @@ class _WebEventsContentState extends State<WebEventsContent> {
       child: Column(
         children: [
           Text(_t('Event Categories', 'קטגוריות אירועים'),
-              style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
               textAlign: TextAlign.center),
           const SizedBox(height: 15),
           Text(_t('From music to family fun, find your next experience.',
                   'ממוזיקה ועד כיף משפחתי — מצאו את החוויה הבאה שלכם.'),
-              style: GoogleFonts.inter(fontSize: 14, color: _kGreyText),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText),
               textAlign: TextAlign.center),
           const SizedBox(height: 42),
           Center(
@@ -371,10 +371,10 @@ class _WebEventsContentState extends State<WebEventsContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t('Events in Modiin', 'אירועים במודיעין'),
-                style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 10),
             Text(_t('Find something happening near you.', 'מצאו משהו שקורה לידכם.'),
-                style: GoogleFonts.inter(fontSize: 14, color: _kGreyText)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
             const SizedBox(height: 32),
             Stack(
               children: [
@@ -438,7 +438,7 @@ class _WebEventsContentState extends State<WebEventsContent> {
               Center(
                 child: Text(_t("That's everything happening right now.",
                         'זה כל מה שקורה כרגע.'),
-                    style: GoogleFonts.inter(fontSize: 14, color: _kGreyText)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
               ),
             ],
             const SizedBox(height: 40),
@@ -465,7 +465,7 @@ class _WebEventsContentState extends State<WebEventsContent> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(_t('Load More', 'טען עוד'),
-                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
             ],
           ),
         ),
@@ -599,7 +599,7 @@ class _CategoryTileState extends State<_CategoryTile> {
               height: 44,
               child: Text(
                 c.name,
-                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
                 textAlign: TextAlign.center,
                 maxLines: 2,
               ),
@@ -607,7 +607,7 @@ class _CategoryTileState extends State<_CategoryTile> {
             const SizedBox(height: 8),
             Text(
               '${c.count}',
-              style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
               textAlign: TextAlign.center,
             ),
           ],
@@ -709,7 +709,7 @@ class _EventCardState extends State<_EventCard> {
                           borderRadius: BorderRadius.circular(50),
                         ),
                         child: Text(e.category,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white, height: 1.25)),
                       ),
                     ),
@@ -728,11 +728,11 @@ class _EventCardState extends State<_EventCard> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(e.month,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 1.25)),
                             const SizedBox(height: 4),
                             Text(e.day,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black, height: 1.22)),
                           ],
                         ),
@@ -750,7 +750,7 @@ class _EventCardState extends State<_EventCard> {
                     children: [
                       Text(
                         e.title,
-                        style: GoogleFonts.nunito(
+                        style: TextStyle(fontFamily: AppFonts.nunito, 
                             fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy, height: 1.25),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -766,7 +766,7 @@ class _EventCardState extends State<_EventCard> {
                           Flexible(
                             child: Text(
                               e.price,
-                              style: GoogleFonts.nunito(
+                              style: TextStyle(fontFamily: AppFonts.nunito, 
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
                                 color: e.isFree ? AppColors.midBlue : AppColors.navy,
@@ -783,7 +783,7 @@ class _EventCardState extends State<_EventCard> {
                               const Icon(IconsaxPlusBold.star_1, size: 18, color: AppColors.turquoise),
                               const SizedBox(width: 4),
                               Text('${e.interested} ${widget.interestedLabel}',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 14, fontWeight: FontWeight.w500, color: _kBodyText, height: 1.21)),
                             ],
                           ),
@@ -808,7 +808,7 @@ class _EventCardState extends State<_EventCard> {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

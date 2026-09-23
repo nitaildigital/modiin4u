@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 
 class ParkingScreen extends StatelessWidget {
@@ -11,7 +11,7 @@ class ParkingScreen extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('חניה וחניונים', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+          title: Text('חניה וחניונים', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
           backgroundColor: AppColors.white,
           foregroundColor: AppColors.navy,
           elevation: 0,
@@ -33,7 +33,7 @@ class ParkingScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'תושבים עם תו חניה עירוני תקף פטורים מתשלום ומקבלים שעתיים ראשונות חינם בכל חניון בעיר',
-                      style: GoogleFonts.rubik(fontSize: 13, color: AppColors.midBlue),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.midBlue),
                     ),
                   ),
                 ],
@@ -69,7 +69,7 @@ class ParkingScreen extends StatelessWidget {
                   children: [
                     Icon(Icons.map, size: 40, color: AppColors.midBlue.withValues(alpha: 0.3)),
                     const SizedBox(height: 8),
-                    Text('מפת חניונים', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayText)),
+                    Text('מפת חניונים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayText)),
                   ],
                 ),
               ),
@@ -114,7 +114,7 @@ class _ParkingLot extends StatelessWidget {
               Icon(Icons.local_parking, size: 20, color: AppColors.midBlue),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(name, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                child: Text(name, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy)),
               ),
               if (hasAvailability)
                 Container(
@@ -125,7 +125,7 @@ class _ParkingLot extends StatelessWidget {
                   ),
                   child: Text(
                     occupancy > 0.8 ? 'כמעט מלא' : occupancy > 0.5 ? 'זמין' : 'פנוי',
-                    style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: availColor),
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: availColor),
                   ),
                 ),
             ],
@@ -145,9 +145,9 @@ class _ParkingLot extends StatelessWidget {
           ],
           Row(
             children: [
-              Text(capacity, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
+              Text(capacity, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText)),
               const Spacer(),
-              Text(rate, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.navy)),
+              Text(rate, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.navy)),
             ],
           ),
         ],

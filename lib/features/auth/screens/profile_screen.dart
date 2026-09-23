@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../providers/auth_provider.dart';
@@ -28,13 +28,33 @@ class ProfileScreen extends ConsumerWidget {
         'Help & Support', '/help-support'),
   ];
 
+  /// Appended for administrators only. The admin area had no way in from the
+  /// app at all; a resident never sees this row, and the gate on the route
+  /// turns them away even if they reach it another way.
+  static final _adminItem = _MenuItem(
+    IconsaxPlusLinear.setting_4,
+    'Manage content and users',
+    'Control Center',
+    '/admin',
+  );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider);
 
+    // The stored session takes a moment to read back, so a null here does not
+    // yet mean signed out.
+    if (user == null && ref.watch(authRestoringProvider)) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     if (user == null) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => context.go('/login'));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => context.pushReplacement('/login'),
+      );
       return const SizedBox.shrink();
     }
 
@@ -92,7 +112,7 @@ class ProfileScreen extends ConsumerWidget {
                             child: Center(
                               child: Text(
                                 'Profile',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.white,
@@ -121,7 +141,7 @@ class ProfileScreen extends ConsumerWidget {
                       child: Center(
                         child: Text(
                           user.initials,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 42,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -134,7 +154,7 @@ class ProfileScreen extends ConsumerWidget {
                     // ── Name ──
                     Text(
                       user.name,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
@@ -162,7 +182,7 @@ class ProfileScreen extends ConsumerWidget {
                           const SizedBox(width: 6),
                           Text(
                             'Real Estate Broker',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFFD47D00),
@@ -203,7 +223,7 @@ class ProfileScreen extends ConsumerWidget {
                                     const SizedBox(width: 8),
                                     Text(
                                       'Edit Profile',
-                                      style: GoogleFonts.inter(
+                                      style: TextStyle(fontFamily: AppFonts.inter, 
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
@@ -218,7 +238,7 @@ class ProfileScreen extends ConsumerWidget {
                             // ── Section header ──
                             Text(
                               'ACCOUNT',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF6D6D6D),
@@ -236,17 +256,21 @@ class ProfileScreen extends ConsumerWidget {
                                     color: const Color(0xFFE7E7E7)),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Column(
-                                children: List.generate(
-                                    _menuItems.length, (i) {
-                                  final item = _menuItems[i];
-                                  final isLast =
-                                      i == _menuItems.length - 1;
-                                  return _MenuRow(
-                                    item: item,
-                                    showBorder: !isLast,
+                              child: Builder(
+                                builder: (_) {
+                                  final items = [
+                                    ..._menuItems,
+                                    if (user.isAdmin) _adminItem,
+                                  ];
+                                  return Column(
+                                    children: List.generate(items.length, (i) {
+                                      return _MenuRow(
+                                        item: items[i],
+                                        showBorder: i != items.length - 1,
+                                      );
+                                    }),
                                   );
-                                }),
+                                },
                               ),
                             ),
                             const SizedBox(height: 40),
@@ -325,7 +349,7 @@ class _MenuRow extends StatelessWidget {
                 children: [
                   Text(
                     item.subtitle,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF6D6D6D),
@@ -334,7 +358,7 @@ class _MenuRow extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     item.title,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF3D3D3D),

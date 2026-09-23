@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -225,12 +225,12 @@ class _WebDealsContentState extends State<WebDealsContent> {
       child: Column(
         children: [
           Text(_t('Best Deals & Offers in Modiin', 'המבצעים וההטבות הטובים במודיעין'),
-              style: GoogleFonts.nunito(fontSize: 44, fontWeight: FontWeight.w600, color: Colors.black, height: 1.23),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.black, height: 1.23),
               textAlign: TextAlign.center),
           const SizedBox(height: 14),
           Text(_t('Explore local deals, discounts, and limited-time offers across Modiin.',
                   'גלו מבצעים מקומיים, הנחות והטבות לזמן מוגבל בכל מודיעין.'),
-              style: GoogleFonts.inter(fontSize: 16, color: _kIconGrey, height: 1.19),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kIconGrey, height: 1.19),
               textAlign: TextAlign.center),
           const SizedBox(height: 48),
           _Section(
@@ -282,7 +282,7 @@ class _WebDealsContentState extends State<WebDealsContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t('Explore Deals by Category', 'גלו מבצעים לפי קטגוריה'),
-                style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 40),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,10 +325,10 @@ class _WebDealsContentState extends State<WebDealsContent> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(_t('Popular Deals in Modiin', 'מבצעים פופולריים במודיעין'),
-                          style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                          style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
                       const SizedBox(height: 8),
                       Text(_t('Top deals handpicked for you', 'המבצעים הטובים ביותר שנבחרו עבורכם'),
-                          style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21)),
                     ],
                   ),
                 ),
@@ -389,10 +389,10 @@ class _WebDealsContentState extends State<WebDealsContent> {
           Icon(IconsaxPlusLinear.discount_shape, size: 44, color: _kGreyText.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(_t('No deals match this filter', 'אין מבצעים שתואמים לסינון'),
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading)),
           const SizedBox(height: 8),
           Text(_t('Try another filter to see more offers.', 'נסו סינון אחר כדי לראות עוד הטבות.'),
-              style: GoogleFonts.inter(fontSize: 14, color: _kGreyText)),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
         ],
       ),
     );
@@ -432,7 +432,7 @@ class _WebDealsContentState extends State<WebDealsContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t('Most Popular Brands', 'המותגים הפופולריים ביותר'),
-                style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 24),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -633,7 +633,7 @@ class _CategoryTileState extends State<_CategoryTile> {
               height: 44,
               child: Text(
                 c.name,
-                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
                 textAlign: TextAlign.center,
                 maxLines: 2,
               ),
@@ -641,7 +641,7 @@ class _CategoryTileState extends State<_CategoryTile> {
             const SizedBox(height: 6),
             Text(
               '${c.count} ${widget.dealsLabel}',
-              style: GoogleFonts.inter(fontSize: 14, color: _kGreyText, height: 1.21),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
               textAlign: TextAlign.center,
             ),
           ],
@@ -692,7 +692,7 @@ class _FilterPillState extends State<_FilterPill> {
             children: [
               Text(
                 widget.label,
-                style: GoogleFonts.nunito(
+                style: TextStyle(fontFamily: AppFonts.nunito, 
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
                   color: selected ? Colors.white : _kBodyText,
@@ -771,7 +771,7 @@ class _DealCardState extends State<_DealCard> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(d.badge,
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white, height: 1.21)),
                             ),
                           ),
@@ -798,7 +798,7 @@ class _DealCardState extends State<_DealCard> {
                           const SizedBox(height: 13),
                           Text(
                             d.title,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 1.23),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -806,7 +806,7 @@ class _DealCardState extends State<_DealCard> {
                           const SizedBox(height: 8),
                           Text(
                             d.merchant,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14, fontWeight: FontWeight.w500, color: _kHeading, height: 1.21),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -819,7 +819,7 @@ class _DealCardState extends State<_DealCard> {
                               Expanded(
                                 child: Text(
                                   d.location,
-                                  style: GoogleFonts.inter(fontSize: 14, color: _kBodyText, height: 1.21),
+                                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBodyText, height: 1.21),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -839,12 +839,12 @@ class _DealCardState extends State<_DealCard> {
                                   Directionality(
                                     textDirection: TextDirection.ltr,
                                     child: Text(d.timeLeft,
-                                        style: GoogleFonts.inter(
+                                        style: TextStyle(fontFamily: AppFonts.inter, 
                                             fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy, height: 1.19)),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(widget.timeLeftLabel,
-                                      style: GoogleFonts.inter(fontSize: 12, color: _kGreyText, height: 1.25)),
+                                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText, height: 1.25)),
                                 ],
                               ),
                               if (d.residentsOnly) ...[
@@ -854,7 +854,7 @@ class _DealCardState extends State<_DealCard> {
                                 Expanded(
                                   child: Text(
                                     widget.residentsLabel,
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                         fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.orange, height: 1.25),
                                     maxLines: 2,
                                   ),
@@ -879,7 +879,7 @@ class _DealCardState extends State<_DealCard> {
                   borderRadius: BorderRadius.circular(60),
                 ),
                 child: Text(widget.viewLabel,
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5)),
               ),
             ],
           ),
@@ -929,7 +929,7 @@ class _BrandCardState extends State<_BrandCard> {
                 alignment: Alignment.center,
                 color: _kBrandStrip,
                 child: Text(b.offer,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14, fontWeight: FontWeight.w500, color: _kBrandStripText, height: 1.21)),
               ),
               Expanded(
@@ -951,7 +951,7 @@ class _BrandCardState extends State<_BrandCard> {
                           borderRadius: BorderRadius.circular(60),
                         ),
                         child: Text(b.reward,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),

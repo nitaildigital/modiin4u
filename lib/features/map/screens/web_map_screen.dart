@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/map_pois.dart';
@@ -247,7 +247,7 @@ class _WebMapContentState extends State<WebMapContent> {
         children: [
           Text(
             _t('Explore Modiin', 'גלו את מודיעין'),
-            style: GoogleFonts.nunito(
+            style: TextStyle(fontFamily: AppFonts.nunito, 
               fontSize: 24,
               fontWeight: FontWeight.w600,
               height: 30 / 24,
@@ -260,7 +260,7 @@ class _WebMapContentState extends State<WebMapContent> {
               'Discover businesses, events and place around the city.',
               'גלו עסקים, אירועים ומקומות ברחבי העיר.',
             ),
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               height: 17 / 14,
@@ -310,7 +310,7 @@ class _WebMapContentState extends State<WebMapContent> {
                     Flexible(
                       child: Text(
                         _layerLabel(name),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           height: 17 / 14,
@@ -360,7 +360,7 @@ class _WebMapContentState extends State<WebMapContent> {
                   _selectedPoi = null;
                 }
               }),
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
                 height: 19 / 16,
@@ -373,7 +373,7 @@ class _WebMapContentState extends State<WebMapContent> {
                   'Search for places, businesses, or events',
                   'חיפוש מקומות, עסקים או אירועים',
                 ),
-                hintStyle: GoogleFonts.inter(
+                hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   height: 19 / 16,
@@ -431,7 +431,7 @@ class _WebMapContentState extends State<WebMapContent> {
             const SizedBox(height: 12),
             Text(
               _aboutText(poi),
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 height: 1.6,
@@ -497,7 +497,7 @@ class _WebMapContentState extends State<WebMapContent> {
               ),
               child: Text(
                 '${_slideIndex % slideCount + 1} / $slideCount',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   height: 15 / 12,
@@ -558,7 +558,7 @@ class _WebMapContentState extends State<WebMapContent> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 12,
               fontWeight: FontWeight.w500,
               height: 15 / 12,
@@ -582,7 +582,7 @@ class _WebMapContentState extends State<WebMapContent> {
             Flexible(
               child: Text(
                 poi.price ?? poi.name,
-                style: GoogleFonts.nunito(
+                style: TextStyle(fontFamily: AppFonts.nunito, 
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   height: 25 / 20,
@@ -598,7 +598,7 @@ class _WebMapContentState extends State<WebMapContent> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   _tag(poi)!,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     height: 15 / 12,
@@ -617,7 +617,7 @@ class _WebMapContentState extends State<WebMapContent> {
                 if (i > 0) const SizedBox(width: 16),
                 Text(
                   facts[i],
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     height: 15 / 12,
@@ -641,7 +641,7 @@ class _WebMapContentState extends State<WebMapContent> {
               Expanded(
                 child: Text(
                   poi.address ?? poi.venue!,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     height: 15 / 12,
@@ -704,7 +704,7 @@ class _WebMapContentState extends State<WebMapContent> {
                           child: Center(
                             child: Text(
                               '+$extra',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 height: 19 / 16,
@@ -761,7 +761,7 @@ class _WebMapContentState extends State<WebMapContent> {
         ]);
     }
 
-    final style = GoogleFonts.inter(
+    final style = TextStyle(fontFamily: AppFonts.inter, 
       fontSize: 12,
       fontWeight: FontWeight.w400,
       height: 15 / 12,
@@ -801,7 +801,7 @@ class _WebMapContentState extends State<WebMapContent> {
             children: [
               Text(
                 _t('View Full Details', 'לפרטים המלאים'),
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   height: 24 / 16,
@@ -824,7 +824,7 @@ class _WebMapContentState extends State<WebMapContent> {
   // ── Slide-card helpers ──
   Widget _sectionTitle(String label) => Text(
     label,
-    style: GoogleFonts.inter(
+    style: TextStyle(fontFamily: AppFonts.inter, 
       fontSize: 14,
       fontWeight: FontWeight.w500,
       height: 17 / 14,

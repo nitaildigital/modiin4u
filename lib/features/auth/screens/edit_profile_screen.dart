@@ -1,11 +1,12 @@
 import 'dart:typed_data';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/neighborhoods.dart';
+import '../../../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
 
 /// Edit Profile screen – avatar with camera overlay, form fields
@@ -60,13 +61,37 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
-  void _save() {
-    ref.read(authProvider.notifier).updateProfile(
-          name: _nameController.text,
-          phone: _phoneController.text,
-          neighborhood: _selectedNeighborhood,
-        );
-    context.pop();
+  bool _saving = false;
+
+  /// The edit now goes to the database, so the screen stays open until the
+  /// write lands rather than closing on an unsaved change.
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(authProvider.notifier).updateProfile(
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        neighborhood: _selectedNeighborhood,
+      );
+      if (mounted) context.pop();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'לא ניתן היה לשמור. נסו שוב.',
+            style: TextStyle(fontFamily: AppFonts.rubik),
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -75,7 +100,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     if (user == null) {
       WidgetsBinding.instance
-          .addPostFrameCallback((_) => context.go('/login'));
+          .addPostFrameCallback((_) => context.pushReplacement('/login'));
       return const SizedBox.shrink();
     }
 
@@ -112,7 +137,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         child: Center(
                           child: Text(
                             'Edit Profile',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -160,7 +185,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               : Center(
                                   child: Text(
                                     user.initials,
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 42,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,
@@ -280,7 +305,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             child: Center(
                               child: Text(
                                 'Save Changes',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.white,
@@ -316,7 +341,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -333,14 +358,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF1F1F1F),
             ),
             decoration: InputDecoration(
               hintText: placeholder,
-              hintStyle: GoogleFonts.inter(
+              hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF6D6D6D),
@@ -369,7 +394,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -393,7 +418,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 size: 20,
                 color: Color(0xFF6D6D6D),
               ),
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF000000),
@@ -420,7 +445,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -455,7 +480,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 Expanded(
                   child: Text(
                     value,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF000000),

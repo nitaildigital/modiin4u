@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../shared/widgets/error_retry.dart';
-import '../../../shared/widgets/shimmer_loading.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../providers/business_providers.dart';
+import '../widgets/business_card.dart';
 import 'business_list_screen.dart';
 import 'web_businesses_screen.dart';
 
@@ -68,7 +69,7 @@ class _MobileBusinessesContentState
                 Center(
                   child: Text(
                     'עסקים',
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.black,
@@ -81,8 +82,7 @@ class _MobileBusinessesContentState
                 _SectionTitle('קטגוריות'),
                 const SizedBox(height: 12),
                 categories.when(
-                  loading: () =>
-                      const ShimmerLoading(itemCount: 2, type: ShimmerType.card),
+                  loading: () => const _CategoryGridSkeleton(),
                   error: (_, _) => ErrorRetry(
                     onRetry: () => ref.invalidate(businessCategoriesProvider),
                   ),
@@ -96,7 +96,7 @@ class _MobileBusinessesContentState
                       onTap: () => context.push('/businesses/all'),
                       child: Text(
                         'ראה הכל',
-                        style: GoogleFonts.rubik(
+                        style: TextStyle(fontFamily: AppFonts.rubik, 
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF123A72),
@@ -108,8 +108,15 @@ class _MobileBusinessesContentState
                 ),
                 const SizedBox(height: 12),
                 businesses.when(
-                  loading: () =>
-                      const ShimmerLoading(itemCount: 3, type: ShimmerType.list),
+                  loading: () => Column(
+                    children: const [
+                      BusinessCardSkeleton(),
+                      SizedBox(height: 12),
+                      BusinessCardSkeleton(),
+                      SizedBox(height: 12),
+                      BusinessCardSkeleton(),
+                    ],
+                  ),
                   error: (_, _) => ErrorRetry(
                     onRetry: () => ref.invalidate(businessesProvider),
                   ),
@@ -144,7 +151,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.rubik(
+      style: TextStyle(fontFamily: AppFonts.rubik, 
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: Colors.black,
@@ -178,12 +185,12 @@ class _SearchField extends StatelessWidget {
               controller: controller,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => onSubmit(),
-              style: GoogleFonts.rubik(fontSize: 14),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isCollapsed: true,
                 hintText: 'חיפוש עסקים במודיעין',
-                hintStyle: GoogleFonts.rubik(
+                hintStyle: TextStyle(fontFamily: AppFonts.rubik, 
                   fontSize: 14,
                   color: const Color(0xFF6D6D6D),
                 ),
@@ -305,7 +312,7 @@ class _CategoryCard extends StatelessWidget {
             const Spacer(),
             Text(
               category.name,
-              style: GoogleFonts.rubik(
+              style: TextStyle(fontFamily: AppFonts.rubik, 
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -317,7 +324,7 @@ class _CategoryCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '$count עסקים',
-                style: GoogleFonts.rubik(
+                style: TextStyle(fontFamily: AppFonts.rubik, 
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.8),
                 ),
@@ -325,6 +332,30 @@ class _CategoryCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Placeholder for the category grid — the same two columns, the same tile
+/// aspect, so the grid does not resize when the categories land.
+class _CategoryGridSkeleton extends StatelessWidget {
+  const _CategoryGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton(
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 13,
+          mainAxisSpacing: 13,
+          childAspectRatio: 174 / 120,
+        ),
+        itemCount: 6,
+        itemBuilder: (_, _) => const SkeletonBox(radius: 12),
       ),
     );
   }

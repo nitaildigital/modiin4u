@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../core/router/app_router.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
@@ -133,7 +134,7 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                       Expanded(
                         child: Text(
                           'Search by location, neighborhood...',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -174,7 +175,7 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                 bottom: 16,
                 child: Center(
                   child: GestureDetector(
-                    onTap: () => context.go('/realestate'),
+                    onTap: () => context.goOrPush('/realestate'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
@@ -201,7 +202,7 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'View as List',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF0A1230),
@@ -371,7 +372,7 @@ class _PropertyCard extends StatelessWidget {
             children: [
               Text(
                 property.price,
-                style: GoogleFonts.rubik(
+                style: TextStyle(fontFamily: AppFonts.rubik, 
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF0A1230),
@@ -379,7 +380,7 @@ class _PropertyCard extends StatelessWidget {
               ),
               Text(
                 'FOR SALE',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF17A9D0),
@@ -398,7 +399,7 @@ class _PropertyCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   property.address,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF5F5E5A),
@@ -442,7 +443,7 @@ class _PropertyCard extends StatelessWidget {
                     children: [
                       Text(
                         'View Full Details',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.white,
@@ -473,7 +474,7 @@ class _PropertyCard extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           text,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF3D3D3D),

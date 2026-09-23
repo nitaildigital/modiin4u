@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../shared/widgets/error_retry.dart';
+import '../../../shared/widgets/skeleton.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../models/event.dart';
+import '../providers/event_providers.dart';
 import 'web_events_screen.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../../favorites/repositories/favorite_repository.dart';
 
 /// Events – responsive wrapper.
 class EventsScreen extends StatelessWidget {
@@ -21,70 +30,13 @@ class EventsScreen extends StatelessWidget {
 
 /// Events discovery screen – category circles, vertical event cards
 /// with date badges, time/location/price, and interest counts.
-class _MobileEventsContent extends StatelessWidget {
+class _MobileEventsContent extends ConsumerWidget {
   const _MobileEventsContent();
 
-  // ── Event categories ──
-  static const _categories = [
-    _Category('All Events', 157),
-    _Category('Municipal &\nCommunity', 32),
-    _Category('Music', 24),
-    _Category('Kids & Family', 45),
-    _Category('Sports', 15),
-    _Category('Free', 41),
-  ];
-
-  // ── Events data ──
-  static const _events = [
-    _Event(
-      'Summer Music Night',
-      'Music',
-      'AUG', 21,
-      '8:00 PM',
-      'Modiin Amphitheater',
-      '₪50',
-      124,
-    ),
-    _Event(
-      'Modiin Community Festival',
-      'Municipal & Community',
-      'AUG', 22,
-      '10:00 AM',
-      'Modiin City Center',
-      'FREE',
-      86,
-    ),
-    _Event(
-      'Family Fun Day',
-      'Kids & Family',
-      'AUG', 23,
-      '11:00 AM',
-      'Anava Park',
-      '₪20',
-      86,
-    ),
-    _Event(
-      'Live Jazz Evening',
-      'Music',
-      'AUG', 24,
-      '8:30 PM',
-      'Local Cultural Center',
-      '₪60',
-      51,
-    ),
-    _Event(
-      'Kids Cooking Workshop',
-      'Kids & Family',
-      'AUG', 26,
-      '8:30 PM',
-      'Local Cultural Center',
-      '₪60',
-      51,
-    ),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final events = ref.watch(upcomingEventsProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -103,30 +55,12 @@ class _MobileEventsContent extends StatelessWidget {
                       const SizedBox(height: 100), // space for sticky header
                       const SizedBox(height: 20),
 
-                      // "Event Categories"
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'Event Categories',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1F1F1F),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Category circles row
-                      _buildCategoryRow(),
-                      const SizedBox(height: 24),
-
                       // "Events in Modiin"
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'Events in Modiin',
-                          style: GoogleFonts.inter(
+                          'אירועים במודיעין',
+                          style: TextStyle(fontFamily: AppFonts.rubik, 
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF1F1F1F),
@@ -138,14 +72,28 @@ class _MobileEventsContent extends StatelessWidget {
                       // Event cards
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Column(
-                          children: [
-                            for (int i = 0; i < _events.length; i++) ...[
-                              _EventCard(event: _events[i], index: i),
-                              if (i < _events.length - 1)
-                                const SizedBox(height: 12),
-                            ],
-                          ],
+                        child: events.when(
+                          loading: () => const _EventListSkeleton(),
+                          error: (_, _) => ErrorRetry(
+                            onRetry: () =>
+                                ref.invalidate(upcomingEventsProvider),
+                          ),
+                          data: (list) => list.isEmpty
+                              ? const EmptyState(
+                                  icon: Icons.event_busy_outlined,
+                                  title: 'אין אירועים קרובים',
+                                  subtitle: 'אירועים חדשים יופיעו כאן',
+                                )
+                              : Column(
+                                  children: [
+                                    for (var i = 0; i < list.length; i++) ...[
+                                      _EventCard(
+                                          event: _Event.from(list[i])),
+                                      if (i < list.length - 1)
+                                        const SizedBox(height: 12),
+                                    ],
+                                  ],
+                                ),
                         ),
                       ),
                       const SizedBox(height: 80),
@@ -192,8 +140,8 @@ class _MobileEventsContent extends StatelessWidget {
                               size: 16, color: Color(0xFF0A1230)),
                           const SizedBox(width: 6),
                           Text(
-                            'Add to Calendar',
-                            style: GoogleFonts.inter(
+                            'הוספה ליומן',
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF0A1230),
@@ -238,8 +186,8 @@ class _MobileEventsContent extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'Events',
-                  style: GoogleFonts.inter(
+                  'אירועים',
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
@@ -272,8 +220,8 @@ class _MobileEventsContent extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Search events, concerts, activities...',
-                      style: GoogleFonts.inter(
+                      'חיפוש אירועים, הופעות ופעילויות',
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF6D6D6D),
@@ -298,29 +246,14 @@ class _MobileEventsContent extends StatelessWidget {
   // ═══════════════════════════════════════════════
   // Category circles horizontal row
   // ═══════════════════════════════════════════════
-  Widget _buildCategoryRow() {
-    return SizedBox(
-      height: 140,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 16, right: 16),
-        itemCount: _categories.length,
-        itemBuilder: (_, i) => _CategoryCircle(category: _categories[i]),
-      ),
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════
 // Data models
 // ═══════════════════════════════════════════════
-class _Category {
-  final String name;
-  final int count;
-  const _Category(this.name, this.count);
-}
 
 class _Event {
+  final String id;
   final String title;
   final String category;
   final String month;
@@ -329,8 +262,10 @@ class _Event {
   final String venue;
   final String price;
   final int interested;
+  final String? imageUrl;
 
   const _Event(
+    this.id,
     this.title,
     this.category,
     this.month,
@@ -339,86 +274,48 @@ class _Event {
     this.venue,
     this.price,
     this.interested,
+    this.imageUrl,
   );
 
-  bool get isFree => price == 'FREE';
+  bool get isFree => price == 'חינם' || price == 'FREE';
+
+  static const _months = [
+    'ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ',
+    'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ',
+  ];
+
+  factory _Event.from(Event e) {
+    final start = e.startDate;
+    return _Event(
+      e.id,
+      e.title,
+      '',
+      start == null ? '' : _months[start.month - 1],
+      start?.day ?? 0,
+      e.displayTime ?? '',
+      e.venueName ?? e.address,
+      e.displayPrice ?? '',
+      e.rsvpCount,
+      e.imageUrl,
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════
 // Category circle (64px avatar + name + count)
 // ═══════════════════════════════════════════════
-class _CategoryCircle extends StatelessWidget {
-  final _Category category;
-  const _CategoryCircle({required this.category});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 100,
-      child: Column(
-        children: [
-          // Circle avatar
-          Container(
-            width: 64,
-            height: 64,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-              ),
-            ),
-            child: Center(
-              child: Icon(
-                IconsaxPlusBold.calendar_1,
-                size: 24,
-                color: Colors.white.withValues(alpha: 0.2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Name
-          Text(
-            category.name,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          // Count
-          Text(
-            '${category.count}',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF5F5E5A),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ═══════════════════════════════════════════════
 // Event card (361 × 348)
 // ═══════════════════════════════════════════════
 class _EventCard extends StatelessWidget {
   final _Event event;
-  final int index;
-  const _EventCard({required this.event, required this.index});
+  const _EventCard({required this.event});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/event/event_$index'),
+      onTap: () => context.push('/event/${event.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -427,23 +324,12 @@ class _EventCard extends StatelessWidget {
             height: 200,
             child: Stack(
               children: [
-                // Image placeholder
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      IconsaxPlusBold.calendar_1,
-                      size: 40,
-                      color: Colors.white.withValues(alpha: 0.12),
-                    ),
+                Positioned.fill(
+                  child: NetworkPhoto(
+                    url: event.imageUrl,
+                    radius: BorderRadius.circular(12),
+                    icon: IconsaxPlusBold.calendar_1,
+                    iconSize: 40,
                   ),
                 ),
 
@@ -462,7 +348,7 @@ class _EventCard extends StatelessWidget {
                       children: [
                         Text(
                           event.month,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF123A72),
@@ -472,7 +358,7 @@ class _EventCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           '${event.day}',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -488,17 +374,12 @@ class _EventCard extends StatelessWidget {
                 Positioned(
                   right: 12,
                   top: 12,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(IconsaxPlusLinear.heart,
-                          size: 23, color: Color(0xFF123A72)),
-                    ),
+                  child: FavoriteButton(
+                    kind: FavoriteKind.event,
+                    id: event.id,
+                    size: 40,
+                    iconSize: 23,
+                    color: const Color(0xFF123A72),
                   ),
                 ),
               ],
@@ -514,7 +395,7 @@ class _EventCard extends StatelessWidget {
                 // Title
                 Text(
                   event.title,
-                  style: GoogleFonts.rubik(
+                  style: TextStyle(fontFamily: AppFonts.rubik, 
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0A1230),
@@ -525,7 +406,7 @@ class _EventCard extends StatelessWidget {
                 // Category
                 Text(
                   event.category,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF5F5E5A),
@@ -542,7 +423,7 @@ class _EventCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       event.time,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF5F5E5A),
@@ -556,7 +437,7 @@ class _EventCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         event.venue,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF5F5E5A),
@@ -575,7 +456,7 @@ class _EventCard extends StatelessWidget {
                     // Price
                     Text(
                       event.price,
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(fontFamily: AppFonts.rubik, 
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: event.isFree
@@ -593,8 +474,8 @@ class _EventCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${event.interested} interested',
-                          style: GoogleFonts.inter(
+                          '${event.interested} מתעניינים',
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF3D3D3D),
@@ -608,6 +489,38 @@ class _EventCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Placeholder for the event cards — the same 200px banner and the same
+/// three lines beneath it.
+class _EventListSkeleton extends StatelessWidget {
+  const _EventListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton(
+      child: Column(
+        children: List.generate(
+          3,
+          (_) => const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBox(height: 200, radius: 12),
+                SizedBox(height: 12),
+                SkeletonLine(width: 230, fontSize: 20),
+                SizedBox(height: 10),
+                SkeletonLine(width: 170, fontSize: 14),
+                SizedBox(height: 12),
+                SkeletonLine(width: 110, fontSize: 14),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

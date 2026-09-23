@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -82,7 +82,7 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                         child: Center(
                           child: Text(
                             'Change Language',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -120,14 +120,14 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF1F1F1F),
                             ),
                             decoration: InputDecoration(
                               hintText: 'Search',
-                              hintStyle: GoogleFonts.inter(
+                              hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF6D6D6D),
@@ -187,7 +187,7 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                               Expanded(
                                 child: Text(
                                   lang.name,
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: const Color(0xFF0A1230),
@@ -223,7 +223,7 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                       child: Center(
                         child: Text(
                           'Save',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,

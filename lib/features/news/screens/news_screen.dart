@@ -1,12 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../shared/widgets/error_retry.dart';
-import '../../../shared/widgets/shimmer_loading.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../models/article.dart';
 import '../providers/news_providers.dart';
 import 'web_news_screen.dart';
@@ -51,7 +51,7 @@ class _MobileNewsContent extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Text(
                     'חדשות',
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.black,
@@ -60,10 +60,7 @@ class _MobileNewsContent extends ConsumerWidget {
                 ),
                 Expanded(
                   child: articles.when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: ShimmerLoading(itemCount: 3),
-                    ),
+                    loading: () => const _NewsSkeleton(),
                     error: (error, _) => ErrorRetry(
                       onRetry: () => ref.invalidate(publishedArticlesProvider),
                     ),
@@ -115,7 +112,7 @@ class _NewsList extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'עדכונים אחרונים',
-                style: GoogleFonts.rubik(
+                style: TextStyle(fontFamily: AppFonts.rubik, 
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: Colors.black,
@@ -184,7 +181,7 @@ class _FeaturedArticle extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             'עכשיו במודיעין',
-                            style: GoogleFonts.rubik(
+                            style: TextStyle(fontFamily: AppFonts.rubik, 
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF0A1230),
@@ -200,7 +197,7 @@ class _FeaturedArticle extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               article.title,
-              style: GoogleFonts.rubik(
+              style: TextStyle(fontFamily: AppFonts.rubik, 
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 height: 25 / 20,
@@ -251,7 +248,7 @@ class _ArticleRow extends StatelessWidget {
                 children: [
                   Text(
                     article.title,
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       height: 20 / 15,
@@ -354,13 +351,80 @@ class _DateRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           _formatted,
-          style: GoogleFonts.rubik(
+          style: TextStyle(fontFamily: AppFonts.rubik, 
             fontSize: fontSize,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Placeholder for the news feed: the hero, then the rows, each matching the
+/// widget it stands in for.
+class _NewsSkeleton extends StatelessWidget {
+  const _NewsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.only(bottom: 20),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBox(height: 200, radius: 12),
+                SizedBox(height: 14),
+                SkeletonLine(width: 300, fontSize: 20),
+                SizedBox(height: 8),
+                SkeletonLine(width: 210, fontSize: 20),
+                SizedBox(height: 10),
+                SkeletonLine(width: 170, fontSize: 14),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: List.generate(
+                4,
+                (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonBox(width: 112, height: 88, radius: 10),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SkeletonLine(width: 220, fontSize: 15),
+                            SizedBox(height: 7),
+                            SkeletonLine(width: 160, fontSize: 15),
+                            SizedBox(height: 10),
+                            SkeletonLine(width: 130, fontSize: 12),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

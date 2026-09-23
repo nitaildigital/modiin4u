@@ -1,13 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../shared/widgets/error_retry.dart';
-import '../../../shared/widgets/shimmer_loading.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../models/article.dart';
 import '../providers/news_providers.dart';
 import 'web_article_screen.dart';
@@ -45,12 +45,7 @@ class _MobileArticleContent extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: article.when(
-        loading: () => const SafeArea(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: ShimmerLoading(itemCount: 2),
-          ),
-        ),
+        loading: () => const _ArticleSkeleton(),
         error: (error, _) => SafeArea(
           child: Column(
             children: [
@@ -108,7 +103,7 @@ class _ArticleView extends StatelessWidget {
                 for (final paragraph in _paragraphs) ...[
                   Text(
                     paragraph,
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 16,
                       height: 1.7,
                       color: const Color(0xFF2B2B2B),
@@ -266,7 +261,7 @@ class _Header extends StatelessWidget {
                   child: Center(
                     child: Text(
                       'דחוף',
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(fontFamily: AppFonts.rubik, 
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -284,7 +279,7 @@ class _Header extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     '${article.viewCount}',
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                         fontSize: 14, color: Colors.black),
                   ),
                 ],
@@ -294,7 +289,7 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             article.title,
-            style: GoogleFonts.rubik(
+            style: TextStyle(fontFamily: AppFonts.rubik, 
               fontSize: 24,
               fontWeight: FontWeight.w600,
               height: 1.4,
@@ -305,7 +300,7 @@ class _Header extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               article.subtitle!,
-              style: GoogleFonts.rubik(
+              style: TextStyle(fontFamily: AppFonts.rubik, 
                 fontSize: 16,
                 height: 1.5,
                 color: const Color(0xFF6D6D6D),
@@ -320,7 +315,7 @@ class _Header extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 _date,
-                style: GoogleFonts.rubik(
+                style: TextStyle(fontFamily: AppFonts.rubik, 
                     fontSize: 14, color: const Color(0xFF6D6D6D)),
               ),
             ],
@@ -353,7 +348,7 @@ class _RelatedNews extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'עוד חדשות',
-                style: GoogleFonts.rubik(
+                style: TextStyle(fontFamily: AppFonts.rubik, 
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: Colors.black,
@@ -430,7 +425,7 @@ class _RelatedCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               article.title,
-              style: GoogleFonts.rubik(
+              style: TextStyle(fontFamily: AppFonts.rubik, 
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 height: 1.35,
@@ -441,6 +436,55 @@ class _RelatedCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Placeholder for the article page: the 260px hero, then the header block
+/// and the first paragraphs, laid out where the real ones go.
+class _ArticleSkeleton extends StatelessWidget {
+  const _ArticleSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton(
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        children: [
+          const SkeletonBox(height: 260, radius: 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                SkeletonLine(width: 70, fontSize: 14),
+                SizedBox(height: 16),
+                SkeletonLine(width: 320, fontSize: 24),
+                SizedBox(height: 10),
+                SkeletonLine(width: 240, fontSize: 24),
+                SizedBox(height: 16),
+                SkeletonLine(width: 180, fontSize: 14),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: List.generate(
+                5,
+                (i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: SkeletonLine(
+                    width: i.isEven ? 340 : 280,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

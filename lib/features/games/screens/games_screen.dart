@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 
 class GamesScreen extends StatelessWidget {
@@ -11,7 +11,7 @@ class GamesScreen extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('משחקים', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+          title: Text('משחקים', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
           backgroundColor: context.cardBg,
           foregroundColor: context.textPrimary,
           elevation: 0,
@@ -31,10 +31,10 @@ class GamesScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('הניקוד שלך', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.white.withValues(alpha: 0.8))),
+                        Text('הניקוד שלך', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.white.withValues(alpha: 0.8))),
                         const SizedBox(height: 4),
-                        Text('1,240', style: GoogleFonts.rubik(fontSize: 32, fontWeight: FontWeight.w700, color: AppColors.white)),
-                        Text('מקום #8 בדירוג', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.white.withValues(alpha: 0.7))),
+                        Text('1,240', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 32, fontWeight: FontWeight.w700, color: AppColors.white)),
+                        Text('מקום #8 בדירוג', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.white.withValues(alpha: 0.7))),
                       ],
                     ),
                   ),
@@ -50,7 +50,7 @@ class GamesScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Text('משחקים', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
+            Text('משחקים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w700, color: context.textPrimary)),
             const SizedBox(height: 12),
             GridView.count(
               shrinkWrap: true,
@@ -92,7 +92,7 @@ class _GameCard extends StatelessWidget {
           : () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('$name — בקרוב! 🎮', style: GoogleFonts.rubik()),
+                  content: Text('$name — בקרוב! 🎮', style: TextStyle(fontFamily: AppFonts.rubik)),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -121,7 +121,7 @@ class _GameCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   name,
-                  style: GoogleFonts.rubik(
+                  style: TextStyle(fontFamily: AppFonts.rubik, 
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: isLocked ? AppColors.grayLight : context.textPrimary,
@@ -135,7 +135,7 @@ class _GameCard extends StatelessWidget {
                       color: color,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text('שחקו', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
+                    child: Text('שחקו', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
                   ),
               ],
             ),
@@ -149,7 +149,7 @@ class _GameCard extends StatelessWidget {
                     color: AppColors.gold,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text('חדש', style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.white)),
+                  child: Text('חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.white)),
                 ),
               ),
           ],

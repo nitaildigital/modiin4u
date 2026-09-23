@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -510,14 +510,14 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                         const SizedBox(height: 112),
                         Text(
                           _t('Restaurants in Modiin', 'מסעדות במודיעין'),
-                          style: GoogleFonts.nunito(fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23),
+                          style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 14),
                         Text(
                           _t('Discover the best restaurants, cafe and bars in Modiin',
                               'גלו את המסעדות, בתי הקפה והברים הטובים ביותר במודיעין'),
-                          style: GoogleFonts.inter(fontSize: 16, color: Colors.white),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 43),
@@ -562,14 +562,14 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(_t('What are you looking for?', 'מה אתם מחפשים?'),
-                      style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF3D3D3D))),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF3D3D3D))),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _searchController,
-                    style: GoogleFonts.inter(fontSize: 16, color: Colors.black),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.black),
                     decoration: InputDecoration(
                       hintText: _t('Restaurants, cuisines, dish or name...', 'מסעדות, מטבחים, מנה או שם...'),
-                      hintStyle: GoogleFonts.inter(fontSize: 16, color: kRGreyText),
+                      hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: kRGreyText),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -600,7 +600,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                       const Icon(IconsaxPlusLinear.search_normal_1, size: 18, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(_t('Search', 'חיפוש'),
-                          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
                     ],
                   ),
                 ),
@@ -637,7 +637,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                   Icon(chip.icon, size: 14, color: selected ? Colors.white : AppColors.midBlue),
                   const SizedBox(width: 8),
                   Text(chip.label,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         color: selected ? Colors.white : AppColors.midBlue,
                       )),
@@ -721,10 +721,10 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_t('Expore Categories', 'גלו קטגוריות'),
-                style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 10),
             Text(_t('Discover restaurants by the food you love.', 'גלו מסעדות לפי האוכל שאתם אוהבים.'),
-                style: GoogleFonts.inter(fontSize: 14, color: kRGreyText)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: kRGreyText)),
             const SizedBox(height: 24),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -805,9 +805,9 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title,
-                          style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                          style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
                       const SizedBox(height: 10),
-                      Text(subtitle, style: GoogleFonts.inter(fontSize: 14, color: kRGreyText)),
+                      Text(subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: kRGreyText)),
                     ],
                   ),
                 ),
@@ -911,7 +911,7 @@ class _ViewAllButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+              Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
               const SizedBox(width: 4),
               const Icon(Icons.chevron_right, size: 16, color: Colors.white),
             ],
@@ -999,11 +999,11 @@ class _CategoryCardState extends State<_CategoryCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(c.name,
-                      style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy),
+                      style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 8),
                   Text('${c.count} ${_placesLabel(context)}',
-                      style: GoogleFonts.inter(fontSize: 14, color: kRGreyText),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: kRGreyText),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),

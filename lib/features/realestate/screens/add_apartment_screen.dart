@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -40,7 +40,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
   void _onBack() {
     if (_currentStep == 3) {
       // From confirmation, go back to My Apartments
-      context.go('/my-apartments');
+      context.pushReplacement('/my-apartments');
     } else if (_currentStep > 0) {
       setState(() => _currentStep--);
     } else {
@@ -83,7 +83,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                         child: Center(
                           child: Text(
                             'Add Apartment',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -98,7 +98,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                           child: Text(
                             'Step ${_currentStep + 1} of 3',
                             textAlign: TextAlign.right,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF123A72),
@@ -152,7 +152,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                         ? _onNext
                         : _currentStep == 2
                             ? _onSubmit
-                            : () => context.go('/my-apartments'),
+                            : () => context.pushReplacement('/my-apartments'),
                     child: Container(
                       width: double.infinity,
                       height: 44,
@@ -169,7 +169,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                                 : _currentStep == 2
                                     ? 'Submit for Approval'
                                     : 'Next',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
@@ -206,7 +206,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         // Section header
         Text(
           'Basic Information',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1F1F1F),
@@ -215,7 +215,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         const SizedBox(height: 6),
         Text(
           'Fill in the details about your property',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
@@ -307,7 +307,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         // Section header
         Text(
           'Apartment Details',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1F1F1F),
@@ -316,7 +316,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         const SizedBox(height: 6),
         Text(
           'Add more details about your property',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
@@ -338,7 +338,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
             children: [
               Text(
                 'Description',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF1F1F1F),
@@ -350,7 +350,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF1F1F1F),
@@ -358,7 +358,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                   decoration: InputDecoration(
                     hintText:
                         'Describe your apartment, features and highlights',
-                    hintStyle: GoogleFonts.inter(
+                    hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF6D6D6D),
@@ -404,14 +404,14 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                   height: 20,
                   child: TextField(
                     keyboardType: TextInputType.number,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF1F1F1F),
                     ),
                     decoration: InputDecoration(
                       hintText: 'Enter area',
-                      hintStyle: GoogleFonts.inter(
+                      hintStyle: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF6D6D6D),
@@ -425,7 +425,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
               ),
               Text(
                 'm²',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: const Color(0xFF6D6D6D),
@@ -456,7 +456,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
             children: [
               Text(
                 'Amenities',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF1F1F1F),
@@ -536,7 +536,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         // Section header
         Text(
           'Add Photos',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1F1F1F),
@@ -545,7 +545,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         const SizedBox(height: 6),
         Text(
           'Upload photos of your apartment',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
@@ -554,7 +554,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         const SizedBox(height: 6),
         Text(
           'First photo will be used as the cover image',
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: const Color(0xFFFF3434),
@@ -595,7 +595,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                         ),
                         child: Text(
                           'Main Image',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 11,
                             fontWeight: FontWeight.w400,
                             color: Colors.white,
@@ -744,7 +744,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
           Text(
             'Listing Submitted!',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -759,7 +759,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
               'Your apartment has been submitted for approval. '
               'We\'ll review the details and publish it once approved.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
@@ -794,7 +794,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                     children: [
                       Text(
                         'Pending Approval',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1F1F1F),
@@ -803,7 +803,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                       const SizedBox(height: 6),
                       Text(
                         'Your listing is being reviewed',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -824,7 +824,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
               'You can check the status of your listing anytime '
               'from the My Apartments page.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
@@ -927,7 +927,7 @@ class _StepProgressBar extends StatelessWidget {
                             // Current or future: show number
                             : Text(
                                 '${i + 1}',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                   color: i <= currentStep
@@ -942,7 +942,7 @@ class _StepProgressBar extends StatelessWidget {
                     Text(
                       labels[i],
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: i <= currentStep
@@ -983,7 +983,7 @@ class _FormCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF1F1F1F),
@@ -1039,7 +1039,7 @@ class _ToggleButton extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: color,
@@ -1095,7 +1095,7 @@ class _AmenityChip extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: color,
@@ -1123,7 +1123,7 @@ class _DropdownRow extends StatelessWidget {
         Expanded(
           child: Text(
             placeholder,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
@@ -1153,14 +1153,14 @@ class _InputRow extends StatelessWidget {
     return SizedBox(
       height: 20,
       child: TextField(
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: AppFonts.inter, 
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: const Color(0xFF1F1F1F),
         ),
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: GoogleFonts.inter(
+          hintStyle: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 14,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),

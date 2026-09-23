@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -268,7 +268,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
                       ),
                       child: Text(
                         _t('Municipality', 'עירייה'),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           height: 24 / 14,
@@ -279,7 +279,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
                     const SizedBox(height: 21),
                     Text(
                       _title,
-                      style: GoogleFonts.nunito(
+                      style: TextStyle(fontFamily: AppFonts.nunito, 
                         fontSize: 32,
                         fontWeight: FontWeight.w600,
                         height: 39 / 32,
@@ -341,7 +341,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
         Flexible(
           child: Text(
             label,
-            style: GoogleFonts.inter(fontSize: 16, height: 19 / 16, color: _kGrey),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, height: 19 / 16, color: _kGrey),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -368,7 +368,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
         const SizedBox(height: 82),
         Text(
           _t('12 Comments', '12 תגובות'),
-          style: GoogleFonts.nunito(
+          style: TextStyle(fontFamily: AppFonts.nunito, 
             fontSize: 24,
             fontWeight: FontWeight.w600,
             height: 30 / 24,
@@ -469,12 +469,12 @@ class _WebArticleContentState extends State<WebArticleContent> {
               children: [
                 if (value != null) ...[
                   Text(value,
-                      style: GoogleFonts.inter(fontSize: 14, height: 17 / 14, color: Colors.black)),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: Colors.black)),
                   const SizedBox(height: 2),
                 ],
                 Text(
                   label.toUpperCase(),
-                  style: GoogleFonts.inter(fontSize: 12, height: 15 / 12, color: Colors.black),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, height: 15 / 12, color: Colors.black),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -503,7 +503,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
               ? Icon(icon, size: 16, color: Colors.white)
               : Text(
                   letter!,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -523,7 +523,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
     void addParagraph(String text) {
       blocks.add(Text(
         text,
-        style: GoogleFonts.inter(
+        style: TextStyle(fontFamily: AppFonts.inter, 
           fontSize: 18,
           fontWeight: FontWeight.w400,
           height: 1.6,
@@ -563,7 +563,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
               Expanded(
                 child: Text(
                   _bullets[i],
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 18,
                     fontWeight: FontWeight.w400,
                     height: 1.6,
@@ -702,7 +702,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
             children: [
               Text(
                 label,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   height: 24 / 16,
@@ -746,7 +746,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
               children: [
                 Text(
                   _t('Write a comment', 'כתבו תגובה'),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     height: 24 / 20,
@@ -756,7 +756,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
                 const SizedBox(height: 6),
                 Text(
                   _t('To post a comment, you must be logged in.', 'כדי לפרסם תגובה יש להתחבר.'),
-                  style: GoogleFonts.inter(fontSize: 14, height: 17 / 14, color: _kBodyText),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: _kBodyText),
                 ),
               ],
             ),
@@ -780,7 +780,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
                     const SizedBox(width: 8),
                     Text(
                       _t('Login', 'התחברות'),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         height: 24 / 16,
@@ -807,7 +807,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
         const SizedBox(height: 7),
         Text(
           _t('More Related News', 'עוד חדשות קשורות'),
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 18,
             fontWeight: FontWeight.w600,
             height: 22 / 18,
@@ -921,7 +921,7 @@ class _RelatedRowState extends State<_RelatedRow> {
                   children: [
                     Text(
                       r.title,
-                      style: GoogleFonts.nunito(
+                      style: TextStyle(fontFamily: AppFonts.nunito, 
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                         height: 22 / 18,
@@ -938,7 +938,7 @@ class _RelatedRowState extends State<_RelatedRow> {
                         Flexible(
                           child: Text(
                             r.date,
-                            style: GoogleFonts.inter(fontSize: 14, height: 17 / 14, color: _kGrey),
+                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: _kGrey),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -979,7 +979,7 @@ class _CommentTile extends StatelessWidget {
             child: Center(
               child: Text(
                 comment.initials,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   height: 17 / 14,
@@ -997,7 +997,7 @@ class _CommentTile extends StatelessWidget {
                   children: [
                     Text(
                       comment.name,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         height: 19 / 16,
@@ -1007,14 +1007,14 @@ class _CommentTile extends StatelessWidget {
                     const SizedBox(width: 12),
                     Text(
                       comment.date,
-                      style: GoogleFonts.inter(fontSize: 12, height: 15 / 12, color: _kIconGrey),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, height: 15 / 12, color: _kIconGrey),
                     ),
                   ],
                 ),
                 const SizedBox(height: 7),
                 Text(
                   comment.text,
-                  style: GoogleFonts.inter(fontSize: 14, height: 1.4, color: _kBodyText),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 1.4, color: _kBodyText),
                 ),
                 const SizedBox(height: 12),
                 MouseRegion(
@@ -1026,7 +1026,7 @@ class _CommentTile extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         replyLabel,
-                        style: GoogleFonts.inter(fontSize: 14, height: 17 / 14, color: AppColors.midBlue),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: AppColors.midBlue),
                       ),
                     ],
                   ),

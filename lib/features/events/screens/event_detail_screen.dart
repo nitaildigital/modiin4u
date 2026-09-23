@@ -1,25 +1,46 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../shared/widgets/error_retry.dart';
+import '../../../shared/widgets/skeleton.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../models/event.dart';
+import '../providers/event_providers.dart';
 import 'web_event_detail_screen.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../../favorites/repositories/favorite_repository.dart';
 
 /// Event detail screen — responsive wrapper.
 /// Desktop (> 1100px) renders the web detail layout; mobile keeps the app UI.
-class EventDetailScreen extends StatelessWidget {
+class EventDetailScreen extends ConsumerWidget {
   final String eventId;
   const EventDetailScreen({super.key, required this.eventId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) {
           return WebEventDetailContent(eventId: eventId);
         }
-        return _MobileEventDetailContent(eventId: eventId);
+
+        final provider = eventByIdProvider(eventId);
+        return ref
+            .watch(provider)
+            .when(
+              loading: () => const _EventDetailSkeleton(),
+              error: (error, _) => Scaffold(
+                backgroundColor: Colors.white,
+                body: SafeArea(
+                  child: ErrorRetry(onRetry: () => ref.invalidate(provider)),
+                ),
+              ),
+              data: (event) => _MobileEventDetailContent(event: event),
+            );
       },
     );
   }
@@ -27,61 +48,34 @@ class EventDetailScreen extends StatelessWidget {
 
 /// Mobile layout – hero image, date badge, info section, organizer,
 /// about, what's included, mini-map, "You May Also Like" cards, RSVP bar.
-class _MobileEventDetailContent extends StatefulWidget {
-  final String eventId;
-  const _MobileEventDetailContent({required this.eventId});
+class _MobileEventDetailContent extends ConsumerStatefulWidget {
+  final Event event;
+  const _MobileEventDetailContent({required this.event});
 
   @override
-  State<_MobileEventDetailContent> createState() =>
+  ConsumerState<_MobileEventDetailContent> createState() =>
       _MobileEventDetailContentState();
 }
 
-class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
+class _MobileEventDetailContentState
+    extends ConsumerState<_MobileEventDetailContent> {
   bool _isGoing = false;
 
-  // ── Related events (You May Also Like) ──
-  static const _related = [
-    _RelatedEvent(
-      'Modiin Community Festival',
-      'Municipal & Community',
-      'AUG', 22,
-      '10:00 AM',
-      'Modiin City Center',
-      'FREE', 86,
-    ),
-    _RelatedEvent(
-      'Family Fun Day',
-      'Kids & Family',
-      'AUG', 23,
-      '11:00 AM',
-      'Anava Park',
-      '₪20', 86,
-    ),
-    _RelatedEvent(
-      'Live Jazz Evening',
-      'Music',
-      'AUG', 24,
-      '8:30 PM',
-      'Local Cultural Center',
-      '₪60', 51,
-    ),
-    _RelatedEvent(
-      'Kids Cooking Workshop',
-      'Kids & Family',
-      'AUG', 26,
-      '8:30 PM',
-      'Local Cultural Center',
-      '₪60', 51,
-    ),
-  ];
+  Event get event => widget.event;
 
-  // What's included items
-  static const _included = [
-    'Live music performances',
-    'Food & refreshments',
-    'Outdoor seating',
-    'Family-friendly atmosphere',
-    'Local artists',
+  static const _months = [
+    'ינו',
+    'פבר',
+    'מרץ',
+    'אפר',
+    'מאי',
+    'יונ',
+    'יול',
+    'אוג',
+    'ספט',
+    'אוק',
+    'נוב',
+    'דצמ',
   ];
 
   @override
@@ -104,13 +98,14 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHero(context),
-                        const SizedBox(height: 49), // space for overlapping badges
+                        const SizedBox(
+                          height: 49,
+                        ), // space for overlapping badges
                         _buildInfoSection(),
                         _buildOrganizedBy(),
                         const SizedBox(height: 24),
                         _buildAbout(),
                         const SizedBox(height: 32),
-                        _buildWhatsIncluded(),
                         const SizedBox(height: 32),
                         _buildWhereIsIt(),
                         const SizedBox(height: 32),
@@ -143,19 +138,18 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
         clipBehavior: Clip.none,
         children: [
           // Hero image
-          Container(
+          SizedBox(
             width: double.infinity,
             height: 260,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-              ),
-            ),
             child: Stack(
+              fit: StackFit.expand,
               children: [
-                // Dark overlay gradient
+                NetworkPhoto(
+                  url: event.imageUrl,
+                  icon: IconsaxPlusBold.calendar_1,
+                  iconSize: 60,
+                ),
+                // Dark overlay gradient, so the badges stay legible on any photo
                 Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
@@ -166,14 +160,6 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                         Colors.transparent,
                       ],
                     ),
-                  ),
-                ),
-                // Placeholder icon
-                Center(
-                  child: Icon(
-                    IconsaxPlusBold.calendar_1,
-                    size: 60,
-                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                 ),
               ],
@@ -194,8 +180,11 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Icon(IconsaxPlusLinear.arrow_left,
-                      size: 20, color: Color(0xFF3D3D3D)),
+                  child: Icon(
+                    IconsaxPlusLinear.arrow_left,
+                    size: 20,
+                    color: Color(0xFF3D3D3D),
+                  ),
                 ),
               ),
             ),
@@ -213,8 +202,11 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: Icon(IconsaxPlusLinear.export_1,
-                    size: 20, color: Color(0xFF3D3D3D)),
+                child: Icon(
+                  IconsaxPlusLinear.export_1,
+                  size: 20,
+                  color: Color(0xFF3D3D3D),
+                ),
               ),
             ),
           ),
@@ -223,17 +215,12 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
           Positioned(
             right: 12,
             top: MediaQuery.of(context).padding.top + 7,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(IconsaxPlusLinear.heart,
-                    size: 20, color: Color(0xFF3D3D3D)),
-              ),
+            child: FavoriteButton(
+              kind: FavoriteKind.event,
+              id: event.id,
+              size: 40,
+              iconSize: 20,
+              color: const Color(0xFF3D3D3D),
             ),
           ),
 
@@ -246,15 +233,17 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
               padding: const EdgeInsets.symmetric(vertical: 11),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border.all(
-                    color: const Color(0xFF123A72), width: 2),
+                border: Border.all(color: const Color(0xFF123A72), width: 2),
                 borderRadius: BorderRadius.circular(11),
               ),
               child: Column(
                 children: [
                   Text(
-                    'AUG',
-                    style: GoogleFonts.inter(
+                    event.startDate == null
+                        ? ''
+                        : _months[event.startDate!.month - 1],
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF123A72),
@@ -263,8 +252,9 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '25',
-                    style: GoogleFonts.inter(
+                    '${event.startDate?.day ?? ''}',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -281,15 +271,15 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
             right: 13,
             top: 272,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: const Color(0xFF17A9D0),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Text(
                 'Music',
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
@@ -309,17 +299,16 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE7E7E7)),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
           Text(
-            'Summer Music Night',
-            style: GoogleFonts.rubik(
+            event.title,
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
               fontSize: 28,
               fontWeight: FontWeight.w600,
               height: 34 / 28,
@@ -334,12 +323,19 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
               // Time
               Row(
                 children: [
-                  const Icon(IconsaxPlusLinear.clock,
-                      size: 16, color: Color(0xFF888888)),
+                  const Icon(
+                    IconsaxPlusLinear.clock,
+                    size: 16,
+                    color: Color(0xFF888888),
+                  ),
                   const SizedBox(width: 8),
                   Text(
-                    '8:00 PM – 11:00 PM',
-                    style: GoogleFonts.inter(
+                    [
+                      event.displayTime,
+                      event.endTime?.substring(0, 5),
+                    ].whereType<String>().join(' – '),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF6D6D6D),
@@ -352,13 +348,20 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
               // Address
               Row(
                 children: [
-                  const Icon(IconsaxPlusLinear.location,
-                      size: 16, color: Color(0xFF888888)),
+                  const Icon(
+                    IconsaxPlusLinear.location,
+                    size: 16,
+                    color: Color(0xFF888888),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '21 Sderot El Melachot, Modi\'in Maccabim-Re\'ut',
-                      style: GoogleFonts.inter(
+                      [event.venueName, event.address]
+                          .whereType<String>()
+                          .where((s) => s.isNotEmpty)
+                          .join(', '),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF6D6D6D),
@@ -373,12 +376,16 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
               // People interested
               Row(
                 children: [
-                  const Icon(IconsaxPlusLinear.people,
-                      size: 16, color: Color(0xFF888888)),
+                  const Icon(
+                    IconsaxPlusLinear.people,
+                    size: 16,
+                    color: Color(0xFF888888),
+                  ),
                   const SizedBox(width: 8),
                   Text(
-                    '124 people interested',
-                    style: GoogleFonts.inter(
+                    '${event.rsvpCount} מתעניינים',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: Colors.black,
@@ -388,33 +395,36 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // Price
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                '₪50',
-                style: GoogleFonts.rubik(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                  height: 34 / 28,
-                  color: Colors.black,
+          // Price, only when the event has one on record.
+          if (event.displayPrice != null) ...[
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  event.displayPrice!,
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    height: 34 / 28,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Price',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF6D6D6D),
+                const SizedBox(width: 4),
+                Text(
+                  'מחיר',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF6D6D6D),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -430,8 +440,9 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Organized by',
-            style: GoogleFonts.inter(
+            'מארגן האירוע',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -453,7 +464,9 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: const Color(0xFFE7E7E7), width: 0.625),
+                      color: const Color(0xFFE7E7E7),
+                      width: 0.625,
+                    ),
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -475,7 +488,8 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                     children: [
                       Text(
                         'Modiin Community Events',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
@@ -484,7 +498,8 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                       const SizedBox(height: 4),
                       Text(
                         'Community & Municipal Events',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -511,8 +526,9 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'About This Event',
-            style: GoogleFonts.inter(
+            'על האירוע',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -520,10 +536,9 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Get ready for an unforgettable evening of live music under the '
-            'stars in Modiin. Enjoy performances from local artists, great '
-            'music, food, and a vibrant community atmosphere.',
-            style: GoogleFonts.inter(
+            event.fullDescription ?? event.shortDescription ?? '',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               height: 1.6,
@@ -535,7 +550,8 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
             'Whether you\'re coming with friends, family, or simply looking '
             'for a great night out, Summer Music Night is the perfect way to '
             'enjoy the summer evening.',
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               height: 1.6,
@@ -546,52 +562,9 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
       ),
     );
   }
-
-  // ═══════════════════════════════════════════════
-  // What's Included
-  // ═══════════════════════════════════════════════
-  Widget _buildWhatsIncluded() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'What\'s Included',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
-          const SizedBox(height: 20),
-          ...List.generate(_included.length, (i) {
-            return Padding(
-              padding: EdgeInsets.only(
-                  bottom: i < _included.length - 1 ? 14 : 0),
-              child: Row(
-                children: [
-                  const Icon(IconsaxPlusLinear.tick_circle,
-                      size: 16, color: Color(0xFF17A9D0)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _included[i],
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF3D3D3D),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
+  // "What's Included" used to sit here, listing live music, food and
+  // outdoor seating for every event. There is no column behind it, so it
+  // said the same five things whatever the event was.
 
   // ═══════════════════════════════════════════════
   // Where Is It? (mini FlutterMap)
@@ -605,8 +578,9 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Where Is It?',
-            style: GoogleFonts.inter(
+            'איפה זה?',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -654,7 +628,9 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                     child: Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(50),
@@ -669,12 +645,16 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(IconsaxPlusLinear.map,
-                                size: 16, color: Color(0xFF0A1230)),
+                            const Icon(
+                              IconsaxPlusLinear.map,
+                              size: 16,
+                              color: Color(0xFF0A1230),
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               'Open in Maps',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: const Color(0xFF0A1230),
@@ -731,7 +711,18 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
   // ═══════════════════════════════════════════════
   // You May Also Like
   // ═══════════════════════════════════════════════
+  /// Other events from the database, not four invented ones on a page
+  /// showing a real one. The current event is left out, and the section
+  /// disappears rather than standing empty when it is the only one.
   Widget _buildYouMayAlsoLike() {
+    final all = ref.watch(eventsProvider).valueOrNull ?? const <Event>[];
+    final related = all
+        .where((e) => e.id != event.id)
+        .take(4)
+        .map(_RelatedEvent.from)
+        .toList();
+    if (related.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -739,18 +730,18 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
         children: [
           Text(
             'You May Also Like',
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
             ),
           ),
           const SizedBox(height: 16),
-          ...List.generate(_related.length, (i) {
+          ...List.generate(related.length, (i) {
             return Padding(
-              padding:
-                  EdgeInsets.only(bottom: i < _related.length - 1 ? 12 : 0),
-              child: _RelatedEventCard(event: _related[i], index: i),
+              padding: EdgeInsets.only(bottom: i < related.length - 1 ? 12 : 0),
+              child: _RelatedEventCard(event: related[i]),
             );
           }),
         ],
@@ -766,9 +757,7 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: const Border(
-          top: BorderSide(color: Color(0xFFE7E7E7)),
-        ),
+        border: const Border(top: BorderSide(color: Color(0xFFE7E7E7))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -791,12 +780,16 @@ class _MobileEventDetailContentState extends State<_MobileEventDetailContent> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(IconsaxPlusLinear.tick_circle,
-                      size: 20, color: Colors.white),
+                  const Icon(
+                    IconsaxPlusLinear.tick_circle,
+                    size: 20,
+                    color: Colors.white,
+                  ),
                   const SizedBox(width: 8),
                   Text(
-                    _isGoing ? 'Going' : 'I\'m Going',
-                    style: GoogleFonts.inter(
+                    _isGoing ? 'מגיע/ה' : 'אני מגיע/ה',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
@@ -825,7 +818,10 @@ class _RelatedEvent {
   final String price;
   final int interested;
 
+  final String id;
+
   const _RelatedEvent(
+    this.id,
     this.title,
     this.category,
     this.month,
@@ -836,7 +832,39 @@ class _RelatedEvent {
     this.interested,
   );
 
-  bool get isFree => price == 'FREE';
+  static const _months = [
+    'ינו',
+    'פבר',
+    'מרץ',
+    'אפר',
+    'מאי',
+    'יונ',
+    'יול',
+    'אוג',
+    'ספט',
+    'אוק',
+    'נוב',
+    'דצמ',
+  ];
+
+  factory _RelatedEvent.from(Event e) {
+    final start = e.startDate;
+    return _RelatedEvent(
+      e.id,
+      e.title,
+      // Events carry no category column; the venue reads better in that slot
+      // than an empty line would.
+      e.venueName ?? '',
+      start == null ? '' : _months[start.month - 1],
+      start?.day ?? 0,
+      e.displayTime ?? '',
+      e.venueName ?? e.address,
+      e.displayPrice ?? '',
+      e.rsvpCount,
+    );
+  }
+
+  bool get isFree => price.isEmpty || price == 'FREE' || price == 'חינם';
 }
 
 // ═══════════════════════════════════════════════
@@ -845,13 +873,12 @@ class _RelatedEvent {
 // ═══════════════════════════════════════════════
 class _RelatedEventCard extends StatelessWidget {
   final _RelatedEvent event;
-  final int index;
-  const _RelatedEventCard({required this.event, required this.index});
+  const _RelatedEventCard({required this.event});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/event/related_$index'),
+      onTap: () => context.push('/event/${event.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -895,7 +922,8 @@ class _RelatedEventCard extends StatelessWidget {
                       children: [
                         Text(
                           event.month,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF123A72),
@@ -905,7 +933,8 @@ class _RelatedEventCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           '${event.day}',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -929,8 +958,11 @@ class _RelatedEventCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
-                      child: Icon(IconsaxPlusLinear.heart,
-                          size: 23, color: Color(0xFF123A72)),
+                      child: Icon(
+                        IconsaxPlusLinear.heart,
+                        size: 23,
+                        color: Color(0xFF123A72),
+                      ),
                     ),
                   ),
                 ),
@@ -947,7 +979,8 @@ class _RelatedEventCard extends StatelessWidget {
                 // Title
                 Text(
                   event.title,
-                  style: GoogleFonts.rubik(
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0A1230),
@@ -958,7 +991,8 @@ class _RelatedEventCard extends StatelessWidget {
                 // Category
                 Text(
                   event.category,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF5F5E5A),
@@ -969,25 +1003,33 @@ class _RelatedEventCard extends StatelessWidget {
                 // Time + Location row
                 Row(
                   children: [
-                    const Icon(IconsaxPlusBold.clock,
-                        size: 16, color: Color(0xFF17A9D0)),
+                    const Icon(
+                      IconsaxPlusBold.clock,
+                      size: 16,
+                      color: Color(0xFF17A9D0),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       event.time,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF5F5E5A),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Icon(IconsaxPlusBold.location,
-                        size: 16, color: Color(0xFF17A9D0)),
+                    const Icon(
+                      IconsaxPlusBold.location,
+                      size: 16,
+                      color: Color(0xFF17A9D0),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         event.venue,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF5F5E5A),
@@ -1005,7 +1047,8 @@ class _RelatedEventCard extends StatelessWidget {
                   children: [
                     Text(
                       event.price,
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubik,
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: event.isFree
@@ -1015,12 +1058,16 @@ class _RelatedEventCard extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        const Icon(IconsaxPlusBold.star_1,
-                            size: 18, color: Color(0xFF17A9D0)),
+                        const Icon(
+                          IconsaxPlusBold.star_1,
+                          size: 18,
+                          color: Color(0xFF17A9D0),
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '${event.interested} interested',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF3D3D3D),
@@ -1034,6 +1081,45 @@ class _RelatedEventCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Placeholder for the event page: the banner, the date tile that overlaps
+/// it, then the title and the time, place and interest lines.
+class _EventDetailSkeleton extends StatelessWidget {
+  const _EventDetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Skeleton(
+        child: ListView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          children: [
+            const SkeletonBox(height: 260, radius: 0),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonBox(width: 81, height: 86, radius: 11),
+                  SizedBox(height: 20),
+                  SkeletonLine(width: 250, fontSize: 24),
+                  SizedBox(height: 16),
+                  SkeletonLine(width: 160, fontSize: 14),
+                  SizedBox(height: 12),
+                  SkeletonLine(width: 240, fontSize: 14),
+                  SizedBox(height: 12),
+                  SkeletonLine(width: 120, fontSize: 14),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

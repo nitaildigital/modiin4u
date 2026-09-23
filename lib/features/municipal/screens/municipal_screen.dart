@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'web_municipal_screen.dart';
@@ -52,7 +52,7 @@ class _MobileMunicipalContent extends StatelessWidget {
               // ═══════════════════════════════════
               Text(
                 'Municipal',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: Colors.black,
@@ -84,7 +84,7 @@ class _MobileMunicipalContent extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Search municipal services...',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -109,7 +109,7 @@ class _MobileMunicipalContent extends StatelessWidget {
                       // ── Quick Info ──
                       Text(
                         'Quick Info',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1F1F1F),
@@ -131,7 +131,7 @@ class _MobileMunicipalContent extends StatelessWidget {
                       // ── Municipal Services ──
                       Text(
                         'Municipal Services',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1F1F1F),
@@ -140,7 +140,7 @@ class _MobileMunicipalContent extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         'Explore services and information',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -238,7 +238,7 @@ class _ShabbatCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Upcoming Shabbat',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       height: 1.4,
@@ -254,7 +254,7 @@ class _ShabbatCard extends StatelessWidget {
           // Date
           Text(
             'Sep 12–13, 2026',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF0A1230),
@@ -273,7 +273,7 @@ class _ShabbatCard extends StatelessWidget {
               const SizedBox(width: 7),
               Text(
                 'Starts 18:42',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   color: const Color(0xFF0A1230),
@@ -343,7 +343,7 @@ class _ParkingCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Parking Right Now',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         height: 1.4,
@@ -359,7 +359,7 @@ class _ParkingCard extends StatelessWidget {
             // Location
             Text(
               'Modiin Center',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF0A1230),
@@ -378,7 +378,7 @@ class _ParkingCard extends StatelessWidget {
                 const SizedBox(width: 7),
                 Text(
                   'High availability',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF0A1230),
@@ -423,7 +423,7 @@ class _ServiceCard extends StatelessWidget {
             const SizedBox(height: 9),
             Text(
               service.label,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 height: 1.4,

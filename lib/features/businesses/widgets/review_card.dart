@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 
 class ReviewCard extends StatelessWidget {
@@ -39,7 +39,7 @@ class ReviewCard extends StatelessWidget {
                 backgroundColor: AppColors.midBlue.withValues(alpha: 0.1),
                 child: Text(
                   userName.characters.first,
-                  style: GoogleFonts.rubik(
+                  style: TextStyle(fontFamily: AppFonts.rubik, 
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.midBlue,
@@ -55,7 +55,7 @@ class ReviewCard extends StatelessWidget {
                       children: [
                         Text(
                           userName,
-                          style: GoogleFonts.rubik(
+                          style: TextStyle(fontFamily: AppFonts.rubik, 
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: context.textPrimary,
@@ -83,7 +83,7 @@ class ReviewCard extends StatelessWidget {
                                 const SizedBox(width: 3),
                                 Text(
                                   'תושב מאומת',
-                                  style: GoogleFonts.rubik(
+                                  style: TextStyle(fontFamily: AppFonts.rubik, 
                                     fontSize: 10,
                                     color: AppColors.turquoise,
                                     fontWeight: FontWeight.w500,
@@ -98,7 +98,7 @@ class ReviewCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       date,
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(fontFamily: AppFonts.rubik, 
                         fontSize: 12,
                         color: AppColors.grayLight,
                       ),
@@ -121,7 +121,7 @@ class ReviewCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             text,
-            style: GoogleFonts.rubik(
+            style: TextStyle(fontFamily: AppFonts.rubik, 
               fontSize: 14,
               color: AppColors.grayText,
               height: 1.4,
@@ -146,7 +146,7 @@ class ReviewCard extends StatelessWidget {
                 children: [
                   Text(
                     'תגובת בעל העסק',
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.midBlue,
@@ -155,7 +155,7 @@ class ReviewCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     ownerReply!,
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 13,
                       color: AppColors.grayText,
                       height: 1.4,

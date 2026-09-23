@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'web_neighborhood_detail_screen.dart';
@@ -125,7 +126,7 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                   child: Text(
                     _name,
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -143,7 +144,7 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                       const SizedBox(width: 8),
                       Text(
                         _city,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -326,7 +327,7 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
         children: [
           Text(
             'About $_name',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -337,7 +338,7 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
                   p,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF3D3D3D),
@@ -361,7 +362,7 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
         children: [
           Text(
             title,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -391,7 +392,7 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
               Positioned(
                 bottom: 10,
                 child: GestureDetector(
-                  onTap: () => context.go('/realestate'),
+                  onTap: () => context.goOrPush('/realestate'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 8),
@@ -403,7 +404,7 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                     ),
                     child: Text(
                       'View All',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF123A72),
@@ -453,7 +454,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             stat.value,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.black,
@@ -463,7 +464,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             stat.label,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: Colors.black,
@@ -566,7 +567,7 @@ class _ListingCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Text('Via Broker',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF0033AC))),
@@ -584,7 +585,7 @@ class _ListingCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Text('New',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: Colors.white)),
@@ -608,7 +609,7 @@ class _ListingCard extends StatelessWidget {
                       children: [
                         Text(
                           listing.price,
-                          style: GoogleFonts.rubik(
+                          style: TextStyle(fontFamily: AppFonts.rubik, 
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF0A1230),
@@ -618,7 +619,7 @@ class _ListingCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             listing.perMonth!,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF5F5E5A),
@@ -629,7 +630,7 @@ class _ListingCard extends StatelessWidget {
                     ),
                     Text(
                       listing.isRent ? 'FOR RENT' : 'FOR SALE',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF17A9D0),
@@ -648,7 +649,7 @@ class _ListingCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         listing.address,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF5F5E5A),
@@ -689,7 +690,7 @@ class _ListingCard extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           text,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF3D3D3D),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import 'web_realestate_screen.dart';
@@ -180,7 +180,7 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                         // Title
                         Text(
                           'Filter Your Discover Feed',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: Colors.black,
@@ -206,7 +206,7 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                                 Expanded(
                                   child: Text(
                                     'Search by location, neighborhood...',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                         fontSize: 14,
                                         color: const Color(0xFF6D6D6D)),
                                   ),
@@ -256,7 +256,7 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                                       Text(
                                         type.name,
                                         textAlign: TextAlign.center,
-                                        style: GoogleFonts.inter(
+                                        style: TextStyle(fontFamily: AppFonts.inter, 
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Colors.black,
@@ -325,7 +325,7 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                           const SizedBox(width: 6),
                           Text(
                             'Sign up with Email',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: AppColors.navy,
@@ -375,7 +375,7 @@ class _TabButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: active ? 20 : 16,
             fontWeight: active ? FontWeight.w600 : FontWeight.w500,
             color: active ? AppColors.midBlue : const Color(0xFF6D6D6D),
@@ -427,7 +427,7 @@ class _ListingCard extends StatelessWidget {
                   ),
                   child: Text(
                     'Via Broker',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF0033AC),
@@ -447,7 +447,7 @@ class _ListingCard extends StatelessWidget {
                   ),
                   child: Text(
                     'New',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
@@ -485,7 +485,7 @@ class _ListingCard extends StatelessWidget {
                     children: [
                       Text(
                         listing.price,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           color: AppColors.navy,
@@ -495,7 +495,7 @@ class _ListingCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           listing.perMonth!,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 14,
                             color: const Color(0xFF5F5E5A),
                           ),
@@ -505,7 +505,7 @@ class _ListingCard extends StatelessWidget {
                   ),
                   Text(
                     listing.saleTag,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: AppColors.turquoise,
@@ -523,7 +523,7 @@ class _ListingCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       listing.address,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 14, color: const Color(0xFF5F5E5A)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -557,7 +557,7 @@ class _ListingCard extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           text,
-          style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF3D3D3D)),
+          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF3D3D3D)),
         ),
       ],
     );

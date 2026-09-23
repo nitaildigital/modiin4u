@@ -1,13 +1,17 @@
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 
+import '../../../shared/widgets/network_photo.dart';
 import '../data/map_pois.dart';
+import '../providers/map_providers.dart';
+import '../widgets/map_pin_bitmap.dart';
 import 'web_map_screen.dart';
-
 
 /// Map – responsive wrapper.
 /// Desktop (> 1100px) renders the "Explore Modiin" web map; mobile keeps the
@@ -31,18 +35,68 @@ class MapScreen extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Mobile Map Screen
 // ═══════════════════════════════════════════════
-class _MobileMapContent extends StatefulWidget {
+class _MobileMapContent extends ConsumerStatefulWidget {
   const _MobileMapContent();
 
   @override
-  State<_MobileMapContent> createState() => _MobileMapContentState();
+  ConsumerState<_MobileMapContent> createState() => _MobileMapContentState();
 }
 
-class _MobileMapContentState extends State<_MobileMapContent> {
+class _MobileMapContentState extends ConsumerState<_MobileMapContent> {
   final _activeLayers = <String>{'Businesses'};
-  final _mapController = MapController();
+  gmaps.GoogleMapController? _mapController;
   MapPoi? _selectedPoi;
   String _mapSearchQuery = '';
+
+  /// Markers are bitmaps that have to be drawn before the map can show them,
+  /// so they are built off to the side and the map picks them up on the next
+  /// frame. Keyed by the POI's route, which is unique per pin.
+  Map<String, gmaps.Marker> _markers = {};
+  int _markerBuild = 0;
+
+  /// Set when the selected pin changes, since that alters how it is drawn
+  /// without changing which pins are on screen.
+  bool _pinsNeedRedraw = false;
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  /// Redraws the marker set. Each call takes a ticket, and a build that
+  /// finishes after a newer one started throws its result away rather than
+  /// overwriting it.
+  Future<void> _rebuildMarkers(List<MapPoi> pois) async {
+    final ticket = ++_markerBuild;
+    final ratio = MediaQuery.devicePixelRatioOf(context);
+
+    final built = <String, gmaps.Marker>{};
+    for (final poi in pois) {
+      final icon = await MapPinBitmap.of(
+        color: poi.color,
+        icon: poi.icon,
+        isSelected: _selectedPoi == poi,
+        devicePixelRatio: ratio,
+      );
+      // `route` is nullable, and a pin still needs an id; the name and
+      // position are unique enough to stand in.
+      final id = poi.route ?? '${poi.name}@${poi.position}';
+      built[id] = gmaps.Marker(
+        markerId: gmaps.MarkerId(id),
+        position: gmaps.LatLng(poi.position.latitude, poi.position.longitude),
+        icon: icon,
+        anchor: const Offset(0.5, 0.5),
+        onTap: () => setState(() {
+          _selectedPoi = poi;
+          _pinsNeedRedraw = true;
+        }),
+      );
+    }
+
+    if (!mounted || ticket != _markerBuild) return;
+    setState(() => _markers = built);
+  }
 
   static const _layers = [
     ('Businesses', IconsaxPlusBold.shop, Color(0xFF17A9D0)),
@@ -52,55 +106,57 @@ class _MobileMapContentState extends State<_MobileMapContent> {
   ];
 
   List<MapPoi> get _visiblePois {
-    var pois = mapPois.where((p) => _activeLayers.contains(p.layer));
+    // Pins come from the database; an empty list while it loads simply means
+    // no markers yet, which is what the map should show.
+    final all = ref.watch(mapPoisProvider).valueOrNull ?? const <MapPoi>[];
+    var pois = all.where((p) => _activeLayers.contains(p.layer));
     if (_mapSearchQuery.isNotEmpty) {
       final q = _mapSearchQuery.toLowerCase();
       pois = pois.where(
-          (p) => p.name.toLowerCase().contains(q) || p.category.toLowerCase().contains(q));
+        (p) =>
+            p.name.toLowerCase().contains(q) ||
+            p.category.toLowerCase().contains(q),
+      );
     }
     return pois.toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Drawing a marker is asynchronous, so it cannot happen during build; the
+    // set is refreshed just after, and only when it has actually changed.
+    final pois = _visiblePois;
+    final wanted = {for (final p in pois) p.route ?? '${p.name}@${p.position}'};
+    if (!setEquals(wanted, _markers.keys.toSet()) || _pinsNeedRedraw) {
+      _pinsNeedRedraw = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _rebuildMarkers(pois);
+      });
+    }
+
     return Stack(
       children: [
         // ── Map ──
-        FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(
-            initialCenter: modiinCenter,
-            initialZoom: 15.0,
-            minZoom: 12,
-            maxZoom: 18,
-            onTap: (_, _) => setState(() => _selectedPoi = null),
+        gmaps.GoogleMap(
+          initialCameraPosition: gmaps.CameraPosition(
+            target: gmaps.LatLng(modiinCenter.latitude, modiinCenter.longitude),
+            zoom: 15,
           ),
-          children: [
-            TileLayer(
-              urlTemplate:
-                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.modiin4u.app',
-              maxZoom: 19,
-            ),
-            MarkerLayer(
-              markers: _visiblePois.map((poi) {
-                final isSelected = _selectedPoi == poi;
-                return Marker(
-                  point: poi.position,
-                  width: 40,
-                  height: 40,
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedPoi = poi),
-                    child: _MapPin(
-                      color: poi.color,
-                      icon: poi.icon,
-                      isSelected: isSelected,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
+          minMaxZoomPreference: const gmaps.MinMaxZoomPreference(12, 18),
+          markers: _markers.values.toSet(),
+          onMapCreated: (c) => _mapController = c,
+          onTap: (_) => setState(() {
+            _selectedPoi = null;
+            _pinsNeedRedraw = true;
+          }),
+          // The screen draws its own search bar, chips and buttons over the
+          // map, so Google's are turned off rather than stacked under them.
+          myLocationButtonEnabled: false,
+          zoomControlsEnabled: false,
+          mapToolbarEnabled: false,
+          // The card sits at the foot of the screen; this keeps Google's
+          // required attribution above it rather than behind it.
+          padding: EdgeInsets.only(bottom: _selectedPoi == null ? 0 : 280),
         ),
 
         // ── Search bar + Filter chips ──
@@ -142,10 +198,14 @@ class _MobileMapContentState extends State<_MobileMapContent> {
                               _mapSearchQuery = val;
                               _selectedPoi = null;
                             }),
-                            style: GoogleFonts.inter(fontSize: 14),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                            ),
                             decoration: InputDecoration(
-                              hintText: 'Search for places, businesses, or events',
-                              hintStyle: GoogleFonts.inter(
+                              hintText: 'חיפוש מקומות, עסקים ואירועים',
+                              hintStyle: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 color: const Color(0xFF6D6D6D),
                               ),
@@ -154,8 +214,9 @@ class _MobileMapContentState extends State<_MobileMapContent> {
                               focusedBorder: InputBorder.none,
                               filled: false,
                               isDense: true,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
                             ),
                           ),
                         ),
@@ -223,14 +284,18 @@ class _MobileMapContentState extends State<_MobileMapContent> {
                                       ),
                               ),
                               child: active
-                                  ? const Icon(Icons.check,
-                                      size: 14, color: Colors.white)
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 14,
+                                      color: Colors.white,
+                                    )
                                   : null,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               label,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.navy,
@@ -254,17 +319,20 @@ class _MobileMapContentState extends State<_MobileMapContent> {
           child: Column(
             children: [
               _MapFab(IconsaxPlusLinear.gps, () {
-                _mapController.move(modiinCenter, 15);
+                _mapController?.animateCamera(
+                  gmaps.CameraUpdate.newLatLngZoom(
+                    gmaps.LatLng(modiinCenter.latitude, modiinCenter.longitude),
+                    15,
+                  ),
+                );
               }),
               const SizedBox(height: 8),
               _MapFab(IconsaxPlusLinear.add, () {
-                final zoom = _mapController.camera.zoom;
-                _mapController.move(_mapController.camera.center, zoom + 1);
+                _mapController?.animateCamera(gmaps.CameraUpdate.zoomIn());
               }),
               const SizedBox(height: 8),
               _MapFab(IconsaxPlusLinear.minus, () {
-                final zoom = _mapController.camera.zoom;
-                _mapController.move(_mapController.camera.center, zoom - 1);
+                _mapController?.animateCamera(gmaps.CameraUpdate.zoomOut());
               }),
             ],
           ),
@@ -299,51 +367,6 @@ class _MobileMapContentState extends State<_MobileMapContent> {
 // ═══════════════════════════════════════════════
 // Map pin (Figma-style: white bg, colored circle, icon)
 // ═══════════════════════════════════════════════
-class _MapPin extends StatelessWidget {
-  final Color color;
-  final IconData icon;
-  final bool isSelected;
-
-  const _MapPin({
-    required this.color,
-    required this.icon,
-    this.isSelected = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x40000000),
-            blurRadius: isSelected ? 6 : 2.29,
-            offset: const Offset(0, 2.29),
-          ),
-        ],
-        border: isSelected
-            ? Border.all(color: color, width: 2)
-            : null,
-      ),
-      child: Center(
-        child: Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 13, color: Colors.white),
-        ),
-      ),
-    );
-  }
-}
-
 // ═══════════════════════════════════════════════
 // Map floating action button
 // ═══════════════════════════════════════════════
@@ -414,26 +437,22 @@ class _PoiCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image placeholder
-                Container(
+                NetworkPhoto(
+                  url: poi.photos.isEmpty ? null : poi.photos.first,
                   width: 120,
                   height: 140,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: poi.color.withValues(alpha: 0.12),
-                  ),
-                  child: Center(
-                    child: Icon(poi.icon, size: 40, color: poi.color),
-                  ),
+                  radius: BorderRadius.circular(8),
+                  gradient: [
+                    poi.color.withValues(alpha: 0.16),
+                    poi.color.withValues(alpha: 0.08),
+                  ],
+                  icon: poi.icon,
+                  iconSize: 40,
+                  iconColor: poi.color,
                 ),
                 const SizedBox(width: 12),
                 // Details
-                Expanded(
-                  child: SizedBox(
-                    height: 140,
-                    child: _buildDetails(),
-                  ),
-                ),
+                Expanded(child: SizedBox(height: 140, child: _buildDetails())),
               ],
             ),
           ),
@@ -453,8 +472,9 @@ class _PoiCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'View Full Details',
-                        style: GoogleFonts.inter(
+                        'לפרטים מלאים',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.white,
@@ -496,7 +516,8 @@ class _PoiCard extends StatelessWidget {
       children: [
         Text(
           poi.name,
-          style: GoogleFonts.inter(
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
@@ -507,7 +528,8 @@ class _PoiCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           poi.category,
-          style: GoogleFonts.inter(
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 14,
             color: const Color(0xFF5F5E5A),
           ),
@@ -525,12 +547,16 @@ class _PoiCard extends StatelessWidget {
         if (poi.rating != null) ...[
           Row(
             children: [
-              const Icon(IconsaxPlusBold.star_1,
-                  size: 16, color: Color(0xFFFFC107)),
+              const Icon(
+                IconsaxPlusBold.star_1,
+                size: 16,
+                color: Color(0xFFFFC107),
+              ),
               const SizedBox(width: 8),
               Text(
                 poi.rating!.toString(),
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.black,
@@ -539,7 +565,8 @@ class _PoiCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 '(${poi.reviewCount ?? 0})',
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 14,
                   color: const Color(0xFF6D6D6D),
                 ),
@@ -552,12 +579,16 @@ class _PoiCard extends StatelessWidget {
         if (poi.viewCount != null)
           Row(
             children: [
-              const Icon(IconsaxPlusLinear.eye,
-                  size: 16, color: AppColors.navy),
+              const Icon(
+                IconsaxPlusLinear.eye,
+                size: 16,
+                color: AppColors.navy,
+              ),
               const SizedBox(width: 8),
               Text(
                 '${poi.viewCount}',
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.black,
@@ -566,7 +597,8 @@ class _PoiCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Views',
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 14,
                   color: const Color(0xFF6D6D6D),
                 ),
@@ -585,7 +617,8 @@ class _PoiCard extends StatelessWidget {
         if (poi.saleTag != null)
           Text(
             poi.saleTag!,
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.turquoise,
@@ -594,7 +627,8 @@ class _PoiCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           poi.price ?? poi.name,
-          style: GoogleFonts.inter(
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
@@ -613,24 +647,36 @@ class _PoiCard extends StatelessWidget {
         Row(
           children: [
             if (poi.area != null) ...[
-              const Icon(IconsaxPlusLinear.ruler,
-                  size: 14, color: Color(0xFF6D6D6D)),
+              const Icon(
+                IconsaxPlusLinear.ruler,
+                size: 14,
+                color: Color(0xFF6D6D6D),
+              ),
               const SizedBox(width: 8),
               Text(
                 poi.area!,
-                style: GoogleFonts.inter(
-                  fontSize: 12, color: const Color(0xFF3D3D3D)),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 12,
+                  color: const Color(0xFF3D3D3D),
+                ),
               ),
               const SizedBox(width: 16),
             ],
             if (poi.rooms != null) ...[
-              const Icon(IconsaxPlusLinear.building_3,
-                  size: 14, color: Color(0xFF6D6D6D)),
+              const Icon(
+                IconsaxPlusLinear.building_3,
+                size: 14,
+                color: Color(0xFF6D6D6D),
+              ),
               const SizedBox(width: 8),
               Text(
                 poi.rooms!,
-                style: GoogleFonts.inter(
-                  fontSize: 12, color: const Color(0xFF3D3D3D)),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 12,
+                  color: const Color(0xFF3D3D3D),
+                ),
               ),
             ],
           ],
@@ -640,13 +686,19 @@ class _PoiCard extends StatelessWidget {
         if (poi.floor != null)
           Row(
             children: [
-              const Icon(IconsaxPlusLinear.building,
-                  size: 14, color: Color(0xFF6D6D6D)),
+              const Icon(
+                IconsaxPlusLinear.building,
+                size: 14,
+                color: Color(0xFF6D6D6D),
+              ),
               const SizedBox(width: 8),
               Text(
                 poi.floor!,
-                style: GoogleFonts.inter(
-                  fontSize: 12, color: const Color(0xFF3D3D3D)),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 12,
+                  color: const Color(0xFF3D3D3D),
+                ),
               ),
             ],
           ),
@@ -661,7 +713,8 @@ class _PoiCard extends StatelessWidget {
       children: [
         Text(
           poi.name,
-          style: GoogleFonts.inter(
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
@@ -672,7 +725,8 @@ class _PoiCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           poi.category,
-          style: GoogleFonts.inter(
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 14,
             color: const Color(0xFF5F5E5A),
           ),
@@ -680,19 +734,11 @@ class _PoiCard extends StatelessWidget {
         const SizedBox(height: 8),
         // Time
         if (poi.time != null)
-          _infoRow(
-            IconsaxPlusLinear.clock,
-            poi.time!,
-            AppColors.turquoise,
-          ),
+          _infoRow(IconsaxPlusLinear.clock, poi.time!, AppColors.turquoise),
         const SizedBox(height: 4),
         // Venue
         if (poi.venue != null)
-          _infoRow(
-            IconsaxPlusLinear.location,
-            poi.venue!,
-            AppColors.turquoise,
-          ),
+          _infoRow(IconsaxPlusLinear.location, poi.venue!, AppColors.turquoise),
         const Spacer(),
         // Price + Interested
         Row(
@@ -701,7 +747,8 @@ class _PoiCard extends StatelessWidget {
             if (poi.eventPrice != null)
               Text(
                 poi.eventPrice!,
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: AppColors.navy,
@@ -710,12 +757,16 @@ class _PoiCard extends StatelessWidget {
             if (poi.interestedCount != null)
               Row(
                 children: [
-                  const Icon(IconsaxPlusBold.star_1,
-                      size: 16, color: AppColors.turquoise),
+                  const Icon(
+                    IconsaxPlusBold.star_1,
+                    size: 16,
+                    color: AppColors.turquoise,
+                  ),
                   const SizedBox(width: 4),
                   Text(
-                    '${poi.interestedCount} interested',
-                    style: GoogleFonts.inter(
+                    '${poi.interestedCount} מתעניינים',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF3D3D3D),
@@ -736,7 +787,8 @@ class _PoiCard extends StatelessWidget {
       children: [
         Text(
           poi.name,
-          style: GoogleFonts.inter(
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
@@ -747,7 +799,8 @@ class _PoiCard extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           poi.category,
-          style: GoogleFonts.inter(
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 14,
             color: const Color(0xFF5F5E5A),
           ),
@@ -771,7 +824,8 @@ class _PoiCard extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.inter(
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 12,
               color: const Color(0xFF5F5E5A),
             ),

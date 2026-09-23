@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -131,7 +131,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                     children: [
                       const Icon(IconsaxPlusLinear.global, size: 18, color: AppColors.midBlue),
                       const SizedBox(width: 6),
-                      Text(_isHebrew ? 'עב | EN' : 'EN | עב', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                      Text(_isHebrew ? 'עב | EN' : 'EN | עב', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                     ],
                   ),
                 ),
@@ -148,7 +148,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 ),
                 child: Text(
                   _t('Contact Us', 'צור קשר'),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
@@ -195,7 +195,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
             child: Text(
               _t('Everything Modiin Has to Offer,\nAll in One Place', 'כל מה שמודיעין מציעה,\nבמקום אחד'),
               textAlign: TextAlign.center,
-              style: GoogleFonts.nunito(
+              style: TextStyle(fontFamily: AppFonts.nunito, 
                 fontSize: 48,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
@@ -209,7 +209,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
             child: Text(
               _t('Businesses, news, events, real estate and more — all in one smart city platform.', 'עסקים, חדשות, אירועים, נדל"ן ועוד — הכל בפלטפורמה עירונית חכמה אחת.'),
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
                 color: Colors.white.withValues(alpha: 0.9),
@@ -250,10 +250,10 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 child: TextField(
                   controller: _searchController,
                   onSubmitted: (_) => _onSearch(),
-                  style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF1F1F1F)),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF1F1F1F)),
                   decoration: InputDecoration(
                     hintText: _t('What are you looking for?', 'מה אתה מחפש?'),
-                    hintStyle: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF4F4F4F)),
+                    hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF4F4F4F)),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -281,7 +281,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                     children: [
                       const Icon(IconsaxPlusBold.magic_star, color: Colors.white, size: 20),
                       const SizedBox(width: 8),
-                      Text(_t('Ask', 'שאל'), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                      Text(_t('Ask', 'שאל'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                     ],
                   ),
                 ),
@@ -323,7 +323,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 children: [
                   Icon(icon, size: 14, color: Colors.white),
                   const SizedBox(width: 8),
-                  Text(label, style: GoogleFonts.inter(fontSize: 12, color: Colors.white)),
+                  Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: Colors.white)),
                 ],
               ),
             ),
@@ -348,16 +348,16 @@ class _WebHomeContentState extends State<WebHomeContent> {
           children: [
             const Text('🚧', style: TextStyle(fontSize: 20)),
             const SizedBox(width: 12),
-            Text(_t('Traffic update:', 'עדכון תנועה:'), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
+            Text(_t('Traffic update:', 'עדכון תנועה:'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 _t('Road work on Begin St. – expect delays in the area', 'עבודות כביש ברח׳ בגין – צפויים עיכובים באזור'),
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF1F1F1F)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF1F1F1F)),
               ),
             ),
             const SizedBox(width: 6),
-            Text(_t('View details', 'צפה בפרטים'), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, decoration: TextDecoration.underline)),
+            Text(_t('View details', 'צפה בפרטים'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, decoration: TextDecoration.underline)),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: () => setState(() => _showTrafficAlert = false),
@@ -407,9 +407,9 @@ class _WebHomeContentState extends State<WebHomeContent> {
                     children: [
                       Icon(cat.$2, size: 32, color: AppColors.midBlue),
                       const SizedBox(height: 19),
-                      Text(cat.$1, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
+                      Text(cat.$1, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
                       const SizedBox(height: 4),
-                      Text(cat.$3, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6D6D6D)), textAlign: TextAlign.center),
+                      Text(cat.$3, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D)), textAlign: TextAlign.center),
                     ],
                   ),
                 ),
@@ -437,10 +437,10 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_t('Intelligence News', 'חדשות מודיעין'), style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
+                    Text(_t('Intelligence News', 'חדשות מודיעין'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
                     const SizedBox(height: 10),
                     Text(_t('Get the latest news, stories and important updates happening across the city.', 'קבלו את החדשות, הסיפורים והעדכונים החשובים ברחבי העיר.'),
-                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                   ],
                 ),
               ),
@@ -511,17 +511,17 @@ class _WebHomeContentState extends State<WebHomeContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(article.$1, style: GoogleFonts.nunito(fontSize: 22, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F), height: 1.22),
+                      Text(article.$1, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 22, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F), height: 1.22),
                           maxLines: 2, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 14),
-                      Text(article.$2, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A), height: 1.4),
+                      Text(article.$2, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A), height: 1.4),
                           maxLines: 2, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 14),
                       Row(
                         children: [
                           const Icon(IconsaxPlusLinear.calendar_1, size: 16, color: Color(0xFF6D6D6D)),
                           const SizedBox(width: 9),
-                          Text(article.$3, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6D6D6D))),
+                          Text(article.$3, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
                         ],
                       ),
                     ],
@@ -592,17 +592,17 @@ class _WebHomeContentState extends State<WebHomeContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(article.$1, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F), height: 1.3),
+                      Text(article.$1, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F), height: 1.3),
                           maxLines: 2, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 8),
-                      Text(article.$2, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A), height: 1.4),
+                      Text(article.$2, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A), height: 1.4),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           const Icon(IconsaxPlusLinear.calendar_1, size: 14, color: Color(0xFF6D6D6D)),
                           const SizedBox(width: 8),
-                          Text(article.$3, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF6D6D6D))),
+                          Text(article.$3, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: const Color(0xFF6D6D6D))),
                         ],
                       ),
                     ],
@@ -668,10 +668,10 @@ class _WebHomeContentState extends State<WebHomeContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_t('Explore Modiin', 'גלו את מודיעין'), style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
+        Text(_t('Explore Modiin', 'גלו את מודיעין'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
         const SizedBox(height: 10),
         Text(_t('Discover businesses, events and places around the city.', 'גלו עסקים, אירועים ומקומות ברחבי העיר.'),
-            style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
         const SizedBox(height: 32),
         _MapToggle(label: _t('Businesses', 'עסקים'), icon: IconsaxPlusLinear.shop, color: const Color(0xFF006BF6)),
         _MapToggle(label: _t('Events', 'אירועים'), icon: IconsaxPlusLinear.calendar, color: const Color(0xFF9032E1)),
@@ -688,7 +688,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_t('Open Map', 'פתח מפה'), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                Text(_t('Open Map', 'פתח מפה'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
                 const SizedBox(width: 8),
                 Icon(_isHebrew ? Icons.arrow_back : Icons.arrow_forward, size: 18, color: Colors.white),
               ],
@@ -737,7 +737,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(_t('Interactive Map', 'מפה אינטראקטיבית'), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+              child: Text(_t('Interactive Map', 'מפה אינטראקטיבית'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
             ),
           ),
         ],
@@ -779,7 +779,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
               children: [
                 const Icon(IconsaxPlusBold.magic_star, size: 20, color: AppColors.midBlue),
                 const SizedBox(width: 8),
-                Text(_t('AI Picks', 'המלצות AI'), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                Text(_t('AI Picks', 'המלצות AI'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
               ],
             ),
           ),
@@ -792,10 +792,10 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_t('Recommended for You', 'מומלץ עבורך'), style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
+                    Text(_t('Recommended for You', 'מומלץ עבורך'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
                     const SizedBox(height: 10),
                     Text(_t('Discover places, services and activities based on what matters to you.', 'גלו מקומות, שירותים ופעילויות על פי מה שחשוב לכם.'),
-                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                   ],
                 ),
               ),
@@ -845,10 +845,10 @@ class _WebHomeContentState extends State<WebHomeContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          Text(_t('Find a Professional in Modiin', 'מצאו בעל מקצוע במודיעין'), style: GoogleFonts.nunito(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
+          Text(_t('Find a Professional in Modiin', 'מצאו בעל מקצוע במודיעין'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
           const SizedBox(height: 10),
           Text(_t('Connect with trusted local professionals for your home, business and everyday needs.', 'התחברו עם בעלי מקצוע מקומיים אמינים לבית, לעסק ולצרכים היומיומיים.'),
-              style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
           const SizedBox(height: 24),
           // Filter pills
           Wrap(
@@ -863,7 +863,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                   border: Border.all(color: isActive ? AppColors.midBlue : const Color(0xFF6D6D6D)),
                   borderRadius: BorderRadius.circular(60),
                 ),
-                child: Text(e.value, style: GoogleFonts.inter(fontSize: 14, color: isActive ? Colors.white : const Color(0xFF6D6D6D))),
+                child: Text(e.value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: isActive ? Colors.white : const Color(0xFF6D6D6D))),
               );
             }).toList(),
           ),
@@ -955,7 +955,7 @@ class _NavLinkState extends State<_NavLink> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(widget.label, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: const Color(0xFF0F161E))),
+              Text(widget.label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 15, fontWeight: FontWeight.w500, color: const Color(0xFF0F161E))),
               if (widget.hasDropdown) ...[
                 const SizedBox(width: 4),
                 const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF21272A)),
@@ -986,7 +986,7 @@ class _ViewAllButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+            Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right, size: 16, color: Colors.white),
           ],
@@ -1014,7 +1014,7 @@ class _MapToggle extends StatelessWidget {
         children: [
           Icon(icon, size: 24, color: color),
           const SizedBox(width: 16),
-          Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F)))),
+          Expanded(child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F)))),
           Container(
             width: 44,
             height: 24,
@@ -1114,7 +1114,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(color: const Color(0xFF0033AC), borderRadius: BorderRadius.circular(50)),
-                      child: Text(d.badge, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
+                      child: Text(d.badge, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
                     ),
                   ),
                   // Status dot
@@ -1142,16 +1142,16 @@ class _BusinessCardState extends State<_BusinessCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
-                    Text(d.name, style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                    Text(d.name, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
                     const SizedBox(height: 4),
-                    Text(d.type, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A))),
+                    Text(d.type, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                     const SizedBox(height: 16),
                     // Address
                     Row(
                       children: [
                         const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
                         const SizedBox(width: 8),
-                        Expanded(child: Text(d.address, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A)), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        Expanded(child: Text(d.address, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A)), maxLines: 1, overflow: TextOverflow.ellipsis)),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -1160,15 +1160,15 @@ class _BusinessCardState extends State<_BusinessCard> {
                       children: [
                         const Icon(IconsaxPlusBold.star_1, size: 16, color: Color(0xFFFFC107)),
                         const SizedBox(width: 8),
-                        Text('${d.rating}', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
+                        Text('${d.rating}', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
                         const SizedBox(width: 4),
-                        Text('(${d.reviews})', style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6D6D6D))),
+                        Text('(${d.reviews})', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
                         const SizedBox(width: 40),
                         const Icon(IconsaxPlusLinear.eye, size: 16, color: Color(0xFF6D6D6D)),
                         const SizedBox(width: 8),
-                        Text('${d.views}', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
+                        Text('${d.views}', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
                         const SizedBox(width: 4),
-                        Text(widget.isHebrew ? 'צפיות' : 'Views', style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6D6D6D))),
+                        Text(widget.isHebrew ? 'צפיות' : 'Views', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -1184,7 +1184,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                         children: [
                           const Icon(IconsaxPlusLinear.call, size: 16, color: AppColors.midBlue),
                           const SizedBox(width: 8),
-                          Text(widget.isHebrew ? 'צור קשר' : 'Contact', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                          Text(widget.isHebrew ? 'צור קשר' : 'Contact', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                         ],
                       ),
                     ),
@@ -1252,9 +1252,9 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
               child: Center(child: Text(d.emoji, style: const TextStyle(fontSize: 40))),
             ),
             const SizedBox(height: 16),
-            Text(d.name, style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy), textAlign: TextAlign.center),
+            Text(d.name, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy), textAlign: TextAlign.center),
             const SizedBox(height: 4),
-            Text(d.role, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF5F5E5A)), textAlign: TextAlign.center),
+            Text(d.role, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A)), textAlign: TextAlign.center),
             const SizedBox(height: 34),
             // Call button
             Container(
@@ -1270,7 +1270,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                 children: [
                   Icon(IconsaxPlusLinear.call, size: 16, color: d.filled ? Colors.white : AppColors.midBlue),
                   const SizedBox(width: 8),
-                  Text(widget.isHebrew ? 'התקשר עכשיו' : 'Call Now', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: d.filled ? Colors.white : AppColors.midBlue)),
+                  Text(widget.isHebrew ? 'התקשר עכשיו' : 'Call Now', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: d.filled ? Colors.white : AppColors.midBlue)),
                 ],
               ),
             ),

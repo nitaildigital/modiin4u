@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
@@ -56,7 +56,7 @@ class OnboardingScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Skip',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white,
@@ -88,7 +88,7 @@ class OnboardingScreen extends StatelessWidget {
                   child: Text(
                     'Everything in Modiin,\nin one place.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.rubik(
+                    style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -103,7 +103,7 @@ class OnboardingScreen extends StatelessWidget {
                   child: Text(
                     'Discover restaurants, businesses, events, deals, real estate and more.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
@@ -134,7 +134,7 @@ class OnboardingScreen extends StatelessWidget {
                           ),
                           child: Text(
                             'Sign In',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -170,7 +170,7 @@ class OnboardingScreen extends StatelessWidget {
                           ),
                           label: Text(
                             'Continue with Google',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -187,7 +187,7 @@ class OnboardingScreen extends StatelessWidget {
                           children: [
                             Text(
                               "Don't have an account?",
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white,
@@ -196,7 +196,7 @@ class OnboardingScreen extends StatelessWidget {
                             const SizedBox(width: 8),
                             Text(
                               'Sign Up',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
@@ -210,7 +210,7 @@ class OnboardingScreen extends StatelessWidget {
                       Text(
                         'By creating an account of signing up, you are agree to your Terms of Service and Privacy Policy',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: Colors.white,

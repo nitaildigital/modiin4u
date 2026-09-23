@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -302,7 +302,7 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
                     const Icon(IconsaxPlusLinear.global, size: 18, color: AppColors.midBlue),
                     const SizedBox(width: 6),
                     Text(_isHebrew ? 'עב | EN' : 'EN | עב',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                   ],
                 ),
@@ -320,7 +320,7 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
                   borderRadius: BorderRadius.circular(60),
                 ),
                 child: Text(_t('Contact Us', 'צור קשר'),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
               ),
             ),
@@ -382,10 +382,10 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
           Expanded(
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.inter(fontSize: 14, color: AppColors.navy),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.navy),
               decoration: InputDecoration(
                 hintText: _t('Search by location...', 'חיפוש לפי מיקום...'),
-                hintStyle: GoogleFonts.inter(fontSize: 14, color: _kTextGrey),
+                hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextGrey),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -407,7 +407,7 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
         const SizedBox(height: 17),
         for (var i = 0; i < options.length; i++) ...[
@@ -452,13 +452,13 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(option.label,
-                  style: GoogleFonts.inter(fontSize: 13, color: _kTextDark, height: 16 / 13),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kTextDark, height: 16 / 13),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(width: 8),
             Text('${option.count}',
-                style: GoogleFonts.inter(fontSize: 13, color: _kTextDark, height: 16 / 13)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kTextDark, height: 16 / 13)),
           ],
         ),
       ),
@@ -528,14 +528,14 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(headline,
-                  style: GoogleFonts.nunito(
+                  style: TextStyle(fontFamily: AppFonts.nunito, 
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       height: 34 / 28,
                       color: AppColors.midBlue)),
               const SizedBox(height: 8),
               Text(_t('in Modiin Maccabim Reut', 'במודיעין מכבים רעות'),
-                  style: GoogleFonts.inter(fontSize: 14, color: _kSubtitle)),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kSubtitle)),
             ],
           ),
         ),
@@ -559,7 +559,7 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
         children: [
           Expanded(
             child: Text(_t('Sort by: Newest', 'מיון: חדש ביותר'),
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.black),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black),
                 overflow: TextOverflow.ellipsis),
           ),
           const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF4F4F4F)),
@@ -580,7 +580,7 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
             const SizedBox(height: 16),
             Text(
               _t('No events match your filters', 'אין אירועים שתואמים את הסינון'),
-              style: GoogleFonts.nunito(
+              style: TextStyle(fontFamily: AppFonts.nunito, 
                   fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy),
               textAlign: TextAlign.center,
             ),
@@ -588,7 +588,7 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
             Text(
               _t('Try clearing a filter or searching for something else.',
                   'נסו להסיר סינון או לחפש משהו אחר.'),
-              style: GoogleFonts.inter(fontSize: 14, color: _kSubtitle),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kSubtitle),
               textAlign: TextAlign.center,
             ),
           ],
@@ -709,14 +709,14 @@ class _EventListRowState extends State<_EventListRow> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(e.month,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.midBlue,
                                     height: 15 / 12)),
                             const SizedBox(height: 4),
                             Text(e.day,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: AppFonts.inter, 
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.black,
@@ -745,7 +745,7 @@ class _EventListRowState extends State<_EventListRow> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(e.title,
-                                    style: GoogleFonts.nunito(
+                                    style: TextStyle(fontFamily: AppFonts.nunito, 
                                         fontSize: 18,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.navy,
@@ -792,11 +792,11 @@ class _EventListRowState extends State<_EventListRow> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(widget.isHebrew ? 'מחיר' : 'Price',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                         fontSize: 14, color: _kSubtitle, height: 17 / 14)),
                                 const SizedBox(height: 4),
                                 Text(e.price,
-                                    style: GoogleFonts.nunito(
+                                    style: TextStyle(fontFamily: AppFonts.nunito, 
                                         fontSize: 22,
                                         fontWeight: FontWeight.w600,
                                         color: e.isFree ? AppColors.midBlue : AppColors.navy,
@@ -817,7 +817,7 @@ class _EventListRowState extends State<_EventListRow> {
                                     widget.isHebrew
                                         ? '${e.interested} מתעניינים'
                                         : '${e.interested} people interested',
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(fontFamily: AppFonts.inter, 
                                         fontSize: 12,
                                         color: Colors.black,
                                         height: 15 / 12),
@@ -845,7 +845,7 @@ class _EventListRowState extends State<_EventListRow> {
 
   Widget _metaRow(IconData icon, String text, {bool forceLtr = false}) {
     Widget label = Text(text,
-        style: GoogleFonts.inter(fontSize: 12, color: _kTextDark, height: 15 / 12),
+        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kTextDark, height: 15 / 12),
         maxLines: 1,
         overflow: TextOverflow.ellipsis);
     // Clock ranges stay left-to-right even in the Hebrew layout.
@@ -882,7 +882,7 @@ class _EventListRowState extends State<_EventListRow> {
               const Icon(IconsaxPlusLinear.export_3, size: 16, color: AppColors.midBlue),
               const SizedBox(width: 8),
               Text(widget.isHebrew ? 'לפרטים' : 'View Detail',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
             ],
           ),
@@ -1039,7 +1039,7 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
                   Flexible(
                     child: Text(
                       widget.label,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 15,
                         fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w500,
                         color: widget.isActive ? AppColors.midBlue : const Color(0xFF0F161E),

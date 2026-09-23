@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -286,7 +286,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
                         size: 18, color: AppColors.midBlue),
                     const SizedBox(width: 6),
                     Text(_isHebrew ? 'עב | EN' : 'EN | עב',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: AppFonts.inter, 
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: AppColors.midBlue)),
@@ -307,7 +307,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
                   borderRadius: BorderRadius.circular(60),
                 ),
                 child: Text(_t('Contact Us', 'צור קשר'),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: Colors.white)),
@@ -394,14 +394,14 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text('$stars',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 13, color: _kTextDark)),
                         const SizedBox(width: 4),
                         const Icon(IconsaxPlusBold.star_1,
                             size: 14, color: _kGold),
                         const SizedBox(width: 4),
                         Text(_t('& up', 'ומעלה'),
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 13, color: _kTextDark)),
                       ],
                     ),
@@ -445,12 +445,12 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
           Expanded(
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.inter(fontSize: 14, color: AppColors.navy),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.navy),
               decoration: InputDecoration(
                 hintText: _t('Search restaurant or cuisine...',
                     'חיפוש מסעדה או סוג מטבח...'),
                 hintStyle:
-                    GoogleFonts.inter(fontSize: 14, color: _kTextGrey),
+                    TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextGrey),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -468,7 +468,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.navy)),
@@ -513,7 +513,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
             labelWidget ??
                 Text(label ?? '',
                     style:
-                        GoogleFonts.inter(fontSize: 13, color: _kTextDark)),
+                        TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kTextDark)),
           ],
         ),
       ),
@@ -566,7 +566,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
             children: [
               Text(
                 _t('$count Restaurant Listings', '$count מסעדות'),
-                style: GoogleFonts.nunito(
+                style: TextStyle(fontFamily: AppFonts.nunito, 
                     fontSize: 28,
                     fontWeight: FontWeight.w600,
                     height: 34 / 28,
@@ -575,7 +575,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
               const SizedBox(height: 8),
               Text(
                 _t('in Modiin Maccabim Reut', 'במודיעין מכבים רעות'),
-                style: GoogleFonts.inter(fontSize: 14, color: _kSubtitle),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kSubtitle),
               ),
             ],
           ),
@@ -601,7 +601,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
           Expanded(
             child: Text(
               _t('Sort by: Newest', 'מיון: חדש ביותר'),
-              style: GoogleFonts.inter(fontSize: 14, color: Colors.black),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -625,7 +625,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
             Text(
               _t('No restaurants match your filters',
                   'אין מסעדות שתואמות את הסינון'),
-              style: GoogleFonts.nunito(
+              style: TextStyle(fontFamily: AppFonts.nunito, 
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: AppColors.navy),
@@ -635,7 +635,7 @@ class _WebRestaurantsMapContentState extends State<WebRestaurantsMapContent> {
             Text(
               _t('Try clearing a filter or searching for something else.',
                   'נסו להסיר סינון או לחפש משהו אחר.'),
-              style: GoogleFonts.inter(fontSize: 14, color: _kSubtitle),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kSubtitle),
               textAlign: TextAlign.center,
             ),
           ],
@@ -788,7 +788,7 @@ class _ListingRowState extends State<_ListingRow> {
                               children: [
                                 Text(
                                   l.name,
-                                  style: GoogleFonts.nunito(
+                                  style: TextStyle(fontFamily: AppFonts.nunito, 
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
                                       height: 22 / 18,
@@ -799,7 +799,7 @@ class _ListingRowState extends State<_ListingRow> {
                                 const SizedBox(height: 8),
                                 Text(
                                   l.subtitle,
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: AppFonts.inter, 
                                       fontSize: 14, color: _kSubtitle),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -812,14 +812,14 @@ class _ListingRowState extends State<_ListingRow> {
                                     const SizedBox(width: 8),
                                     Text(
                                       l.rating.toStringAsFixed(1),
-                                      style: GoogleFonts.inter(
+                                      style: TextStyle(fontFamily: AppFonts.inter, 
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Colors.black),
                                     ),
                                     const SizedBox(width: 8),
                                     Text('(${l.reviews})',
-                                        style: GoogleFonts.inter(
+                                        style: TextStyle(fontFamily: AppFonts.inter, 
                                             fontSize: 14,
                                             color: _kTextGrey)),
                                   ],
@@ -865,7 +865,7 @@ class _ListingRowState extends State<_ListingRow> {
                           Expanded(
                             child: Text(
                               l.address,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: AppFonts.inter, 
                                   fontSize: 14, color: _kSubtitle),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -918,7 +918,7 @@ class _ListingRowState extends State<_ListingRow> {
             const SizedBox(width: 6),
           ],
           Text(label,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: AppFonts.inter, 
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   height: 15 / 12,
@@ -948,7 +948,7 @@ class _ListingRowState extends State<_ListingRow> {
                   size: 16, color: AppColors.midBlue),
               const SizedBox(width: 8),
               Text(_t('Contact', 'צור קשר'),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: AppColors.midBlue)),
@@ -1111,7 +1111,7 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
                   Flexible(
                     child: Text(
                       widget.label,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 15,
                         fontWeight: widget.isActive
                             ? FontWeight.w600

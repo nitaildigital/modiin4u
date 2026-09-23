@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 
 class _CategoryItem {
@@ -38,7 +38,7 @@ class CategoryRow extends StatelessWidget {
         itemBuilder: (context, index) {
           final cat = _categories[index];
           return GestureDetector(
-            onTap: () => context.go(cat.route),
+            onTap: () => context.goOrPush(cat.route),
             child: Container(
               width: 110,
               padding: const EdgeInsets.all(12),
@@ -69,11 +69,11 @@ class CategoryRow extends StatelessWidget {
                   const Spacer(),
                   Text(
                     cat.label,
-                    style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: context.textPrimary),
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: context.textPrimary),
                   ),
                   Text(
                     cat.subtitle,
-                    style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayMeta),
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayMeta),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

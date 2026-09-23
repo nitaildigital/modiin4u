@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../businesses/widgets/review_card.dart';
 
@@ -35,7 +35,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                           backgroundColor: AppColors.white,
                           child: Text(
                             'יר',
-                            style: GoogleFonts.rubik(
+                            style: TextStyle(fontFamily: AppFonts.rubik, 
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
                               color: AppColors.midBlue,
@@ -45,7 +45,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                         Text(
                           'יוסי רביבו',
-                          style: GoogleFonts.rubik(
+                          style: TextStyle(fontFamily: AppFonts.rubik, 
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                             color: AppColors.white,
@@ -53,7 +53,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                         ),
                         Text(
                           'אינסטלטור',
-                          style: GoogleFonts.rubik(
+                          style: TextStyle(fontFamily: AppFonts.rubik, 
                             fontSize: 14,
                             color: AppColors.white.withValues(alpha: 0.8),
                           ),
@@ -95,7 +95,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 'זמין עכשיו',
-                                style: GoogleFonts.rubik(
+                                style: TextStyle(fontFamily: AppFonts.rubik, 
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.success,
@@ -109,7 +109,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           'משיב תוך כ-15 דק׳',
-                          style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+                          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                         ),
                       ],
                     ),
@@ -120,12 +120,12 @@ class ProfessionalDetailScreen extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '4.8',
-                          style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navy),
+                          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.navy),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '(43 ביקורות)',
-                          style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                         ),
                       ],
                     ),
@@ -137,7 +137,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                           child: ElevatedButton.icon(
                             onPressed: () {},
                             icon: const Icon(Icons.phone),
-                            label: Text('התקשרו', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
+                            label: Text('התקשרו', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600)),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
@@ -148,14 +148,14 @@ class ProfessionalDetailScreen extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: () {},
                             icon: const Icon(Icons.chat, size: 18),
-                            label: Text('וואטסאפ', style: GoogleFonts.rubik(fontSize: 13)),
+                            label: Text('וואטסאפ', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () {},
-                            child: Text('הצעת מחיר', style: GoogleFonts.rubik(fontSize: 12)),
+                            child: Text('הצעת מחיר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)),
                           ),
                         ),
                       ],
@@ -163,7 +163,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     Text(
                       'תחומי התמחות',
-                      style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy),
                     ),
                     const SizedBox(height: 10),
                     Wrap(
@@ -181,7 +181,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     Text(
                       'אזור שירות',
-                      style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy),
                     ),
                     const SizedBox(height: 10),
                     Container(
@@ -199,7 +199,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                             const SizedBox(height: 6),
                             Text(
                               'רדיוס 15 ק"מ ממודיעין',
-                              style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+                              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                             ),
                           ],
                         ),
@@ -208,7 +208,7 @@ class ProfessionalDetailScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     Text(
                       'עבודות אחרונות',
-                      style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
@@ -238,12 +238,12 @@ class ProfessionalDetailScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     Text(
                       'ביקורות',
-                      style: GoogleFonts.rubik(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.navy),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'רק מי שהזמין שירות בפועל יכול לכתוב ביקורת',
-                      style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayLight),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayLight),
                     ),
                     const SizedBox(height: 12),
                     const ReviewCard(
@@ -289,7 +289,7 @@ class _SpecTag extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: GoogleFonts.rubik(fontSize: 13, color: AppColors.midBlue),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.midBlue),
       ),
     );
   }

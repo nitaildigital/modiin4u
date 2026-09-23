@@ -1,21 +1,71 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/error_retry.dart';
+import '../../../shared/widgets/skeleton.dart';
+import '../models/business.dart';
+import '../providers/business_providers.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../../favorites/repositories/favorite_repository.dart';
 
-class BusinessDetailScreen extends StatefulWidget {
+class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
 
   const BusinessDetailScreen({super.key, required this.businessId});
 
   @override
-  State<BusinessDetailScreen> createState() => _BusinessDetailScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = businessByIdProvider(businessId);
+
+    return ref
+        .watch(provider)
+        .when(
+          loading: () => const _BusinessDetailSkeleton(),
+          error: (error, _) => Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              child: ErrorRetry(onRetry: () => ref.invalidate(provider)),
+            ),
+          ),
+          data: (business) => _BusinessDetailContent(business: business),
+        );
+  }
 }
 
-class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
+class _BusinessDetailContent extends ConsumerStatefulWidget {
+  final Business business;
+
+  const _BusinessDetailContent({required this.business});
+
+  @override
+  ConsumerState<_BusinessDetailContent> createState() =>
+      _BusinessDetailContentState();
+}
+
+class _BusinessDetailContentState
+    extends ConsumerState<_BusinessDetailContent> {
+  Business get business => widget.business;
+
+  /// The page has two share controls — one on the photograph, one in the
+  /// action row — and they now send the same thing.
+  void _shareBusiness() {
+    Share.share(
+      [
+        business.name,
+        business.description,
+        business.address,
+      ].whereType<String>().where((s) => s.isNotEmpty).join('\n'),
+      subject: business.name,
+    );
+  }
+
   int _selectedTab = 0;
 
   // Review creation state
@@ -55,8 +105,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Shipudey Hatikva',
-                    style: GoogleFonts.rubik(
+                    business.name,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -64,8 +115,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Grill Restaurant · Meat · Kosher',
-                    style: GoogleFonts.inter(
+                    business.description ?? '',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF6D6D6D),
@@ -113,7 +165,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
       height: 260,
       child: Stack(
         children: [
-          // Background gradient (placeholder for image)
+          // Cover photo, falling back to the brand gradient
           Container(
             width: double.infinity,
             height: 260,
@@ -125,7 +177,15 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
               ),
             ),
             child: Stack(
+              fit: StackFit.expand,
               children: [
+                if (business.imageUrl != null && business.imageUrl!.isNotEmpty)
+                  CachedNetworkImage(
+                    imageUrl: business.imageUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (_, _) => const SizedBox.shrink(),
+                    errorWidget: (_, _, _) => const SizedBox.shrink(),
+                  ),
                 // Dark gradient overlay at bottom
                 Positioned.fill(
                   child: DecoratedBox(
@@ -169,7 +229,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
             top: topPadding + 7,
             child: _CircleButton(
               icon: IconsaxPlusLinear.export_1,
-              onTap: () {},
+              onTap: _shareBusiness,
             ),
           ),
 
@@ -177,44 +237,18 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           Positioned(
             right: 12,
             top: topPadding + 7,
-            child: _CircleButton(
-              icon: IconsaxPlusLinear.heart,
-              onTap: () {},
+            child: FavoriteButton(
+              kind: FavoriteKind.business,
+              id: business.id,
+              size: 40,
+              iconSize: 20,
+              color: const Color(0xFF3D3D3D),
             ),
           ),
 
-          // "Show all photos" button
-          Positioned(
-            right: 12,
-            bottom: 14,
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(IconsaxPlusLinear.camera,
-                        size: 14, color: Colors.white),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Show all photos',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // The "Show all photos" control used to sit here doing nothing.
+          // A business carries a single cover image; a gallery needs the
+          // `media` table, which is empty (A5b). Restore it with the gallery.
         ],
       ),
     );
@@ -255,31 +289,36 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
 
             const Spacer(),
 
-            // Kosher badge button
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFFE7E7E7)),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(IconsaxPlusLinear.verify,
-                      size: 14, color: AppColors.midBlue),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Kosher',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+            // Kosher badge — only shown when the business is certified
+            if (business.kosherLabel != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFE7E7E7)),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      IconsaxPlusLinear.verify,
+                      size: 14,
                       color: AppColors.midBlue,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Text(
+                      business.kosherLabel!,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.midBlue,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -295,12 +334,16 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
       child: Row(
         children: [
           // Star + rating
-          const Icon(IconsaxPlusBold.star_1,
-              size: 16, color: Color(0xFFFFC107)),
+          const Icon(
+            IconsaxPlusBold.star_1,
+            size: 16,
+            color: Color(0xFFFFC107),
+          ),
           const SizedBox(width: 6),
           Text(
-            '4.8',
-            style: GoogleFonts.inter(
+            business.rating.toStringAsFixed(1),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.black,
@@ -308,39 +351,46 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           ),
           const SizedBox(width: 4),
           Text(
-            '(128)',
-            style: GoogleFonts.inter(
+            '(${business.reviewCount})',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
             ),
           ),
 
-          const SizedBox(width: 16),
-
-          // Open now
-          Container(
-            width: 16,
-            height: 16,
-            decoration: const BoxDecoration(
-              color: Color(0xFF00BA00),
-              shape: BoxShape.circle,
+          // Open or closed, but only when the business has hours on record.
+          if (business.hours.isNotEmpty) ...[
+            const SizedBox(width: 16),
+            Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: business.isOpenNow
+                    ? const Color(0xFF00BA00)
+                    : AppColors.error,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                business.isOpenNow ? Icons.check : Icons.close,
+                size: 10,
+                color: Colors.white,
+              ),
             ),
-            child: const Icon(
-              Icons.check,
-              size: 10,
-              color: Colors.white,
+            const SizedBox(width: 8),
+            Text(
+              business.isOpenNow ? 'פתוח עכשיו' : 'סגור',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: business.isOpenNow
+                    ? const Color(0xFF00BA00)
+                    : AppColors.error,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Open now',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF00BA00),
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -354,13 +404,20 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          const Icon(IconsaxPlusLinear.location,
-              size: 16, color: Color(0xFF888888)),
+          const Icon(
+            IconsaxPlusLinear.location,
+            size: 16,
+            color: Color(0xFF888888),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '21 Sderot El Melachot, Modi\'in Maccabim-Re\'ut',
-              style: GoogleFonts.inter(
+              [
+                business.address,
+                business.neighborhood,
+              ].where((s) => s.isNotEmpty).join(', '),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF6D6D6D),
@@ -369,9 +426,11 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          // Distance needs the device location, which is not wired up yet.
           Text(
-            '2.1 km away',
-            style: GoogleFonts.inter(
+            '',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.black,
@@ -393,7 +452,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           // Call Now button
           Expanded(
             child: GestureDetector(
-              onTap: () => launchUrl(Uri.parse('tel:+972501234567')),
+              onTap: business.phone == null
+                  ? null
+                  : () => launchUrl(Uri.parse('tel:${business.phone}')),
               child: Container(
                 height: 40,
                 decoration: BoxDecoration(
@@ -403,12 +464,16 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(IconsaxPlusLinear.call,
-                        size: 16, color: Colors.white),
+                    const Icon(
+                      IconsaxPlusLinear.call,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'Call Now',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -426,7 +491,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           _OutlineCircleButton(
             icon: IconsaxPlusLinear.global,
             color: AppColors.turquoise,
-            onTap: () => launchUrl(Uri.parse('https://example.com')),
+            onTap: business.website == null
+                ? null
+                : () => launchUrl(Uri.parse(business.website!)),
           ),
 
           const SizedBox(width: 8),
@@ -435,7 +502,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           _OutlineCircleButton(
             icon: IconsaxPlusLinear.instagram,
             color: AppColors.turquoise,
-            onTap: () => launchUrl(Uri.parse('https://instagram.com/shipudeyhatikva')),
+            onTap: business.instagram == null
+                ? null
+                : () => launchUrl(Uri.parse(business.instagram!)),
           ),
 
           const SizedBox(width: 8),
@@ -444,7 +513,12 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           _OutlineCircleButton(
             icon: IconsaxPlusLinear.routing,
             color: AppColors.turquoise,
-            onTap: () => launchUrl(Uri.parse('https://waze.com/ul?ll=31.8928,34.8713&navigate=yes')),
+            onTap: () => launchUrl(
+              Uri.parse(
+                'https://waze.com/ul?ll=${business.latitude},'
+                '${business.longitude}&navigate=yes',
+              ),
+            ),
           ),
 
           const SizedBox(width: 8),
@@ -453,7 +527,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           _OutlineCircleButton(
             icon: IconsaxPlusLinear.export_1,
             color: AppColors.turquoise,
-            onTap: () {},
+            onTap: _shareBusiness,
           ),
         ],
       ),
@@ -469,9 +543,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
     return Container(
       height: 48,
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE7E7E7)),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Row(
         children: tabs.asMap().entries.map((entry) {
@@ -484,8 +556,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color:
-                          isActive ? AppColors.midBlue : Colors.transparent,
+                      color: isActive ? AppColors.midBlue : Colors.transparent,
                       width: 2,
                     ),
                   ),
@@ -493,10 +564,10 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                 child: Center(
                   child: Text(
                     entry.value,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
-                      fontWeight:
-                          isActive ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                       color: isActive
                           ? AppColors.midBlue
                           : const Color(0xFF454545),
@@ -547,7 +618,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           ('Tahini with Mushrooms', '₪38'),
           ('Chopped Salad', '₪28'),
           ('Eggplant with Tehina', '₪34'),
-        ]
+        ],
       ),
       (
         'Grilled Meats',
@@ -557,7 +628,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           ('Lamb Chops', '₪112'),
           ('Beef Kebab', '₪78'),
           ('Chicken Wings (8 pcs)', '₪52'),
-        ]
+        ],
       ),
       (
         'Sides',
@@ -565,7 +636,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           ('French Fries', '₪22'),
           ('Rice Pilaf', '₪18'),
           ('Grilled Vegetables', '₪26'),
-        ]
+        ],
       ),
       (
         'Drinks',
@@ -573,7 +644,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           ('Soft Drink', '₪14'),
           ('Fresh Lemonade', '₪22'),
           ('Israeli Beer', '₪28'),
-        ]
+        ],
       ),
     ];
 
@@ -589,7 +660,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
               const SizedBox(height: 8),
               Text(
                 category,
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF1F1F1F),
@@ -605,7 +677,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                     children: [
                       Text(
                         name,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF3D3D3D),
@@ -613,7 +686,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                       ),
                       Text(
                         price,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
@@ -656,12 +730,16 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
               ),
               child: Column(
                 children: [
-                  const Icon(IconsaxPlusLinear.camera,
-                      size: 32, color: AppColors.midBlue),
+                  const Icon(
+                    IconsaxPlusLinear.camera,
+                    size: 32,
+                    color: AppColors.midBlue,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Upload a Photo',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: AppColors.midBlue,
@@ -670,7 +748,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Share your experience with the community',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 12,
                       color: const Color(0xFF6D6D6D),
                     ),
@@ -680,71 +759,12 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
             ),
           ),
 
-          const SizedBox(height: 24),
-
-          // Business Gallery
-          Text(
-            'Business Gallery',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildPhotoGrid([
-            const Color(0xFF8B6914),
-            const Color(0xFF2D6A4F),
-            const Color(0xFF6B1D2A),
-            const Color(0xFF1A4B6E),
-            const Color(0xFF667EEA),
-            const Color(0xFF11998E),
-          ]),
-
-          const SizedBox(height: 24),
-
-          // User Photos
-          Text(
-            'Pictures from our Users',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildPhotoGrid([
-            const Color(0xFFF093FB),
-            const Color(0xFF4FACFE),
-            const Color(0xFF43E97B),
-            const Color(0xFFFA709A),
-          ]),
+          // A gallery and a user-photo grid used to sit here, both drawn as
+          // coloured squares — ten of them, the same ten for every business.
+          // Photos come from `media`, which has no rows yet (A5b).
+          const _NoPhotosYet(),
         ],
       ),
-    );
-  }
-
-  Widget _buildPhotoGrid(List<Color> colors) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: colors.map((color) {
-        return Container(
-          width: (MediaQuery.of(context).size.width - 48) / 3,
-          height: (MediaQuery.of(context).size.width - 48) / 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Icon(
-              IconsaxPlusLinear.image,
-              size: 24,
-              color: Colors.white.withValues(alpha: 0.4),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 
@@ -800,47 +820,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
             ),
           ),
 
-        // ── Existing reviews ──
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              _ReviewCardWithReply(
-                initials: 'DC',
-                name: 'Daniel Cohen',
-                date: 'August 8, 2026',
-                rating: 4,
-                text:
-                    'Great food and generous portions. The grilled meats were fresh and perfectly cooked. The staff was friendly and the atmosphere was relaxed. Definitely coming back.',
-              ),
-              _ReviewCardWithReply(
-                initials: 'ML',
-                name: 'Maya Levi',
-                date: 'August 8, 2026',
-                rating: 4,
-                text:
-                    'We came for dinner with the family and really enjoyed it. The mixed grill was excellent and the salads were fresh. A great place for a casual family meal.',
-              ),
-              _ReviewCardWithReply(
-                initials: 'AS',
-                name: 'Amit Shalev',
-                date: 'August 8, 2026',
-                rating: 4,
-                text:
-                    'Good food, nice service and a comfortable outdoor seating area. It can get busy during dinner, but the food is worth the wait.',
-              ),
-              _ReviewCardWithReply(
-                initials: 'YF',
-                name: 'Yael Friedman',
-                date: 'August 8, 2026',
-                rating: 4,
-                text:
-                    'The chicken skewers were amazing and the hummus is some of the best I\'ve had. Friendly service and fair prices. We\'ll definitely be back!',
-                isLast: true,
-              ),
-            ],
-          ),
-        ),
+        // ── Reviews from the database ──
+        _buildReviewList(withReply: true),
       ],
     );
   }
@@ -860,7 +841,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           children: [
             Text(
               'How was your experience?',
-              style: GoogleFonts.rubik(
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
@@ -869,7 +851,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
             const SizedBox(height: 4),
             Text(
               'Rate and share your experience',
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF6D6D6D),
@@ -911,13 +894,14 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                 _userRating == 1
                     ? 'Poor'
                     : _userRating == 2
-                        ? 'Fair'
-                        : _userRating == 3
-                            ? 'Good'
-                            : _userRating == 4
-                                ? 'Very Good'
-                                : 'Excellent!',
-                style: GoogleFonts.inter(
+                    ? 'Fair'
+                    : _userRating == 3
+                    ? 'Good'
+                    : _userRating == 4
+                    ? 'Very Good'
+                    : 'Excellent!',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: AppColors.midBlue,
@@ -946,7 +930,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           children: [
             Text(
               'Write your review',
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.black,
@@ -956,10 +941,12 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
             TextField(
               controller: _reviewTextController,
               maxLines: 4,
-              style: GoogleFonts.inter(fontSize: 13),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13),
               decoration: InputDecoration(
-                hintText: 'Share details about your experience at this place...',
-                hintStyle: GoogleFonts.inter(
+                hintText:
+                    'Share details about your experience at this place...',
+                hintStyle: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 13,
                   color: const Color(0xFF9E9E9E),
                 ),
@@ -1003,7 +990,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                       ),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF6D6D6D),
@@ -1052,7 +1040,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                       ),
                       child: Text(
                         'Submit',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -1076,9 +1065,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(left: 16, right: 16),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE7E7E7)),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1087,63 +1074,64 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
 
           // About section
           Text(
-            'About Shipudey Hatikva',
-            style: GoogleFonts.inter(
+            'אודות ${business.name}',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Shipudey Hatikva is a beloved grill restaurant in the heart of Modi\'in, bringing together high-quality grilled meats, fresh ingredients, and warm Israeli hospitality. The restaurant offers a relaxed and welcoming atmosphere where guests can enjoy a casual meal with family, meet friends, or celebrate special occasions... ',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF3D3D3D),
-              height: 1.6,
-            ),
-          ),
-          GestureDetector(
-            onTap: () {},
-            child: Text(
-              'See More',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.midBlue,
+          _ExpandableText(text: business.description ?? ''),
+
+          // Opening hours, only when this business has them. The section
+          // used to state Mon-Sat 12:00-9:30 and closed Sunday for every
+          // business in the directory, whatever its real hours were —
+          // something a resident would act on and turn up to a shut shop.
+          if (business.hours.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Text(
+              'שעות פתיחה',
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1F1F1F),
               ),
             ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Working Hours
-          Text(
-            'Working Hours',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          ..._buildHoursRows(),
+            const SizedBox(height: 20),
+            ..._buildHoursRows(),
+          ],
         ],
       ),
     );
   }
 
+  /// Monday first, as the design lays it out. The model normalises the
+  /// table's 0 = Sunday to Dart's 1 = Monday .. 7 = Sunday.
+  static const _dayNames = {
+    DateTime.monday: 'יום שני',
+    DateTime.tuesday: 'יום שלישי',
+    DateTime.wednesday: 'יום רביעי',
+    DateTime.thursday: 'יום חמישי',
+    DateTime.friday: 'יום שישי',
+    DateTime.saturday: 'שבת',
+    DateTime.sunday: 'יום ראשון',
+  };
+
   List<Widget> _buildHoursRows() {
+    final byDay = {for (final h in business.hours) h.dayOfWeek: h};
+
     final hours = [
-      ('Mon', '12:00 PM - 9:30 PM', false),
-      ('Tue', '12:00 PM - 9:30 PM', false),
-      ('Wed', '12:00 PM - 9:30 PM', false),
-      ('Thu', '12:00 PM - 9:30 PM', false),
-      ('Fri', '12:00 PM - 9:30 PM', false),
-      ('Sat', '12:00 PM - 9:30 PM', false),
-      ('Sun', 'Close', true),
+      for (var day = DateTime.monday; day <= DateTime.sunday; day++)
+        (
+          _dayNames[day]!,
+          byDay[day] == null || byDay[day]!.isClosed
+              ? 'סגור'
+              : '${byDay[day]!.openTime} - ${byDay[day]!.closeTime}',
+          byDay[day] == null || byDay[day]!.isClosed,
+        ),
     ];
 
     return hours.asMap().entries.map((entry) {
@@ -1155,7 +1143,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           children: [
             Text(
               day,
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF3D3D3D),
@@ -1163,7 +1152,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
             ),
             Text(
               time,
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: isClosed
@@ -1184,38 +1174,11 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE7E7E7)),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Business Gallery title
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Business Gallery',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1F1F1F),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Horizontal image scroll
-          _buildImageScroll([
-            const Color(0xFF8B6914),
-            const Color(0xFF2D6A4F),
-            const Color(0xFF6B1D2A),
-            const Color(0xFF1A4B6E),
-            const Color(0xFF667EEA),
-          ]),
-
-          const SizedBox(height: 24),
-
           // Review prompt card
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1233,8 +1196,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Have you visited Shipudey Hatikva?',
-                          style: GoogleFonts.inter(
+                          'ביקרתם ב${business.name}?',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: Colors.black,
@@ -1243,7 +1207,8 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                         const SizedBox(height: 6),
                         Text(
                           'Share your recommendation with the Modi\'in community.',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -1253,12 +1218,17 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                         // Thumbs up/down
                         Row(
                           children: [
-                            const Icon(IconsaxPlusLinear.like_1,
-                                size: 20, color: AppColors.midBlue),
+                            const Icon(
+                              IconsaxPlusLinear.like_1,
+                              size: 20,
+                              color: AppColors.midBlue,
+                            ),
                             const SizedBox(width: 22),
-                            Icon(IconsaxPlusLinear.dislike,
-                                size: 20,
-                                color: const Color(0xFF888888)),
+                            Icon(
+                              IconsaxPlusLinear.dislike,
+                              size: 20,
+                              color: const Color(0xFF888888),
+                            ),
                           ],
                         ),
                       ],
@@ -1268,60 +1238,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
               ),
             ),
           ),
-
-          const SizedBox(height: 24),
-
-          // Pictures from our Users
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Pictures from our Users',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1F1F1F),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          _buildImageScroll([
-            const Color(0xFF11998E),
-            const Color(0xFFF093FB),
-            const Color(0xFF4FACFE),
-            const Color(0xFF43E97B),
-            const Color(0xFFFA709A),
-          ]),
         ],
-      ),
-    );
-  }
-
-  Widget _buildImageScroll(List<Color> colors) {
-    return SizedBox(
-      height: 100,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 5,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (_, index) {
-          return Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: colors[index],
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Center(
-              child: Icon(
-                IconsaxPlusLinear.image,
-                size: 24,
-                color: Colors.white.withValues(alpha: 0.4),
-              ),
-            ),
-          );
-        },
       ),
     );
   }
@@ -1333,9 +1250,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE7E7E7)),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1344,8 +1259,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Reviews for Shipudey Hatikva',
-              style: GoogleFonts.inter(
+              'ביקורות על ${business.name}',
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1F1F1F),
@@ -1360,53 +1276,76 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
 
           const SizedBox(height: 24),
 
-          // Review cards
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                _ReviewCard(
-                  initials: 'DC',
-                  name: 'Daniel Cohen',
-                  date: 'August 8, 2026',
-                  rating: 4,
-                  text:
-                      'Great food and generous portions. The grilled meats were fresh and perfectly cooked. The staff was friendly and the atmosphere was relaxed. Definitely coming back.',
-                ),
-                _ReviewCard(
-                  initials: 'ML',
-                  name: 'Maya Levi',
-                  date: 'August 8, 2026',
-                  rating: 4,
-                  text:
-                      'We came for dinner with the family and really enjoyed it. The mixed grill was excellent and the salads were fresh. A great place for a casual family meal.',
-                ),
-                _ReviewCard(
-                  initials: 'AS',
-                  name: 'Amit Shalev',
-                  date: 'August 8, 2026',
-                  rating: 4,
-                  text:
-                      'Good food, nice service and a comfortable outdoor seating area. It can get busy during dinner, but the food is worth the wait.',
-                ),
-                _ReviewCard(
-                  initials: 'YF',
-                  name: 'Yael Friedman',
-                  date: 'August 8, 2026',
-                  rating: 4,
-                  text:
-                      'The chicken skewers were amazing and the hummus is some of the best I\'ve had. Friendly service and fair prices. We\'ll definitely be back!',
-                  isLast: true,
-                ),
-              ],
-            ),
-          ),
+          _buildReviewList(withReply: false),
         ],
       ),
     );
   }
 
+  static const _monthNames = [
+    'ינואר',
+    'פברואר',
+    'מרץ',
+    'אפריל',
+    'מאי',
+    'יוני',
+    'יולי',
+    'אוגוסט',
+    'ספטמבר',
+    'אוקטובר',
+    'נובמבר',
+    'דצמבר',
+  ];
+
+  /// The reviews this business actually has.
+  ///
+  /// Both places that listed reviews carried the same four invented ones, so
+  /// they share this now. An empty table shows an empty state: a business with
+  /// no reviews should look like one, not like a place four people praised.
+  Widget _buildReviewList({required bool withReply}) {
+    final reviews = ref.watch(businessReviewsProvider(business.id));
+
+    return reviews.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ErrorRetry(
+          onRetry: () => ref.invalidate(businessReviewsProvider(business.id)),
+        ),
+      ),
+      data: (list) {
+        if (list.isEmpty) return const _NoReviewsYet();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              for (var i = 0; i < list.length; i++)
+                _ReviewCardWithReply(
+                  initials: list[i].initials,
+                  name: list[i].authorName,
+                  date: _formatReviewDate(list[i].createdAt),
+                  rating: list[i].rating,
+                  text: list[i].body,
+                  isLast: i == list.length - 1,
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatReviewDate(DateTime? date) {
+    if (date == null) return '';
+    return '${date.day} ב${_monthNames[date.month - 1]} ${date.year}';
+  }
+
   Widget _buildRatingSummary() {
+    final summary = ref.watch(businessReviewSummaryProvider(business.id));
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -1417,23 +1356,21 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
             width: 153,
             padding: const EdgeInsets.only(right: 16, top: 16, bottom: 16),
             decoration: const BoxDecoration(
-              border: Border(
-                right: BorderSide(color: Color(0xFFE7E7E7)),
-              ),
+              border: Border(right: BorderSide(color: Color(0xFFE7E7E7))),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '4.6',
-                  style: GoogleFonts.inter(
+                  summary.average.toStringAsFixed(1),
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 32,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 16),
-                // 5 stars (4 gold, 1 grey)
                 Row(
                   children: List.generate(5, (i) {
                     return Padding(
@@ -1441,7 +1378,7 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                       child: Icon(
                         IconsaxPlusBold.star_1,
                         size: 20,
-                        color: i < 4
+                        color: i < summary.average.round()
                             ? const Color(0xFFFFC107)
                             : const Color(0xFFD1D1D1),
                       ),
@@ -1450,8 +1387,9 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Based on 128 reviews',
-                  style: GoogleFonts.inter(
+                  'מבוסס על ${summary.total} ביקורות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF3D3D3D),
@@ -1469,15 +1407,13 @@ class _BusinessDetailScreenState extends State<BusinessDetailScreen> {
               padding: const EdgeInsets.symmetric(vertical: 0),
               child: Column(
                 children: [
-                  _RatingBar(label: '5', percent: 78),
-                  const SizedBox(height: 8),
-                  _RatingBar(label: '4', percent: 14),
-                  const SizedBox(height: 8),
-                  _RatingBar(label: '3', percent: 5),
-                  const SizedBox(height: 8),
-                  _RatingBar(label: '2', percent: 2),
-                  const SizedBox(height: 8),
-                  _RatingBar(label: '1', percent: 1),
+                  for (var score = 5; score >= 1; score--) ...[
+                    _RatingBar(
+                      label: '$score',
+                      percent: (summary.shareOf(score) * 100).round(),
+                    ),
+                    if (score > 1) const SizedBox(height: 8),
+                  ],
                 ],
               ),
             ),
@@ -1522,7 +1458,10 @@ class _CircleButton extends StatelessWidget {
 class _OutlineCircleButton extends StatelessWidget {
   final IconData icon;
   final Color color;
-  final VoidCallback onTap;
+
+  /// Null when the business has nothing to open — the button then dims
+  /// instead of leading nowhere.
+  final VoidCallback? onTap;
 
   const _OutlineCircleButton({
     required this.icon,
@@ -1532,18 +1471,19 @@ class _OutlineCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFE7E7E7)),
-        ),
-        child: Center(
-          child: Icon(icon, size: 20, color: color),
+    return Opacity(
+      opacity: onTap == null ? 0.4 : 1,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFE7E7E7)),
+          ),
+          child: Center(child: Icon(icon, size: 20, color: color)),
         ),
       ),
     );
@@ -1570,7 +1510,8 @@ class _RatingBar extends StatelessWidget {
             width: 12,
             child: Text(
               label,
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.black,
@@ -1579,8 +1520,11 @@ class _RatingBar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // Star icon
-          const Icon(IconsaxPlusBold.star_1,
-              size: 12, color: Color(0xFFFFC107)),
+          const Icon(
+            IconsaxPlusBold.star_1,
+            size: 12,
+            color: Color(0xFFFFC107),
+          ),
           const SizedBox(width: 11),
           // Progress bar
           Expanded(
@@ -1608,7 +1552,8 @@ class _RatingBar extends StatelessWidget {
             width: 38,
             child: Text(
               '$percent%',
-              style: GoogleFonts.inter(
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF6D6D6D),
@@ -1625,126 +1570,6 @@ class _RatingBar extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Review card
 // ═══════════════════════════════════════════════
-class _ReviewCard extends StatelessWidget {
-  final String initials;
-  final String name;
-  final String date;
-  final int rating;
-  final String text;
-  final bool isLast;
-
-  const _ReviewCard({
-    required this.initials,
-    required this.name,
-    required this.date,
-    required this.rating,
-    required this.text,
-    this.isLast = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : const Border(
-                bottom: BorderSide(color: Color(0xFFE7E7E7)),
-              ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar circle
-          Container(
-            width: 32,
-            height: 32,
-            decoration: const BoxDecoration(
-              color: AppColors.turquoise,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                initials,
-                style: GoogleFonts.inter(
-                  fontSize: 11.2,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name + date
-                Row(
-                  children: [
-                    Text(
-                      name,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      date,
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 7),
-
-                // Stars
-                Row(
-                  children: List.generate(5, (i) {
-                    return Padding(
-                      padding: EdgeInsets.only(right: i < 4 ? 4.08 : 0),
-                      child: Icon(
-                        IconsaxPlusBold.star_1,
-                        size: 14,
-                        color: i < rating
-                            ? const Color(0xFFFFC107)
-                            : const Color(0xFFD1D1D1),
-                      ),
-                    );
-                  }),
-                ),
-
-                const SizedBox(height: 7),
-
-                // Review text
-                Text(
-                  text,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF3D3D3D),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ═══════════════════════════════════════════════
 // Review card with reply functionality
 // ═══════════════════════════════════════════════
@@ -1787,9 +1612,7 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
       decoration: BoxDecoration(
         border: widget.isLast
             ? null
-            : const Border(
-                bottom: BorderSide(color: Color(0xFFE7E7E7)),
-              ),
+            : const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1805,7 +1628,8 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
             child: Center(
               child: Text(
                 widget.initials,
-                style: GoogleFonts.inter(
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 11.2,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -1826,7 +1650,8 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                   children: [
                     Text(
                       widget.name,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.black,
@@ -1835,7 +1660,8 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                     const SizedBox(width: 12),
                     Text(
                       widget.date,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 10,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF6D6D6D),
@@ -1867,7 +1693,8 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                 // Review text
                 Text(
                   widget.text,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF3D3D3D),
@@ -1901,7 +1728,8 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                             children: [
                               Text(
                                 'Your reply',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.midBlue,
@@ -1910,7 +1738,8 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                               const SizedBox(height: 2),
                               Text(
                                 _submittedReply!,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w400,
                                   color: const Color(0xFF3D3D3D),
@@ -1929,7 +1758,8 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                         setState(() => _showReplyField = !_showReplyField),
                     child: Text(
                       _showReplyField ? 'Cancel' : 'Reply',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.midBlue,
@@ -1952,16 +1782,21 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                         Expanded(
                           child: TextField(
                             controller: _replyController,
-                            style: GoogleFonts.inter(fontSize: 12),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 12,
+                            ),
                             decoration: InputDecoration(
                               hintText: 'Write a reply...',
-                              hintStyle: GoogleFonts.inter(
+                              hintStyle: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 12,
                                 color: const Color(0xFF6D6D6D),
                               ),
                               border: InputBorder.none,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 10),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                              ),
                             ),
                           ),
                         ),
@@ -1992,6 +1827,218 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                   ),
                 ],
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Placeholder for the business page: the 260px cover, the overlapping
+/// avatar, then the name, rating, address and action row in their places.
+class _BusinessDetailSkeleton extends StatelessWidget {
+  const _BusinessDetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Skeleton(
+        child: ListView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          children: [
+            const SkeletonBox(height: 260, radius: 0),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SizedBox(height: 12),
+                  SkeletonLine(width: 220, fontSize: 28),
+                  SizedBox(height: 12),
+                  SkeletonLine(width: 280, fontSize: 14),
+                  SizedBox(height: 18),
+                  SkeletonLine(width: 150, fontSize: 14),
+                  SizedBox(height: 16),
+                  SkeletonLine(width: 260, fontSize: 14),
+                  SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(child: SkeletonBox(height: 40, radius: 20)),
+                      SizedBox(width: 12),
+                      SkeletonCircle(size: 40),
+                      SizedBox(width: 8),
+                      SkeletonCircle(size: 40),
+                      SizedBox(width: 8),
+                      SkeletonCircle(size: 40),
+                    ],
+                  ),
+                  SizedBox(height: 24),
+                  SkeletonBox(height: 2, radius: 0),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The description with a working "See More".
+///
+/// The control was there and the text was never shortened, so it sat under a
+/// full paragraph doing nothing. This clamps to four lines and only offers
+/// the control when there is something hidden behind it — a two-line
+/// description keeps no "See More" it cannot honour.
+class _ExpandableText extends StatefulWidget {
+  final String text;
+  const _ExpandableText({required this.text});
+
+  @override
+  State<_ExpandableText> createState() => _ExpandableTextState();
+}
+
+class _ExpandableTextState extends State<_ExpandableText> {
+  static const _collapsedLines = 4;
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.text.isEmpty) return const SizedBox.shrink();
+
+    final style = TextStyle(
+      fontFamily: AppFonts.inter,
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      color: const Color(0xFF3D3D3D),
+      height: 1.6,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(text: widget.text, style: style),
+          maxLines: _collapsedLines,
+          textDirection: Directionality.of(context),
+        )..layout(maxWidth: constraints.maxWidth);
+        final overflows = painter.didExceedMaxLines;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.text,
+              style: style,
+              maxLines: _expanded ? null : _collapsedLines,
+              overflow: _expanded ? TextOverflow.clip : TextOverflow.ellipsis,
+            ),
+            if (overflows)
+              GestureDetector(
+                onTap: () => setState(() => _expanded = !_expanded),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    _expanded ? 'See Less' : 'See More',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.midBlue,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Shown where the photographs would be, until `media` has rows.
+class _NoPhotosYet extends StatelessWidget {
+  const _NoPhotosYet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF5F5F5),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              IconsaxPlusLinear.gallery,
+              size: 28,
+              color: Color(0xFF6D6D6D),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'אין עדיין תמונות',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown where reviews would be, when a business has none.
+class _NoReviewsYet extends StatelessWidget {
+  const _NoReviewsYet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF5F5F5),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              IconsaxPlusLinear.message_text_1,
+              size: 28,
+              color: Color(0xFF6D6D6D),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'אין עדיין ביקורות',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'היו הראשונים לכתוב ביקורת על המקום הזה',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 13,
+              color: const Color(0xFF6D6D6D),
             ),
           ),
         ],
