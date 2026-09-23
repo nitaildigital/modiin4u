@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_businesses_provider.dart';
+import '../widgets/image_upload_field.dart';
 
 class AdminBusinessesScreen extends ConsumerStatefulWidget {
   const AdminBusinessesScreen({super.key});
@@ -403,7 +404,16 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 4, vsync: this);
+    for (var d = DateTime.monday; d <= DateTime.sunday; d++) {
+      _openCtl[d] = TextEditingController();
+      _closeCtl[d] = TextEditingController();
+      _dayClosed[d] = false;
+    }
+    if (_isEditing) {
+      _loadHours();
+      _loadCategories();
+    }
     final b = widget.business;
 
     _logoUrl = TextEditingController(text: b?['logo_url'] as String? ?? '');
@@ -446,6 +456,14 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
   @override
   void dispose() {
     _tabs.dispose();
+    for (final c in _openCtl.values) {
+      c.dispose();
+    }
+    for (final c in _closeCtl.values) {
+      c.dispose();
+    }
+    _bulkOpen.dispose();
+    _bulkClose.dispose();
     _logoUrl.dispose(); _coverImageUrl.dispose();
     _name.dispose(); _slug.dispose(); _shortDesc.dispose(); _fullDesc.dispose();
     _phone.dispose(); _email.dispose(); _website.dispose(); _whatsapp.dispose(); _instagram.dispose();
@@ -494,6 +512,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
                   indicatorColor: AppColors.turquoise,
                   tabs: const [
                     Tab(text: 'פרטים'),
+                    Tab(text: 'שעות פתיחה'),
                     Tab(text: 'מאפיינים'),
                     Tab(text: 'SEO'),
                   ],
@@ -504,6 +523,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
               Expanded(
                 child: TabBarView(controller: _tabs, children: [
                   _buildDetailsTab(neighborhoods),
+                  _buildHoursTab(),
                   _buildAttributesTab(),
                   _buildSeoTab(),
                 ]),
@@ -546,22 +566,22 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
       const SizedBox(height: 16),
       Text('תמונות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
-      Row(children: [
-        Expanded(child: _field('לוגו URL', _logoUrl)),
-        const SizedBox(width: 12),
-        Expanded(child: _field('תמונת כריכה URL', _coverImageUrl)),
-      ]),
-      if (_logoUrl.text.isNotEmpty || _coverImageUrl.text.isNotEmpty)
-        Row(children: [
-          if (_logoUrl.text.isNotEmpty) ...[
-            ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(_logoUrl.text, width: 64, height: 64, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(width: 64, height: 64, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.broken_image, size: 20, color: AppColors.grayLight)))),
-            const SizedBox(width: 12),
-          ],
-          if (_coverImageUrl.text.isNotEmpty)
-            Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(_coverImageUrl.text, height: 64, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(height: 64, alignment: Alignment.center, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.broken_image, size: 20, color: AppColors.grayLight))))),
-        ]),
+      // Upload rather than a URL typed by hand: the person managing the
+      // directory should not have to host a picture somewhere else first.
+      // Each field still shows what is stored and stays editable, so the
+      // photographs already on the WordPress site keep working.
+      const SizedBox(height: 4),
+      ImageUploadField(
+        label: 'לוגו',
+        controller: _logoUrl,
+        folder: 'businesses/logo',
+      ),
+      const SizedBox(height: 14),
+      ImageUploadField(
+        label: 'תמונת כריכה',
+        controller: _coverImageUrl,
+        folder: 'businesses/cover',
+      ),
       const SizedBox(height: 16),
       Text('קשר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
@@ -576,6 +596,10 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
         Expanded(child: _field('אתר', _website)),
       ]),
       _field('Instagram', _instagram),
+      const SizedBox(height: 16),
+      Text('סיווג', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      const SizedBox(height: 8),
+      _categoryPicker(),
       const SizedBox(height: 16),
       Text('מיקום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
@@ -709,6 +733,310 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
     );
   }
 
+  // ── Opening hours ──
+  //
+  // Held as the week the person sees it, Monday first. The table's 0 = Sunday
+  // is converted in the provider, so nothing here has to think about it.
+
+  static const _dayNames = {
+    DateTime.monday: 'שני',
+    DateTime.tuesday: 'שלישי',
+    DateTime.wednesday: 'רביעי',
+    DateTime.thursday: 'חמישי',
+    DateTime.friday: 'שישי',
+    DateTime.saturday: 'שבת',
+    DateTime.sunday: 'ראשון',
+  };
+
+  final Map<int, TextEditingController> _openCtl = {};
+  final Map<int, TextEditingController> _closeCtl = {};
+  final Map<int, bool> _dayClosed = {};
+  bool _hoursLoaded = false;
+  bool _hoursTouched = false;
+
+  /// Postgres hands back `09:00:00`; the field takes and validates `09:00`.
+  static String _hhmm(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    final parts = raw.split(':');
+    return parts.length >= 2 ? '${parts[0]}:${parts[1]}' : raw;
+  }
+
+  // ── Categories ──
+  //
+  // A business's categories live in `entity_categories`, not on the row, so
+  // they are loaded and saved separately. The directory and the restaurants
+  // screen both filter on this, so a business with none is invisible in every
+  // category list — which is why it belongs in the editor rather than
+  // somewhere else.
+  Set<String> _categoryIds = {};
+  bool _categoriesTouched = false;
+
+  Future<void> _loadCategories() async {
+    final id = widget.business!['id'] as String;
+    try {
+      final ids = await ref.read(businessCategoryIdsProvider(id).future);
+      if (mounted) setState(() => _categoryIds = ids.toSet());
+    } catch (_) {
+      // Leave it empty; saving without touching it changes nothing.
+    }
+  }
+
+  Widget _categoryPicker() {
+    final categories = ref.watch(businessCategoriesProvider);
+
+    return categories.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: LinearProgressIndicator(),
+      ),
+      error: (_, _) => Text(
+        'לא ניתן לטעון קטגוריות',
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 12,
+          color: AppColors.error,
+        ),
+      ),
+      data: (list) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'קטגוריות',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 12,
+              color: AppColors.adminTextMedium,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final c in list)
+                FilterChip(
+                  label: Text(
+                    c['name'] as String,
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
+                  ),
+                  selected: _categoryIds.contains(c['id']),
+                  onSelected: (on) => setState(() {
+                    on
+                        ? _categoryIds.add(c['id'] as String)
+                        : _categoryIds.remove(c['id']);
+                    _categoriesTouched = true;
+                  }),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  final _bulkOpen = TextEditingController();
+  final _bulkClose = TextEditingController();
+
+  /// Copies the pair at the top into a run of days. Sunday to Thursday wraps
+  /// around the end of the week, which is the ordinary Israeli working week.
+  void _applyToAll(int from, int to) {
+    final open = _bulkOpen.text.trim();
+    final close = _bulkClose.text.trim();
+    if (open.isEmpty || close.isEmpty) return;
+
+    final days = from <= to
+        ? [for (var d = from; d <= to; d++) d]
+        : [
+            for (var d = from; d <= DateTime.sunday; d++) d,
+            for (var d = DateTime.monday; d <= to; d++) d,
+          ];
+
+    setState(() {
+      for (final d in days) {
+        _openCtl[d]!.text = open;
+        _closeCtl[d]!.text = close;
+        _dayClosed[d] = false;
+      }
+      _hoursTouched = true;
+    });
+  }
+
+  Future<void> _loadHours() async {
+    final id = widget.business!['id'] as String;
+    try {
+      final week = await ref.read(businessHoursProvider(id).future);
+      if (!mounted) return;
+      setState(() {
+        for (var d = DateTime.monday; d <= DateTime.sunday; d++) {
+          final row = week[d];
+          _openCtl[d]!.text = _hhmm(row?['open_time'] as String?);
+          _closeCtl[d]!.text = _hhmm(row?['close_time'] as String?);
+          _dayClosed[d] = row == null ? false : (row['is_closed'] as bool? ?? false);
+        }
+        _hoursLoaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _hoursLoaded = true);
+    }
+  }
+
+  Widget _buildHoursTab() {
+    if (_isEditing && !_hoursLoaded) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text(
+          'השאירו ריק אם השעות אינן ידועות. יום ללא שעות לא יוצג באפליקציה.',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 12,
+            color: AppColors.adminTextLight,
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Most businesses keep the same hours Sunday to Thursday and differ
+        // only on Friday and Saturday, so typing fourteen times is the
+        // common case. This fills the week from one pair.
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.adminContentBg,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Expanded(child: _timeField(_bulkOpen, 'פתיחה', enabled: true)),
+              const SizedBox(width: 8),
+              Expanded(child: _timeField(_bulkClose, 'סגירה', enabled: true)),
+              const SizedBox(width: 10),
+              TextButton(
+                onPressed: () => _applyToAll(DateTime.monday, DateTime.sunday),
+                child: Text(
+                  'החל על כל השבוע',
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
+                ),
+              ),
+              TextButton(
+                onPressed: () =>
+                    _applyToAll(DateTime.sunday, DateTime.thursday),
+                child: Text(
+                  'א׳–ה׳ בלבד',
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        for (var day = DateTime.monday; day <= DateTime.sunday; day++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    _dayNames[day]!,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.adminTextDark,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: _timeField(
+                    _openCtl[day]!,
+                    'פתיחה',
+                    enabled: !(_dayClosed[day] ?? false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _timeField(
+                    _closeCtl[day]!,
+                    'סגירה',
+                    enabled: !(_dayClosed[day] ?? false),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'סגור',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 12,
+                    color: AppColors.adminTextLight,
+                  ),
+                ),
+                Switch(
+                  value: _dayClosed[day] ?? false,
+                  onChanged: (v) => setState(() {
+                    _dayClosed[day] = v;
+                    _hoursTouched = true;
+                  }),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// 24-hour HH:MM, which is what the column holds and what the app parses.
+  Widget _timeField(
+    TextEditingController controller,
+    String hint, {
+    required bool enabled,
+  }) {
+    return TextFormField(
+      controller: controller,
+      enabled: enabled,
+      onChanged: (_) => _hoursTouched = true,
+      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 13,
+          color: AppColors.adminTextLight,
+        ),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        border: const OutlineInputBorder(),
+      ),
+      validator: (v) {
+        if (!enabled || v == null || v.isEmpty) return null;
+        return RegExp(r'^([01]?\d|2[0-3]):[0-5]\d$').hasMatch(v)
+            ? null
+            : 'HH:MM';
+      },
+    );
+  }
+
+  /// Only the days that say something are written. A day left blank stays
+  /// unknown rather than becoming "closed", so the app can hide it instead of
+  /// stating hours nobody gave.
+  Map<int, ({String? open, String? close, bool closed})> _weekFromForm() {
+    final week = <int, ({String? open, String? close, bool closed})>{};
+    for (var d = DateTime.monday; d <= DateTime.sunday; d++) {
+      final closed = _dayClosed[d] ?? false;
+      final open = _openCtl[d]!.text.trim();
+      final close = _closeCtl[d]!.text.trim();
+      if (!closed && (open.isEmpty || close.isEmpty)) continue;
+      week[d] = (
+        open: open.isEmpty ? null : open,
+        close: close.isEmpty ? null : close,
+        closed: closed,
+      );
+    }
+    return week;
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
@@ -753,7 +1081,16 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
     try {
       final notifier = ref.read(adminBusinessListProvider.notifier);
       if (_isEditing) {
-        await notifier.updateBusiness(widget.business!['id'] as String, fields);
+        final id = widget.business!['id'] as String;
+        await notifier.updateBusiness(id, fields);
+        if (_hoursTouched) {
+          await notifier.setHours(id, _weekFromForm());
+          ref.invalidate(businessHoursProvider(id));
+        }
+        if (_categoriesTouched) {
+          await notifier.setCategories(id, _categoryIds.toList());
+          ref.invalidate(businessCategoryIdsProvider(id));
+        }
       } else {
         await notifier.createBusiness(fields);
       }

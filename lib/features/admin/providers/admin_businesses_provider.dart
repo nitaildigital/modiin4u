@@ -1,19 +1,86 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final adminBusinessListProvider = StateNotifierProvider<AdminBusinessListNotifier, AsyncValue<List<Map<String, dynamic>>>>((ref) {
-  return AdminBusinessListNotifier();
+import '../../../core/supabase/supabase_config.dart';
+
+/// The directory, as the admin panel sees it.
+///
+/// This held twenty invented businesses in memory: an edit looked like it
+/// worked and was gone on the next launch. It reads and writes the real table
+/// now, so the panel is the way the client actually manages the directory.
+final adminBusinessListProvider =
+    StateNotifierProvider<
+      AdminBusinessListNotifier,
+      AsyncValue<List<Map<String, dynamic>>>
+    >((ref) {
+      return AdminBusinessListNotifier();
+    });
+
+/// Neighbourhoods for the picker, from the table rather than a list of
+/// thirteen written into the file.
+final neighborhoodsProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final rows = await SupabaseConfig.client
+      .from('neighborhoods')
+      .select('id, name, slug, is_active, sort_order')
+      .eq('is_active', true)
+      .order('sort_order');
+  return List<Map<String, dynamic>>.from(rows);
 });
 
-final neighborhoodsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  return _mockNeighborhoods;
+/// Business categories, likewise.
+final businessCategoriesProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final rows = await SupabaseConfig.client
+      .from('categories')
+      .select('id, name, slug, scope, parent_id, is_active, sort_order')
+      .eq('scope', 'business')
+      .eq('is_active', true)
+      .order('sort_order');
+  return List<Map<String, dynamic>>.from(rows);
 });
 
-final businessCategoriesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  return _mockCategories;
-});
+/// The categories one business belongs to, as ids.
+final businessCategoryIdsProvider = FutureProvider.family<List<String>, String>(
+  (ref, businessId) async {
+    final rows = await SupabaseConfig.client
+        .from('entity_categories')
+        .select('category_id')
+        .eq('entity_type', 'business')
+        .eq('entity_id', businessId);
+    return List<Map<String, dynamic>>.from(
+      rows,
+    ).map((r) => r['category_id'] as String).toList();
+  },
+);
 
-class AdminBusinessListNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
-  List<Map<String, dynamic>> _all = List.from(_mockBusinesses);
+/// One business's opening hours, keyed 1 = Monday .. 7 = Sunday.
+///
+/// The table stores 0 = Sunday, which is the convention the import used; the
+/// app compares against Dart's `weekday`, so the two are converted here in
+/// one place rather than at every call site.
+final businessHoursProvider =
+    FutureProvider.family<Map<int, Map<String, dynamic>>, String>((
+      ref,
+      businessId,
+    ) async {
+      final rows = await SupabaseConfig.client
+          .from('business_hours')
+          .select('id, day_of_week, open_time, close_time, is_closed')
+          .eq('business_id', businessId);
+
+      return {
+        for (final r in List<Map<String, dynamic>>.from(rows))
+          _toDartWeekday((r['day_of_week'] as num?)?.toInt() ?? 0): r,
+      };
+    });
+
+int _toDartWeekday(int stored) => stored == 0 ? DateTime.sunday : stored;
+int _toStoredDay(int weekday) => weekday == DateTime.sunday ? 0 : weekday;
+
+class AdminBusinessListNotifier
+    extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
   String? _search;
   String? _status;
 
@@ -23,23 +90,23 @@ class AdminBusinessListNotifier extends StateNotifier<AsyncValue<List<Map<String
 
   Future<void> load() async {
     state = const AsyncValue.loading();
-    await Future.delayed(const Duration(milliseconds: 200));
     try {
-      var filtered = List<Map<String, dynamic>>.from(_all);
+      var query = SupabaseConfig.client
+          .from('businesses')
+          .select('*, neighborhoods!businesses_neighborhood_id_fkey(id, name, slug)');
+
       if (_status != null && _status!.isNotEmpty) {
-        filtered = filtered.where((b) => b['status'] == _status).toList();
+        query = query.eq('status', _status!);
       }
       if (_search != null && _search!.isNotEmpty) {
-        final q = _search!.toLowerCase();
-        filtered = filtered.where((b) {
-          final name = (b['name'] as String? ?? '').toLowerCase();
-          final desc = (b['short_description'] as String? ?? '').toLowerCase();
-          return name.contains(q) || desc.contains(q);
-        }).toList();
+        final q = _search!.replaceAll(',', ' ');
+        query = query.or('name.ilike.%$q%,short_description.ilike.%$q%');
       }
-      state = AsyncValue.data(filtered);
+
+      final rows = await query.order('created_at', ascending: false).limit(500);
+      if (mounted) state = AsyncValue.data(List<Map<String, dynamic>>.from(rows));
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      if (mounted) state = AsyncValue.error(e, st);
     }
   }
 
@@ -53,299 +120,97 @@ class AdminBusinessListNotifier extends StateNotifier<AsyncValue<List<Map<String
     load();
   }
 
+  /// Columns the form does not own. `neighborhoods` arrives from the join and
+  /// is not a column, and the rest are set by the database.
+  static const _notColumns = {
+    'neighborhoods',
+    'id',
+    'created_at',
+    'updated_at',
+    'rating',
+    'review_count',
+  };
+
+  Map<String, dynamic> _columnsOnly(Map<String, dynamic> fields) {
+    return {
+      for (final e in fields.entries)
+        if (!_notColumns.contains(e.key)) e.key: e.value,
+    };
+  }
+
   Future<void> createBusiness(Map<String, dynamic> business) async {
-    business['id'] = 'b_${DateTime.now().millisecondsSinceEpoch}';
-    business['created_at'] = DateTime.now().toIso8601String();
-    _all = [business, ..._all];
+    await SupabaseConfig.client
+        .from('businesses')
+        .insert(_columnsOnly(business));
     await load();
   }
 
   Future<void> updateBusiness(String id, Map<String, dynamic> fields) async {
-    _all = [
-      for (final b in _all)
-        if (b['id'] == id) {...b, ...fields} else b,
-    ];
+    await SupabaseConfig.client
+        .from('businesses')
+        .update(_columnsOnly(fields))
+        .eq('id', id);
     await load();
   }
 
+  /// Marks the business closed rather than removing the row.
+  ///
+  /// A delete would take its reviews and favourites with it, and the client
+  /// asked for a trash rather than a permanent removal.
   Future<void> deleteBusiness(String id) async {
-    _all = _all.where((b) => b['id'] != id).toList();
-    await load();
+    await updateStatus(id, 'closed');
   }
 
   Future<void> updateStatus(String id, String status) async {
-    await updateBusiness(id, {'status': status});
+    await SupabaseConfig.client
+        .from('businesses')
+        .update({'status': status})
+        .eq('id', id);
+    await load();
+  }
+
+  // ── Categories ──
+
+  /// Replaces the categories a business belongs to.
+  Future<void> setCategories(String businessId, List<String> categoryIds) async {
+    final client = SupabaseConfig.client;
+    await client
+        .from('entity_categories')
+        .delete()
+        .eq('entity_type', 'business')
+        .eq('entity_id', businessId);
+
+    if (categoryIds.isEmpty) return;
+    await client.from('entity_categories').insert([
+      for (final id in categoryIds)
+        {'entity_type': 'business', 'entity_id': businessId, 'category_id': id},
+    ]);
+  }
+
+  // ── Opening hours ──
+
+  /// Replaces the week's hours in one go.
+  ///
+  /// [week] is keyed 1 = Monday .. 7 = Sunday; a day left out, or marked
+  /// closed, is stored as closed rather than dropped, so "closed on Monday"
+  /// and "we never said" stay distinguishable.
+  Future<void> setHours(
+    String businessId,
+    Map<int, ({String? open, String? close, bool closed})> week,
+  ) async {
+    final client = SupabaseConfig.client;
+    await client.from('business_hours').delete().eq('business_id', businessId);
+
+    final rows = [
+      for (final entry in week.entries)
+        {
+          'business_id': businessId,
+          'day_of_week': _toStoredDay(entry.key),
+          'is_closed': entry.value.closed,
+          'open_time': entry.value.closed ? null : entry.value.open,
+          'close_time': entry.value.closed ? null : entry.value.close,
+        },
+    ];
+    if (rows.isNotEmpty) await client.from('business_hours').insert(rows);
   }
 }
-
-// ─── Mock Neighborhoods ───
-
-final _mockNeighborhoods = <Map<String, dynamic>>[
-  {'id': 'n1', 'name': 'אבני חן', 'slug': 'avnei-hen', 'is_active': true, 'sort_order': 1},
-  {'id': 'n2', 'name': 'מורשת', 'slug': 'moreshet', 'is_active': true, 'sort_order': 2},
-  {'id': 'n3', 'name': 'בוכמן', 'slug': 'buchman', 'is_active': true, 'sort_order': 3},
-  {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center', 'is_active': true, 'sort_order': 4},
-  {'id': 'n5', 'name': 'רמת מודיעין', 'slug': 'ramat-modiin', 'is_active': true, 'sort_order': 5},
-  {'id': 'n6', 'name': 'כפר הנוער', 'slug': 'kfar-hanoar', 'is_active': true, 'sort_order': 6},
-  {'id': 'n7', 'name': 'נופים', 'slug': 'nofim', 'is_active': true, 'sort_order': 7},
-  {'id': 'n8', 'name': 'הכרמים', 'slug': 'hakramim', 'is_active': true, 'sort_order': 8},
-  {'id': 'n9', 'name': 'מוריה', 'slug': 'moriah', 'is_active': true, 'sort_order': 9},
-  {'id': 'n10', 'name': 'הנחלים', 'slug': 'hanhalim', 'is_active': true, 'sort_order': 10},
-  {'id': 'n11', 'name': 'הפרחים', 'slug': 'haprahim', 'is_active': true, 'sort_order': 11},
-  {'id': 'n12', 'name': 'משואה', 'slug': 'masua', 'is_active': true, 'sort_order': 12},
-  {'id': 'n13', 'name': 'המע"ר', 'slug': 'maar', 'is_active': true, 'sort_order': 13},
-];
-
-// ─── Mock Categories ───
-
-final _mockCategories = <Map<String, dynamic>>[
-  {'id': 'c1', 'name': 'מסעדות', 'slug': 'restaurants', 'scope': 'business', 'is_active': true, 'sort_order': 1},
-  {'id': 'c2', 'name': 'בריאות', 'slug': 'health', 'scope': 'business', 'is_active': true, 'sort_order': 2},
-  {'id': 'c3', 'name': 'ספורט', 'slug': 'sport', 'scope': 'business', 'is_active': true, 'sort_order': 3},
-  {'id': 'c4', 'name': 'חינוך', 'slug': 'education', 'scope': 'business', 'is_active': true, 'sort_order': 4},
-  {'id': 'c5', 'name': 'שירותים', 'slug': 'services', 'scope': 'business', 'is_active': true, 'sort_order': 5},
-  {'id': 'c6', 'name': 'קמעונאות', 'slug': 'retail', 'scope': 'business', 'is_active': true, 'sort_order': 6},
-  {'id': 'c7', 'name': 'בילוי ופנאי', 'slug': 'entertainment', 'scope': 'business', 'is_active': true, 'sort_order': 7},
-  {'id': 'c8', 'name': 'יופי וטיפוח', 'slug': 'beauty', 'scope': 'business', 'is_active': true, 'sort_order': 8},
-];
-
-// ─── Mock Businesses ───
-
-final _mockBusinesses = <Map<String, dynamic>>[
-  {
-    'id': 'b1', 'name': 'פיצה פרגו', 'slug': 'pizza-frago',
-    'logo_url': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200',
-    'short_description': 'פיצריה איטלקית אותנטית במרכז מודיעין',
-    'full_description': 'פיצריה איטלקית אותנטית עם תנור אבן. מגוון פיצות, פסטות ומנות איטלקיות. משלוחים לכל רחבי מודיעין.',
-    'phone': '08-9712345', 'email': 'info@pizzafrago.co.il', 'website': 'https://pizzafrago.co.il',
-    'whatsapp': '0509712345', 'instagram': '@pizzafrago',
-    'address': 'רח׳ המעיין 12', 'neighborhood_id': 'n4',
-    'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
-    'latitude': 31.8975, 'longitude': 35.0104,
-    'rating': 4.5, 'review_count': 87,
-    'status': 'active', 'kosher_level': 'rabbanut', 'price_level': '₪₪',
-    'has_delivery': true, 'is_accessible': true, 'has_takeaway': true, 'has_parking': false,
-    'pet_friendly': false, 'kid_friendly': true, 'has_wifi': true, 'open_on_shabbat': false,
-    'is_featured': true, 'is_verified': true, 'noindex': false,
-    'meta_title': 'פיצה פרגו — פיצריה איטלקית במודיעין',
-    'meta_description': 'פיצה פרגו — פיצריה איטלקית במודיעין. משלוחים, ישיבה במקום, כשר רבנות.',
-    'created_at': '2024-03-15T10:00:00Z',
-  },
-  {
-    'id': 'b2', 'name': 'סופר פארם מודיעין', 'slug': 'super-pharm-modiin',
-    'logo_url': 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=1200',
-    'short_description': 'תרופות, קוסמטיקה ומוצרי טיפוח',
-    'phone': '08-9714567', 'address': 'מרכז עזריאלי מודיעין', 'neighborhood_id': 'n4',
-    'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
-    'latitude': 31.8960, 'longitude': 35.0120, 'rating': 4.1, 'review_count': 42,
-    'status': 'active', 'is_verified': true, 'created_at': '2024-05-01T10:00:00Z',
-  },
-  {
-    'id': 'b3', 'name': 'סטודיו שרה — יוגה ופילאטיס', 'slug': 'studio-sara-yoga',
-    'logo_url': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1588286840104-8957b019727f?w=1200',
-    'short_description': 'שיעורי יוגה ופילאטיס לכל הרמות',
-    'phone': '053-5556666', 'address': 'רח׳ האלון 8', 'neighborhood_id': 'n1',
-    'neighborhoods': {'id': 'n1', 'name': 'אבני חן', 'slug': 'avnei-hen'},
-    'latitude': 31.9010, 'longitude': 35.0050, 'rating': 4.8, 'review_count': 63,
-    'status': 'active', 'is_featured': true, 'created_at': '2024-09-05T10:00:00Z',
-  },
-  {
-    'id': 'b4', 'name': 'ביסטרו מודיעין', 'slug': 'bistro-modiin',
-    'logo_url': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=1200',
-    'short_description': 'מסעדת שף חדשה — מטבח ים תיכוני',
-    'phone': '08-9719999', 'address': 'רח׳ הנרקיס 3', 'neighborhood_id': 'n2',
-    'neighborhoods': {'id': 'n2', 'name': 'מורשת', 'slug': 'moreshet'},
-    'latitude': 31.8990, 'longitude': 35.0080,
-    'status': 'pending', 'created_at': '2026-08-10T10:00:00Z',
-  },
-  {
-    'id': 'b5', 'name': 'קפה לנדוור', 'slug': 'cafe-landwer',
-    'logo_url': 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=1200',
-    'short_description': 'בית קפה עם ארוחות בוקר ועוגות',
-    'phone': '08-9715678', 'address': 'רח׳ לב העיר 5', 'neighborhood_id': 'n4',
-    'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
-    'rating': 4.3, 'review_count': 112,
-    'status': 'active', 'kosher_level': 'rabbanut', 'price_level': '₪₪',
-    'has_delivery': false, 'has_wifi': true, 'kid_friendly': true,
-    'is_verified': true, 'created_at': '2024-01-10T10:00:00Z',
-  },
-  {
-    'id': 'b6', 'name': 'ד"ר אבי כהן — רפואת שיניים', 'slug': 'dr-avi-cohen-dental',
-    'logo_url': 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=1200',
-    'short_description': 'מרפאת שיניים מתקדמת — כל הטיפולים',
-    'phone': '08-9713456', 'email': 'clinic@dravidental.co.il',
-    'address': 'רח׳ הדקל 18', 'neighborhood_id': 'n1',
-    'neighborhoods': {'id': 'n1', 'name': 'אבני חן', 'slug': 'avnei-hen'},
-    'rating': 4.7, 'review_count': 58,
-    'status': 'active', 'is_accessible': true, 'has_parking': true,
-    'is_verified': true, 'created_at': '2023-11-20T10:00:00Z',
-  },
-  {
-    'id': 'b7', 'name': 'חנות הספרים של רונית', 'slug': 'ronit-bookstore',
-    'logo_url': 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1200',
-    'short_description': 'ספרים בעברית ובאנגלית לכל הגילאים',
-    'phone': '08-9716789', 'address': 'מרכז מסחרי מורשת', 'neighborhood_id': 'n2',
-    'neighborhoods': {'id': 'n2', 'name': 'מורשת', 'slug': 'moreshet'},
-    'rating': 4.9, 'review_count': 34,
-    'status': 'active', 'kid_friendly': true,
-    'created_at': '2024-06-15T10:00:00Z',
-  },
-  {
-    'id': 'b8', 'name': 'קרוספיט מודיעין', 'slug': 'crossfit-modiin',
-    'logo_url': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1200',
-    'short_description': 'מועדון קרוספיט עם מאמנים מוסמכים',
-    'phone': '050-8889999', 'website': 'https://crossfitmodiin.co.il',
-    'address': 'אזור תעשייה מודיעין', 'neighborhood_id': 'n13',
-    'neighborhoods': {'id': 'n13', 'name': 'המע"ר', 'slug': 'maar'},
-    'rating': 4.6, 'review_count': 76,
-    'status': 'active', 'has_parking': true, 'is_accessible': true,
-    'is_featured': true, 'created_at': '2024-02-28T10:00:00Z',
-  },
-  {
-    'id': 'b9', 'name': 'מספרת טיפ-טופ', 'slug': 'tip-top-hair',
-    'logo_url': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200',
-    'short_description': 'מספרה לנשים וגברים — תספורות, צבע, החלקות',
-    'phone': '08-9718765', 'address': 'רח׳ השקמה 22', 'neighborhood_id': 'n3',
-    'neighborhoods': {'id': 'n3', 'name': 'בוכמן', 'slug': 'buchman'},
-    'rating': 4.2, 'review_count': 45,
-    'status': 'active', 'is_accessible': true,
-    'created_at': '2024-04-10T10:00:00Z',
-  },
-  {
-    'id': 'b10', 'name': 'גן ילדים שמש', 'slug': 'gan-shemesh',
-    'logo_url': 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200',
-    'short_description': 'גן ילדים פרטי גילאי 3-6 — גישה חינוכית מתקדמת',
-    'phone': '054-2223333', 'email': 'gan@shemesh.co.il',
-    'address': 'רח׳ הזית 7', 'neighborhood_id': 'n7',
-    'neighborhoods': {'id': 'n7', 'name': 'נופים', 'slug': 'nofim'},
-    'rating': 4.4, 'review_count': 29,
-    'status': 'active', 'is_accessible': true, 'has_parking': true, 'kid_friendly': true,
-    'created_at': '2023-09-01T10:00:00Z',
-  },
-  {
-    'id': 'b11', 'name': 'אופטיקה ראיית עיניים', 'slug': 'optika-modiin',
-    'logo_url': 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1577401239170-897c3a09de2d?w=1200',
-    'short_description': 'משקפיים, עדשות מגע ובדיקות ראייה',
-    'phone': '08-9711111', 'address': 'קניון עזריאלי, קומה 1', 'neighborhood_id': 'n4',
-    'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
-    'rating': 4.0, 'review_count': 18,
-    'status': 'active', 'created_at': '2024-07-20T10:00:00Z',
-  },
-  {
-    'id': 'b12', 'name': 'שיפוצניק מודיעין — ארז', 'slug': 'shipuznik-erez',
-    'logo_url': 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200',
-    'short_description': 'שיפוצים, צביעה, חשמל ואינסטלציה',
-    'phone': '052-4445555', 'whatsapp': '0524445555',
-    'address': 'שירות ניידת — כל מודיעין', 'neighborhood_id': 'n4',
-    'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
-    'rating': 4.3, 'review_count': 31,
-    'status': 'active', 'created_at': '2025-01-15T10:00:00Z',
-  },
-  {
-    'id': 'b13', 'name': 'סושי מודיעין', 'slug': 'sushi-modiin',
-    'logo_url': 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=1200',
-    'short_description': 'סושי טרי — מגוון מנות יפניות ואסייתיות',
-    'phone': '08-9714321', 'address': 'רח׳ הגפן 14', 'neighborhood_id': 'n8',
-    'neighborhoods': {'id': 'n8', 'name': 'הכרמים', 'slug': 'hakramim'},
-    'rating': 4.6, 'review_count': 55,
-    'status': 'active', 'kosher_level': 'rabbanut', 'price_level': '₪₪₪',
-    'has_delivery': true, 'has_takeaway': true,
-    'is_featured': true, 'created_at': '2025-03-01T10:00:00Z',
-  },
-  {
-    'id': 'b14', 'name': 'חוגי רובוטיקה — TechKids', 'slug': 'techkids-robotics',
-    'logo_url': 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200',
-    'short_description': 'חוגי רובוטיקה ותכנות לילדים גילאי 6-16',
-    'phone': '050-6667777', 'website': 'https://techkids.co.il',
-    'address': 'מתנ"ס בוכמן', 'neighborhood_id': 'n3',
-    'neighborhoods': {'id': 'n3', 'name': 'בוכמן', 'slug': 'buchman'},
-    'rating': 4.8, 'review_count': 41,
-    'status': 'active', 'kid_friendly': true,
-    'created_at': '2024-08-20T10:00:00Z',
-  },
-  {
-    'id': 'b15', 'name': 'מאפייה הירושלמית', 'slug': 'jerusalem-bakery',
-    'logo_url': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=1200',
-    'short_description': 'לחם טרי, בורקסים ומאפים מסורתיים',
-    'phone': '08-9717654', 'address': 'רח׳ הזיתים 3', 'neighborhood_id': 'n5',
-    'neighborhoods': {'id': 'n5', 'name': 'רמת מודיעין', 'slug': 'ramat-modiin'},
-    'rating': 4.7, 'review_count': 92,
-    'status': 'active', 'kosher_level': 'mehadrin',
-    'has_takeaway': true, 'open_on_shabbat': false,
-    'created_at': '2023-06-10T10:00:00Z',
-  },
-  {
-    'id': 'b16', 'name': 'עורכת דין — מיכל רוזנברג', 'slug': 'adv-michal-rosenberg',
-    'logo_url': 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=1200',
-    'short_description': 'דיני משפחה, נדל"ן וצוואות',
-    'phone': '08-9719876', 'email': 'michal@rosenberg-law.co.il',
-    'address': 'מגדלי העיר, קומה 7', 'neighborhood_id': 'n4',
-    'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
-    'rating': 4.9, 'review_count': 22,
-    'status': 'active', 'is_accessible': true, 'has_parking': true,
-    'is_verified': true, 'created_at': '2024-10-01T10:00:00Z',
-  },
-  {
-    'id': 'b17', 'name': 'בורגר סטיישן', 'slug': 'burger-station',
-    'logo_url': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200',
-    'short_description': 'המבורגרים גורמה ונקניקיות ביתיות',
-    'phone': '08-9712222', 'address': 'רח׳ הדס 9', 'neighborhood_id': 'n2',
-    'neighborhoods': {'id': 'n2', 'name': 'מורשת', 'slug': 'moreshet'},
-    'rating': 4.4, 'review_count': 67,
-    'status': 'suspended', 'kosher_level': 'rabbanut', 'price_level': '₪₪',
-    'has_delivery': true, 'has_takeaway': true,
-    'created_at': '2024-11-15T10:00:00Z',
-  },
-  {
-    'id': 'b18', 'name': 'מכון כושר HolmES', 'slug': 'holmes-gym',
-    'logo_url': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200',
-    'short_description': 'מכון כושר מתקדם עם שיעורי סטודיו',
-    'phone': '08-9713333', 'website': 'https://holmesgym.co.il',
-    'address': 'מרכז ספורט מודיעין', 'neighborhood_id': 'n13',
-    'neighborhoods': {'id': 'n13', 'name': 'המע"ר', 'slug': 'maar'},
-    'rating': 4.1, 'review_count': 89,
-    'status': 'active', 'has_parking': true, 'is_accessible': true,
-    'created_at': '2023-03-01T10:00:00Z',
-  },
-  {
-    'id': 'b19', 'name': 'פרחי נועם', 'slug': 'pirchei-noam',
-    'logo_url': 'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=1200',
-    'short_description': 'חנות פרחים ועיצוב אירועים',
-    'phone': '054-8889999', 'instagram': '@pirchei_noam',
-    'address': 'רח׳ הכלנית 2', 'neighborhood_id': 'n7',
-    'neighborhoods': {'id': 'n7', 'name': 'נופים', 'slug': 'nofim'},
-    'rating': 4.6, 'review_count': 28,
-    'status': 'pending', 'has_delivery': true,
-    'created_at': '2026-08-20T10:00:00Z',
-  },
-  {
-    'id': 'b20', 'name': 'טכנאי מחשבים — דני', 'slug': 'dani-tech',
-    'logo_url': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=200&h=200&fit=crop',
-    'cover_image_url': 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1200',
-    'short_description': 'תיקון מחשבים, טלפונים ומכשירים חכמים',
-    'phone': '050-1112222', 'whatsapp': '0501112222',
-    'address': 'שירות עד הבית', 'neighborhood_id': 'n4',
-    'neighborhoods': {'id': 'n4', 'name': 'מרכז העיר', 'slug': 'city-center'},
-    'rating': 4.5, 'review_count': 39,
-    'status': 'active', 'created_at': '2025-05-10T10:00:00Z',
-  },
-];

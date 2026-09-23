@@ -1,59 +1,83 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final adminTrashListProvider = StateNotifierProvider<AdminTrashListNotifier, AsyncValue<List<Map<String, dynamic>>>>((ref) {
-  return AdminTrashListNotifier();
-});
+import '../../../core/supabase/supabase_config.dart';
+import 'admin_table_notifier.dart';
 
-class AdminTrashListNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
-  List<Map<String, dynamic>> _allData = [];
-  String? _entityFilter;
+/// Deleted things, kept until they expire.
+///
+/// The client asked for a trash rather than anything permanent, so the
+/// editors mark a row closed or archived and the original lands here with
+/// the whole record in `entity_data` — enough to put it back.
+final adminTrashListProvider =
+    StateNotifierProvider<
+      AdminTrashNotifier,
+      AsyncValue<List<Map<String, dynamic>>>
+    >((ref) {
+      return AdminTrashNotifier();
+    });
 
-  AdminTrashListNotifier() : super(const AsyncValue.loading()) { load(); }
+class AdminTrashNotifier extends AdminTableNotifier {
+  AdminTrashNotifier()
+    : super(
+        table: 'trash',
+        searchColumns: const [],
+        orderBy: 'deleted_at',
+        hasStatus: false,
+      );
 
+  String? _entityType;
+
+  void setEntityFilter(String? type) {
+    _entityType = type;
+    load();
+  }
+
+  @override
   Future<void> load() async {
-    _allData = List<Map<String, dynamic>>.from(_mockTrash);
-    _applyFilters();
+    await super.load();
+    final type = _entityType;
+    if (type == null || type.isEmpty) return;
+
+    state.whenData((rows) {
+      state = AsyncValue.data(
+        rows.where((r) => r['entity_type'] == type).toList(),
+      );
+    });
   }
 
-  void _applyFilters() {
-    var filtered = List<Map<String, dynamic>>.from(_allData);
-    if (_entityFilter != null && _entityFilter!.isNotEmpty) {
-      filtered = filtered.where((t) => t['entity_type'] == _entityFilter).toList();
-    }
-    filtered.sort((a, b) => (b['deleted_at'] as String).compareTo(a['deleted_at'] as String));
-    state = AsyncValue.data(filtered);
-  }
-
-  void setEntityFilter(String? f) { _entityFilter = f; _applyFilters(); }
-
+  /// Writes the stored record back into its own table, then drops the entry.
   Future<void> restore(String id) async {
-    _allData.removeWhere((t) => t['id'] == id);
-    _applyFilters();
+    final client = SupabaseConfig.client;
+    final row = await client
+        .from('trash')
+        .select('entity_type, entity_data')
+        .eq('id', id)
+        .single();
+
+    final table = row['entity_type'] as String?;
+    final data = row['entity_data'];
+    if (table == null || data is! Map) return;
+
+    await client.from(table).upsert(Map<String, dynamic>.from(data));
+    await client.from('trash').delete().eq('id', id);
+    await load();
   }
 
   Future<void> permanentDelete(String id) async {
-    _allData.removeWhere((t) => t['id'] == id);
-    _applyFilters();
+    await SupabaseConfig.client.from('trash').delete().eq('id', id);
+    await load();
+  }
+
+  /// How long a row has left. The screen warns when it is nearly gone.
+  int daysUntilExpiry(String expiresAt) {
+    final exp = DateTime.tryParse(expiresAt);
+    if (exp == null) return 0;
+    return exp.difference(DateTime.now()).inDays;
   }
 
   Future<void> emptyTrash() async {
-    _allData.clear();
-    state = const AsyncValue.data([]);
-  }
-
-  int daysUntilExpiry(String expiresAt) {
-    final exp = DateTime.parse(expiresAt);
-    return exp.difference(DateTime.now()).inDays;
+    // A delete needs a filter, and everything has an id, so this matches all.
+    await SupabaseConfig.client.from('trash').delete().neq('id', '');
+    await load();
   }
 }
-
-final _mockTrash = <Map<String, dynamic>>[
-  {'id': 'tr_1', 'entity_type': 'business', 'entity_id': 'b_del_1', 'entity_title': 'מסעדת הקוסקוס של סבתא', 'entity_data': {'name': 'מסעדת הקוסקוס של סבתא', 'category': 'מסעדות', 'status': 'active', 'address': 'רח׳ הזית 5, מודיעין'}, 'deleted_by': 'u1', 'deleted_by_name': 'ניתאי לוי', 'deleted_at': '2026-08-25T14:30:00Z', 'expires_at': '2026-09-24T14:30:00Z'},
-  {'id': 'tr_2', 'entity_type': 'article', 'entity_id': 'a_del_1', 'entity_title': 'עדכון: כביש 431 ייסגר לתנועה', 'entity_data': {'title': 'עדכון: כביש 431 ייסגר לתנועה', 'status': 'published', 'slug': 'road-431-closure', 'view_count': 890}, 'deleted_by': 'u1', 'deleted_by_name': 'ניתאי לוי', 'deleted_at': '2026-08-22T09:15:00Z', 'expires_at': '2026-09-21T09:15:00Z'},
-  {'id': 'tr_3', 'entity_type': 'review', 'entity_id': 'r_del_1', 'entity_title': 'ביקורת של דני פרץ על פיצה פרגו', 'entity_data': {'text': 'אוכל גרוע, שירות איטי', 'rating': 1, 'user_name': 'דני פרץ', 'business_name': 'פיצה פרגו'}, 'deleted_by': 'u1', 'deleted_by_name': 'ניתאי לוי', 'deleted_at': '2026-08-20T16:45:00Z', 'expires_at': '2026-09-19T16:45:00Z'},
-  {'id': 'tr_4', 'entity_type': 'event', 'entity_id': 'ev_del_1', 'entity_title': 'סדנת ציור לילדים — בוטל', 'entity_data': {'title': 'סדנת ציור לילדים', 'date': '2026-08-18', 'location': 'מתנ"ס מורשת', 'status': 'cancelled'}, 'deleted_by': 'u1', 'deleted_by_name': 'דנה מזרחי', 'deleted_at': '2026-08-18T11:20:00Z', 'expires_at': '2026-09-17T11:20:00Z'},
-  {'id': 'tr_5', 'entity_type': 'business', 'entity_id': 'b_del_2', 'entity_title': 'חנות הספרים הישנה', 'entity_data': {'name': 'חנות הספרים הישנה', 'category': 'קמעונאות', 'status': 'closed', 'address': 'מרכז עזריאלי'}, 'deleted_by': 'u1', 'deleted_by_name': 'ניתאי לוי', 'deleted_at': '2026-08-10T08:00:00Z', 'expires_at': '2026-09-09T08:00:00Z'},
-  {'id': 'tr_6', 'entity_type': 'article', 'entity_id': 'a_del_2', 'entity_title': 'טיוטה: ראיון עם ראש העיר (לא פורסם)', 'entity_data': {'title': 'ראיון עם ראש העיר', 'status': 'draft', 'slug': 'mayor-interview'}, 'deleted_by': 'u1', 'deleted_by_name': 'יוסי כהן', 'deleted_at': '2026-08-05T13:30:00Z', 'expires_at': '2026-09-04T13:30:00Z'},
-  {'id': 'tr_7', 'entity_type': 'review', 'entity_id': 'r_del_2', 'entity_title': 'ביקורת ספאם — סופר פארם', 'entity_data': {'text': 'Buy cheap watches at www.spam.com', 'rating': 5, 'user_name': 'SpamBot123', 'business_name': 'סופר פארם מודיעין'}, 'deleted_by': 'u1', 'deleted_by_name': 'ניתאי לוי', 'deleted_at': '2026-08-02T10:00:00Z', 'expires_at': '2026-09-01T10:00:00Z'},
-  {'id': 'tr_8', 'entity_type': 'business', 'entity_id': 'b_del_3', 'entity_title': 'מספרת טוני — נסגרה', 'entity_data': {'name': 'מספרת טוני', 'category': 'יופי וטיפוח', 'status': 'closed', 'address': 'רח׳ האורן 3'}, 'deleted_by': 'u1', 'deleted_by_name': 'ניתאי לוי', 'deleted_at': '2026-07-28T15:00:00Z', 'expires_at': '2026-08-27T15:00:00Z'},
-];
