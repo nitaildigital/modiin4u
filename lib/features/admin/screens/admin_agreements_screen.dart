@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_agreements_provider.dart';
 
@@ -68,10 +68,10 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
             height: 40,
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.rubik(fontSize: 14),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש לפי עסק...',
-                hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -90,12 +90,12 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
           _FilterChip('בוטל', _statusFilter == 'cancelled', () { setState(() => _statusFilter = 'cancelled'); ref.read(adminAgreementListProvider.notifier).setStatusFilter('cancelled'); }),
           _FilterChip('פג תוקף', _statusFilter == 'expired', () { setState(() => _statusFilter = 'expired'); ref.read(adminAgreementListProvider.notifier).setStatusFilter('expired'); }),
           const Spacer(),
-          asyncData.whenData((list) => Text('${list.length} הסכמים', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((list) => Text('${list.length} הסכמים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 16),
           FilledButton.icon(
             onPressed: () => _showEditor(context, ref),
             icon: const Icon(Icons.add, size: 18),
-            label: Text('הסכם חדש', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('הסכם חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, minimumSize: const Size(0, 40), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           ),
         ]),
@@ -105,13 +105,13 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.handshake_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין הסכמים', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין הסכמים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return Column(children: [
@@ -150,22 +150,22 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         child: Row(children: [
                           Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(a['business_name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
-                            Text(a['name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                            Text(a['business_name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                            Text(a['name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                           ])),
-                          Expanded(flex: 2, child: Text(typeLabel, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
-                          if (isWide) Expanded(flex: 1, child: Text(discount > 0 ? '₪${net.toStringAsFixed(0)} (${discount.toInt()}%-)' : '₪${price.toStringAsFixed(0)}', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, fontFeatures: [const FontFeature.tabularFigures()]))),
-                          if (isWide) Expanded(flex: 1, child: Text(cycleLabel, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText))),
+                          Expanded(flex: 2, child: Text(typeLabel, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
+                          if (isWide) Expanded(flex: 1, child: Text(discount > 0 ? '₪${net.toStringAsFixed(0)} (${discount.toInt()}%-)' : '₪${price.toStringAsFixed(0)}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, fontFeatures: [const FontFeature.tabularFigures()]))),
+                          if (isWide) Expanded(flex: 1, child: Text(cycleLabel, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
                           Expanded(flex: 1, child: _StatusPill(status)),
-                          if (isWide) Expanded(flex: 2, child: Text('$start → $end', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText))),
+                          if (isWide) Expanded(flex: 2, child: Text('$start → $end', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText))),
                           PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
                             onSelected: (v) => _handleAction(v, a),
                             itemBuilder: (_) => [
-                              PopupMenuItem(value: 'edit', child: Text('עריכה', style: GoogleFonts.rubik(fontSize: 13))),
-                              if (status != 'active') PopupMenuItem(value: 'activate', child: Text('הפעל', style: GoogleFonts.rubik(fontSize: 13))),
-                              if (status == 'active') PopupMenuItem(value: 'pause', child: Text('השהה', style: GoogleFonts.rubik(fontSize: 13))),
-                              PopupMenuItem(value: 'cancel', child: Text('בטל', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.error))),
+                              PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                              if (status != 'active') PopupMenuItem(value: 'activate', child: Text('הפעל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                              if (status == 'active') PopupMenuItem(value: 'pause', child: Text('השהה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                              PopupMenuItem(value: 'cancel', child: Text('בטל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
                             ],
                           ),
                         ]),
@@ -291,7 +291,7 @@ class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> 
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
                 child: Row(children: [
-                  Text(_isEditing ? 'עריכת הסכם' : 'הסכם חדש', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text(_isEditing ? 'עריכת הסכם' : 'הסכם חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
                 ]),
@@ -337,8 +337,8 @@ class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> 
                   ]),
                   const SizedBox(height: 8),
                   Wrap(spacing: 8, runSpacing: 4, children: [
-                    FilterChip(label: Text('כולל מע"מ', style: GoogleFonts.rubik(fontSize: 12)), selected: _vatIncluded, onSelected: (v) => setState(() => _vatIncluded = v), selectedColor: AppColors.turquoise.withValues(alpha: 0.15), checkmarkColor: AppColors.turquoise, side: BorderSide(color: _vatIncluded ? AppColors.turquoise : AppColors.border)),
-                    FilterChip(label: Text('חידוש אוטומטי', style: GoogleFonts.rubik(fontSize: 12)), selected: _autoRenew, onSelected: (v) => setState(() => _autoRenew = v), selectedColor: AppColors.turquoise.withValues(alpha: 0.15), checkmarkColor: AppColors.turquoise, side: BorderSide(color: _autoRenew ? AppColors.turquoise : AppColors.border)),
+                    FilterChip(label: Text('כולל מע"מ', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)), selected: _vatIncluded, onSelected: (v) => setState(() => _vatIncluded = v), selectedColor: AppColors.turquoise.withValues(alpha: 0.15), checkmarkColor: AppColors.turquoise, side: BorderSide(color: _vatIncluded ? AppColors.turquoise : AppColors.border)),
+                    FilterChip(label: Text('חידוש אוטומטי', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)), selected: _autoRenew, onSelected: (v) => setState(() => _autoRenew = v), selectedColor: AppColors.turquoise.withValues(alpha: 0.15), checkmarkColor: AppColors.turquoise, side: BorderSide(color: _autoRenew ? AppColors.turquoise : AppColors.border)),
                   ]),
                   const SizedBox(height: 12),
                   Row(children: [
@@ -368,14 +368,14 @@ class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> 
                 decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
                 child: Row(children: [
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: GoogleFonts.rubik())),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _saving ? null : _save,
                     style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _saving
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור הסכם', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+                        : Text(_isEditing ? 'שמור' : 'צור הסכם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),
@@ -391,8 +391,8 @@ class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> 
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller, maxLines: maxLines, validator: validator,
-        style: GoogleFonts.rubik(fontSize: 13),
-        decoration: InputDecoration(labelText: label, labelStyle: GoogleFonts.rubik(fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+        decoration: InputDecoration(labelText: label, labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
       ),
     );
   }
@@ -445,9 +445,9 @@ class _StatChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: color, fontFeatures: [const FontFeature.tabularFigures()])),
+        Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: color, fontFeatures: [const FontFeature.tabularFigures()])),
         const SizedBox(width: 8),
-        Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+        Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
       ]),
     );
   }
@@ -469,7 +469,7 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
@@ -481,7 +481,7 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
   }
 }
 
@@ -505,7 +505,7 @@ class _FilterChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5),
           ),
-          child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
         ),
       ),
     );

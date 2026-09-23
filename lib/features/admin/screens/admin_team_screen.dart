@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_team_provider.dart';
 
@@ -30,9 +30,9 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
           SizedBox(
             width: isWide ? 280 : 180, height: 40,
             child: TextField(
-              controller: _searchController, style: GoogleFonts.rubik(fontSize: 14),
+              controller: _searchController, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'חיפוש חבר צוות...', hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintText: 'חיפוש חבר צוות...', hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -43,12 +43,12 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
             ),
           ),
           const Spacer(),
-          asyncData.whenData((l) => Text('${l.length} חברי צוות', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((l) => Text('${l.length} חברי צוות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: () => _showEditor(context, null),
             icon: const Icon(Icons.person_add, size: 18),
-            label: Text('הוספת חבר צוות', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('הוספת חבר צוות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.turquoise, foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -62,13 +62,13 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.group_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין חברי צוות', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין חברי צוות', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return GridView.builder(
@@ -94,34 +94,34 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
       builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: Text(existing == null ? 'הוספת חבר צוות' : 'עריכת חבר צוות', style: GoogleFonts.rubik(fontWeight: FontWeight.w700, color: AppColors.navy)),
+          title: Text(existing == null ? 'הוספת חבר צוות' : 'עריכת חבר צוות', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, color: AppColors.navy)),
           content: SizedBox(width: 420, child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: nameC, style: GoogleFonts.rubik(fontSize: 14),
-              decoration: InputDecoration(labelText: 'שם מלא', labelStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+            TextField(controller: nameC, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+              decoration: InputDecoration(labelText: 'שם מלא', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10))),
             const SizedBox(height: 14),
-            TextField(controller: emailC, style: GoogleFonts.rubik(fontSize: 14),
-              decoration: InputDecoration(labelText: 'אימייל', labelStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+            TextField(controller: emailC, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+              decoration: InputDecoration(labelText: 'אימייל', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10))),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               value: role,
-              style: GoogleFonts.rubik(fontSize: 14, color: AppColors.navy),
-              decoration: InputDecoration(labelText: 'תפקיד', labelStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.navy),
+              decoration: InputDecoration(labelText: 'תפקיד', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
               items: [
-                DropdownMenuItem(value: 'super_admin', child: Text('סופר אדמין', style: GoogleFonts.rubik())),
-                DropdownMenuItem(value: 'admin', child: Text('אדמין', style: GoogleFonts.rubik())),
-                DropdownMenuItem(value: 'editor', child: Text('עורך', style: GoogleFonts.rubik())),
-                DropdownMenuItem(value: 'moderator', child: Text('מנהל תוכן', style: GoogleFonts.rubik())),
-                DropdownMenuItem(value: 'sales', child: Text('מכירות', style: GoogleFonts.rubik())),
-                DropdownMenuItem(value: 'viewer', child: Text('צופה', style: GoogleFonts.rubik())),
+                DropdownMenuItem(value: 'super_admin', child: Text('סופר אדמין', style: TextStyle(fontFamily: AppFonts.rubik))),
+                DropdownMenuItem(value: 'admin', child: Text('אדמין', style: TextStyle(fontFamily: AppFonts.rubik))),
+                DropdownMenuItem(value: 'editor', child: Text('עורך', style: TextStyle(fontFamily: AppFonts.rubik))),
+                DropdownMenuItem(value: 'moderator', child: Text('מנהל תוכן', style: TextStyle(fontFamily: AppFonts.rubik))),
+                DropdownMenuItem(value: 'sales', child: Text('מכירות', style: TextStyle(fontFamily: AppFonts.rubik))),
+                DropdownMenuItem(value: 'viewer', child: Text('צופה', style: TextStyle(fontFamily: AppFonts.rubik))),
               ],
               onChanged: (v) => setD(() => role = v!),
             ),
           ])),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik(color: AppColors.grayText))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText))),
             ElevatedButton(
               onPressed: () {
                 final data = {'name': nameC.text, 'email': emailC.text, 'role': role};
@@ -133,7 +133,7 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
                 Navigator.pop(ctx);
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.turquoise, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: Text(existing == null ? 'הוסף' : 'שמור', style: GoogleFonts.rubik()),
+              child: Text(existing == null ? 'הוסף' : 'שמור', style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
           ],
         ),
@@ -166,17 +166,17 @@ class _TeamCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(children: [
               CircleAvatar(radius: 24, backgroundColor: _roleColor(role).withValues(alpha: 0.12),
-                child: Text(name.isNotEmpty ? name[0] : '?', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: _roleColor(role)))),
+                child: Text(name.isNotEmpty ? name[0] : '?', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w700, color: _roleColor(role)))),
               const SizedBox(width: 14),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(name, style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                Text(name, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy)),
                 const SizedBox(height: 2),
-                Text(email, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                Text(email, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(color: _roleColor(role).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                  child: Text(_roleLabel(role), style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: _roleColor(role))),
+                  child: Text(_roleLabel(role), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: _roleColor(role))),
                 ),
               ])),
               Switch(

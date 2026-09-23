@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_trash_provider.dart';
 
@@ -61,7 +61,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
         child: Row(children: [
           Icon(Icons.delete_outline, size: 20, color: AppColors.error),
           const SizedBox(width: 8),
-          Text('סל מחזור', style: GoogleFonts.rubik(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy)),
+          Text('סל מחזור', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy)),
           const SizedBox(width: 20),
           _FilterChip('הכל', _entityFilter.isEmpty, () { setState(() => _entityFilter = ''); ref.read(adminTrashListProvider.notifier).setEntityFilter(null); }),
           _FilterChip('עסקים', _entityFilter == 'business', () { setState(() => _entityFilter = 'business'); ref.read(adminTrashListProvider.notifier).setEntityFilter('business'); }),
@@ -69,25 +69,25 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
           _FilterChip('ביקורות', _entityFilter == 'review', () { setState(() => _entityFilter = 'review'); ref.read(adminTrashListProvider.notifier).setEntityFilter('review'); }),
           _FilterChip('אירועים', _entityFilter == 'event', () { setState(() => _entityFilter = 'event'); ref.read(adminTrashListProvider.notifier).setEntityFilter('event'); }),
           const Spacer(),
-          asyncData.whenData((list) => Text('${list.length} פריטים', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((list) => Text('${list.length} פריטים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 16),
           OutlinedButton.icon(
             onPressed: () {
               showDialog(context: context, builder: (ctx) => AlertDialog(
-                title: Text('ריקון סל', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
-                content: Text('מחיקה לצמיתות של כל הפריטים?', style: GoogleFonts.rubik()),
+                title: Text('ריקון סל', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600)),
+                content: Text('מחיקה לצמיתות של כל הפריטים?', style: TextStyle(fontFamily: AppFonts.rubik)),
                 actions: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik())),
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
                   FilledButton(
                     onPressed: () { ref.read(adminTrashListProvider.notifier).emptyTrash(); Navigator.pop(ctx); },
                     style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-                    child: Text('מחק הכל', style: GoogleFonts.rubik()),
+                    child: Text('מחק הכל', style: TextStyle(fontFamily: AppFonts.rubik)),
                   ),
                 ],
               ));
             },
             icon: const Icon(Icons.delete_forever, size: 16, color: AppColors.error),
-            label: Text('ריקון סל', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.error)),
+            label: Text('ריקון סל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error)),
             style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.error), minimumSize: const Size(0, 40), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           ),
         ]),
@@ -100,7 +100,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
         child: Row(children: [
           Icon(Icons.info_outline, size: 16, color: AppColors.gold),
           const SizedBox(width: 8),
-          Text('פריטים נמחקים אוטומטית לאחר 30 יום', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.gold)),
+          Text('פריטים נמחקים אוטומטית לאחר 30 יום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.gold)),
         ]),
       ),
 
@@ -108,13 +108,13 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.check_circle_outline, size: 48, color: AppColors.success.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('הסל ריק 🎉', style: GoogleFonts.rubik(color: AppColors.grayText, fontSize: 16)),
+                Text('הסל ריק 🎉', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText, fontSize: 16)),
               ]));
             }
             return Column(children: [
@@ -147,16 +147,16 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                       color: daysLeft <= 3 ? AppColors.error.withValues(alpha: 0.03) : null,
                       child: Row(children: [
                         Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(t['entity_title'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                          Text(t['entity_title'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
                           if (t['entity_data'] != null && t['entity_data'] is Map)
-                            Text(_entitySubtitle(entityType, t['entity_data'] as Map), style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                            Text(_entitySubtitle(entityType, t['entity_data'] as Map), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                         ])),
                         Expanded(flex: 1, child: _EntityTypePill(entityType)),
-                        if (isWide) Expanded(flex: 2, child: Text(t['deleted_by_name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
-                        if (isWide) Expanded(flex: 2, child: Text(_formatDate(t['deleted_at'] as String? ?? ''), style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText))),
+                        if (isWide) Expanded(flex: 2, child: Text(t['deleted_by_name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
+                        if (isWide) Expanded(flex: 2, child: Text(_formatDate(t['deleted_at'] as String? ?? ''), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
                         Expanded(flex: 1, child: Text(
                           daysLeft <= 0 ? 'היום!' : '$daysLeft ימים',
-                          style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: daysLeft <= 3 ? AppColors.error : AppColors.grayText),
+                          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: daysLeft <= 3 ? AppColors.error : AppColors.grayText),
                         )),
                         SizedBox(
                           width: 80,
@@ -217,9 +217,9 @@ class _StatChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(value, style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
+        Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w700, color: color)),
         const SizedBox(width: 8),
-        Text(label, style: GoogleFonts.rubik(fontSize: 12, color: color.withValues(alpha: 0.7))),
+        Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: color.withValues(alpha: 0.7))),
       ]),
     );
   }
@@ -245,7 +245,7 @@ class _FilterChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: selected ? AppColors.navy : AppColors.border),
           ),
-          child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w500, color: selected ? Colors.white : AppColors.grayText)),
+          child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w500, color: selected ? Colors.white : AppColors.grayText)),
         ),
       ),
     );
@@ -259,7 +259,7 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.grayText)));
+    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.grayText)));
   }
 }
 
@@ -282,7 +282,7 @@ class _EntityTypePill extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 12, color: color),
         const SizedBox(width: 4),
-        Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w500, color: color)),
+        Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w500, color: color)),
       ]),
     );
   }

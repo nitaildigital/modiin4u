@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_businesses_provider.dart';
@@ -43,10 +43,10 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
             height: 40,
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.inter(fontSize: 14),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש עסק...',
-                hintStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight),
+                hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight),
                 prefixIcon: Icon(IconsaxPlusLinear.search_normal, size: 18, color: AppColors.adminTextLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.adminSearchBorder)),
@@ -83,7 +83,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
           // Count
           businessesAsync.whenData((list) => Text(
             '${list.length} עסקים',
-            style: GoogleFonts.inter(fontSize: 13, color: AppColors.adminTextLight),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: AppColors.adminTextLight),
           )).value ?? const SizedBox.shrink(),
           const SizedBox(width: 16),
 
@@ -93,7 +93,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
             child: FilledButton.icon(
               onPressed: () => _showBusinessEditor(context, ref),
               icon: const Icon(Icons.add, size: 18),
-              label: Text('עסק חדש', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500)),
+              label: Text('עסק חדש', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500)),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.midBlue,
                 minimumSize: const Size(0, 40),
@@ -111,9 +111,9 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
           error: (e, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('שגיאה בטעינת עסקים', style: GoogleFonts.rubik(color: AppColors.error)),
+            Text('שגיאה בטעינת עסקים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error)),
             const SizedBox(height: 4),
-            Text('$e', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+            Text('$e', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
             const SizedBox(height: 12),
             TextButton(onPressed: () => ref.read(adminBusinessListProvider.notifier).load(), child: const Text('נסה שוב')),
           ])),
@@ -122,7 +122,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.store_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין עסקים', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין עסקים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
 
@@ -152,13 +152,13 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('מחיקת עסק', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-            content: Text('למחוק את "${biz['name']}"?', style: GoogleFonts.rubik()),
+            title: Text('מחיקת עסק', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+            content: Text('למחוק את "${biz['name']}"?', style: TextStyle(fontFamily: AppFonts.rubik)),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik())),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
               TextButton(
                 onPressed: () { Navigator.pop(ctx); notifier.deleteBusiness(id); },
-                child: Text('מחק', style: GoogleFonts.rubik(color: AppColors.error)),
+                child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error)),
               ),
             ],
           ),
@@ -233,13 +233,13 @@ class _BusinessTable extends StatelessWidget {
                     const SizedBox(width: 10),
                   ],
                   Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(biz['name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
-                    Text(biz['slug'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                    Text(biz['name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                    Text(biz['slug'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                   ])),
                   // Category placeholder (from entity_categories in the future)
-                  if (isWide) Expanded(flex: 2, child: Text(biz['short_description'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  if (isWide) Expanded(flex: 2, child: Text(biz['short_description'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis)),
                   // Neighborhood
-                  Expanded(flex: 2, child: Text(neighborhood?['name'] as String? ?? '—', style: GoogleFonts.rubik(fontSize: 13))),
+                  Expanded(flex: 2, child: Text(neighborhood?['name'] as String? ?? '—', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                   // Status
                   Expanded(flex: 1, child: _StatusPill(status)),
                   // Rating
@@ -247,21 +247,21 @@ class _BusinessTable extends StatelessWidget {
                     if (rating > 0) ...[
                       Icon(Icons.star, size: 14, color: rating >= 4 ? AppColors.gold : AppColors.grayLight),
                       const SizedBox(width: 2),
-                      Text(rating.toStringAsFixed(1), style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(rating.toStringAsFixed(1), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
                     ] else
-                      Text('—', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight)),
+                      Text('—', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight)),
                   ])),
                   // Reviews
-                  if (isWide) Expanded(flex: 1, child: Text('$reviewCount', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
+                  if (isWide) Expanded(flex: 1, child: Text('$reviewCount', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                   // Actions
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
                     onSelected: (v) => onAction(v, biz),
                     itemBuilder: (_) => [
-                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status != 'active') PopupMenuItem(value: 'activate', child: Text('אשר', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status != 'suspended') PopupMenuItem(value: 'suspend', child: Text('השהה', style: GoogleFonts.rubik(fontSize: 13))),
-                      PopupMenuItem(value: 'delete', child: Text('מחק', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.error))),
+                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status != 'active') PopupMenuItem(value: 'activate', child: Text('אשר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status != 'suspended') PopupMenuItem(value: 'suspend', child: Text('השהה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
                     ],
                   ),
                 ]),
@@ -281,7 +281,7 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
   }
 }
 
@@ -306,7 +306,7 @@ class _StatusPill extends StatelessWidget {
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
@@ -332,7 +332,7 @@ class _FilterChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: selected ? AppColors.midBlue.withValues(alpha: 0.3) : AppColors.adminSearchBorder, width: 1),
           ),
-          child: Text(label, style: GoogleFonts.inter(
+          child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, 
             fontSize: 13,
             fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
             color: selected ? AppColors.midBlue : AppColors.adminTextMedium,
@@ -476,7 +476,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                 ),
                 child: Row(children: [
-                  Text(_isEditing ? 'עריכת עסק' : 'עסק חדש', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text(_isEditing ? 'עריכת עסק' : 'עסק חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
                 ]),
@@ -487,8 +487,8 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
                 color: AppColors.surfaceLight,
                 child: TabBar(
                   controller: _tabs,
-                  labelStyle: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600),
-                  unselectedLabelStyle: GoogleFonts.rubik(fontSize: 13),
+                  labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600),
+                  unselectedLabelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   labelColor: AppColors.turquoise,
                   unselectedLabelColor: AppColors.grayText,
                   indicatorColor: AppColors.turquoise,
@@ -519,14 +519,14 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
                     const SizedBox(width: 8),
                   ],
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: GoogleFonts.rubik())),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _saving ? null : _save,
                     style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _saving
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור עסק', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+                        : Text(_isEditing ? 'שמור' : 'צור עסק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),
@@ -544,7 +544,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
       _field('תיאור קצר', _shortDesc, maxLines: 2),
       _field('תיאור מלא', _fullDesc, maxLines: 4),
       const SizedBox(height: 16),
-      Text('תמונות', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('תמונות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       Row(children: [
         Expanded(child: _field('לוגו URL', _logoUrl)),
@@ -563,7 +563,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
               errorBuilder: (_, __, ___) => Container(height: 64, alignment: Alignment.center, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.broken_image, size: 20, color: AppColors.grayLight))))),
         ]),
       const SizedBox(height: 16),
-      Text('קשר', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('קשר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       Row(children: [
         Expanded(child: _field('טלפון', _phone)),
@@ -577,7 +577,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
       ]),
       _field('Instagram', _instagram),
       const SizedBox(height: 16),
-      Text('מיקום', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('מיקום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       _field('כתובת *', _address, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
       neighborhoods.when(
@@ -585,8 +585,8 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
         error: (_, __) => const SizedBox.shrink(),
         data: (hoods) => DropdownButtonFormField<String>(
           value: _neighborhoodId,
-          decoration: InputDecoration(labelText: 'שכונה', labelStyle: GoogleFonts.rubik(fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-          items: hoods.map((h) => DropdownMenuItem(value: h['id'] as String, child: Text(h['name'] as String, style: GoogleFonts.rubik(fontSize: 13)))).toList(),
+          decoration: InputDecoration(labelText: 'שכונה', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+          items: hoods.map((h) => DropdownMenuItem(value: h['id'] as String, child: Text(h['name'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)))).toList(),
           onChanged: (v) => setState(() => _neighborhoodId = v),
         ),
       ),
@@ -597,17 +597,17 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
         Expanded(child: _field('Longitude', _lng)),
       ]),
       const SizedBox(height: 16),
-      Text('סטטוס', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('סטטוס', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       DropdownButtonFormField<String>(
         value: _status,
         decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
         items: [
-          DropdownMenuItem(value: 'draft', child: Text('טיוטה', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: 'pending', child: Text('ממתין לאישור', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: 'active', child: Text('פעיל', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: 'suspended', child: Text('מושהה', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: 'closed', child: Text('סגור', style: GoogleFonts.rubik(fontSize: 13))),
+          DropdownMenuItem(value: 'draft', child: Text('טיוטה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: 'pending', child: Text('ממתין לאישור', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: 'active', child: Text('פעיל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: 'suspended', child: Text('מושהה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: 'closed', child: Text('סגור', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
         ],
         onChanged: (v) => setState(() => _status = v!),
       ),
@@ -616,36 +616,36 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
 
   Widget _buildAttributesTab() {
     return ListView(padding: const EdgeInsets.all(20), children: [
-      Text('כשרות', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('כשרות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       DropdownButtonFormField<String>(
         value: _kosher,
         decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
         items: [
-          DropdownMenuItem(value: 'none', child: Text('ללא', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: 'rabbanut', child: Text('רבנות', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: 'mehadrin', child: Text('מהדרין', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: 'badatz', child: Text('בד"ץ', style: GoogleFonts.rubik(fontSize: 13))),
+          DropdownMenuItem(value: 'none', child: Text('ללא', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: 'rabbanut', child: Text('רבנות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: 'mehadrin', child: Text('מהדרין', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: 'badatz', child: Text('בד"ץ', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
         ],
         onChanged: (v) => setState(() => _kosher = v!),
       ),
       const SizedBox(height: 12),
-      Text('רמת מחיר', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('רמת מחיר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       DropdownButtonFormField<String?>(
         value: _priceLevel,
         decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
         items: [
-          DropdownMenuItem(value: null, child: Text('—', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: '₪', child: Text('₪', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: '₪₪', child: Text('₪₪', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: '₪₪₪', child: Text('₪₪₪', style: GoogleFonts.rubik(fontSize: 13))),
-          DropdownMenuItem(value: '₪₪₪₪', child: Text('₪₪₪₪', style: GoogleFonts.rubik(fontSize: 13))),
+          DropdownMenuItem(value: null, child: Text('—', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: '₪', child: Text('₪', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: '₪₪', child: Text('₪₪', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: '₪₪₪', child: Text('₪₪₪', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+          DropdownMenuItem(value: '₪₪₪₪', child: Text('₪₪₪₪', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
         ],
         onChanged: (v) => setState(() => _priceLevel = v),
       ),
       const SizedBox(height: 16),
-      Text('מאפיינים', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('מאפיינים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       Wrap(spacing: 8, runSpacing: 4, children: [
         _toggle('משלוחים', _hasDelivery, (v) => setState(() => _hasDelivery = v)),
@@ -658,7 +658,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
         _toggle('פתוח בשבת', _openOnShabbat, (v) => setState(() => _openOnShabbat = v)),
       ]),
       const SizedBox(height: 16),
-      Text('קידום', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('קידום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       _toggle('מומלץ / Featured', _isFeatured, (v) => setState(() => _isFeatured = v)),
       _toggle('מאומת / Verified', _isVerified, (v) => setState(() => _isVerified = v)),
@@ -671,7 +671,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
       _field('Meta Description', _metaDesc, maxLines: 3),
       _field('Meta Keywords', _metaKeywords),
       const SizedBox(height: 16),
-      Text('Open Graph', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('Open Graph', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 8),
       _field('OG Title', _ogTitle),
       _field('OG Description', _ogDesc, maxLines: 3),
@@ -687,10 +687,10 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
         controller: controller,
         maxLines: maxLines,
         validator: validator,
-        style: GoogleFonts.rubik(fontSize: 13),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: GoogleFonts.rubik(fontSize: 13),
+          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
@@ -700,7 +700,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> wi
 
   Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) {
     return FilterChip(
-      label: Text(label, style: GoogleFonts.rubik(fontSize: 12)),
+      label: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)),
       selected: value,
       onSelected: onChanged,
       selectedColor: AppColors.turquoise.withValues(alpha: 0.15),

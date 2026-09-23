@@ -1,8 +1,8 @@
 import 'dart:math';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -154,7 +154,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                                     children: [
                                       Icon(icon, size: 16, color: sel ? AppColors.midBlue : AppColors.adminTextLight),
                                       const SizedBox(width: 6),
-                                      Text(label, style: GoogleFonts.inter(
+                                      Text(label, style: TextStyle(fontFamily: AppFonts.inter, 
                                         fontSize: 13,
                                         fontWeight: sel ? FontWeight.w500 : FontWeight.w400,
                                         color: sel ? AppColors.midBlue : AppColors.adminTextMedium,
@@ -236,7 +236,7 @@ class _AdminTopBar extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text('M4U', style: GoogleFonts.inter(
+            child: Text('M4U', style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5,
             )),
           ),
@@ -245,10 +245,10 @@ class _AdminTopBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ניהול — מודיעין בשבילך', style: GoogleFonts.rubik(
+              Text('ניהול — מודיעין בשבילך', style: TextStyle(fontFamily: AppFonts.rubik, 
                 fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.adminTextDark,
               )),
-              Text(sectionName, style: GoogleFonts.inter(
+              Text(sectionName, style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.adminTextLight,
               )),
             ],
@@ -268,7 +268,7 @@ class _AdminTopBar extends StatelessWidget {
                 Icon(IconsaxPlusLinear.search_normal, size: 18, color: AppColors.adminTextLight),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text('חיפוש...', style: GoogleFonts.inter(
+                  child: Text('חיפוש...', style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 14, color: AppColors.adminTextLight,
                   )),
                 ),
@@ -301,7 +301,7 @@ class _AdminTopBar extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Center(child: Text('NL', style: GoogleFonts.inter(
+            child: Center(child: Text('NL', style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white,
             ))),
           ),
@@ -344,7 +344,7 @@ class _TopBarButton extends StatelessWidget {
                     borderRadius: BorderRadius.circular(50),
                     border: Border.all(color: Colors.white, width: 1.5),
                   ),
-                  child: Center(child: Text('$badgeCount', style: GoogleFonts.inter(
+                  child: Center(child: Text('$badgeCount', style: TextStyle(fontFamily: AppFonts.inter, 
                     fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white,
                   ))),
                 ),
@@ -377,7 +377,7 @@ class _Sidebar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Text(
             sectionGroups[i]!,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: AppFonts.inter, 
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.adminTextMedium,
@@ -413,7 +413,7 @@ class _Sidebar extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(label, style: GoogleFonts.rubik(
+                      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, 
                         fontSize: 14,
                         fontWeight: sel ? FontWeight.w500 : FontWeight.w400,
                         color: sel ? AppColors.adminTextDark : AppColors.adminTextMedium,
@@ -491,9 +491,9 @@ class _OverviewSection extends ConsumerWidget {
       padding: const EdgeInsets.all(24),
       children: [
         // Header — CRM style
-        Text('סקירה כללית', style: GoogleFonts.rubik(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text('סקירה כללית', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
         const SizedBox(height: 4),
-        Text('נתונים בזמן אמת על כל הפעילות באפליקציה', style: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight)),
+        Text('נתונים בזמן אמת על כל הפעילות באפליקציה', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight)),
         const SizedBox(height: 24),
 
         // Top metrics row — scrollable
@@ -599,13 +599,13 @@ class _TopMetric extends StatelessWidget {
                 color: (change!.startsWith('+') ? AppColors.success : AppColors.error).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(change!, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
+              child: Text(change!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, fontWeight: FontWeight.w600, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
             ),
         ]),
         const Spacer(),
-        Text(value, style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text(value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
         const SizedBox(height: 2),
-        Text(sub, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
+        Text(sub, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
       ]),
     );
   }
@@ -634,7 +634,7 @@ class _UsersChartCard extends StatelessWidget {
               showTitles: true,
               reservedSize: 30,
               interval: 5,
-              getTitlesWidget: (v, _) => Text('${v.toInt()}', style: GoogleFonts.inter(fontSize: 10, color: AppColors.adminTextLight)),
+              getTitlesWidget: (v, _) => Text('${v.toInt()}', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 10, color: AppColors.adminTextLight)),
             )),
             bottomTitles: AxisTitles(sideTitles: SideTitles(
               showTitles: true,
@@ -642,7 +642,7 @@ class _UsersChartCard extends StatelessWidget {
               interval: 5,
               getTitlesWidget: (v, _) {
                 final day = v.toInt() + 1;
-                return Text('$day/8', style: GoogleFonts.inter(fontSize: 10, color: AppColors.adminTextLight));
+                return Text('$day/8', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 10, color: AppColors.adminTextLight));
               },
             )),
           ),
@@ -673,7 +673,7 @@ class _UsersChartCard extends StatelessWidget {
               getTooltipColor: (_) => AppColors.navy,
               getTooltipItems: (spots) => spots.map((s) => LineTooltipItem(
                 '${s.y.toInt()} רישומים',
-                GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                TextStyle(fontFamily: AppFonts.inter, color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
               )).toList(),
             ),
           ),
@@ -735,11 +735,11 @@ class _FunnelRow extends StatelessWidget {
         width: 32,
         height: 32,
         decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-        child: Center(child: Text('$count', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: color))),
+        child: Center(child: Text('$count', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w600, color: color))),
       ),
       const SizedBox(width: 12),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.adminTextDark)),
+        Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.adminTextDark)),
         const SizedBox(height: 5),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
@@ -762,9 +762,9 @@ class _FunnelStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(child: Column(children: [
-      Text(value, style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+      Text(value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
       const SizedBox(height: 2),
-      Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
+      Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
     ]));
   }
 }
@@ -802,8 +802,8 @@ class _UsersByRoleCard extends StatelessWidget {
           const SizedBox(height: 10),
           _LegendDot(const Color(0xFF8B5CF6), 'מנהלים', '$admins', '${users.isNotEmpty ? (admins / users.length * 100).toInt() : 0}%'),
           const SizedBox(height: 14),
-          Text('${users.length}', style: GoogleFonts.rubik(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.navy)),
-          Text('סה"כ', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+          Text('${users.length}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.navy)),
+          Text('סה"כ', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText)),
         ]),
       ])),
     );
@@ -820,9 +820,9 @@ class _LegendDot extends StatelessWidget {
     return Row(children: [
       Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
       const SizedBox(width: 8),
-      Text(label, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.adminTextDark)),
+      Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.adminTextDark)),
       const SizedBox(width: 8),
-      Text('$pct ($count)', style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
+      Text('$pct ($count)', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
     ]);
   }
 }
@@ -865,7 +865,7 @@ class _ActivityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final pct = total > 0 ? (count / total * 100).toInt() : 0;
     return Row(children: [
-      SizedBox(width: 60, child: Text(label, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.adminTextDark))),
+      SizedBox(width: 60, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.adminTextDark))),
       const SizedBox(width: 10),
       Expanded(child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
@@ -877,9 +877,9 @@ class _ActivityRow extends StatelessWidget {
         ),
       )),
       const SizedBox(width: 12),
-      Text('$count', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+      Text('$count', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
       const SizedBox(width: 6),
-      SizedBox(width: 36, child: Text('$pct%', style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight))),
+      SizedBox(width: 36, child: Text('$pct%', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight))),
     ]);
   }
 }
@@ -909,7 +909,7 @@ class _PendingCard extends StatelessWidget {
               child: Icon(IconsaxPlusBold.tick_circle, size: 24, color: AppColors.success.withValues(alpha: 0.5)),
             ),
             const SizedBox(height: 10),
-            Text('אין פריטים ממתינים', style: GoogleFonts.inter(color: AppColors.adminTextLight, fontSize: 14)),
+            Text('אין פריטים ממתינים', style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextLight, fontSize: 14)),
           ]))
         : ListView.separated(
             itemCount: pending.length,
@@ -934,8 +934,8 @@ class _PendingCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(b.name, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
-                    Text(b.category, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
+                    Text(b.name, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
+                    Text(b.category, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
                   ])),
                   InkWell(
                     onTap: () => ref.read(adminBusinessesProvider.notifier).setStatus(b.id, BusinessStatus.active),
@@ -1011,9 +1011,9 @@ class _RecentActivityCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${r.userName} העיר על $bizName', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
+                Text('${r.userName} העיר על $bizName', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
                 const SizedBox(height: 2),
-                Text(r.text ?? '', style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(r.text ?? '', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight), maxLines: 1, overflow: TextOverflow.ellipsis),
               ])),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1024,7 +1024,7 @@ class _RecentActivityCard extends StatelessWidget {
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(IconsaxPlusBold.star_1, size: 12, color: accentColor),
                   const SizedBox(width: 3),
-                  Text('${r.rating}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: accentColor)),
+                  Text('${r.rating}', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w600, color: accentColor)),
                 ]),
               ),
             ]),
@@ -1054,10 +1054,10 @@ class _CardShell extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
+        Text(title, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
         if (subtitle != null) ...[
           const SizedBox(height: 2),
-          Text(subtitle!, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
+          Text(subtitle!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
         ],
         const SizedBox(height: 8),
         child,
@@ -1107,12 +1107,12 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'חיפוש לפי שם, טלפון, אימייל...',
-                    hintStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight),
+                    hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight),
                     prefixIcon: Icon(IconsaxPlusLinear.search_normal, size: 18, color: AppColors.adminTextLight),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
-                  style: GoogleFonts.inter(fontSize: 14),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
                   onChanged: (v) => setState(() => _search = v),
                 ),
               ),
@@ -1128,11 +1128,11 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<UserRole?>(
                   value: _roleFilter,
-                  hint: Text('תפקיד', style: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextMedium)),
+                  hint: Text('תפקיד', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextMedium)),
                   icon: Icon(IconsaxPlusLinear.arrow_down_1, size: 16, color: AppColors.adminTextLight),
                   items: [
-                    DropdownMenuItem(value: null, child: Text('הכל', style: GoogleFonts.inter(fontSize: 14))),
-                    ...UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(switch (r) { UserRole.admin => 'מנהל', UserRole.businessOwner => 'בעל עסק', UserRole.user => 'תושב' }, style: GoogleFonts.inter(fontSize: 14)))),
+                    DropdownMenuItem(value: null, child: Text('הכל', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))),
+                    ...UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(switch (r) { UserRole.admin => 'מנהל', UserRole.businessOwner => 'בעל עסק', UserRole.user => 'תושב' }, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14)))),
                   ],
                   onChanged: (v) => setState(() => _roleFilter = v),
                 ),
@@ -1144,7 +1144,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
               child: FilledButton.icon(
                 onPressed: () => _showUserDialog(context, ref),
                 icon: const Icon(Icons.add, size: 18),
-                label: Text('משתמש חדש', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500)),
+                label: Text('משתמש חדש', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500)),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.midBlue,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -1176,7 +1176,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                     ),
                     child: Center(child: Text(
                       u.initials,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         color: u.isBanned ? AppColors.error : AppColors.midBlue,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -1184,7 +1184,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                     )),
                   ),
                   title: Row(children: [
-                    Text(u.name, style: GoogleFonts.rubik(fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.adminTextDark)),
+                    Text(u.name, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.adminTextDark)),
                     const SizedBox(width: 8),
                     _RoleBadge(u.role),
                     if (u.isBanned) ...[
@@ -1195,22 +1195,22 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                           color: AppColors.error.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text('חסום', style: GoogleFonts.inter(fontSize: 11, color: AppColors.error, fontWeight: FontWeight.w600)),
+                        child: Text('חסום', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: AppColors.error, fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ]),
                   subtitle: Text(
                     '${u.phone} • ${u.email} • ${u.neighborhood ?? "—"}',
-                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight),
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (v) => _handleUserAction(v, u),
                     icon: Icon(IconsaxPlusLinear.more, size: 20, color: AppColors.adminTextLight),
                     itemBuilder: (_) => [
-                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: GoogleFonts.inter(fontSize: 14))),
-                      PopupMenuItem(value: 'ban', child: Text(u.isBanned ? 'בטל חסימה' : 'חסום משתמש', style: GoogleFonts.inter(fontSize: 14))),
-                      PopupMenuItem(value: 'makeBusinessOwner', child: Text('הפוך לבעל עסק', style: GoogleFonts.inter(fontSize: 14))),
-                      PopupMenuItem(value: 'delete', child: Text('מחק', style: GoogleFonts.inter(fontSize: 14, color: AppColors.error))),
+                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))),
+                      PopupMenuItem(value: 'ban', child: Text(u.isBanned ? 'בטל חסימה' : 'חסום משתמש', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))),
+                      PopupMenuItem(value: 'makeBusinessOwner', child: Text('הפוך לבעל עסק', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))),
+                      PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.error))),
                     ],
                   ),
                   onTap: () => _showUserDialog(context, ref, user: u),
@@ -1266,10 +1266,10 @@ class _BusinessesSectionState extends ConsumerState<_BusinessesSection> {
             const SizedBox(width: 12),
             DropdownButton<BusinessStatus?>(
               value: _statusFilter,
-              hint: Text('סטטוס', style: GoogleFonts.rubik()),
+              hint: Text('סטטוס', style: TextStyle(fontFamily: AppFonts.rubik)),
               items: [
-                DropdownMenuItem(value: null, child: Text('הכל', style: GoogleFonts.rubik())),
-                ...BusinessStatus.values.map((s) => DropdownMenuItem(value: s, child: Text(switch (s) { BusinessStatus.active => 'פעיל', BusinessStatus.pending => 'ממתין', BusinessStatus.suspended => 'מושהה', BusinessStatus.rejected => 'נדחה' }, style: GoogleFonts.rubik()))),
+                DropdownMenuItem(value: null, child: Text('הכל', style: TextStyle(fontFamily: AppFonts.rubik))),
+                ...BusinessStatus.values.map((s) => DropdownMenuItem(value: s, child: Text(switch (s) { BusinessStatus.active => 'פעיל', BusinessStatus.pending => 'ממתין', BusinessStatus.suspended => 'מושהה', BusinessStatus.rejected => 'נדחה' }, style: TextStyle(fontFamily: AppFonts.rubik)))),
               ],
               onChanged: (v) => setState(() => _statusFilter = v),
             ),
@@ -1277,7 +1277,7 @@ class _BusinessesSectionState extends ConsumerState<_BusinessesSection> {
             FilledButton.icon(
               onPressed: () => _showBusinessDialog(context, ref),
               icon: const Icon(Icons.add, size: 18),
-              label: Text('עסק חדש', style: GoogleFonts.rubik()),
+              label: Text('עסק חדש', style: TextStyle(fontFamily: AppFonts.rubik)),
               style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise),
             ),
           ]),
@@ -1292,11 +1292,11 @@ class _BusinessesSectionState extends ConsumerState<_BusinessesSection> {
               return ListTile(
                 leading: Icon(Icons.store, color: _statusColor(b.status)),
                 title: Row(children: [
-                  Flexible(child: Text(b.name, style: GoogleFonts.rubik(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                  Flexible(child: Text(b.name, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
                   const SizedBox(width: 8),
                   _StatusBadge(b.statusLabel, _statusColor(b.status)),
                 ]),
-                subtitle: Text('${b.category} • ${b.address} • slug: ${b.slug.isEmpty ? "—" : b.slug}', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                subtitle: Text('${b.category} • ${b.address} • slug: ${b.slug.isEmpty ? "—" : b.slug}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
                 trailing: PopupMenuButton<String>(
                   onSelected: (v) => _handleBusinessAction(v, b),
                   itemBuilder: (_) => [
@@ -1362,7 +1362,7 @@ class _ArticlesSectionState extends ConsumerState<_ArticlesSection> {
             FilledButton.icon(
               onPressed: () => _showArticleDialog(context, ref),
               icon: const Icon(Icons.add, size: 18),
-              label: Text('כתבה חדשה', style: GoogleFonts.rubik()),
+              label: Text('כתבה חדשה', style: TextStyle(fontFamily: AppFonts.rubik)),
               style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise),
             ),
           ]),
@@ -1380,7 +1380,7 @@ class _ArticlesSectionState extends ConsumerState<_ArticlesSection> {
                   color: a.status == ArticleStatus.published ? AppColors.success : a.status == ArticleStatus.draft ? AppColors.gold : AppColors.grayLight,
                 ),
                 title: Row(children: [
-                  Flexible(child: Text(a.title, style: GoogleFonts.rubik(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                  Flexible(child: Text(a.title, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
                   const SizedBox(width: 8),
                   _StatusBadge(
                     a.status == ArticleStatus.published ? 'פורסם' : a.status == ArticleStatus.draft ? 'טיוטה' : 'ארכיון',
@@ -1388,7 +1388,7 @@ class _ArticlesSectionState extends ConsumerState<_ArticlesSection> {
                   ),
                   if (a.isFeatured) ...[const SizedBox(width: 4), const Icon(Icons.star, size: 16, color: AppColors.gold)],
                 ]),
-                subtitle: Text('slug: ${a.slug.isEmpty ? "—" : a.slug} • ${a.category.label} • ${a.viewCount} צפיות • meta: ${a.metaDescription?.isNotEmpty == true ? "✓" : "✗"}', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                subtitle: Text('slug: ${a.slug.isEmpty ? "—" : a.slug} • ${a.category.label} • ${a.viewCount} צפיות • meta: ${a.metaDescription?.isNotEmpty == true ? "✓" : "✗"}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
                 trailing: PopupMenuButton<String>(
                   onSelected: (v) => _handleArticleAction(v, a),
                   itemBuilder: (_) => [
@@ -1438,10 +1438,10 @@ class _ReviewsSection extends ConsumerWidget {
         return ListTile(
           leading: CircleAvatar(
             backgroundColor: r.rating >= 4 ? AppColors.success.withValues(alpha: 0.15) : r.rating >= 3 ? AppColors.gold.withValues(alpha: 0.15) : AppColors.error.withValues(alpha: 0.15),
-            child: Text('${r.rating.toInt()}', style: GoogleFonts.rubik(fontWeight: FontWeight.w700, color: r.rating >= 4 ? AppColors.success : r.rating >= 3 ? AppColors.gold : AppColors.error)),
+            child: Text('${r.rating.toInt()}', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, color: r.rating >= 4 ? AppColors.success : r.rating >= 3 ? AppColors.gold : AppColors.error)),
           ),
-          title: Text('${r.userName} — $bizName', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
-          subtitle: Text(r.text ?? '', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
+          title: Text('${r.userName} — $bizName', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600)),
+          subtitle: Text(r.text ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText)),
           trailing: IconButton(icon: const Icon(Icons.delete_outline, color: AppColors.error), onPressed: () => ref.read(adminReviewsProvider.notifier).remove(r.id)),
         );
       },
@@ -1459,9 +1459,9 @@ class _SettingsSection extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text('הגדרות אפליקציה', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text('הגדרות אפליקציה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
         const SizedBox(height: 4),
-        Text('ניהול הגדרות כלליות של המערכת', style: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight)),
+        Text('ניהול הגדרות כלליות של המערכת', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight)),
         const SizedBox(height: 20),
         _SettingsTile('שם האפליקציה', 'מודיעין בשבילך', IconsaxPlusLinear.mobile),
         _SettingsTile('גרסה', '1.0.0', IconsaxPlusLinear.info_circle),
@@ -1506,14 +1506,14 @@ class _SettingsTile extends StatelessWidget {
         Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: GoogleFonts.rubik(fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.adminTextDark)),
+            Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.adminTextDark)),
             const SizedBox(height: 2),
             Row(children: [
               if (statusColor != null) ...[
                 Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
                 const SizedBox(width: 6),
               ],
-              Expanded(child: Text(value, style: GoogleFonts.inter(color: AppColors.adminTextLight, fontSize: 13), overflow: TextOverflow.ellipsis)),
+              Expanded(child: Text(value, style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextLight, fontSize: 13), overflow: TextOverflow.ellipsis)),
             ]),
           ],
         )),
@@ -1555,10 +1555,10 @@ class _MetricCard extends StatelessWidget {
           child: Icon(icon, size: 20, color: color),
         ),
         const SizedBox(height: 12),
-        Text(value, style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
-        Text(title, style: GoogleFonts.inter(fontSize: 14, color: AppColors.adminTextLight)),
+        Text(value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text(title, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight)),
         const SizedBox(height: 4),
-        Text(subtitle, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: color)),
+        Text(subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: color)),
       ]),
     );
   }
@@ -1581,7 +1581,7 @@ class _RoleBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label, style: GoogleFonts.inter(fontSize: 11, color: color, fontWeight: FontWeight.w500)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: color, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -1599,7 +1599,7 @@ class _StatusBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label, style: GoogleFonts.inter(fontSize: 11, color: color, fontWeight: FontWeight.w500)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: color, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -1619,7 +1619,7 @@ void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
     builder: (ctx) => StatefulBuilder(builder: (ctx, setDState) => Directionality(
       textDirection: TextDirection.rtl,
       child: AlertDialog(
-        title: Text(isEdit ? 'עריכת משתמש' : 'משתמש חדש', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+        title: Text(isEdit ? 'עריכת משתמש' : 'משתמש חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
         content: SizedBox(width: 400, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(controller: nameC, decoration: const InputDecoration(labelText: 'שם מלא')),
           const SizedBox(height: 12),
@@ -1639,7 +1639,7 @@ void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('ביטול', style: GoogleFonts.inter(color: AppColors.adminTextMedium)),
+            child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextMedium)),
           ),
           FilledButton(
             onPressed: () {
@@ -1655,7 +1655,7 @@ void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
               backgroundColor: AppColors.midBlue,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+            child: Text(isEdit ? 'שמור' : 'צור', style: TextStyle(fontFamily: AppFonts.inter, fontWeight: FontWeight.w500)),
           ),
         ],
       ),
@@ -1682,7 +1682,7 @@ void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? busines
     builder: (ctx) => Directionality(
       textDirection: TextDirection.rtl,
       child: AlertDialog(
-        title: Text(isEdit ? 'עריכת עסק' : 'עסק חדש', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+        title: Text(isEdit ? 'עריכת עסק' : 'עסק חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
         content: SizedBox(width: 500, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(controller: nameC, decoration: const InputDecoration(labelText: 'שם העסק')),
           const SizedBox(height: 10),
@@ -1713,7 +1713,7 @@ void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? busines
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('ביטול', style: GoogleFonts.inter(color: AppColors.adminTextMedium)),
+            child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextMedium)),
           ),
           FilledButton(
             onPressed: () {
@@ -1730,7 +1730,7 @@ void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? busines
               backgroundColor: AppColors.midBlue,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+            child: Text(isEdit ? 'שמור' : 'צור', style: TextStyle(fontFamily: AppFonts.inter, fontWeight: FontWeight.w500)),
           ),
         ],
       ),
@@ -1758,7 +1758,7 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
     builder: (ctx) => StatefulBuilder(builder: (ctx, setDState) => Directionality(
       textDirection: TextDirection.rtl,
       child: AlertDialog(
-        title: Text(isEdit ? 'עריכת כתבה' : 'כתבה חדשה', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+        title: Text(isEdit ? 'עריכת כתבה' : 'כתבה חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
         content: SizedBox(width: 550, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(controller: titleC, decoration: const InputDecoration(labelText: 'כותרת')),
           const SizedBox(height: 10),
@@ -1780,9 +1780,9 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
               value: status,
               decoration: const InputDecoration(labelText: 'סטטוס'),
               items: [
-                DropdownMenuItem(value: ArticleStatus.draft, child: Text('טיוטה', style: GoogleFonts.rubik())),
-                DropdownMenuItem(value: ArticleStatus.published, child: Text('פורסם', style: GoogleFonts.rubik())),
-                DropdownMenuItem(value: ArticleStatus.archived, child: Text('ארכיון', style: GoogleFonts.rubik())),
+                DropdownMenuItem(value: ArticleStatus.draft, child: Text('טיוטה', style: TextStyle(fontFamily: AppFonts.rubik))),
+                DropdownMenuItem(value: ArticleStatus.published, child: Text('פורסם', style: TextStyle(fontFamily: AppFonts.rubik))),
+                DropdownMenuItem(value: ArticleStatus.archived, child: Text('ארכיון', style: TextStyle(fontFamily: AppFonts.rubik))),
               ],
               onChanged: (v) => setDState(() => status = v!),
             )),
@@ -1790,7 +1790,7 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
           const SizedBox(height: 10),
           TextField(controller: bodyC, decoration: const InputDecoration(labelText: 'תוכן', alignLabelWithHint: true), maxLines: 6),
           const SizedBox(height: 14),
-          Text('SEO', style: GoogleFonts.rubik(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.navy)),
+          Text('SEO', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.navy)),
           const SizedBox(height: 8),
           TextField(controller: metaDescC, decoration: const InputDecoration(labelText: 'Meta Description', hintText: 'תיאור ל-SEO (עד 160 תווים)'), maxLength: 160),
           const SizedBox(height: 10),
@@ -1800,16 +1800,16 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
           const SizedBox(height: 10),
           Row(children: [
             Checkbox(value: isBreaking, onChanged: (v) => setDState(() => isBreaking = v!)),
-            Text('מבזק', style: GoogleFonts.rubik()),
+            Text('מבזק', style: TextStyle(fontFamily: AppFonts.rubik)),
             const SizedBox(width: 20),
             Checkbox(value: isFeatured, onChanged: (v) => setDState(() => isFeatured = v!)),
-            Text('מומלץ', style: GoogleFonts.rubik()),
+            Text('מומלץ', style: TextStyle(fontFamily: AppFonts.rubik)),
           ]),
         ]))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('ביטול', style: GoogleFonts.inter(color: AppColors.adminTextMedium)),
+            child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextMedium)),
           ),
           FilledButton(
             onPressed: () {
@@ -1826,7 +1826,7 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
               backgroundColor: AppColors.midBlue,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text(isEdit ? 'שמור' : 'צור', style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+            child: Text(isEdit ? 'שמור' : 'צור', style: TextStyle(fontFamily: AppFonts.inter, fontWeight: FontWeight.w500)),
           ),
         ],
       ),

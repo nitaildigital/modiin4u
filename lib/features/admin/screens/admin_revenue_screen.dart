@@ -1,7 +1,7 @@
 import 'dart:ui';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_revenue_provider.dart';
 
@@ -57,10 +57,10 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           SizedBox(
             width: isWide ? 280 : 180, height: 40,
             child: TextField(
-              controller: _searchController, style: GoogleFonts.rubik(fontSize: 14),
+              controller: _searchController, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש לפי עסק / חשבונית...',
-                hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -77,7 +77,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
           _FilterChip('באיחור', _statusFilter == 'overdue', () { setState(() => _statusFilter = 'overdue'); ref.read(adminRevenueListProvider.notifier).setStatusFilter('overdue'); }),
           _FilterChip('זיכוי', _statusFilter == 'refunded', () { setState(() => _statusFilter = 'refunded'); ref.read(adminRevenueListProvider.notifier).setStatusFilter('refunded'); }),
           const Spacer(),
-          asyncData.whenData((l) => Text('${l.length} רשומות', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((l) => Text('${l.length} רשומות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
         ]),
       ),
 
@@ -85,13 +85,13 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.receipt_long_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין רשומות', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין רשומות', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return Column(children: [
@@ -127,25 +127,25 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       child: Row(children: [
                         Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(t['business_name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
-                          Text(t['description'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                          Text(t['business_name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                          Text(t['description'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                         ])),
-                        Expanded(flex: 1, child: Text(typeLabel, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText))),
+                        Expanded(flex: 1, child: Text(typeLabel, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
                         Expanded(flex: 1, child: Text(
                           '${isRefund ? "" : "₪"}${amount.abs().toStringAsFixed(0)}${isRefund ? "₪-" : ""}',
-                          style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: isRefund ? AppColors.error : AppColors.navy, fontFeatures: [const FontFeature.tabularFigures()]),
+                          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: isRefund ? AppColors.error : AppColors.navy, fontFeatures: [const FontFeature.tabularFigures()]),
                         )),
-                        if (isWide) Expanded(flex: 1, child: Text(method, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText))),
-                        if (isWide) Expanded(flex: 2, child: Text(t['invoice_number'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText, fontFeatures: [const FontFeature.tabularFigures()]))),
+                        if (isWide) Expanded(flex: 1, child: Text(method, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
+                        if (isWide) Expanded(flex: 2, child: Text(t['invoice_number'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText, fontFeatures: [const FontFeature.tabularFigures()]))),
                         Expanded(flex: 1, child: _StatusPill(status)),
-                        if (isWide) Expanded(flex: 1, child: Text(_shortDate(t['due_date'] as String? ?? ''), style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText))),
+                        if (isWide) Expanded(flex: 1, child: Text(_shortDate(t['due_date'] as String? ?? ''), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
                           onSelected: (v) {
                             if (v == 'mark_paid') ref.read(adminRevenueListProvider.notifier).updateStatus(t['id'] as String, 'paid');
                           },
                           itemBuilder: (_) => [
-                            if (status != 'paid') PopupMenuItem(value: 'mark_paid', child: Text('סמן כשולם', style: GoogleFonts.rubik(fontSize: 13))),
+                            if (status != 'paid') PopupMenuItem(value: 'mark_paid', child: Text('סמן כשולם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                           ],
                         ),
                       ]),
@@ -176,9 +176,9 @@ class _StatChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: color, fontFeatures: [const FontFeature.tabularFigures()])),
+        Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: color, fontFeatures: [const FontFeature.tabularFigures()])),
         const SizedBox(width: 8),
-        Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+        Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
       ]),
     );
   }
@@ -189,13 +189,13 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) { 'paid' => ('שולם', AppColors.success), 'pending' => ('ממתין', AppColors.gold), 'overdue' => ('באיחור', AppColors.error), 'refunded' => ('זיכוי', AppColors.grayLight), _ => (status, AppColors.grayLight) };
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: color)));
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)));
   }
 }
 
 class _Col extends StatelessWidget {
   final String label; final int flex; const _Col(this.label, {this.flex = 1});
-  @override Widget build(BuildContext context) => Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+  @override Widget build(BuildContext context) => Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
 }
 
 class _FilterChip extends StatelessWidget {
@@ -206,7 +206,7 @@ class _FilterChip extends StatelessWidget {
     return Padding(padding: const EdgeInsets.only(left: 6), child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(6), child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent, borderRadius: BorderRadius.circular(6), border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
     )));
   }
 }

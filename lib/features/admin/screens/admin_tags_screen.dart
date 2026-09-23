@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_tags_provider.dart';
 
@@ -31,10 +31,10 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
           SizedBox(
             width: isWide ? 280 : 180, height: 40,
             child: TextField(
-              controller: _searchController, style: GoogleFonts.rubik(fontSize: 14),
+              controller: _searchController, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש תגית...',
-                hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -48,12 +48,12 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
           _SortChip('שם', _sortBy == 'name', () { setState(() => _sortBy = 'name'); ref.read(adminTagListProvider.notifier).setSortBy('name'); }),
           _SortChip('שימוש', _sortBy == 'usage', () { setState(() => _sortBy = 'usage'); ref.read(adminTagListProvider.notifier).setSortBy('usage'); }),
           const Spacer(),
-          asyncData.whenData((l) => Text('${l.length} תגיות', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((l) => Text('${l.length} תגיות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 12),
           ElevatedButton.icon(
             onPressed: () => _showEditor(context, null),
             icon: const Icon(Icons.add, size: 18),
-            label: Text('תגית חדשה', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('תגית חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.turquoise, foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -67,13 +67,13 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.label_off, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין תגיות', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין תגיות', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return Padding(
@@ -101,18 +101,18 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: Text(existing == null ? 'תגית חדשה' : 'עריכת תגית', style: GoogleFonts.rubik(fontWeight: FontWeight.w700, color: AppColors.navy)),
+          title: Text(existing == null ? 'תגית חדשה' : 'עריכת תגית', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, color: AppColors.navy)),
           content: SizedBox(width: 400, child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: nameC, style: GoogleFonts.rubik(fontSize: 14),
-              decoration: InputDecoration(labelText: 'שם', labelStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+            TextField(controller: nameC, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+              decoration: InputDecoration(labelText: 'שם', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10))),
             const SizedBox(height: 14),
-            TextField(controller: slugC, style: GoogleFonts.rubik(fontSize: 14),
-              decoration: InputDecoration(labelText: 'Slug', labelStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+            TextField(controller: slugC, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+              decoration: InputDecoration(labelText: 'Slug', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10))),
           ])),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik(color: AppColors.grayText))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText))),
             ElevatedButton(
               onPressed: () {
                 final data = {'name': nameC.text, 'slug': slugC.text.isEmpty ? nameC.text.toLowerCase().replaceAll(' ', '-') : slugC.text};
@@ -124,7 +124,7 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                 Navigator.pop(ctx);
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.turquoise, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: Text(existing == null ? 'צור' : 'שמור', style: GoogleFonts.rubik()),
+              child: Text(existing == null ? 'צור' : 'שמור', style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
           ],
         ),
@@ -138,14 +138,14 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: Text('מחיקת תגית', style: GoogleFonts.rubik(fontWeight: FontWeight.w700, color: AppColors.error)),
-          content: Text('למחוק את התגית "${tag['name']}"?', style: GoogleFonts.rubik()),
+          title: Text('מחיקת תגית', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, color: AppColors.error)),
+          content: Text('למחוק את התגית "${tag['name']}"?', style: TextStyle(fontFamily: AppFonts.rubik)),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik(color: AppColors.grayText))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText))),
             ElevatedButton(
               onPressed: () { ref.read(adminTagListProvider.notifier).deleteTag(tag['id'] as String); Navigator.pop(ctx); },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
-              child: Text('מחק', style: GoogleFonts.rubik()),
+              child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
           ],
         ),
@@ -172,12 +172,12 @@ class _TagChip extends StatelessWidget {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.label, size: 16, color: AppColors.turquoise),
             const SizedBox(width: 8),
-            Text(tag['name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+            Text(tag['name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(color: AppColors.navy.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(4)),
-              child: Text('$usage', style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayText)),
+              child: Text('$usage', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayText)),
             ),
             const SizedBox(width: 6),
             InkWell(
@@ -199,7 +199,7 @@ class _SortChip extends StatelessWidget {
     return Padding(padding: const EdgeInsets.only(left: 6), child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(6), child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent, borderRadius: BorderRadius.circular(6), border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
     )));
   }
 }

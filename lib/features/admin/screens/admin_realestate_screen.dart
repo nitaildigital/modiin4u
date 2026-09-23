@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_realestate_provider.dart';
 
@@ -42,10 +42,10 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
             height: 40,
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.rubik(fontSize: 14),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש כתובת / שכונה...',
-                hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -89,12 +89,12 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
           ],
 
           const Spacer(),
-          listingsAsync.whenData((list) => Text('${list.length} נכסים', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          listingsAsync.whenData((list) => Text('${list.length} נכסים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 16),
           FilledButton.icon(
             onPressed: () => _showListingEditor(context, ref),
             icon: const Icon(Icons.add, size: 18),
-            label: Text('נכס חדש', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('נכס חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.turquoise,
               minimumSize: const Size(0, 40),
@@ -111,8 +111,8 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
           error: (e, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('שגיאה בטעינת נכסים', style: GoogleFonts.rubik(color: AppColors.error)),
-            Text('$e', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+            Text('שגיאה בטעינת נכסים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error)),
+            Text('$e', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
             const SizedBox(height: 12),
             TextButton(onPressed: () => ref.read(adminListingListProvider.notifier).load(), child: const Text('נסה שוב')),
           ])),
@@ -121,7 +121,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.apartment_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין נכסים', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין נכסים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return _ListingTable(listings: listings, isWide: isWide, onTap: (l) => _showListingEditor(context, ref, listing: l), onAction: _handleAction);
@@ -147,11 +147,11 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('מחיקת נכס', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-            content: Text('למחוק את "${listing['address']}"?', style: GoogleFonts.rubik()),
+            title: Text('מחיקת נכס', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+            content: Text('למחוק את "${listing['address']}"?', style: TextStyle(fontFamily: AppFonts.rubik)),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik())),
-              TextButton(onPressed: () { Navigator.pop(ctx); notifier.deleteListing(id); }, child: Text('מחק', style: GoogleFonts.rubik(color: AppColors.error))),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
+              TextButton(onPressed: () { Navigator.pop(ctx); notifier.deleteListing(id); }, child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
             ],
           ),
         );
@@ -210,26 +210,26 @@ class _ListingTable extends StatelessWidget {
                   Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
                       if (isFeatured) Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.star, size: 14, color: AppColors.gold)),
-                      Flexible(child: Text(l['address'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis)),
+                      Flexible(child: Text(l['address'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis)),
                     ]),
-                    if (isBroker) Text('מתווך', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)),
+                    if (isBroker) Text('מתווך', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)),
                   ])),
-                  Expanded(flex: 2, child: Text(l['neighborhood'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13))),
+                  Expanded(flex: 2, child: Text(l['neighborhood'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                   Expanded(flex: 1, child: _TypeBadge(type)),
-                  Expanded(flex: 1, child: Text('${l['rooms'] ?? '—'}', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
-                  if (isWide) Expanded(flex: 1, child: Text('${l['sqm'] ?? '—'}', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
-                  Expanded(flex: 2, child: Text(_formatPrice(price, type), style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navy))),
+                  Expanded(flex: 1, child: Text('${l['rooms'] ?? '—'}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
+                  if (isWide) Expanded(flex: 1, child: Text('${l['sqm'] ?? '—'}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
+                  Expanded(flex: 2, child: Text(_formatPrice(price, type), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navy))),
                   Expanded(flex: 1, child: _StatusPill(status)),
-                  if (isWide) Expanded(flex: 1, child: Text('${l['view_count'] ?? 0}', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
+                  if (isWide) Expanded(flex: 1, child: Text('${l['view_count'] ?? 0}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
                     onSelected: (v) => onAction(v, l),
                     itemBuilder: (_) => [
-                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status != 'active') PopupMenuItem(value: 'activate', child: Text('הפעל', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status == 'active') PopupMenuItem(value: 'sold', child: Text(type == 'rent' ? 'סמן כהושכר' : 'סמן כנמכר', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status != 'expired') PopupMenuItem(value: 'expire', child: Text('סמן כפג תוקף', style: GoogleFonts.rubik(fontSize: 13))),
-                      PopupMenuItem(value: 'delete', child: Text('מחק', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.error))),
+                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status != 'active') PopupMenuItem(value: 'activate', child: Text('הפעל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status == 'active') PopupMenuItem(value: 'sold', child: Text(type == 'rent' ? 'סמן כהושכר' : 'סמן כנמכר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status != 'expired') PopupMenuItem(value: 'expire', child: Text('סמן כפג תוקף', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
                     ],
                   ),
                 ]),
@@ -351,7 +351,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
                 child: Row(children: [
-                  Text(_isEditing ? 'עריכת נכס' : 'נכס חדש', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text(_isEditing ? 'עריכת נכס' : 'נכס חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
                 ]),
@@ -364,8 +364,8 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                       value: _type,
                       decoration: InputDecoration(labelText: 'סוג *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                       items: [
-                        DropdownMenuItem(value: 'rent', child: Text('השכרה', style: GoogleFonts.rubik(fontSize: 13))),
-                        DropdownMenuItem(value: 'sale', child: Text('מכירה', style: GoogleFonts.rubik(fontSize: 13))),
+                        DropdownMenuItem(value: 'rent', child: Text('השכרה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                        DropdownMenuItem(value: 'sale', child: Text('מכירה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                       ],
                       onChanged: (v) => setState(() => _type = v!),
                     )),
@@ -386,7 +386,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                   ]),
                   _field('תיאור', _description, maxLines: 3),
                   const SizedBox(height: 8),
-                  Text('פרטי קשר', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                  Text('פרטי קשר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
                   const SizedBox(height: 8),
                   Row(children: [
                     Expanded(child: _field('שם', _contactName)),
@@ -394,7 +394,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                     Expanded(child: _field('טלפון', _contactPhone)),
                   ]),
                   const SizedBox(height: 8),
-                  Text('מאפיינים', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                  Text('מאפיינים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
                   const SizedBox(height: 8),
                   Wrap(spacing: 8, runSpacing: 4, children: [
                     _toggle('חניה', _hasParking, (v) => setState(() => _hasParking = v)),
@@ -407,16 +407,16 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                     _toggle('מומלץ', _isFeatured, (v) => setState(() => _isFeatured = v)),
                   ]),
                   const SizedBox(height: 16),
-                  Text('סטטוס', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                  Text('סטטוס', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: _status,
                     decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                     items: [
-                      DropdownMenuItem(value: 'pending', child: Text('ממתין', style: GoogleFonts.rubik(fontSize: 13))),
-                      DropdownMenuItem(value: 'active', child: Text('פעיל', style: GoogleFonts.rubik(fontSize: 13))),
-                      DropdownMenuItem(value: _type == 'rent' ? 'rented' : 'sold', child: Text(_type == 'rent' ? 'הושכר' : 'נמכר', style: GoogleFonts.rubik(fontSize: 13))),
-                      DropdownMenuItem(value: 'expired', child: Text('פג תוקף', style: GoogleFonts.rubik(fontSize: 13))),
+                      DropdownMenuItem(value: 'pending', child: Text('ממתין', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      DropdownMenuItem(value: 'active', child: Text('פעיל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      DropdownMenuItem(value: _type == 'rent' ? 'rented' : 'sold', child: Text(_type == 'rent' ? 'הושכר' : 'נמכר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      DropdownMenuItem(value: 'expired', child: Text('פג תוקף', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                     ],
                     onChanged: (v) => setState(() => _status = v!),
                   ),
@@ -428,14 +428,14 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                 decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
                 child: Row(children: [
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: GoogleFonts.rubik())),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _saving ? null : _save,
                     style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _saving
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור נכס', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+                        : Text(_isEditing ? 'שמור' : 'צור נכס', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),
@@ -451,10 +451,10 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller, maxLines: maxLines, validator: validator,
-        style: GoogleFonts.rubik(fontSize: 13),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
         decoration: InputDecoration(
           labelText: label, hintText: hint,
-          labelStyle: GoogleFonts.rubik(fontSize: 13),
+          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
@@ -464,7 +464,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
 
   Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) {
     return FilterChip(
-      label: Text(label, style: GoogleFonts.rubik(fontSize: 12)),
+      label: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)),
       selected: value, onSelected: onChanged,
       selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
       checkmarkColor: AppColors.turquoise,
@@ -537,7 +537,7 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
@@ -556,7 +556,7 @@ class _TypeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
@@ -568,7 +568,7 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
   }
 }
 
@@ -591,7 +591,7 @@ class _FilterChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5),
           ),
-          child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
         ),
       ),
     );

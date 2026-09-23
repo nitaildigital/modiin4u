@@ -1,7 +1,7 @@
 import 'dart:math';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
@@ -43,8 +43,8 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> wit
         child: TabBar(
           controller: _tabs,
           isScrollable: true,
-          labelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
-          unselectedLabelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400),
+          labelStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500),
+          unselectedLabelStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w400),
           labelColor: AppColors.midBlue,
           unselectedLabelColor: AppColors.adminTextLight,
           indicatorColor: AppColors.midBlue,
@@ -100,12 +100,12 @@ class _RealTimeTab extends ConsumerWidget {
     return ListView(padding: const EdgeInsets.all(20), children: [
       // Header with refresh
       Row(children: [
-        Text('פעילות בזמן אמת', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+        Text('פעילות בזמן אמת', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
         const Spacer(),
         TextButton.icon(
           onPressed: () => ref.read(adminRealTimeProvider.notifier).refresh(),
           icon: const Icon(Icons.refresh, size: 18),
-          label: Text('רענן', style: GoogleFonts.rubik(fontSize: 13)),
+          label: Text('רענן', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
         ),
       ]),
       const SizedBox(height: 16),
@@ -157,7 +157,7 @@ class _EngagementTab extends ConsumerWidget {
     final peakHours = daily['peak_hours'] as List;
 
     return ListView(padding: const EdgeInsets.all(20), children: [
-      Text('מעורבות משתמשים', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('מעורבות משתמשים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 16),
 
       // DAU / WAU / MAU cards
@@ -199,9 +199,9 @@ class _EngagementTab extends ConsumerWidget {
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: retention.entries.map((e) {
           final pct = (e.value as num).toDouble();
           return Column(children: [
-            Text('${pct.toInt()}%', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: pct > 40 ? AppColors.success : pct > 20 ? AppColors.gold : AppColors.error)),
+            Text('${pct.toInt()}%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w700, color: pct > 40 ? AppColors.success : pct > 20 ? AppColors.gold : AppColors.error)),
             const SizedBox(height: 4),
-            Text(e.key.replaceAll('day', 'D'), style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+            Text(e.key.replaceAll('day', 'D'), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText)),
           ]);
         }).toList()),
       )),
@@ -219,10 +219,10 @@ class _EngagementTab extends ConsumerWidget {
             }).toList(),
             titlesData: FlTitlesData(
               rightTitles: const AxisTitles(), topTitles: const AxisTitles(),
-              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 36, getTitlesWidget: (v, _) => Text(_fmtK(v.toInt()), style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)))),
+              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 36, getTitlesWidget: (v, _) => Text(_fmtK(v.toInt()), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)))),
               bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 24, getTitlesWidget: (v, _) {
                 if (v.toInt() < peakHours.length) {
-                  return Text('${(peakHours[v.toInt()] as Map)['hour']}', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight));
+                  return Text('${(peakHours[v.toInt()] as Map)['hour']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight));
                 }
                 return const Text('');
               })),
@@ -243,18 +243,18 @@ class _EngagementTab extends ConsumerWidget {
       gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 400),
       titlesData: FlTitlesData(
         rightTitles: const AxisTitles(), topTitles: const AxisTitles(),
-        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: 400, getTitlesWidget: (v, _) => Text(_fmtK(v.toInt()), style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)))),
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: 400, getTitlesWidget: (v, _) => Text(_fmtK(v.toInt()), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)))),
         bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 24, interval: 5, getTitlesWidget: (v, _) {
           if (v.toInt() < dau.length) {
             final d = (dau[v.toInt()] as Map)['date'] as String;
-            return Text(d.substring(8), style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight));
+            return Text(d.substring(8), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight));
           }
           return const Text('');
         })),
       ),
       borderData: FlBorderData(show: false),
       lineBarsData: [LineChartBarData(spots: spots, isCurved: true, curveSmoothness: 0.3, color: AppColors.turquoise, barWidth: 2, dotData: const FlDotData(show: false), belowBarData: BarAreaData(show: true, color: AppColors.turquoise.withValues(alpha: 0.08)))],
-      lineTouchData: LineTouchData(touchTooltipData: LineTouchTooltipData(getTooltipItems: (spots) => spots.map((s) => LineTooltipItem('${s.y.toInt()} פעילים', GoogleFonts.rubik(color: Colors.white, fontSize: 12))).toList())),
+      lineTouchData: LineTouchData(touchTooltipData: LineTouchTooltipData(getTooltipItems: (spots) => spots.map((s) => LineTooltipItem('${s.y.toInt()} פעילים', TextStyle(fontFamily: AppFonts.rubik, color: Colors.white, fontSize: 12))).toList())),
     );
   }
 
@@ -266,9 +266,9 @@ class _EngagementTab extends ConsumerWidget {
       }).toList(),
       titlesData: FlTitlesData(
         rightTitles: const AxisTitles(), topTitles: const AxisTitles(),
-        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (v, _) => Text(_fmtK(v.toInt()), style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)))),
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (v, _) => Text(_fmtK(v.toInt()), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)))),
         bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 24, getTitlesWidget: (v, _) {
-          if (v.toInt() < data.length) return Text((data[v.toInt()] as Map)[labelKey].toString(), style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight));
+          if (v.toInt() < data.length) return Text((data[v.toInt()] as Map)[labelKey].toString(), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight));
           return const Text('');
         })),
       ),
@@ -297,7 +297,7 @@ class _ContentTab extends ConsumerWidget {
     final categories = cp['categories_distribution'] as List;
 
     return ListView(padding: const EdgeInsets.all(20), children: [
-      Text('ביצועי תוכן', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('ביצועי תוכן', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 16),
 
       // Top articles
@@ -338,11 +338,11 @@ class _ContentTab extends ConsumerWidget {
         Expanded(flex: 2, child: _CardShell(title: '⚠️ חיפושים ללא תוצאות', child: Column(
           children: zeroResults.map((z) => ListTile(
             dense: true,
-            title: Text(z['query'] as String, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+            title: Text(z['query'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-              child: Text('${z['count']}', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.error)),
+              child: Text('${z['count']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.error)),
             ),
           )).toList(),
         ))),
@@ -355,8 +355,8 @@ class _ContentTab extends ConsumerWidget {
         _CardShell(title: '⚠️ חיפושים ללא תוצאות', child: Column(
           children: zeroResults.map((z) => ListTile(
             dense: true,
-            title: Text(z['query'] as String, style: GoogleFonts.rubik(fontSize: 13)),
-            trailing: Text('${z['count']}', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.error)),
+            title: Text(z['query'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
+            trailing: Text('${z['count']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.error)),
           )).toList(),
         )),
       ],
@@ -369,14 +369,14 @@ class _ContentTab extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
             child: Row(children: [
-              SizedBox(width: 140, child: Text(c['name'] as String, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.navy))),
+              SizedBox(width: 140, child: Text(c['name'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.navy))),
               Expanded(child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(value: pct / 100, minHeight: 16, backgroundColor: AppColors.surfaceLight, color: AppColors.turquoise.withValues(alpha: 0.7 + pct / 300)),
               )),
               const SizedBox(width: 8),
-              SizedBox(width: 50, child: Text('$pct%', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600))),
-              SizedBox(width: 50, child: Text('${c['businesses']}', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText))),
+              SizedBox(width: 50, child: Text('$pct%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600))),
+              SizedBox(width: 50, child: Text('${c['businesses']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
             ]),
           );
         }).toList(),
@@ -402,7 +402,7 @@ class _RevenueTab extends ConsumerWidget {
     final topAdvertisers = ad['top_advertisers'] as List;
 
     return ListView(padding: const EdgeInsets.all(20), children: [
-      Text('פרסום והכנסות', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('פרסום והכנסות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 16),
 
       // Revenue headline metrics
@@ -428,9 +428,9 @@ class _RevenueTab extends ConsumerWidget {
             }).toList(),
             titlesData: FlTitlesData(
               rightTitles: const AxisTitles(), topTitles: const AxisTitles(),
-              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 50, getTitlesWidget: (v, _) => Text('₪${_fmtK(v.toInt())}', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)))),
+              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 50, getTitlesWidget: (v, _) => Text('₪${_fmtK(v.toInt())}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)))),
               bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 24, getTitlesWidget: (v, _) {
-                if (v.toInt() < revenueTrend.length) return Text((revenueTrend[v.toInt()] as Map)['month'].toString(), style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight));
+                if (v.toInt() < revenueTrend.length) return Text((revenueTrend[v.toInt()] as Map)['month'].toString(), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight));
                 return const Text('');
               })),
             ),
@@ -449,11 +449,11 @@ class _RevenueTab extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
               child: Row(children: [
-                SizedBox(width: 130, child: Text(s['source'] as String, style: GoogleFonts.rubik(fontSize: 12))),
+                SizedBox(width: 130, child: Text(s['source'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12))),
                 Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct / 100, minHeight: 14, backgroundColor: AppColors.surfaceLight, color: AppColors.success))),
                 const SizedBox(width: 8),
-                SizedBox(width: 60, child: Text('₪${_fmtK(s['amount'] as int)}', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600))),
-                SizedBox(width: 40, child: Text('$pct%', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText))),
+                SizedBox(width: 60, child: Text('₪${_fmtK(s['amount'] as int)}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600))),
+                SizedBox(width: 40, child: Text('$pct%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText))),
               ]),
             );
           }).toList(),
@@ -467,15 +467,15 @@ class _RevenueTab extends ConsumerWidget {
             _FunnelStep('העתקת קוד', funnel['code_copies'] as int, funnel['views'] as int),
             _FunnelStep('מימושים', funnel['claims'] as int, funnel['views'] as int),
             const SizedBox(height: 8),
-            Text('Conversion: ${funnel['conversion_rate_pct']}%', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
+            Text('Conversion: ${funnel['conversion_rate_pct']}%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
           ]),
         ))),
       ]) else ...[
         _CardShell(title: '💰 הכנסות לפי מקור', child: Column(
           children: revBySource.map((s) => ListTile(
             dense: true,
-            title: Text(s['source'] as String, style: GoogleFonts.rubik(fontSize: 13)),
-            trailing: Text('₪${_fmtK(s['amount'] as int)}', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+            title: Text(s['source'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
+            trailing: Text('₪${_fmtK(s['amount'] as int)}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
           )).toList(),
         )),
         const SizedBox(height: 16),
@@ -523,7 +523,7 @@ class _DemographicsTab extends ConsumerWidget {
     final gamification = ua['gamification'] as Map<String, dynamic>;
 
     return ListView(padding: const EdgeInsets.all(20), children: [
-      Text('דמוגרפיה ומשתמשים', style: GoogleFonts.rubik(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+      Text('דמוגרפיה ומשתמשים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
       const SizedBox(height: 16),
 
       // User headline
@@ -548,7 +548,7 @@ class _DemographicsTab extends ConsumerWidget {
               return PieChartSectionData(
                 value: (p['pct'] as int).toDouble(), title: '${p['platform']}\n${p['pct']}%',
                 color: colors[e.key % colors.length], radius: 55,
-                titleStyle: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                titleStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
               );
             }).toList(),
             sectionsSpace: 2, centerSpaceRadius: 30,
@@ -561,10 +561,10 @@ class _DemographicsTab extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
               child: Row(children: [
-                SizedBox(width: 50, child: Text(a['range'] as String, style: GoogleFonts.rubik(fontSize: 12))),
+                SizedBox(width: 50, child: Text(a['range'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12))),
                 Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct / 100, minHeight: 14, backgroundColor: AppColors.surfaceLight, color: AppColors.midBlue))),
                 const SizedBox(width: 8),
-                Text('$pct%', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600)),
+                Text('$pct%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600)),
               ]),
             );
           }).toList(),
@@ -573,8 +573,8 @@ class _DemographicsTab extends ConsumerWidget {
         _CardShell(title: '📱 פלטפורמה', child: Column(
           children: byPlatform.map((p) => ListTile(
             dense: true,
-            title: Text(p['platform'] as String, style: GoogleFonts.rubik(fontSize: 13)),
-            trailing: Text('${p['pct']}% (${p['users']})', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+            title: Text(p['platform'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
+            trailing: Text('${p['pct']}% (${p['users']})', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
           )).toList(),
         )),
         const SizedBox(height: 16),
@@ -597,10 +597,10 @@ class _DemographicsTab extends ConsumerWidget {
             child: Row(children: [
               Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
               const SizedBox(width: 8),
-              Expanded(child: Text(s['segment'] as String, style: GoogleFonts.rubik(fontSize: 12))),
-              Text('${s['users']}', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600)),
+              Expanded(child: Text(s['segment'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12))),
+              Text('${s['users']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600)),
               const SizedBox(width: 8),
-              Text('${s['pct']}%', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+              Text('${s['pct']}%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
             ]),
           );
         }).toList(),
@@ -615,10 +615,10 @@ class _DemographicsTab extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
               child: Row(children: [
-                SizedBox(width: 130, child: Text(a['channel'] as String, style: GoogleFonts.rubik(fontSize: 12))),
+                SizedBox(width: 130, child: Text(a['channel'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12))),
                 Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct / 100, minHeight: 14, backgroundColor: AppColors.surfaceLight, color: AppColors.turquoise))),
                 const SizedBox(width: 8),
-                Text('$pct%', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600)),
+                Text('$pct%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600)),
               ]),
             );
           }).toList(),
@@ -630,23 +630,23 @@ class _DemographicsTab extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
               child: Row(children: [
-                SizedBox(width: 90, child: Text(n['name'] as String, style: GoogleFonts.rubik(fontSize: 12))),
+                SizedBox(width: 90, child: Text(n['name'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12))),
                 Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct / 100, minHeight: 14, backgroundColor: AppColors.surfaceLight, color: AppColors.midBlue))),
                 const SizedBox(width: 8),
-                Text('${n['users']}', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600)),
+                Text('${n['users']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(width: 4),
-                Text('($pct%)', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+                Text('($pct%)', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText)),
               ]),
             );
           }).toList(),
         ))),
       ]) else ...[
         _CardShell(title: '📥 ערוצי רכישה', child: Column(
-          children: acquisition.map((a) => ListTile(dense: true, title: Text(a['channel'] as String, style: GoogleFonts.rubik(fontSize: 13)), trailing: Text('${a['pct']}%', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)))).toList(),
+          children: acquisition.map((a) => ListTile(dense: true, title: Text(a['channel'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)), trailing: Text('${a['pct']}%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)))).toList(),
         )),
         const SizedBox(height: 16),
         _CardShell(title: '🏘️ לפי שכונה', child: Column(
-          children: byNeighborhood.map((n) => ListTile(dense: true, title: Text(n['name'] as String, style: GoogleFonts.rubik(fontSize: 13)), trailing: Text('${n['users']}', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)))).toList(),
+          children: byNeighborhood.map((n) => ListTile(dense: true, title: Text(n['name'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)), trailing: Text('${n['users']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)))).toList(),
         )),
       ],
       const SizedBox(height: 20),
@@ -715,7 +715,7 @@ class _CardShell extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          child: Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
+          child: Text(title, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
         ),
         const Divider(height: 1, color: AppColors.adminCardBorder),
         child,
@@ -753,9 +753,9 @@ class _LiveStatCard extends StatelessWidget {
           child: Icon(icon, size: large ? 22 : 18, color: color),
         ),
         const SizedBox(height: 10),
-        Text(value, style: GoogleFonts.inter(fontSize: large ? 32 : 22, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text(value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: large ? 32 : 22, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
         const SizedBox(height: 2),
-        Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight)),
+        Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
       ]),
     );
   }
@@ -782,10 +782,10 @@ class _MetricCard extends StatelessWidget {
         Row(children: [
           Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
           const SizedBox(width: 8),
-          Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppColors.adminTextLight), overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight), overflow: TextOverflow.ellipsis)),
         ]),
         const SizedBox(height: 10),
-        Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text(value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
         if (change != null) ...[
           const SizedBox(height: 2),
           Container(
@@ -794,7 +794,7 @@ class _MetricCard extends StatelessWidget {
               color: (change!.startsWith('+') ? AppColors.success : AppColors.error).withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(change!, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
+            child: Text(change!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
           ),
         ],
       ]),
@@ -814,16 +814,16 @@ class _RankedTable extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         color: AppColors.surfaceLight,
         child: Row(children: [
-          SizedBox(width: 24, child: Text('#', style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight))),
-          ...headers.asMap().entries.map((e) => Expanded(flex: e.key == 0 ? 3 : 1, child: Text(e.value, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)))),
+          SizedBox(width: 24, child: Text('#', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight))),
+          ...headers.asMap().entries.map((e) => Expanded(flex: e.key == 0 ? 3 : 1, child: Text(e.value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)))),
         ]),
       ),
       ...rows.asMap().entries.map((e) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.3)))),
         child: Row(children: [
-          SizedBox(width: 24, child: Text('${e.key + 1}', style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w700, color: e.key < 3 ? AppColors.gold : AppColors.grayLight))),
-          ...e.value.asMap().entries.map((c) => Expanded(flex: c.key == 0 ? 3 : 1, child: Text(c.value, style: GoogleFonts.rubik(fontSize: 12, fontWeight: c.key == 0 ? FontWeight.w600 : FontWeight.w400, color: c.key == 0 ? AppColors.navy : AppColors.grayText), overflow: TextOverflow.ellipsis))),
+          SizedBox(width: 24, child: Text('${e.key + 1}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w700, color: e.key < 3 ? AppColors.gold : AppColors.grayLight))),
+          ...e.value.asMap().entries.map((c) => Expanded(flex: c.key == 0 ? 3 : 1, child: Text(c.value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: c.key == 0 ? FontWeight.w600 : FontWeight.w400, color: c.key == 0 ? AppColors.navy : AppColors.grayText), overflow: TextOverflow.ellipsis))),
         ]),
       )),
     ]);
@@ -841,10 +841,10 @@ class _FunnelStep extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(children: [
-        SizedBox(width: 80, child: Text(label, style: GoogleFonts.rubik(fontSize: 12))),
+        SizedBox(width: 80, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12))),
         Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct, minHeight: 16, backgroundColor: AppColors.surfaceLight, color: AppColors.turquoise))),
         const SizedBox(width: 8),
-        SizedBox(width: 50, child: Text(_fmtK(value), style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600))),
+        SizedBox(width: 50, child: Text(_fmtK(value), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600))),
       ]),
     );
   }
@@ -862,8 +862,8 @@ class _PushStatRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(children: [
-        Expanded(child: Text(label, style: GoogleFonts.rubik(fontSize: 13))),
-        Text(value, style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: isWarning ? AppColors.error : AppColors.navy)),
+        Expanded(child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+        Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: isWarning ? AppColors.error : AppColors.navy)),
       ]),
     );
   }
@@ -890,15 +890,15 @@ class _NeighborhoodHeatGrid extends StatelessWidget {
             border: Border.all(color: AppColors.turquoise.withValues(alpha: 0.2 + intensity * 0.3)),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(d['name'] as String, style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navy)),
+            Text(d['name'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.navy)),
             const SizedBox(height: 4),
-            Text('$users משתמשים', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
-            Text('${d['businesses']} עסקים · ${d['events_this_month']} אירועים', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)),
+            Text('$users משתמשים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText)),
+            Text('${d['businesses']} עסקים · ${d['events_this_month']} אירועים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)),
             const SizedBox(height: 4),
             Row(children: [
               Icon(Icons.star, size: 12, color: AppColors.gold),
               const SizedBox(width: 2),
-              Text('${d['avg_engagement']}', style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600)),
+              Text('${d['avg_engagement']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600)),
             ]),
           ]),
         );
@@ -931,7 +931,7 @@ class _LiveUserMap extends StatelessWidget {
           // Label "מודיעין" in center
           Positioned(
             left: w * 0.45, top: h * 0.05,
-            child: Text('מודיעין', style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy.withValues(alpha: 0.15))),
+            child: Text('מודיעין', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy.withValues(alpha: 0.15))),
           ),
           // User dots
           ...users.map((u) {
@@ -960,7 +960,7 @@ class _LiveUserMap extends StatelessWidget {
             final y = (1 - (e.value.$1 - minLat) / (maxLat - minLat)).clamp(0.05, 0.95) * h;
             return Positioned(
               left: x - 30, top: y - 18,
-              child: Text(e.key, style: GoogleFonts.rubik(fontSize: 9, color: AppColors.grayLight, fontWeight: FontWeight.w600)),
+              child: Text(e.key, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 9, color: AppColors.grayLight, fontWeight: FontWeight.w600)),
             );
           }),
         ],

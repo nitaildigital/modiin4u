@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_events_provider.dart';
 
@@ -41,10 +41,10 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
             height: 40,
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.rubik(fontSize: 14),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש אירוע...',
-                hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -74,12 +74,12 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
             ref.read(adminEventListProvider.notifier).setStatusFilter('cancelled');
           }),
           const Spacer(),
-          eventsAsync.whenData((list) => Text('${list.length} אירועים', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          eventsAsync.whenData((list) => Text('${list.length} אירועים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 16),
           FilledButton.icon(
             onPressed: () => _showEventEditor(context, ref),
             icon: const Icon(Icons.add, size: 18),
-            label: Text('אירוע חדש', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('אירוע חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.turquoise,
               minimumSize: const Size(0, 40),
@@ -96,8 +96,8 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
           error: (e, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('שגיאה בטעינת אירועים', style: GoogleFonts.rubik(color: AppColors.error)),
-            Text('$e', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+            Text('שגיאה בטעינת אירועים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error)),
+            Text('$e', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
             const SizedBox(height: 12),
             TextButton(onPressed: () => ref.read(adminEventListProvider.notifier).load(), child: const Text('נסה שוב')),
           ])),
@@ -106,7 +106,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.event_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין אירועים', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין אירועים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return _EventTable(events: events, isWide: isWide, onTap: (ev) => _showEventEditor(context, ref, event: ev), onAction: _handleAction);
@@ -132,11 +132,11 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('מחיקת אירוע', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-            content: Text('למחוק את "${event['title']}"?', style: GoogleFonts.rubik()),
+            title: Text('מחיקת אירוע', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+            content: Text('למחוק את "${event['title']}"?', style: TextStyle(fontFamily: AppFonts.rubik)),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik())),
-              TextButton(onPressed: () { Navigator.pop(ctx); notifier.deleteEvent(id); }, child: Text('מחק', style: GoogleFonts.rubik(color: AppColors.error))),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
+              TextButton(onPressed: () { Navigator.pop(ctx); notifier.deleteEvent(id); }, child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
             ],
           ),
         );
@@ -196,29 +196,29 @@ class _EventTable extends StatelessWidget {
                       if (isFree) Padding(padding: const EdgeInsets.only(left: 4), child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(3)),
-                        child: Text('חינם', style: GoogleFonts.rubik(fontSize: 9, color: AppColors.success, fontWeight: FontWeight.w600)),
+                        child: Text('חינם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 9, color: AppColors.success, fontWeight: FontWeight.w600)),
                       )),
-                      Flexible(child: Text(ev['title'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis)),
+                      Flexible(child: Text(ev['title'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis)),
                     ]),
-                    if (ev['price'] != null) Text(ev['price'] as String, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                    if (ev['price'] != null) Text(ev['price'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                   ])),
                   Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(ev['date'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13)),
-                    Text(ev['time'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                    Text(ev['date'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
+                    Text(ev['time'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                   ])),
-                  if (isWide) Expanded(flex: 2, child: Text(ev['location'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  Expanded(flex: 1, child: Text(ev['category'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText))),
+                  if (isWide) Expanded(flex: 2, child: Text(ev['location'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  Expanded(flex: 1, child: Text(ev['category'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
                   Expanded(flex: 1, child: _StatusPill(status)),
-                  if (isWide) Expanded(flex: 1, child: Text(capacity > 0 ? '$registered/$capacity' : '$registered', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
+                  if (isWide) Expanded(flex: 1, child: Text(capacity > 0 ? '$registered/$capacity' : '$registered', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
                     onSelected: (v) => onAction(v, ev),
                     itemBuilder: (_) => [
-                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status != 'published') PopupMenuItem(value: 'publish', child: Text('פרסם', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status != 'draft') PopupMenuItem(value: 'draft', child: Text('החזר לטיוטה', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status != 'cancelled') PopupMenuItem(value: 'cancel', child: Text('בטל אירוע', style: GoogleFonts.rubik(fontSize: 13))),
-                      PopupMenuItem(value: 'delete', child: Text('מחק', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.error))),
+                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status != 'published') PopupMenuItem(value: 'publish', child: Text('פרסם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status != 'draft') PopupMenuItem(value: 'draft', child: Text('החזר לטיוטה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status != 'cancelled') PopupMenuItem(value: 'cancel', child: Text('בטל אירוע', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
                     ],
                   ),
                 ]),
@@ -305,7 +305,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
                 child: Row(children: [
-                  Text(_isEditing ? 'עריכת אירוע' : 'אירוע חדש', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text(_isEditing ? 'עריכת אירוע' : 'אירוע חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
                 ]),
@@ -331,21 +331,21 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                     const SizedBox(width: 12),
                     Expanded(child: DropdownButtonFormField<String>(
                       value: _category,
-                      decoration: InputDecoration(labelText: 'קטגוריה', labelStyle: GoogleFonts.rubik(fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                      items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.rubik(fontSize: 13)))).toList(),
+                      decoration: InputDecoration(labelText: 'קטגוריה', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                      items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)))).toList(),
                       onChanged: (v) => setState(() => _category = v!),
                     )),
                   ]),
                   const SizedBox(height: 16),
-                  Text('הגדרות', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                  Text('הגדרות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: _status,
                     decoration: InputDecoration(labelText: 'סטטוס', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                     items: [
-                      DropdownMenuItem(value: 'draft', child: Text('טיוטה', style: GoogleFonts.rubik(fontSize: 13))),
-                      DropdownMenuItem(value: 'published', child: Text('פורסם', style: GoogleFonts.rubik(fontSize: 13))),
-                      DropdownMenuItem(value: 'cancelled', child: Text('בוטל', style: GoogleFonts.rubik(fontSize: 13))),
+                      DropdownMenuItem(value: 'draft', child: Text('טיוטה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      DropdownMenuItem(value: 'published', child: Text('פורסם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      DropdownMenuItem(value: 'cancelled', child: Text('בוטל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                     ],
                     onChanged: (v) => setState(() => _status = v!),
                   ),
@@ -362,14 +362,14 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                 decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
                 child: Row(children: [
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: GoogleFonts.rubik())),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _saving ? null : _save,
                     style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _saving
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור אירוע', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+                        : Text(_isEditing ? 'שמור' : 'צור אירוע', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),
@@ -385,10 +385,10 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller, maxLines: maxLines, validator: validator,
-        style: GoogleFonts.rubik(fontSize: 13),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
         decoration: InputDecoration(
           labelText: label, hintText: hint,
-          labelStyle: GoogleFonts.rubik(fontSize: 13),
+          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
@@ -398,7 +398,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
 
   Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) {
     return FilterChip(
-      label: Text(label, style: GoogleFonts.rubik(fontSize: 12)),
+      label: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)),
       selected: value, onSelected: onChanged,
       selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
       checkmarkColor: AppColors.turquoise,
@@ -461,7 +461,7 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
@@ -473,7 +473,7 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
   }
 }
 
@@ -496,7 +496,7 @@ class _FilterChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5),
           ),
-          child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
         ),
       ),
     );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_audit_provider.dart';
 
@@ -31,9 +31,9 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
           SizedBox(
             width: isWide ? 280 : 180, height: 40,
             child: TextField(
-              controller: _searchController, style: GoogleFonts.rubik(fontSize: 14),
+              controller: _searchController, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'חיפוש ביומן...', hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintText: 'חיפוש ביומן...', hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -50,7 +50,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
           _FilterChip('מחיקה', _actionFilter == 'delete', () { setState(() => _actionFilter = 'delete'); ref.read(adminAuditProvider.notifier).setActionFilter('delete'); }),
           _FilterChip('אישור', _actionFilter == 'approve', () { setState(() => _actionFilter = 'approve'); ref.read(adminAuditProvider.notifier).setActionFilter('approve'); }),
           const Spacer(),
-          asyncData.whenData((l) => Text('${l.length} רשומות', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((l) => Text('${l.length} רשומות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
         ]),
       ),
 
@@ -58,13 +58,13 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.history_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין רשומות ביומן', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין רשומות ביומן', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return ListView.builder(
@@ -95,27 +95,27 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                           Row(children: [
                             Icon(_actionIcon(action), size: 16, color: _actionColor(action)),
                             const SizedBox(width: 8),
-                            Text(_actionLabel(action), style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w600, color: _actionColor(action))),
+                            Text(_actionLabel(action), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600, color: _actionColor(action))),
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(4)),
-                              child: Text(_entityLabel(e['entity_type'] as String? ?? ''), style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayText)),
+                              child: Text(_entityLabel(e['entity_type'] as String? ?? ''), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayText)),
                             ),
                             const Spacer(),
-                            Text(_timeAgo(e['created_at'] as String? ?? ''), style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                            Text(_timeAgo(e['created_at'] as String? ?? ''), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                           ]),
                           const SizedBox(height: 8),
-                          Text(e['entity_title'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+                          Text(e['entity_title'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
                           const SizedBox(height: 4),
                           Row(children: [
                             CircleAvatar(radius: 10, backgroundColor: AppColors.turquoise.withValues(alpha: 0.1),
-                              child: Text((e['admin_name'] as String? ?? '?')[0], style: GoogleFonts.rubik(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.turquoise))),
+                              child: Text((e['admin_name'] as String? ?? '?')[0], style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.turquoise))),
                             const SizedBox(width: 6),
-                            Text(e['admin_name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                            Text(e['admin_name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
                             if (isWide && e['ip_address'] != null) ...[
                               const SizedBox(width: 12),
-                              Text(e['ip_address'] as String, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight, fontFeatures: [const FontFeature.tabularFigures()])),
+                              Text(e['ip_address'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight, fontFeatures: [const FontFeature.tabularFigures()])),
                             ],
                           ]),
                           if (e['changes'] != null && (e['changes'] as Map).isNotEmpty) ...[
@@ -124,10 +124,10 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                               width: double.infinity, padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(6)),
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text('שינויים:', style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.grayText)),
+                                Text('שינויים:', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.grayText)),
                                 const SizedBox(height: 4),
                                 ...(e['changes'] as Map).entries.take(3).map((entry) =>
-                                  Padding(padding: const EdgeInsets.only(bottom: 2), child: RichText(text: TextSpan(style: GoogleFonts.rubik(fontSize: 11, color: AppColors.navy), children: [
+                                  Padding(padding: const EdgeInsets.only(bottom: 2), child: RichText(text: TextSpan(style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.navy), children: [
                                     TextSpan(text: '${entry.key}: ', style: const TextStyle(fontWeight: FontWeight.w600)),
                                     if (entry.value is Map) ...[
                                       TextSpan(text: '${(entry.value as Map)['old'] ?? ''} → ', style: TextStyle(color: AppColors.error.withValues(alpha: 0.7), decoration: TextDecoration.lineThrough)),
@@ -174,6 +174,6 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(left: 6), child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(6), child: Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     decoration: BoxDecoration(color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent, borderRadius: BorderRadius.circular(6), border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5)),
-    child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+    child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
   )));
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_media_provider.dart';
 
@@ -55,9 +55,9 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
           SizedBox(
             width: isWide ? 280 : 180, height: 40,
             child: TextField(
-              controller: _searchController, style: GoogleFonts.rubik(fontSize: 14),
+              controller: _searchController, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'חיפוש קובץ...', hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintText: 'חיפוש קובץ...', hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -82,7 +82,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
           ElevatedButton.icon(
             onPressed: () => _showEditor(context, null),
             icon: const Icon(Icons.upload, size: 18),
-            label: Text('העלאת קובץ', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('העלאת קובץ', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.turquoise, foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -96,13 +96,13 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.photo_library_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין קבצי מדיה', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין קבצי מדיה', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             if (_gridView) {
@@ -130,7 +130,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: Text(existing == null ? 'העלאת קובץ' : 'עריכת מדיה', style: GoogleFonts.rubik(fontWeight: FontWeight.w700, color: AppColors.navy)),
+          title: Text(existing == null ? 'העלאת קובץ' : 'עריכת מדיה', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, color: AppColors.navy)),
           content: SizedBox(width: 450, child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (existing == null) Container(
               height: 120, width: double.infinity,
@@ -138,30 +138,30 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
               child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.cloud_upload_outlined, size: 36, color: AppColors.grayLight),
                 const SizedBox(height: 8),
-                Text('גרור קובץ לכאן או לחץ לבחירה', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText)),
+                Text('גרור קובץ לכאן או לחץ לבחירה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText)),
               ])),
             ),
             const SizedBox(height: 14),
-            TextField(controller: filenameC, style: GoogleFonts.rubik(fontSize: 14),
-              decoration: InputDecoration(labelText: 'שם קובץ', labelStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+            TextField(controller: filenameC, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+              decoration: InputDecoration(labelText: 'שם קובץ', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10))),
             const SizedBox(height: 14),
-            TextField(controller: altC, style: GoogleFonts.rubik(fontSize: 14),
-              decoration: InputDecoration(labelText: 'טקסט חלופי (Alt)', labelStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText),
+            TextField(controller: altC, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+              decoration: InputDecoration(labelText: 'טקסט חלופי (Alt)', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10))),
             if (existing != null) ...[
               const SizedBox(height: 14),
               Row(children: [
-                Text('${existing['width']}×${existing['height']}', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                Text('${existing['width']}×${existing['height']}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
                 const SizedBox(width: 12),
-                Text(_formatSize(existing['file_size'] as int? ?? 0), style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                Text(_formatSize(existing['file_size'] as int? ?? 0), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
                 const SizedBox(width: 12),
-                Text(existing['mime_type'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                Text(existing['mime_type'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
               ]),
             ],
           ])),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik(color: AppColors.grayText))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText))),
             ElevatedButton(
               onPressed: () {
                 final data = {'filename': filenameC.text, 'alt_text': altC.text, 'mime_type': 'image/jpeg', 'file_size': 100000, 'width': 800, 'height': 600, 'uploaded_by': 'ניתאי לוי'};
@@ -173,7 +173,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                 Navigator.pop(ctx);
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.turquoise, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: Text(existing == null ? 'העלה' : 'שמור', style: GoogleFonts.rubik()),
+              child: Text(existing == null ? 'העלה' : 'שמור', style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
           ],
         ),
@@ -183,12 +183,12 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
 
   void _confirmDelete(BuildContext context, Map<String, dynamic> media) {
     showDialog(context: context, builder: (ctx) => Directionality(textDirection: TextDirection.rtl, child: AlertDialog(
-      title: Text('מחיקת קובץ', style: GoogleFonts.rubik(fontWeight: FontWeight.w700, color: AppColors.error)),
-      content: Text('למחוק את "${media['filename']}"?', style: GoogleFonts.rubik()),
+      title: Text('מחיקת קובץ', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, color: AppColors.error)),
+      content: Text('למחוק את "${media['filename']}"?', style: TextStyle(fontFamily: AppFonts.rubik)),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik(color: AppColors.grayText))),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText))),
         ElevatedButton(onPressed: () { ref.read(adminMediaListProvider.notifier).deleteMedia(media['id'] as String); Navigator.pop(ctx); },
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white), child: Text('מחק', style: GoogleFonts.rubik())),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white), child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik))),
       ],
     )));
   }
@@ -223,9 +223,9 @@ class _MediaCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(media['filename'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.navy), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(media['filename'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.navy), maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
-              Text(media['alt_text'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(media['alt_text'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis),
             ]),
           ),
         ]),
@@ -268,8 +268,8 @@ class _MediaTable extends StatelessWidget {
           final m = list[i];
           return ListTile(
             dense: true,
-            title: Text(m['filename'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.navy)),
-            subtitle: Text(m['alt_text'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+            title: Text(m['filename'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.navy)),
+            subtitle: Text(m['alt_text'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText)),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               IconButton(icon: const Icon(Icons.edit, size: 16, color: AppColors.grayLight), onPressed: () => onEdit(m)),
               IconButton(icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.error), onPressed: () => onDelete(m)),
@@ -283,7 +283,7 @@ class _MediaTable extends StatelessWidget {
 
 class _Col extends StatelessWidget {
   final String label; final int flex; const _Col(this.label, {this.flex = 1});
-  @override Widget build(BuildContext context) => Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+  @override Widget build(BuildContext context) => Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
 }
 
 class _StatChip extends StatelessWidget {
@@ -294,9 +294,9 @@ class _StatChip extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
     decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+      Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: color)),
       const SizedBox(width: 8),
-      Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+      Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
     ]),
   );
 }
@@ -308,6 +308,6 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(left: 6), child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(6), child: Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     decoration: BoxDecoration(color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent, borderRadius: BorderRadius.circular(6), border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5)),
-    child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+    child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
   )));
 }

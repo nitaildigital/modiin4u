@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_neighborhoods_provider.dart';
 
@@ -45,11 +45,11 @@ class _AdminNeighborhoodsScreenState
             height: 40,
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.rubik(fontSize: 14),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש שכונה...',
                 hintStyle:
-                    GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                    TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon:
                     const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding:
@@ -94,7 +94,7 @@ class _AdminNeighborhoodsScreenState
           const Spacer(),
           async
                   .whenData((list) => Text('${list.length} שכונות',
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(fontFamily: AppFonts.rubik, 
                           fontSize: 13, color: AppColors.grayText)))
                   .value ??
               const SizedBox.shrink(),
@@ -102,7 +102,7 @@ class _AdminNeighborhoodsScreenState
           FilledButton.icon(
             onPressed: () => _showEditor(context, ref),
             icon: const Icon(Icons.add, size: 18),
-            label: Text('שכונה חדשה', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('שכונה חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.turquoise,
               minimumSize: const Size(0, 40),
@@ -119,12 +119,12 @@ class _AdminNeighborhoodsScreenState
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(
               child: Text('שגיאה: $e',
-                  style: GoogleFonts.rubik(color: AppColors.error))),
+                  style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (neighborhoods) {
             if (neighborhoods.isEmpty) {
               return Center(
                   child: Text('אין שכונות',
-                      style: GoogleFonts.rubik(color: AppColors.grayText)));
+                      style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)));
             }
             return Column(children: [
               // Header
@@ -168,7 +168,7 @@ class _AdminNeighborhoodsScreenState
                                       CrossAxisAlignment.start,
                                   children: [
                                     Text(n['name'] as String? ?? '',
-                                        style: GoogleFonts.rubik(
+                                        style: TextStyle(fontFamily: AppFonts.rubik, 
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: AppColors.navy)),
@@ -176,7 +176,7 @@ class _AdminNeighborhoodsScreenState
                                             ?.isNotEmpty ==
                                         true)
                                       Text(n['description'] as String,
-                                          style: GoogleFonts.rubik(
+                                          style: TextStyle(fontFamily: AppFonts.rubik, 
                                               fontSize: 11,
                                               color: AppColors.grayLight),
                                           maxLines: 1,
@@ -185,7 +185,7 @@ class _AdminNeighborhoodsScreenState
                           Expanded(
                               flex: 2,
                               child: Text(n['slug'] as String? ?? '',
-                                  style: GoogleFonts.rubik(
+                                  style: TextStyle(fontFamily: AppFonts.rubik, 
                                       fontSize: 12,
                                       color: AppColors.grayText))),
                           if (isWide)
@@ -193,7 +193,7 @@ class _AdminNeighborhoodsScreenState
                                 flex: 1,
                                 child: Text(
                                     '${n['resident_count'] ?? 0}',
-                                    style: GoogleFonts.rubik(
+                                    style: TextStyle(fontFamily: AppFonts.rubik, 
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500))),
                           if (isWide)
@@ -201,7 +201,7 @@ class _AdminNeighborhoodsScreenState
                                 flex: 1,
                                 child: Text(
                                     '${n['business_count'] ?? 0}',
-                                    style: GoogleFonts.rubik(fontSize: 13))),
+                                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                           Expanded(
                               flex: 1,
                               child: _StatusPill(
@@ -218,17 +218,17 @@ class _AdminNeighborhoodsScreenState
                                   value: 'edit',
                                   child: Text('עריכה',
                                       style:
-                                          GoogleFonts.rubik(fontSize: 13))),
+                                          TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                               PopupMenuItem(
                                   value: 'toggle',
                                   child: Text(
                                       active ? 'השבת' : 'הפעל',
                                       style:
-                                          GoogleFonts.rubik(fontSize: 13))),
+                                          TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                               PopupMenuItem(
                                   value: 'delete',
                                   child: Text('מחק',
-                                      style: GoogleFonts.rubik(
+                                      style: TextStyle(fontFamily: AppFonts.rubik, 
                                           fontSize: 13,
                                           color: AppColors.error))),
                             ],
@@ -259,20 +259,20 @@ class _AdminNeighborhoodsScreenState
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text('מחיקת שכונה',
-                style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
+                style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
             content: Text('למחוק את "${n['name']}"?',
-                style: GoogleFonts.rubik()),
+                style: TextStyle(fontFamily: AppFonts.rubik)),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: Text('ביטול', style: GoogleFonts.rubik())),
+                  child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
               TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
                     notifier.deleteNeighborhood(id);
                   },
                   child: Text('מחק',
-                      style: GoogleFonts.rubik(color: AppColors.error))),
+                      style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
             ],
           ),
         );
@@ -365,7 +365,7 @@ class _NeighborhoodEditorDialogState
                         BorderRadius.vertical(top: Radius.circular(14))),
                 child: Row(children: [
                   Text(_isEditing ? 'עריכת שכונה' : 'שכונה חדשה',
-                      style: GoogleFonts.rubik(
+                      style: TextStyle(fontFamily: AppFonts.rubik, 
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: Colors.white)),
@@ -397,7 +397,7 @@ class _NeighborhoodEditorDialogState
                       const SizedBox(height: 12),
                       SwitchListTile(
                         title: Text('פעיל',
-                            style: GoogleFonts.rubik(fontSize: 14)),
+                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)),
                         value: _isActive,
                         onChanged: (v) => setState(() => _isActive = v),
                         activeColor: AppColors.turquoise,
@@ -414,7 +414,7 @@ class _NeighborhoodEditorDialogState
                   const Spacer(),
                   TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text('ביטול', style: GoogleFonts.rubik())),
+                      child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _saving ? null : _save,
@@ -429,7 +429,7 @@ class _NeighborhoodEditorDialogState
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
                         : Text(_isEditing ? 'שמור' : 'צור שכונה',
-                            style: GoogleFonts.rubik(
+                            style: TextStyle(fontFamily: AppFonts.rubik, 
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600)),
                   ),
@@ -450,10 +450,10 @@ class _NeighborhoodEditorDialogState
         controller: controller,
         maxLines: maxLines,
         validator: validator,
-        style: GoogleFonts.rubik(fontSize: 13),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: GoogleFonts.rubik(fontSize: 13),
+          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border:
               OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           contentPadding:
@@ -513,7 +513,7 @@ class _StatusPill extends StatelessWidget {
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6)),
       child: Text(label,
-          style: GoogleFonts.rubik(
+          style: TextStyle(fontFamily: AppFonts.rubik, 
               fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
@@ -529,7 +529,7 @@ class _Col extends StatelessWidget {
     return Expanded(
         flex: flex,
         child: Text(label,
-            style: GoogleFonts.rubik(
+            style: TextStyle(fontFamily: AppFonts.rubik, 
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: AppColors.grayLight)));
@@ -562,7 +562,7 @@ class _FilterChip extends StatelessWidget {
                 width: 0.5),
           ),
           child: Text(label,
-              style: GoogleFonts.rubik(
+              style: TextStyle(fontFamily: AppFonts.rubik, 
                   fontSize: 12,
                   fontWeight:
                       selected ? FontWeight.w600 : FontWeight.w400,

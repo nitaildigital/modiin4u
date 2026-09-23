@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_flags_provider.dart';
 
@@ -40,8 +40,8 @@ class _AdminFlagsScreenState extends ConsumerState<AdminFlagsScreen> with Single
           labelColor: AppColors.turquoise,
           unselectedLabelColor: AppColors.grayText,
           indicatorColor: AppColors.turquoise,
-          labelStyle: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: GoogleFonts.rubik(fontSize: 14),
+          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600),
+          unselectedLabelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
           tabs: const [
             Tab(text: 'Feature Flags', icon: Icon(Icons.flag, size: 18)),
             Tab(text: 'Remote Config', icon: Icon(Icons.settings_remote, size: 18)),
@@ -105,12 +105,12 @@ class _FeatureFlagsTab extends ConsumerWidget {
         child: Row(children: [
           Icon(Icons.flag, size: 18, color: AppColors.navy),
           const SizedBox(width: 8),
-          Text('Feature Flags', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+          Text('Feature Flags', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
           const Spacer(),
           FilledButton.icon(
             onPressed: () => _showFlagEditor(context, ref),
             icon: const Icon(Icons.add, size: 18),
-            label: Text('Flag חדש', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('Flag חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, minimumSize: const Size(0, 38), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           ),
         ]),
@@ -120,10 +120,10 @@ class _FeatureFlagsTab extends ConsumerWidget {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
-              return Center(child: Text('אין Feature Flags', style: GoogleFonts.rubik(color: AppColors.grayText)));
+              return Center(child: Text('אין Feature Flags', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)));
             }
             return ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -151,13 +151,13 @@ class _FeatureFlagsTab extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(color: AppColors.navy.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(4)),
-                              child: Text(f['key'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.navy, fontWeight: FontWeight.w600)),
+                              child: Text(f['key'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.navy, fontWeight: FontWeight.w600)),
                             ),
                             const SizedBox(width: 8),
-                            Text(f['label'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                            Text(f['label'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
                           ]),
                           const SizedBox(height: 4),
-                          Text(f['description'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                          Text(f['description'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
                         ])),
                         Switch(
                           value: isEnabled,
@@ -169,7 +169,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
                       Row(children: [
                         // Rollout slider
                         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text('Rollout: $rollout%', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+                          Text('Rollout: $rollout%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText)),
                           const SizedBox(height: 4),
                           SliderTheme(
                             data: SliderThemeData(
@@ -197,11 +197,11 @@ class _FeatureFlagsTab extends ConsumerWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(4)),
-                            child: Text(p, style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayText)),
+                            child: Text(p, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayText)),
                           ),
                         )),
                         const SizedBox(width: 8),
-                        Text('by ${f['updated_by'] ?? ''}', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)),
+                        Text('by ${f['updated_by'] ?? ''}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)),
                       ]),
                     ]),
                   ),
@@ -239,14 +239,14 @@ class _RemoteConfigTab extends ConsumerWidget {
         child: Row(children: [
           Icon(Icons.settings_remote, size: 18, color: AppColors.navy),
           const SizedBox(width: 8),
-          Text('Remote Config', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
+          Text('Remote Config', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
           const Spacer(),
-          asyncData.whenData((list) => Text('${list.length} הגדרות', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((list) => Text('${list.length} הגדרות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 16),
           FilledButton.icon(
             onPressed: () => _showConfigEditor(context, ref),
             icon: const Icon(Icons.add, size: 18),
-            label: Text('הגדרה חדשה', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('הגדרה חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, minimumSize: const Size(0, 38), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           ),
         ]),
@@ -256,10 +256,10 @@ class _RemoteConfigTab extends ConsumerWidget {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
-              return Center(child: Text('אין הגדרות', style: GoogleFonts.rubik(color: AppColors.grayText)));
+              return Center(child: Text('אין הגדרות', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)));
             }
             return ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -279,10 +279,10 @@ class _RemoteConfigTab extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(color: AppColors.turquoise.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(4)),
-                        child: Text(c['key'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.turquoise, fontWeight: FontWeight.w600)),
+                        child: Text(c['key'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.turquoise, fontWeight: FontWeight.w600)),
                       ),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(c['description'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
+                      Expanded(child: Text(c['description'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                     ]),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -290,11 +290,11 @@ class _RemoteConfigTab extends ConsumerWidget {
                         width: double.infinity,
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(6)),
-                        child: Text(c['value'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.navy), maxLines: 3, overflow: TextOverflow.ellipsis),
+                        child: Text(c['value'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.navy), maxLines: 3, overflow: TextOverflow.ellipsis),
                       ),
                     ),
                     trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Text('by ${c['updated_by'] ?? ''}', style: GoogleFonts.rubik(fontSize: 10, color: AppColors.grayLight)),
+                      Text('by ${c['updated_by'] ?? ''}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)),
                       const SizedBox(width: 8),
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
@@ -303,8 +303,8 @@ class _RemoteConfigTab extends ConsumerWidget {
                           if (v == 'delete') ref.read(adminRemoteConfigProvider.notifier).deleteConfig(c['id'] as String);
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(value: 'edit', child: Text('עריכה', style: GoogleFonts.rubik(fontSize: 13))),
-                          PopupMenuItem(value: 'delete', child: Text('מחיקה', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.error))),
+                          PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                          PopupMenuItem(value: 'delete', child: Text('מחיקה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
                         ],
                       ),
                     ]),
@@ -361,7 +361,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
                 child: Row(children: [
-                  Text('Flag חדש', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text('Flag חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
                 ]),
@@ -377,13 +377,13 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                     _buildField('תיאור', _description, hint: 'מה הפיצ\'ר עושה', maxLines: 2),
                     const SizedBox(height: 14),
                     SwitchListTile(
-                      title: Text('מופעל', style: GoogleFonts.rubik(fontSize: 14)),
+                      title: Text('מופעל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)),
                       value: _isEnabled,
                       activeColor: AppColors.success,
                       onChanged: (v) => setState(() => _isEnabled = v),
                     ),
                     const SizedBox(height: 8),
-                    Text('Rollout: $_rolloutPct%', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+                    Text('Rollout: $_rolloutPct%', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
                     Slider(
                       value: _rolloutPct.toDouble(),
                       min: 0, max: 100, divisions: 10,
@@ -397,14 +397,14 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.5)))),
                 child: Row(children: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                   const Spacer(),
                   FilledButton(
                     onPressed: _saving ? null : _save,
                     style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, minimumSize: const Size(120, 42), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _saving
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text('יצירה', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600)),
+                      : Text('יצירה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),
@@ -417,15 +417,15 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
 
   Widget _buildField(String label, TextEditingController ctrl, {String? hint, int maxLines = 1}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.grayText)),
+      Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.grayText)),
       const SizedBox(height: 6),
       TextFormField(
         controller: ctrl,
         maxLines: maxLines,
-        style: GoogleFonts.rubik(fontSize: 14),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+          hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -501,7 +501,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
                 child: Row(children: [
-                  Text(_isEditing ? 'עריכת הגדרה' : 'הגדרה חדשה', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text(_isEditing ? 'עריכת הגדרה' : 'הגדרה חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
                 ]),
@@ -522,14 +522,14 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.5)))),
                 child: Row(children: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                   const Spacer(),
                   FilledButton(
                     onPressed: _saving ? null : _save,
                     style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, minimumSize: const Size(120, 42), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _saving
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(_isEditing ? 'עדכון' : 'יצירה', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600)),
+                      : Text(_isEditing ? 'עדכון' : 'יצירה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),
@@ -542,15 +542,15 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
 
   Widget _buildField(String label, TextEditingController ctrl, {String? hint, int maxLines = 1}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.grayText)),
+      Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.grayText)),
       const SizedBox(height: 6),
       TextFormField(
         controller: ctrl,
         maxLines: maxLines,
-        style: GoogleFonts.rubik(fontSize: 14),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+          hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -592,9 +592,9 @@ class _StatChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(value, style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
+        Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w700, color: color)),
         const SizedBox(width: 8),
-        Text(label, style: GoogleFonts.rubik(fontSize: 12, color: color.withValues(alpha: 0.7))),
+        Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: color.withValues(alpha: 0.7))),
       ]),
     );
   }

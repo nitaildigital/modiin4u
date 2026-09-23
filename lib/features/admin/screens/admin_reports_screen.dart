@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_reports_provider.dart';
 
@@ -57,7 +57,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
             _FilterChip('תגובות', _entityFilter == 'comment', () { setState(() => _entityFilter = _entityFilter == 'comment' ? '' : 'comment'); ref.read(adminReportsProvider.notifier).setEntityTypeFilter(_entityFilter.isEmpty ? null : _entityFilter); }),
           ],
           const Spacer(),
-          asyncData.whenData((l) => Text('${l.length} דיווחים', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((l) => Text('${l.length} דיווחים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
         ]),
       ),
 
@@ -65,13 +65,13 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.flag_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין דיווחים', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין דיווחים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return Column(children: [
@@ -104,20 +104,20 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                       Expanded(flex: 2, child: Row(children: [
                         Icon(_reasonIcon(r['reason'] as String? ?? ''), size: 16, color: AppColors.error),
                         const SizedBox(width: 8),
-                        Flexible(child: Text(reason, style: GoogleFonts.rubik(fontSize: 13, color: AppColors.navy))),
+                        Flexible(child: Text(reason, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.navy))),
                       ])),
                       Expanded(flex: 3, child: Row(children: [
                         Icon(entityIcon, size: 14, color: AppColors.grayLight),
                         const SizedBox(width: 6),
                         Flexible(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(r['entity_title'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.navy), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text(r['entity_title'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.navy), maxLines: 1, overflow: TextOverflow.ellipsis),
                           if (r['details'] != null && (r['details'] as String).isNotEmpty)
-                            Text(r['details'] as String, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            Text(r['details'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis),
                         ])),
                       ])),
-                      Expanded(flex: 2, child: Text(r['reporter_name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
+                      Expanded(flex: 2, child: Text(r['reporter_name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                       Expanded(flex: 1, child: _StatusPill(status)),
-                      if (isWide) Expanded(flex: 1, child: Text(_shortDate(r['created_at'] as String? ?? ''), style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText))),
+                      if (isWide) Expanded(flex: 1, child: Text(_shortDate(r['created_at'] as String? ?? ''), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
                       SizedBox(width: 80, child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                         if (status == 'pending') ...[
                           IconButton(icon: const Icon(Icons.search, size: 16, color: AppColors.gold), tooltip: 'בדוק',
@@ -154,13 +154,13 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) { 'open' => ('פתוח', AppColors.error), 'investigating' => ('בטיפול', AppColors.gold), 'resolved' => ('נפתר', AppColors.success), 'dismissed' => ('נדחה', AppColors.grayLight), _ => (status, AppColors.grayLight) };
     return Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w600, color: color)));
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, fontWeight: FontWeight.w600, color: color)));
   }
 }
 
 class _Col extends StatelessWidget {
   final String label; final int flex; const _Col(this.label, {this.flex = 1});
-  @override Widget build(BuildContext context) => Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+  @override Widget build(BuildContext context) => Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
 }
 
 class _StatChip extends StatelessWidget {
@@ -171,9 +171,9 @@ class _StatChip extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
     decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+      Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: color)),
       const SizedBox(width: 8),
-      Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+      Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
     ]),
   );
 }
@@ -185,6 +185,6 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(left: 6), child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(6), child: Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     decoration: BoxDecoration(color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent, borderRadius: BorderRadius.circular(6), border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5)),
-    child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+    child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
   )));
 }

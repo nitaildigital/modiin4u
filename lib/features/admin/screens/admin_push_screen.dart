@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_push_provider.dart';
 
@@ -65,10 +65,10 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
             height: 40,
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.rubik(fontSize: 14),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'חיפוש הודעה...',
-                hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -98,12 +98,12 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
             ref.read(adminPushListProvider.notifier).setStatusFilter('draft');
           }),
           const Spacer(),
-          pushAsync.whenData((list) => Text('${list.length} הודעות', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          pushAsync.whenData((list) => Text('${list.length} הודעות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
           const SizedBox(width: 16),
           FilledButton.icon(
             onPressed: () => _showPushEditor(context, ref),
             icon: const Icon(Icons.add, size: 18),
-            label: Text('הודעה חדשה', style: GoogleFonts.rubik(fontSize: 13)),
+            label: Text('הודעה חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.turquoise,
               minimumSize: const Size(0, 40),
@@ -120,14 +120,14 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
           error: (e, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('שגיאה בטעינת הודעות', style: GoogleFonts.rubik(color: AppColors.error)),
+            Text('שגיאה בטעינת הודעות', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error)),
           ])),
           data: (notifications) {
             if (notifications.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.notifications_none, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין הודעות', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין הודעות', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return _PushTable(notifications: notifications, isWide: isWide, onTap: (n) => _showPushEditor(context, ref, notification: n), onAction: _handleAction);
@@ -154,11 +154,11 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('מחיקת הודעה', style: GoogleFonts.rubik(fontWeight: FontWeight.w700)),
-            content: Text('למחוק את "${notification['title']}"?', style: GoogleFonts.rubik()),
+            title: Text('מחיקת הודעה', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+            content: Text('למחוק את "${notification['title']}"?', style: TextStyle(fontFamily: AppFonts.rubik)),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: GoogleFonts.rubik())),
-              TextButton(onPressed: () { Navigator.pop(ctx); notifier.deleteNotification(id); }, child: Text('מחק', style: GoogleFonts.rubik(color: AppColors.error))),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
+              TextButton(onPressed: () { Navigator.pop(ctx); notifier.deleteNotification(id); }, child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
             ],
           ),
         );
@@ -191,8 +191,8 @@ class _StatChip extends StatelessWidget {
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 8),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
-          Text(label, style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText)),
+          Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.navy)),
+          Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText)),
         ]),
       ]),
     );
@@ -255,28 +255,28 @@ class _PushTable extends StatelessWidget {
                     const SizedBox(width: 10),
                   ],
                   Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(n['title'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis),
-                    Text(n['body'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(n['title'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis),
+                    Text(n['body'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ])),
                   Expanded(flex: 1, child: _TypeBadge(type)),
                   Expanded(flex: 2, child: Text(
                     audience == 'all' ? 'כולם' : audience == 'neighborhood' ? 'שכונה: ${targetValue ?? "—"}' : 'תפקיד: ${targetValue ?? "—"}',
-                    style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText),
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
                   )),
                   Expanded(flex: 1, child: _StatusPill(status)),
-                  if (isWide) Expanded(flex: 1, child: Text('$delivered', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
-                  if (isWide) Expanded(flex: 1, child: Text(delivered > 0 ? '${(read / delivered * 100).toInt()}%' : '—', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))),
+                  if (isWide) Expanded(flex: 1, child: Text('$delivered', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
+                  if (isWide) Expanded(flex: 1, child: Text(delivered > 0 ? '${(read / delivered * 100).toInt()}%' : '—', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                   if (isWide) Expanded(flex: 2, child: Text(
                     sentAt != null ? _formatDate(sentAt) : scheduledAt != null ? 'מתוזמן: ${_formatDate(scheduledAt)}' : '—',
-                    style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText),
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
                   )),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
                     onSelected: (v) => onAction(v, n),
                     itemBuilder: (_) => [
-                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: GoogleFonts.rubik(fontSize: 13))),
-                      if (status == 'draft' || status == 'scheduled') PopupMenuItem(value: 'send', child: Text('שלח עכשיו', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.success))),
-                      PopupMenuItem(value: 'delete', child: Text('מחק', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.error))),
+                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status == 'draft' || status == 'scheduled') PopupMenuItem(value: 'send', child: Text('שלח עכשיו', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.success))),
+                      PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
                     ],
                   ),
                 ]),
@@ -361,7 +361,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
                 child: Row(children: [
-                  Text(_isEditing ? 'עריכת הודעה' : 'הודעה חדשה', style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text(_isEditing ? 'עריכת הודעה' : 'הודעה חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
                 ]),
@@ -375,7 +375,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(_imageUrl.text, height: 120, width: double.infinity, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(height: 60, alignment: Alignment.center, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: Text('תמונה לא נמצאה', style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayLight)))),
+                        errorBuilder: (_, __, ___) => Container(height: 60, alignment: Alignment.center, decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(8)), child: Text('תמונה לא נמצאה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayLight)))),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -383,38 +383,38 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                   Row(children: [
                     Expanded(child: DropdownButtonFormField<String>(
                       value: _type,
-                      decoration: InputDecoration(labelText: 'סוג', labelStyle: GoogleFonts.rubik(fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                      decoration: InputDecoration(labelText: 'סוג', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                       items: [
-                        DropdownMenuItem(value: 'general', child: Text('כללי', style: GoogleFonts.rubik(fontSize: 13))),
-                        DropdownMenuItem(value: 'breaking', child: Text('מבזק', style: GoogleFonts.rubik(fontSize: 13))),
-                        DropdownMenuItem(value: 'event', child: Text('אירוע', style: GoogleFonts.rubik(fontSize: 13))),
-                        DropdownMenuItem(value: 'deal', child: Text('מבצע', style: GoogleFonts.rubik(fontSize: 13))),
-                        DropdownMenuItem(value: 'municipal', child: Text('עירוני', style: GoogleFonts.rubik(fontSize: 13))),
+                        DropdownMenuItem(value: 'general', child: Text('כללי', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                        DropdownMenuItem(value: 'breaking', child: Text('מבזק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                        DropdownMenuItem(value: 'event', child: Text('אירוע', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                        DropdownMenuItem(value: 'deal', child: Text('מבצע', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                        DropdownMenuItem(value: 'municipal', child: Text('עירוני', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                       ],
                       onChanged: (v) => setState(() => _type = v!),
                     )),
                     const SizedBox(width: 12),
                     Expanded(child: DropdownButtonFormField<String>(
                       value: _status,
-                      decoration: InputDecoration(labelText: 'סטטוס', labelStyle: GoogleFonts.rubik(fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                      decoration: InputDecoration(labelText: 'סטטוס', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                       items: [
-                        DropdownMenuItem(value: 'draft', child: Text('טיוטה', style: GoogleFonts.rubik(fontSize: 13))),
-                        DropdownMenuItem(value: 'scheduled', child: Text('מתוזמן', style: GoogleFonts.rubik(fontSize: 13))),
-                        DropdownMenuItem(value: 'sent', child: Text('נשלח', style: GoogleFonts.rubik(fontSize: 13))),
+                        DropdownMenuItem(value: 'draft', child: Text('טיוטה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                        DropdownMenuItem(value: 'scheduled', child: Text('מתוזמן', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                        DropdownMenuItem(value: 'sent', child: Text('נשלח', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                       ],
                       onChanged: (v) => setState(() => _status = v!),
                     )),
                   ]),
                   const SizedBox(height: 16),
-                  Text('קהל יעד', style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
+                  Text('קהל יעד', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: _targetAudience,
                     decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                     items: [
-                      DropdownMenuItem(value: 'all', child: Text('כולם', style: GoogleFonts.rubik(fontSize: 13))),
-                      DropdownMenuItem(value: 'neighborhood', child: Text('לפי שכונה', style: GoogleFonts.rubik(fontSize: 13))),
-                      DropdownMenuItem(value: 'role', child: Text('לפי תפקיד', style: GoogleFonts.rubik(fontSize: 13))),
+                      DropdownMenuItem(value: 'all', child: Text('כולם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      DropdownMenuItem(value: 'neighborhood', child: Text('לפי שכונה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      DropdownMenuItem(value: 'role', child: Text('לפי תפקיד', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                     ],
                     onChanged: (v) => setState(() => _targetAudience = v!),
                   ),
@@ -433,13 +433,13 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                 decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
                 child: Row(children: [
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: GoogleFonts.rubik())),
+                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
                   const SizedBox(width: 8),
                   if (!_isEditing || _status == 'draft') ...[
                     OutlinedButton(
                       onPressed: _saving ? null : () => _save(sendNow: true),
                       style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), foregroundColor: AppColors.success),
-                      child: Text('שלח עכשיו', style: GoogleFonts.rubik(fontSize: 13)),
+                      child: Text('שלח עכשיו', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -448,7 +448,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                     style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     child: _saving
                         ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור הודעה', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600)),
+                        : Text(_isEditing ? 'שמור' : 'צור הודעה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ]),
               ),
@@ -464,10 +464,10 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller, maxLines: maxLines, validator: validator,
-        style: GoogleFonts.rubik(fontSize: 13),
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
         decoration: InputDecoration(
           labelText: label, hintText: hint,
-          labelStyle: GoogleFonts.rubik(fontSize: 13),
+          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
@@ -530,7 +530,7 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
@@ -552,7 +552,7 @@ class _TypeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, fontWeight: FontWeight.w600, color: color)),
     );
   }
 }
@@ -564,7 +564,7 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: GoogleFonts.rubik(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
   }
 }
 
@@ -587,7 +587,7 @@ class _FilterChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5),
           ),
-          child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
         ),
       ),
     );

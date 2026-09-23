@@ -30,9 +30,12 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
 
-  # Map
+  # Map. latlong2 stays: the POI model and the web screens are built on it,
+  # and google_maps_flutter's LatLng is a different type.
+  google_maps_flutter: ^2.9.0
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  geolocator: ^13.0.2
 
   # Utils
   intl: ^0.20.2
@@ -95,3 +98,37 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/data/
+
+  # Declared here so `TextStyle(fontFamily: ...)` resolves them directly, and
+  # kept in `assets:` above so anything still going through google_fonts finds
+  # them locally instead of over the network.
+  fonts:
+    - family: Rubik
+      fonts:
+        - asset: assets/google_fonts/Rubik-Regular.ttf
+          weight: 400
+        - asset: assets/google_fonts/Rubik-Medium.ttf
+          weight: 500
+        - asset: assets/google_fonts/Rubik-SemiBold.ttf
+          weight: 600
+        - asset: assets/google_fonts/Rubik-Bold.ttf
+          weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/google_fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/google_fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/google_fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/google_fonts/Inter-Bold.ttf
+          weight: 700
+    - family: Nunito
+      fonts:
+        - asset: assets/google_fonts/Nunito-Medium.ttf
+          weight: 500
+        - asset: assets/google_fonts/Nunito-SemiBold.ttf
+          weight: 600
+        - asset: assets/google_fonts/Nunito-Bold.ttf
+          weight: 700
+

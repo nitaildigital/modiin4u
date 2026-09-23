@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_comments_provider.dart';
 
@@ -52,9 +52,9 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
           SizedBox(
             width: isWide ? 280 : 180, height: 40,
             child: TextField(
-              controller: _searchController, style: GoogleFonts.rubik(fontSize: 14),
+              controller: _searchController, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'חיפוש תגובה...', hintStyle: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayLight),
+                hintText: 'חיפוש תגובה...', hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
                 prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
@@ -75,7 +75,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
             _FilterChip('כתבות', _entityFilter == 'article', () { setState(() => _entityFilter = _entityFilter == 'article' ? '' : 'article'); ref.read(adminCommentsProvider.notifier).setEntityTypeFilter(_entityFilter.isEmpty ? null : _entityFilter); }),
           ],
           const Spacer(),
-          asyncData.whenData((l) => Text('${l.length} תגובות', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
+          asyncData.whenData((l) => Text('${l.length} תגובות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
         ]),
       ),
 
@@ -83,13 +83,13 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
       Expanded(
         child: asyncData.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: GoogleFonts.rubik(color: AppColors.error))),
+          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
           data: (list) {
             if (list.isEmpty) {
               return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.forum_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
                 const SizedBox(height: 12),
-                Text('אין תגובות', style: GoogleFonts.rubik(color: AppColors.grayText)),
+                Text('אין תגובות', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
               ]));
             }
             return ListView.separated(
@@ -107,15 +107,15 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     CircleAvatar(radius: 18, backgroundColor: AppColors.turquoise.withValues(alpha: 0.1),
-                      child: Text((c['user_name'] as String? ?? '?')[0], style: GoogleFonts.rubik(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.turquoise))),
+                      child: Text((c['user_name'] as String? ?? '?')[0], style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.turquoise))),
                     const SizedBox(width: 12),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
-                        Text(c['user_name'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                        Text(c['user_name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navy)),
                         const SizedBox(width: 8),
-                        Text(_entityLabel(c['entity_type'] as String? ?? ''), style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                        Text(_entityLabel(c['entity_type'] as String? ?? ''), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                         const SizedBox(width: 4),
-                        Flexible(child: Text(c['entity_title'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        Flexible(child: Text(c['entity_title'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis)),
                         const Spacer(),
                         _StatusPill(status),
                         if (isFlagged) ...[
@@ -124,21 +124,21 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                         ],
                       ]),
                       const SizedBox(height: 6),
-                      Text(c['body'] as String? ?? '', style: GoogleFonts.rubik(fontSize: 13, color: AppColors.navy, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
+                      Text(c['body'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.navy, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 6),
                       Row(children: [
-                        Text(_shortDate(c['created_at'] as String? ?? ''), style: GoogleFonts.rubik(fontSize: 11, color: AppColors.grayLight)),
+                        Text(_shortDate(c['created_at'] as String? ?? ''), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
                         const Spacer(),
                         TextButton.icon(
                           onPressed: () => ref.read(adminCommentsProvider.notifier).toggleVisibility(c['id'] as String),
                           icon: Icon(status == 'visible' ? Icons.visibility_off : Icons.visibility, size: 14),
-                          label: Text(status == 'visible' ? 'הסתר' : 'הצג', style: GoogleFonts.rubik(fontSize: 12)),
+                          label: Text(status == 'visible' ? 'הסתר' : 'הצג', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)),
                           style: TextButton.styleFrom(foregroundColor: AppColors.turquoise, padding: const EdgeInsets.symmetric(horizontal: 8)),
                         ),
                         TextButton.icon(
                           onPressed: () => ref.read(adminCommentsProvider.notifier).togglePin(c['id'] as String),
                           icon: Icon(isPinned ? Icons.push_pin : Icons.push_pin_outlined, size: 14),
-                          label: Text(isPinned ? 'בטל הצמדה' : 'הצמד', style: GoogleFonts.rubik(fontSize: 12)),
+                          label: Text(isPinned ? 'בטל הצמדה' : 'הצמד', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)),
                           style: TextButton.styleFrom(foregroundColor: AppColors.gold, padding: const EdgeInsets.symmetric(horizontal: 8)),
                         ),
                         IconButton(
@@ -168,7 +168,7 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) { 'approved' => ('מאושר', AppColors.success), 'pending' => ('ממתין', AppColors.gold), 'rejected' => ('נדחה', AppColors.error), _ => (status, AppColors.grayLight) };
     return Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: GoogleFonts.rubik(fontSize: 10, fontWeight: FontWeight.w600, color: color)));
+      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, fontWeight: FontWeight.w600, color: color)));
   }
 }
 
@@ -180,9 +180,9 @@ class _StatChip extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
     decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Text(value, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+      Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: color)),
       const SizedBox(width: 8),
-      Text(label, style: GoogleFonts.rubik(fontSize: 12, color: AppColors.grayText)),
+      Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
     ]),
   );
 }
@@ -194,6 +194,6 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(left: 6), child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(6), child: Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     decoration: BoxDecoration(color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent, borderRadius: BorderRadius.circular(6), border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5)),
-    child: Text(label, style: GoogleFonts.rubik(fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+    child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
   )));
 }
