@@ -49,3 +49,9 @@ games/
 
 # Package lock (npm)
 package-lock.json
+
+# Client deliverables (not source)
+*.docx
+
+# Server-side secrets — never committed
+.env.local

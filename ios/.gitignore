@@ -32,3 +32,6 @@ Runner/GeneratedPluginRegistrant.*
 !default.mode2v3
 !default.pbxuser
 !default.perspectivev3
+
+# The Maps key, kept out of git the same way Generated.xcconfig is.
+Flutter/Maps.xcconfig
