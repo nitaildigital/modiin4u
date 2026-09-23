@@ -13,3 +13,10 @@
 
 # image_picker
 -keep class androidx.core.content.FileProvider { *; }
+
+# Flutter's embedding references Play Core for deferred components, which this
+# app does not use and does not ship. Without these R8 fails the release build
+# on the missing classes.
+-dontwarn com.google.android.play.core.**
+-keep class io.flutter.embedding.engine.deferredcomponents.** { *; }
+-keep class io.flutter.embedding.android.FlutterPlayStoreSplitApplication { *; }
