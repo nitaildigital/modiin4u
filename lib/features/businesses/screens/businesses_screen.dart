@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
+import '../../../shared/widgets/error_retry.dart';
+import '../../../shared/widgets/shimmer_loading.dart';
+import '../providers/business_providers.dart';
+import 'business_list_screen.dart';
 import 'web_businesses_screen.dart';
 
-/// Businesses – responsive wrapper.
+/// Business directory – responsive wrapper.
 class BusinessesScreen extends StatelessWidget {
   const BusinessesScreen({super.key});
 
@@ -11,121 +18,117 @@ class BusinessesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth > 1100) return const WebBusinessesContent();
+        if (constraints.maxWidth > 1100) {
+          return const WebBusinessesContent();
+        }
         return const _MobileBusinessesContent();
       },
     );
   }
 }
 
-/// Business category grid – dark gradient cards with a search bar on top.
-class _MobileBusinessesContent extends StatelessWidget {
+class _MobileBusinessesContent extends ConsumerStatefulWidget {
   const _MobileBusinessesContent();
 
-  static const _categories = [
-    _Category('Bars', '24 businesses', Color(0xFF2D1B4E), Color(0xFF4A2D6E)),
-    _Category(
-        'Coffee Shops', '38 businesses', Color(0xFF3E2723), Color(0xFF5D4037)),
-    _Category(
-        'Restaurants', '126 businesses', Color(0xFF1B3A2D), Color(0xFF2E5A47)),
-    _Category('Aesthetics &\nGrooming', '42 businesses', Color(0xFF4E1B3A),
-        Color(0xFF6E2D54)),
-    _Category('Sports &\nFitness', '31 businesses', Color(0xFF1A237E),
-        Color(0xFF283593)),
-    _Category(
-        'Hairdressers', '27 businesses', Color(0xFF4E342E), Color(0xFF6D4C41)),
-    _Category(
-        'Services', '51 businesses', Color(0xFF263238), Color(0xFF37474F)),
-    _Category('Education', '19 businesses', Color(0xFF1B5E20),
-        Color(0xFF2E7D32)),
-  ];
+  @override
+  ConsumerState<_MobileBusinessesContent> createState() =>
+      _MobileBusinessesContentState();
+}
+
+class _MobileBusinessesContentState
+    extends ConsumerState<_MobileBusinessesContent> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _search() {
+    final q = _searchController.text.trim();
+    if (q.isEmpty) return;
+    context.push('/search?q=${Uri.encodeComponent(q)}');
+  }
 
   @override
   Widget build(BuildContext context) {
+    final categories = ref.watch(businessCategoriesProvider);
+    final businesses = ref.watch(businessesProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 430),
-            child: Column(
-          children: [
-            const SizedBox(height: 12),
-
-            // ── Title ──
-            Text(
-              'Filter Your Discover Feed',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // ── Search bar ──
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE7E7E7)),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    const Icon(
-                      IconsaxPlusLinear.search_normal_1,
-                      size: 18,
-                      color: Color(0xFF6D6D6D),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                Center(
+                  child: Text(
+                    'עסקים',
+                    style: GoogleFonts.rubik(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _SearchField(controller: _searchController, onSubmit: _search),
+                const SizedBox(height: 24),
+                _SectionTitle('קטגוריות'),
+                const SizedBox(height: 12),
+                categories.when(
+                  loading: () =>
+                      const ShimmerLoading(itemCount: 2, type: ShimmerType.card),
+                  error: (_, _) => ErrorRetry(
+                    onRetry: () => ref.invalidate(businessCategoriesProvider),
+                  ),
+                  data: (list) => _CategoryGrid(categories: list),
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => context.push('/businesses/all'),
                       child: Text(
-                        'Search businesses in Modiin...',
-                        style: GoogleFonts.inter(
+                        'ראה הכל',
+                        style: GoogleFonts.rubik(
                           fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6D6D6D),
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF123A72),
                         ),
                       ),
                     ),
+                    _SectionTitle('כל העסקים'),
                   ],
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // ── Category grid ──
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 13,
-                    mainAxisSpacing: 13,
-                    childAspectRatio: 174 / 170,
+                const SizedBox(height: 12),
+                businesses.when(
+                  loading: () =>
+                      const ShimmerLoading(itemCount: 3, type: ShimmerType.list),
+                  error: (_, _) => ErrorRetry(
+                    onRetry: () => ref.invalidate(businessesProvider),
                   ),
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final cat = _categories[index];
-                    return _CategoryCard(
-                      category: cat,
-                      onTap: () {
-                        // TODO: Navigate to filtered business list
-                      },
-                    );
-                  },
+                  data: (list) => list.isEmpty
+                      ? const EmptyState(
+                          icon: IconsaxPlusLinear.shop,
+                          title: 'אין עסקים להצגה',
+                        )
+                      : Column(
+                          children: [
+                            for (final b in list.take(8)) ...[
+                              BusinessListTile(business: b),
+                              const SizedBox(height: 12),
+                            ],
+                          ],
+                        ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
           ),
         ),
       ),
@@ -133,130 +136,196 @@ class _MobileBusinessesContent extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════
-// Category data model
-// ═══════════════════════════════════════════════
-class _Category {
-  final String name;
-  final String count;
-  final Color colorStart;
-  final Color colorEnd;
-
-  const _Category(this.name, this.count, this.colorStart, this.colorEnd);
-}
-
-// ═══════════════════════════════════════════════
-// Category card widget
-// ═══════════════════════════════════════════════
-class _CategoryCard extends StatelessWidget {
-  final _Category category;
-  final VoidCallback onTap;
-
-  const _CategoryCard({required this.category, required this.onTap});
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle(this.text);
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              category.colorEnd,
-              category.colorStart,
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Dark bottom gradient overlay (like the Figma design)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0.5235, 1.0],
-                    colors: [
-                      Colors.transparent,
-                      Color(0xBB000000),
-                    ],
-                  ),
+    return Text(
+      text,
+      style: GoogleFonts.rubik(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Colors.black,
+      ),
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final VoidCallback onSubmit;
+
+  const _SearchField({required this.controller, required this.onSubmit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+      ),
+      child: Row(
+        children: [
+          const Icon(IconsaxPlusLinear.search_normal_1,
+              size: 20, color: Color(0xFF6D6D6D)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => onSubmit(),
+              style: GoogleFonts.rubik(fontSize: 14),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isCollapsed: true,
+                hintText: 'חיפוש עסקים במודיעין',
+                hintStyle: GoogleFonts.rubik(
+                  fontSize: 14,
+                  color: const Color(0xFF6D6D6D),
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-            // Category icon watermark
-            Positioned(
-              top: 16,
-              right: 16,
+// ═══════════════════════════════════════════════
+// Category grid
+// ═══════════════════════════════════════════════
+class _CategoryGrid extends ConsumerWidget {
+  final List<BusinessCategory> categories;
+
+  const _CategoryGrid({required this.categories});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (categories.isEmpty) return const SizedBox.shrink();
+
+    // Empty until the content load links businesses to categories, at which
+    // point every card picks up its count without another change here.
+    final counts =
+        ref.watch(businessCountsByCategoryProvider).valueOrNull ?? const {};
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 13,
+        mainAxisSpacing: 13,
+        childAspectRatio: 174 / 120,
+      ),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        return _CategoryCard(
+          category: category,
+          count: counts[category.id],
+          onTap: () => context.push(
+            '/businesses/category/${category.id}'
+            '?title=${Uri.encodeComponent(category.name)}',
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  final BusinessCategory category;
+  final int? count;
+  final VoidCallback onTap;
+
+  const _CategoryCard({
+    required this.category,
+    required this.count,
+    required this.onTap,
+  });
+
+  static const _icons = <String, IconData>{
+    'restaurants': IconsaxPlusBold.reserve,
+    'cafe-bakery': IconsaxPlusBold.coffee,
+    'health': IconsaxPlusBold.health,
+    'sports-fitness': IconsaxPlusBold.weight,
+    'education': IconsaxPlusBold.book,
+    'services': IconsaxPlusBold.setting_2,
+    'shopping': IconsaxPlusBold.shopping_bag,
+    'automotive': IconsaxPlusBold.car,
+    'beauty': IconsaxPlusBold.brush_2,
+    'entertainment': IconsaxPlusBold.music,
+  };
+
+  static const _colors = <Color>[
+    Color(0xFF17A9D0),
+    Color(0xFF2ECC71),
+    Color(0xFF8B5CF6),
+    Color(0xFFE74C3C),
+    Color(0xFFFF9800),
+    Color(0xFF123A72),
+    Color(0xFF00BCD4),
+    Color(0xFF795548),
+    Color(0xFF607D8B),
+    Color(0xFF9C27B0),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colors[category.sortOrder.abs() % _colors.length];
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color, Color.lerp(color, Colors.black, 0.55)!],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Align(
+              alignment: AlignmentDirectional.topEnd,
               child: Icon(
-                _iconFor(category.name),
-                size: 40,
-                color: Colors.white.withValues(alpha: 0.15),
+                _icons[category.slug] ?? IconsaxPlusBold.shop,
+                size: 26,
+                color: Colors.white.withValues(alpha: 0.35),
               ),
             ),
-
-            // Text content at bottom
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    category.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      height: 1.22,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    category.count,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+            const Spacer(),
+            Text(
+              category.name,
+              style: GoogleFonts.rubik(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
+            if (count != null && count! > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                '$count עסקים',
+                style: GoogleFonts.rubik(
+                  fontSize: 13,
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
-  }
-
-  IconData _iconFor(String name) {
-    switch (name) {
-      case 'Bars':
-        return IconsaxPlusBold.coffee;
-      case 'Coffee Shops':
-        return IconsaxPlusBold.coffee;
-      case 'Restaurants':
-        return IconsaxPlusBold.reserve;
-      case 'Aesthetics &\nGrooming':
-        return IconsaxPlusBold.brush_1;
-      case 'Sports &\nFitness':
-        return IconsaxPlusBold.weight;
-      case 'Hairdressers':
-        return IconsaxPlusBold.scissor;
-      case 'Services':
-        return IconsaxPlusBold.setting_2;
-      case 'Education':
-        return IconsaxPlusBold.book_1;
-      default:
-        return IconsaxPlusBold.shop;
-    }
   }
 }

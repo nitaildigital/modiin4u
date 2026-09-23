@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/businesses/screens/businesses_screen.dart';
 import '../../features/businesses/screens/business_detail_screen.dart';
+import '../../features/businesses/screens/business_list_screen.dart';
 import '../../features/news/screens/news_screen.dart';
 import '../../features/news/screens/article_screen.dart';
 import '../../features/map/screens/map_screen.dart';
@@ -135,6 +136,25 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
         RestaurantDetailScreen(restaurantId: state.pathParameters['id']!), state,
+      ),
+    ),
+    GoRoute(
+      path: '/businesses/category/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        BusinessListScreen(
+          categoryId: state.pathParameters['id'],
+          title: state.uri.queryParameters['title'] ?? 'עסקים',
+        ),
+        state,
+      ),
+    ),
+    GoRoute(
+      path: '/businesses/all',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        const BusinessListScreen(title: 'כל העסקים'),
+        state,
       ),
     ),
     GoRoute(

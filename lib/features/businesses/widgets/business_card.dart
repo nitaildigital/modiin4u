@@ -7,7 +7,9 @@ class BusinessCard extends StatelessWidget {
   final String category;
   final double rating;
   final int reviewCount;
-  final bool isOpen;
+  /// Null when the business has no opening hours on record, in which case
+  /// no open/closed tag is shown rather than claiming it is closed.
+  final bool? isOpen;
   final String? kosher;
   final String neighborhood;
   final String? imageUrl;
@@ -19,7 +21,7 @@ class BusinessCard extends StatelessWidget {
     required this.category,
     required this.rating,
     required this.reviewCount,
-    required this.isOpen,
+    this.isOpen,
     this.kosher,
     required this.neighborhood,
     this.imageUrl,
@@ -73,7 +75,7 @@ class BusinessCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        _StatusTag(isOpen: isOpen),
+                        if (isOpen != null) _StatusTag(isOpen: isOpen!),
                       ],
                     ),
                     const SizedBox(height: 4),

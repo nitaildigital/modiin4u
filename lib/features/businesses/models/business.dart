@@ -13,7 +13,13 @@ class BusinessHours {
 
   factory BusinessHours.fromJson(Map<String, dynamic> json) {
     return BusinessHours(
-      dayOfWeek: json['day_of_week'] as int,
+      // The table stores 0 = Sunday .. 6 = Saturday, while `isOpenNow`
+      // compares against Dart's `weekday`, which is 1 = Monday .. 7 = Sunday.
+      dayOfWeek: switch ((json['day_of_week'] as num?)?.toInt()) {
+        null => 1,
+        0 => DateTime.sunday,
+        final d => d,
+      },
       openTime: json['open_time'] as String?,
       closeTime: json['close_time'] as String?,
     );
@@ -192,38 +198,77 @@ class Business {
     return false;
   }
 
+  /// Maps a row of the live `businesses` table.
+  ///
+  /// The table holds no `category` column — categories are linked through
+  /// `entity_categories` — and the neighbourhood arrives as a joined object
+  /// when the query asks for it, so both degrade gracefully when absent.
+  /// The kosher certification as it should read on screen, or null when the
+  /// business carries none.
+  String? get kosherLabel => switch (kosherStatus) {
+        'rabbanut' => 'רבנות',
+        'mehadrin' => 'מהדרין',
+        'badatz' => 'בד"ץ',
+        'other' => 'כשר',
+        _ => null,
+      };
+
   factory Business.fromJson(Map<String, dynamic> json) {
+    final joinedNeighborhood = json['neighborhoods'];
+    final neighborhoodName = joinedNeighborhood is Map<String, dynamic>
+        ? (joinedNeighborhood['name'] as String? ?? '')
+        : (json['neighborhood'] as String? ?? '');
+
+    final joinedHours = json['business_hours'];
+
     return Business(
       id: json['id'] as String,
-      name: json['name'] as String,
-      category: json['category'] as String,
+      name: (json['name'] as String?) ?? '',
+      slug: (json['slug'] as String?) ?? '',
+      category: (json['category'] as String?) ?? '',
       subcategory: json['subcategory'] as String?,
-      description: json['description'] as String?,
+      description: (json['short_description'] ?? json['full_description'])
+          as String?,
+      metaDescription: json['meta_description'] as String?,
       phone: json['phone'] as String?,
       website: json['website'] as String?,
       instagram: json['instagram'] as String?,
       whatsapp: json['whatsapp'] as String?,
-      address: json['address'] as String,
-      neighborhood: json['neighborhood'] as String,
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      imageUrl: json['image_url'] as String?,
+      email: json['email'] as String?,
+      address: (json['address'] as String?) ?? '',
+      neighborhood: neighborhoodName,
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
+      imageUrl: (json['cover_url'] ?? json['og_image_url']) as String?,
       logoUrl: json['logo_url'] as String?,
-      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
-      hours: (json['hours'] as List<dynamic>?)
-              ?.map((h) => BusinessHours.fromJson(h as Map<String, dynamic>))
-              .toList() ??
-          [],
+      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? const [],
+      hours: joinedHours is List
+          ? joinedHours
+              .whereType<Map<String, dynamic>>()
+              .map(BusinessHours.fromJson)
+              .toList()
+          : const [],
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
-      reviewCount: json['review_count'] as int? ?? 0,
-      kosherStatus: json['kosher_status'] as String?,
+      reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
+      kosherStatus: switch (json['kosher_level'] as String?) {
+        null || '' || 'none' => null,
+        final level => level,
+      },
       priceLevel: json['price_level'] as String?,
       hasDelivery: json['has_delivery'] as bool? ?? false,
-      hasOutdoorSeating: json['has_outdoor_seating'] as bool? ?? false,
+      hasOutdoorSeating: json['has_outdoor'] as bool? ?? false,
       isAccessible: json['is_accessible'] as bool? ?? false,
       hasParking: json['has_parking'] as bool? ?? false,
       petFriendly: json['pet_friendly'] as bool? ?? false,
       openOnShabbat: json['open_on_shabbat'] as bool? ?? false,
+      status: BusinessStatus.values.firstWhere(
+        (s) => s.name == json['status'],
+        orElse: () => BusinessStatus.active,
+      ),
+      ownerId: json['owner_id'] as String?,
+      createdAt: json['created_at'] is String
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
     );
   }
 }

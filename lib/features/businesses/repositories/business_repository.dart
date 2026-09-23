@@ -7,9 +7,17 @@ class BusinessRepository {
   Future<List<Map<String, dynamic>>> fetchAll({
     String? search,
     String? status,
-    String? categorySlug,
+    String? categoryId,
     String? neighborhoodId,
   }) async {
+    // Categories live in `entity_categories`, so narrow to the ids in that
+    // category first rather than trying to filter across the join.
+    List<String>? ids;
+    if (categoryId != null && categoryId.isNotEmpty) {
+      ids = await fetchBusinessIdsInCategory(categoryId);
+      if (ids.isEmpty) return const [];
+    }
+
     var query = _client.from('businesses').select('''
       *,
       neighborhoods!businesses_neighborhood_id_fkey(id, name, slug)
@@ -21,6 +29,9 @@ class BusinessRepository {
     if (neighborhoodId != null && neighborhoodId.isNotEmpty) {
       query = query.eq('neighborhood_id', neighborhoodId);
     }
+    if (ids != null) {
+      query = query.inFilter('id', ids);
+    }
     if (search != null && search.isNotEmpty) {
       query = query.or('name.ilike.%$search%,short_description.ilike.%$search%');
     }
@@ -29,10 +40,38 @@ class BusinessRepository {
     return List<Map<String, dynamic>>.from(data);
   }
 
+  /// Business ids linked to a category.
+  Future<List<String>> fetchBusinessIdsInCategory(String categoryId) async {
+    final data = await _client
+        .from('entity_categories')
+        .select('entity_id')
+        .eq('entity_type', 'business')
+        .eq('category_id', categoryId);
+    return List<Map<String, dynamic>>.from(data)
+        .map((r) => r['entity_id'] as String)
+        .toList();
+  }
+
+  /// How many businesses sit in each category, keyed by category id.
+  Future<Map<String, int>> fetchCategoryCounts() async {
+    final data = await _client
+        .from('entity_categories')
+        .select('category_id')
+        .eq('entity_type', 'business');
+
+    final counts = <String, int>{};
+    for (final row in List<Map<String, dynamic>>.from(data)) {
+      final id = row['category_id'] as String;
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    return counts;
+  }
+
   Future<Map<String, dynamic>> fetchById(String id) async {
     final data = await _client.from('businesses').select('''
       *,
-      neighborhoods!businesses_neighborhood_id_fkey(id, name, slug)
+      neighborhoods!businesses_neighborhood_id_fkey(id, name, slug),
+      business_hours(*)
     ''').eq('id', id).single();
     return data;
   }
