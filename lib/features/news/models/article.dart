@@ -18,6 +18,7 @@ class Article {
   final String id;
   final String title;
   final String? subtitle;
+  final String? excerpt;
   final String slug;
   final String body;
   final String? imageUrl;
@@ -38,6 +39,7 @@ class Article {
     required this.id,
     required this.title,
     this.subtitle,
+    this.excerpt,
     this.slug = '',
     required this.body,
     this.imageUrl,
@@ -58,6 +60,7 @@ class Article {
   Article copyWith({
     String? title,
     String? subtitle,
+    String? excerpt,
     String? slug,
     String? body,
     String? imageUrl,
@@ -78,6 +81,7 @@ class Article {
       id: id,
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
+      excerpt: excerpt ?? this.excerpt,
       slug: slug ?? this.slug,
       body: body ?? this.body,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -96,23 +100,42 @@ class Article {
     );
   }
 
+  /// Maps a row of the live `articles` table.
+  ///
+  /// The table has no `category` column — categories are linked through
+  /// `entity_categories` — and `author_id` is a uuid rather than a name,
+  /// so both fall back to a default until those joins are wired in.
   factory Article.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(Object? v) =>
+        v is String ? (DateTime.tryParse(v) ?? DateTime.now()) : DateTime.now();
+
     return Article(
       id: json['id'] as String,
-      title: json['title'] as String,
+      title: (json['title'] as String?) ?? '',
       subtitle: json['subtitle'] as String?,
-      body: json['body'] as String,
-      imageUrl: json['image_url'] as String?,
-      author: json['author'] as String,
+      excerpt: json['excerpt'] as String?,
+      slug: (json['slug'] as String?) ?? '',
+      body: (json['body'] as String?) ?? '',
+      imageUrl: (json['featured_image'] ??
+              json['mobile_image'] ??
+              json['og_image']) as String?,
+      author: (json['author_name'] as String?) ?? '',
       category: NewsCategory.values.firstWhere(
         (c) => c.name == json['category'],
         orElse: () => NewsCategory.municipal,
       ),
-      publishedAt: DateTime.parse(json['published_at'] as String),
+      publishedAt: parseDate(json['published_at'] ?? json['created_at']),
+      updatedAt:
+          json['updated_at'] is String ? parseDate(json['updated_at']) : null,
       isBreaking: json['is_breaking'] as bool? ?? false,
-      relatedBusinessIds:
-          (json['related_business_ids'] as List<dynamic>?)?.cast<String>() ??
-              [],
+      isFeatured: json['is_featured'] as bool? ?? false,
+      metaDescription: json['meta_description'] as String?,
+      metaKeywords: json['meta_keywords'] as String?,
+      status: ArticleStatus.values.firstWhere(
+        (s) => s.name == json['status'],
+        orElse: () => ArticleStatus.published,
+      ),
+      viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
     );
   }
 }
