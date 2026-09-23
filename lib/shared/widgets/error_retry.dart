@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/app_fonts.dart';
 import '../../core/theme/app_colors.dart';
 
 class ErrorRetry extends StatelessWidget {
@@ -26,15 +26,15 @@ class ErrorRetry extends StatelessWidget {
               child: const Icon(Icons.wifi_off_rounded, size: 36, color: AppColors.error),
             ),
             const SizedBox(height: 20),
-            Text(message, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy), textAlign: TextAlign.center),
+            Text(message, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy), textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Text('בדקו את החיבור לאינטרנט ונסו שוב', style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta), textAlign: TextAlign.center),
+            Text('בדקו את החיבור לאינטרנט ונסו שוב', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayMeta), textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: Text('נסו שוב', style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
+                label: Text('נסו שוב', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600)),
               ),
             ],
           ],
@@ -63,16 +63,16 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(icon, size: 64, color: AppColors.grayLight.withValues(alpha: 0.4)),
             const SizedBox(height: 16),
-            Text(title, style: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy), textAlign: TextAlign.center),
+            Text(title, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy), textAlign: TextAlign.center),
             if (subtitle != null) ...[
               const SizedBox(height: 8),
-              Text(subtitle!, style: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayMeta), textAlign: TextAlign.center),
+              Text(subtitle!, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayMeta), textAlign: TextAlign.center),
             ],
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: onAction,
-                child: Text(actionLabel!, style: GoogleFonts.rubik(fontWeight: FontWeight.w600)),
+                child: Text(actionLabel!, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600)),
               ),
             ],
           ],

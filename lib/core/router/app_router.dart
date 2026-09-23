@@ -38,6 +38,7 @@ import '../../features/deals/screens/deal_detail_screen.dart';
 import '../../features/games/screens/games_screen.dart';
 import '../../features/steps/screens/steps_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
+import '../../features/admin/widgets/admin_gate.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/home/screens/search_results_screen.dart';
@@ -45,6 +46,33 @@ import '../../features/restaurants/screens/restaurants_screen.dart';
 import '../../features/restaurants/screens/restaurants_map_screen.dart';
 import '../../features/restaurants/screens/restaurant_detail_screen.dart';
 import '../../shared/widgets/shell_scaffold.dart';
+
+
+/// The six destinations that live inside the bottom-navigation shell.
+///
+/// Navigating to one of these should switch tab, which is what `go` does.
+/// Navigating anywhere else with `go` throws the whole stack away, so the
+/// back button leaves the app instead of returning to the previous screen —
+/// use [AppNavigation.goOrPush] rather than choosing by hand.
+const shellDestinations = {
+  '/',
+  '/businesses',
+  '/news',
+  '/map',
+  '/municipal',
+  '/realestate',
+};
+
+extension AppNavigation on BuildContext {
+  /// Switches tab for a shell destination, pushes for anything else.
+  void goOrPush(String location) {
+    if (shellDestinations.contains(location.split('?').first)) {
+      go(location);
+    } else {
+      push(location);
+    }
+  }
+}
 
 CustomTransitionPage<void> _slideTransition(Widget child, GoRouterState state) {
   return CustomTransitionPage(
@@ -290,7 +318,9 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/admin',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const AdminDashboardScreen(),
+      // Anyone who typed this path opened the whole control centre.
+      builder: (context, state) =>
+          const AdminGate(child: AdminDashboardScreen()),
     ),
     GoRoute(
       path: '/login',

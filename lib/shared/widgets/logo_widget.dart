@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/app_fonts.dart';
 import '../../core/theme/app_colors.dart';
 
 class LogoWidget extends StatelessWidget {
@@ -19,7 +19,7 @@ class LogoWidget extends StatelessWidget {
       'מודיעין\nבשבילך',
       textDirection: TextDirection.rtl,
       textAlign: TextAlign.right,
-      style: GoogleFonts.rubik(
+      style: TextStyle(fontFamily: AppFonts.rubik, 
         fontSize: fontSize,
         fontWeight: FontWeight.w700,
         color: color,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -138,7 +138,7 @@ class WebNavbar extends StatelessWidget {
                     const Icon(IconsaxPlusLinear.global, size: 18, color: AppColors.midBlue),
                     const SizedBox(width: 6),
                     Text(isHebrew ? 'עב | EN' : 'EN | עב',
-                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
                   ],
                 ),
               ),
@@ -156,7 +156,7 @@ class WebNavbar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(60),
                 ),
                 child: Text(isHebrew ? 'צור קשר' : 'Contact Us',
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
               ),
             ),
           ),
@@ -208,7 +208,7 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
                   Flexible(
                     child: Text(
                       widget.label,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(fontFamily: AppFonts.inter, 
                         fontSize: 15,
                         fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w500,
                         color: widget.isActive ? AppColors.midBlue : const Color(0xFF0F161E),
@@ -300,14 +300,14 @@ class WebFooter extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(_t('All Rights Reserved to modiin4u.co.il, 2026', 'כל הזכויות שמורות ל-modiin4u.co.il, 2026'),
-                            style: GoogleFonts.inter(fontSize: 14, color: _kBorder)),
+                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBorder)),
                         Row(
                           children: [
-                            Text(_t('Terms of Use', 'תנאי שימוש'), style: GoogleFonts.inter(fontSize: 14, color: _kBorder)),
+                            Text(_t('Terms of Use', 'תנאי שימוש'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBorder)),
                             const SizedBox(width: 4),
                             const Text('|', style: TextStyle(color: _kBorder)),
                             const SizedBox(width: 4),
-                            Text(_t('Privacy Policy', 'מדיניות פרטיות'), style: GoogleFonts.inter(fontSize: 14, color: _kBorder)),
+                            Text(_t('Privacy Policy', 'מדיניות פרטיות'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBorder)),
                           ],
                         ),
                       ],
@@ -323,7 +323,7 @@ class WebFooter extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Powered by ', style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withValues(alpha: 0.6))),
+                              Text('Powered by ', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: Colors.white.withValues(alpha: 0.6))),
                               ShaderMask(
                                 shaderCallback: (bounds) => const LinearGradient(
                                   begin: Alignment.centerLeft,
@@ -331,7 +331,7 @@ class WebFooter extends StatelessWidget {
                                   colors: [Color(0xFF9333EA), Color(0xFFEC4899)],
                                 ).createShader(bounds),
                                 child: Text('PersonaAI',
-                                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
                               ),
                             ],
                           ),
@@ -384,20 +384,20 @@ class WebFooter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_t('We are here for\nany questions.', 'אנחנו כאן\nלכל שאלה.'),
-            style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w500, color: Colors.white, height: 1.22)),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w500, color: Colors.white, height: 1.22)),
         const SizedBox(height: 40),
         _FooterContactRow(icon: IconsaxPlusLinear.call, label: _t('Phone', 'טלפון'), value: '058-4770195'),
         _FooterContactRow(icon: IconsaxPlusLinear.sms, label: _t('Email', 'אימייל'), value: 'modiin4uoffice@gmail.com'),
         _FooterContactRow(icon: IconsaxPlusLinear.message, label: _t('WhatsApp', 'וואטסאפ'), value: '058-4770195'),
         const SizedBox(height: 16),
         Text(_t('Our Socials', 'הרשתות שלנו'),
-            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
         const SizedBox(height: 19),
         Row(
           children: [
-            _socialIcon(child: Text('f', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))),
-            _socialIcon(child: Text('X', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white))),
-            _socialIcon(child: Text('in', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white))),
+            _socialIcon(child: Text('f', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))),
+            _socialIcon(child: Text('X', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white))),
+            _socialIcon(child: Text('in', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white))),
             _socialIcon(child: const Icon(IconsaxPlusLinear.instagram, size: 18, color: Colors.white)),
             _socialIcon(child: const Icon(IconsaxPlusLinear.music, size: 18, color: Colors.white)),
           ],
@@ -421,17 +421,17 @@ class WebFooter extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+        Text(title, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
         const SizedBox(height: 24),
         ...links.map((link) => Padding(
           padding: const EdgeInsets.only(bottom: 20),
-          child: Text(link, style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withValues(alpha: 0.9))),
+          child: Text(link, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.white.withValues(alpha: 0.9))),
         )),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(_t('View all', 'הצג הכל'),
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.turquoise)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.turquoise)),
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right, size: 16, color: AppColors.turquoise),
           ],
@@ -449,18 +449,18 @@ class WebFooter extends StatelessWidget {
         SvgPicture.asset('assets/images/logo_white.svg', width: 164, height: 88),
         const SizedBox(height: 24),
         Text(_t('Modiin for You', 'מודיעין בשבילך'),
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white),
             textAlign: textAlign),
         const SizedBox(height: 16),
         Text(
           _t('We are not just a news site – we are the beating heart of Modiin! A local media and public relations organization that lives and breathes our city.',
              'אנחנו לא סתם אתר חדשות – אנחנו הלב הפועם של מודיעין! ארגון מדיה ויחסי ציבור מקומי שחי ונושם את העיר שלנו.'),
-          style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withValues(alpha: 0.85), height: 1.4),
+          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: Colors.white.withValues(alpha: 0.85), height: 1.4),
           textAlign: textAlign,
         ),
         const SizedBox(height: 24),
         Text(_t('Download Our App', 'הורידו את האפליקציה'),
-            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
             textAlign: textAlign),
         const SizedBox(height: 16),
         Directionality(
@@ -500,10 +500,10 @@ class _FooterContactRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.9))),
                 const SizedBox(height: 4),
                 Text(value,
-                    style: GoogleFonts.inter(fontSize: 16, color: Colors.white),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white),
                     maxLines: 1, overflow: TextOverflow.ellipsis),
               ],
             ),
@@ -538,9 +538,9 @@ class _AppStoreBtn extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.8))),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 10, fontWeight: FontWeight.w400, color: Colors.white.withValues(alpha: 0.8))),
               const SizedBox(height: 1),
-              Text(store, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+              Text(store, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
             ],
           ),
         ],

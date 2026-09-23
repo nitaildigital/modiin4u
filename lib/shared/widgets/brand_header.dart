@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_fonts.dart';
+import '../../core/router/app_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../features/auth/providers/auth_provider.dart';
@@ -59,7 +60,7 @@ class BrandHeader extends ConsumerWidget {
                             child: Center(
                               child: Text(
                                 user.initials,
-                                style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.white),
+                                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.white),
                               ),
                             ),
                           )
@@ -82,7 +83,7 @@ class BrandHeader extends ConsumerWidget {
             // Headline
             Text(
               'כל מה שמודיעין מציעה,',
-              style: GoogleFonts.rubik(
+              style: TextStyle(fontFamily: AppFonts.rubik, 
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
                 color: AppColors.white,
@@ -92,7 +93,7 @@ class BrandHeader extends ConsumerWidget {
             ),
             Text(
               'הכל במקום אחד',
-              style: GoogleFonts.rubik(
+              style: TextStyle(fontFamily: AppFonts.rubik, 
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
                 color: AppColors.white,
@@ -108,7 +109,7 @@ class BrandHeader extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
                 'עסקים, חדשות, אירועים, נדל״ן ועוד — הכל בפלטפורמה עירונית חכמה אחת.',
-                style: GoogleFonts.rubik(
+                style: TextStyle(fontFamily: AppFonts.rubik, 
                   fontSize: 14,
                   color: AppColors.white.withValues(alpha: 0.8),
                   height: 1.4,
@@ -139,11 +140,11 @@ class BrandHeader extends ConsumerWidget {
                       child: TextField(
                         textDirection: TextDirection.rtl,
                         onSubmitted: onSearch,
-                        style: GoogleFonts.rubik(fontSize: 14, color: AppColors.navy),
+                        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.navy),
                         decoration: InputDecoration(
                           hintText: 'מה אתם מחפשים?',
                           hintTextDirection: TextDirection.rtl,
-                          hintStyle: GoogleFonts.rubik(fontSize: 14, color: AppColors.grayLight),
+                          hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayLight),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(vertical: 14),
                         ),
@@ -163,7 +164,7 @@ class BrandHeader extends ConsumerWidget {
                           children: [
                             const Icon(Icons.auto_awesome, color: AppColors.white, size: 16),
                             const SizedBox(width: 6),
-                            Text('שאלו', style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
+                            Text('שאלו', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
                           ],
                         ),
                       ),
@@ -192,7 +193,7 @@ class BrandHeader extends ConsumerWidget {
                   const SizedBox(width: 8),
                   _HeroChip(Icons.engineering_outlined, 'מקצוענים', () => context.go('/businesses')),
                   const SizedBox(width: 8),
-                  _HeroChip(Icons.local_offer_outlined, 'הטבות', () => context.go('/deals')),
+                  _HeroChip(Icons.local_offer_outlined, 'הטבות', () => context.goOrPush('/deals')),
                 ],
               ),
             ),
@@ -230,7 +231,7 @@ class _HeroChip extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.rubik(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.white),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.white),
             ),
           ],
         ),

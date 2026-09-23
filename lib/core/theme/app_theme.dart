@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/app_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -17,7 +17,7 @@ class AppTheme {
         onSurface: Color(0xFFE0E0E0),
         error: AppColors.error,
       ),
-      textTheme: GoogleFonts.rubikTextTheme(ThemeData.dark().textTheme).apply(
+      textTheme: ThemeData.dark().textTheme.apply(fontFamily: AppFonts.rubik).apply(
         bodyColor: const Color(0xFFE0E0E0),
         displayColor: const Color(0xFFE0E0E0),
       ),
@@ -26,7 +26,7 @@ class AppTheme {
         foregroundColor: const Color(0xFFE0E0E0),
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleTextStyle: GoogleFonts.rubik(
+        titleTextStyle: TextStyle(fontFamily: AppFonts.rubik, 
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: const Color(0xFFE0E0E0),
@@ -47,7 +47,7 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-          textStyle: GoogleFonts.rubik(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -63,7 +63,7 @@ class AppTheme {
         selectedColor: AppColors.turquoise.withValues(alpha: 0.2),
         side: const BorderSide(color: Color(0xFF2C2C2C)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        labelStyle: GoogleFonts.rubik(fontSize: 13),
+        labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -98,7 +98,7 @@ class AppTheme {
         onSurface: AppColors.navy,
         error: AppColors.error,
       ),
-      textTheme: GoogleFonts.rubikTextTheme().apply(
+      textTheme: ThemeData.light().textTheme.apply(fontFamily: AppFonts.rubik).apply(
         bodyColor: AppColors.navy,
         displayColor: AppColors.navy,
       ),
@@ -107,7 +107,7 @@ class AppTheme {
         foregroundColor: AppColors.navy,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleTextStyle: GoogleFonts.rubik(
+        titleTextStyle: TextStyle(fontFamily: AppFonts.rubik, 
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: AppColors.navy,
@@ -130,7 +130,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
-          textStyle: GoogleFonts.rubik(
+          textStyle: TextStyle(fontFamily: AppFonts.rubik, 
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -153,7 +153,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        labelStyle: GoogleFonts.rubik(fontSize: 13),
+        labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
