@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/supabase/supabase_config.dart';
 
 class BusinessRepository {
@@ -47,17 +48,12 @@ class BusinessRepository {
         .select('entity_id')
         .eq('entity_type', 'business')
         .eq('category_id', categoryId);
-    return List<Map<String, dynamic>>.from(data)
-        .map((r) => r['entity_id'] as String)
-        .toList();
+    return List<Map<String, dynamic>>.from(data).map((r) => r['entity_id'] as String).toList();
   }
 
   /// How many businesses sit in each category, keyed by category id.
   Future<Map<String, int>> fetchCategoryCounts() async {
-    final data = await _client
-        .from('entity_categories')
-        .select('category_id')
-        .eq('entity_type', 'business');
+    final data = await _client.from('entity_categories').select('category_id').eq('entity_type', 'business');
 
     final counts = <String, int>{};
     for (final row in List<Map<String, dynamic>>.from(data)) {
@@ -68,11 +64,15 @@ class BusinessRepository {
   }
 
   Future<Map<String, dynamic>> fetchById(String id) async {
-    final data = await _client.from('businesses').select('''
+    final data = await _client
+        .from('businesses')
+        .select('''
       *,
       neighborhoods!businesses_neighborhood_id_fkey(id, name, slug),
       business_hours(*)
-    ''').eq('id', id).single();
+    ''')
+        .eq('id', id)
+        .single();
     return data;
   }
 
@@ -101,11 +101,7 @@ class BusinessRepository {
   }
 
   Future<List<Map<String, dynamic>>> fetchNeighborhoods() async {
-    final data = await _client
-        .from('neighborhoods')
-        .select()
-        .eq('is_active', true)
-        .order('sort_order');
+    final data = await _client.from('neighborhoods').select().eq('is_active', true).order('sort_order');
     return List<Map<String, dynamic>>.from(data);
   }
 

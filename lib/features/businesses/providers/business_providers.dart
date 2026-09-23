@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/supabase/supabase_config.dart';
 import '../models/business.dart';
+import '../models/business_review.dart';
 import '../repositories/business_repository.dart';
 
 final businessRepositoryProvider =
@@ -55,12 +57,14 @@ class BusinessCategory {
   final String name;
   final String slug;
   final int sortOrder;
+  final String? imageUrl;
 
   const BusinessCategory({
     required this.id,
     required this.name,
     required this.slug,
     this.sortOrder = 0,
+    this.imageUrl,
   });
 
   factory BusinessCategory.fromJson(Map<String, dynamic> json) {
@@ -69,6 +73,34 @@ class BusinessCategory {
       name: (json['name'] as String?) ?? '',
       slug: (json['slug'] as String?) ?? '',
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+      imageUrl: json['image_url'] as String?,
     );
   }
 }
+
+/// Approved reviews for one business, newest first.
+///
+/// The page used to carry four invented reviews, with invented names, under a
+/// real business — and a summary saying "based on 0 reviews" beside a 4.6
+/// score. This reads the `reviews` table instead, so an empty table shows an
+/// empty state rather than fiction.
+final businessReviewsProvider =
+    FutureProvider.family<List<BusinessReview>, String>((ref, businessId) async {
+  final rows = await SupabaseConfig.client
+      .from('reviews')
+      // Two foreign keys run from `reviews` to `profiles` — the author and
+      // whoever replied — so the join has to say which one it means.
+      .select('*, profiles!reviews_author_id_fkey(full_name, avatar_url)')
+      .eq('business_id', businessId)
+      .eq('status', 'approved')
+      .order('created_at', ascending: false);
+
+  return List<Map<String, dynamic>>.from(rows).map(BusinessReview.fromJson).toList();
+});
+
+/// The numbers above the list, derived from the reviews themselves.
+final businessReviewSummaryProvider =
+    Provider.family<ReviewSummary, String>((ref, businessId) {
+  final reviews = ref.watch(businessReviewsProvider(businessId)).valueOrNull;
+  return reviews == null ? ReviewSummary.empty : ReviewSummary.of(reviews);
+});
