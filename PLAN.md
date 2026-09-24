@@ -5,7 +5,7 @@ not for the client.
 
 - **Branch:** `feat/live-data`
 - **Supabase project:** `zbtgietqoxkglfxfocrb` (client's org, PRO, marked PRODUCTION)
-- **Last updated:** 23 September 2026
+- **Last updated:** 24 September 2026
 
 ---
 
@@ -27,6 +27,55 @@ not for the client.
 
 Everything else is 0 — including `profiles`, `admin_users`, `business_hours`,
 `reviews`, `media`, `offers`, `favorites`, `daily_steps`.
+
+---
+
+## 1b. How the app is meant to work
+
+Written down because the plan below only makes sense against it.
+
+**Two kinds of account**, chosen at sign-up:
+
+| | |
+|---|---|
+| **Regular user** (`resident`) | A resident. Browses, saves favourites, posts an apartment of their own, counts steps. |
+| **Real estate broker** (`broker`) | Lists property professionally. Same app, and the listing is marked as coming from an agent. |
+
+The choice is carried in the account's metadata as `is_broker` and lands on
+`listings.is_broker`, which is what the card means when it says a listing came
+through an agent rather than from the person who lives there.
+
+**What a resident can create.** Only property: `/add-apartment` and
+`/new-listing` write to `listings`, and `/my-apartments` lists what they
+posted. Row level security ties each listing to `owner_id`, so someone edits
+their own and nobody else's.
+
+**What a resident cannot create.** A business. `businesses.owner_id` exists
+and nothing in the app writes it — there is no "claim my shop" flow, and the
+client enters every business from the panel. That matches his answer: he
+manages the directory himself.
+
+**Who manages everything else.** The client, from the control centre — the
+directory, the news, categories, offers, events, and the property listings
+residents post.
+
+**The chain, end to end**
+
+```
+sign up  →  confirm the address  →  signed in
+                                      │
+                  ┌───────────────────┼───────────────────┐
+             save favourites     post an apartment    count steps
+                                      │
+                             appears in the property
+                             section and on the map
+                                      │
+                          client reviews it in the panel
+```
+
+Every step after "signed in" needs the session to be real. That is why the
+authentication work below is first: nothing downstream of it can be finished,
+or even tested, until it holds.
 
 ---
 
@@ -222,6 +271,24 @@ and it transforms how the app behaves.
       real-estate-agents — so the 10 events and 29 categories showing the
       fallback are rows we seeded ourselves and never gave a picture. The
       missing photography has to come from the client, not from a re-import
+- [x] **B5a** **The web build cannot show a single business photograph, and
+      this is why.** `modiin4u.co.il` sends no `Access-Control-Allow-Origin`
+      header, so a browser refuses to load its images into the Flutter web
+      app — the directory and the admin panel both come up blank. It only
+      shows in a browser: on a phone there is no such rule, which is why
+      months of testing on a device never surfaced it. Supabase storage sends
+      `*`, so moving the files fixes it. Found by opening the admin panel in
+      Chrome for the first time
+- [x] **B5b** 908 files moved into the `media` bucket — 129 business covers,
+      137 logos, 642 article images — and the records repointed.
+      `tool/migrate_images.py` is idempotent: a URL already in storage is
+      skipped, and one photograph used by two records is uploaded once and
+      shared. Article filenames carry raw Hebrew, which an HTTP request cannot
+      send, so the path is percent-encoded first
+- [x] **B5c** 96 of the 220 business slugs were unusable — the import turned
+      percent-encoded Hebrew into `d7-9e-d7-a2-…`, which the admin list showed
+      under each business name. All 96 decoded back to Hebrew, no collisions.
+      `tool/fix_slugs.py`, dry run by default
 - [ ] **B5** Move the photography into Supabase storage. 129 of the 200
       businesses carry an image URL pointing at the WordPress site, so the app
       depends on that site staying up
@@ -255,13 +322,34 @@ and it transforms how the app behaves.
       first thing a new account did was fail. Adds the trigger on
       `auth.users`, backfills anyone already there, and adds the missing
       INSERT policy
-- [ ] **C1b** Two settings only the dashboard can change, and sign-in is not
-      usable by a resident until both are done:
-      **(a)** the email template has to include `{{ .Token }}`, or the message
-      carries a link instead of the six digits the screen asks for;
-      **(b)** custom SMTP, because the built-in sender allows a couple of
+- [x] **C1c** **Corrected: sign-in follows the design.** It had been built as
+      a one-time code, which the design does not have — `Sign In.png` shows a
+      password field with "Remember Me" and "Forgot Password?", and
+      `Sign Up.png` a password and a confirmation, plus a **Real Estate
+      Broker** account type that had been dropped. All of it is back and
+      matches. Change Password works, and verifies the current password by
+      signing in with it first, because Supabase has no check of its own — a
+      borrowed unlocked phone could otherwise change it without knowing it
+- [ ] **C1b** Two dashboard settings, and no resident can sign in until both
+      are done:
+      **(a)** **Site URL** is still `http://localhost:3000`, so the
+      confirmation link in the sign-up email goes nowhere;
+      **(b)** **custom SMTP**, because the built-in sender allows a couple of
       messages an hour — the live test hit `over_email_send_rate_limit` on the
       second attempt
+- [x] **C1d** Email confirmation handled properly. The link now lands on
+      `/auth/callback`, a page in this same build that says the address is
+      confirmed — a web address rather than the app's own scheme, because an
+      email is often opened in a desktop browser where no app scheme exists,
+      and a page works everywhere with no per-platform setup. The custom
+      scheme stays registered on both platforms, so a link opened on the phone
+      can be switched to it later without another release. Signing up also
+      offers to send the confirmation again, since someone who loses the email
+      is otherwise stuck — they cannot sign in, and signing up again with the
+      same address is refused
+- [x] **C1e** A password-reset link gets its own screen. It signs the person
+      in, so without one the app would open as normal and the password they
+      had forgotten would still be the one on the account
 - [x] **C2** **Account deletion** — client priority, and required by both Apple
       and Google. The button existed and only signed out. It now calls
       `delete_own_account()`, which removes the `auth.users` row; the foreign
@@ -360,16 +448,39 @@ and it transforms how the app behaves.
       (`admin_push_screen.dart`, `admin_team_screen.dart`) and the tables
       (`push_campaigns`, `push_automations`, `admin_roles`,
       `admin_role_permissions`, `admin_users`) already exist
-- [ ] **E2** Businesses and articles: create, edit, publish, delete, media library
-- [ ] **E3** The remaining 21 sections
+- [x] **E2** Businesses and articles: create, edit, publish, delete, with
+      image upload to the `media` bucket. Businesses gained an opening-hours
+      tab with a fill-the-week shortcut and a category picker
+- [x] **E3** Twenty-one of twenty-three sections on live data. Fifteen were
+      the same four operations against invented rows, so that shape is written
+      once in `AdminTableNotifier`. The two left are `flags`, which has no
+      table, and `data`, which is only the dashboard's aggregates
+- [x] **E4** The control centre is web only. All 23 of its screens had been
+      compiled into the mobile app that goes to Play
 
 ---
 
 ## 8. Phase F — language, quality, release
 
-- [ ] **F1** Hebrew and English across every screen with an app-wide switch;
+- [x] **F1a** The groundwork for both languages: ARB files, a locale kept on
+      the device so it holds before anyone signs in, and the switch. Sign-in,
+      settings and the language screen are translated. The language screen had
+      offered eight languages, six of which did not exist and did nothing when
+      chosen
+- [ ] **F1** The remaining strings — roughly a thousand across the mobile
+      screens, in the same shape as the ones already done;
       32 mobile screens are currently English-only while the app is locked to
       Hebrew RTL
+- [x] **F2a** The admin panel opened in a browser for the first time, at
+      desktop width. It renders as intended — sidebar, tabs, live list reading
+      "220 עסקים" — and two faults showed that a phone cannot show: the
+      images (B5a) and the slugs (B5c)
+- [x] **F2b** Sign-in, sign-up and reset stretched their fields across the
+      whole window on a desktop browser. They were drawn for a phone and
+      never constrained. All three now hold to 430px and centre
+- [ ] **F2c** Flutter's service worker caches the whole bundle, so a
+      deployment can leave someone on the previous version until they clear
+      it. Worth settling before the first deploy to Kamatera
 - [ ] **F2** Device and browser testing, analytics, performance
 - [ ] **F3** Signed release builds, store listings, submission
 
