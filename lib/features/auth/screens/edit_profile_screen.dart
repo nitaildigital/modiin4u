@@ -69,11 +69,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (_saving) return;
     setState(() => _saving = true);
     try {
-      await ref.read(authProvider.notifier).updateProfile(
-        name: _nameController.text.trim(),
-        phone: _phoneController.text.trim(),
-        neighborhood: _selectedNeighborhood,
-      );
+      await ref
+          .read(authProvider.notifier)
+          .updateProfile(
+            name: _nameController.text.trim(),
+            phone: _phoneController.text.trim(),
+            neighborhood: _selectedNeighborhood,
+          );
       if (mounted) context.pop();
     } catch (_) {
       if (!mounted) return;
@@ -99,8 +101,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final user = ref.watch(authProvider);
 
     if (user == null) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => context.pushReplacement('/login'));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => context.pushReplacement('/login'),
+      );
       return const SizedBox.shrink();
     }
 
@@ -137,7 +140,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         child: Center(
                           child: Text(
                             'Edit Profile',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -185,7 +189,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               : Center(
                                   child: Text(
                                     user.initials,
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
                                       fontSize: 42,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,
@@ -305,7 +310,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             child: Center(
                               child: Text(
                                 'Save Changes',
-                                style: TextStyle(fontFamily: AppFonts.inter, 
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.white,
@@ -341,7 +347,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -358,21 +365,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF1F1F1F),
             ),
             decoration: InputDecoration(
               hintText: placeholder,
-              hintStyle: TextStyle(fontFamily: AppFonts.inter, 
+              hintStyle: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF6D6D6D),
               ),
               border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 13,
+              ),
             ),
           ),
         ),
@@ -394,7 +405,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -418,7 +430,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 size: 20,
                 color: Color(0xFF6D6D6D),
               ),
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF000000),
@@ -445,7 +458,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -480,7 +494,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 Expanded(
                   child: Text(
                     value,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF000000),
@@ -502,8 +517,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   static String _monthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return months[month - 1];
   }

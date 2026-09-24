@@ -19,6 +19,12 @@ final isLoggedInProvider = Provider<bool>((ref) {
   return ref.watch(authProvider) != null;
 });
 
+/// Set when someone arrives from a password-reset link.
+///
+/// The link signs them in, so without this the app would simply open as
+/// though they had signed in normally and never ask for the new password.
+final passwordResetPendingProvider = StateProvider<bool>((ref) => false);
+
 /// True until the stored session has been read back.
 ///
 /// A signed-in person is null for the first moments after launch, so a screen
@@ -31,8 +37,35 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   final Ref _ref;
   StreamSubscription<AuthState>? _sub;
 
+  /// Where Supabase sends someone back to after they follow a link in an
+  /// email — confirming their address, or resetting a password.
+  ///
+  /// The web address, not the app's own scheme. A link in an email is opened
+  /// by whatever reads the email, which is often a desktop browser where no
+  /// app scheme exists at all; a web page works everywhere and needs no
+  /// per-platform setup. The same build serves `/auth/callback`, so the page
+  /// the link lands on is the app's own.
+  ///
+  /// The custom scheme stays registered on both platforms, so a link opened
+  /// on the phone can be switched to it later without another release.
+  ///
+  /// Whatever this is set to must also be listed under Redirect URLs in the
+  /// Supabase dashboard, or the link is refused.
+  static const redirectUrl = String.fromEnvironment(
+    'AUTH_REDIRECT_URL',
+    defaultValue: 'https://app.modiin4u.co.il/auth/callback',
+  );
+
   AuthNotifier(this._ref) : super(null) {
     _sub = _client.auth.onAuthStateChange.listen((event) async {
+      // Arriving from a reset link signs the person in. The app has to stop
+      // and ask for the new password rather than carrying on as normal.
+      if (event.event == AuthChangeEvent.passwordRecovery) {
+        Future.microtask(
+          () => _ref.read(passwordResetPendingProvider.notifier).state = true,
+        );
+      }
+
       final user = event.session?.user;
       if (user == null) {
         if (mounted) state = null;
@@ -66,25 +99,88 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   }
 
   // ── Signing in ──
+  //
+  // Email and password, as the design has it: the sign-in screen shows a
+  // password field with "Remember Me" and "Forgot Password?", and sign-up
+  // asks for a password and a confirmation.
 
-  /// Sends a one-time code to [email]. No password: the client asked for
-  /// sign-in to be as short as possible, and a code is one less thing for a
-  /// resident to keep.
+  Future<void> signIn({
+    required String email,
+    required String password,
+  }) async {
+    await _client.auth.signInWithPassword(
+      email: email.trim(),
+      password: password,
+    );
+  }
+
+  /// Creates the account.
   ///
   /// [data] is written to the account's metadata, where the trigger in
   /// migration 00015 reads `full_name` when it creates the profile row.
-  Future<void> sendCode(String email, {Map<String, dynamic>? data}) {
-    return _client.auth.signInWithOtp(email: email.trim(), data: data);
+  ///
+  /// Returns true when a session came back. It does not when the project
+  /// requires the address to be confirmed first, and the screen then says to
+  /// check the email rather than pretending to be signed in.
+  Future<bool> signUp({
+    required String email,
+    required String password,
+    Map<String, dynamic>? data,
+  }) async {
+    final res = await _client.auth.signUp(
+      email: email.trim(),
+      password: password,
+      data: data,
+      emailRedirectTo: redirectUrl,
+    );
+    return res.session != null;
   }
 
-  /// Exchanges the code for a session. Throws if it is wrong or expired, and
-  /// the screen shows the message.
-  Future<void> verifyCode({required String email, required String code}) async {
-    await _client.auth.verifyOTP(
+  /// Sends the confirmation email again.
+  ///
+  /// Someone who signs up and loses the email is otherwise stuck: they cannot
+  /// sign in, and signing up again with the same address is refused.
+  Future<void> resendConfirmation(String email) {
+    return _client.auth.resend(
+      type: OtpType.signup,
       email: email.trim(),
-      token: code.trim(),
-      type: OtpType.email,
+      emailRedirectTo: redirectUrl,
     );
+  }
+
+  /// Sends the "forgot password" email.
+  Future<void> sendPasswordReset(String email) {
+    return _client.auth.resetPasswordForEmail(
+      email.trim(),
+      redirectTo: redirectUrl,
+    );
+  }
+
+  /// Sets a new password after following a reset link.
+  ///
+  /// The link puts a session in place, so no old password is asked for — that
+  /// is the whole point of resetting one.
+  Future<void> completePasswordReset(String newPassword) async {
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
+  /// Changes the password of whoever is signed in.
+  ///
+  /// Supabase has no "check the old one" step, so the screen verifies it by
+  /// signing in with it first — otherwise a borrowed unlocked phone could
+  /// change the password without knowing it.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final email = _client.auth.currentUser?.email;
+    if (email == null) throw AuthException('not signed in');
+
+    await _client.auth.signInWithPassword(
+      email: email,
+      password: currentPassword,
+    );
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   Future<void> logout() async {

@@ -85,9 +85,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     final q = _searchController.text.toLowerCase();
     if (q.isEmpty) return _faqs;
     return _faqs
-        .where((f) =>
-            f.question.toLowerCase().contains(q) ||
-            f.answer.toLowerCase().contains(q))
+        .where(
+          (f) =>
+              f.question.toLowerCase().contains(q) ||
+              f.answer.toLowerCase().contains(q),
+        )
         .toList();
   }
 
@@ -140,7 +142,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         child: Center(
                           child: Text(
                             'Help & Support',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF1F1F1F),
@@ -178,21 +181,24 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF1F1F1F),
                             ),
                             decoration: InputDecoration(
                               hintText: 'Search for help',
-                              hintStyle: TextStyle(fontFamily: AppFonts.inter, 
+                              hintStyle: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF6D6D6D),
                               ),
                               border: InputBorder.none,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 13),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 13,
+                              ),
                             ),
                           ),
                         ),
@@ -219,8 +225,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                           faq: faq,
                           expanded: expanded,
                           onTap: () => setState(() {
-                            _expandedIndex =
-                                expanded ? -1 : originalIndex;
+                            _expandedIndex = expanded ? -1 : originalIndex;
                           }),
                         );
                       }),
@@ -270,7 +275,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                 children: [
                                   Text(
                                     'Still need help?',
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: const Color(0xFF0A1230),
@@ -279,7 +285,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     'Contact our support team',
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
                                       color: const Color(0xFF6D6D6D),
@@ -304,7 +311,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                 child: Center(
                                   child: Text(
                                     'Contact Us',
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.white,
@@ -367,9 +375,7 @@ class _FaqTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(expanded ? 8 : 0),
           border: expanded
               ? null
-              : const Border(
-                  bottom: BorderSide(color: Color(0xFFE7E7E7)),
-                ),
+              : const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,10 +386,10 @@ class _FaqTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     faq.question,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
-                      fontWeight:
-                          expanded ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: expanded ? FontWeight.w600 : FontWeight.w400,
                       color: const Color(0xFF0A1230),
                     ),
                   ),
@@ -404,7 +410,8 @@ class _FaqTile extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 faq.answer,
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   height: 1.4,

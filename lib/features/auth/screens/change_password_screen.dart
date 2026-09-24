@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
+
+import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
+import '../providers/auth_provider.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -6,14 +12,70 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 /// Change Password screen – lock illustration, subtitle,
 /// three password fields (current, new, confirm) with visibility
 /// toggles, and a midBlue "Change Password" button.
-class ChangePasswordScreen extends StatefulWidget {
+class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
 }
 
-class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
+  bool _saving = false;
+
+  /// Supabase has no "check the old one" step of its own, so the provider
+  /// verifies the current password by signing in with it first. Without that,
+  /// a borrowed unlocked phone could change the password without knowing it.
+  Future<void> _submit() async {
+    final l = L.of(context);
+
+    if (_currentController.text.isEmpty) {
+      _toast(l.errEnterPassword, error: true);
+      return;
+    }
+    if (_newController.text.length < 8) {
+      _toast(l.errPasswordTooShort, error: true);
+      return;
+    }
+    if (_newController.text != _confirmController.text) {
+      _toast(l.errPasswordsDoNotMatch, error: true);
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(authProvider.notifier)
+          .changePassword(
+            currentPassword: _currentController.text,
+            newPassword: _newController.text,
+          );
+      if (!mounted) return;
+      _toast(l.passwordChanged);
+      context.pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      final wrong =
+          e is AuthException && e.message.toLowerCase().contains('credentials');
+      _toast(
+        wrong ? l.errCurrentPasswordWrong : l.errCouldNotSave,
+        error: true,
+      );
+    }
+  }
+
+  void _toast(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        backgroundColor: error ? AppColors.error : null,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   final _currentController = TextEditingController();
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
@@ -65,7 +127,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         child: Center(
                           child: Text(
                             'Change Password',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -112,7 +175,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           child: Text(
                             'For your security, please choose a strong new password.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
                               height: 15 / 12,
@@ -129,7 +193,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           controller: _currentController,
                           obscure: _obscureCurrent,
                           onToggle: () => setState(
-                              () => _obscureCurrent = !_obscureCurrent),
+                            () => _obscureCurrent = !_obscureCurrent,
+                          ),
                         ),
                         const SizedBox(height: 20),
 
@@ -151,7 +216,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           controller: _confirmController,
                           obscure: _obscureConfirm,
                           onToggle: () => setState(
-                              () => _obscureConfirm = !_obscureConfirm),
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
                         ),
                         const SizedBox(height: 40),
                       ],
@@ -163,10 +229,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 // Change Password button (pinned bottom)
                 // ═══════════════════════════════════
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: GestureDetector(
-                    onTap: () => context.pop(),
+                    onTap: _saving ? null : _submit,
                     child: Container(
                       width: double.infinity,
                       height: 48,
@@ -177,7 +245,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       child: Center(
                         child: Text(
                           'Change Password',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
@@ -210,7 +279,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF4F4F4F),
@@ -230,21 +300,25 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: TextField(
                   controller: controller,
                   obscureText: obscure,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF1F1F1F),
                   ),
                   decoration: InputDecoration(
                     hintText: placeholder,
-                    hintStyle: TextStyle(fontFamily: AppFonts.inter, 
+                    hintStyle: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF6D6D6D),
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 13),
+                      horizontal: 16,
+                      vertical: 13,
+                    ),
                   ),
                 ),
               ),

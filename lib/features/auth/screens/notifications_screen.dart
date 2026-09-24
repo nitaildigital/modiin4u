@@ -62,13 +62,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   void _markAllRead() {
     setState(() {
-      _notifications = _notifications.map((n) => _NotificationItem(
-        icon: n.icon, title: n.title, body: n.body, time: n.time, isNew: false, route: n.route,
-      )).toList();
+      _notifications = _notifications
+          .map(
+            (n) => _NotificationItem(
+              icon: n.icon,
+              title: n.title,
+              body: n.body,
+              time: n.time,
+              isNew: false,
+              route: n.route,
+            ),
+          )
+          .toList();
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('כל ההתראות סומנו כנקראו', style: TextStyle(fontFamily: AppFonts.rubik)),
+        content: Text(
+          'כל ההתראות סומנו כנקראו',
+          style: TextStyle(fontFamily: AppFonts.rubik),
+        ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -83,19 +95,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('התראות', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+          title: Text(
+            'התראות',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           actions: [
             if (hasUnread)
               TextButton(
                 onPressed: _markAllRead,
-                child: Text('סמן הכל כנקרא', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.turquoise)),
+                child: Text(
+                  'סמן הכל כנקרא',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.turquoise,
+                  ),
+                ),
               ),
           ],
         ),
         body: ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 8),
           itemCount: _notifications.length,
-          separatorBuilder: (_, __) => const Divider(color: AppColors.border, height: 1, indent: 76),
+          separatorBuilder: (_, __) =>
+              const Divider(color: AppColors.border, height: 1, indent: 76),
           itemBuilder: (context, index) {
             final n = _notifications[index];
             return InkWell(
@@ -103,15 +129,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 if (n.isNew) {
                   setState(() {
                     _notifications[index] = _NotificationItem(
-                      icon: n.icon, title: n.title, body: n.body, time: n.time, isNew: false, route: n.route,
+                      icon: n.icon,
+                      title: n.title,
+                      body: n.body,
+                      time: n.time,
+                      isNew: false,
+                      route: n.route,
                     );
                   });
                 }
                 context.push(n.route);
               },
               child: Container(
-                color: n.isNew ? AppColors.turquoise.withValues(alpha: 0.03) : null,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                color: n.isNew
+                    ? AppColors.turquoise.withValues(alpha: 0.03)
+                    : null,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -134,9 +170,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               Expanded(
                                 child: Text(
                                   n.title,
-                                  style: TextStyle(fontFamily: AppFonts.rubik, 
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubik,
                                     fontSize: 14,
-                                    fontWeight: n.isNew ? FontWeight.w600 : FontWeight.w500,
+                                    fontWeight: n.isNew
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
                                     color: context.textPrimary,
                                   ),
                                 ),
@@ -155,12 +194,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           const SizedBox(height: 2),
                           Text(
                             n.body,
-                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayMeta),
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 13,
+                              color: AppColors.grayMeta,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             n.time,
-                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayLight),
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.grayLight,
+                            ),
                           ),
                         ],
                       ),

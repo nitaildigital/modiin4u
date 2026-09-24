@@ -11,6 +11,12 @@ class BusinessHours {
 
   bool get isClosed => openTime == null || closeTime == null;
 
+  static String? _hhmm(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    final parts = raw.split(':');
+    return parts.length >= 2 ? '${parts[0]}:${parts[1]}' : raw;
+  }
+
   factory BusinessHours.fromJson(Map<String, dynamic> json) {
     return BusinessHours(
       // The table stores 0 = Sunday .. 6 = Saturday, while `isOpenNow`
@@ -20,8 +26,10 @@ class BusinessHours {
         0 => DateTime.sunday,
         final d => d,
       },
-      openTime: json['open_time'] as String?,
-      closeTime: json['close_time'] as String?,
+      // Postgres returns `09:00:00`; the page shows `09:00`, and `isOpenNow`
+      // parses either.
+      openTime: _hhmm(json['open_time'] as String?),
+      closeTime: _hhmm(json['close_time'] as String?),
     );
   }
 }

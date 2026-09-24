@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,20 +13,48 @@ class ProfileScreen extends ConsumerWidget {
 
   // ── Menu items ──
   static final _menuItems = [
-    _MenuItem(IconsaxPlusLinear.user, 'Personal details', 'Edit Profile',
-        '/edit-profile'),
-    _MenuItem(IconsaxPlusLinear.notification, 'Manage your alerts',
-        'Notifications', '/notifications'),
-    _MenuItem(IconsaxPlusLinear.heart, 'Saved places & listings', 'Favorites',
-        '/favorites'),
     _MenuItem(
-        IconsaxPlusLinear.setting_2, 'App preferences', 'Settings', '/settings'),
-    _MenuItem(IconsaxPlusLinear.activity, 'Steps, reviews & rewards',
-        'My Activity', '/steps'),
-    _MenuItem(IconsaxPlusLinear.building_3, 'Properties you posted',
-        'My Apartments', '/my-apartments'),
-    _MenuItem(IconsaxPlusLinear.info_circle, 'FAQs & contact us',
-        'Help & Support', '/help-support'),
+      IconsaxPlusLinear.user,
+      'Personal details',
+      'Edit Profile',
+      '/edit-profile',
+    ),
+    _MenuItem(
+      IconsaxPlusLinear.notification,
+      'Manage your alerts',
+      'Notifications',
+      '/notifications',
+    ),
+    _MenuItem(
+      IconsaxPlusLinear.heart,
+      'Saved places & listings',
+      'Favorites',
+      '/favorites',
+    ),
+    _MenuItem(
+      IconsaxPlusLinear.setting_2,
+      'App preferences',
+      'Settings',
+      '/settings',
+    ),
+    _MenuItem(
+      IconsaxPlusLinear.activity,
+      'Steps, reviews & rewards',
+      'My Activity',
+      '/steps',
+    ),
+    _MenuItem(
+      IconsaxPlusLinear.building_3,
+      'Properties you posted',
+      'My Apartments',
+      '/my-apartments',
+    ),
+    _MenuItem(
+      IconsaxPlusLinear.info_circle,
+      'FAQs & contact us',
+      'Help & Support',
+      '/help-support',
+    ),
   ];
 
   /// Appended for administrators only. The admin area had no way in from the
@@ -112,7 +141,8 @@ class ProfileScreen extends ConsumerWidget {
                             child: Center(
                               child: Text(
                                 'Profile',
-                                style: TextStyle(fontFamily: AppFonts.inter, 
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.white,
@@ -141,7 +171,8 @@ class ProfileScreen extends ConsumerWidget {
                       child: Center(
                         child: Text(
                           user.initials,
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 42,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -154,7 +185,8 @@ class ProfileScreen extends ConsumerWidget {
                     // ── Name ──
                     Text(
                       user.name,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
@@ -165,10 +197,11 @@ class ProfileScreen extends ConsumerWidget {
                     // ── Badge pill ──
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color:
-                            const Color(0xFFD47D00).withValues(alpha: 0.1),
+                        color: const Color(0xFFD47D00).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -182,7 +215,8 @@ class ProfileScreen extends ConsumerWidget {
                           const SizedBox(width: 6),
                           Text(
                             'Real Estate Broker',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFFD47D00),
@@ -223,7 +257,8 @@ class ProfileScreen extends ConsumerWidget {
                                     const SizedBox(width: 8),
                                     Text(
                                       'Edit Profile',
-                                      style: TextStyle(fontFamily: AppFonts.inter, 
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.inter,
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
@@ -238,7 +273,8 @@ class ProfileScreen extends ConsumerWidget {
                             // ── Section header ──
                             Text(
                               'ACCOUNT',
-                              style: TextStyle(fontFamily: AppFonts.inter, 
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF6D6D6D),
@@ -248,19 +284,23 @@ class ProfileScreen extends ConsumerWidget {
 
                             // ── Menu card ──
                             Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 border: Border.all(
-                                    color: const Color(0xFFE7E7E7)),
+                                  color: const Color(0xFFE7E7E7),
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Builder(
                                 builder: (_) {
                                   final items = [
                                     ..._menuItems,
-                                    if (user.isAdmin) _adminItem,
+                                    // Web only: the panel is not in the
+                                    // mobile build at all.
+                                    if (kIsWeb && user.isAdmin) _adminItem,
                                   ];
                                   return Column(
                                     children: List.generate(items.length, (i) {
@@ -317,9 +357,7 @@ class _MenuRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           border: showBorder
-              ? const Border(
-                  bottom: BorderSide(color: Color(0xFFE7E7E7)),
-                )
+              ? const Border(bottom: BorderSide(color: Color(0xFFE7E7E7)))
               : null,
         ),
         child: Row(
@@ -349,7 +387,8 @@ class _MenuRow extends StatelessWidget {
                 children: [
                   Text(
                     item.subtitle,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       color: const Color(0xFF6D6D6D),
@@ -358,7 +397,8 @@ class _MenuRow extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     item.title,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF3D3D3D),

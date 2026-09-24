@@ -37,6 +37,19 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- Where the links in Supabase's emails land.
+                 Confirming an address and resetting a password both send a
+                 link; without this it opens a browser, which has no session
+                 and cannot finish either. A custom scheme rather than an
+                 https one, because an https link needs a verified domain and
+                 the site is not deployed yet. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="il.co.modiin4u" android:host="auth"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

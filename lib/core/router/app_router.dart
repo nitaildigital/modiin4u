@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/home/screens/home_screen.dart';
@@ -17,6 +18,8 @@ import '../../features/auth/screens/favorites_screen.dart';
 import '../../features/auth/screens/notifications_screen.dart';
 import '../../features/auth/screens/settings_screen.dart';
 import '../../features/auth/screens/change_password_screen.dart';
+import '../../features/auth/screens/auth_callback_screen.dart';
+import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/auth/screens/change_language_screen.dart';
 import '../../features/auth/screens/help_support_screen.dart';
 import '../../features/auth/screens/terms_conditions_screen.dart';
@@ -315,13 +318,19 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ParkingScreen(),
     ),
-    GoRoute(
-      path: '/admin',
-      parentNavigatorKey: _rootNavigatorKey,
-      // Anyone who typed this path opened the whole control centre.
-      builder: (context, state) =>
-          const AdminGate(child: AdminDashboardScreen()),
-    ),
+    // The control centre is web only. It was compiled into the mobile app,
+    // so all 23 of its screens shipped to Play inside the resident's build.
+    // `kIsWeb` is a compile-time constant, so on mobile this branch and
+    // everything it reaches is dropped from the bundle rather than merely
+    // hidden.
+    if (kIsWeb)
+      GoRoute(
+        path: '/admin',
+        parentNavigatorKey: _rootNavigatorKey,
+        // Anyone who typed this path opened the whole control centre.
+        builder: (context, state) =>
+            const AdminGate(child: AdminDashboardScreen()),
+      ),
     GoRoute(
       path: '/login',
       parentNavigatorKey: _rootNavigatorKey,
@@ -356,6 +365,20 @@ final appRouter = GoRouter(
       path: '/settings',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const SettingsScreen(),
+    ),
+    // Where the links in Supabase's emails land — both on the web, where the
+    // person reads that their address is confirmed, and in the app.
+    GoRoute(
+      path: '/auth/callback',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AuthCallbackScreen(),
+    ),
+    // A reset link needs its own screen: the session it creates has to be
+    // spent on setting a new password.
+    GoRoute(
+      path: '/reset-password',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const ResetPasswordScreen(),
     ),
     GoRoute(
       path: '/change-password',
