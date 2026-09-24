@@ -41,24 +41,38 @@ would show nothing even once wired.
 ## 1a. What is still made up
 
 Audited 24 September by grepping every feature for database access and for
-hardcoded lists. This is the list of things the app currently *asserts* that
-are not true, ordered by how visible they are.
+hardcoded lists, then fixing down the list. This is what the app *asserts*
+that is not true, and what has been dealt with.
 
-| Screen | What it shows now | Table it should read | Table has data? |
+### Fixed this session
+
+| Screen | What it was claiming | Now |
+|---|---|---|
+| **Real estate** (whole feature) | One invented flat — ₪3,650,000, agent "Zeev Schumacher" — on every listing page whatever the id; three invented Tel Aviv flats in My Apartments; a form whose fields had no controllers and whose Submit wrote nothing | On `listings`. Posting works, arrives `pending`, photographs upload |
+| **Deals** (both screens) | Offers on shops that are not in Modiin — Nike, mCaffeine, "Urban Plate Kitchen & Bar" — with countdowns that were fixed strings; category counts of 62/48/31; eight "Upto 80% Off" tiles with nothing behind them | On `offers`. Claiming writes `offer_claims` and shows the real code |
+| **Steps** | Three people who do not exist on a leaderboard — "Daniel Cohen", "Maya Levi", "Amit May" — plus a fabricated step count, streak, weekly chart, calorie figure and four walking routes | Reads the phone's pedometer, writes `daily_steps`; leaderboards from two SECURITY DEFINER functions, opt-in only |
+| **Profile** | A "Real Estate Broker" badge on every resident; family status, pet and date of birth pre-filled with "Married", "Yes", "12 May 1990" and then discarded on save | Badge reads the real flag; the three fields save |
+| **Municipal** | A fixed Shabbat date; a "High availability" parking claim; eight tiles that did nothing at all when tapped | Shabbat computed; parking claim removed; dead tiles greyed "coming soon" |
+| **Admin › real estate** | Creating a listing always failed — it wrote a column `type` that does not exist and a text `neighborhood` where the column is a foreign key, and never collected the NOT NULL `title`. Sale/let filters matched nothing. Rentals showed ₪0 | Fixed; adds approve / reject for the resident queue |
+
+### Still to do
+
+| Screen | What it shows now | Table | Blocker |
 |---|---|---|---|
-| ~~**Deals**~~ | **Fixed 24 Sep.** Reads `offers`; claiming writes `offer_claims`. The table is empty, so the honest state today is the empty message — the client adds offers in the admin panel, which was already live | `offers`, `offer_claims` | Empty, by nature |
-| ~~**Steps**~~ | **Fixed 24 Sep.** Counts real steps from the phone's pedometer and writes `daily_steps`; leaderboards come from two SECURITY DEFINER functions (migration 00022) and include only people who turned the health switch on. The challenge card is hidden while `challenges` is empty | `daily_steps`, `challenges` | Empty, by nature |
-| **Map POIs** | 63 hardcoded place names | `businesses` (has lat/long) | Yes — 220 rows |
-| **Municipal services** | A static list of services | none — genuinely static links | n/a, but the phone numbers need checking |
-| **Games** | Placeholder screen | `games`, `game_sessions` | No |
-| **Community** | Placeholder screen | `comments`, `reports` | No |
-| **Professionals** | Placeholder detail screen | `businesses` filtered by category | Yes |
-| **Business hours** | Nothing shown | `business_hours` | No — needs the admin form (built) to be used, or an import |
-| **Reviews** | Nothing shown | `reviews` | No — needs residents, which needs sign-in, which works now |
+| **Games** | Placeholder screen | `games`, `game_sessions` | No content, and no admin form to create one |
+| **Community** | Placeholder screen | `comments`, `reports` | Needs a product decision on what community *is* here |
+| **Professionals** | Placeholder detail screen | `businesses` by category | Small — wire to the existing provider |
+| **Business hours** | Nothing shown on a business page | `business_hours` | Table empty. The admin form exists (businesses › 4th tab); needs the client to fill it, or an import |
+| **Reviews** | Nothing shown | `reviews` | Table empty by nature — needs residents, and sign-in now works |
+| **Web screens** (17) | A frozen JSON export in `assets/data/`, plus the hardcoded map pins | various | Separate track; not deployed anywhere yet |
 
-**Fixed already** (was mock, now live): real estate — the whole feature, see
-the commit of 24 September; profile badge and the three profile fields;
-favourites; settings.
+### Translations
+
+Roughly 400 hardcoded English strings remain on mobile screens, and ~600 more
+on the `web_*` screens. Done so far: profile, edit profile, favourites,
+change password, the whole real-estate feature, both deals screens, steps,
+municipal. Biggest remaining: `business_detail_screen` (36),
+`signup_screen` (27), `events_map_screen` (45), `restaurants_map_screen` (39).
 
 ## 1b. How the app is meant to work
 
