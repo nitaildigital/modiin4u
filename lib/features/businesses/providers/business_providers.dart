@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/business.dart';
 import '../models/business_review.dart';
 import '../models/menu_item.dart' as menu;
@@ -128,3 +129,16 @@ final businessMenuProvider = FutureProvider.family<List<menu.MenuItem>, String>(
     return rows.map(menu.MenuItem.fromJson).toList();
   },
 );
+
+/// Whether the signed-in person has already reviewed this business.
+///
+/// The form is hidden once they have — the old one let anyone submit
+/// repeatedly into a list held in memory.
+final hasReviewedProvider = FutureProvider.family<bool, String>((
+  ref,
+  businessId,
+) async {
+  final user = ref.watch(authProvider);
+  if (user == null) return false;
+  return ref.watch(businessRepositoryProvider).hasReviewed(businessId);
+});

@@ -515,5 +515,9 @@
   "signInToRsvp": "Sign in to RSVP",
   "eventSoldOut": "This event is full",
   "rsvpFailed": "Could not update. Please try again.",
-  "openInMaps": "Open in Maps"
+  "openInMaps": "Open in Maps",
+  "reviewSubmitted": "Your review was sent and will appear once approved",
+  "alreadyReviewed": "You have already reviewed this business",
+  "signInToReview": "Sign in to leave a review",
+  "chooseRating": "Please choose a rating"
 }

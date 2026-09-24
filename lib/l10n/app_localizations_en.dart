@@ -1210,4 +1210,17 @@ class LEn extends L {
 
   @override
   String get openInMaps => 'Open in Maps';
+
+  @override
+  String get reviewSubmitted =>
+      'Your review was sent and will appear once approved';
+
+  @override
+  String get alreadyReviewed => 'You have already reviewed this business';
+
+  @override
+  String get signInToReview => 'Sign in to leave a review';
+
+  @override
+  String get chooseRating => 'Please choose a rating';
 }

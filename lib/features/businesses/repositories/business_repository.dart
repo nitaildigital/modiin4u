@@ -151,4 +151,55 @@ class BusinessRepository {
         .order('sort_order', ascending: true);
     return List<Map<String, dynamic>>.from(data);
   }
+
+  /// Writes a review.
+  ///
+  /// It arrives as `pending` — the column's own default — so it does not
+  /// move the business's score until an administrator approves it. The
+  /// rollup trigger from migration 00025 does that the moment they do.
+  ///
+  /// The unique constraint is on nothing, so a second review by the same
+  /// person would be a second row; the screen only offers the form to
+  /// someone who has not reviewed yet, and this checks again because the
+  /// form can be reached twice.
+  Future<void> addReview({
+    required String businessId,
+    required int rating,
+    String? body,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) {
+      throw StateError('A review can only be left by a signed-in account.');
+    }
+
+    final existing = await _client
+        .from('reviews')
+        .select('id')
+        .eq('business_id', businessId)
+        .eq('author_id', uid)
+        .maybeSingle();
+    if (existing != null) throw StateError('already-reviewed');
+
+    await _client.from('reviews').insert({
+      'business_id': businessId,
+      'author_id': uid,
+      'rating': rating,
+      'body': (body ?? '').trim().isEmpty ? null : body!.trim(),
+    });
+  }
+
+  /// Whether this person has already reviewed this business, approved or
+  /// not. The read policy lets an author see their own pending review.
+  Future<bool> hasReviewed(String businessId) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return false;
+
+    final row = await _client
+        .from('reviews')
+        .select('id')
+        .eq('business_id', businessId)
+        .eq('author_id', uid)
+        .maybeSingle();
+    return row != null;
+  }
 }

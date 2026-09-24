@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/error_retry.dart';
 import '../models/menu_item.dart' as menu;
 import '../../../shared/widgets/skeleton.dart';
@@ -73,8 +73,8 @@ class _BusinessDetailContentState
   // Review creation state
   int _userRating = 0;
   bool _showReviewForm = false;
+  bool _savingReview = false;
   final _reviewTextController = TextEditingController();
-  final List<Map<String, dynamic>> _userReviews = [];
 
   @override
   void dispose() {
@@ -717,59 +717,20 @@ class _BusinessDetailContentState
   }
 
   // ─────────────────────────────────────────────
-  // Photos tab (with upload button)
+  // Photos tab
   // ─────────────────────────────────────────────
   Widget _buildPhotosTab() {
-    final l = L.of(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Upload photo button
-          GestureDetector(
-            onTap: _pickAndUploadPhoto,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: AppColors.midBlue,
-                  style: BorderStyle.solid,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                color: const Color(0xFFF8FAFF),
-              ),
-              child: Column(
-                children: [
-                  const Icon(
-                    IconsaxPlusLinear.camera,
-                    size: 32,
-                    color: AppColors.midBlue,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l.uploadPhoto,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.midBlue,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l.shareYourExperience,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      color: const Color(0xFF6D6D6D),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // A photo-upload tile sat here. It opened the picker and
+          // toasted "Photo X selected for upload" — nothing was ever
+          // uploaded. Resident-contributed photos need storage and table
+          // policies of their own and somewhere to moderate them, and
+          // `entity_media` has no status column, so the control is gone
+          // rather than continuing to claim an upload that never happens.
 
           // A gallery and a user-photo grid used to sit here, both drawn as
           // coloured squares — ten of them, the same ten for every business.
@@ -778,19 +739,6 @@ class _BusinessDetailContentState
         ],
       ),
     );
-  }
-
-  Future<void> _pickAndUploadPhoto() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Photo "${image.name}" selected for upload'),
-          backgroundColor: AppColors.midBlue,
-        ),
-      );
-    }
   }
 
   // ─────────────────────────────────────────────
@@ -815,26 +763,70 @@ class _BusinessDetailContentState
 
         const SizedBox(height: 24),
 
-        // ── User-submitted reviews ──
-        if (_userReviews.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: _userReviews.map((review) {
-                return _ReviewCardWithReply(
-                  initials: review['initials'] as String,
-                  name: review['name'] as String,
-                  date: review['date'] as String,
-                  rating: review['rating'] as int,
-                  text: review['text'] as String,
-                );
-              }).toList(),
-            ),
-          ),
-
-        // ── Reviews from the database ──
+        // Reviews used to be inserted into a list held in memory and
+        // rendered above this one, with a "Review submitted! Thank you 🎉"
+        // toast. Nothing was written and it vanished on the next rebuild.
+        // A review goes to the database now and appears here once approved.
         _buildReviewList(withReply: true),
       ],
+    );
+  }
+
+  Future<void> _submitReview(Business business) async {
+    final l = L.of(context);
+    if (_userRating == 0) {
+      _reviewToast(l.chooseRating, error: true);
+      return;
+    }
+    if (ref.read(authProvider) == null) {
+      _reviewToast(l.signInToReview, error: true);
+      return;
+    }
+
+    setState(() => _savingReview = true);
+    try {
+      await ref
+          .read(businessRepositoryProvider)
+          .addReview(
+            businessId: business.id,
+            rating: _userRating,
+            body: _reviewTextController.text,
+          );
+
+      ref.invalidate(hasReviewedProvider(business.id));
+      ref.invalidate(businessReviewsProvider(business.id));
+      if (!mounted) return;
+      setState(() {
+        _savingReview = false;
+        _showReviewForm = false;
+        _userRating = 0;
+      });
+      _reviewTextController.clear();
+      // It arrives as `pending`, so saying "thank you" alone would leave
+      // someone wondering why their review is not on the page.
+      _reviewToast(l.reviewSubmitted);
+    } on StateError catch (e) {
+      if (!mounted) return;
+      setState(() => _savingReview = false);
+      _reviewToast(
+        e.message == 'already-reviewed' ? l.alreadyReviewed : l.signInToReview,
+        error: true,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _savingReview = false);
+      _reviewToast(l.errCouldNotSave, error: true);
+    }
+  }
+
+  void _reviewToast(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        backgroundColor: error ? AppColors.error : AppColors.midBlue,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
@@ -1019,30 +1011,9 @@ class _BusinessDetailContentState
                   child: SizedBox(
                     height: 42,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_userRating > 0) {
-                          setState(() {
-                            _userReviews.insert(0, {
-                              'initials': 'YO',
-                              'name': 'You',
-                              'date': l.justNow,
-                              'rating': _userRating,
-                              'text': _reviewTextController.text.trim().isEmpty
-                                  ? 'Rated $_userRating stars'
-                                  : _reviewTextController.text.trim(),
-                            });
-                            _showReviewForm = false;
-                            _userRating = 0;
-                            _reviewTextController.clear();
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Review submitted! Thank you 🎉'),
-                              backgroundColor: AppColors.midBlue,
-                            ),
-                          );
-                        }
-                      },
+                      onPressed: _savingReview
+                          ? null
+                          : () => _submitReview(business),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.midBlue,
                         foregroundColor: Colors.white,
@@ -1337,7 +1308,7 @@ class _BusinessDetailContentState
           child: Column(
             children: [
               for (var i = 0; i < list.length; i++)
-                _ReviewCardWithReply(
+                _ReviewCard(
                   initials: list[i].initials,
                   name: list[i].authorName,
                   date: _formatReviewDate(list[i].createdAt),
@@ -1586,7 +1557,7 @@ class _RatingBar extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Review card with reply functionality
 // ═══════════════════════════════════════════════
-class _ReviewCardWithReply extends StatefulWidget {
+class _ReviewCard extends StatefulWidget {
   final String initials;
   final String name;
   final String date;
@@ -1594,7 +1565,7 @@ class _ReviewCardWithReply extends StatefulWidget {
   final String text;
   final bool isLast;
 
-  const _ReviewCardWithReply({
+  const _ReviewCard({
     required this.initials,
     required this.name,
     required this.date,
@@ -1604,23 +1575,12 @@ class _ReviewCardWithReply extends StatefulWidget {
   });
 
   @override
-  State<_ReviewCardWithReply> createState() => _ReviewCardWithReplyState();
+  State<_ReviewCard> createState() => _ReviewCardState();
 }
 
-class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
-  bool _showReplyField = false;
-  String? _submittedReply;
-  final _replyController = TextEditingController();
-
-  @override
-  void dispose() {
-    _replyController.dispose();
-    super.dispose();
-  }
-
+class _ReviewCardState extends State<_ReviewCard> {
   @override
   Widget build(BuildContext context) {
-    final l = L.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
@@ -1715,131 +1675,13 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                     height: 1.4,
                   ),
                 ),
-
-                const SizedBox(height: 8),
-
-                // Submitted reply (shown after sending)
-                if (_submittedReply != null) ...[
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          IconsaxPlusLinear.message_text,
-                          size: 14,
-                          color: AppColors.midBlue,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l.yourReply,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.midBlue,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _submittedReply!,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: const Color(0xFF3D3D3D),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else ...[
-                  // Reply button
-                  GestureDetector(
-                    onTap: () =>
-                        setState(() => _showReplyField = !_showReplyField),
-                    child: Text(
-                      _showReplyField ? l.cancel : l.reply,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.midBlue,
-                      ),
-                    ),
-                  ),
-                ],
-
-                // Reply field
-                if (_showReplyField && _submittedReply == null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFFE7E7E7)),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _replyController,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 12,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: l.writeReplyHint,
-                              hintStyle: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 12,
-                                color: const Color(0xFF6D6D6D),
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 10,
-                              ),
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            if (_replyController.text.trim().isNotEmpty) {
-                              setState(() {
-                                _submittedReply = _replyController.text.trim();
-                                _showReplyField = false;
-                              });
-                              _replyController.clear();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l.replySent),
-                                  backgroundColor: AppColors.midBlue,
-                                ),
-                              );
-                            }
-                          },
-                          child: const Icon(
-                            IconsaxPlusBold.send_1,
-                            size: 18,
-                            color: AppColors.midBlue,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                // A reply control sat here: it stored the text in a
+                // String on the widget and announced "Reply sent!".
+                // Nothing was written. `reviews` carries
+                // `admin_response` — the business's or an
+                // administrator's reply — and a resident replying to
+                // another resident's review has no home in the schema
+                // at all, so the control is gone rather than lying.
               ],
             ),
           ),

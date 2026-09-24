@@ -1198,4 +1198,16 @@ class LHe extends L {
 
   @override
   String get openInMaps => 'פתיחה במפות';
+
+  @override
+  String get reviewSubmitted => 'הביקורת נשלחה ותפורסם לאחר אישור';
+
+  @override
+  String get alreadyReviewed => 'כבר כתבתם ביקורת על העסק הזה';
+
+  @override
+  String get signInToReview => 'התחברו כדי לכתוב ביקורת';
+
+  @override
+  String get chooseRating => 'יש לבחור דירוג';
 }

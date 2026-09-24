@@ -2376,6 +2376,30 @@ abstract class L {
   /// In he, this message translates to:
   /// **'פתיחה במפות'**
   String get openInMaps;
+
+  /// No description provided for @reviewSubmitted.
+  ///
+  /// In he, this message translates to:
+  /// **'הביקורת נשלחה ותפורסם לאחר אישור'**
+  String get reviewSubmitted;
+
+  /// No description provided for @alreadyReviewed.
+  ///
+  /// In he, this message translates to:
+  /// **'כבר כתבתם ביקורת על העסק הזה'**
+  String get alreadyReviewed;
+
+  /// No description provided for @signInToReview.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי לכתוב ביקורת'**
+  String get signInToReview;
+
+  /// No description provided for @chooseRating.
+  ///
+  /// In he, this message translates to:
+  /// **'יש לבחור דירוג'**
+  String get chooseRating;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
