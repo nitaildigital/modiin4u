@@ -1074,4 +1074,55 @@ class LEn extends L {
 
   @override
   String get stepChallengeSub => 'Compete with others and climb the ranks';
+
+  @override
+  String get municipal => 'Municipal';
+
+  @override
+  String get searchMunicipal => 'Search municipal services...';
+
+  @override
+  String get quickInfo => 'Quick Info';
+
+  @override
+  String get municipalServices => 'Municipal Services';
+
+  @override
+  String get exploreServices => 'Explore services and information';
+
+  @override
+  String get upcomingShabbat => 'Upcoming Shabbat';
+
+  @override
+  String get parkingInModiin => 'Parking in Modiin';
+
+  @override
+  String get comingSoon => 'Coming soon';
+
+  @override
+  String get svcParking => 'Parking';
+
+  @override
+  String get svcShabbat => 'Shabbat &\nHolidays';
+
+  @override
+  String get svcInstitutions => 'Public\nInstitutions';
+
+  @override
+  String get svcHealth => 'Health';
+
+  @override
+  String get svcEducation => 'Education';
+
+  @override
+  String get svcTransport => 'Transportation';
+
+  @override
+  String get svcEmergency => 'Emergency';
+
+  @override
+  String get svcParks => 'Parks';
+
+  @override
+  String get svcForms => 'Forms';
 }

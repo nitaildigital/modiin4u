@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/month_names.dart';
 import 'web_municipal_screen.dart';
 
 /// Municipal – responsive wrapper.
@@ -25,20 +28,25 @@ class _MobileMunicipalContent extends StatelessWidget {
   const _MobileMunicipalContent();
 
   // ── Service grid items ──
-  static final _services = [
-    _Service('Parking', IconsaxPlusLinear.clock, '/parking'),
-    _Service('Shabbat &\nHolidays', IconsaxPlusLinear.candle, null),
-    _Service('Public\nInstitutions', IconsaxPlusLinear.bank, null),
-    _Service('Health', IconsaxPlusLinear.health, null),
-    _Service('Education', IconsaxPlusLinear.book_1, null),
-    _Service('Transportation', IconsaxPlusLinear.bus, null),
-    _Service('Emergency', IconsaxPlusLinear.danger, null),
-    _Service('Parks', IconsaxPlusLinear.tree, null),
-    _Service('Forms', IconsaxPlusLinear.document_text, null),
+  /// Eight of these nine have no destination yet, and tapping them did
+  /// nothing at all — no screen, no message. They are shown greyed with
+  /// "coming soon" until the client tells us what each should contain, so a
+  /// resident can see which ones are ready rather than tapping dead tiles.
+  static List<_Service> _servicesFor(L l) => [
+    _Service(l.svcParking, IconsaxPlusLinear.clock, '/parking'),
+    _Service(l.svcShabbat, IconsaxPlusLinear.candle, null),
+    _Service(l.svcInstitutions, IconsaxPlusLinear.bank, null),
+    _Service(l.svcHealth, IconsaxPlusLinear.health, null),
+    _Service(l.svcEducation, IconsaxPlusLinear.book_1, null),
+    _Service(l.svcTransport, IconsaxPlusLinear.bus, null),
+    _Service(l.svcEmergency, IconsaxPlusLinear.danger, null),
+    _Service(l.svcParks, IconsaxPlusLinear.tree, null),
+    _Service(l.svcForms, IconsaxPlusLinear.document_text, null),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return SafeArea(
       child: Center(
         child: ConstrainedBox(
@@ -51,8 +59,9 @@ class _MobileMunicipalContent extends StatelessWidget {
               // Title
               // ═══════════════════════════════════
               Text(
-                'Municipal',
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                l.municipal,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: Colors.black,
@@ -83,8 +92,9 @@ class _MobileMunicipalContent extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Search municipal services...',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          l.searchMunicipal,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -108,8 +118,9 @@ class _MobileMunicipalContent extends StatelessWidget {
                     children: [
                       // ── Quick Info ──
                       Text(
-                        'Quick Info',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        l.quickInfo,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1F1F1F),
@@ -130,8 +141,9 @@ class _MobileMunicipalContent extends StatelessWidget {
 
                       // ── Municipal Services ──
                       Text(
-                        'Municipal Services',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        l.municipalServices,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1F1F1F),
@@ -139,8 +151,9 @@ class _MobileMunicipalContent extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Explore services and information',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        l.exploreServices,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -156,9 +169,9 @@ class _MobileMunicipalContent extends StatelessWidget {
                         mainAxisSpacing: 8,
                         crossAxisSpacing: 8,
                         childAspectRatio: 115 / 120,
-                        children: _services
-                            .map((s) => _ServiceCard(service: s))
-                            .toList(),
+                        children: _servicesFor(
+                          l,
+                        ).map((s) => _ServiceCard(service: s)).toList(),
                       ),
                       const SizedBox(height: 40),
                     ],
@@ -187,10 +200,24 @@ class _Service {
 // Shabbat quick-info card (warm orange theme)
 // ═══════════════════════════════════════════════
 class _ShabbatCard extends StatelessWidget {
+  /// The Friday and Saturday of the coming weekend. See the note on the
+  /// screen's own copy: the card used to print one fixed date for everyone.
+  static (DateTime friday, DateTime saturday) _upcomingShabbat() {
+    final now = DateTime.now();
+    final daysToFriday = (DateTime.friday - now.weekday + 7) % 7;
+    final friday = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(Duration(days: now.weekday == DateTime.saturday ? -1 : daysToFriday));
+    return (friday, friday.add(const Duration(days: 1)));
+  }
+
   const _ShabbatCard();
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Container(
       height: 141,
       padding: const EdgeInsets.all(12),
@@ -208,9 +235,7 @@ class _ShabbatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.only(bottom: 12),
             decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Color(0xFFE7E7E7)),
-              ),
+              border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
             ),
             child: Row(
               children: [
@@ -237,8 +262,9 @@ class _ShabbatCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Upcoming Shabbat',
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    l.upcomingShabbat,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       height: 1.4,
@@ -253,8 +279,13 @@ class _ShabbatCard extends StatelessWidget {
 
           // Date
           Text(
-            'Sep 12–13, 2026',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            () {
+              final (fri, sat) = _upcomingShabbat();
+              return '${fri.day} ${l.monthShort(fri.month)}'
+                  '–${sat.day} ${l.monthShort(sat.month)} ${sat.year}';
+            }(),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF0A1230),
@@ -273,7 +304,8 @@ class _ShabbatCard extends StatelessWidget {
               const SizedBox(width: 7),
               Text(
                 'Starts 18:42',
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   color: const Color(0xFF0A1230),
@@ -290,99 +322,60 @@ class _ShabbatCard extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Parking quick-info card (light blue theme)
 // ═══════════════════════════════════════════════
+/// A way into the parking screen.
+///
+/// It used to read "Parking Right Now — Modiin Center — High availability".
+/// Nothing measures how full a car park is, so the claim is gone and the
+/// card is a link.
 class _ParkingCard extends StatelessWidget {
   const _ParkingCard();
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return GestureDetector(
       onTap: () => context.push('/parking'),
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        height: 141,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F7FD),
-          border: Border.all(color: const Color(0xFFD9E8F4)),
+          color: const Color(0xFFEAF6FA),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top section with border-bottom
-            Container(
-              padding: const EdgeInsets.only(bottom: 12),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFFE7E7E7)),
-                ),
-              ),
-              child: Row(
-                children: [
-                  // Icon circle
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color:
-                            const Color(0xFF123A72).withValues(alpha: 0.3),
-                        width: 0.86,
-                      ),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        IconsaxPlusLinear.clock,
-                        size: 24,
-                        color: Color(0xFF123A72),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Parking Right Now',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        height: 1.4,
-                        color: const Color(0xFF0A1230),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-
-            // Location
-            Text(
-              'Modiin Center',
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF0A1230),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Availability row
             Row(
               children: [
-                const Icon(
-                  IconsaxPlusLinear.chart_1,
-                  size: 14,
-                  color: Color(0xFF0A1230),
-                ),
-                const SizedBox(width: 7),
-                Text(
-                  'High availability',
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF0A1230),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
                   ),
+                  child: const Icon(
+                    IconsaxPlusLinear.car,
+                    size: 18,
+                    color: Color(0xFF0A1230),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l.parkingInModiin,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      height: 1.4,
+                      color: const Color(0xFF0A1230),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  IconsaxPlusLinear.arrow_left_2,
+                  size: 16,
+                  color: Color(0xFF0A1230),
                 ),
               ],
             ),
@@ -398,14 +391,14 @@ class _ParkingCard extends StatelessWidget {
 // ═══════════════════════════════════════════════
 class _ServiceCard extends StatelessWidget {
   final _Service service;
+
+  bool get ready => service.route != null;
   const _ServiceCard({required this.service});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: service.route != null
-          ? () => context.push(service.route!)
-          : null,
+      onTap: service.route != null ? () => context.push(service.route!) : null,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -418,19 +411,35 @@ class _ServiceCard extends StatelessWidget {
             Icon(
               service.icon,
               size: 32,
-              color: const Color(0xFF123A72),
+              // A tile with nowhere to go is shown greyed, so it reads as
+              // not ready rather than as broken.
+              color: ready ? const Color(0xFF123A72) : const Color(0xFFB4BAC6),
             ),
             const SizedBox(height: 9),
             Text(
               service.label,
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 height: 1.4,
-                color: const Color(0xFF0A1230),
+                color: ready
+                    ? const Color(0xFF0A1230)
+                    : const Color(0xFF9AA1AE),
               ),
               textAlign: TextAlign.center,
             ),
+            if (!ready) ...[
+              const SizedBox(height: 4),
+              Text(
+                L.of(context).comingSoon,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 10,
+                  color: const Color(0xFF9AA1AE),
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -2106,6 +2106,108 @@ abstract class L {
   /// In he, this message translates to:
   /// **'התחרו מול אחרים וטפסו בדירוג'**
   String get stepChallengeSub;
+
+  /// No description provided for @municipal.
+  ///
+  /// In he, this message translates to:
+  /// **'עירייה'**
+  String get municipal;
+
+  /// No description provided for @searchMunicipal.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש שירותי עירייה...'**
+  String get searchMunicipal;
+
+  /// No description provided for @quickInfo.
+  ///
+  /// In he, this message translates to:
+  /// **'מידע מהיר'**
+  String get quickInfo;
+
+  /// No description provided for @municipalServices.
+  ///
+  /// In he, this message translates to:
+  /// **'שירותי עירייה'**
+  String get municipalServices;
+
+  /// No description provided for @exploreServices.
+  ///
+  /// In he, this message translates to:
+  /// **'שירותים ומידע'**
+  String get exploreServices;
+
+  /// No description provided for @upcomingShabbat.
+  ///
+  /// In he, this message translates to:
+  /// **'שבת הקרובה'**
+  String get upcomingShabbat;
+
+  /// No description provided for @parkingInModiin.
+  ///
+  /// In he, this message translates to:
+  /// **'חניה במודיעין'**
+  String get parkingInModiin;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In he, this message translates to:
+  /// **'בקרוב'**
+  String get comingSoon;
+
+  /// No description provided for @svcParking.
+  ///
+  /// In he, this message translates to:
+  /// **'חניה'**
+  String get svcParking;
+
+  /// No description provided for @svcShabbat.
+  ///
+  /// In he, this message translates to:
+  /// **'שבת\nוחגים'**
+  String get svcShabbat;
+
+  /// No description provided for @svcInstitutions.
+  ///
+  /// In he, this message translates to:
+  /// **'מוסדות\nציבור'**
+  String get svcInstitutions;
+
+  /// No description provided for @svcHealth.
+  ///
+  /// In he, this message translates to:
+  /// **'בריאות'**
+  String get svcHealth;
+
+  /// No description provided for @svcEducation.
+  ///
+  /// In he, this message translates to:
+  /// **'חינוך'**
+  String get svcEducation;
+
+  /// No description provided for @svcTransport.
+  ///
+  /// In he, this message translates to:
+  /// **'תחבורה'**
+  String get svcTransport;
+
+  /// No description provided for @svcEmergency.
+  ///
+  /// In he, this message translates to:
+  /// **'חירום'**
+  String get svcEmergency;
+
+  /// No description provided for @svcParks.
+  ///
+  /// In he, this message translates to:
+  /// **'פארקים'**
+  String get svcParks;
+
+  /// No description provided for @svcForms.
+  ///
+  /// In he, this message translates to:
+  /// **'טפסים'**
+  String get svcForms;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -1063,4 +1063,55 @@ class LHe extends L {
 
   @override
   String get stepChallengeSub => 'התחרו מול אחרים וטפסו בדירוג';
+
+  @override
+  String get municipal => 'עירייה';
+
+  @override
+  String get searchMunicipal => 'חיפוש שירותי עירייה...';
+
+  @override
+  String get quickInfo => 'מידע מהיר';
+
+  @override
+  String get municipalServices => 'שירותי עירייה';
+
+  @override
+  String get exploreServices => 'שירותים ומידע';
+
+  @override
+  String get upcomingShabbat => 'שבת הקרובה';
+
+  @override
+  String get parkingInModiin => 'חניה במודיעין';
+
+  @override
+  String get comingSoon => 'בקרוב';
+
+  @override
+  String get svcParking => 'חניה';
+
+  @override
+  String get svcShabbat => 'שבת\nוחגים';
+
+  @override
+  String get svcInstitutions => 'מוסדות\nציבור';
+
+  @override
+  String get svcHealth => 'בריאות';
+
+  @override
+  String get svcEducation => 'חינוך';
+
+  @override
+  String get svcTransport => 'תחבורה';
+
+  @override
+  String get svcEmergency => 'חירום';
+
+  @override
+  String get svcParks => 'פארקים';
+
+  @override
+  String get svcForms => 'טפסים';
 }

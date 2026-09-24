@@ -470,5 +470,22 @@
   "monthlyChallenge": "אתגר חודשי במודיעין",
   "viewChallenge": "לצפייה באתגר",
   "stepChallengeTitle": "אתגר הצעדים של מודיעין",
-  "stepChallengeSub": "התחרו מול אחרים וטפסו בדירוג"
+  "stepChallengeSub": "התחרו מול אחרים וטפסו בדירוג",
+  "municipal": "עירייה",
+  "searchMunicipal": "חיפוש שירותי עירייה...",
+  "quickInfo": "מידע מהיר",
+  "municipalServices": "שירותי עירייה",
+  "exploreServices": "שירותים ומידע",
+  "upcomingShabbat": "שבת הקרובה",
+  "parkingInModiin": "חניה במודיעין",
+  "comingSoon": "בקרוב",
+  "svcParking": "חניה",
+  "svcShabbat": "שבת\nוחגים",
+  "svcInstitutions": "מוסדות\nציבור",
+  "svcHealth": "בריאות",
+  "svcEducation": "חינוך",
+  "svcTransport": "תחבורה",
+  "svcEmergency": "חירום",
+  "svcParks": "פארקים",
+  "svcForms": "טפסים"
 }

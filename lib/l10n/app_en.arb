@@ -470,5 +470,22 @@
   "monthlyChallenge": "MODIIN MONTHLY CHALLENGE",
   "viewChallenge": "View Challenge",
   "stepChallengeTitle": "Modiin Step Challenge",
-  "stepChallengeSub": "Compete with others and climb the ranks"
+  "stepChallengeSub": "Compete with others and climb the ranks",
+  "municipal": "Municipal",
+  "searchMunicipal": "Search municipal services...",
+  "quickInfo": "Quick Info",
+  "municipalServices": "Municipal Services",
+  "exploreServices": "Explore services and information",
+  "upcomingShabbat": "Upcoming Shabbat",
+  "parkingInModiin": "Parking in Modiin",
+  "comingSoon": "Coming soon",
+  "svcParking": "Parking",
+  "svcShabbat": "Shabbat &\nHolidays",
+  "svcInstitutions": "Public\nInstitutions",
+  "svcHealth": "Health",
+  "svcEducation": "Education",
+  "svcTransport": "Transportation",
+  "svcEmergency": "Emergency",
+  "svcParks": "Parks",
+  "svcForms": "Forms"
 }
