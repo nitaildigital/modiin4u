@@ -53,6 +53,8 @@ that is not true, and what has been dealt with.
 | **Steps** | Three people who do not exist on a leaderboard — "Daniel Cohen", "Maya Levi", "Amit May" — plus a fabricated step count, streak, weekly chart, calorie figure and four walking routes | Reads the phone's pedometer, writes `daily_steps`; leaderboards from two SECURITY DEFINER functions, opt-in only |
 | **Profile** | A "Real Estate Broker" badge on every resident; family status, pet and date of birth pre-filled with "Married", "Yes", "12 May 1990" and then discarded on save | Badge reads the real flag; the three fields save |
 | **Municipal** | A fixed Shabbat date; a "High availability" parking claim; eight tiles that did nothing at all when tapped | Shabbat computed; parking claim removed; dead tiles greyed "coming soon" |
+| **Business menus** | The Menu tab showed the same invented menu — hummus, lamb chops, Israeli beer — on all 220 businesses | `business_menu_items` (migration 00023); tab hidden when empty; admin editor gained a Menu tab |
+| **Every sorted list** | `.order()` in postgrest-dart defaults to `ascending: false`. Seventeen calls relied on it meaning ascending, so categories, neighbourhoods, tags, events and admin lists were all in reverse | All seventeen made explicit |
 | **Admin › real estate** | Creating a listing always failed — it wrote a column `type` that does not exist and a text `neighborhood` where the column is a foreign key, and never collected the NOT NULL `title`. Sale/let filters matched nothing. Rentals showed ₪0 | Fixed; adds approve / reject for the resident queue |
 
 ### Still to do
@@ -62,7 +64,8 @@ that is not true, and what has been dealt with.
 | **Games** | Placeholder screen | `games`, `game_sessions` | No content, and no admin form to create one |
 | **Community** | Placeholder screen | `comments`, `reports` | Needs a product decision on what community *is* here |
 | **Professionals** | Placeholder detail screen | `businesses` by category | Small — wire to the existing provider |
-| **Business hours** | Nothing shown on a business page | `business_hours` | Table empty. The admin form exists (businesses › 4th tab); needs the client to fill it, or an import |
+| **Business hours** | Nothing shown on a business page | `business_hours` | Table empty. The admin form exists (businesses › 2nd tab); needs the client to fill it, or an import |
+| **Menus** | Tab hidden everywhere | `business_menu_items` | Table empty. The admin form now exists (businesses › Menu tab); needs the client to fill it |
 | **Reviews** | Nothing shown | `reviews` | Table empty by nature — needs residents, and sign-in now works |
 | **Web screens** (17) | A frozen JSON export in `assets/data/`, plus the hardcoded map pins | various | Separate track; not deployed anywhere yet |
 
