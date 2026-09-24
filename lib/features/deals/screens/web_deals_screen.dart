@@ -45,12 +45,36 @@ class _WebDealsContentState extends State<WebDealsContent> {
   // ── Nav links ──
   // ── Deal categories — 6 circular tiles ──
   List<_Category> get _categories => [
-    _Category(name: _t('Restaurants & Nightlife', 'מסעדות וחיי לילה'), count: 62, imageBg: const Color(0xFFE0CDBE)),
-    _Category(name: _t('Shopping', 'קניות'), count: 48, imageBg: const Color(0xFFC6D6E4)),
-    _Category(name: _t('Beauty & Wellness', 'יופי ובריאות'), count: 31, imageBg: const Color(0xFFD9C8DE)),
-    _Category(name: _t('Leisure & Culture', 'פנאי ותרבות'), count: 27, imageBg: const Color(0xFFDCE2C6)),
-    _Category(name: _t('Services', 'שירותים'), count: 19, imageBg: const Color(0xFFC8DDD8)),
-    _Category(name: _t('Experiences', 'חוויות'), count: 15, imageBg: const Color(0xFFD8C7B8)),
+    _Category(
+      name: _t('Restaurants & Nightlife', 'מסעדות וחיי לילה'),
+      count: 62,
+      imageBg: const Color(0xFFE0CDBE),
+    ),
+    _Category(
+      name: _t('Shopping', 'קניות'),
+      count: 48,
+      imageBg: const Color(0xFFC6D6E4),
+    ),
+    _Category(
+      name: _t('Beauty & Wellness', 'יופי ובריאות'),
+      count: 31,
+      imageBg: const Color(0xFFD9C8DE),
+    ),
+    _Category(
+      name: _t('Leisure & Culture', 'פנאי ותרבות'),
+      count: 27,
+      imageBg: const Color(0xFFDCE2C6),
+    ),
+    _Category(
+      name: _t('Services', 'שירותים'),
+      count: 19,
+      imageBg: const Color(0xFFC8DDD8),
+    ),
+    _Category(
+      name: _t('Experiences', 'חוויות'),
+      count: 15,
+      imageBg: const Color(0xFFD8C7B8),
+    ),
   ];
 
   // ── Filter pills ──
@@ -76,7 +100,10 @@ class _WebDealsContentState extends State<WebDealsContent> {
     ),
     _Deal(
       badge: _t('FLAT ₪300 OFF', '₪300 הנחה'),
-      title: _t('Flat ₪300 Off on Orders Above ₪2,999', '₪300 הנחה בקנייה מעל ₪2,999'),
+      title: _t(
+        'Flat ₪300 Off on Orders Above ₪2,999',
+        '₪300 הנחה בקנייה מעל ₪2,999',
+      ),
       merchant: _t('Nike Store', 'חנות נייקי'),
       location: _t('Modiin City Center', 'מרכז העיר מודיעין'),
       timeLeft: '3d : 05h',
@@ -109,7 +136,10 @@ class _WebDealsContentState extends State<WebDealsContent> {
     ),
     _Deal(
       badge: _t('15% OFF', '15% הנחה'),
-      title: _t('15% Off on Every Family Haircut', '15% הנחה על תספורת משפחתית'),
+      title: _t(
+        '15% Off on Every Family Haircut',
+        '15% הנחה על תספורת משפחתית',
+      ),
       merchant: _t('Studio Bella', 'סטודיו בלה'),
       location: _t('Modiin City Center', 'מרכז העיר מודיעין'),
       timeLeft: '5d : 02h',
@@ -120,7 +150,10 @@ class _WebDealsContentState extends State<WebDealsContent> {
     ),
     _Deal(
       badge: _t('2 FOR 1', '2 ב-1'),
-      title: _t('Two Cinema Tickets for the Price of One', 'שני כרטיסי קולנוע במחיר אחד'),
+      title: _t(
+        'Two Cinema Tickets for the Price of One',
+        'שני כרטיסי קולנוע במחיר אחד',
+      ),
       merchant: _t('Modiin Cinema City', 'סינמה סיטי מודיעין'),
       location: _t('Modiin Mall', 'קניון מודיעין'),
       timeLeft: '0d : 19h',
@@ -131,7 +164,10 @@ class _WebDealsContentState extends State<WebDealsContent> {
     ),
     _Deal(
       badge: _t('FLAT ₪50 OFF', '₪50 הנחה'),
-      title: _t('Flat ₪50 Off on Your First Home Service', '₪50 הנחה על שירות ראשון בבית'),
+      title: _t(
+        'Flat ₪50 Off on Your First Home Service',
+        '₪50 הנחה על שירות ראשון בבית',
+      ),
       merchant: _t('FixIt Modiin', 'פיקסאיט מודיעין'),
       location: _t('Anava Park', 'פארק ענבה'),
       timeLeft: '6d : 11h',
@@ -142,7 +178,10 @@ class _WebDealsContentState extends State<WebDealsContent> {
     ),
     _Deal(
       badge: _t('25% OFF', '25% הנחה'),
-      title: _t('25% Off All Kids Activity Classes', '25% הנחה על כל חוגי הילדים'),
+      title: _t(
+        '25% Off All Kids Activity Classes',
+        '25% הנחה על כל חוגי הילדים',
+      ),
       merchant: _t('Anava Community Center', 'המרכז הקהילתי ענבה'),
       location: _t('Anava Park', 'פארק ענבה'),
       timeLeft: '4d : 07h',
@@ -160,16 +199,56 @@ class _WebDealsContentState extends State<WebDealsContent> {
 
   // ── Brand cards — 5 × 2 grid ──
   List<_Brand> get _brands => [
-    _Brand(offer: _t('Upto 80% Off', 'עד 80% הנחה'), reward: _t('Upto 5% Rewards', 'עד 5% החזר'), logoBg: const Color(0xFFD6C6DE)),
-    _Brand(offer: _t('50-90% Off', '50-90% הנחה'), reward: _t('Upto 5% Rewards', 'עד 5% החזר'), logoBg: const Color(0xFFC6D6E4)),
-    _Brand(offer: _t('50-90% Off', '50-90% הנחה'), reward: _t('Upto 6.50% Rewards', 'עד 6.50% החזר'), logoBg: const Color(0xFFDCE2C6)),
-    _Brand(offer: _t('50-90% Off', '50-90% הנחה'), reward: _t('Upto 7% Rewards', 'עד 7% החזר'), logoBg: const Color(0xFFC8DDD8)),
-    _Brand(offer: _t('Upto 20% Off', 'עד 20% הנחה'), reward: _t('Upto 12% Rewards', 'עד 12% החזר'), logoBg: const Color(0xFFE4D6C2)),
-    _Brand(offer: _t('Upto 80% Off', 'עד 80% הנחה'), reward: _t('Upto 5% Rewards', 'עד 5% החזר'), logoBg: const Color(0xFFDDD0C2)),
-    _Brand(offer: _t('Buy 2 Get 4 Free', 'קנה 2 קבל 4'), reward: _t('Upto 6% Rewards', 'עד 6% החזר'), logoBg: const Color(0xFFD9C8DE)),
-    _Brand(offer: _t('Upto 60% Off', 'עד 60% הנחה'), reward: _t('Upto 5% Rewards', 'עד 5% החזר'), logoBg: const Color(0xFFCBD4DE)),
-    _Brand(offer: _t('Upto 80% Off', 'עד 80% הנחה'), reward: _t('Upto 8% Rewards', 'עד 8% החזר'), logoBg: const Color(0xFFCADEC9)),
-    _Brand(offer: _t('Upto 80% Off', 'עד 80% הנחה'), reward: _t('Upto 5% Rewards', 'עד 5% החזר'), logoBg: const Color(0xFFE2D4C4)),
+    _Brand(
+      offer: _t('Upto 80% Off', 'עד 80% הנחה'),
+      reward: _t('Upto 5% Rewards', 'עד 5% החזר'),
+      logoBg: const Color(0xFFD6C6DE),
+    ),
+    _Brand(
+      offer: _t('50-90% Off', '50-90% הנחה'),
+      reward: _t('Upto 5% Rewards', 'עד 5% החזר'),
+      logoBg: const Color(0xFFC6D6E4),
+    ),
+    _Brand(
+      offer: _t('50-90% Off', '50-90% הנחה'),
+      reward: _t('Upto 6.50% Rewards', 'עד 6.50% החזר'),
+      logoBg: const Color(0xFFDCE2C6),
+    ),
+    _Brand(
+      offer: _t('50-90% Off', '50-90% הנחה'),
+      reward: _t('Upto 7% Rewards', 'עד 7% החזר'),
+      logoBg: const Color(0xFFC8DDD8),
+    ),
+    _Brand(
+      offer: _t('Upto 20% Off', 'עד 20% הנחה'),
+      reward: _t('Upto 12% Rewards', 'עד 12% החזר'),
+      logoBg: const Color(0xFFE4D6C2),
+    ),
+    _Brand(
+      offer: _t('Upto 80% Off', 'עד 80% הנחה'),
+      reward: _t('Upto 5% Rewards', 'עד 5% החזר'),
+      logoBg: const Color(0xFFDDD0C2),
+    ),
+    _Brand(
+      offer: _t('Buy 2 Get 4 Free', 'קנה 2 קבל 4'),
+      reward: _t('Upto 6% Rewards', 'עד 6% החזר'),
+      logoBg: const Color(0xFFD9C8DE),
+    ),
+    _Brand(
+      offer: _t('Upto 60% Off', 'עד 60% הנחה'),
+      reward: _t('Upto 5% Rewards', 'עד 5% החזר'),
+      logoBg: const Color(0xFFCBD4DE),
+    ),
+    _Brand(
+      offer: _t('Upto 80% Off', 'עד 80% הנחה'),
+      reward: _t('Upto 8% Rewards', 'עד 8% החזר'),
+      logoBg: const Color(0xFFCADEC9),
+    ),
+    _Brand(
+      offer: _t('Upto 80% Off', 'עד 80% הנחה'),
+      reward: _t('Upto 5% Rewards', 'עד 5% החזר'),
+      logoBg: const Color(0xFFE2D4C4),
+    ),
   ];
 
   // ── Hero banners — 3 × 520 + 2 × 20 gap = 1600 ──
@@ -224,14 +303,34 @@ class _WebDealsContentState extends State<WebDealsContent> {
       padding: const EdgeInsets.only(top: 56),
       child: Column(
         children: [
-          Text(_t('Best Deals & Offers in Modiin', 'המבצעים וההטבות הטובים במודיעין'),
-              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.black, height: 1.23),
-              textAlign: TextAlign.center),
+          Text(
+            _t(
+              'Best Deals & Offers in Modiin',
+              'המבצעים וההטבות הטובים במודיעין',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
+              fontSize: 44,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+              height: 1.23,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 14),
-          Text(_t('Explore local deals, discounts, and limited-time offers across Modiin.',
-                  'גלו מבצעים מקומיים, הנחות והטבות לזמן מוגבל בכל מודיעין.'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kIconGrey, height: 1.19),
-              textAlign: TextAlign.center),
+          Text(
+            _t(
+              'Explore local deals, discounts, and limited-time offers across Modiin.',
+              'גלו מבצעים מקומיים, הנחות והטבות לזמן מוגבל בכל מודיעין.',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 16,
+              color: _kIconGrey,
+              height: 1.19,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 48),
           _Section(
             child: SizedBox(
@@ -255,12 +354,22 @@ class _WebDealsContentState extends State<WebDealsContent> {
                   PositionedDirectional(
                     start: -20,
                     top: 130,
-                    child: _carouselArrow(controller: _banner, step: 540, isNext: false, shadow: true),
+                    child: _carouselArrow(
+                      controller: _banner,
+                      step: 540,
+                      isNext: false,
+                      shadow: true,
+                    ),
                   ),
                   PositionedDirectional(
                     end: -20,
                     top: 130,
-                    child: _carouselArrow(controller: _banner, step: 540, isNext: true, shadow: true),
+                    child: _carouselArrow(
+                      controller: _banner,
+                      step: 540,
+                      isNext: true,
+                      shadow: true,
+                    ),
                   ),
                 ],
               ),
@@ -281,15 +390,24 @@ class _WebDealsContentState extends State<WebDealsContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_t('Explore Deals by Category', 'גלו מבצעים לפי קטגוריה'),
-                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+            Text(
+              _t('Explore Deals by Category', 'גלו מבצעים לפי קטגוריה'),
+              style: TextStyle(
+                fontFamily: AppFonts.nunito,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: AppColors.midBlue,
+              ),
+            ),
             const SizedBox(height: 40),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: List.generate(_categories.length, (i) {
                 return Expanded(
                   child: Padding(
-                    padding: EdgeInsetsDirectional.only(end: i == _categories.length - 1 ? 0 : 30),
+                    padding: EdgeInsetsDirectional.only(
+                      end: i == _categories.length - 1 ? 0 : 30,
+                    ),
                     child: _CategoryTile(
                       category: _categories[i],
                       dealsLabel: _t('Deals', 'מבצעים'),
@@ -324,11 +442,31 @@ class _WebDealsContentState extends State<WebDealsContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_t('Popular Deals in Modiin', 'מבצעים פופולריים במודיעין'),
-                          style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                      Text(
+                        _t(
+                          'Popular Deals in Modiin',
+                          'מבצעים פופולריים במודיעין',
+                        ),
+                        style: TextStyle(
+                          fontFamily: AppFonts.nunito,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.midBlue,
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      Text(_t('Top deals handpicked for you', 'המבצעים הטובים ביותר שנבחרו עבורכם'),
-                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21)),
+                      Text(
+                        _t(
+                          'Top deals handpicked for you',
+                          'המבצעים הטובים ביותר שנבחרו עבורכם',
+                        ),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          color: _kGreyText,
+                          height: 1.21,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -338,9 +476,17 @@ class _WebDealsContentState extends State<WebDealsContent> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _carouselArrow(controller: _dealsCarousel, step: 500, isNext: false),
+                      _carouselArrow(
+                        controller: _dealsCarousel,
+                        step: 500,
+                        isNext: false,
+                      ),
                       const SizedBox(width: 12),
-                      _carouselArrow(controller: _dealsCarousel, step: 500, isNext: true),
+                      _carouselArrow(
+                        controller: _dealsCarousel,
+                        step: 500,
+                        isNext: true,
+                      ),
                     ],
                   ),
                 ),
@@ -386,13 +532,33 @@ class _WebDealsContentState extends State<WebDealsContent> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(IconsaxPlusLinear.discount_shape, size: 44, color: _kGreyText.withValues(alpha: 0.5)),
+          Icon(
+            IconsaxPlusLinear.discount_shape,
+            size: 44,
+            color: _kGreyText.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 16),
-          Text(_t('No deals match this filter', 'אין מבצעים שתואמים לסינון'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading)),
+          Text(
+            _t('No deals match this filter', 'אין מבצעים שתואמים לסינון'),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: _kHeading,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(_t('Try another filter to see more offers.', 'נסו סינון אחר כדי לראות עוד הטבות.'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
+          Text(
+            _t(
+              'Try another filter to see more offers.',
+              'נסו סינון אחר כדי לראות עוד הטבות.',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: _kGreyText,
+            ),
+          ),
         ],
       ),
     );
@@ -413,7 +579,9 @@ class _WebDealsContentState extends State<WebDealsContent> {
             return _FilterPill(
               label: _filters[i],
               isSelected: _selectedFilter == i,
-              onTap: () => setState(() => _selectedFilter = _selectedFilter == i ? -1 : i),
+              onTap: () => setState(
+                () => _selectedFilter = _selectedFilter == i ? -1 : i,
+              ),
             );
           }),
         ),
@@ -431,14 +599,22 @@ class _WebDealsContentState extends State<WebDealsContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_t('Most Popular Brands', 'המותגים הפופולריים ביותר'),
-                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+            Text(
+              _t('Most Popular Brands', 'המותגים הפופולריים ביותר'),
+              style: TextStyle(
+                fontFamily: AppFonts.nunito,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: AppColors.midBlue,
+              ),
+            ),
             const SizedBox(height: 24),
             LayoutBuilder(
               builder: (context, constraints) {
                 const gap = 25.0;
                 const perRow = 5;
-                final cardWidth = (constraints.maxWidth - gap * (perRow - 1)) / perRow;
+                final cardWidth =
+                    (constraints.maxWidth - gap * (perRow - 1)) / perRow;
                 return Wrap(
                   spacing: gap,
                   runSpacing: gap,
@@ -470,7 +646,10 @@ class _WebDealsContentState extends State<WebDealsContent> {
           if (!controller.hasClients) return;
           final delta = step * (isNext ? 1 : -1);
           controller.animateTo(
-            (controller.offset + delta).clamp(0.0, controller.position.maxScrollExtent),
+            (controller.offset + delta).clamp(
+              0.0,
+              controller.position.maxScrollExtent,
+            ),
             duration: const Duration(milliseconds: 280),
             curve: Curves.easeOut,
           );
@@ -480,14 +659,24 @@ class _WebDealsContentState extends State<WebDealsContent> {
           height: 40,
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: shadow ? const Color(0xFFF6F6F6) : _kBorder),
+            border: Border.all(
+              color: shadow ? const Color(0xFFF6F6F6) : _kBorder,
+            ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: shadow
-                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 1))]
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
                 : null,
           ),
           child: Icon(
-            isNext ? IconsaxPlusLinear.arrow_right_3 : IconsaxPlusLinear.arrow_left_2,
+            isNext
+                ? IconsaxPlusLinear.arrow_right_3
+                : IconsaxPlusLinear.arrow_left_2,
             size: 20,
             color: AppColors.midBlue,
           ),
@@ -509,7 +698,11 @@ class _Category {
   final String name;
   final int count;
   final Color imageBg;
-  const _Category({required this.name, required this.count, required this.imageBg});
+  const _Category({
+    required this.name,
+    required this.count,
+    required this.imageBg,
+  });
 }
 
 class _Deal {
@@ -533,7 +726,11 @@ class _Deal {
 class _Brand {
   final String offer, reward;
   final Color logoBg;
-  const _Brand({required this.offer, required this.reward, required this.logoBg});
+  const _Brand({
+    required this.offer,
+    required this.reward,
+    required this.logoBg,
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -548,7 +745,9 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1648), // 1600 content + 24 padding each side
+        constraints: const BoxConstraints(
+          maxWidth: 1648,
+        ), // 1600 content + 24 padding each side
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: child,
@@ -559,7 +758,13 @@ class _Section extends StatelessWidget {
 }
 
 /// Gradient stand-in for a photo that has no asset yet.
-Widget _imagePlaceholder(Color base, {double? width, double? height, BorderRadius? radius, double glyph = 28}) {
+Widget _imagePlaceholder(
+  Color base, {
+  double? width,
+  double? height,
+  BorderRadius? radius,
+  double glyph = 28,
+}) {
   return Container(
     width: width,
     height: height,
@@ -573,7 +778,11 @@ Widget _imagePlaceholder(Color base, {double? width, double? height, BorderRadiu
       ),
     ),
     child: Center(
-      child: Icon(IconsaxPlusLinear.image, size: glyph, color: Colors.white.withValues(alpha: 0.35)),
+      child: Icon(
+        IconsaxPlusLinear.image,
+        size: glyph,
+        color: Colors.white.withValues(alpha: 0.35),
+      ),
     ),
   );
 }
@@ -633,7 +842,13 @@ class _CategoryTileState extends State<_CategoryTile> {
               height: 44,
               child: Text(
                 c.name,
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: _kHeading,
+                  height: 1.22,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
               ),
@@ -641,7 +856,12 @@ class _CategoryTileState extends State<_CategoryTile> {
             const SizedBox(height: 6),
             Text(
               '${c.count} ${widget.dealsLabel}',
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: _kGreyText,
+                height: 1.21,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -658,7 +878,11 @@ class _FilterPill extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  const _FilterPill({required this.label, required this.isSelected, required this.onTap});
+  const _FilterPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   State<_FilterPill> createState() => _FilterPillState();
@@ -682,7 +906,11 @@ class _FilterPillState extends State<_FilterPill> {
           padding: const EdgeInsets.symmetric(horizontal: 40),
           decoration: BoxDecoration(
             color: selected ? AppColors.midBlue : Colors.white,
-            border: Border.all(color: selected ? AppColors.midBlue : (_hovered ? AppColors.turquoise : _kPillBorder)),
+            border: Border.all(
+              color: selected
+                  ? AppColors.midBlue
+                  : (_hovered ? AppColors.turquoise : _kPillBorder),
+            ),
             borderRadius: BorderRadius.circular(50),
           ),
           // mainAxisSize.min keeps the pill hugging its label — a Container
@@ -692,7 +920,8 @@ class _FilterPillState extends State<_FilterPill> {
             children: [
               Text(
                 widget.label,
-                style: TextStyle(fontFamily: AppFonts.nunito, 
+                style: TextStyle(
+                  fontFamily: AppFonts.nunito,
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
                   color: selected ? Colors.white : _kBodyText,
@@ -759,20 +988,35 @@ class _DealCardState extends State<_DealCard> {
                       height: 191,
                       child: Stack(
                         children: [
-                          _imagePlaceholder(d.imageBg,
-                              width: 157, height: 191, radius: BorderRadius.circular(12), glyph: 30),
+                          _imagePlaceholder(
+                            d.imageBg,
+                            width: 157,
+                            height: 191,
+                            radius: BorderRadius.circular(12),
+                            glyph: 30,
+                          ),
                           PositionedDirectional(
                             start: 12,
                             top: 12,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.orange,
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text(d.badge,
-                                  style: TextStyle(fontFamily: AppFonts.inter, 
-                                      fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white, height: 1.21)),
+                              child: Text(
+                                d.badge,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  height: 1.21,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -798,28 +1042,47 @@ class _DealCardState extends State<_DealCard> {
                           const SizedBox(height: 13),
                           Text(
                             d.title,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                                fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 1.23),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.midBlue,
+                              height: 1.23,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             d.merchant,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                                fontSize: 14, fontWeight: FontWeight.w500, color: _kHeading, height: 1.21),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: _kHeading,
+                              height: 1.21,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              const Icon(IconsaxPlusLinear.location, size: 16, color: _kIconGrey),
+                              const Icon(
+                                IconsaxPlusLinear.location,
+                                size: 16,
+                                color: _kIconGrey,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   d.location,
-                                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBodyText, height: 1.21),
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.inter,
+                                    fontSize: 14,
+                                    color: _kBodyText,
+                                    height: 1.21,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -830,7 +1093,11 @@ class _DealCardState extends State<_DealCard> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Icon(IconsaxPlusLinear.clock, size: 20, color: AppColors.midBlue),
+                              const Icon(
+                                IconsaxPlusLinear.clock,
+                                size: 20,
+                                color: AppColors.midBlue,
+                              ),
                               const SizedBox(width: 8),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -838,24 +1105,47 @@ class _DealCardState extends State<_DealCard> {
                                 children: [
                                   Directionality(
                                     textDirection: TextDirection.ltr,
-                                    child: Text(d.timeLeft,
-                                        style: TextStyle(fontFamily: AppFonts.inter, 
-                                            fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy, height: 1.19)),
+                                    child: Text(
+                                      d.timeLeft,
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.inter,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.navy,
+                                        height: 1.19,
+                                      ),
+                                    ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(widget.timeLeftLabel,
-                                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText, height: 1.25)),
+                                  Text(
+                                    widget.timeLeftLabel,
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
+                                      fontSize: 12,
+                                      color: _kGreyText,
+                                      height: 1.25,
+                                    ),
+                                  ),
                                 ],
                               ),
                               if (d.residentsOnly) ...[
                                 const SizedBox(width: 20),
-                                const Icon(IconsaxPlusLinear.shield_tick, size: 20, color: AppColors.orange),
+                                const Icon(
+                                  IconsaxPlusLinear.shield_tick,
+                                  size: 20,
+                                  color: AppColors.orange,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     widget.residentsLabel,
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
-                                        fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.orange, height: 1.25),
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.orange,
+                                      height: 1.25,
+                                    ),
                                     maxLines: 2,
                                   ),
                                 ),
@@ -878,8 +1168,16 @@ class _DealCardState extends State<_DealCard> {
                   color: AppColors.midBlue,
                   borderRadius: BorderRadius.circular(60),
                 ),
-                child: Text(widget.viewLabel,
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5)),
+                child: Text(
+                  widget.viewLabel,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    height: 1.5,
+                  ),
+                ),
               ),
             ],
           ),
@@ -928,9 +1226,16 @@ class _BrandCardState extends State<_BrandCard> {
                 height: 33,
                 alignment: Alignment.center,
                 color: _kBrandStrip,
-                child: Text(b.offer,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 14, fontWeight: FontWeight.w500, color: _kBrandStripText, height: 1.21)),
+                child: Text(
+                  b.offer,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: _kBrandStripText,
+                    height: 1.21,
+                  ),
+                ),
               ),
               Expanded(
                 child: Padding(
@@ -938,8 +1243,12 @@ class _BrandCardState extends State<_BrandCard> {
                   child: Column(
                     children: [
                       Expanded(
-                        child: _imagePlaceholder(b.logoBg,
-                            width: double.infinity, radius: BorderRadius.circular(8), glyph: 28),
+                        child: _imagePlaceholder(
+                          b.logoBg,
+                          width: double.infinity,
+                          radius: BorderRadius.circular(8),
+                          glyph: 28,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Container(
@@ -950,11 +1259,18 @@ class _BrandCardState extends State<_BrandCard> {
                           color: AppColors.midBlue,
                           borderRadius: BorderRadius.circular(60),
                         ),
-                        child: Text(b.reward,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                                fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          b.reward,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            height: 1.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),

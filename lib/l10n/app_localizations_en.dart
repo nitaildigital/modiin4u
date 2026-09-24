@@ -885,4 +885,97 @@ class LEn extends L {
   String maxPhotosReached(int n) {
     return 'Up to $n photos';
   }
+
+  @override
+  String get exploreDealsByCategory => 'Explore Deals by Category';
+
+  @override
+  String get popularDealsInModiin => 'Popular Deals in Modiin';
+
+  @override
+  String get viewDeal => 'View Deal';
+
+  @override
+  String get viewAll => 'View All';
+
+  @override
+  String get timeLeft => 'Time Left';
+
+  @override
+  String get residentsOnly => 'Residents Only';
+
+  @override
+  String get noDealsYet => 'No deals right now';
+
+  @override
+  String get noDealsYetBody =>
+      'When businesses in Modiin add offers, they will appear here.';
+
+  @override
+  String get claimOffer => 'Claim this offer';
+
+  @override
+  String get offerClaimed => 'Offer claimed';
+
+  @override
+  String get alreadyClaimed => 'You have already claimed this offer';
+
+  @override
+  String get showThisCode => 'Show this code at the business';
+
+  @override
+  String get offerExpired => 'This offer has ended';
+
+  @override
+  String get signInToClaim => 'Sign in to claim this offer';
+
+  @override
+  String daysShort(int n) {
+    return '${n}d';
+  }
+
+  @override
+  String hoursShort(int n) {
+    return '${n}h';
+  }
+
+  @override
+  String minutesShort(int n) {
+    return '${n}m';
+  }
+
+  @override
+  String dealsCount(int n) {
+    return '$n deals';
+  }
+
+  @override
+  String get validUntil => 'Valid Until';
+
+  @override
+  String get terms => 'Terms';
+
+  @override
+  String get getDirections => 'Get Directions';
+
+  @override
+  String get callBusiness => 'Call Business';
+
+  @override
+  String moreDealsFrom(String name) {
+    return 'More Deals from $name';
+  }
+
+  @override
+  String get offerNotFound => 'This offer could not be found';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get bestDealsHeading => 'Best Deals &\nOffers in Modiin';
+
+  @override
+  String get dealsHeroSubtitle =>
+      'Explore local deals, discounts, and limited-time offers across Modiin.';
 }

@@ -1764,6 +1764,168 @@ abstract class L {
   /// In he, this message translates to:
   /// **'ניתן להעלות עד {n} תמונות'**
   String maxPhotosReached(int n);
+
+  /// No description provided for @exploreDealsByCategory.
+  ///
+  /// In he, this message translates to:
+  /// **'מבצעים לפי קטגוריה'**
+  String get exploreDealsByCategory;
+
+  /// No description provided for @popularDealsInModiin.
+  ///
+  /// In he, this message translates to:
+  /// **'מבצעים פופולריים במודיעין'**
+  String get popularDealsInModiin;
+
+  /// No description provided for @viewDeal.
+  ///
+  /// In he, this message translates to:
+  /// **'לצפייה במבצע'**
+  String get viewDeal;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In he, this message translates to:
+  /// **'ראה הכל'**
+  String get viewAll;
+
+  /// No description provided for @timeLeft.
+  ///
+  /// In he, this message translates to:
+  /// **'נותר'**
+  String get timeLeft;
+
+  /// No description provided for @residentsOnly.
+  ///
+  /// In he, this message translates to:
+  /// **'לתושבים בלבד'**
+  String get residentsOnly;
+
+  /// No description provided for @noDealsYet.
+  ///
+  /// In he, this message translates to:
+  /// **'אין מבצעים כרגע'**
+  String get noDealsYet;
+
+  /// No description provided for @noDealsYetBody.
+  ///
+  /// In he, this message translates to:
+  /// **'כשעסקים במודיעין יוסיפו מבצעים, הם יופיעו כאן.'**
+  String get noDealsYetBody;
+
+  /// No description provided for @claimOffer.
+  ///
+  /// In he, this message translates to:
+  /// **'קבלת המבצע'**
+  String get claimOffer;
+
+  /// No description provided for @offerClaimed.
+  ///
+  /// In he, this message translates to:
+  /// **'המבצע נשמר'**
+  String get offerClaimed;
+
+  /// No description provided for @alreadyClaimed.
+  ///
+  /// In he, this message translates to:
+  /// **'כבר קיבלתם את המבצע הזה'**
+  String get alreadyClaimed;
+
+  /// No description provided for @showThisCode.
+  ///
+  /// In he, this message translates to:
+  /// **'הציגו את הקוד בבית העסק'**
+  String get showThisCode;
+
+  /// No description provided for @offerExpired.
+  ///
+  /// In he, this message translates to:
+  /// **'המבצע הסתיים'**
+  String get offerExpired;
+
+  /// No description provided for @signInToClaim.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי לקבל את המבצע'**
+  String get signInToClaim;
+
+  /// No description provided for @daysShort.
+  ///
+  /// In he, this message translates to:
+  /// **'{n} ימים'**
+  String daysShort(int n);
+
+  /// No description provided for @hoursShort.
+  ///
+  /// In he, this message translates to:
+  /// **'{n} שעות'**
+  String hoursShort(int n);
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In he, this message translates to:
+  /// **'{n} דקות'**
+  String minutesShort(int n);
+
+  /// No description provided for @dealsCount.
+  ///
+  /// In he, this message translates to:
+  /// **'{n} מבצעים'**
+  String dealsCount(int n);
+
+  /// No description provided for @validUntil.
+  ///
+  /// In he, this message translates to:
+  /// **'בתוקף עד'**
+  String get validUntil;
+
+  /// No description provided for @terms.
+  ///
+  /// In he, this message translates to:
+  /// **'תנאים'**
+  String get terms;
+
+  /// No description provided for @getDirections.
+  ///
+  /// In he, this message translates to:
+  /// **'ניווט'**
+  String get getDirections;
+
+  /// No description provided for @callBusiness.
+  ///
+  /// In he, this message translates to:
+  /// **'התקשרו לעסק'**
+  String get callBusiness;
+
+  /// No description provided for @moreDealsFrom.
+  ///
+  /// In he, this message translates to:
+  /// **'עוד מבצעים מ{name}'**
+  String moreDealsFrom(String name);
+
+  /// No description provided for @offerNotFound.
+  ///
+  /// In he, this message translates to:
+  /// **'המבצע לא נמצא'**
+  String get offerNotFound;
+
+  /// No description provided for @close.
+  ///
+  /// In he, this message translates to:
+  /// **'סגירה'**
+  String get close;
+
+  /// No description provided for @bestDealsHeading.
+  ///
+  /// In he, this message translates to:
+  /// **'המבצעים הטובים\nביותר במודיעין'**
+  String get bestDealsHeading;
+
+  /// No description provided for @dealsHeroSubtitle.
+  ///
+  /// In he, this message translates to:
+  /// **'גלו מבצעים, הנחות והטבות לזמן מוגבל ברחבי מודיעין.'**
+  String get dealsHeroSubtitle;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

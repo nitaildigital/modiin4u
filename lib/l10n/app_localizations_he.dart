@@ -875,4 +875,96 @@ class LHe extends L {
   String maxPhotosReached(int n) {
     return 'ניתן להעלות עד $n תמונות';
   }
+
+  @override
+  String get exploreDealsByCategory => 'מבצעים לפי קטגוריה';
+
+  @override
+  String get popularDealsInModiin => 'מבצעים פופולריים במודיעין';
+
+  @override
+  String get viewDeal => 'לצפייה במבצע';
+
+  @override
+  String get viewAll => 'ראה הכל';
+
+  @override
+  String get timeLeft => 'נותר';
+
+  @override
+  String get residentsOnly => 'לתושבים בלבד';
+
+  @override
+  String get noDealsYet => 'אין מבצעים כרגע';
+
+  @override
+  String get noDealsYetBody => 'כשעסקים במודיעין יוסיפו מבצעים, הם יופיעו כאן.';
+
+  @override
+  String get claimOffer => 'קבלת המבצע';
+
+  @override
+  String get offerClaimed => 'המבצע נשמר';
+
+  @override
+  String get alreadyClaimed => 'כבר קיבלתם את המבצע הזה';
+
+  @override
+  String get showThisCode => 'הציגו את הקוד בבית העסק';
+
+  @override
+  String get offerExpired => 'המבצע הסתיים';
+
+  @override
+  String get signInToClaim => 'התחברו כדי לקבל את המבצע';
+
+  @override
+  String daysShort(int n) {
+    return '$n ימים';
+  }
+
+  @override
+  String hoursShort(int n) {
+    return '$n שעות';
+  }
+
+  @override
+  String minutesShort(int n) {
+    return '$n דקות';
+  }
+
+  @override
+  String dealsCount(int n) {
+    return '$n מבצעים';
+  }
+
+  @override
+  String get validUntil => 'בתוקף עד';
+
+  @override
+  String get terms => 'תנאים';
+
+  @override
+  String get getDirections => 'ניווט';
+
+  @override
+  String get callBusiness => 'התקשרו לעסק';
+
+  @override
+  String moreDealsFrom(String name) {
+    return 'עוד מבצעים מ$name';
+  }
+
+  @override
+  String get offerNotFound => 'המבצע לא נמצא';
+
+  @override
+  String get close => 'סגירה';
+
+  @override
+  String get bestDealsHeading => 'המבצעים הטובים\nביותר במודיעין';
+
+  @override
+  String get dealsHeroSubtitle =>
+      'גלו מבצעים, הנחות והטבות לזמן מוגבל ברחבי מודיעין.';
 }

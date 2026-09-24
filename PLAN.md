@@ -46,7 +46,7 @@ are not true, ordered by how visible they are.
 
 | Screen | What it shows now | Table it should read | Table has data? |
 |---|---|---|---|
-| **Deals** | Invented offers on invented shops — "Nike Store", "mCaffeine", "Urban Plate Kitchen & Bar" — with counting-down timers that do not count | `offers`, `offer_claims` | No, and nothing can create one |
+| ~~**Deals**~~ | **Fixed 24 Sep.** Reads `offers`; claiming writes `offer_claims`. The table is empty, so the honest state today is the empty message — the client adds offers in the admin panel, which was already live | `offers`, `offer_claims` | Empty, by nature |
 | **Steps** | A fabricated step count, fabricated leaderboard, fabricated challenges | `daily_steps`, `challenges`, `challenge_participants` | No |
 | **Map POIs** | 63 hardcoded place names | `businesses` (has lat/long) | Yes — 220 rows |
 | **Municipal services** | A static list of services | none — genuinely static links | n/a, but the phone numbers need checking |

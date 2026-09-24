@@ -361,5 +361,67 @@
         "type": "int"
       }
     }
-  }
+  },
+  "exploreDealsByCategory": "מבצעים לפי קטגוריה",
+  "popularDealsInModiin": "מבצעים פופולריים במודיעין",
+  "viewDeal": "לצפייה במבצע",
+  "viewAll": "ראה הכל",
+  "timeLeft": "נותר",
+  "residentsOnly": "לתושבים בלבד",
+  "noDealsYet": "אין מבצעים כרגע",
+  "noDealsYetBody": "כשעסקים במודיעין יוסיפו מבצעים, הם יופיעו כאן.",
+  "claimOffer": "קבלת המבצע",
+  "offerClaimed": "המבצע נשמר",
+  "alreadyClaimed": "כבר קיבלתם את המבצע הזה",
+  "showThisCode": "הציגו את הקוד בבית העסק",
+  "offerExpired": "המבצע הסתיים",
+  "signInToClaim": "התחברו כדי לקבל את המבצע",
+  "daysShort": "{n} ימים",
+  "@daysShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursShort": "{n} שעות",
+  "@hoursShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "minutesShort": "{n} דקות",
+  "@minutesShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "dealsCount": "{n} מבצעים",
+  "@dealsCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "validUntil": "בתוקף עד",
+  "terms": "תנאים",
+  "getDirections": "ניווט",
+  "callBusiness": "התקשרו לעסק",
+  "moreDealsFrom": "עוד מבצעים מ{name}",
+  "@moreDealsFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "offerNotFound": "המבצע לא נמצא",
+  "close": "סגירה",
+  "bestDealsHeading": "המבצעים הטובים\nביותר במודיעין",
+  "dealsHeroSubtitle": "גלו מבצעים, הנחות והטבות לזמן מוגבל ברחבי מודיעין."
 }

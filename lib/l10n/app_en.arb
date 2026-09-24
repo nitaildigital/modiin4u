@@ -361,5 +361,67 @@
         "type": "int"
       }
     }
-  }
+  },
+  "exploreDealsByCategory": "Explore Deals by Category",
+  "popularDealsInModiin": "Popular Deals in Modiin",
+  "viewDeal": "View Deal",
+  "viewAll": "View All",
+  "timeLeft": "Time Left",
+  "residentsOnly": "Residents Only",
+  "noDealsYet": "No deals right now",
+  "noDealsYetBody": "When businesses in Modiin add offers, they will appear here.",
+  "claimOffer": "Claim this offer",
+  "offerClaimed": "Offer claimed",
+  "alreadyClaimed": "You have already claimed this offer",
+  "showThisCode": "Show this code at the business",
+  "offerExpired": "This offer has ended",
+  "signInToClaim": "Sign in to claim this offer",
+  "daysShort": "{n}d",
+  "@daysShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursShort": "{n}h",
+  "@hoursShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "minutesShort": "{n}m",
+  "@minutesShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "dealsCount": "{n} deals",
+  "@dealsCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "validUntil": "Valid Until",
+  "terms": "Terms",
+  "getDirections": "Get Directions",
+  "callBusiness": "Call Business",
+  "moreDealsFrom": "More Deals from {name}",
+  "@moreDealsFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "offerNotFound": "This offer could not be found",
+  "close": "Close",
+  "bestDealsHeading": "Best Deals &\nOffers in Modiin",
+  "dealsHeroSubtitle": "Explore local deals, discounts, and limited-time offers across Modiin."
 }
