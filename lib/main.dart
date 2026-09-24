@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'core/providers/theme_provider.dart';
 import 'core/router/app_router.dart';
@@ -12,6 +13,18 @@ import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Real paths on the web rather than `/#/…`.
+  //
+  // Without this, `AUTH_REDIRECT_URL` — https://app.modiin4u.co.il/auth/callback
+  // — cannot work: the browser would fetch that path, the server would hand
+  // back index.html, and go_router would then read an empty hash and land on
+  // the home screen instead of the callback. Someone confirming their
+  // address would be shown the home page with no word that it worked.
+  //
+  // It also means the server must serve index.html for any unknown path;
+  // see deploy/nginx/app.modiin4u.co.il.conf.
+  usePathUrlStrategy();
 
   try {
     await SupabaseConfig.init().timeout(const Duration(seconds: 5));

@@ -15,7 +15,7 @@ not for the client.
 |---|---|
 | Mobile app | 44 screens built. News, businesses, restaurants, events, map, search, sign-in, favourites, settings and **real estate** are on live data. Deals, steps, community, games and the municipal services list still carry content packed inside the build. |
 | Website | 17 screens built, reading a frozen JSON export in `assets/data/`. Not deployed anywhere. |
-| Backend | Live. 58 tables deployed. Migrations `00014`–`00020` all applied. |
+| Backend | Live. 58 tables deployed. Migrations `00014`–`00025` all applied. |
 | Auth | Working end to end on a device: sign up, e-mail confirmation, sign in, password reset, profile row, account deletion. Blocked only on SMTP for the client's own first sign-in. |
 | Admin area | 23 sections on live data, reachable from the app for an administrator (web build only). **No moderation queue for resident-posted listings** — see D1. |
 
@@ -149,6 +149,123 @@ An earlier summary said the real-estate feature was "entirely on live data".
 That was wrong. Three screens were converted — add apartment, my apartments,
 listing detail. The main Real Estate tab, its map and neighbourhood detail
 were not, and are listed in section A above.
+
+---
+
+## 1d. Fixed since the audit — 24 September
+
+Worked through the audit in the order agreed: own defects first, then
+controls that lie, then invented values, then whole screens. All verified on
+a device against the live database, with every test row deleted afterwards.
+
+| Area | Was | Now |
+|---|---|---|
+| **Own defects** | Step chart axis fixed at 12K while bars scaled; nearby cards printed "null m²" and "4.0 Rooms"; Shabbat card printed "Starts 18:42" every week | Axis follows the data on whole thousands; absent figures are left out; the lighting time is gone (no zmanim source) |
+| **RSVP** | A local `setState`. Wrote nothing, forgot itself on re-entry, and the count beside it never moved | Writes `event_attendees`; migration 00024 keeps `rsvp_count` in step; state reads back; cancelling marks rather than deletes |
+| **Reviews** | Inserted into a list held in memory, with "Review submitted! Thank you 🎉" | Writes `reviews` as `pending`; migration 00025 rolls an approved review into the business's rating |
+| **78 business ratings** | "4.5 (87 reviews)" on businesses where `reviews` is empty — seeded with the import | Zeroed. Visible change; one revert if the figures are wanted for a demo |
+| **Photo upload / reply** | Toasted success, wrote nothing | Removed — both need a product decision (moderation; and a resident reply has no home in the schema) |
+| **Home rows** | "20% Off All Pizzas" and four invented flats, routing to `/deal/demo_N` and `/listing/demo_N` | On `offers` and `listings`; heading hides with the row when empty |
+| **Real Estate tab** | 8 invented flats; dead search, dead chips, untappable cards, a button reading "Sign up with Email" | On `listings`; search, chips and tabs all filter; cards open; button opens the map |
+| **Real-estate map** | 14 invented pins; "view details" pushed `/listing/1` | On `listings`; opens the right listing; pin is a house, not a person |
+| **Listing detail map** | A flat pastel box with a faint glyph | A real map at the listing's coordinates; the button opens the phone's maps app |
+| **Events list + map** | Search was a `Text`; pill read "Add to Calendar" with no handler; map served 14 invented events whose details pushed `/event/map_<hashCode>` | Search filters; pill opens the map; map reads `events` and opens the right one |
+| **Event detail** | Every event labelled "Music", attributed to "Modiin Community Events", pinned at one fixed coordinate, with a "Summer Music Night" paragraph appended | All four gone; map uses the event's own coordinates |
+| **Business menus** | The same invented menu on all 220 businesses | `business_menu_items` (00023); tab hidden when empty; admin editor added |
+| **Sign-up** | Discarded date of birth, family status and pet; English form with two Hebrew fields; untappable terms links; "Business" contradicting its own subtitle | All saved; translated; links open `/terms`; reads "broker" |
+| **Settings** | Four rows opened hardcoded bottom sheets while the real screens were reachable from nowhere | Opens change-password, change-language, terms and help |
+| **Municipal** | Fixed Shabbat date, a "High availability" parking claim, eight tiles that did nothing | Shabbat computed; claim removed; dead tiles greyed "coming soon" |
+| **Admin** | No section for `challenges` or `real_estate_agents`; creating a listing always failed (wrote a column that does not exist) | Both sections added; editor fixed; approve/reject queue for resident listings |
+| **Sorting, everywhere** | `.order()` in postgrest-dart defaults to descending; 17 calls assumed ascending | All explicit |
+
+### Migrations added: 00021–00025
+
+Listing photo policies, steps leaderboard functions, business menus, RSVP
+count trigger, review rating rollup. All applied.
+
+### Still outstanding
+
+- **Restaurants map** — 24 invented places; details push
+  `/business/restaurant_<hashCode>`; the entry point goes to `/map` instead.
+- **Neighbourhood detail** — every neighbourhood renders as "Moriah";
+  unreachable on mobile.
+- **Help & Support** — entirely hardcoded English; "Contact Us" is an empty
+  TODO.
+- **News list** — the design's per-category sections replaced by one flat
+  list; `articles` has no category column to group by.
+- **Google sign-in** — an empty TODO on the first screen; no OAuth anywhere.
+- **~300 English strings** on mobile screens, ~600 on `web_*`.
+- **Games and Community** — placeholders, waiting on a product decision.
+
+---
+
+## 1e. Web deployment — Kamatera
+
+No server exists yet. Nothing here has been run against one. The files are
+written so that provisioning is the only remaining step, and so the shape of
+the server is decided before it is paid for.
+
+### What was written
+
+| File | What it does |
+|---|---|
+| `tool/deploy_web.sh` | Builds with the redirect URL compiled in, rsyncs `build/web/` to the server, fixes ownership. `--build-only` and `--dry-run` supported. |
+| `deploy/nginx/app.modiin4u.co.il.conf` | gzip, cache rules, the SPA fallback, security headers. |
+| `deploy/README.md` | One-time server setup, the `.env.local` keys, and what will bite. |
+
+### The bug this found
+
+`lib/main.dart` had no `usePathUrlStrategy()`, so web URLs were `/#/…`. That
+would have broken `AUTH_REDIRECT_URL` outright: the browser fetches
+`/auth/callback`, nginx returns `index.html`, go_router reads an empty hash
+and opens the home screen. Someone confirming their e-mail address would
+have landed on the home page with no word that it had worked, and no way to
+tell the confirmation had gone through. Fixed, with the reason in a comment —
+it is the kind of line that looks removable.
+
+It also makes the nginx `try_files … /index.html` fallback load-bearing
+rather than a nicety: without it every route but `/` 404s on refresh.
+
+### Recommendation, for the client to approve before anything is bought
+
+| | |
+|---|---|
+| Size | 1 vCPU / 1GB RAM / 20GB SSD |
+| Region | **Israel (Tel Aviv)** — the audience is in Modiin |
+| OS | Ubuntu 22.04 LTS |
+| Cost | roughly $4–6/month |
+
+That is enough because the server only hands out static files. No Dart, no
+Node, no database on it — every query goes from the browser to Supabase. If
+traffic ever justifies more, the honest next step is a CDN in front, not a
+bigger box.
+
+**DNS is at uPress, not Kamatera.** `modiin4u.co.il` uses `ns1.upress.io`, so
+the `A` record `app` → server IP is added in uPress's panel. Kamatera's DNS
+settings have no effect on this domain.
+
+**Kamatera's panel cannot be driven from here.** It would need the client's
+login and almost certainly a second factor. The server gets created by hand;
+what is needed back is the IP and SSH access, after which the deploy is one
+command.
+
+### After the server exists
+
+1. `A` record at uPress: `app` → the IP.
+2. nginx + certbot per `deploy/README.md`. Certbot must run *after* DNS has
+   propagated — it proves ownership over port 80.
+3. Add `https://app.modiin4u.co.il/auth/callback` to Supabase's redirect
+   allow-list. Until then the confirmation link is refused.
+4. `tool/deploy_web.sh --dry-run`, then for real.
+
+### Open question
+
+The web build contains the **whole** app. The admin area is gated on
+`kIsWeb`, not built separately, so every resident screen ships with it. If
+`app.modiin4u.co.il` is meant to be the admin panel only, that needs a
+separate build flag — not done, and not guessed at.
+
+SMTP is a separate matter and deliberately untouched here.
 
 ---
 
