@@ -16,6 +16,7 @@ import 'admin_articles_screen.dart';
 import 'admin_events_screen.dart';
 import 'admin_realestate_screen.dart';
 import 'admin_categories_screen.dart';
+import 'admin_challenges_screen.dart';
 import 'admin_tags_screen.dart';
 import 'admin_neighborhoods_screen.dart';
 import 'admin_media_screen.dart';
@@ -32,6 +33,7 @@ import 'admin_audit_screen.dart';
 import 'admin_trash_screen.dart';
 import 'admin_home_builder_screen.dart';
 import 'admin_flags_screen.dart';
+import 'admin_agents_screen.dart';
 import 'admin_analytics_screen.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
@@ -54,6 +56,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     ('כתבות', IconsaxPlusLinear.document_text),
     ('אירועים', IconsaxPlusLinear.calendar),
     ('נדל"ן', IconsaxPlusLinear.building_3),
+    ('מתווכים', IconsaxPlusLinear.profile_circle),
     // ── טקסונומיה ──
     ('קטגוריות', IconsaxPlusLinear.category_2),
     ('תגיות', IconsaxPlusLinear.tag),
@@ -70,6 +73,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     ('תגובות', IconsaxPlusLinear.message_text),
     ('דיווחים', IconsaxPlusLinear.flag),
     ('Push', IconsaxPlusLinear.notification),
+    ('אתגרים', IconsaxPlusLinear.cup),
     // ── מערכת ──
     ('צוות ניהול', IconsaxPlusLinear.people),
     ('יומן פעולות', IconsaxPlusLinear.clock),
@@ -219,25 +223,27 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       3 => const AdminArticlesScreen(),
       4 => const AdminEventsScreen(),
       5 => const AdminRealEstateScreen(),
-      6 => const AdminCategoriesScreen(),
-      7 => const AdminTagsScreen(),
-      8 => const AdminNeighborhoodsScreen(),
-      9 => const AdminMediaScreen(),
-      10 => const AdminOffersScreen(),
-      11 => const AdminAgreementsScreen(),
-      12 => const AdminRevenueScreen(),
-      13 => const AdminAdPlacementsScreen(),
-      14 => const AdminCampaignsScreen(),
-      15 => const _ReviewsSection(),
-      16 => const AdminCommentsScreen(),
-      17 => const AdminReportsScreen(),
-      18 => const AdminPushScreen(),
-      19 => const AdminTeamScreen(),
-      20 => const AdminAuditScreen(),
-      21 => const AdminTrashScreen(),
-      22 => const AdminHomeBuilderScreen(),
-      23 => const AdminFlagsScreen(),
-      24 => const _SettingsSection(),
+      6 => const AdminAgentsScreen(),
+      7 => const AdminCategoriesScreen(),
+      8 => const AdminTagsScreen(),
+      9 => const AdminNeighborhoodsScreen(),
+      10 => const AdminMediaScreen(),
+      11 => const AdminOffersScreen(),
+      12 => const AdminAgreementsScreen(),
+      13 => const AdminRevenueScreen(),
+      14 => const AdminAdPlacementsScreen(),
+      15 => const AdminCampaignsScreen(),
+      16 => const _ReviewsSection(),
+      17 => const AdminCommentsScreen(),
+      18 => const AdminReportsScreen(),
+      19 => const AdminPushScreen(),
+      20 => const AdminChallengesScreen(),
+      21 => const AdminTeamScreen(),
+      22 => const AdminAuditScreen(),
+      23 => const AdminTrashScreen(),
+      24 => const AdminHomeBuilderScreen(),
+      25 => const AdminFlagsScreen(),
+      26 => const _SettingsSection(),
       _ => const SizedBox(),
     };
   }
