@@ -138,6 +138,7 @@ class _BusinessDetailContentState
 
             // ── Address row ──
             _buildAddressRow(),
+            _buildNeighborhoodLink(),
 
             const SizedBox(height: 20),
 
@@ -414,6 +415,54 @@ class _BusinessDetailContentState
   // ─────────────────────────────────────────────
   // Address row
   // ─────────────────────────────────────────────
+  /// A link to the neighbourhood's own page.
+  ///
+  /// On its own line rather than appended to the address: addresses here run
+  /// long and the row ellipsises, so a tail on that line is usually invisible
+  /// and never tappable. Nothing in the app linked to `/neighborhood/:id`
+  /// before this, so the screen existed and could not be reached.
+  Widget _buildNeighborhoodLink() {
+    final id = business.neighborhoodId;
+    if (id == null || business.neighborhood.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: GestureDetector(
+        onTap: () => context.push('/neighborhood/$id'),
+        child: Row(
+          children: [
+            const Icon(
+              IconsaxPlusLinear.buildings_2,
+              size: 16,
+              color: Color(0xFF123A72),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                business.neighborhood,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF123A72),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              IconsaxPlusLinear.arrow_left_2,
+              size: 14,
+              color: Color(0xFF123A72),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAddressRow() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),

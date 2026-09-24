@@ -107,6 +107,11 @@ These were never converted. Each shows the same fiction to every user.
 | **Restaurants map** | 24 invented places; details push `/business/restaurant_<hashCode>` | `restaurants/screens/restaurants_map_screen.dart:45` |
 | **Unearned ratings, on screen** | Business cards, restaurant cards and the business page all printed a gold star beside "0.0 (0)" — truthful, but it reads as a bad score rather than as no score. The restaurant card also carried "👁 0 Views", in English, against a column the table does not have | Reads "אין דירוג עדיין" until a review earns a score; the views figure is gone |
 | **City map** | `/map` is one of five bottom-nav tabs. The desktop layout read a frozen WordPress export and, whenever that was empty, fell back to pins written into the source — "Cafe Greg", "Pizza Prego", four car parks, three apartments — each with a rating and review count nobody had given, each routing to `/business/demo_2` or `/listing/demo_0`, which match no row. The Events, Parking and Real Estate layers came from that list **always**, even after the export loaded. A generator then wrote a description for any pin lacking one: every property got the same paragraph about a "mini penthouse 6 rooms in Avni Chen, 140 m², balcony 18 m², payment schedule 20/80", every car park was declared open around the clock, and a business with no reviews was described as "rated - by 0 residents". "Property Type: Apartment" was printed for every listing whatever it was | Both layouts read `mapPoisProvider`: businesses, events and listings, all live, each pin opening its own row. The generator is gone — no description means no About section. Parking is dropped: there is no table and could not be one |
+| **Community feed** | The worst of them. The screen opened with a feed written into the source: named residents holding conversations, a plumber and an electrician given as **real-looking telephone numbers** ("מוטי שרברב — 050-1234567"), a named restaurant recommended by a "resident" with a claim about its kashrut, and a pothole reported at a real street address with a note that the municipality had been told. Two composers offered to post; both wrote into a list held in the widget, so a post vanished on the next rebuild. Search and notification buttons had empty handlers | The feed is empty and says so — there is no `posts` table in the schema, so nothing can fill it. Both composers say the same rather than opening. The dead buttons are gone |
+| **Events and Deals on the desktop layouts** | The same routes told a different story above 1100px. 16 invented events with venues, prices and interest counts; a "Load More" that re-showed the same pool as if it were new; category circles reading 157 / 32 / 24 / 45 / 15 / 41. The event detail page took an id and read nothing with it — every id rendered "Summer Music Night", the same two paragraphs, a five-line "What's Included", four coloured circles as attendee faces, an organiser named "Modiin Community Events" and a map pinned to one constant coordinate. Deals carried 8 offers on businesses that are not in Modiin, with discount badges, a "Residents Only" shield no column backs, and a countdown that was the literal string "2d : 14h" | All four on live providers. RSVP writes `event_attendees`; Save writes `favorites`; Share works; sort is a real menu over `start_date`. Category filters removed — `events` has no category column — while the Deals ones were wired, because `offer_categories` does back them. Counts are counted from rows in hand |
+| **Admin dashboard** | It read four lists written into the source — six invented people, four businesses, four articles, three reviews — as `StateNotifier`s. So banning someone, approving a business or deleting a review **changed a list in memory and wrote nothing**. The client would have believed he had acted | On the live tables. `setBanned` writes `profiles.is_banned`; review moderation writes `reviews.status`, which migration 00025 then rolls into the business's rating. Businesses and articles use the live providers the panel's own sections already had. ~2,000 lines of dead widgets removed with it |
+| **"Contact Us", everywhere on the web** | The header CTA on every web page had `onContactTap ?? () {}` — drawn on all of them, doing nothing. The footer published a phone, an e-mail and a WhatsApp number as plain text nobody could tap | The details are named once in `web_chrome.dart` and the header opens the e-mail. All three footer rows act. The address is `modiin4uoffice@gmail.com`, corroborated as the client's — it is the same account that owns the Kamatera server |
+| **Two zero-counts on mobile** | Events printed "0 מתעניינים" on every row; the Deals banner sat under three page dots claiming it was one of three and could be paged, when it is a single box that does not scroll | Both gone |
 | **Events map** | 14 invented events; details push `/event/map_<hashCode>` | `events/screens/events_map_screen.dart:45` |
 | **Home — "Deal Near You" / "Apartment Near You"** | Hardcoded tiles routing to `/deal/demo_0`, `/listing/demo_N` | `home/screens/home_screen.dart:390,455` |
 
@@ -202,8 +207,18 @@ count trigger, review rating rollup. All applied.
 
 - **Neighbourhood detail** — every neighbourhood renders as "Moriah";
   unreachable on mobile.
-- **Help & Support** — entirely hardcoded English; "Contact Us" is an empty
-  TODO.
+- **Help & Support** — entirely hardcoded English. Its "Contact Us" is no
+  longer blocked on a product decision: the contact details were found
+  published in the web footer and are now named in `web_chrome.dart`. The
+  screen still needs translating and its FAQ answers checked against what the
+  app actually does — several describe flows that may not exist.
+- **`web_events_category_screen.dart`** — converted to live data, but nothing
+  in `lib` constructs `WebEventsCategoryContent`. `/events` resolves to
+  `EventsScreen`, so the three-panel category layout is unreachable. Route it
+  or delete it.
+- **The Deals banner** — a 200px gradient box with a faded icon, on both
+  layouts. No source, no content, decorative filler. Needs a product decision
+  rather than a fix.
 - **News list** — the design's per-category sections replaced by one flat
   list. Confirmed blocked on 24 September, not merely unfinished: `articles`
   has no category column, and `entity_categories` holds 210 rows of which
@@ -213,8 +228,17 @@ count trigger, review rating rollup. All applied.
   fix is a data job: link the 669 articles, then the sections follow. Nothing
   can group them until then.
 - **Google sign-in** — an empty TODO on the first screen; no OAuth anywhere.
+- **The 19 seeded businesses** — see §1f. Kept deliberately for now; must go
+  before launch.
 - **~300 English strings** on mobile screens, ~600 on `web_*`.
-- **Games and Community** — placeholders, waiting on a product decision.
+- **Games** — a placeholder, waiting on a product decision.
+- **Community** — the invented feed is gone (see above), but the feature
+  still needs a `posts` table and a moderation story before it can open. It
+  is also reachable only from the **web** home screen; nothing on mobile
+  links to `/community`.
+- **Two orphaned widgets deleted** — `news_preview.dart` (pushed
+  `/article/demo_0`) and `category_row.dart`. Neither was referenced from
+  anywhere; both carried routes that match no row.
 - **"Contact Us"** in the web header — still an empty handler, on the same
   footing as Help & Support above: there is no destination decided yet, and
   inventing one would be worse than leaving the button plainly unfinished.
@@ -343,6 +367,54 @@ sign up  →  confirm the address  →  signed in
 Every step after "signed in" needs the session to be real. That is why the
 authentication work below is first: nothing downstream of it can be finished,
 or even tested, until it holds.
+
+---
+
+## 1f. Nineteen invented businesses, in the live database
+
+**Decision on 24 September: leave them for now, remove before launch.**
+Recorded here so nobody has to rediscover it.
+
+`businesses` holds two populations, and they are easy to tell apart:
+
+| | 200 rows | 19 rows |
+|---|---|---|
+| `created_at` | all `2026-09-23` — the WordPress import | spread over 2022–2025, **every one on the 18th of a month** |
+| `website` | 120 have one | **none** |
+| `cover_url` | 129 have one | **none** |
+| `neighborhood_id` | none set | **all 19 set** |
+
+The nineteen are seeded placeholders. Their telephone numbers give it away:
+
+```
+08-9711111  08-9712222  08-9713333  08-9714444  08-9715555
+08-9716666  08-9717777  08-9718888  08-9712345  08-9714567
+```
+
+Repeating and sequential digits. Their names are generic — Modiin Laundry,
+Eli's Garage, Modiin Flowers, Modiin Pet Shop, Vision Optics — and three of
+them are the same names that were written into the old map pin list: קפה גרג
+(Cafe Greg), פיצה פרגו (Pizza Prego), Japan Japan.
+
+Two are worse than filler: **ד"ר שלומי כהן — רופא שיניים**, a dentist, and
+**עורך דין דנה לוי**, a lawyer. Invented professionals with invented numbers.
+
+### What they affect
+
+- They appear in the app as ordinary businesses, with a call button that
+  reaches nobody.
+- They are counted in the category tiles — the "54 מסעדות" on the
+  businesses screen includes them.
+- **They are the only rows with `neighborhood_id`**, so the neighbourhood
+  link added on 24 September, and the neighbourhood page's own counts, are
+  driven entirely by them. When they go, both go quiet until the client
+  files real businesses under neighbourhoods.
+
+### Removing them
+
+Identify by the signature, not by name — `created_at < '2026-01-01'` picks
+exactly these nineteen and nothing from the import. Take the
+`entity_categories` links with them. Count first, delete second.
 
 ---
 

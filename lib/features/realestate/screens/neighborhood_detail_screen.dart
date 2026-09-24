@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
-import '../../../core/router/app_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
+import '../../../core/router/app_router.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../models/listing.dart';
+import '../providers/neighborhood_providers.dart';
 import 'web_neighborhood_detail_screen.dart';
 
 class NeighborhoodDetailScreen extends StatelessWidget {
@@ -22,167 +27,95 @@ class NeighborhoodDetailScreen extends StatelessWidget {
   }
 }
 
-class _MobileNeighborhoodDetailContent extends StatefulWidget {
+class _MobileNeighborhoodDetailContent extends ConsumerWidget {
   final String neighborhoodId;
   const _MobileNeighborhoodDetailContent({required this.neighborhoodId});
-
   @override
-  State<_MobileNeighborhoodDetailContent> createState() =>
-      _MobileNeighborhoodDetailContentState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final neighborhood = ref.watch(neighborhoodByIdProvider(neighborhoodId));
 
-class _MobileNeighborhoodDetailContentState
-    extends State<_MobileNeighborhoodDetailContent> {
-  int _selectedThumb = 0;
-
-  // ── Mock data ──
-  static const _name = 'Moriah';
-  static const _city = 'Modiin';
-
-  static const _aboutParagraphs = [
-    'Moriah is one of the southernmost neighborhoods of Modi\'in-Maccabim-Re\'ut. '
-        'Formerly known as Buchman South, the neighborhood began to be populated in 2007 '
-        'and is characterized primarily by private homes and semi-detached houses.',
-    'The neighborhood takes its name from women from ancient Jewish history, '
-        'including the four matriarchs and biblical heroines, which is also reflected '
-        'in many of the street names throughout the neighborhood.',
-    'Today, Moriah combines residential living with parks, recreation, education '
-        'and neighborhood shopping. Its southern location also places residents close '
-        'to major roads and the city\'s southern open spaces.',
-  ];
-
-  static const _stats = [
-    _NeighStat('12', 'Properties for Sale', IconsaxPlusBold.home_2),
-    _NeighStat('18', 'Businesses in the Area', IconsaxPlusBold.shop),
-    _NeighStat('6', 'Parks & Playgrounds', IconsaxPlusBold.tree),
-    _NeighStat('7', 'Schools & Kindergardens', IconsaxPlusBold.teacher),
-  ];
-
-  static final _saleListings = [
-    _NListing(
-      price: '₪3,650,000',
-      address: '3 Yona Hanavi Street, Modiin',
-      area: 140,
-      rooms: 6,
-      floor: 3,
-      isNew: true,
-      viaBroker: true,
-    ),
-    _NListing(
-      price: '₪3,790,000',
-      address: '84 Menachem Begin Road',
-      area: 133,
-      rooms: 4,
-      floor: 2,
-      isNew: true,
-      viaBroker: false,
-    ),
-  ];
-
-  static final _rentListings = [
-    _NListing(
-      price: '₪7,500',
-      perMonth: '/ In the month',
-      address: 'Weizmann Street Heritage Modiin',
-      area: 140,
-      rooms: 6,
-      floor: 3,
-      isNew: true,
-      viaBroker: true,
-      isRent: true,
-    ),
-    _NListing(
-      price: '₪12,000',
-      perMonth: '/ In the month',
-      address: '12 Yitzhak Shamir Street, Modiin (Legacy)',
-      area: 122,
-      rooms: 4,
-      floor: 2,
-      isNew: false,
-      viaBroker: false,
-      isRent: true,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 430),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: neighborhood.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, _) => _Message(
+              text: 'לא הצלחנו לטעון את השכונה',
+              onBack: () => context.pop(),
+            ),
+            data: (n) => n == null
+                ? _Message(
+                    text: 'השכונה לא נמצאה',
+                    onBack: () => context.pop(),
+                  )
+                : _buildBody(context, ref, n),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, WidgetRef ref, Neighborhood n) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // The neighbourhood's own photograph where the admin has set one.
+          // Five tappable gradient rectangles sat under this as a thumbnail
+          // strip; `neighborhoods` holds a single image, so there was never
+          // a gallery to page through.
+          _buildHeroImage(context, n),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+            child: Text(
+              n.name,
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
               children: [
-                // 1. Hero image
-                _buildHeroImage(),
-
-                // 2. Thumbnails
-                const SizedBox(height: 16),
-                _buildThumbnailRow(),
-
-                // 3. Neighborhood name
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                  child: Text(
-                    _name,
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
+                const Icon(
+                  IconsaxPlusLinear.location,
+                  size: 16,
+                  color: Color(0xFF888888),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'מודיעין מכבים רעות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF6D6D6D),
                   ),
                 ),
-
-                // 4. City
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        IconsaxPlusLinear.location,
-                        size: 16,
-                        color: Color(0xFF888888),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _city,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6D6D6D),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 5. Stats grid (2×2)
-                _buildStatsGrid(),
-
-                // 6. About
-                _buildAboutSection(),
-
-                // 7. Apartments for Sale
-                _buildListingSection(
-                  'Apartments for Sale in Moriah',
-                  _saleListings,
-                ),
-
-                // 8. Apartments for Rent
-                _buildListingSection(
-                  'Apartments for Rent in Moriah',
-                  _rentListings,
-                ),
-
-                const SizedBox(height: 40),
               ],
             ),
           ),
-        ),
+
+          _buildStatsGrid(ref, n),
+
+          // Only when the client has written one. Three paragraphs about
+          // Moriah — when it was settled, where its street names come from —
+          // used to appear under every neighbourhood in the city.
+          if (n.description != null) _buildAboutSection(n),
+
+          _buildListingSection(context, ref, n, ListingKind.sale),
+          _buildListingSection(context, ref, n, ListingKind.rent),
+
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
@@ -190,45 +123,29 @@ class _MobileNeighborhoodDetailContentState
   // ─────────────────────────────────
   // Hero image
   // ─────────────────────────────────
-  Widget _buildHeroImage() {
+  Widget _buildHeroImage(BuildContext context, Neighborhood n) {
     return SizedBox(
       height: 260,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Container(
-            decoration: const BoxDecoration(
+          NetworkPhoto(
+            url: n.imageUrl,
+            fit: BoxFit.cover,
+            icon: IconsaxPlusBold.buildings_2,
+            iconSize: 80,
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment(0.0, -0.5),
-                end: Alignment(0.0, 1.0),
-                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.4),
+                ],
               ),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    IconsaxPlusBold.buildings_2,
-                    size: 80,
-                    color: Colors.white.withValues(alpha: 0.15),
-                  ),
-                ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
           // Back button
@@ -258,77 +175,34 @@ class _MobileNeighborhoodDetailContentState
   }
 
   // ─────────────────────────────────
-  // Thumbnail row
-  // ─────────────────────────────────
-  Widget _buildThumbnailRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: List.generate(5, (i) {
-          final selected = _selectedThumb == i;
-          return Padding(
-            padding: EdgeInsets.only(right: i < 4 ? 8 : 0),
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedThumb = i),
-              child: Container(
-                width: 66,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Color.lerp(
-                    const Color(0xFF0058B5),
-                    const Color(0xFF010A36),
-                    i * 0.2,
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                  border: selected
-                      ? Border.all(color: const Color(0xFF123A72), width: 2)
-                      : null,
-                ),
-                child: Center(
-                  child: Icon(
-                    IconsaxPlusBold.image,
-                    size: 18,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────
   // Stats grid 2×2
   // ─────────────────────────────────
-  Widget _buildStatsGrid() {
+  Widget _buildStatsGrid(WidgetRef ref, Neighborhood n) {
+    final counts = ref.watch(neighborhoodCountsProvider(n.id)).valueOrNull;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      child: Column(
-        children: [
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _StatCard(stat: _stats[0])),
-                const SizedBox(width: 12),
-                Expanded(child: _StatCard(stat: _stats[1])),
-              ],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _StatCard(
+                value: counts?.listings,
+                label: 'נכסים למכירה',
+                icon: IconsaxPlusBold.home_2,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _StatCard(stat: _stats[2])),
-                const SizedBox(width: 12),
-                Expanded(child: _StatCard(stat: _stats[3])),
-              ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatCard(
+                value: counts?.businesses,
+                label: 'עסקים באזור',
+                icon: IconsaxPlusBold.shop,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -336,14 +210,14 @@ class _MobileNeighborhoodDetailContentState
   // ─────────────────────────────────
   // About section
   // ─────────────────────────────────
-  Widget _buildAboutSection() {
+  Widget _buildAboutSection(Neighborhood n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'About $_name',
+            'אודות ${n.name}',
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 16,
@@ -352,11 +226,11 @@ class _MobileNeighborhoodDetailContentState
             ),
           ),
           const SizedBox(height: 12),
-          ..._aboutParagraphs.map(
+          ...n.description!.split('\n\n').map(
             (p) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                p,
+                p.trim(),
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 14,
@@ -375,7 +249,25 @@ class _MobileNeighborhoodDetailContentState
   // ─────────────────────────────────
   // Listing section with fade + View All
   // ─────────────────────────────────
-  Widget _buildListingSection(String title, List<_NListing> listings) {
+  /// One neighbourhood's listings of a kind.
+  ///
+  /// Two flats for sale and two to let used to sit here, priced, addressed
+  /// and titled "Apartments for Sale in Moriah" whichever neighbourhood was
+  /// open. `listings` has no rows yet, so both sections say so instead.
+  Widget _buildListingSection(
+    BuildContext context,
+    WidgetRef ref,
+    Neighborhood n,
+    ListingKind kind,
+  ) {
+    final listings =
+        ref.watch(neighborhoodListingsProvider((n.id, kind))).valueOrNull ??
+        const <Listing>[];
+
+    final title = kind == ListingKind.rent
+        ? 'דירות להשכרה ב${n.name}'
+        : 'דירות למכירה ב${n.name}';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
@@ -391,41 +283,34 @@ class _MobileNeighborhoodDetailContentState
             ),
           ),
           const SizedBox(height: 12),
-          // Listing cards
-          ...listings.map((l) => _ListingCard(listing: l)),
 
-          // Fade gradient + View All
-          Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              // Gradient overlay
-              Container(
-                height: 100,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0x00FFFFFF), Color(0xFFFFFFFF)],
-                  ),
+          if (listings.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                kind == ListingKind.rent
+                    ? 'אין כרגע דירות להשכרה בשכונה הזו'
+                    : 'אין כרגע דירות למכירה בשכונה הזו',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  color: const Color(0xFF6D6D6D),
                 ),
               ),
-              // View All button
-              Positioned(
-                bottom: 10,
+            )
+          else ...[
+            for (final listing in listings.take(3))
+              _ListingCard(listing: listing),
+
+            // Only worth offering when there is more than this screen shows.
+            if (listings.length > 3)
+              Center(
                 child: GestureDetector(
                   onTap: () => context.goOrPush('/realestate'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: const Color(0xFF123A72)),
-                      borderRadius: BorderRadius.circular(60),
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Text(
-                      'View All',
+                      'ראה הכל',
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
@@ -436,8 +321,37 @@ class _MobileNeighborhoodDetailContentState
                   ),
                 ),
               ),
-            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown in place of the page when the row cannot be loaded or does not
+/// exist, so a bad id is not a blank screen.
+class _Message extends StatelessWidget {
+  final String text;
+  final VoidCallback onBack;
+
+  const _Message({required this.text, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 15,
+              color: const Color(0xFF6D6D6D),
+            ),
           ),
+          const SizedBox(height: 12),
+          TextButton(onPressed: onBack, child: const Text('חזרה')),
         ],
       ),
     );
@@ -445,21 +359,16 @@ class _MobileNeighborhoodDetailContentState
 }
 
 // ═══════════════════════════════════════════════
-// Neighborhood stat data
-// ═══════════════════════════════════════════════
-class _NeighStat {
-  final String value;
-  final String label;
-  final IconData icon;
-  const _NeighStat(this.value, this.label, this.icon);
-}
-
-// ═══════════════════════════════════════════════
 // Stat card widget
 // ═══════════════════════════════════════════════
 class _StatCard extends StatelessWidget {
-  final _NeighStat stat;
-  const _StatCard({required this.stat});
+  /// Null while the count is still being fetched, which is why it shows a
+  /// dash rather than a nought — nought is a claim, a dash is not.
+  final int? value;
+  final String label;
+  final IconData icon;
+
+  const _StatCard({required this.value, required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -473,10 +382,10 @@ class _StatCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(stat.icon, size: 32, color: const Color(0xFF123A72)),
+          Icon(icon, size: 32, color: const Color(0xFF123A72)),
           const SizedBox(height: 12),
           Text(
-            stat.value,
+            value?.toString() ?? '—',
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 14,
@@ -487,7 +396,7 @@ class _StatCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            stat.label,
+            label,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 14,
@@ -505,40 +414,35 @@ class _StatCard extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Listing data model
 // ═══════════════════════════════════════════════
-class _NListing {
-  final String price;
-  final String? perMonth;
-  final String address;
-  final int area;
-  final int rooms;
-  final int floor;
-  final bool isNew;
-  final bool viaBroker;
-  final bool isRent;
-
-  const _NListing({
-    required this.price,
-    this.perMonth,
-    required this.address,
-    required this.area,
-    required this.rooms,
-    required this.floor,
-    this.isNew = false,
-    this.viaBroker = false,
-    this.isRent = false,
-  });
-}
-
 // ═══════════════════════════════════════════════
 // Listing card widget
 // ═══════════════════════════════════════════════
 class _ListingCard extends StatelessWidget {
-  final _NListing listing;
+  final Listing listing;
   const _ListingCard({required this.listing});
+
+  /// "₪3,650,000", or null where the row carries no price — which is not the
+  /// same as free and must not read as ₪0.
+  String? get _price {
+    final amount = listing.effectivePrice;
+    if (amount == null) return null;
+    final digits = amount.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(digits[i]);
+    }
+    return '₪$buffer';
+  }
+
+  bool get _isRent => listing.kind == ListingKind.rent;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return GestureDetector(
+      // The card was not tappable at all. Now it opens the row it shows.
+      onTap: () => context.push('/listing/${listing.id}'),
+      child: Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,21 +453,16 @@ class _ListingCard extends StatelessWidget {
             width: double.infinity,
             child: Stack(
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      IconsaxPlusBold.home_2,
-                      size: 48,
-                      color: Colors.white.withValues(alpha: 0.15),
-                    ),
+                // The listing's own photograph where it has one, and the
+                // brand panel where it does not, at the same size so nothing
+                // shifts once the client uploads pictures.
+                Positioned.fill(
+                  child: NetworkPhoto(
+                    url: listing.coverUrl,
+                    fit: BoxFit.cover,
+                    radius: BorderRadius.circular(12),
+                    icon: IconsaxPlusBold.home_2,
+                    iconSize: 48,
                   ),
                 ),
                 // Heart
@@ -585,7 +484,7 @@ class _ListingCard extends StatelessWidget {
                   ),
                 ),
                 // Badges
-                if (listing.viaBroker)
+                if (listing.isBroker)
                   Positioned(
                     left: 12,
                     bottom: 12,
@@ -609,30 +508,9 @@ class _ListingCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (listing.isNew)
-                  Positioned(
-                    right: 12,
-                    bottom: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF17A9D0),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Text(
-                        'New',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                // A "New" badge sat here. `listings` records when a row was
+                // created but nothing says what counts as new, so the badge
+                // would have been a rule invented in this widget.
               ],
             ),
           ),
@@ -650,7 +528,7 @@ class _ListingCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          listing.price,
+                          _price ?? '',
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 20,
@@ -658,10 +536,10 @@ class _ListingCard extends StatelessWidget {
                             color: const Color(0xFF0A1230),
                           ),
                         ),
-                        if (listing.perMonth != null) ...[
+                        if (_isRent && _price != null) ...[
                           const SizedBox(width: 8),
                           Text(
-                            listing.perMonth!,
+                            'לחודש',
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 14,
@@ -673,7 +551,7 @@ class _ListingCard extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      listing.isRent ? 'FOR RENT' : 'FOR SALE',
+                      _isRent ? 'להשכרה' : 'למכירה',
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 12,
@@ -696,7 +574,7 @@ class _ListingCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        listing.address,
+                        listing.address ?? listing.neighborhoodName ?? '',
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 14,
@@ -711,19 +589,29 @@ class _ListingCard extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 // Area / Rooms / Floor
+                // Each figure only where the row has it, rather than a
+                // dash or a nought standing in for one it does not.
                 Row(
                   children: [
-                    _chip(IconsaxPlusLinear.maximize_3, '${listing.area} m²'),
-                    const SizedBox(width: 31),
-                    _chip(
-                      IconsaxPlusLinear.building_3,
-                      '${listing.rooms} Rooms',
-                    ),
-                    const SizedBox(width: 31),
-                    _chip(
-                      IconsaxPlusLinear.building_4,
-                      'Floor ${listing.floor}',
-                    ),
+                    if (listing.sqm != null) ...[
+                      _chip(
+                        IconsaxPlusLinear.maximize_3,
+                        '${listing.sqm} מ"ר',
+                      ),
+                      const SizedBox(width: 31),
+                    ],
+                    if (listing.rooms != null) ...[
+                      _chip(
+                        IconsaxPlusLinear.building_3,
+                        '${_rooms(listing.rooms!)} חדרים',
+                      ),
+                      const SizedBox(width: 31),
+                    ],
+                    if (listing.floor != null)
+                      _chip(
+                        IconsaxPlusLinear.building_4,
+                        'קומה ${listing.floor}',
+                      ),
                   ],
                 ),
               ],
@@ -731,8 +619,13 @@ class _ListingCard extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
+
+  /// Half rooms are normal here, so 3.5 must not print as 3.
+  static String _rooms(double rooms) =>
+      rooms == rooms.roundToDouble() ? '${rooms.toInt()}' : '$rooms';
 
   Widget _chip(IconData icon, String text) {
     return Row(

@@ -235,12 +235,16 @@ class _MobileListingDetailContentState
               if (listing.latitude != null && listing.longitude != null)
                 _buildMapSection(listing),
 
-              if (hood != null &&
-                  (listing.neighborhoodDescription ?? '').trim().isNotEmpty)
+              // Shown whenever the listing is filed under a neighbourhood,
+              // not only when someone has written a paragraph about it. The
+              // heading opens the neighbourhood page, which until now had
+              // nothing anywhere in the app linking to it.
+              if (hood != null)
                 _buildNeighborhoodSection(
                   l,
                   hood,
-                  listing.neighborhoodDescription!,
+                  listing.neighborhoodId,
+                  listing.neighborhoodDescription,
                 ),
 
               _buildNearbyProperties(l, hood),
@@ -715,21 +719,46 @@ class _MobileListingDetailContentState
   // ───────────────────────────────────────────────
   // About Moriah (neighborhood) with fade + Read More
   // ───────────────────────────────────────────────
-  Widget _buildNeighborhoodSection(L l, String name, String about) {
+  Widget _buildNeighborhoodSection(
+    L l,
+    String name,
+    String? neighborhoodId,
+    String? about,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l.aboutNeighborhood(name),
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
+          GestureDetector(
+            onTap: neighborhoodId == null
+                ? null
+                : () => context.push('/neighborhood/$neighborhoodId'),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l.aboutNeighborhood(name),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1F1F1F),
+                    ),
+                  ),
+                ),
+                if (neighborhoodId != null)
+                  const Icon(
+                    IconsaxPlusLinear.arrow_left_2,
+                    size: 18,
+                    color: Color(0xFF123A72),
+                  ),
+              ],
             ),
           ),
+          if (about == null || about.trim().isEmpty)
+            const SizedBox.shrink()
+          else ...[
           const SizedBox(height: 12),
           Stack(
             children: [
@@ -798,6 +827,7 @@ class _MobileListingDetailContentState
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

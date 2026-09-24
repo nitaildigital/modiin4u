@@ -47,6 +47,10 @@ class Business {
   final String? email;
   final String address;
   final String neighborhood;
+
+  /// The joined row's id, so a screen can link to the neighbourhood page.
+  /// Null where the business is not filed under one.
+  final String? neighborhoodId;
   final double latitude;
   final double longitude;
   final String? imageUrl;
@@ -82,6 +86,7 @@ class Business {
     this.email,
     required this.address,
     required this.neighborhood,
+    this.neighborhoodId,
     required this.latitude,
     required this.longitude,
     this.imageUrl,
@@ -224,6 +229,9 @@ class Business {
     final neighborhoodName = joinedNeighborhood is Map<String, dynamic>
         ? (joinedNeighborhood['name'] as String? ?? '')
         : (json['neighborhood'] as String? ?? '');
+    final neighborhoodId = joinedNeighborhood is Map<String, dynamic>
+        ? joinedNeighborhood['id'] as String?
+        : json['neighborhood_id'] as String?;
 
     final joinedHours = json['business_hours'];
 
@@ -243,6 +251,7 @@ class Business {
       email: json['email'] as String?,
       address: (json['address'] as String?) ?? '',
       neighborhood: neighborhoodName,
+      neighborhoodId: neighborhoodId,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
       imageUrl: (json['cover_url'] ?? json['og_image_url']) as String?,
