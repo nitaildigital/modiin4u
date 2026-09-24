@@ -335,32 +335,45 @@ class _BusinessDetailContentState
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          // Star + rating
-          const Icon(
-            IconsaxPlusBold.star_1,
-            size: 16,
-            color: Color(0xFFFFC107),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            business.rating.toStringAsFixed(1),
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
+          // A business nobody has reviewed says so, rather than showing a gold
+          // star beside "0.0 (0)" — which reads as a bad score, not as none.
+          if (business.reviewCount == 0)
+            Text(
+              L.of(context).notRatedYet,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF6D6D6D),
+              ),
+            )
+          else ...[
+            const Icon(
+              IconsaxPlusBold.star_1,
+              size: 16,
+              color: Color(0xFFFFC107),
             ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '(${business.reviewCount})',
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF6D6D6D),
+            const SizedBox(width: 6),
+            Text(
+              business.rating.toStringAsFixed(1),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
             ),
-          ),
+            const SizedBox(width: 4),
+            Text(
+              '(${business.reviewCount})',
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF6D6D6D),
+              ),
+            ),
+          ],
 
           // Open or closed, but only when the business has hours on record.
           if (business.hours.isNotEmpty) ...[
@@ -1190,7 +1203,7 @@ class _BusinessDetailContentState
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Share your recommendation with the Modi\'in community.',
+                          L.of(context).shareRecommendation,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 12,

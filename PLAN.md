@@ -93,6 +93,7 @@ These were never converted. Each shows the same fiction to every user.
 | **Real-estate map** | 14 invented pins; every "View Full Details" pushes `/listing/1`, which cannot resolve | `realestate/screens/realestate_map_screen.dart:25` |
 | **Neighbourhood detail** | Takes a `neighborhoodId` and never uses it — every neighbourhood renders as "Moriah" with invented counts | `realestate/screens/neighborhood_detail_screen.dart:39` |
 | **Restaurants map** | 24 invented places; details push `/business/restaurant_<hashCode>` | `restaurants/screens/restaurants_map_screen.dart:45` |
+| **Unearned ratings, on screen** | Business cards, restaurant cards and the business page all printed a gold star beside "0.0 (0)" — truthful, but it reads as a bad score rather than as no score. The restaurant card also carried "👁 0 Views", in English, against a column the table does not have | Reads "אין דירוג עדיין" until a review earns a score; the views figure is gone |
 | **Events map** | 14 invented events; details push `/event/map_<hashCode>` | `events/screens/events_map_screen.dart:45` |
 | **Home — "Deal Near You" / "Apartment Near You"** | Hardcoded tiles routing to `/deal/demo_0`, `/listing/demo_N` | `home/screens/home_screen.dart:390,455` |
 
@@ -177,6 +178,7 @@ a device against the live database, with every test row deleted afterwards.
 | **Municipal** | Fixed Shabbat date, a "High availability" parking claim, eight tiles that did nothing | Shabbat computed; claim removed; dead tiles greyed "coming soon" |
 | **Admin** | No section for `challenges` or `real_estate_agents`; creating a listing always failed (wrote a column that does not exist) | Both sections added; editor fixed; approve/reject queue for resident listings |
 | **Sorting, everywhere** | `.order()` in postgrest-dart defaults to descending; 17 calls assumed ascending | All explicit |
+| **Restaurants map** | 24 invented places — several addressed in Tel Aviv and Jerusalem, sharing a handful of copied ratings; "View Full Details" pushed `/business/restaurant_<hashCode>`; the list's "View on Map" went to `/map`, so the screen had no way in. The desktop layout of the same route carried 8 more, every row and pin pushing `/restaurant/1`, three of its five cuisine filters naming categories the database does not have, a "Sort by" chevron with no handler, and a "Contact" button with an empty one | 60 real food businesses from `businesses`, at their own coordinates, coloured by category; search filters; rating shown only where reviews earned it; cuisines come from the admin's sub-categories; sort works; Contact dials the number and is not drawn without one; every click opens the business it names |
 
 ### Migrations added: 00021–00025
 
@@ -185,8 +187,6 @@ count trigger, review rating rollup. All applied.
 
 ### Still outstanding
 
-- **Restaurants map** — 24 invented places; details push
-  `/business/restaurant_<hashCode>`; the entry point goes to `/map` instead.
 - **Neighbourhood detail** — every neighbourhood renders as "Moriah";
   unreachable on mobile.
 - **Help & Support** — entirely hardcoded English; "Contact Us" is an empty
@@ -196,6 +196,15 @@ count trigger, review rating rollup. All applied.
 - **Google sign-in** — an empty TODO on the first screen; no OAuth anywhere.
 - **~300 English strings** on mobile screens, ~600 on `web_*`.
 - **Games and Community** — placeholders, waiting on a product decision.
+- **"Contact Us"** in the web header — still an empty handler, on the same
+  footing as Help & Support above: there is no destination decided yet, and
+  inventing one would be worse than leaving the button plainly unfinished.
+- **Dine-in and take-away filters** — dropped from the restaurants map.
+  `has_takeaway` is false on all 220 rows and there is no dine-in column, so
+  one checkbox would have emptied the list and the other narrowed nothing.
+  They come back when the data does.
+- **The heart on a web listing row** — local `setState`; favourites are live
+  elsewhere in the app but this row is not wired to them.
 
 ---
 

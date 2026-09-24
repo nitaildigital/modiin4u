@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/skeleton.dart';
 
 class BusinessCard extends StatelessWidget {
@@ -85,26 +86,44 @@ class BusinessCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.star, size: 16, color: AppColors.gold),
-                        const SizedBox(width: 3),
-                        Text(
-                          rating.toStringAsFixed(1),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.textPrimary,
+                        // A business nobody has reviewed says so. It used to
+                        // show a gold star beside "0.0 (0)", which reads as a
+                        // bad score rather than as no score.
+                        if (reviewCount == 0)
+                          Text(
+                            L.of(context).notRatedYet,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.grayLight,
+                            ),
+                          )
+                        else ...[
+                          const Icon(
+                            Icons.star,
+                            size: 16,
+                            color: AppColors.gold,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '($reviewCount)',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 12,
-                            color: AppColors.grayLight,
+                          const SizedBox(width: 3),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: context.textPrimary,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '($reviewCount)',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.grayLight,
+                            ),
+                          ),
+                        ],
                         if (kosher != null) ...[
                           const SizedBox(width: 10),
                           Container(

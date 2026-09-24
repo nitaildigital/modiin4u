@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+
+import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../providers/restaurant_providers.dart';
 import 'web_restaurants_map_screen.dart';
 
 /// Restaurants map view — responsive wrapper.
@@ -24,225 +30,56 @@ class RestaurantsMapScreen extends StatelessWidget {
   }
 }
 
-/// Mobile layout – shows restaurant, coffee shop, and bar pins on
-/// the map with a search bar, tappable popup cards, and a "View as List" toggle.
-class _MobileRestaurantsMapContent extends StatefulWidget {
+/// Mobile layout — the city's food businesses as pins, with a search box,
+/// a tappable card per pin, and a "View as List" toggle.
+class _MobileRestaurantsMapContent extends ConsumerStatefulWidget {
   const _MobileRestaurantsMapContent();
 
   @override
-  State<_MobileRestaurantsMapContent> createState() =>
+  ConsumerState<_MobileRestaurantsMapContent> createState() =>
       _MobileRestaurantsMapContentState();
 }
 
 class _MobileRestaurantsMapContentState
-    extends State<_MobileRestaurantsMapContent> {
-  int? _selectedPin;
+    extends ConsumerState<_MobileRestaurantsMapContent> {
+  /// The selected place by id, not by index: the list changes as the search
+  /// narrows it, so an index would point at a different place afterwards.
+  String? _selectedId;
 
-  // Modi'in center
+  final _searchController = TextEditingController();
+  Timer? _debounce;
+
+  // Modi'in centre.
   static const _center = LatLng(31.8928, 35.0104);
 
-  // ── Restaurant pins (green #31AC4E) ──
-  static final _restaurants = [
-    _RestaurantPin(
-      'Shipudey Hatikva',
-      'Israeli Dining',
-      '3 Yona Hanavi Street, Modiin',
-      4.8, 254, 428,
-      _PinType.restaurant,
-      const LatLng(31.8960, 35.0080),
-    ),
-    _RestaurantPin(
-      'Pasta Basta',
-      'Dining',
-      'HaOmanut St 2, Modiin',
-      4.8, 254, 428,
-      _PinType.restaurant,
-      const LatLng(31.8945, 35.0120),
-    ),
-    _RestaurantPin(
-      'Sushi Bar Modiin',
-      'Dining',
-      '21 Sderot Modi\'in',
-      4.8, 254, 428,
-      _PinType.restaurant,
-      const LatLng(31.8910, 35.0060),
-    ),
-    _RestaurantPin(
-      'Japan Japan Modiin',
-      'Restaurant',
-      'Main St 15, Tel Aviv',
-      4.5, 200, 250,
-      _PinType.restaurant,
-      const LatLng(31.8890, 35.0140),
-    ),
-    _RestaurantPin(
-      'Sea & Spice',
-      'Restaurant',
-      'HaNahalım St 8, Modiin',
-      4.5, 200, 250,
-      _PinType.restaurant,
-      const LatLng(31.8975, 35.0050),
-    ),
-    _RestaurantPin(
-      'Orta Abylai Khan',
-      'Restaurant',
-      'Main St 15, Tel Aviv',
-      4.5, 200, 250,
-      _PinType.restaurant,
-      const LatLng(31.8930, 35.0180),
-    ),
-    _RestaurantPin(
-      'Japonica Dostyk',
-      'Restaurant',
-      'Derech Modiin 6, Modiin',
-      4.5, 200, 250,
-      _PinType.restaurant,
-      const LatLng(31.8870, 35.0100),
-    ),
-    _RestaurantPin(
-      'Mangal Doner',
-      'Restaurant',
-      'HaNahalım St 8, Modiin',
-      4.5, 200, 250,
-      _PinType.restaurant,
-      const LatLng(31.8955, 35.0160),
-    ),
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
 
-    // ── Coffee shop pins (blue #006BF6) ──
-    _RestaurantPin(
-      'Fresh Coffee',
-      'Israeli Cafe',
-      'HaNahalım St 8, Modiin',
-      4.8, 128, 187,
-      _PinType.coffee,
-      const LatLng(31.8920, 35.0040),
-    ),
-    _RestaurantPin(
-      '3:16 John Caffe',
-      'Cafe',
-      'HaMaccabim, Modi\'in',
-      4.8, 345, 745,
-      _PinType.coffee,
-      const LatLng(31.8985, 35.0130),
-    ),
-    _RestaurantPin(
-      'Coffee Station',
-      'Cafe',
-      'HaMaccabim, Modi\'in',
-      4.8, 345, 745,
-      _PinType.coffee,
-      const LatLng(31.8905, 35.0190),
-    ),
-    _RestaurantPin(
-      'Landwer Café',
-      'Cafe',
-      'HaNahalım St 8, Modiin',
-      4.5, 200, 250,
-      _PinType.coffee,
-      const LatLng(31.8940, 35.0020),
-    ),
-    _RestaurantPin(
-      'Aroma Espresso',
-      'Cafe',
-      'Azrieli Modiin, Modiin',
-      4.6, 320, 410,
-      _PinType.coffee,
-      const LatLng(31.8965, 35.0200),
-    ),
-    _RestaurantPin(
-      'Cofix',
-      'Cafe',
-      'HaMaccabim Blvd, Modiin',
-      4.3, 180, 290,
-      _PinType.coffee,
-      const LatLng(31.8880, 35.0070),
-    ),
-    _RestaurantPin(
-      'Cafe Cafe',
-      'Cafe',
-      'Yigal Alon St, Modiin',
-      4.4, 210, 330,
-      _PinType.coffee,
-      const LatLng(31.8950, 35.0095),
-    ),
-    _RestaurantPin(
-      'Greg Café',
-      'Cafe',
-      'Emek Ayalon Mall, Modiin',
-      4.5, 275, 380,
-      _PinType.coffee,
-      const LatLng(31.8935, 35.0150),
-    ),
-
-    // ── Bar pins (red #CC0001) ──
-    _RestaurantPin(
-      'Jim\'s Bar',
-      'Bar',
-      'HaNahalım St 8, Modiin',
-      4.8, 128, 187,
-      _PinType.bar,
-      const LatLng(31.8942, 35.0055),
-    ),
-    _RestaurantPin(
-      'The Duke',
-      'Bar',
-      'Main St 15, Tel Aviv',
-      4.5, 200, 250,
-      _PinType.bar,
-      const LatLng(31.8898, 35.0115),
-    ),
-    _RestaurantPin(
-      'The Gourmet Burger',
-      'Bar',
-      'King St 3, Jerusalem',
-      4.7, 300, 320,
-      _PinType.bar,
-      const LatLng(31.8970, 35.0175),
-    ),
-    _RestaurantPin(
-      'Perry\'s Bar',
-      'Bar',
-      'Derech Modiin 6, Modiin',
-      4.5, 200, 250,
-      _PinType.bar,
-      const LatLng(31.8915, 35.0030),
-    ),
-    _RestaurantPin(
-      'Murphy\'s Pub',
-      'Bar',
-      'Azrieli Modiin, Modiin',
-      4.3, 150, 190,
-      _PinType.bar,
-      const LatLng(31.8958, 35.0140),
-    ),
-    _RestaurantPin(
-      'Whiskey Bar',
-      'Bar',
-      'Emek Ayalon, Modiin',
-      4.6, 180, 230,
-      _PinType.bar,
-      const LatLng(31.8928, 35.0088),
-    ),
-    _RestaurantPin(
-      'The Tap House',
-      'Bar',
-      'HaPardes St, Modiin',
-      4.4, 160, 210,
-      _PinType.bar,
-      const LatLng(31.8882, 35.0165),
-    ),
-    _RestaurantPin(
-      'Beerhouse',
-      'Bar',
-      'Shimshon Blvd, Modiin',
-      4.5, 220, 280,
-      _PinType.bar,
-      const LatLng(31.8973, 35.0045),
-    ),
-  ];
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      ref.read(restaurantMapSearchProvider.notifier).state = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    // A pin needs coordinates, so the map can show fewer places than the list
+    // does.
+    final places =
+        (ref.watch(filteredFoodMapPlacesProvider).valueOrNull ??
+                const <FoodPlace>[])
+            .where((p) => p.hasLocation)
+            .toList();
+    final selected = places
+        .where((p) => p.business.id == _selectedId)
+        .firstOrNull;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -250,14 +87,11 @@ class _MobileRestaurantsMapContentState
           constraints: const BoxConstraints(maxWidth: 430),
           child: Stack(
             children: [
-              // ═══════════════════════════════════
-              // Map
-              // ═══════════════════════════════════
               FlutterMap(
                 options: MapOptions(
                   initialCenter: _center,
                   initialZoom: 14.5,
-                  onTap: (_, _) => setState(() => _selectedPin = null),
+                  onTap: (_, _) => setState(() => _selectedId = null),
                 ),
                 children: [
                   TileLayer(
@@ -266,29 +100,32 @@ class _MobileRestaurantsMapContentState
                     userAgentPackageName: 'com.modiin4u.app',
                   ),
                   MarkerLayer(
-                    markers: List.generate(_restaurants.length, (i) {
-                      final r = _restaurants[i];
-                      final isSelected = _selectedPin == i;
-                      return Marker(
-                        point: r.position,
-                        width: 40,
-                        height: 40,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedPin = i),
-                          child: _MapPin(
-                            type: r.type,
-                            isSelected: isSelected,
+                    markers: [
+                      for (final place in places)
+                        Marker(
+                          point: LatLng(
+                            place.business.latitude,
+                            place.business.longitude,
+                          ),
+                          width: 40,
+                          height: 40,
+                          child: GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedId = place.business.id),
+                            child: _MapPin(
+                              isCafe: place.isCafe,
+                              isSelected: _selectedId == place.business.id,
+                            ),
                           ),
                         ),
-                      );
-                    }),
+                    ],
                   ),
                 ],
               ),
 
-              // ═══════════════════════════════════
-              // Search bar
-              // ═══════════════════════════════════
+              // ── Search ──
+              //
+              // A `Text` before, so nothing could be typed.
               Positioned(
                 top: 58,
                 left: 16,
@@ -317,42 +154,84 @@ class _MobileRestaurantsMapContentState
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          'Search restaurant, cuisine, or location...',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF6D6D6D),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: l.searchPlaces,
+                            hintStyle: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              color: const Color(0xFF6D6D6D),
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
                           ),
                         ),
-                      ),
-                      const Icon(
-                        IconsaxPlusLinear.setting_4,
-                        size: 20,
-                        color: Color(0xFF123A72),
                       ),
                     ],
                   ),
                 ),
               ),
 
-              // ═══════════════════════════════════
-              // Selected pin card overlay
-              // ═══════════════════════════════════
-              if (_selectedPin != null)
+              // Said plainly rather than left as an empty map, which reads as
+              // a failure to load.
+              if (places.isEmpty)
+                Positioned(
+                  top: 122,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      // Two different emptinesses: nothing matched what was
+                      // typed, or nothing in the city has coordinates. Saying
+                      // the second when the first is true sounds like a fault.
+                      // The provider, not the controller: it is what the
+                      // list was actually filtered by, and it is what this
+                      // rebuild is watching.
+                      ref.watch(restaurantMapSearchProvider).trim().isEmpty
+                          ? l.noPlacesOnMap
+                          : l.noPlacesMatch,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (selected != null)
                 Positioned(
                   left: 12,
                   right: 12,
                   bottom: 80,
-                  child: _RestaurantCard(
-                    restaurant: _restaurants[_selectedPin!],
-                    onClose: () => setState(() => _selectedPin = null),
+                  child: _PlaceCard(
+                    place: selected,
+                    onClose: () => setState(() => _selectedId = null),
                   ),
                 ),
 
-              // ═══════════════════════════════════
-              // "View as List" floating button
-              // ═══════════════════════════════════
+              // ── "View as List" ──
               Positioned(
                 left: 0,
                 right: 0,
@@ -362,7 +241,9 @@ class _MobileRestaurantsMapContentState
                     onTap: () => context.push('/restaurants'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(50),
@@ -384,8 +265,9 @@ class _MobileRestaurantsMapContentState
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'View as List',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            l.viewAsList,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF0A1230),
@@ -406,53 +288,16 @@ class _MobileRestaurantsMapContentState
 }
 
 // ═══════════════════════════════════════════════
-// Data model
-// ═══════════════════════════════════════════════
-enum _PinType { restaurant, coffee, bar }
-
-class _RestaurantPin {
-  final String name;
-  final String category;
-  final String address;
-  final double rating;
-  final int reviews;
-  final int views;
-  final _PinType type;
-  final LatLng position;
-
-  const _RestaurantPin(
-    this.name,
-    this.category,
-    this.address,
-    this.rating,
-    this.reviews,
-    this.views,
-    this.type,
-    this.position,
-  );
-}
-
-// ═══════════════════════════════════════════════
-// Map pin widget – white circle + colored inner circle + icon
-// Green = restaurant, Blue = coffee, Red = bar
+// Map pin — white circle, coloured inner circle, icon.
+//
+// Green for a restaurant, blue for a café. The design also has a red bar pin,
+// but there is no bar category in the database, so nothing can fill it.
 // ═══════════════════════════════════════════════
 class _MapPin extends StatelessWidget {
-  final _PinType type;
+  final bool isCafe;
   final bool isSelected;
 
-  const _MapPin({required this.type, this.isSelected = false});
-
-  Color get _color => switch (type) {
-        _PinType.restaurant => const Color(0xFF31AC4E),
-        _PinType.coffee => const Color(0xFF006BF6),
-        _PinType.bar => const Color(0xFFCC0001),
-      };
-
-  IconData get _icon => switch (type) {
-        _PinType.restaurant => IconsaxPlusBold.verify,
-        _PinType.coffee => IconsaxPlusBold.coffee,
-        _PinType.bar => IconsaxPlusBold.cup,
-      };
+  const _MapPin({required this.isCafe, this.isSelected = false});
 
   @override
   Widget build(BuildContext context) {
@@ -478,10 +323,14 @@ class _MapPin extends StatelessWidget {
           width: 22,
           height: 22,
           decoration: BoxDecoration(
-            color: _color,
+            color: isCafe ? const Color(0xFF006BF6) : const Color(0xFF31AC4E),
             shape: BoxShape.circle,
           ),
-          child: Icon(_icon, size: 12, color: Colors.white),
+          child: Icon(
+            isCafe ? IconsaxPlusBold.coffee : IconsaxPlusBold.reserve,
+            size: 12,
+            color: Colors.white,
+          ),
         ),
       ),
     );
@@ -489,19 +338,19 @@ class _MapPin extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════
-// Restaurant popup card (horizontal layout: image + info)
+// The card for the selected pin.
 // ═══════════════════════════════════════════════
-class _RestaurantCard extends StatelessWidget {
-  final _RestaurantPin restaurant;
+class _PlaceCard extends StatelessWidget {
+  final FoodPlace place;
   final VoidCallback onClose;
 
-  const _RestaurantCard({
-    required this.restaurant,
-    required this.onClose,
-  });
+  const _PlaceCard({required this.place, required this.onClose});
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final business = place.business;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -518,32 +367,20 @@ class _RestaurantCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Top row: image + info
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image placeholder
-              Container(
+              SizedBox(
                 width: 120,
                 height: 140,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                  ),
-                ),
                 child: Stack(
                   children: [
-                    Center(
-                      child: Icon(
-                        IconsaxPlusBold.reserve,
-                        size: 32,
-                        color: Colors.white.withValues(alpha: 0.15),
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: _CoverImage(url: business.imageUrl),
                       ),
                     ),
-                    // Close button
                     Positioned(
                       right: 4,
                       top: 4,
@@ -556,8 +393,11 @@ class _RestaurantCard extends StatelessWidget {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close,
-                              size: 14, color: Color(0xFF3D3D3D)),
+                          child: const Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Color(0xFF3D3D3D),
+                          ),
                         ),
                       ),
                     ),
@@ -566,17 +406,16 @@ class _RestaurantCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
 
-              // Info column
               Expanded(
                 child: SizedBox(
                   height: 140,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Name
                       Text(
-                        restaurant.name,
-                        style: TextStyle(fontFamily: AppFonts.rubik, 
+                        business.name,
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           height: 25 / 20,
@@ -587,90 +426,77 @@ class _RestaurantCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
 
-                      // Category
                       Text(
-                        restaurant.category,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        place.categoryName,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF5F5E5A),
                         ),
                       ),
-                      const SizedBox(height: 11),
 
-                      // Address
-                      Row(
-                        children: [
-                          const Icon(IconsaxPlusBold.location,
-                              size: 14, color: Color(0xFF17A9D0)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              restaurant.address,
-                              style: TextStyle(fontFamily: AppFonts.inter, 
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                color: const Color(0xFF5F5E5A),
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                      if (business.address.isNotEmpty) ...[
+                        const SizedBox(height: 11),
+                        Row(
+                          children: [
+                            const Icon(
+                              IconsaxPlusBold.location,
+                              size: 14,
+                              color: Color(0xFF17A9D0),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                business.address,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: const Color(0xFF5F5E5A),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const Spacer(),
 
-                      // Rating
-                      Row(
-                        children: [
-                          const Icon(IconsaxPlusBold.star_1,
-                              size: 16, color: Color(0xFFFFC107)),
-                          const SizedBox(width: 8),
-                          Text(
-                            restaurant.rating.toString(),
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                      // Only where reviews have earned one. The card used to
+                      // print a rating and a review count for every place,
+                      // copied between them, and a "Views" figure the
+                      // businesses table has no column for.
+                      if (business.rating > 0)
+                        Row(
+                          children: [
+                            const Icon(
+                              IconsaxPlusBold.star_1,
+                              size: 16,
+                              color: Color(0xFFFFC107),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '(${restaurant.reviews})',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF6D6D6D),
+                            const SizedBox(width: 8),
+                            Text(
+                              business.rating.toStringAsFixed(1),
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Views
-                      Row(
-                        children: [
-                          const Icon(IconsaxPlusLinear.eye,
-                              size: 16, color: Color(0xFF0A1230)),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${restaurant.views}',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                            const SizedBox(width: 8),
+                            Text(
+                              '(${business.reviewCount})',
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: const Color(0xFF6D6D6D),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Views',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF6D6D6D),
-                            ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
@@ -679,10 +505,10 @@ class _RestaurantCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // "View Full Details" button
           GestureDetector(
-            onTap: () => context.push(
-                '/business/restaurant_${restaurant.name.hashCode}'),
+            // The real row, so the detail page can load it. This used to push
+            // `/business/restaurant_<hashCode>`, which matched nothing.
+            onTap: () => context.push('/business/${business.id}'),
             child: Container(
               width: double.infinity,
               height: 44,
@@ -695,8 +521,9 @@ class _RestaurantCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'View Full Details',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      l.viewFullDetails,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -715,6 +542,40 @@ class _RestaurantCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The cover photo, or the brand gradient where a business has none — which
+/// is most of them.
+class _CoverImage extends StatelessWidget {
+  final String? url;
+
+  const _CoverImage({required this.url});
+
+  static const _fallback = DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+      ),
+    ),
+    child: Center(
+      child: Icon(IconsaxPlusBold.reserve, size: 32, color: Colors.white24),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final src = url;
+    if (src == null || src.isEmpty) return _fallback;
+    return Image.network(
+      src,
+      fit: BoxFit.cover,
+      // A broken link should look like a place with no photo, not like an
+      // error.
+      errorBuilder: (_, _, _) => _fallback,
     );
   }
 }

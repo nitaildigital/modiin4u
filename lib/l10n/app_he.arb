@@ -551,5 +551,11 @@
   "changePasswordRow": "שינוי סיסמה",
   "searchEvents": "חיפוש אירועים, הופעות ופעילויות",
   "noEventsMatch": "לא נמצאו אירועים מתאימים",
-  "noEventsOnMap": "אין אירועים עם מיקום על המפה"
+  "noEventsOnMap": "אין אירועים עם מיקום על המפה",
+  "searchPlaces": "חיפוש מסעדה, מטבח או מקום",
+  "noPlacesOnMap": "אין מקומות עם מיקום על המפה",
+  "noPlacesMatch": "לא נמצאו מקומות מתאימים",
+  "viewAsList": "תצוגת רשימה",
+  "notRatedYet": "אין דירוג עדיין",
+  "shareRecommendation": "שתפו את ההמלצה שלכם עם קהילת מודיעין."
 }

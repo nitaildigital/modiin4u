@@ -551,5 +551,11 @@
   "changePasswordRow": "Change password",
   "searchEvents": "Search events, shows and activities",
   "noEventsMatch": "No events match your search",
-  "noEventsOnMap": "No events have a location on the map yet"
+  "noEventsOnMap": "No events have a location on the map yet",
+  "searchPlaces": "Search a restaurant, cuisine or place",
+  "noPlacesOnMap": "No places have a location on the map yet",
+  "noPlacesMatch": "No places match your search",
+  "viewAsList": "View as List",
+  "notRatedYet": "Not rated yet",
+  "shareRecommendation": "Share your recommendation with the Modi'in community."
 }

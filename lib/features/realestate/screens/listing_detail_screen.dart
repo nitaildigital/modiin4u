@@ -985,29 +985,6 @@ class _SpecCard extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════
-// Nearby listing data model
-// ═══════════════════════════════════════════════
-class _NearbyListing {
-  final String price;
-  final String address;
-  final int area;
-  final int rooms;
-  final int floor;
-  final bool isNew;
-  final bool viaBroker;
-
-  const _NearbyListing(
-    this.price,
-    this.address,
-    this.area,
-    this.rooms,
-    this.floor,
-    this.isNew,
-    this.viaBroker,
-  );
-}
-
-// ═══════════════════════════════════════════════
 // Nearby listing card
 // ═══════════════════════════════════════════════
 class _NearbyListingCard extends StatelessWidget {

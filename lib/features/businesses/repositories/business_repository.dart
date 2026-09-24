@@ -70,6 +70,19 @@ class BusinessRepository {
     return counts;
   }
 
+  /// Every business-to-category link, as `{entity_id, category_id}`.
+  ///
+  /// One query rather than one per category: the map needs to know which
+  /// category each pin belongs to, and there are only a couple of hundred
+  /// links in total.
+  Future<List<Map<String, dynamic>>> fetchCategoryLinks() async {
+    final data = await _client
+        .from('entity_categories')
+        .select('entity_id, category_id')
+        .eq('entity_type', 'business');
+    return List<Map<String, dynamic>>.from(data);
+  }
+
   Future<Map<String, dynamic>> fetchById(String id) async {
     final data = await _client
         .from('businesses')

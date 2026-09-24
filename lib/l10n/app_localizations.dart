@@ -2592,6 +2592,42 @@ abstract class L {
   /// In he, this message translates to:
   /// **'אין אירועים עם מיקום על המפה'**
   String get noEventsOnMap;
+
+  /// No description provided for @searchPlaces.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש מסעדה, מטבח או מקום'**
+  String get searchPlaces;
+
+  /// No description provided for @noPlacesOnMap.
+  ///
+  /// In he, this message translates to:
+  /// **'אין מקומות עם מיקום על המפה'**
+  String get noPlacesOnMap;
+
+  /// No description provided for @noPlacesMatch.
+  ///
+  /// In he, this message translates to:
+  /// **'לא נמצאו מקומות מתאימים'**
+  String get noPlacesMatch;
+
+  /// No description provided for @viewAsList.
+  ///
+  /// In he, this message translates to:
+  /// **'תצוגת רשימה'**
+  String get viewAsList;
+
+  /// No description provided for @notRatedYet.
+  ///
+  /// In he, this message translates to:
+  /// **'אין דירוג עדיין'**
+  String get notRatedYet;
+
+  /// No description provided for @shareRecommendation.
+  ///
+  /// In he, this message translates to:
+  /// **'שתפו את ההמלצה שלכם עם קהילת מודיעין.'**
+  String get shareRecommendation;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

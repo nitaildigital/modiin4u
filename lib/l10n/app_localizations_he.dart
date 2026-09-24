@@ -1306,4 +1306,22 @@ class LHe extends L {
 
   @override
   String get noEventsOnMap => 'אין אירועים עם מיקום על המפה';
+
+  @override
+  String get searchPlaces => 'חיפוש מסעדה, מטבח או מקום';
+
+  @override
+  String get noPlacesOnMap => 'אין מקומות עם מיקום על המפה';
+
+  @override
+  String get noPlacesMatch => 'לא נמצאו מקומות מתאימים';
+
+  @override
+  String get viewAsList => 'תצוגת רשימה';
+
+  @override
+  String get notRatedYet => 'אין דירוג עדיין';
+
+  @override
+  String get shareRecommendation => 'שתפו את ההמלצה שלכם עם קהילת מודיעין.';
 }

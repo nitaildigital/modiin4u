@@ -64,6 +64,10 @@ class BusinessCategory {
   final String id;
   final String name;
   final String slug;
+
+  /// The category this one sits under, or null for a top-level one. Kept on
+  /// the model so callers can walk the tree without going back to the raw row.
+  final String? parentId;
   final int sortOrder;
   final String? imageUrl;
 
@@ -71,6 +75,7 @@ class BusinessCategory {
     required this.id,
     required this.name,
     required this.slug,
+    this.parentId,
     this.sortOrder = 0,
     this.imageUrl,
   });
@@ -80,6 +85,7 @@ class BusinessCategory {
       id: json['id'] as String,
       name: (json['name'] as String?) ?? '',
       slug: (json['slug'] as String?) ?? '',
+      parentId: json['parent_id'] as String?,
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
       imageUrl: json['image_url'] as String?,
     );

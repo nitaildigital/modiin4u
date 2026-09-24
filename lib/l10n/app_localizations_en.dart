@@ -1320,4 +1320,23 @@ class LEn extends L {
 
   @override
   String get noEventsOnMap => 'No events have a location on the map yet';
+
+  @override
+  String get searchPlaces => 'Search a restaurant, cuisine or place';
+
+  @override
+  String get noPlacesOnMap => 'No places have a location on the map yet';
+
+  @override
+  String get noPlacesMatch => 'No places match your search';
+
+  @override
+  String get viewAsList => 'View as List';
+
+  @override
+  String get notRatedYet => 'Not rated yet';
+
+  @override
+  String get shareRecommendation =>
+      'Share your recommendation with the Modi\'in community.';
 }

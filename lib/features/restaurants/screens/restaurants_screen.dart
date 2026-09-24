@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
@@ -146,7 +147,9 @@ class _MobileRestaurantsContentState
                   bottom: 16,
                   child: Center(
                     child: GestureDetector(
-                      onTap: () => context.push('/map'),
+                      // The food map, not the general city map. This went to
+                      // `/map`, which left `/restaurants-map` with no way in.
+                      onTap: () => context.push('/restaurants-map'),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -546,7 +549,6 @@ class _Place {
   final String address;
   final double rating;
   final int reviews;
-  final int views;
   final bool isKosher;
   final String? imageUrl;
   final _BadgeColor badgeColor = _BadgeColor.green;
@@ -557,8 +559,7 @@ class _Place {
     this.type,
     this.address,
     this.rating,
-    this.reviews,
-    this.views, {
+    this.reviews, {
     this.isKosher = false,
     this.imageUrl,
   });
@@ -570,7 +571,6 @@ class _Place {
     [b.address, b.neighborhood].where((s) => s.isNotEmpty).join(', '),
     b.rating,
     b.reviewCount,
-    0,
     isKosher: b.kosherLabel != null,
     imageUrl: b.imageUrl,
   );
@@ -833,65 +833,49 @@ class _PlaceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Rating + views row
-                Row(
-                  children: [
-                    // Star rating
-                    const Icon(
-                      IconsaxPlusBold.star_1,
-                      size: 16,
-                      color: Color(0xFFFFC107),
+                // A business nobody has reviewed says so, rather than
+                // showing a gold star beside "0.0 (0)". The row also carried
+                // "👁 0 Views" — in English, always zero, against no column.
+                if (place.reviews == 0)
+                  Text(
+                    L.of(context).notRatedYet,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF6D6D6D),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      place.rating.toString(),
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
+                  )
+                else
+                  Row(
+                    children: [
+                      const Icon(
+                        IconsaxPlusBold.star_1,
+                        size: 16,
+                        color: Color(0xFFFFC107),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '(${place.reviews})',
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF6D6D6D),
+                      const SizedBox(width: 8),
+                      Text(
+                        place.rating.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 40),
-
-                    // Views
-                    const Icon(
-                      IconsaxPlusLinear.eye,
-                      size: 16,
-                      color: Color(0xFF0A1230),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${place.views}',
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
+                      const SizedBox(width: 8),
+                      Text(
+                        '(${place.reviews})',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF6D6D6D),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Views',
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -997,34 +981,46 @@ class _HPlaceCard extends StatelessWidget {
             ),
             const Spacer(),
 
-            // Rating + views/time row
+            // Rating + time row
             Row(
               children: [
-                const Icon(
-                  IconsaxPlusBold.star_1,
-                  size: 16,
-                  color: Color(0xFFFFC107),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  place.rating.toString(),
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                if (place.reviews == 0)
+                  Text(
+                    L.of(context).notRatedYet,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF6D6D6D),
+                    ),
+                  )
+                else ...[
+                  const Icon(
+                    IconsaxPlusBold.star_1,
+                    size: 16,
+                    color: Color(0xFFFFC107),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '(${place.reviews})',
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF6D6D6D),
+                  const SizedBox(width: 8),
+                  Text(
+                    place.rating.toStringAsFixed(1),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '(${place.reviews})',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF6D6D6D),
+                    ),
+                  ),
+                ],
                 const SizedBox(width: 40),
 
                 if (place.views != null) ...[
