@@ -12,13 +12,28 @@
 -- ============================================================
 
 -- ─── 1. Row level security on every public table ───
+--
+-- Only the ones we own. An extension brings its own tables into `public` —
+-- PostGIS puts `spatial_ref_sys` there — and they belong to the extension,
+-- not to us: altering one fails, and it holds reference data with nothing
+-- private in it anyway.
+
 do $$
 declare t record;
 begin
   for t in
-    select tablename from pg_tables where schemaname = 'public'
+    select c.relname
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relkind = 'r'
+      and pg_catalog.pg_get_userbyid(c.relowner) = current_user
+      and not exists (
+        select 1 from pg_depend d
+        where d.objid = c.oid and d.deptype = 'e'
+      )
   loop
-    execute format('alter table public.%I enable row level security', t.tablename);
+    execute format('alter table public.%I enable row level security', t.relname);
   end loop;
 end $$;
 

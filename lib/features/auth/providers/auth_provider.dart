@@ -250,6 +250,10 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       points: (row['points'] as num?)?.toInt() ?? 0,
       isVerifiedResident: row['is_verified'] as bool? ?? false,
       isBanned: row['is_banned'] as bool? ?? false,
+      isBroker: row['is_broker'] as bool? ?? false,
+      familyStatus: row['family_status'] as String?,
+      hasPet: row['has_pet'] as bool?,
+      dateOfBirth: DateTime.tryParse(row['date_of_birth'] as String? ?? ''),
       role: isAdmin ? UserRole.admin : UserRole.user,
       createdAt:
           DateTime.tryParse(row['created_at'] as String? ?? '') ??
@@ -271,6 +275,9 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     String? phone,
     String? neighborhood,
     String? avatarUrl,
+    String? familyStatus,
+    bool? hasPet,
+    DateTime? dateOfBirth,
   }) async {
     final user = _client.auth.currentUser;
     if (user == null) return;
@@ -279,6 +286,10 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       'full_name': ?name,
       'phone': ?phone,
       'avatar_url': ?avatarUrl,
+      'family_status': ?familyStatus,
+      'has_pet': ?hasPet,
+      // A date column, so the time half of the timestamp is dropped.
+      'date_of_birth': ?dateOfBirth?.toIso8601String().split('T').first,
     };
     if (patch.isNotEmpty) {
       await _client.from('profiles').update(patch).eq('id', user.id);
@@ -292,6 +303,9 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       phone: phone,
       neighborhood: neighborhood,
       avatarUrl: avatarUrl,
+      familyStatus: familyStatus,
+      hasPet: hasPet,
+      dateOfBirth: dateOfBirth,
     );
   }
 

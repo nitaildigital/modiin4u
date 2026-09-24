@@ -4,6 +4,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 
 /// Profile screen – dark rounded header with avatar, name & badge,
@@ -12,47 +13,50 @@ class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   // ── Menu items ──
-  static final _menuItems = [
+  //
+  // Built per call rather than held in a static, because the labels come from
+  // the translations and those depend on the locale in effect.
+  static List<_MenuItem> _menuItems(L l) => [
     _MenuItem(
       IconsaxPlusLinear.user,
-      'Personal details',
-      'Edit Profile',
+      l.personalDetails,
+      l.editProfile,
       '/edit-profile',
     ),
     _MenuItem(
       IconsaxPlusLinear.notification,
-      'Manage your alerts',
-      'Notifications',
+      l.manageYourAlerts,
+      l.notifications,
       '/notifications',
     ),
     _MenuItem(
       IconsaxPlusLinear.heart,
-      'Saved places & listings',
-      'Favorites',
+      l.savedPlacesListings,
+      l.favorites,
       '/favorites',
     ),
     _MenuItem(
       IconsaxPlusLinear.setting_2,
-      'App preferences',
-      'Settings',
+      l.appPreferences,
+      l.settings,
       '/settings',
     ),
     _MenuItem(
       IconsaxPlusLinear.activity,
-      'Steps, reviews & rewards',
-      'My Activity',
+      l.stepsReviewsRewards,
+      l.myActivity,
       '/steps',
     ),
     _MenuItem(
       IconsaxPlusLinear.building_3,
-      'Properties you posted',
-      'My Apartments',
+      l.propertiesYouPosted,
+      l.myApartments,
       '/my-apartments',
     ),
     _MenuItem(
       IconsaxPlusLinear.info_circle,
-      'FAQs & contact us',
-      'Help & Support',
+      l.faqsContactUs,
+      l.helpSupport,
       '/help-support',
     ),
   ];
@@ -60,15 +64,16 @@ class ProfileScreen extends ConsumerWidget {
   /// Appended for administrators only. The admin area had no way in from the
   /// app at all; a resident never sees this row, and the gate on the route
   /// turns them away even if they reach it another way.
-  static final _adminItem = _MenuItem(
+  static _MenuItem _adminItem(L l) => _MenuItem(
     IconsaxPlusLinear.setting_4,
-    'Manage content and users',
-    'Control Center',
+    l.manageContentUsers,
+    l.controlCenter,
     '/admin',
   );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = L.of(context);
     final user = ref.watch(authProvider);
 
     // The stored session takes a moment to read back, so a null here does not
@@ -140,7 +145,7 @@ class ProfileScreen extends ConsumerWidget {
                           Expanded(
                             child: Center(
                               child: Text(
-                                'Profile',
+                                l.profile,
                                 style: TextStyle(
                                   fontFamily: AppFonts.inter,
                                   fontSize: 16,
@@ -207,14 +212,16 @@ class ProfileScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            IconsaxPlusLinear.crown_1,
+                          Icon(
+                            user.isBroker
+                                ? IconsaxPlusLinear.crown_1
+                                : IconsaxPlusLinear.user,
                             size: 14,
-                            color: Color(0xFFD47D00),
+                            color: const Color(0xFFD47D00),
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Real Estate Broker',
+                            user.isBroker ? l.realEstateBroker : l.resident,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 12,
@@ -256,7 +263,7 @@ class ProfileScreen extends ConsumerWidget {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Edit Profile',
+                                      l.editProfile,
                                       style: TextStyle(
                                         fontFamily: AppFonts.inter,
                                         fontSize: 16,
@@ -272,7 +279,7 @@ class ProfileScreen extends ConsumerWidget {
 
                             // ── Section header ──
                             Text(
-                              'ACCOUNT',
+                              l.account.toUpperCase(),
                               style: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 12,
@@ -297,10 +304,10 @@ class ProfileScreen extends ConsumerWidget {
                               child: Builder(
                                 builder: (_) {
                                   final items = [
-                                    ..._menuItems,
+                                    ..._menuItems(l),
                                     // Web only: the panel is not in the
                                     // mobile build at all.
-                                    if (kIsWeb && user.isAdmin) _adminItem,
+                                    if (kIsWeb && user.isAdmin) _adminItem(l),
                                   ];
                                   return Column(
                                     children: List.generate(items.length, (i) {

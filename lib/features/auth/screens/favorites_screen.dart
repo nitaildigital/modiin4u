@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/error_retry.dart';
@@ -30,15 +31,17 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   ///
   /// Bars and Apartments are gone from the row: a bar is a business like any
   /// other, and there is no property table to save from.
-  static const _filters = [
-    _FilterDef('All', IconsaxPlusLinear.element_3, null),
-    _FilterDef('Businesses', IconsaxPlusLinear.shop, FavoriteKind.business),
-    _FilterDef('Events', IconsaxPlusLinear.calendar_1, FavoriteKind.event),
-    _FilterDef('News', IconsaxPlusLinear.document_text, FavoriteKind.article),
+  static List<_FilterDef> _filtersFor(L l) => [
+    _FilterDef(l.all, IconsaxPlusLinear.element_3, null),
+    _FilterDef(l.businesses, IconsaxPlusLinear.shop, FavoriteKind.business),
+    _FilterDef(l.events, IconsaxPlusLinear.calendar_1, FavoriteKind.event),
+    _FilterDef(l.news, IconsaxPlusLinear.document_text, FavoriteKind.article),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final filters = _filtersFor(l);
     final signedIn = ref.watch(isLoggedInProvider);
     final entries = ref.watch(favoriteEntriesProvider);
 
@@ -74,7 +77,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Favorites',
+                            l.favorites,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 16,
@@ -98,10 +101,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: _filters.length,
+                    itemCount: filters.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
-                      final f = _filters[index];
+                      final f = filters[index];
                       final active = index == _activeFilter;
                       return GestureDetector(
                         onTap: () => setState(() => _activeFilter = index),
@@ -169,7 +172,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                                 ref.invalidate(favoriteEntriesProvider),
                           ),
                           data: (all) {
-                            final kind = _filters[_activeFilter].kind;
+                            final kind = filters[_activeFilter].kind;
                             final items = kind == null
                                 ? all
                                 : all.where((e) => e.kind == kind).toList();
@@ -197,6 +200,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   /// Signed out there is nothing to show and nothing to fetch, so the screen
   /// says what to do rather than looking like an account with nothing saved.
   Widget _buildSignedOutState() {
+    final l = L.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -216,7 +220,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'Sign in to see your favorites',
+            l.signInToSeeFavorites,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 18,
@@ -239,7 +243,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 32),
               ),
               child: Text(
-                'Sign In',
+                l.signIn,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 14,
@@ -254,6 +258,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l = L.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -273,7 +278,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'No favorites yet',
+            l.noFavoritesYet,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 18,
@@ -283,7 +288,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Save places and items you love',
+            l.saveThingsYouLove,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 14,
@@ -333,10 +338,10 @@ class _FavoriteCard extends StatelessWidget {
     'דצמ',
   ];
 
-  String get _typeName => switch (entry.kind) {
-    FavoriteKind.business => 'Business',
-    FavoriteKind.event => 'Event',
-    FavoriteKind.article => 'News',
+  String _typeName(L l) => switch (entry.kind) {
+    FavoriteKind.business => l.business,
+    FavoriteKind.event => l.event,
+    FavoriteKind.article => l.news,
   };
 
   Color get _typeColor => switch (entry.kind) {
@@ -486,7 +491,7 @@ class _FavoriteCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      _typeName,
+                      _typeName(L.of(context)),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 10,

@@ -375,4 +375,226 @@ class LEn extends L {
   @override
   String get confirmationFailedHint =>
       'The link may have expired or already been used. Try sending it again.';
+
+  @override
+  String get dealsNearYou => 'Deals near you';
+
+  @override
+  String get summerSpecial => 'Summer special';
+
+  @override
+  String get kosher => 'Kosher';
+
+  @override
+  String get forSale => 'For sale';
+
+  @override
+  String get forRent => 'For rent';
+
+  @override
+  String rooms(int count) {
+    return '$count rooms';
+  }
+
+  @override
+  String get monthShortJan => 'Jan';
+
+  @override
+  String get monthShortFeb => 'Feb';
+
+  @override
+  String get monthShortMar => 'Mar';
+
+  @override
+  String get monthShortApr => 'Apr';
+
+  @override
+  String get monthShortMay => 'May';
+
+  @override
+  String get monthShortJun => 'Jun';
+
+  @override
+  String get monthShortJul => 'Jul';
+
+  @override
+  String get monthShortAug => 'Aug';
+
+  @override
+  String get monthShortSep => 'Sep';
+
+  @override
+  String get monthShortOct => 'Oct';
+
+  @override
+  String get monthShortNov => 'Nov';
+
+  @override
+  String get monthShortDec => 'Dec';
+
+  @override
+  String get monthJan => 'January';
+
+  @override
+  String get monthFeb => 'February';
+
+  @override
+  String get monthMar => 'March';
+
+  @override
+  String get monthApr => 'April';
+
+  @override
+  String get monthMay => 'May';
+
+  @override
+  String get monthJun => 'June';
+
+  @override
+  String get monthJul => 'July';
+
+  @override
+  String get monthAug => 'August';
+
+  @override
+  String get monthSep => 'September';
+
+  @override
+  String get monthOct => 'October';
+
+  @override
+  String get monthNov => 'November';
+
+  @override
+  String get monthDec => 'December';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get personalDetails => 'Personal details';
+
+  @override
+  String get editProfile => 'Edit Profile';
+
+  @override
+  String get manageYourAlerts => 'Manage your alerts';
+
+  @override
+  String get savedPlacesListings => 'Saved places & listings';
+
+  @override
+  String get appPreferences => 'App preferences';
+
+  @override
+  String get stepsReviewsRewards => 'Steps, reviews & rewards';
+
+  @override
+  String get myActivity => 'My Activity';
+
+  @override
+  String get propertiesYouPosted => 'Properties you posted';
+
+  @override
+  String get myApartments => 'My Apartments';
+
+  @override
+  String get faqsContactUs => 'FAQs & contact us';
+
+  @override
+  String get helpSupport => 'Help & Support';
+
+  @override
+  String get manageContentUsers => 'Manage content and users';
+
+  @override
+  String get controlCenter => 'Control Center';
+
+  @override
+  String get realEstateBroker => 'Real Estate Broker';
+
+  @override
+  String get resident => 'Resident';
+
+  @override
+  String get businesses => 'Businesses';
+
+  @override
+  String get business => 'Business';
+
+  @override
+  String get event => 'Event';
+
+  @override
+  String get saveThingsYouLove => 'Save places and items you love';
+
+  @override
+  String get fullName => 'Full Name';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get enterYourPhone => 'Enter your phone number';
+
+  @override
+  String get neighborhood => 'Neighborhood';
+
+  @override
+  String get familyStatus => 'Family Status';
+
+  @override
+  String get single => 'Single';
+
+  @override
+  String get married => 'Married';
+
+  @override
+  String get divorced => 'Divorced';
+
+  @override
+  String get widowed => 'Widowed';
+
+  @override
+  String get doYouHaveAPet => 'Do you have a pet?';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String get dateOfBirth => 'Date of Birth';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get chooseStrongNewPassword =>
+      'For your security, please choose a strong new password.';
+
+  @override
+  String get enterCurrentPassword => 'Enter current password';
+
+  @override
+  String get enterNewPassword => 'Enter new password';
+
+  @override
+  String get reEnterNewPassword => 'Re-enter new password';
+
+  @override
+  String get searchForHelp => 'Search for help';
+
+  @override
+  String get stillNeedHelp => 'Still need help?';
+
+  @override
+  String get contactOurSupportTeam => 'Contact our support team';
+
+  @override
+  String get contactUs => 'Contact Us';
+
+  @override
+  String get selectHint => 'Select';
 }

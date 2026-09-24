@@ -24,7 +24,11 @@ values (
   'media',
   true,
   10485760,
-  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  array[
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    -- A few of the business logos are vector.
+    'image/svg+xml'
+  ]
 )
 on conflict (id) do update
   set public             = excluded.public,

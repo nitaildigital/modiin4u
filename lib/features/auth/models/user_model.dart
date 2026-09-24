@@ -12,6 +12,16 @@ class UserModel {
   final List<String> favoriteListingIds;
   final bool isVerifiedResident;
   final bool isBanned;
+
+  /// Chosen at sign-up. A broker gets the badge on their profile and may post
+  /// apartment listings; a resident sees neither.
+  final bool isBroker;
+
+  /// Collected on the edit screen. Null means not answered, which is not the
+  /// same as an answer of "no" — the screen leaves the field blank for it.
+  final String? familyStatus;
+  final bool? hasPet;
+  final DateTime? dateOfBirth;
   final UserRole role;
   final String? ownedBusinessId;
   final DateTime createdAt;
@@ -29,6 +39,10 @@ class UserModel {
     this.favoriteListingIds = const [],
     this.isVerifiedResident = false,
     this.isBanned = false,
+    this.isBroker = false,
+    this.familyStatus,
+    this.hasPet,
+    this.dateOfBirth,
     this.role = UserRole.user,
     this.ownedBusinessId,
     required this.createdAt,
@@ -46,6 +60,10 @@ class UserModel {
     List<String>? favoriteListingIds,
     bool? isVerifiedResident,
     bool? isBanned,
+    bool? isBroker,
+    String? familyStatus,
+    bool? hasPet,
+    DateTime? dateOfBirth,
     UserRole? role,
     String? ownedBusinessId,
     DateTime? lastLoginAt,
@@ -62,6 +80,10 @@ class UserModel {
       favoriteListingIds: favoriteListingIds ?? this.favoriteListingIds,
       isVerifiedResident: isVerifiedResident ?? this.isVerifiedResident,
       isBanned: isBanned ?? this.isBanned,
+      isBroker: isBroker ?? this.isBroker,
+      familyStatus: familyStatus ?? this.familyStatus,
+      hasPet: hasPet ?? this.hasPet,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       role: role ?? this.role,
       ownedBusinessId: ownedBusinessId ?? this.ownedBusinessId,
       createdAt: createdAt,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/month_names.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
@@ -50,11 +52,11 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
     super.dispose();
   }
 
-  String get _greeting {
+  String _greeting(L l) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'בוקר טוב';
-    if (hour < 17) return 'צהריים טובים';
-    return 'ערב טוב';
+    if (hour < 12) return l.goodMorning;
+    if (hour < 17) return l.goodAfternoon;
+    return l.goodEvening;
   }
 
   void _onSearch() {
@@ -68,6 +70,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final l = L.of(context);
 
     // A ListView rather than a Column in a SingleChildScrollView, so sections
     // below the fold are built as they are reached instead of all at once.
@@ -83,7 +86,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'גלו את מודיעין',
+            l.discoverModiin,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 16,
@@ -100,7 +103,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
         // ── Popular Near You ──
         _SectionHeader(
-          title: 'פופולרי בקרבתך',
+          title: l.popularNearYou,
           onSeeAll: () => context.go('/businesses'),
         ),
         const SizedBox(height: 12),
@@ -110,7 +113,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
         // ── Deal Near You ──
         _SectionHeader(
-          title: 'מבצעים בקרבתך',
+          title: l.dealsNearYou,
           onSeeAll: () => context.goOrPush('/deals'),
         ),
         const SizedBox(height: 12),
@@ -120,17 +123,17 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
         // ── Upcoming Events ──
         _SectionHeader(
-          title: 'אירועים קרובים',
+          title: l.upcomingEvents,
           onSeeAll: () => context.goOrPush('/events'),
         ),
         const SizedBox(height: 12),
-        _buildEventCards(),
+        _buildEventCards(l),
 
         const SizedBox(height: 24),
 
         // ── Apartment Near You ──
         _SectionHeader(
-          title: 'דירות בקרבתך',
+          title: l.apartmentsNearYou,
           onSeeAll: () => context.go('/realestate'),
         ),
         const SizedBox(height: 12),
@@ -140,11 +143,11 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
         // ── Latest News ──
         _SectionHeader(
-          title: 'חדשות אחרונות',
+          title: l.latestNews,
           onSeeAll: () => context.go('/news'),
         ),
         const SizedBox(height: 12),
-        _buildNewsCards(),
+        _buildNewsCards(l),
 
         const SizedBox(height: 32),
       ],
@@ -155,6 +158,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // Header with gradient + search bar
   // ─────────────────────────────────────────────
   Widget _buildHeader(double topPadding) {
+    final l = L.of(context);
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -196,7 +200,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _greeting,
+                  _greeting(l),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 24,
@@ -207,7 +211,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'מה אתה מחפש היום?',
+                  l.whatAreYouLookingFor,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 14,
@@ -249,7 +253,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                         color: const Color(0xFF1F1F1F),
                       ),
                       decoration: InputDecoration(
-                        hintText: 'שאל או חפש במודיעין...',
+                        hintText: l.searchPlaceholder,
                         hintStyle: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 14,
@@ -437,11 +441,11 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // ─────────────────────────────────────────────
   // Upcoming Events — horizontal event cards
   // ─────────────────────────────────────────────
-  Widget _buildEventCards() => _ProviderRow<Event>(
+  Widget _buildEventCards(L l) => _ProviderRow<Event>(
     provider: upcomingEventsProvider,
     height: 272,
     gap: 12,
-    card: _eventCard,
+    card: (e) => _eventCard(e, l),
     skeleton: _eventCardSkeleton,
   );
 
@@ -492,11 +496,11 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // ─────────────────────────────────────────────
   // Latest News — horizontal news cards
   // ─────────────────────────────────────────────
-  Widget _buildNewsCards() => _ProviderRow<Article>(
+  Widget _buildNewsCards(L l) => _ProviderRow<Article>(
     provider: publishedArticlesProvider,
     height: 240,
     gap: 20,
-    card: _newsCard,
+    card: (a) => _newsCard(a, l),
     skeleton: _newsCardSkeleton,
   );
 }
@@ -586,8 +590,11 @@ class _CardFrame extends StatelessWidget {
 }
 
 Widget _businessCard(Business b) => _BusinessCard(data: _BusinessData.from(b));
-Widget _eventCard(Event e) => _EventCard(data: _EventData.from(e));
-Widget _newsCard(Article a) => _NewsCard(data: _NewsData.from(a));
+// Dates are formatted here rather than inside the data classes: a factory
+// has no BuildContext, so a month name written there would stay Hebrew with
+// the app set to English.
+Widget _eventCard(Event e, L l) => _EventCard(data: _EventData.from(e, l));
+Widget _newsCard(Article a, L l) => _NewsCard(data: _NewsData.from(a, l));
 
 /// One horizontal row driven by a single provider.
 ///
@@ -669,7 +676,7 @@ class _SectionHeader extends StatelessWidget {
             GestureDetector(
               onTap: onSeeAll,
               child: Text(
-                'ראה הכל',
+                L.of(context).seeAll,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 12,
@@ -962,22 +969,8 @@ class _EventData {
     required this.gradientColors,
   });
 
-  static const _months = [
-    'ינו',
-    'פבר',
-    'מרץ',
-    'אפר',
-    'מאי',
-    'יונ',
-    'יול',
-    'אוג',
-    'ספט',
-    'אוק',
-    'נוב',
-    'דצמ',
-  ];
 
-  factory _EventData.from(Event e) {
+  factory _EventData.from(Event e, L l) {
     final start = e.startDate;
     return _EventData(
       id: e.id,
@@ -988,7 +981,7 @@ class _EventData {
       time: e.displayTime ?? '',
       price: e.displayPrice ?? '',
       priceColor: e.isFree ? const Color(0xFF31AC4E) : Colors.black,
-      month: start == null ? '' : _months[start.month - 1],
+      month: start == null ? '' : l.monthShort(start.month),
       day: '${start?.day ?? ''}',
       gradientColors: _gradientFor(e.id),
     );
@@ -1345,22 +1338,8 @@ class _NewsData {
     required this.gradientColors,
   });
 
-  static const _months = [
-    'ינואר',
-    'פברואר',
-    'מרץ',
-    'אפריל',
-    'מאי',
-    'יוני',
-    'יולי',
-    'אוגוסט',
-    'ספטמבר',
-    'אוקטובר',
-    'נובמבר',
-    'דצמבר',
-  ];
 
-  factory _NewsData.from(Article a) {
+  factory _NewsData.from(Article a, L l) {
     final d = a.publishedAt;
     final time =
         '${d.hour.toString().padLeft(2, '0')}:'
@@ -1369,7 +1348,7 @@ class _NewsData {
       id: a.id,
       imageUrl: a.imageUrl,
       title: a.title,
-      date: '${d.day} ב${_months[d.month - 1]} ${d.year} | $time',
+      date: '${d.day} ${l.monthLong(d.month)} ${d.year} | $time',
       gradientColors: _gradientFor(a.id),
     );
   }

@@ -94,6 +94,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -126,7 +127,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Change Password',
+                            l.changePassword,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 16,
@@ -173,7 +174,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         SizedBox(
                           width: 217,
                           child: Text(
-                            'For your security, please choose a strong new password.',
+                            l.chooseStrongNewPassword,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
@@ -188,8 +189,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
                         // ── Current Password ──
                         _buildPasswordField(
-                          label: 'Current Password',
-                          placeholder: 'Enter current password',
+                          label: l.currentPassword,
+                          placeholder: l.enterCurrentPassword,
                           controller: _currentController,
                           obscure: _obscureCurrent,
                           onToggle: () => setState(
@@ -200,8 +201,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
                         // ── New Password ──
                         _buildPasswordField(
-                          label: 'New Password',
-                          placeholder: 'Enter new password',
+                          label: l.newPassword,
+                          placeholder: l.enterNewPassword,
                           controller: _newController,
                           obscure: _obscureNew,
                           onToggle: () =>
@@ -211,8 +212,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
                         // ── Confirm New Password ──
                         _buildPasswordField(
-                          label: 'Confirm New Password',
-                          placeholder: 'Re-enter new password',
+                          label: l.confirmNewPassword,
+                          placeholder: l.reEnterNewPassword,
                           controller: _confirmController,
                           obscure: _obscureConfirm,
                           onToggle: () => setState(
@@ -244,7 +245,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          'Change Password',
+                          l.changePassword,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,

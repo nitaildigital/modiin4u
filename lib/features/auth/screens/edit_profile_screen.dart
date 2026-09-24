@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/month_names.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,9 +26,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   String? _selectedNeighborhood;
-  String _familyStatus = 'Married';
-  String _hasPet = 'Yes';
-  String _dateOfBirth = '12 May 1990';
+  /// Stored as the database key, not the label, so switching language does
+  /// not change what is saved. Null until the person answers — the screen
+  /// used to open on 'Married' / 'Yes' / '12 May 1990' for everybody.
+  String? _familyStatus;
+  bool? _hasPet;
+  DateTime? _dateOfBirth;
   Uint8List? _avatarBytes;
 
   @override
@@ -36,8 +41,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController = TextEditingController(text: user?.name ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
-    _selectedNeighborhood = user?.neighborhood ?? 'Modiin Center';
+    _selectedNeighborhood = user?.neighborhood;
+    _familyStatus = user?.familyStatus;
+    _hasPet = user?.hasPet;
+    _dateOfBirth = user?.dateOfBirth;
   }
+
+  static const _familyStatusKeys = ['single', 'married', 'divorced', 'widowed'];
+
+  static String _familyStatusLabel(L l, String key) => switch (key) {
+    'single' => l.single,
+    'married' => l.married,
+    'divorced' => l.divorced,
+    _ => l.widowed,
+  };
 
   @override
   void dispose() {
@@ -75,6 +92,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             name: _nameController.text.trim(),
             phone: _phoneController.text.trim(),
             neighborhood: _selectedNeighborhood,
+            familyStatus: _familyStatus,
+            hasPet: _hasPet,
+            dateOfBirth: _dateOfBirth,
           );
       if (mounted) context.pop();
     } catch (_) {
@@ -98,6 +118,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     final user = ref.watch(authProvider);
 
     if (user == null) {
@@ -139,7 +160,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Edit Profile',
+                            l.editProfile,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 16,
@@ -234,25 +255,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Full Name
-                        _buildTextField('Full Name', _nameController),
+                        _buildTextField(l.fullName, _nameController),
                         const SizedBox(height: 20),
 
                         // Email
-                        _buildTextField('Email', _emailController),
+                        _buildTextField(l.email, _emailController),
                         const SizedBox(height: 20),
 
                         // Phone
                         _buildTextField(
-                          'Phone',
+                          l.phone,
                           _phoneController,
-                          placeholder: 'Enter your phone number',
+                          placeholder: l.enterYourPhone,
                           keyboardType: TextInputType.phone,
                         ),
                         const SizedBox(height: 20),
 
                         // Neighborhood (dropdown)
                         _buildDropdownField(
-                          label: 'Neighborhood',
+                          label: l.neighborhood,
                           value: _selectedNeighborhood,
                           options: neighborhoods.map((n) => n.name).toList(),
                           onChanged: (val) =>
@@ -265,26 +286,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           children: [
                             Expanded(
                               child: _buildDropdownField(
-                                label: 'Family Status',
-                                value: _familyStatus,
-                                options: const [
-                                  'Single',
-                                  'Married',
-                                  'Divorced',
-                                  'Widowed',
-                                ],
-                                onChanged: (val) =>
-                                    setState(() => _familyStatus = val),
+                                label: l.familyStatus,
+                                value: _familyStatus == null
+                                    ? null
+                                    : _familyStatusLabel(l, _familyStatus!),
+                                options: _familyStatusKeys
+                                    .map((k) => _familyStatusLabel(l, k))
+                                    .toList(),
+                                onChanged: (val) => setState(() {
+                                  _familyStatus = _familyStatusKeys.firstWhere(
+                                    (k) => _familyStatusLabel(l, k) == val,
+                                  );
+                                }),
                               ),
                             ),
                             const SizedBox(width: 15),
                             Expanded(
                               child: _buildDropdownField(
-                                label: 'Do you have a pet?',
-                                value: _hasPet,
-                                options: const ['Yes', 'No'],
+                                label: l.doYouHaveAPet,
+                                value: _hasPet == null
+                                    ? null
+                                    : (_hasPet! ? l.yes : l.no),
+                                options: [l.yes, l.no],
                                 onChanged: (val) =>
-                                    setState(() => _hasPet = val),
+                                    setState(() => _hasPet = val == l.yes),
                               ),
                             ),
                           ],
@@ -292,7 +317,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         const SizedBox(height: 20),
 
                         // Date of Birth
-                        _buildDateField('Date of Birth', _dateOfBirth),
+                        _buildDateField(
+                          l.dateOfBirth,
+                          _dateOfBirth == null
+                              ? ''
+                              : '${_dateOfBirth!.day} '
+                                    '${l.monthShort(_dateOfBirth!.month)} '
+                                    '${_dateOfBirth!.year}',
+                        ),
                         const SizedBox(height: 32),
 
                         // ═══════════════════════════════════
@@ -309,7 +341,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                'Save Changes',
+                                l.saveChanges,
                                 style: TextStyle(
                                   fontFamily: AppFonts.inter,
                                   fontSize: 14,
@@ -425,6 +457,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: DropdownButton<String>(
               value: options.contains(value) ? value : null,
               isExpanded: true,
+              hint: Text(
+                L.of(context).selectHint,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  color: const Color(0xFF9E9E9E),
+                ),
+              ),
               icon: const Icon(
                 IconsaxPlusLinear.arrow_down_1,
                 size: 20,
@@ -470,16 +510,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           onTap: () async {
             final date = await showDatePicker(
               context: context,
-              initialDate: DateTime(1990, 5, 12),
+              initialDate: _dateOfBirth ?? DateTime(1990),
               firstDate: DateTime(1920),
               lastDate: DateTime.now(),
             );
-            if (date != null) {
-              setState(() {
-                _dateOfBirth =
-                    '${date.day} ${_monthName(date.month)} ${date.year}';
-              });
-            }
+            if (date != null) setState(() => _dateOfBirth = date);
           },
           child: Container(
             height: 48,
@@ -493,12 +528,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    value,
+                    value.isEmpty ? L.of(context).selectHint : value,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF000000),
+                      color: value.isEmpty
+                          ? const Color(0xFF9E9E9E)
+                          : const Color(0xFF000000),
                     ),
                   ),
                 ),
@@ -515,21 +552,4 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  static String _monthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
-  }
 }

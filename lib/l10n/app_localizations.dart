@@ -786,6 +786,444 @@ abstract class L {
   /// In he, this message translates to:
   /// **'ייתכן שהקישור פג תוקף או שכבר נעשה בו שימוש. נסו לשלוח אותו שוב.'**
   String get confirmationFailedHint;
+
+  /// No description provided for @dealsNearYou.
+  ///
+  /// In he, this message translates to:
+  /// **'מבצעים בקרבתך'**
+  String get dealsNearYou;
+
+  /// No description provided for @summerSpecial.
+  ///
+  /// In he, this message translates to:
+  /// **'מבצע קיץ'**
+  String get summerSpecial;
+
+  /// No description provided for @kosher.
+  ///
+  /// In he, this message translates to:
+  /// **'כשר'**
+  String get kosher;
+
+  /// No description provided for @forSale.
+  ///
+  /// In he, this message translates to:
+  /// **'למכירה'**
+  String get forSale;
+
+  /// No description provided for @forRent.
+  ///
+  /// In he, this message translates to:
+  /// **'להשכרה'**
+  String get forRent;
+
+  /// No description provided for @rooms.
+  ///
+  /// In he, this message translates to:
+  /// **'{count} חדרים'**
+  String rooms(int count);
+
+  /// No description provided for @monthShortJan.
+  ///
+  /// In he, this message translates to:
+  /// **'ינו'**
+  String get monthShortJan;
+
+  /// No description provided for @monthShortFeb.
+  ///
+  /// In he, this message translates to:
+  /// **'פבר'**
+  String get monthShortFeb;
+
+  /// No description provided for @monthShortMar.
+  ///
+  /// In he, this message translates to:
+  /// **'מרץ'**
+  String get monthShortMar;
+
+  /// No description provided for @monthShortApr.
+  ///
+  /// In he, this message translates to:
+  /// **'אפר'**
+  String get monthShortApr;
+
+  /// No description provided for @monthShortMay.
+  ///
+  /// In he, this message translates to:
+  /// **'מאי'**
+  String get monthShortMay;
+
+  /// No description provided for @monthShortJun.
+  ///
+  /// In he, this message translates to:
+  /// **'יונ'**
+  String get monthShortJun;
+
+  /// No description provided for @monthShortJul.
+  ///
+  /// In he, this message translates to:
+  /// **'יול'**
+  String get monthShortJul;
+
+  /// No description provided for @monthShortAug.
+  ///
+  /// In he, this message translates to:
+  /// **'אוג'**
+  String get monthShortAug;
+
+  /// No description provided for @monthShortSep.
+  ///
+  /// In he, this message translates to:
+  /// **'ספט'**
+  String get monthShortSep;
+
+  /// No description provided for @monthShortOct.
+  ///
+  /// In he, this message translates to:
+  /// **'אוק'**
+  String get monthShortOct;
+
+  /// No description provided for @monthShortNov.
+  ///
+  /// In he, this message translates to:
+  /// **'נוב'**
+  String get monthShortNov;
+
+  /// No description provided for @monthShortDec.
+  ///
+  /// In he, this message translates to:
+  /// **'דצמ'**
+  String get monthShortDec;
+
+  /// No description provided for @monthJan.
+  ///
+  /// In he, this message translates to:
+  /// **'ינואר'**
+  String get monthJan;
+
+  /// No description provided for @monthFeb.
+  ///
+  /// In he, this message translates to:
+  /// **'פברואר'**
+  String get monthFeb;
+
+  /// No description provided for @monthMar.
+  ///
+  /// In he, this message translates to:
+  /// **'מרץ'**
+  String get monthMar;
+
+  /// No description provided for @monthApr.
+  ///
+  /// In he, this message translates to:
+  /// **'אפריל'**
+  String get monthApr;
+
+  /// No description provided for @monthMay.
+  ///
+  /// In he, this message translates to:
+  /// **'מאי'**
+  String get monthMay;
+
+  /// No description provided for @monthJun.
+  ///
+  /// In he, this message translates to:
+  /// **'יוני'**
+  String get monthJun;
+
+  /// No description provided for @monthJul.
+  ///
+  /// In he, this message translates to:
+  /// **'יולי'**
+  String get monthJul;
+
+  /// No description provided for @monthAug.
+  ///
+  /// In he, this message translates to:
+  /// **'אוגוסט'**
+  String get monthAug;
+
+  /// No description provided for @monthSep.
+  ///
+  /// In he, this message translates to:
+  /// **'ספטמבר'**
+  String get monthSep;
+
+  /// No description provided for @monthOct.
+  ///
+  /// In he, this message translates to:
+  /// **'אוקטובר'**
+  String get monthOct;
+
+  /// No description provided for @monthNov.
+  ///
+  /// In he, this message translates to:
+  /// **'נובמבר'**
+  String get monthNov;
+
+  /// No description provided for @monthDec.
+  ///
+  /// In he, this message translates to:
+  /// **'דצמבר'**
+  String get monthDec;
+
+  /// No description provided for @profile.
+  ///
+  /// In he, this message translates to:
+  /// **'פרופיל'**
+  String get profile;
+
+  /// No description provided for @personalDetails.
+  ///
+  /// In he, this message translates to:
+  /// **'פרטים אישיים'**
+  String get personalDetails;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכת פרופיל'**
+  String get editProfile;
+
+  /// No description provided for @manageYourAlerts.
+  ///
+  /// In he, this message translates to:
+  /// **'ניהול ההתראות שלך'**
+  String get manageYourAlerts;
+
+  /// No description provided for @savedPlacesListings.
+  ///
+  /// In he, this message translates to:
+  /// **'מקומות ומודעות שנשמרו'**
+  String get savedPlacesListings;
+
+  /// No description provided for @appPreferences.
+  ///
+  /// In he, this message translates to:
+  /// **'העדפות אפליקציה'**
+  String get appPreferences;
+
+  /// No description provided for @stepsReviewsRewards.
+  ///
+  /// In he, this message translates to:
+  /// **'צעדים, ביקורות ותגמולים'**
+  String get stepsReviewsRewards;
+
+  /// No description provided for @myActivity.
+  ///
+  /// In he, this message translates to:
+  /// **'הפעילות שלי'**
+  String get myActivity;
+
+  /// No description provided for @propertiesYouPosted.
+  ///
+  /// In he, this message translates to:
+  /// **'הנכסים שפרסמתם'**
+  String get propertiesYouPosted;
+
+  /// No description provided for @myApartments.
+  ///
+  /// In he, this message translates to:
+  /// **'הדירות שלי'**
+  String get myApartments;
+
+  /// No description provided for @faqsContactUs.
+  ///
+  /// In he, this message translates to:
+  /// **'שאלות נפוצות ויצירת קשר'**
+  String get faqsContactUs;
+
+  /// No description provided for @helpSupport.
+  ///
+  /// In he, this message translates to:
+  /// **'עזרה ותמיכה'**
+  String get helpSupport;
+
+  /// No description provided for @manageContentUsers.
+  ///
+  /// In he, this message translates to:
+  /// **'ניהול תכנים ומשתמשים'**
+  String get manageContentUsers;
+
+  /// No description provided for @controlCenter.
+  ///
+  /// In he, this message translates to:
+  /// **'מרכז הבקרה'**
+  String get controlCenter;
+
+  /// No description provided for @realEstateBroker.
+  ///
+  /// In he, this message translates to:
+  /// **'מתווך נדל״ן'**
+  String get realEstateBroker;
+
+  /// No description provided for @resident.
+  ///
+  /// In he, this message translates to:
+  /// **'תושב'**
+  String get resident;
+
+  /// No description provided for @businesses.
+  ///
+  /// In he, this message translates to:
+  /// **'עסקים'**
+  String get businesses;
+
+  /// No description provided for @business.
+  ///
+  /// In he, this message translates to:
+  /// **'עסק'**
+  String get business;
+
+  /// No description provided for @event.
+  ///
+  /// In he, this message translates to:
+  /// **'אירוע'**
+  String get event;
+
+  /// No description provided for @saveThingsYouLove.
+  ///
+  /// In he, this message translates to:
+  /// **'שמרו מקומות ופריטים שאהבתם'**
+  String get saveThingsYouLove;
+
+  /// No description provided for @fullName.
+  ///
+  /// In he, this message translates to:
+  /// **'שם מלא'**
+  String get fullName;
+
+  /// No description provided for @phone.
+  ///
+  /// In he, this message translates to:
+  /// **'טלפון'**
+  String get phone;
+
+  /// No description provided for @enterYourPhone.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו מספר טלפון'**
+  String get enterYourPhone;
+
+  /// No description provided for @neighborhood.
+  ///
+  /// In he, this message translates to:
+  /// **'שכונה'**
+  String get neighborhood;
+
+  /// No description provided for @familyStatus.
+  ///
+  /// In he, this message translates to:
+  /// **'מצב משפחתי'**
+  String get familyStatus;
+
+  /// No description provided for @single.
+  ///
+  /// In he, this message translates to:
+  /// **'רווק/ה'**
+  String get single;
+
+  /// No description provided for @married.
+  ///
+  /// In he, this message translates to:
+  /// **'נשוי/אה'**
+  String get married;
+
+  /// No description provided for @divorced.
+  ///
+  /// In he, this message translates to:
+  /// **'גרוש/ה'**
+  String get divorced;
+
+  /// No description provided for @widowed.
+  ///
+  /// In he, this message translates to:
+  /// **'אלמן/ה'**
+  String get widowed;
+
+  /// No description provided for @doYouHaveAPet.
+  ///
+  /// In he, this message translates to:
+  /// **'יש לכם חיית מחמד?'**
+  String get doYouHaveAPet;
+
+  /// No description provided for @yes.
+  ///
+  /// In he, this message translates to:
+  /// **'כן'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In he, this message translates to:
+  /// **'לא'**
+  String get no;
+
+  /// No description provided for @dateOfBirth.
+  ///
+  /// In he, this message translates to:
+  /// **'תאריך לידה'**
+  String get dateOfBirth;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In he, this message translates to:
+  /// **'שמירת שינויים'**
+  String get saveChanges;
+
+  /// No description provided for @chooseStrongNewPassword.
+  ///
+  /// In he, this message translates to:
+  /// **'לביטחונכם, בחרו סיסמה חדשה וחזקה.'**
+  String get chooseStrongNewPassword;
+
+  /// No description provided for @enterCurrentPassword.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו סיסמה נוכחית'**
+  String get enterCurrentPassword;
+
+  /// No description provided for @enterNewPassword.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו סיסמה חדשה'**
+  String get enterNewPassword;
+
+  /// No description provided for @reEnterNewPassword.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו שוב את הסיסמה החדשה'**
+  String get reEnterNewPassword;
+
+  /// No description provided for @searchForHelp.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש עזרה'**
+  String get searchForHelp;
+
+  /// No description provided for @stillNeedHelp.
+  ///
+  /// In he, this message translates to:
+  /// **'עדיין צריכים עזרה?'**
+  String get stillNeedHelp;
+
+  /// No description provided for @contactOurSupportTeam.
+  ///
+  /// In he, this message translates to:
+  /// **'צרו קשר עם צוות התמיכה שלנו'**
+  String get contactOurSupportTeam;
+
+  /// No description provided for @contactUs.
+  ///
+  /// In he, this message translates to:
+  /// **'צרו קשר'**
+  String get contactUs;
+
+  /// No description provided for @selectHint.
+  ///
+  /// In he, this message translates to:
+  /// **'בחרו'**
+  String get selectHint;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

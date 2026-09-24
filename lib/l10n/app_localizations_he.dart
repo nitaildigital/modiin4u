@@ -369,4 +369,225 @@ class LHe extends L {
   @override
   String get confirmationFailedHint =>
       'ייתכן שהקישור פג תוקף או שכבר נעשה בו שימוש. נסו לשלוח אותו שוב.';
+
+  @override
+  String get dealsNearYou => 'מבצעים בקרבתך';
+
+  @override
+  String get summerSpecial => 'מבצע קיץ';
+
+  @override
+  String get kosher => 'כשר';
+
+  @override
+  String get forSale => 'למכירה';
+
+  @override
+  String get forRent => 'להשכרה';
+
+  @override
+  String rooms(int count) {
+    return '$count חדרים';
+  }
+
+  @override
+  String get monthShortJan => 'ינו';
+
+  @override
+  String get monthShortFeb => 'פבר';
+
+  @override
+  String get monthShortMar => 'מרץ';
+
+  @override
+  String get monthShortApr => 'אפר';
+
+  @override
+  String get monthShortMay => 'מאי';
+
+  @override
+  String get monthShortJun => 'יונ';
+
+  @override
+  String get monthShortJul => 'יול';
+
+  @override
+  String get monthShortAug => 'אוג';
+
+  @override
+  String get monthShortSep => 'ספט';
+
+  @override
+  String get monthShortOct => 'אוק';
+
+  @override
+  String get monthShortNov => 'נוב';
+
+  @override
+  String get monthShortDec => 'דצמ';
+
+  @override
+  String get monthJan => 'ינואר';
+
+  @override
+  String get monthFeb => 'פברואר';
+
+  @override
+  String get monthMar => 'מרץ';
+
+  @override
+  String get monthApr => 'אפריל';
+
+  @override
+  String get monthMay => 'מאי';
+
+  @override
+  String get monthJun => 'יוני';
+
+  @override
+  String get monthJul => 'יולי';
+
+  @override
+  String get monthAug => 'אוגוסט';
+
+  @override
+  String get monthSep => 'ספטמבר';
+
+  @override
+  String get monthOct => 'אוקטובר';
+
+  @override
+  String get monthNov => 'נובמבר';
+
+  @override
+  String get monthDec => 'דצמבר';
+
+  @override
+  String get profile => 'פרופיל';
+
+  @override
+  String get personalDetails => 'פרטים אישיים';
+
+  @override
+  String get editProfile => 'עריכת פרופיל';
+
+  @override
+  String get manageYourAlerts => 'ניהול ההתראות שלך';
+
+  @override
+  String get savedPlacesListings => 'מקומות ומודעות שנשמרו';
+
+  @override
+  String get appPreferences => 'העדפות אפליקציה';
+
+  @override
+  String get stepsReviewsRewards => 'צעדים, ביקורות ותגמולים';
+
+  @override
+  String get myActivity => 'הפעילות שלי';
+
+  @override
+  String get propertiesYouPosted => 'הנכסים שפרסמתם';
+
+  @override
+  String get myApartments => 'הדירות שלי';
+
+  @override
+  String get faqsContactUs => 'שאלות נפוצות ויצירת קשר';
+
+  @override
+  String get helpSupport => 'עזרה ותמיכה';
+
+  @override
+  String get manageContentUsers => 'ניהול תכנים ומשתמשים';
+
+  @override
+  String get controlCenter => 'מרכז הבקרה';
+
+  @override
+  String get realEstateBroker => 'מתווך נדל״ן';
+
+  @override
+  String get resident => 'תושב';
+
+  @override
+  String get businesses => 'עסקים';
+
+  @override
+  String get business => 'עסק';
+
+  @override
+  String get event => 'אירוע';
+
+  @override
+  String get saveThingsYouLove => 'שמרו מקומות ופריטים שאהבתם';
+
+  @override
+  String get fullName => 'שם מלא';
+
+  @override
+  String get phone => 'טלפון';
+
+  @override
+  String get enterYourPhone => 'הזינו מספר טלפון';
+
+  @override
+  String get neighborhood => 'שכונה';
+
+  @override
+  String get familyStatus => 'מצב משפחתי';
+
+  @override
+  String get single => 'רווק/ה';
+
+  @override
+  String get married => 'נשוי/אה';
+
+  @override
+  String get divorced => 'גרוש/ה';
+
+  @override
+  String get widowed => 'אלמן/ה';
+
+  @override
+  String get doYouHaveAPet => 'יש לכם חיית מחמד?';
+
+  @override
+  String get yes => 'כן';
+
+  @override
+  String get no => 'לא';
+
+  @override
+  String get dateOfBirth => 'תאריך לידה';
+
+  @override
+  String get saveChanges => 'שמירת שינויים';
+
+  @override
+  String get chooseStrongNewPassword => 'לביטחונכם, בחרו סיסמה חדשה וחזקה.';
+
+  @override
+  String get enterCurrentPassword => 'הזינו סיסמה נוכחית';
+
+  @override
+  String get enterNewPassword => 'הזינו סיסמה חדשה';
+
+  @override
+  String get reEnterNewPassword => 'הזינו שוב את הסיסמה החדשה';
+
+  @override
+  String get searchForHelp => 'חיפוש עזרה';
+
+  @override
+  String get stillNeedHelp => 'עדיין צריכים עזרה?';
+
+  @override
+  String get contactOurSupportTeam => 'צרו קשר עם צוות התמיכה שלנו';
+
+  @override
+  String get contactUs => 'צרו קשר';
+
+  @override
+  String get selectHint => 'בחרו';
 }

@@ -50,6 +50,9 @@ JOBS = [
 MIME = {
     ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
     ".webp": "image/webp", ".gif": "image/gif",
+    # A few logos are vector. The bucket has to allow the type or the upload
+    # is refused and the record keeps pointing at WordPress.
+    ".svg": "image/svg+xml",
 }
 
 
@@ -85,6 +88,43 @@ def download(src):
     )
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read(), r.headers.get("content-type", "")
+
+
+MAX_BYTES = 10 * 1024 * 1024
+MAX_EDGE = 2000
+
+
+def shrink(data, content_type):
+    """Reduces a picture that is too big for the bucket, or simply too big.
+
+    One news photograph is a 16MB PNG, which the bucket refuses — and which
+    no phone should be asked to download either. Anything over the limit, or
+    wider than 2000px, is re-encoded as a JPEG at that width.
+
+    Returns the bytes unchanged when nothing needs doing.
+    """
+    from io import BytesIO
+
+    from PIL import Image
+
+    try:
+        img = Image.open(BytesIO(data))
+        too_big = len(data) > MAX_BYTES
+        too_wide = max(img.size) > MAX_EDGE
+        if not (too_big or too_wide):
+            return data, content_type
+
+        if too_wide:
+            img.thumbnail((MAX_EDGE, MAX_EDGE), Image.LANCZOS)
+        if img.mode in ("RGBA", "P", "LA"):
+            img = img.convert("RGB")
+
+        out = BytesIO()
+        img.save(out, format="JPEG", quality=85, optimize=True)
+        return out.getvalue(), "image/jpeg"
+    except Exception:
+        # Not something Pillow reads — an SVG, say. Leave it alone.
+        return data, content_type
 
 
 def upload(path, data, content_type):
@@ -156,7 +196,12 @@ def main():
                     data, ctype = download(src)
                     if not data:
                         raise ValueError("empty response")
-                    public = upload(path, data, ctype or mime)
+                    data, ctype = shrink(data, ctype or mime)
+                    if ctype == "image/jpeg" and not path.endswith(
+                        (".jpg", ".jpeg")
+                    ):
+                        path = os.path.splitext(path)[0] + ".jpg"
+                    public = upload(path, data, ctype)
                     uploaded[src] = public
                     moved += 1
 
