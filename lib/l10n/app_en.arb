@@ -423,5 +423,52 @@
   "offerNotFound": "This offer could not be found",
   "close": "Close",
   "bestDealsHeading": "Best Deals &\nOffers in Modiin",
-  "dealsHeroSubtitle": "Explore local deals, discounts, and limited-time offers across Modiin."
+  "dealsHeroSubtitle": "Explore local deals, discounts, and limited-time offers across Modiin.",
+  "stepCounter": "Step Counter",
+  "everyStepBetter": "Every step makes Modiin better",
+  "todaysProgress": "Today's Progress",
+  "stepsUnit": "steps",
+  "streakDays": "{n} day streak",
+  "@streakDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "percentOfGoal": "{percent}% of {goal}",
+  "@percentOfGoal": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "kmUnit": "km",
+  "distanceEstimate": "Estimated distance",
+  "thisWeek": "This Week",
+  "leaderboard": "Leaderboard",
+  "byNeighborhood": "Neighborhood",
+  "byCity": "City",
+  "you": "You",
+  "stepsPermissionNeeded": "Counting steps needs permission to detect activity",
+  "stepsUnsupported": "This device cannot count steps",
+  "noStepsYet": "No step data yet",
+  "leaderboardEmpty": "Nobody is counting steps yet",
+  "leaderboardSignIn": "Sign in to see the leaderboard",
+  "enableHealthToJoin": "Turn on health data in Settings to appear in the leaderboard",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+  "monthlyChallenge": "MODIIN MONTHLY CHALLENGE",
+  "viewChallenge": "View Challenge",
+  "stepChallengeTitle": "Modiin Step Challenge",
+  "stepChallengeSub": "Compete with others and climb the ranks"
 }

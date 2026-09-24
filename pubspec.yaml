@@ -46,6 +46,10 @@ dependencies:
   shared_preferences: ^2.3.4
   fl_chart: ^1.2.0
   iconsax_plus: ^1.0.0
+  pedometer: ^4.2.0
+  # 14.x ships a build script that Gradle 8.14 refuses to compile, so this is
+  # pinned until the project moves to a newer Gradle.
+  permission_handler: 12.0.1
 
 dev_dependencies:
   flutter_test:

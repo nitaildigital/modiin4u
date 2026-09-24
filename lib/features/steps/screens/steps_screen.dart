@@ -2,21 +2,49 @@ import 'dart:math';
 import '../../../core/theme/app_fonts.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/month_names.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../models/step_entry.dart';
+import '../providers/steps_providers.dart';
 
 /// Step Counter screen – circular progress ring with daily stats,
 /// weekly bar chart, monthly challenge card with progress bar,
 /// neighborhood/city leaderboard, and recommended walking routes.
-class StepsScreen extends StatefulWidget {
+class StepsScreen extends ConsumerStatefulWidget {
   const StepsScreen({super.key});
 
   @override
-  State<StepsScreen> createState() => _StepsScreenState();
+  ConsumerState<StepsScreen> createState() => _StepsScreenState();
 }
 
-class _StepsScreenState extends State<StepsScreen> {
+class _StepsScreenState extends ConsumerState<StepsScreen> {
   int _leaderboardTab = 0; // 0 = Neighborhood, 1 = City
+
+  /// The daily target the ring fills against.
+  static const _goal = 10000;
+
+  /// An average stride, for turning a step count into a distance. It is the
+  /// usual figure used for this and is stated as an estimate on screen,
+  /// because the app does not know anyone's height.
+  static const _metresPerStep = 0.762;
+
+  /// Consecutive days up to today with any steps recorded.
+  ///
+  /// The card said "5 Streak" to everybody. This counts.
+  int _streak(List<StepEntry> week) {
+    var n = 0;
+    for (final e in week.reversed) {
+      if (e.steps <= 0) break;
+      n++;
+    }
+    return n;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +93,9 @@ class _StepsScreenState extends State<StepsScreen> {
 
                         // ── Title + subtitle ──
                         Text(
-                          'Step Counter',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          L.of(context).stepCounter,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -74,8 +103,9 @@ class _StepsScreenState extends State<StepsScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Every step makes Modiin better',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          L.of(context).everyStepBetter,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -89,13 +119,13 @@ class _StepsScreenState extends State<StepsScreen> {
                         _buildWeeklyChart(),
                         const SizedBox(height: 16),
 
-                        _buildMonthlyChallenge(),
-                        const SizedBox(height: 16),
+                        if (ref.watch(activeChallengeProvider).valueOrNull !=
+                            null) ...[
+                          _buildMonthlyChallenge(),
+                          const SizedBox(height: 16),
+                        ],
 
                         _buildLeaderboard(),
-                        const SizedBox(height: 16),
-
-                        _buildWalkRoutes(),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -113,6 +143,18 @@ class _StepsScreenState extends State<StepsScreen> {
   // Card 1 — Today's Progress
   // ═══════════════════════════════════════════════
   Widget _buildTodayProgress() {
+    final l = L.of(context);
+    final counter = ref.watch(stepCounterProvider);
+    final week =
+        ref.watch(myStepWeekProvider).valueOrNull ?? const <StepEntry>[];
+    final now = DateTime.now();
+
+    // Null until the sensor reports; the ring shows nothing rather than a
+    // figure the phone has not given us.
+    final steps = counter.today;
+    final progress = steps == null ? 0.0 : (steps / _goal).clamp(0.0, 1.0);
+    final km = steps == null ? null : (steps * _metresPerStep) / 1000;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -122,23 +164,23 @@ class _StepsScreenState extends State<StepsScreen> {
       ),
       child: Column(
         children: [
-          // Header row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Today's Progress",
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                l.todaysProgress,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF1F1F1F),
                 ),
               ),
               Text(
-                'May 13, 2026',
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                '${now.day} ${l.monthLong(now.month)} ${now.year}',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 14,
-                  fontWeight: FontWeight.w400,
                   color: const Color(0xFF5D5D5D),
                 ),
               ),
@@ -146,145 +188,218 @@ class _StepsScreenState extends State<StepsScreen> {
           ),
           const SizedBox(height: 23),
 
-          // Ring + right-side stats
-          Row(
-            children: [
-              // Circular progress ring
-              SizedBox(
-                width: 137,
-                height: 137,
-                child: CustomPaint(
-                  painter: _ProgressRingPainter(0.6842),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '6,842',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Opacity(
-                          opacity: 0.6,
-                          child: Text(
-                            'steps',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 12.6,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF454545),
+          // The counter cannot run without permission, and on a phone with
+          // no step sensor it cannot run at all. Both are said plainly
+          // instead of showing a number.
+          if (counter.permission == StepPermission.denied ||
+              counter.permission == StepPermission.unsupported)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Row(
+                children: [
+                  const Icon(
+                    IconsaxPlusLinear.info_circle,
+                    size: 20,
+                    color: Color(0xFF6D6D6D),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      counter.permission == StepPermission.denied
+                          ? l.stepsPermissionNeeded
+                          : l.stepsUnsupported,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            Row(
+              children: [
+                SizedBox(
+                  width: 137,
+                  height: 137,
+                  child: CustomPaint(
+                    painter: _ProgressRingPainter(progress),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            steps == null ? '—' : _thousands(steps),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          Opacity(
+                            opacity: 0.6,
+                            child: Text(
+                              l.stepsUnit,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 12.6,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF454545),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 24),
-
-              // Right stats column
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Streak
-                    Row(
-                      children: [
-                        const SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: Center(
-                            child: Text('🔥', style: TextStyle(fontSize: 24)),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Builder(
+                        builder: (_) {
+                          final streak = _streak(week);
+                          if (streak == 0) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: 32,
+                                  height: 32,
+                                  child: Center(
+                                    child: Text(
+                                      '🔥',
+                                      style: TextStyle(fontSize: 24),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  l.streakDays(streak),
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.inter,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      if (steps != null)
                         Text(
-                          '5 Streak',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          l.percentOfGoal(
+                            (progress * 100).round(),
+                            _thousands(_goal),
+                          ),
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: const Color(0xFF123A72),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Percentage of goal
-                    Text(
-                      '68% of 10,000',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF123A72),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+              ],
+            ),
 
-          // Stats row: kcal | km | hours
-          Row(
-            children: [
-              Expanded(
-                child: _StatColumn(
-                  value: '862',
-                  label: 'kcal',
-                  valueColor: const Color(0xFF5630DF),
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 32,
-                color: const Color(0xFFD1D1D1).withValues(alpha: 0.7),
-              ),
-              Expanded(
-                child: _StatColumn(
-                  value: '7.2',
-                  label: 'km',
-                  valueColor: const Color(0xFFE57F03),
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 32,
-                color: const Color(0xFFD1D1D1).withValues(alpha: 0.7),
-              ),
-              Expanded(
-                child: _StatColumn(
-                  value: '2:19',
-                  label: 'hours',
-                  valueColor: const Color(0xFF286EFD),
-                ),
+            // Distance only. The card also claimed calories and active
+            // hours; calories depend on body weight, which the app does not
+            // know, and the pedometer reports no active time at all.
+            if (km != null) ...[
+              const SizedBox(height: 16),
+              _StatColumn(
+                value: km.toStringAsFixed(1),
+                label: '${l.kmUnit} · ${l.distanceEstimate}',
+                valueColor: const Color(0xFF17A9D0),
               ),
             ],
-          ),
+          ],
         ],
       ),
     );
+  }
+
+  /// 1 = Monday, as DateTime.weekday numbers them.
+  static String _weekdayShort(L l, DateTime d) => switch (d.weekday) {
+    DateTime.monday => l.weekdayMon,
+    DateTime.tuesday => l.weekdayTue,
+    DateTime.wednesday => l.weekdayWed,
+    DateTime.thursday => l.weekdayThu,
+    DateTime.friday => l.weekdayFri,
+    DateTime.saturday => l.weekdaySat,
+    _ => l.weekdaySun,
+  };
+
+  /// 6842 -> "6,842".
+  static String _thousands(int n) {
+    final digits = n.toString();
+    final out = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) out.write(',');
+      out.write(digits[i]);
+    }
+    return out.toString();
   }
 
   // ═══════════════════════════════════════════════
   // Card 2 — This Week (bar chart)
   // ═══════════════════════════════════════════════
   Widget _buildWeeklyChart() {
-    const data = <_BarData>[
-      _BarData('Mon', 8200, '8.2K'),
-      _BarData('Tue', 6400, '6.4K'),
-      _BarData('Wed', 8200, '8.2K'),
-      _BarData('Thu', 10100, '10.1K'),
-      _BarData('Fri', 7800, '7.8K'),
-      _BarData('Sat', 6800, '6.8K'),
-      _BarData('Sun', 9200, '9.2K'),
+    final l = L.of(context);
+    final week =
+        ref.watch(myStepWeekProvider).valueOrNull ?? const <StepEntry>[];
+
+    // Seven fixed bars — 8.2K, 6.4K, 10.1K and so on — used to be written
+    // into this method. These are the rows, with a bar at zero for a day
+    // with nothing recorded rather than a gap.
+    final data = [
+      for (final e in week)
+        _BarData(
+          _weekdayShort(l, e.date),
+          e.steps,
+          e.steps >= 1000
+              ? '${(e.steps / 1000).toStringAsFixed(1)}K'
+              : '${e.steps}',
+        ),
     ];
-    const double maxSteps = 12000;
+
+    if (data.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE7E7E7)),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Text(
+            l.noStepsYet,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 13,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // The scale follows the week's own best day, so a quiet week is not all
+    // stubs against a fixed 12,000 ceiling.
+    final best = data.map((d) => d.steps).reduce((a, b) => a > b ? a : b);
+    final maxSteps = (best < _goal ? _goal : best).toDouble();
     const double barMaxH = 170;
 
     return Container(
@@ -299,8 +414,9 @@ class _StepsScreenState extends State<StepsScreen> {
         children: [
           // Header
           Text(
-            'This Week',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            l.thisWeek,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -323,14 +439,17 @@ class _StepsScreenState extends State<StepsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: ['12K', '10K', '8K', '6K', '4K', '2K', '0']
-                          .map((l) => Text(
-                                l,
-                                style: TextStyle(fontFamily: AppFonts.inter, 
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: const Color(0xFF888888),
-                                ),
-                              ))
+                          .map(
+                            (l) => Text(
+                              l,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: const Color(0xFF888888),
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -346,7 +465,8 @@ class _StepsScreenState extends State<StepsScreen> {
                       children: [
                         Text(
                           d.label,
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: Colors.black,
@@ -364,7 +484,8 @@ class _StepsScreenState extends State<StepsScreen> {
                         const SizedBox(height: 8),
                         Text(
                           d.day,
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -386,6 +507,7 @@ class _StepsScreenState extends State<StepsScreen> {
   // Card 3 — Monthly Challenge
   // ═══════════════════════════════════════════════
   Widget _buildMonthlyChallenge() {
+    final l = L.of(context);
     const progress = 82450;
     const goal = 150000;
     final fraction = progress / goal; // ~55%
@@ -422,8 +544,9 @@ class _StepsScreenState extends State<StepsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'MODIIN MONTHLY CHALLENGE',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      l.monthlyChallenge,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.5,
@@ -433,7 +556,8 @@ class _StepsScreenState extends State<StepsScreen> {
                     const SizedBox(height: 11),
                     Text(
                       'Walk 150,000 steps',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
@@ -442,7 +566,8 @@ class _StepsScreenState extends State<StepsScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'this month',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF454545),
@@ -456,7 +581,8 @@ class _StepsScreenState extends State<StepsScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Prize: ₪500 Shopping Voucher',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF454545),
@@ -482,7 +608,8 @@ class _StepsScreenState extends State<StepsScreen> {
                       children: [
                         Text(
                           '82,450',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -491,7 +618,8 @@ class _StepsScreenState extends State<StepsScreen> {
                         const SizedBox(width: 4),
                         Text(
                           '/ 150,000 steps',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF454545),
@@ -502,7 +630,8 @@ class _StepsScreenState extends State<StepsScreen> {
                   ),
                   Text(
                     '55%',
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF3D3D3D),
@@ -542,8 +671,9 @@ class _StepsScreenState extends State<StepsScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'View Challenge',
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  l.viewChallenge,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF123A72),
@@ -567,6 +697,7 @@ class _StepsScreenState extends State<StepsScreen> {
   // Card 4 — Modiin Step Challenge (Leaderboard)
   // ═══════════════════════════════════════════════
   Widget _buildLeaderboard() {
+    final l = L.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -579,8 +710,9 @@ class _StepsScreenState extends State<StepsScreen> {
         children: [
           // Header
           Text(
-            'Modiin Step Challenge',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            l.stepChallengeTitle,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -588,8 +720,9 @@ class _StepsScreenState extends State<StepsScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Compete with others and climb the ranks',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            l.stepChallengeSub,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
@@ -600,8 +733,8 @@ class _StepsScreenState extends State<StepsScreen> {
           // Tab toggle
           Row(
             children: [
-              _buildTabButton('Neighborhood', 0, isLeft: true),
-              _buildTabButton('City', 1, isLeft: false),
+              _buildTabButton(l.byNeighborhood, 0, isLeft: true),
+              _buildTabButton(l.byCity, 1, isLeft: false),
             ],
           ),
           const SizedBox(height: 16),
@@ -623,9 +756,7 @@ class _StepsScreenState extends State<StepsScreen> {
         height: 36,
         decoration: BoxDecoration(
           color: active ? const Color(0xFF123A72) : Colors.white,
-          border: active
-              ? null
-              : Border.all(color: const Color(0xFFE7E7E7)),
+          border: active ? null : Border.all(color: const Color(0xFFE7E7E7)),
           borderRadius: isLeft
               ? const BorderRadius.horizontal(left: Radius.circular(8))
               : const BorderRadius.horizontal(right: Radius.circular(8)),
@@ -633,7 +764,8 @@ class _StepsScreenState extends State<StepsScreen> {
         child: Center(
           child: Text(
             label,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: active ? Colors.white : const Color(0xFF6D6D6D),
@@ -644,177 +776,116 @@ class _StepsScreenState extends State<StepsScreen> {
     );
   }
 
+  /// The neighbourhood table.
+  ///
+  /// Three neighbourhoods with fixed totals used to be written in here, with
+  /// a highlighted "You (Modiin Center) — 48,620" row underneath that was the
+  /// same for everyone. These come from
+  /// `steps_leaderboard_neighborhoods`, which only counts people who turned
+  /// the health-data switch on.
   List<Widget> _buildNeighborhoodRows() {
-    const entries = <_LeaderboardEntry>[
-      _LeaderboardEntry(rank: 1, name: 'Moriah', steps: '102,450', color: Color(0xFFFFAC27)),
-      _LeaderboardEntry(rank: 2, name: 'Avnei Chen', steps: '98,210', color: Color(0xFFB0B0B0)),
-      _LeaderboardEntry(rank: 3, name: 'The Birds', steps: '94,840', color: Color(0xFFC59850)),
-    ];
+    final l = L.of(context);
+    final user = ref.watch(authProvider);
+    if (user == null) return [_leaderboardNote(l.leaderboardSignIn)];
 
-    return [
-      ...entries.map((e) => _NeighborhoodRow(entry: e)),
-      // User's row (highlighted)
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        decoration: const BoxDecoration(
-          color: Color(0xFFF1F6FD),
+    final rows = ref.watch(neighborhoodLeaderboardProvider);
+    return rows.when(
+      loading: () => const [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(child: CircularProgressIndicator()),
         ),
-        child: Row(
-          children: [
-            _RankBadge(rank: 12, color: const Color(0xFF123A72)),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Text(
-                'You (Modiin Center)',
-                style: TextStyle(fontFamily: AppFonts.inter, 
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF123A72),
-                ),
+      ],
+      error: (_, _) => [_leaderboardNote(l.leaderboardEmpty)],
+      data: (list) {
+        if (list.isEmpty) return [_leaderboardNote(l.leaderboardEmpty)];
+        return [
+          for (final e in list)
+            _NeighborhoodRow(
+              entry: _LeaderboardEntry(
+                rank: e.rank,
+                name: e.name,
+                steps: _thousands(e.totalSteps),
+                color: _rankColour(e.rank),
               ),
+              highlighted: e.name == user.neighborhood,
             ),
-            Text(
-              '48,620',
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1F1F1F),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'steps',
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF6D6D6D),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ];
+        ];
+      },
+    );
   }
 
+  /// The city table.
+  ///
+  /// This one named three people who do not exist — "Daniel Cohen", "Maya
+  /// Levi", "Amit May" — each with a step count beside their name.
   List<Widget> _buildCityRows() {
-    const entries = <_CityLeaderboardEntry>[
-      _CityLeaderboardEntry(rank: 1, name: 'Daniel Cohen', steps: '82,478', color: Color(0xFFFFAC27)),
-      _CityLeaderboardEntry(rank: 2, name: 'Maya Levi', steps: '75,105', color: Color(0xFFB0B0B0)),
-      _CityLeaderboardEntry(rank: 3, name: 'Amit May', steps: '71,589', color: Color(0xFFC59850)),
-    ];
+    final l = L.of(context);
+    final user = ref.watch(authProvider);
+    if (user == null) return [_leaderboardNote(l.leaderboardSignIn)];
 
-    return [
-      ...entries.map((e) => _CityRow(entry: e)),
-      // User's row (highlighted)
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        decoration: const BoxDecoration(
-          color: Color(0xFFF1F6FD),
+    final rows = ref.watch(peopleLeaderboardProvider);
+    return rows.when(
+      loading: () => const [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(child: CircularProgressIndicator()),
         ),
-        child: Row(
-          children: [
-            _RankBadge(rank: 12, color: const Color(0xFF123A72)),
-            const SizedBox(width: 11),
-            // Avatar placeholder
-            Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                ),
-              ),
+      ],
+      error: (_, _) => [_leaderboardNote(l.leaderboardEmpty)],
+      data: (list) {
+        if (list.isEmpty) {
+          // Nobody is listed. If this person has the switch off, that is
+          // probably why they are not, so say so.
+          return [
+            _leaderboardNote(
+              user.healthEnabled ? l.leaderboardEmpty : l.enableHealthToJoin,
             ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Text(
-                'You (Modiin Center)',
-                style: TextStyle(fontFamily: AppFonts.inter, 
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF123A72),
-                ),
+          ];
+        }
+        return [
+          for (final e in list)
+            _CityRow(
+              entry: _CityLeaderboardEntry(
+                rank: e.rank,
+                name: e.name,
+                steps: _thousands(e.totalSteps),
+                color: _rankColour(e.rank),
+                avatarUrl: e.avatarUrl,
               ),
+              highlighted: e.profileId == user.id,
             ),
-            Text(
-              '48,620',
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1F1F1F),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'steps',
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF6D6D6D),
-              ),
-            ),
-          ],
+        ];
+      },
+    );
+  }
+
+  /// Gold, silver, bronze, then the house colour.
+  static Color _rankColour(int rank) => switch (rank) {
+    1 => const Color(0xFFFFAC27),
+    2 => const Color(0xFFB0B0B0),
+    3 => const Color(0xFFC59850),
+    _ => const Color(0xFF123A72),
+  };
+
+  Widget _leaderboardNote(String message) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 28),
+    child: Center(
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: 13,
+          color: const Color(0xFF6D6D6D),
         ),
       ),
-    ];
-  }
+    ),
+  );
 
   // ═══════════════════════════════════════════════
   // Card 5 — Walk Modiin (walking routes)
   // ═══════════════════════════════════════════════
-  Widget _buildWalkRoutes() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE7E7E7)),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Walk Modiin',
-            style: TextStyle(fontFamily: AppFonts.inter, 
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Recommended walking routes',
-            style: TextStyle(fontFamily: AppFonts.inter, 
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF6D6D6D),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Route 1
-          _RouteCard(
-            title: 'Modiin Park → City Center',
-            distance: '4.2 km',
-            duration: '50 min',
-            steps: '+4,800 steps',
-          ),
-
-          // Route 2
-          _RouteCard(
-            title: 'Anava Lake Loop',
-            distance: '3.6 km',
-            duration: '40 min',
-            steps: '+4,200 steps',
-            showBorder: false,
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -882,7 +953,8 @@ class _StatColumn extends StatelessWidget {
         Text(
           value,
           textAlign: TextAlign.center,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: valueColor,
@@ -894,7 +966,8 @@ class _StatColumn extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF4F4F4F),
@@ -912,7 +985,7 @@ class _StatColumn extends StatelessWidget {
 
 class _BarData {
   final String day;
-  final double steps;
+  final int steps;
   final String label;
   const _BarData(this.day, this.steps, this.label);
 }
@@ -939,11 +1012,13 @@ class _CityLeaderboardEntry {
   final String name;
   final String steps;
   final Color color;
+  final String? avatarUrl;
   const _CityLeaderboardEntry({
     required this.rank,
     required this.name,
     required this.steps,
     required this.color,
+    this.avatarUrl,
   });
 }
 
@@ -961,14 +1036,12 @@ class _RankBadge extends StatelessWidget {
     return Container(
       width: 20,
       height: 20,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       child: Center(
         child: Text(
           '$rank',
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 10,
             fontWeight: FontWeight.w600,
             color: Colors.white,
@@ -985,14 +1058,16 @@ class _RankBadge extends StatelessWidget {
 
 class _NeighborhoodRow extends StatelessWidget {
   final _LeaderboardEntry entry;
-  const _NeighborhoodRow({required this.entry});
+  final bool highlighted;
+  const _NeighborhoodRow({required this.entry, this.highlighted = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+      decoration: BoxDecoration(
+        color: highlighted ? const Color(0xFFF1F6FD) : null,
+        border: const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Row(
         children: [
@@ -1001,7 +1076,8 @@ class _NeighborhoodRow extends StatelessWidget {
           Expanded(
             child: Text(
               entry.name,
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF1F1F1F),
@@ -1010,7 +1086,8 @@ class _NeighborhoodRow extends StatelessWidget {
           ),
           Text(
             entry.steps,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -1019,7 +1096,8 @@ class _NeighborhoodRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'steps',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
@@ -1037,43 +1115,56 @@ class _NeighborhoodRow extends StatelessWidget {
 
 class _CityRow extends StatelessWidget {
   final _CityLeaderboardEntry entry;
-  const _CityRow({required this.entry});
+  final bool highlighted;
+  const _CityRow({required this.entry, this.highlighted = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+      decoration: BoxDecoration(
+        color: highlighted ? const Color(0xFFF1F6FD) : null,
+        border: const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Row(
         children: [
           _RankBadge(rank: entry.rank, color: entry.color),
           const SizedBox(width: 11),
-          // Avatar placeholder
-          Container(
-            width: 32,
-            height: 32,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFD9D9D9),
-            ),
-            child: Center(
-              child: Text(
-                entry.name.split(' ').map((w) => w[0]).join(),
-                style: TextStyle(fontFamily: AppFonts.inter, 
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+          if (entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty)
+            NetworkPhoto(
+              url: entry.avatarUrl,
+              width: 32,
+              height: 32,
+              radius: BorderRadius.circular(16),
+            )
+          else
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFFD9D9D9),
+              ),
+              child: Center(
+                child: Text(
+                  // A one-word name has one initial; splitting and taking the
+                  // first letter of each word crashed on an empty name.
+                  entry.name.isEmpty ? '?' : entry.name[0],
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
-          ),
           const SizedBox(width: 11),
           Expanded(
             child: Text(
               entry.name,
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF1F1F1F),
@@ -1082,7 +1173,8 @@ class _CityRow extends StatelessWidget {
           ),
           Text(
             entry.steps,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -1091,7 +1183,8 @@ class _CityRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'steps',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF6D6D6D),
@@ -1106,128 +1199,3 @@ class _CityRow extends StatelessWidget {
 // ═══════════════════════════════════════════════════
 // Walking route card
 // ═══════════════════════════════════════════════════
-
-class _RouteCard extends StatelessWidget {
-  final String title;
-  final String distance;
-  final String duration;
-  final String steps;
-  final bool showBorder;
-
-  const _RouteCard({
-    required this.title,
-    required this.distance,
-    required this.duration,
-    required this.steps,
-    this.showBorder = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: showBorder
-            ? const Border(bottom: BorderSide(color: Color(0xFFE7E7E7)))
-            : null,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image placeholder
-          Container(
-            width: 95,
-            height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-              ),
-            ),
-            child: const Center(
-              child: Icon(
-                IconsaxPlusLinear.map_1,
-                size: 28,
-                color: Colors.white54,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0A1230),
-                  ),
-                ),
-                const SizedBox(height: 9),
-                // Detail rows
-                Row(
-                  children: [
-                    // Distance
-                    const Icon(
-                      IconsaxPlusLinear.location,
-                      size: 14,
-                      color: Color(0xFF6D6D6D),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      distance,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 12,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    // Duration
-                    const Icon(
-                      IconsaxPlusLinear.clock,
-                      size: 14,
-                      color: Color(0xFF6D6D6D),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      duration,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 12,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 9),
-                // Steps
-                Row(
-                  children: [
-                    const Icon(
-                      IconsaxPlusLinear.activity,
-                      size: 14,
-                      color: Color(0xFF6D6D6D),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      steps,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 12,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -423,5 +423,52 @@
   "offerNotFound": "המבצע לא נמצא",
   "close": "סגירה",
   "bestDealsHeading": "המבצעים הטובים\nביותר במודיעין",
-  "dealsHeroSubtitle": "גלו מבצעים, הנחות והטבות לזמן מוגבל ברחבי מודיעין."
+  "dealsHeroSubtitle": "גלו מבצעים, הנחות והטבות לזמן מוגבל ברחבי מודיעין.",
+  "stepCounter": "מד צעדים",
+  "everyStepBetter": "כל צעד עושה את מודיעין טובה יותר",
+  "todaysProgress": "ההתקדמות היום",
+  "stepsUnit": "צעדים",
+  "streakDays": "רצף {n} ימים",
+  "@streakDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "percentOfGoal": "{percent}% מתוך {goal}",
+  "@percentOfGoal": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "kmUnit": "ק״מ",
+  "distanceEstimate": "מרחק משוער",
+  "thisWeek": "השבוע",
+  "leaderboard": "טבלת מובילים",
+  "byNeighborhood": "לפי שכונה",
+  "byCity": "כל העיר",
+  "you": "אתם",
+  "stepsPermissionNeeded": "כדי לספור צעדים צריך אישור לזיהוי פעילות",
+  "stepsUnsupported": "המכשיר הזה לא תומך בספירת צעדים",
+  "noStepsYet": "עדיין אין נתוני צעדים",
+  "leaderboardEmpty": "אף אחד עדיין לא מודד צעדים",
+  "leaderboardSignIn": "התחברו כדי לראות את הטבלה",
+  "enableHealthToJoin": "הפעילו ״נתוני כושר״ בהגדרות כדי להופיע בטבלה",
+  "weekdayMon": "ב׳",
+  "weekdayTue": "ג׳",
+  "weekdayWed": "ד׳",
+  "weekdayThu": "ה׳",
+  "weekdayFri": "ו׳",
+  "weekdaySat": "ש׳",
+  "weekdaySun": "א׳",
+  "monthlyChallenge": "אתגר חודשי במודיעין",
+  "viewChallenge": "לצפייה באתגר",
+  "stepChallengeTitle": "אתגר הצעדים של מודיעין",
+  "stepChallengeSub": "התחרו מול אחרים וטפסו בדירוג"
 }

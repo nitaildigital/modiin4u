@@ -8,6 +8,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
+    <!-- The step counter. Optional: the screen says plainly when it is
+         refused, rather than showing a number it does not have. Only needed
+         from Android 10; older versions count steps without asking. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
+    <uses-feature android:name="android.hardware.sensor.stepcounter"
+                  android:required="false"/>
+
     <!-- Camera & gallery for image_picker (apartment photos) -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>

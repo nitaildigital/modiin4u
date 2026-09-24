@@ -47,7 +47,7 @@ are not true, ordered by how visible they are.
 | Screen | What it shows now | Table it should read | Table has data? |
 |---|---|---|---|
 | ~~**Deals**~~ | **Fixed 24 Sep.** Reads `offers`; claiming writes `offer_claims`. The table is empty, so the honest state today is the empty message — the client adds offers in the admin panel, which was already live | `offers`, `offer_claims` | Empty, by nature |
-| **Steps** | A fabricated step count, fabricated leaderboard, fabricated challenges | `daily_steps`, `challenges`, `challenge_participants` | No |
+| ~~**Steps**~~ | **Fixed 24 Sep.** Counts real steps from the phone's pedometer and writes `daily_steps`; leaderboards come from two SECURITY DEFINER functions (migration 00022) and include only people who turned the health switch on. The challenge card is hidden while `challenges` is empty | `daily_steps`, `challenges` | Empty, by nature |
 | **Map POIs** | 63 hardcoded place names | `businesses` (has lat/long) | Yes — 220 rows |
 | **Municipal services** | A static list of services | none — genuinely static links | n/a, but the phone numbers need checking |
 | **Games** | Placeholder screen | `games`, `game_sessions` | No |

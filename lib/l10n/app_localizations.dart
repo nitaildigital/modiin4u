@@ -1926,6 +1926,186 @@ abstract class L {
   /// In he, this message translates to:
   /// **'גלו מבצעים, הנחות והטבות לזמן מוגבל ברחבי מודיעין.'**
   String get dealsHeroSubtitle;
+
+  /// No description provided for @stepCounter.
+  ///
+  /// In he, this message translates to:
+  /// **'מד צעדים'**
+  String get stepCounter;
+
+  /// No description provided for @everyStepBetter.
+  ///
+  /// In he, this message translates to:
+  /// **'כל צעד עושה את מודיעין טובה יותר'**
+  String get everyStepBetter;
+
+  /// No description provided for @todaysProgress.
+  ///
+  /// In he, this message translates to:
+  /// **'ההתקדמות היום'**
+  String get todaysProgress;
+
+  /// No description provided for @stepsUnit.
+  ///
+  /// In he, this message translates to:
+  /// **'צעדים'**
+  String get stepsUnit;
+
+  /// No description provided for @streakDays.
+  ///
+  /// In he, this message translates to:
+  /// **'רצף {n} ימים'**
+  String streakDays(int n);
+
+  /// No description provided for @percentOfGoal.
+  ///
+  /// In he, this message translates to:
+  /// **'{percent}% מתוך {goal}'**
+  String percentOfGoal(int percent, String goal);
+
+  /// No description provided for @kmUnit.
+  ///
+  /// In he, this message translates to:
+  /// **'ק״מ'**
+  String get kmUnit;
+
+  /// No description provided for @distanceEstimate.
+  ///
+  /// In he, this message translates to:
+  /// **'מרחק משוער'**
+  String get distanceEstimate;
+
+  /// No description provided for @thisWeek.
+  ///
+  /// In he, this message translates to:
+  /// **'השבוע'**
+  String get thisWeek;
+
+  /// No description provided for @leaderboard.
+  ///
+  /// In he, this message translates to:
+  /// **'טבלת מובילים'**
+  String get leaderboard;
+
+  /// No description provided for @byNeighborhood.
+  ///
+  /// In he, this message translates to:
+  /// **'לפי שכונה'**
+  String get byNeighborhood;
+
+  /// No description provided for @byCity.
+  ///
+  /// In he, this message translates to:
+  /// **'כל העיר'**
+  String get byCity;
+
+  /// No description provided for @you.
+  ///
+  /// In he, this message translates to:
+  /// **'אתם'**
+  String get you;
+
+  /// No description provided for @stepsPermissionNeeded.
+  ///
+  /// In he, this message translates to:
+  /// **'כדי לספור צעדים צריך אישור לזיהוי פעילות'**
+  String get stepsPermissionNeeded;
+
+  /// No description provided for @stepsUnsupported.
+  ///
+  /// In he, this message translates to:
+  /// **'המכשיר הזה לא תומך בספירת צעדים'**
+  String get stepsUnsupported;
+
+  /// No description provided for @noStepsYet.
+  ///
+  /// In he, this message translates to:
+  /// **'עדיין אין נתוני צעדים'**
+  String get noStepsYet;
+
+  /// No description provided for @leaderboardEmpty.
+  ///
+  /// In he, this message translates to:
+  /// **'אף אחד עדיין לא מודד צעדים'**
+  String get leaderboardEmpty;
+
+  /// No description provided for @leaderboardSignIn.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי לראות את הטבלה'**
+  String get leaderboardSignIn;
+
+  /// No description provided for @enableHealthToJoin.
+  ///
+  /// In he, this message translates to:
+  /// **'הפעילו ״נתוני כושר״ בהגדרות כדי להופיע בטבלה'**
+  String get enableHealthToJoin;
+
+  /// No description provided for @weekdayMon.
+  ///
+  /// In he, this message translates to:
+  /// **'ב׳'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In he, this message translates to:
+  /// **'ג׳'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In he, this message translates to:
+  /// **'ד׳'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In he, this message translates to:
+  /// **'ה׳'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In he, this message translates to:
+  /// **'ו׳'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In he, this message translates to:
+  /// **'ש׳'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In he, this message translates to:
+  /// **'א׳'**
+  String get weekdaySun;
+
+  /// No description provided for @monthlyChallenge.
+  ///
+  /// In he, this message translates to:
+  /// **'אתגר חודשי במודיעין'**
+  String get monthlyChallenge;
+
+  /// No description provided for @viewChallenge.
+  ///
+  /// In he, this message translates to:
+  /// **'לצפייה באתגר'**
+  String get viewChallenge;
+
+  /// No description provided for @stepChallengeTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'אתגר הצעדים של מודיעין'**
+  String get stepChallengeTitle;
+
+  /// No description provided for @stepChallengeSub.
+  ///
+  /// In he, this message translates to:
+  /// **'התחרו מול אחרים וטפסו בדירוג'**
+  String get stepChallengeSub;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

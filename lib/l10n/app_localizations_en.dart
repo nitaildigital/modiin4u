@@ -978,4 +978,100 @@ class LEn extends L {
   @override
   String get dealsHeroSubtitle =>
       'Explore local deals, discounts, and limited-time offers across Modiin.';
+
+  @override
+  String get stepCounter => 'Step Counter';
+
+  @override
+  String get everyStepBetter => 'Every step makes Modiin better';
+
+  @override
+  String get todaysProgress => 'Today\'s Progress';
+
+  @override
+  String get stepsUnit => 'steps';
+
+  @override
+  String streakDays(int n) {
+    return '$n day streak';
+  }
+
+  @override
+  String percentOfGoal(int percent, String goal) {
+    return '$percent% of $goal';
+  }
+
+  @override
+  String get kmUnit => 'km';
+
+  @override
+  String get distanceEstimate => 'Estimated distance';
+
+  @override
+  String get thisWeek => 'This Week';
+
+  @override
+  String get leaderboard => 'Leaderboard';
+
+  @override
+  String get byNeighborhood => 'Neighborhood';
+
+  @override
+  String get byCity => 'City';
+
+  @override
+  String get you => 'You';
+
+  @override
+  String get stepsPermissionNeeded =>
+      'Counting steps needs permission to detect activity';
+
+  @override
+  String get stepsUnsupported => 'This device cannot count steps';
+
+  @override
+  String get noStepsYet => 'No step data yet';
+
+  @override
+  String get leaderboardEmpty => 'Nobody is counting steps yet';
+
+  @override
+  String get leaderboardSignIn => 'Sign in to see the leaderboard';
+
+  @override
+  String get enableHealthToJoin =>
+      'Turn on health data in Settings to appear in the leaderboard';
+
+  @override
+  String get weekdayMon => 'Mon';
+
+  @override
+  String get weekdayTue => 'Tue';
+
+  @override
+  String get weekdayWed => 'Wed';
+
+  @override
+  String get weekdayThu => 'Thu';
+
+  @override
+  String get weekdayFri => 'Fri';
+
+  @override
+  String get weekdaySat => 'Sat';
+
+  @override
+  String get weekdaySun => 'Sun';
+
+  @override
+  String get monthlyChallenge => 'MODIIN MONTHLY CHALLENGE';
+
+  @override
+  String get viewChallenge => 'View Challenge';
+
+  @override
+  String get stepChallengeTitle => 'Modiin Step Challenge';
+
+  @override
+  String get stepChallengeSub => 'Compete with others and climb the ranks';
 }

@@ -967,4 +967,100 @@ class LHe extends L {
   @override
   String get dealsHeroSubtitle =>
       'גלו מבצעים, הנחות והטבות לזמן מוגבל ברחבי מודיעין.';
+
+  @override
+  String get stepCounter => 'מד צעדים';
+
+  @override
+  String get everyStepBetter => 'כל צעד עושה את מודיעין טובה יותר';
+
+  @override
+  String get todaysProgress => 'ההתקדמות היום';
+
+  @override
+  String get stepsUnit => 'צעדים';
+
+  @override
+  String streakDays(int n) {
+    return 'רצף $n ימים';
+  }
+
+  @override
+  String percentOfGoal(int percent, String goal) {
+    return '$percent% מתוך $goal';
+  }
+
+  @override
+  String get kmUnit => 'ק״מ';
+
+  @override
+  String get distanceEstimate => 'מרחק משוער';
+
+  @override
+  String get thisWeek => 'השבוע';
+
+  @override
+  String get leaderboard => 'טבלת מובילים';
+
+  @override
+  String get byNeighborhood => 'לפי שכונה';
+
+  @override
+  String get byCity => 'כל העיר';
+
+  @override
+  String get you => 'אתם';
+
+  @override
+  String get stepsPermissionNeeded =>
+      'כדי לספור צעדים צריך אישור לזיהוי פעילות';
+
+  @override
+  String get stepsUnsupported => 'המכשיר הזה לא תומך בספירת צעדים';
+
+  @override
+  String get noStepsYet => 'עדיין אין נתוני צעדים';
+
+  @override
+  String get leaderboardEmpty => 'אף אחד עדיין לא מודד צעדים';
+
+  @override
+  String get leaderboardSignIn => 'התחברו כדי לראות את הטבלה';
+
+  @override
+  String get enableHealthToJoin =>
+      'הפעילו ״נתוני כושר״ בהגדרות כדי להופיע בטבלה';
+
+  @override
+  String get weekdayMon => 'ב׳';
+
+  @override
+  String get weekdayTue => 'ג׳';
+
+  @override
+  String get weekdayWed => 'ד׳';
+
+  @override
+  String get weekdayThu => 'ה׳';
+
+  @override
+  String get weekdayFri => 'ו׳';
+
+  @override
+  String get weekdaySat => 'ש׳';
+
+  @override
+  String get weekdaySun => 'א׳';
+
+  @override
+  String get monthlyChallenge => 'אתגר חודשי במודיעין';
+
+  @override
+  String get viewChallenge => 'לצפייה באתגר';
+
+  @override
+  String get stepChallengeTitle => 'אתגר הצעדים של מודיעין';
+
+  @override
+  String get stepChallengeSub => 'התחרו מול אחרים וטפסו בדירוג';
 }

@@ -249,6 +249,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       isVerifiedResident: row['is_verified'] as bool? ?? false,
       isBanned: row['is_banned'] as bool? ?? false,
       isBroker: row['is_broker'] as bool? ?? false,
+      healthEnabled: row['health_enabled'] as bool? ?? false,
       familyStatus: row['family_status'] as String?,
       hasPet: row['has_pet'] as bool?,
       dateOfBirth: DateTime.tryParse(row['date_of_birth'] as String? ?? ''),

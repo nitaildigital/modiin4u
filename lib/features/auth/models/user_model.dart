@@ -17,6 +17,11 @@ class UserModel {
   /// apartment listings; a resident sees neither.
   final bool isBroker;
 
+  /// The health-data switch in Settings. It decides whether this person's
+  /// steps are counted into the public leaderboards, so the Steps screen
+  /// reads it to explain why they are not listed.
+  final bool healthEnabled;
+
   /// Collected on the edit screen. Null means not answered, which is not the
   /// same as an answer of "no" — the screen leaves the field blank for it.
   final String? familyStatus;
@@ -40,6 +45,7 @@ class UserModel {
     this.isVerifiedResident = false,
     this.isBanned = false,
     this.isBroker = false,
+    this.healthEnabled = false,
     this.familyStatus,
     this.hasPet,
     this.dateOfBirth,
@@ -61,6 +67,7 @@ class UserModel {
     bool? isVerifiedResident,
     bool? isBanned,
     bool? isBroker,
+    bool? healthEnabled,
     String? familyStatus,
     bool? hasPet,
     DateTime? dateOfBirth,
@@ -81,6 +88,7 @@ class UserModel {
       isVerifiedResident: isVerifiedResident ?? this.isVerifiedResident,
       isBanned: isBanned ?? this.isBanned,
       isBroker: isBroker ?? this.isBroker,
+      healthEnabled: healthEnabled ?? this.healthEnabled,
       familyStatus: familyStatus ?? this.familyStatus,
       hasPet: hasPet ?? this.hasPet,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,

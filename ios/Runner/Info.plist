@@ -45,6 +45,8 @@
 	<string>$(MAPS_API_KEY)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Modiin4U needs camera access to take photos of your apartment listing.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Modiin4U counts your steps so you can take part in the city step challenges and leaderboards.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Modiin4U uses your location to show nearby businesses, events, and real estate on the map.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
