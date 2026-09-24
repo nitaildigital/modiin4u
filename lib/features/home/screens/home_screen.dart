@@ -13,7 +13,12 @@ import '../../../shared/widgets/skeleton.dart';
 import '../../businesses/models/business.dart';
 import '../../businesses/providers/business_providers.dart';
 import '../../events/models/event.dart';
+import '../../deals/models/offer.dart';
+import '../../deals/providers/offer_providers.dart';
 import '../../events/providers/event_providers.dart';
+import '../../realestate/models/listing.dart';
+import '../../realestate/providers/listing_providers.dart';
+import '../../realestate/screens/my_apartments_screen.dart' show formatShekels;
 import '../../news/models/article.dart';
 import '../../news/providers/news_providers.dart';
 import 'web_home_screen.dart';
@@ -112,14 +117,15 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         const SizedBox(height: 24),
 
         // ── Deal Near You ──
-        _SectionHeader(
-          title: l.dealsNearYou,
-          onSeeAll: () => context.goOrPush('/deals'),
-        ),
-        const SizedBox(height: 12),
-        _buildDealImages(),
-
-        const SizedBox(height: 24),
+        if ((ref.watch(offersProvider).valueOrNull ?? const []).isNotEmpty) ...[
+          _SectionHeader(
+            title: l.dealsNearYou,
+            onSeeAll: () => context.goOrPush('/deals'),
+          ),
+          const SizedBox(height: 12),
+          _buildDealImages(),
+          const SizedBox(height: 24),
+        ],
 
         // ── Upcoming Events ──
         _SectionHeader(
@@ -132,14 +138,16 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         const SizedBox(height: 24),
 
         // ── Apartment Near You ──
-        _SectionHeader(
-          title: l.apartmentsNearYou,
-          onSeeAll: () => context.go('/realestate'),
-        ),
-        const SizedBox(height: 12),
-        _buildApartmentList(),
-
-        const SizedBox(height: 24),
+        if ((ref.watch(listingsProvider).valueOrNull ?? const [])
+            .isNotEmpty) ...[
+          _SectionHeader(
+            title: l.apartmentsNearYou,
+            onSeeAll: () => context.go('/realestate'),
+          ),
+          const SizedBox(height: 12),
+          _buildApartmentList(),
+          const SizedBox(height: 24),
+        ],
 
         // ── Latest News ──
         _SectionHeader(
@@ -387,49 +395,70 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // ─────────────────────────────────────────────
   // Deal Near You — horizontal deal banner images
   // ─────────────────────────────────────────────
+  /// Deals, from `offers`.
+  ///
+  /// Three gradient rectangles used to sit here reading "20% Off All
+  /// Pizzas", "Buy 1 Get 1 Free" and "Summer Special", tapping through to
+  /// `/deal/demo_0..2` — ids that cannot resolve. They came from nowhere.
   Widget _buildDealImages() {
-    final dealColors = [
-      [const Color(0xFFE92C04), const Color(0xFFFCC311)],
-      [const Color(0xFF0058B5), const Color(0xFF17A9D0)],
-      [const Color(0xFF31AC4E), const Color(0xFF43E97B)],
-    ];
-    final dealLabels = [
-      '20% Off All Pizzas',
-      'Buy 1 Get 1 Free',
-      'Summer Special',
-    ];
+    final offers = ref.watch(offersProvider).valueOrNull ?? const <Offer>[];
+    if (offers.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
       height: 130,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 3,
+        itemCount: offers.length,
         separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (_, index) {
+          final offer = offers[index];
           return GestureDetector(
-            onTap: () => context.push('/deal/demo_$index'),
-            child: Container(
+            onTap: () => context.push('/deal/${offer.id}'),
+            child: SizedBox(
               width: 230,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: dealColors[index],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  dealLabels[index],
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  NetworkPhoto(
+                    url: offer.imageUrl ?? offer.businessLogoUrl,
+                    radius: BorderRadius.circular(12),
+                    icon: IconsaxPlusBold.discount_shape,
+                    iconSize: 32,
                   ),
-                  textAlign: TextAlign.center,
-                ),
+                  // The name sits over the photograph, so it stays legible
+                  // whatever the picture is.
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.55),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Align(
+                      alignment: Alignment.bottomRight,
+                      child: Text(
+                        offer.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -452,43 +481,29 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // ─────────────────────────────────────────────
   // Apartment Near You — vertical list
   // ─────────────────────────────────────────────
+  /// Apartments, from `listings`.
+  ///
+  /// Four invented flats used to sit here — "3 Yona Hanavi Street" at
+  /// ₪3,650,000 and three more, all 140 m² and 6 rooms — tapping through to
+  /// `/listing/demo_0..3`, which cannot resolve.
   Widget _buildApartmentList() {
-    final apartments = [
-      _ApartmentData(
-        price: '₪3,650,000',
-        address: '3 Yona Hanavi Street, Modiin',
-        area: '140 m²',
-        rooms: '6 Rooms',
-      ),
-      _ApartmentData(
-        price: '₪3,790,000',
-        address: '84 Menachem Begin Road',
-        area: '140 m²',
-        rooms: '6 Rooms',
-      ),
-      _ApartmentData(
-        price: '₪5,690,000',
-        address: '73 Sarah Amano Street',
-        area: '140 m²',
-        rooms: '6 Rooms',
-      ),
-      _ApartmentData(
-        price: '₪5,690,000',
-        address: '73 Sarah Amano Street',
-        area: '140 m²',
-        rooms: '6 Rooms',
-      ),
-    ];
+    final listings =
+        ref.watch(listingsProvider).valueOrNull ?? const <Listing>[];
+    if (listings.isEmpty) return const SizedBox.shrink();
+
+    // The home screen shows a handful; the Real Estate tab shows them all.
+    final shown = listings.take(4).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
-        children: apartments.asMap().entries.map((entry) {
-          return GestureDetector(
-            onTap: () => context.push('/listing/demo_${entry.key}'),
-            child: _ApartmentRow(data: entry.value),
-          );
-        }).toList(),
+        children: [
+          for (final listing in shown)
+            GestureDetector(
+              onTap: () => context.push('/listing/${listing.id}'),
+              child: _ApartmentRow(listing: listing),
+            ),
+        ],
       ),
     );
   }
@@ -511,60 +526,60 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 /// Placeholders built to the exact geometry of the cards below them: same
 /// widths, image sizes, gaps and corner radii, so the row does not jump.
 Widget _businessCardSkeleton() => const _CardFrame(
-      width: 270,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  width: 270,
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SkeletonBox(width: 252, height: 140),
+      SizedBox(height: 10),
+      SkeletonLine(width: 170, fontSize: 16),
+      SizedBox(height: 8),
+      SkeletonLine(width: 210, fontSize: 12),
+      SizedBox(height: 8),
+      Row(
         children: [
-          SkeletonBox(width: 252, height: 140),
-          SizedBox(height: 10),
-          SkeletonLine(width: 170, fontSize: 16),
-          SizedBox(height: 8),
-          SkeletonLine(width: 210, fontSize: 12),
-          SizedBox(height: 8),
-          Row(
-            children: [
-              SkeletonBox(width: 54, height: 18, radius: 50),
-              Spacer(),
-              SkeletonLine(width: 64, fontSize: 12),
-            ],
-          ),
+          SkeletonBox(width: 54, height: 18, radius: 50),
+          Spacer(),
+          SkeletonLine(width: 64, fontSize: 12),
         ],
       ),
-    );
+    ],
+  ),
+);
 
 Widget _eventCardSkeleton() => const _CardFrame(
-      width: 270,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SkeletonBox(width: 252, height: 140),
-          SizedBox(height: 10),
-          SkeletonLine(width: 180, fontSize: 16),
-          SizedBox(height: 10),
-          SkeletonLine(width: 130, fontSize: 12),
-          SizedBox(height: 8),
-          SkeletonLine(width: 96, fontSize: 12),
-        ],
-      ),
-    );
+  width: 270,
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SkeletonBox(width: 252, height: 140),
+      SizedBox(height: 10),
+      SkeletonLine(width: 180, fontSize: 16),
+      SizedBox(height: 10),
+      SkeletonLine(width: 130, fontSize: 12),
+      SizedBox(height: 8),
+      SkeletonLine(width: 96, fontSize: 12),
+    ],
+  ),
+);
 
 Widget _newsCardSkeleton() => const SizedBox(
-      width: 250,
-      child: Skeleton(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SkeletonBox(width: 250, height: 150, radius: 12),
-            SizedBox(height: 12),
-            SkeletonLine(width: 250, fontSize: 16),
-            SizedBox(height: 7),
-            SkeletonLine(width: 190, fontSize: 16),
-            SizedBox(height: 12),
-            SkeletonLine(width: 150, fontSize: 14),
-          ],
-        ),
-      ),
-    );
+  width: 250,
+  child: Skeleton(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SkeletonBox(width: 250, height: 150, radius: 12),
+        SizedBox(height: 12),
+        SkeletonLine(width: 250, fontSize: 16),
+        SizedBox(height: 7),
+        SkeletonLine(width: 190, fontSize: 16),
+        SizedBox(height: 12),
+        SkeletonLine(width: 150, fontSize: 14),
+      ],
+    ),
+  ),
+);
 
 /// The card chrome stays solid while its contents shimmer — a shimmering
 /// border reads as a glitch rather than as loading.
@@ -969,7 +984,6 @@ class _EventData {
     required this.gradientColors,
   });
 
-
   factory _EventData.from(Event e, L l) {
     final start = e.startDate;
     return _EventData(
@@ -1062,10 +1076,7 @@ class _EventCard extends StatelessWidget {
                 Positioned(
                   right: 8,
                   top: 8,
-                  child: FavoriteButton(
-                    kind: FavoriteKind.event,
-                    id: data.id,
-                  ),
+                  child: FavoriteButton(kind: FavoriteKind.event, id: data.id),
                 ),
               ],
             ),
@@ -1173,27 +1184,21 @@ class _EventCard extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Apartment data + row widget
 // ═══════════════════════════════════════════════
-class _ApartmentData {
-  final String price;
-  final String address;
-  final String area;
-  final String rooms;
-
-  const _ApartmentData({
-    required this.price,
-    required this.address,
-    required this.area,
-    required this.rooms,
-  });
-}
-
+/// One apartment row on the home screen.
+///
+/// It took a `_ApartmentData` of pre-formatted strings, which is how four
+/// invented flats ended up hardcoded above it. It takes the row now.
 class _ApartmentRow extends StatelessWidget {
-  final _ApartmentData data;
+  final Listing listing;
 
-  const _ApartmentRow({required this.data});
+  const _ApartmentRow({required this.listing});
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final price = listing.effectivePrice;
+    final address = listing.address ?? listing.neighborhoodName;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: const BoxDecoration(
@@ -1202,43 +1207,42 @@ class _ApartmentRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thumbnail
-          Container(
+          NetworkPhoto(
+            url: listing.coverUrl,
             width: 95,
             height: 80,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFBDC3C7), Color(0xFF95A5A6)],
-              ),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Center(
-              child: Icon(Icons.apartment, size: 28, color: Colors.white),
-            ),
+            radius: BorderRadius.circular(6),
+            icon: IconsaxPlusBold.home_2,
+            iconSize: 28,
           ),
-
           const SizedBox(width: 12),
-
-          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Price + FOR SALE
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    if (price != null)
+                      Text(
+                        listing.kind == ListingKind.rent
+                            ? l.pricePerMonthValue(formatShekels(price))
+                            : formatShekels(price),
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.navy,
+                        ),
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    // The badge said FOR SALE on every row, rentals
+                    // included.
                     Text(
-                      data.price,
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                    Text(
-                      'FOR SALE',
+                      listing.kind == ListingKind.rent
+                          ? l.forRentBadge
+                          : l.forSaleBadge,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 10,
@@ -1249,68 +1253,74 @@ class _ApartmentRow extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 9),
-
-                // Address
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 14,
-                      color: Color(0xFF6D6D6D),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        data.address,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: const Color(0xFF6D6D6D),
+                if (address != null && address.isNotEmpty) ...[
+                  const SizedBox(height: 9),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: Color(0xFF6D6D6D),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          address,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            color: const Color(0xFF6D6D6D),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
 
-                const SizedBox(height: 9),
-
-                // Area + Rooms
-                Row(
-                  children: [
-                    const Icon(
-                      IconsaxPlusLinear.maximize_4,
-                      size: 14,
-                      color: Color(0xFF6D6D6D),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      data.area,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 12,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                    ),
-                    const SizedBox(width: 31),
-                    const Icon(
-                      IconsaxPlusLinear.house_2,
-                      size: 14,
-                      color: Color(0xFF6D6D6D),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      data.rooms,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 12,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                    ),
-                  ],
-                ),
+                // Only the figures this listing carries — the old row always
+                // printed "140 m²" and "6 Rooms".
+                if (listing.sqm != null || listing.rooms != null) ...[
+                  const SizedBox(height: 9),
+                  Row(
+                    children: [
+                      if (listing.sqm != null) ...[
+                        const Icon(
+                          IconsaxPlusLinear.maximize_4,
+                          size: 14,
+                          color: Color(0xFF6D6D6D),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${listing.sqm} ${l.sqmUnit}',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            color: const Color(0xFF6D6D6D),
+                          ),
+                        ),
+                        const SizedBox(width: 31),
+                      ],
+                      if (listing.rooms != null) ...[
+                        const Icon(
+                          IconsaxPlusLinear.house_2,
+                          size: 14,
+                          color: Color(0xFF6D6D6D),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${_rooms(listing.rooms!)} ${l.roomsLabel}',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            color: const Color(0xFF6D6D6D),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -1318,6 +1328,10 @@ class _ApartmentRow extends StatelessWidget {
       ),
     );
   }
+
+  /// 3.5 reads as "3.5"; 4.0 reads as "4".
+  static String _rooms(double v) =>
+      v == v.roundToDouble() ? '${v.toInt()}' : '$v';
 }
 
 // ═══════════════════════════════════════════════
@@ -1337,7 +1351,6 @@ class _NewsData {
     required this.date,
     required this.gradientColors,
   });
-
 
   factory _NewsData.from(Article a, L l) {
     final d = a.publishedAt;
