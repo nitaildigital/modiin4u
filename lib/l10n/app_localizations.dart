@@ -1746,6 +1746,24 @@ abstract class L {
   /// In he, this message translates to:
   /// **'להשכרה'**
   String get forRentBadge;
+
+  /// No description provided for @photoTooLarge.
+  ///
+  /// In he, this message translates to:
+  /// **'הקובץ גדול מ-10MB'**
+  String get photoTooLarge;
+
+  /// No description provided for @uploadFailed.
+  ///
+  /// In he, this message translates to:
+  /// **'ההעלאה נכשלה. נסו שוב.'**
+  String get uploadFailed;
+
+  /// No description provided for @maxPhotosReached.
+  ///
+  /// In he, this message translates to:
+  /// **'ניתן להעלות עד {n} תמונות'**
+  String maxPhotosReached(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

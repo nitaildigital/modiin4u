@@ -864,4 +864,15 @@ class LHe extends L {
 
   @override
   String get forRentBadge => 'להשכרה';
+
+  @override
+  String get photoTooLarge => 'הקובץ גדול מ-10MB';
+
+  @override
+  String get uploadFailed => 'ההעלאה נכשלה. נסו שוב.';
+
+  @override
+  String maxPhotosReached(int n) {
+    return 'ניתן להעלות עד $n תמונות';
+  }
 }

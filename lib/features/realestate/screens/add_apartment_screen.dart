@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 
@@ -55,6 +59,104 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
   final Set<_Amenity> _amenities = {};
 
   bool _saving = false;
+
+  // ── Photographs ──
+  //
+  // Uploaded as they are picked rather than on submit, so the person sees
+  // them appear and a slow connection does not stall the final button. The
+  // list holds public URLs; the first is the cover.
+  static const _maxPhotos = 9;
+  final List<String> _photos = [];
+  bool _uploading = false;
+
+  Future<void> _pickPhotos() async {
+    final l = L.of(context);
+    final room = _maxPhotos - _photos.length;
+    if (room <= 0) {
+      _toast(l.maxPhotosReached(_maxPhotos));
+      return;
+    }
+
+    final List<XFile> picked;
+    try {
+      picked = await ImagePicker().pickMultiImage(
+        maxWidth: 2000,
+        imageQuality: 85,
+      );
+    } catch (_) {
+      if (mounted) _toast(l.uploadFailed, error: true);
+      return;
+    }
+    if (picked.isEmpty || !mounted) return;
+
+    setState(() => _uploading = true);
+
+    final uid = SupabaseConfig.client.auth.currentUser?.id;
+    if (uid == null) {
+      setState(() => _uploading = false);
+      _toast(l.signInToPostListing, error: true);
+      return;
+    }
+
+    for (final file in picked.take(room)) {
+      try {
+        final bytes = await file.readAsBytes();
+        // The bucket refuses anything over 10MB and reports it as a plain
+        // failure, so the size is checked here to say why.
+        if (bytes.lengthInBytes > 10 * 1024 * 1024) {
+          if (mounted) _toast(l.photoTooLarge, error: true);
+          continue;
+        }
+
+        // The storage policy only admits `listings/<your id>/…`, so the path
+        // is built to match rather than hoped for.
+        final ext = _extensionOf(file.name);
+        final path =
+            'listings/$uid/${DateTime.now().microsecondsSinceEpoch}$ext';
+
+        await SupabaseConfig.client.storage
+            .from('media')
+            .uploadBinary(
+              path,
+              bytes,
+              fileOptions: FileOptions(
+                contentType: _mimeOf(ext),
+                upsert: false,
+              ),
+            );
+
+        final url = SupabaseConfig.client.storage
+            .from('media')
+            .getPublicUrl(path);
+        if (!mounted) return;
+        setState(() => _photos.add(url));
+      } catch (_) {
+        if (mounted) _toast(l.uploadFailed, error: true);
+      }
+    }
+
+    if (mounted) setState(() => _uploading = false);
+  }
+
+  /// Drops it from the listing. The file is left in the bucket: a half-filled
+  /// form is often come back to, and an orphan costs less than a photograph
+  /// deleted while it is still being used.
+  void _removePhoto(int index) => setState(() => _photos.removeAt(index));
+
+  static String _extensionOf(String name) {
+    final dot = name.lastIndexOf('.');
+    if (dot == -1) return '.jpg';
+    final ext = name.substring(dot).toLowerCase();
+    return const {'.jpg', '.jpeg', '.png', '.webp'}.contains(ext)
+        ? ext
+        : '.jpg';
+  }
+
+  static String _mimeOf(String ext) => switch (ext) {
+    '.png' => 'image/png',
+    '.webp' => 'image/webp',
+    _ => 'image/jpeg',
+  };
 
   @override
   void dispose() {
@@ -118,6 +220,8 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
             hasStorage: _amenities.contains(_Amenity.storage),
             hasBalcony: _amenities.contains(_Amenity.balcony),
             hasMamad: _amenities.contains(_Amenity.mamad),
+            coverUrl: _photos.isEmpty ? null : _photos.first,
+            gallery: _photos.length > 1 ? _photos.sublist(1) : const [],
           );
 
       // So "My Apartments" shows it without the person having to pull to
@@ -676,10 +780,10 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
   // ═══════════════════════════════════════════════
   Widget _buildStep3() {
     final l = L.of(context);
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       children: [
-        // Section header
         Text(
           l.addPhotos,
           style: TextStyle(
@@ -695,7 +799,6 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
           style: TextStyle(
             fontFamily: AppFonts.inter,
             fontSize: 12,
-            fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
           ),
         ),
@@ -711,146 +814,125 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
         ),
         const SizedBox(height: 16),
 
-        // ── Uploaded photos: 1 large + 2 small ──
-        SizedBox(
-          height: 210,
-          child: Row(
-            children: [
-              // Large main photo
-              Expanded(
-                flex: 235,
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                        ),
-                      ),
-                    ),
-                    // "Main Image" badge
-                    Positioned(
-                      left: 10,
-                      top: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF123A72),
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: Text(
-                          l.mainImage,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Delete button
-                    Positioned(right: 8, top: 8, child: const _DeleteCircle()),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Two small photos stacked
-              Expanded(
-                flex: 118,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              gradient: const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            right: 6,
-                            top: 6,
-                            child: const _DeleteCircle(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              gradient: const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            right: 6,
-                            top: 6,
-                            child: const _DeleteCircle(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        // ── The photographs, as a grid that grows ──
+        //
+        // This was eight fixed boxes: three painted blue to look like
+        // uploaded pictures and five empty slots that did nothing. Nothing was
+        // ever picked and nothing was ever uploaded, so every listing reached
+        // the directory with no photograph at all.
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
           ),
+          itemCount: _photos.length + (_photos.length < _maxPhotos ? 1 : 0),
+          itemBuilder: (_, i) {
+            if (i == _photos.length) return _addPhotoSlot(l);
+            return _photoTile(l, i);
+          },
         ),
-        const SizedBox(height: 16),
 
-        // ── Empty upload slots: row 1 ──
-        Row(
-          children: List.generate(
-            3,
-            (i) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: i == 0 ? 0 : 6,
-                  right: i == 2 ? 0 : 6,
-                ),
-                child: const _UploadSlot(),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // ── Empty upload slots: row 2 ──
-        Row(
-          children: List.generate(
-            3,
-            (i) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: i == 0 ? 0 : 6,
-                  right: i == 2 ? 0 : 6,
-                ),
-                child: const _UploadSlot(),
-              ),
-            ),
-          ),
-        ),
+        if (_uploading) ...[
+          const SizedBox(height: 16),
+          const Center(child: CircularProgressIndicator()),
+        ],
         const SizedBox(height: 24),
       ],
+    );
+  }
+
+  Widget _photoTile(L l, int index) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        NetworkPhoto(
+          url: _photos[index],
+          radius: BorderRadius.circular(8),
+          icon: IconsaxPlusBold.image,
+        ),
+        // The first one is the cover, which is what the label says, so
+        // reordering is done by making another one first.
+        if (index == 0)
+          Positioned(
+            left: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Text(
+                l.mainImage,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 10,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          )
+        else
+          Positioned(
+            left: 6,
+            bottom: 6,
+            child: GestureDetector(
+              onTap: () => setState(() {
+                final photo = _photos.removeAt(index);
+                _photos.insert(0, photo);
+              }),
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  IconsaxPlusLinear.star_1,
+                  size: 14,
+                  color: Color(0xFF123A72),
+                ),
+              ),
+            ),
+          ),
+        Positioned(
+          right: 6,
+          top: 6,
+          child: GestureDetector(
+            onTap: () => _removePhoto(index),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE53935),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, size: 15, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _addPhotoSlot(L l) {
+    return GestureDetector(
+      onTap: _uploading ? null : _pickPhotos,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFFC6C6C6),
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: const Center(
+          child: Icon(Icons.add, size: 28, color: Color(0xFF123A72)),
+        ),
+      ),
     );
   }
 

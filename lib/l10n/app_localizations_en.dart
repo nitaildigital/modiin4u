@@ -874,4 +874,15 @@ class LEn extends L {
 
   @override
   String get forRentBadge => 'FOR RENT';
+
+  @override
+  String get photoTooLarge => 'That file is larger than 10MB';
+
+  @override
+  String get uploadFailed => 'The upload failed. Please try again.';
+
+  @override
+  String maxPhotosReached(int n) {
+    return 'Up to $n photos';
+  }
 }

@@ -351,5 +351,15 @@
   },
   "viewOnMap": "הצג במפה",
   "forSaleBadge": "למכירה",
-  "forRentBadge": "להשכרה"
+  "forRentBadge": "להשכרה",
+  "photoTooLarge": "הקובץ גדול מ-10MB",
+  "uploadFailed": "ההעלאה נכשלה. נסו שוב.",
+  "maxPhotosReached": "ניתן להעלות עד {n} תמונות",
+  "@maxPhotosReached": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -351,5 +351,15 @@
   },
   "viewOnMap": "View on Map",
   "forSaleBadge": "FOR SALE",
-  "forRentBadge": "FOR RENT"
+  "forRentBadge": "FOR RENT",
+  "photoTooLarge": "That file is larger than 10MB",
+  "uploadFailed": "The upload failed. Please try again.",
+  "maxPhotosReached": "Up to {n} photos",
+  "@maxPhotosReached": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }
