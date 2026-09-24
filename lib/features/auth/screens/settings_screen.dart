@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/providers/theme_provider.dart';
+import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../../settings/models/notification_preferences.dart';
 import '../../settings/providers/preferences_provider.dart';
@@ -196,6 +197,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final signedIn = ref.watch(isLoggedInProvider);
     final prefs =
         ref.watch(preferencesProvider) ?? const NotificationPreferences();
+    final l = L.of(context);
 
     void set(NotificationPreferences next) =>
         ref.read(preferencesProvider.notifier).update(next);
@@ -214,7 +216,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         body: ListView(
           children: [
             const SizedBox(height: 8),
-            _SectionTitle('התראות'),
+            _SectionTitle(l.notifications),
 
             // Signed out there is no row to write a choice to, so the
             // switches say so rather than appearing to remember anything.
@@ -222,61 +224,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             _ToggleItem(
               icon: Icons.notifications_active_outlined,
-              label: 'קבלת התראות',
-              subtitle: 'כבו כדי להפסיק לקבל התראות',
+              label: l.receiveNotifications,
+              subtitle: l.receiveNotificationsHint,
               value: prefs.pushEnabled,
               enabled: signedIn,
               onChanged: (v) => set(prefs.copyWith(pushEnabled: v)),
             ),
             _ToggleItem(
               icon: Icons.newspaper_outlined,
-              label: 'חדשות ועדכונים',
-              subtitle: 'חדשות מקומיות, עדכוני עירייה',
+              label: l.notifyNews,
+              subtitle: l.notifyNewsHint,
               value: prefs.news,
               enabled: signedIn && prefs.pushEnabled,
               onChanged: (v) => set(prefs.copyWith(news: v)),
             ),
             _ToggleItem(
               icon: Icons.local_offer_outlined,
-              label: 'הטבות ומבצעים',
-              subtitle: 'קופונים חדשים מעסקים',
+              label: l.notifyDeals,
+              subtitle: l.notifyDealsHint,
               value: prefs.deals,
               enabled: signedIn && prefs.pushEnabled,
               onChanged: (v) => set(prefs.copyWith(deals: v)),
             ),
             _ToggleItem(
               icon: Icons.location_on_outlined,
-              label: 'עדכוני שכונה',
-              subtitle: 'אירועים ועדכונים רלוונטיים לשכונה שלך',
+              label: l.notifyNeighborhood,
+              subtitle: l.notifyNeighborhoodHint,
               value: prefs.neighborhood,
               enabled: signedIn && prefs.pushEnabled,
               onChanged: (v) => set(prefs.copyWith(neighborhood: v)),
             ),
             const Divider(color: AppColors.border, indent: 20, endIndent: 20),
 
-            _SectionTitle('גישה'),
+            _SectionTitle(l.access),
             _ToggleItem(
               icon: Icons.my_location_outlined,
-              label: 'מיקום',
-              subtitle: 'למציאת עסקים ואירועים קרובים אליכם',
+              label: l.accessLocation,
+              subtitle: l.accessLocationHint,
               value: prefs.locationEnabled,
               enabled: signedIn,
               onChanged: (v) => set(prefs.copyWith(locationEnabled: v)),
             ),
             _ToggleItem(
               icon: Icons.directions_walk_outlined,
-              label: 'נתוני כושר',
-              subtitle: 'לספירת צעדים ואתגרים',
+              label: l.accessHealth,
+              subtitle: l.accessHealthHint,
               value: prefs.healthEnabled,
               enabled: signedIn,
               onChanged: (v) => set(prefs.copyWith(healthEnabled: v)),
             ),
             const Divider(color: AppColors.border, indent: 20, endIndent: 20),
 
-            _SectionTitle('תצוגה'),
+            _SectionTitle(l.display),
             _ToggleItem(
               icon: Icons.dark_mode_outlined,
-              label: 'מצב כהה',
+              label: l.darkMode,
               subtitle: isDark ? 'מצב כהה פעיל' : 'מצב בהיר פעיל',
               value: isDark,
               onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
@@ -284,7 +286,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             const Divider(color: AppColors.border, indent: 20, endIndent: 20),
 
-            _SectionTitle('חשבון'),
+            _SectionTitle(l.account),
             _ActionItem(
               icon: Icons.lock_outline,
               label: 'פרטיות ואבטחה',
@@ -506,7 +508,7 @@ class _SignInPrompt extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'התחברו כדי לשמור את ההעדפות שלכם',
+                  L.of(context).signInToSavePrefs,
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,

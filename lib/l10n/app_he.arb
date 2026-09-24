@@ -1,0 +1,153 @@
+{
+  "@@locale": "he",
+  "appName": "מודיעין בשבילך",
+  "navHome": "בית",
+  "navBusinesses": "עסקים",
+  "navMap": "מפה",
+  "navNews": "חדשות",
+  "navMunicipal": "עירייה",
+  "goodMorning": "בוקר טוב",
+  "goodAfternoon": "צהריים טובים",
+  "goodEvening": "ערב טוב",
+  "whatAreYouLookingFor": "מה אתה מחפש היום?",
+  "searchPlaceholder": "שאל או חפש במודיעין...",
+  "ask": "שאל",
+  "discoverModiin": "גלו את מודיעין",
+  "popularNearYou": "פופולרי בקרבתך",
+  "upcomingEvents": "אירועים קרובים",
+  "latestNews": "חדשות אחרונות",
+  "apartmentsNearYou": "דירות בקרבתך",
+  "seeAll": "ראה הכל",
+  "restaurants": "מסעדות",
+  "events": "אירועים",
+  "realEstate": "נדל\"ן",
+  "news": "חדשות",
+  "deals": "מבצעים",
+  "signIn": "התחברות",
+  "signUp": "הרשמה",
+  "signOut": "התנתקות",
+  "email": "אימייל",
+  "emailHint": "הזינו את כתובת האימייל",
+  "welcomeBack": "ברוכים השבים! 👋",
+  "signInSubtitle": "שמחים לראות אתכם שוב!",
+  "noAccount": "אין לכם חשבון?",
+  "confirm": "אישור",
+  "errEnterEmail": "הזינו כתובת אימייל",
+  "errTooMany": "יותר מדי ניסיונות. המתינו רגע ונסו שוב.",
+  "errNoConnection": "אין חיבור. בדקו את הרשת ונסו שוב.",
+  "errCouldNotSave": "לא ניתן היה לשמור. נסו שוב.",
+  "somethingWentWrong": "משהו השתבש",
+  "tryAgain": "נסו שוב",
+  "settings": "הגדרות",
+  "notifications": "התראות",
+  "access": "גישה",
+  "account": "חשבון",
+  "display": "תצוגה",
+  "language": "שפה",
+  "receiveNotifications": "קבלת התראות",
+  "receiveNotificationsHint": "כבו כדי להפסיק לקבל התראות",
+  "notifyNews": "חדשות ועדכונים",
+  "notifyNewsHint": "חדשות מקומיות, עדכוני עירייה",
+  "notifyDeals": "הטבות ומבצעים",
+  "notifyDealsHint": "קופונים חדשים מעסקים",
+  "notifyNeighborhood": "עדכוני שכונה",
+  "notifyNeighborhoodHint": "אירועים ועדכונים רלוונטיים לשכונה שלך",
+  "accessLocation": "מיקום",
+  "accessLocationHint": "למציאת עסקים ואירועים קרובים אליכם",
+  "accessHealth": "נתוני כושר",
+  "accessHealthHint": "לספירת צעדים ואתגרים",
+  "darkMode": "מצב כהה",
+  "signInToSavePrefs": "התחברו כדי לשמור את ההעדפות שלכם",
+  "deleteAccount": "מחיקת חשבון",
+  "deleteAccountConfirm": "פעולה זו תמחק את כל הנתונים שלך לצמיתות. האם להמשיך?",
+  "deleteAccountFailed": "לא ניתן היה למחוק את החשבון. נסו שוב מאוחר יותר.",
+  "cancel": "ביטול",
+  "delete": "מחיקה",
+  "favorites": "מועדפים",
+  "signInToSave": "התחברו כדי לשמור",
+  "noFavoritesYet": "אין עדיין מועדפים",
+  "noFavoritesHint": "שמרו מקומות ופריטים שאהבתם",
+  "signInToSeeFavorites": "התחברו כדי לראות את המועדפים שלכם",
+  "openingHours": "שעות פתיחה",
+  "closed": "סגור",
+  "about": "אודות {name}",
+  "@about": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewsFor": "ביקורות על {name}",
+  "@reviewsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noReviewsYet": "אין עדיין ביקורות",
+  "noReviewsHint": "היו הראשונים לכתוב ביקורת על המקום הזה",
+  "noPhotosYet": "אין עדיין תמונות",
+  "basedOnReviews": "מבוסס על {count} ביקורות",
+  "@basedOnReviews": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "seeMore": "הצג עוד",
+  "seeLess": "הצג פחות",
+  "haveYouVisited": "ביקרתם ב{name}?",
+  "@haveYouVisited": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "searchResults": "תוצאות חיפוש",
+  "resultsCount": "{count} תוצאות",
+  "@resultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noResults": "לא נמצאו תוצאות",
+  "noResultsHint": "נסו חיפוש אחר",
+  "all": "הכל",
+  "noAdminAccess": "אין לך גישה לאזור הניהול",
+  "backHome": "חזרה לדף הבית",
+  "password": "סיסמה",
+  "passwordHint": "הזינו סיסמה",
+  "rememberMe": "זכור אותי",
+  "forgotPassword": "שכחתם סיסמה?",
+  "errEnterPassword": "הזינו סיסמה",
+  "errEnterEmailFirst": "הזינו קודם את כתובת האימייל",
+  "resetLinkSent": "אם קיים חשבון עם הכתובת הזו, נשלח אליה קישור לאיפוס.",
+  "errWrongCredentials": "האימייל או הסיסמה אינם נכונים.",
+  "errEmailNotConfirmed": "יש לאשר את כתובת האימייל. בדקו את תיבת הדואר.",
+  "errPasswordsDoNotMatch": "הסיסמאות אינן תואמות",
+  "errPasswordTooShort": "הסיסמה חייבת להכיל לפחות 8 תווים",
+  "createAccount": "יצירת חשבון",
+  "accountCreatedCheckEmail": "החשבון נוצר. אשרו את כתובת האימייל כדי להתחבר.",
+  "currentPassword": "סיסמה נוכחית",
+  "newPassword": "סיסמה חדשה",
+  "confirmNewPassword": "אימות סיסמה חדשה",
+  "changePassword": "שינוי סיסמה",
+  "passwordChanged": "הסיסמה שונתה",
+  "errCurrentPasswordWrong": "הסיסמה הנוכחית אינה נכונה",
+  "errAgreeToTerms": "יש לאשר את תנאי השימוש",
+  "chooseStrongPassword": "למען האבטחה שלכם, בחרו סיסמה חזקה.",
+  "resendConfirmation": "שליחת אימות שוב",
+  "confirmationResent": "שלחנו שוב את הודעת האימות.",
+  "checkYourEmail": "בדקו את האימייל",
+  "emailConfirmed": "האימייל אומת!",
+  "emailConfirmedWeb": "כתובת האימייל שלכם אומתה. חזרו לאפליקציה והתחברו.",
+  "emailConfirmedApp": "כתובת האימייל שלכם אומתה. אפשר להתחיל.",
+  "confirmationFailed": "האימות נכשל",
+  "confirmationFailedHint": "ייתכן שהקישור פג תוקף או שכבר נעשה בו שימוש. נסו לשלוח אותו שוב."
+}

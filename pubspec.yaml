@@ -94,6 +94,9 @@ flutter_native_splash:
 flutter:
   uses-material-design: true
 
+  # Turns the ARB files in lib/l10n into the L class the screens read.
+  generate: true
+
   assets:
     - assets/images/
     - assets/icons/

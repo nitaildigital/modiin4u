@@ -1,42 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 /// Change Language screen – search bar, list of languages with flag
 /// emoji + radio buttons, and a midBlue "Save" pill button.
-class ChangeLanguageScreen extends StatefulWidget {
+class ChangeLanguageScreen extends ConsumerStatefulWidget {
   const ChangeLanguageScreen({super.key});
 
   @override
-  State<ChangeLanguageScreen> createState() => _ChangeLanguageScreenState();
+  ConsumerState<ChangeLanguageScreen> createState() =>
+      _ChangeLanguageScreenState();
 }
 
-class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
+class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
   final _searchController = TextEditingController();
-  int _selectedIndex = 0; // English (US) pre-selected
+  int _selectedIndex = 0;
 
+  /// Only the two the app is actually translated into.
+  ///
+  /// The list used to offer eight — Spanish, French, German, Italian, Russian,
+  /// Korean — none of which exist. Choosing one did nothing, which is worse
+  /// than not offering it.
   static const _languages = <_LanguageItem>[
-    _LanguageItem('English (United States)', '🇺🇸'),
-    _LanguageItem('עברית', '🇮🇱'),
-    _LanguageItem('Español', '🇪🇸'),
-    _LanguageItem('Français', '🇫🇷'),
-    _LanguageItem('Deutsch', '🇩🇪'),
-    _LanguageItem('Italiano', '🇮🇹'),
-    _LanguageItem('Русский', '🇷🇺'),
-    _LanguageItem('한국어', '🇰🇷'),
+    _LanguageItem('עברית', '🇮🇱', 'he'),
+    _LanguageItem('English', '🇺🇸', 'en'),
   ];
-
-  List<_LanguageItem> get _filtered {
-    final q = _searchController.text.toLowerCase();
-    if (q.isEmpty) return _languages;
-    return _languages.where((l) => l.name.toLowerCase().contains(q)).toList();
-  }
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(() => setState(() {}));
+    final code = ref.read(localeProvider).languageCode;
+    _selectedIndex = _languages.indexWhere((l) => l.code == code).clamp(0, 1);
+  }
+
+  void _apply() {
+    final code = _languages[_selectedIndex].code;
+    ref
+        .read(localeProvider.notifier)
+        .setLocale(supportedLocales.firstWhere((l) => l.languageCode == code));
+    context.pop();
+  }
+
+  List<_LanguageItem> get _filtered {
+    final q = _searchController.text.toLowerCase();
+    if (q.isEmpty) return _languages;
+    return _languages.where((l) => l.name.toLowerCase().contains(q)).toList();
   }
 
   @override
@@ -82,7 +95,8 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                         child: Center(
                           child: Text(
                             'Change Language',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -120,21 +134,24 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF1F1F1F),
                             ),
                             decoration: InputDecoration(
                               hintText: 'Search',
-                              hintStyle: TextStyle(fontFamily: AppFonts.inter, 
+                              hintStyle: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF6D6D6D),
                               ),
                               border: InputBorder.none,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 13),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 13,
+                              ),
                             ),
                           ),
                         ),
@@ -164,8 +181,7 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                           height: 57,
                           decoration: const BoxDecoration(
                             border: Border(
-                              bottom:
-                                  BorderSide(color: Color(0xFFE7E7E7)),
+                              bottom: BorderSide(color: Color(0xFFE7E7E7)),
                             ),
                           ),
                           child: Row(
@@ -187,7 +203,8 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                               Expanded(
                                 child: Text(
                                   lang.name,
-                                  style: TextStyle(fontFamily: AppFonts.inter, 
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.inter,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: const Color(0xFF0A1230),
@@ -209,10 +226,12 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                 // Save button (pinned bottom)
                 // ═══════════════════════════════════
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: GestureDetector(
-                    onTap: () => context.pop(),
+                    onTap: _apply,
                     child: Container(
                       width: double.infinity,
                       height: 48,
@@ -223,7 +242,8 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
                       child: Center(
                         child: Text(
                           'Save',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
@@ -247,9 +267,12 @@ class _ChangeLanguageScreenState extends State<ChangeLanguageScreen> {
 // ═══════════════════════════════════════════════
 
 class _LanguageItem {
+  /// The locale it maps to.
+  final String code;
+
   final String name;
   final String flag;
-  const _LanguageItem(this.name, this.flag);
+  const _LanguageItem(this.name, this.flag, this.code);
 }
 
 // ═══════════════════════════════════════════════
@@ -268,9 +291,7 @@ class _RadioDot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: selected
-              ? const Color(0xFF123A72)
-              : const Color(0xFFD1D1D1),
+          color: selected ? const Color(0xFF123A72) : const Color(0xFFD1D1D1),
           width: 2,
         ),
       ),

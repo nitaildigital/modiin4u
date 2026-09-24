@@ -1,0 +1,153 @@
+{
+  "@@locale": "en",
+  "appName": "Modiin4U",
+  "navHome": "Home",
+  "navBusinesses": "Businesses",
+  "navMap": "Map",
+  "navNews": "News",
+  "navMunicipal": "City",
+  "goodMorning": "Good morning",
+  "goodAfternoon": "Good afternoon",
+  "goodEvening": "Good evening",
+  "whatAreYouLookingFor": "What are you looking for today?",
+  "searchPlaceholder": "Ask or search in Modiin…",
+  "ask": "Ask",
+  "discoverModiin": "Discover Modiin",
+  "popularNearYou": "Popular near you",
+  "upcomingEvents": "Upcoming events",
+  "latestNews": "Latest news",
+  "apartmentsNearYou": "Apartments near you",
+  "seeAll": "See all",
+  "restaurants": "Restaurants",
+  "events": "Events",
+  "realEstate": "Real estate",
+  "news": "News",
+  "deals": "Deals",
+  "signIn": "Sign in",
+  "signUp": "Sign up",
+  "signOut": "Sign out",
+  "email": "Email",
+  "emailHint": "Enter your email",
+  "welcomeBack": "Hi, welcome back! 👋",
+  "signInSubtitle": "Hello again, you've been missed!",
+  "noAccount": "Don't have an account?",
+  "confirm": "Confirm",
+  "errEnterEmail": "Please enter your email address",
+  "errTooMany": "Too many attempts. Wait a minute and try again.",
+  "errNoConnection": "No connection. Check your network and try again.",
+  "errCouldNotSave": "Could not save. Please try again.",
+  "somethingWentWrong": "Something went wrong",
+  "tryAgain": "Try again",
+  "settings": "Settings",
+  "notifications": "Notifications",
+  "access": "Access",
+  "account": "Account",
+  "display": "Display",
+  "language": "Language",
+  "receiveNotifications": "Receive notifications",
+  "receiveNotificationsHint": "Turn off to stop receiving notifications",
+  "notifyNews": "News and updates",
+  "notifyNewsHint": "Local news and city updates",
+  "notifyDeals": "Offers and deals",
+  "notifyDealsHint": "New coupons from businesses",
+  "notifyNeighborhood": "Neighbourhood updates",
+  "notifyNeighborhoodHint": "Events and updates for your neighbourhood",
+  "accessLocation": "Location",
+  "accessLocationHint": "To find businesses and events near you",
+  "accessHealth": "Fitness data",
+  "accessHealthHint": "For step counting and challenges",
+  "darkMode": "Dark mode",
+  "signInToSavePrefs": "Sign in to save your preferences",
+  "deleteAccount": "Delete account",
+  "deleteAccountConfirm": "This will permanently delete all your data. Continue?",
+  "deleteAccountFailed": "Could not delete the account. Please try again later.",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "favorites": "Favourites",
+  "signInToSave": "Sign in to save",
+  "noFavoritesYet": "No favourites yet",
+  "noFavoritesHint": "Save places and items you love",
+  "signInToSeeFavorites": "Sign in to see your favourites",
+  "openingHours": "Opening hours",
+  "closed": "Closed",
+  "about": "About {name}",
+  "@about": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewsFor": "Reviews for {name}",
+  "@reviewsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noReviewsYet": "No reviews yet",
+  "noReviewsHint": "Be the first to review this place",
+  "noPhotosYet": "No photos yet",
+  "basedOnReviews": "Based on {count} reviews",
+  "@basedOnReviews": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "seeMore": "See more",
+  "seeLess": "See less",
+  "haveYouVisited": "Have you visited {name}?",
+  "@haveYouVisited": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "searchResults": "Search results",
+  "resultsCount": "{count} results",
+  "@resultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noResults": "No results found",
+  "noResultsHint": "Try a different search",
+  "all": "All",
+  "noAdminAccess": "You do not have access to the control centre",
+  "backHome": "Back to home",
+  "password": "Password",
+  "passwordHint": "Please enter password",
+  "rememberMe": "Remember Me",
+  "forgotPassword": "Forgot Password?",
+  "errEnterPassword": "Please enter your password",
+  "errEnterEmailFirst": "Enter your email address first",
+  "resetLinkSent": "If an account exists for that address, a reset link has been sent.",
+  "errWrongCredentials": "That email or password is not right.",
+  "errEmailNotConfirmed": "Please confirm your email address. Check your inbox.",
+  "errPasswordsDoNotMatch": "Passwords do not match",
+  "errPasswordTooShort": "Password must be at least 8 characters",
+  "createAccount": "Create your account",
+  "accountCreatedCheckEmail": "Account created. Confirm your email address to sign in.",
+  "currentPassword": "Current password",
+  "newPassword": "New password",
+  "confirmNewPassword": "Confirm new password",
+  "changePassword": "Change password",
+  "passwordChanged": "Password changed",
+  "errCurrentPasswordWrong": "Current password is not right",
+  "errAgreeToTerms": "Please agree to the Terms of Service",
+  "chooseStrongPassword": "For your security, please choose a strong new password.",
+  "resendConfirmation": "Send confirmation again",
+  "confirmationResent": "The confirmation email has been sent again.",
+  "checkYourEmail": "Check your email",
+  "emailConfirmed": "Email confirmed",
+  "emailConfirmedWeb": "Your email address has been confirmed. Go back to the app and sign in.",
+  "emailConfirmedApp": "Your email address has been confirmed. You are all set.",
+  "confirmationFailed": "Confirmation failed",
+  "confirmationFailedHint": "The link may have expired or already been used. Try sending it again."
+}

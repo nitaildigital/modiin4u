@@ -1,0 +1,7 @@
+# Hebrew is the source: the client's audience is local, the app is laid out
+# right to left, and English is the second language rather than the first.
+arb-dir: lib/l10n
+template-arb-file: app_he.arb
+output-localization-file: app_localizations.dart
+output-class: L
+nullable-getter: false
