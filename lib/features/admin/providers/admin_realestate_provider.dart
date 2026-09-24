@@ -61,7 +61,8 @@ class AdminListingListNotifier extends AdminTableNotifier {
       state = AsyncValue.data(
         rows.where((r) {
           final kindOk = _kind == null || _kind!.isEmpty || r['kind'] == _kind;
-          final typeOk = _propertyType == null ||
+          final typeOk =
+              _propertyType == null ||
               _propertyType!.isEmpty ||
               r['property_type'] == _propertyType;
           return kindOk && typeOk;
@@ -92,7 +93,7 @@ final realEstateAgentsProvider = FutureProvider<List<Map<String, dynamic>>>((
       .from('real_estate_agents')
       .select('id, name, agency, phone')
       .eq('is_active', true)
-      .order('name');
+      .order('name', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });
 
@@ -106,6 +107,6 @@ final adminNeighborhoodOptionsProvider =
           .from('neighborhoods')
           .select('id, name')
           .eq('is_active', true)
-          .order('sort_order');
+          .order('sort_order', ascending: true);
       return List<Map<String, dynamic>>.from(rows);
     });

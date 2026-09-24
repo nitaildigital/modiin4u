@@ -8,7 +8,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/error_retry.dart';
+import '../models/menu_item.dart' as menu;
 import '../../../shared/widgets/skeleton.dart';
 import '../models/business.dart';
 import '../providers/business_providers.dart';
@@ -145,7 +147,7 @@ class _BusinessDetailContentState
             const SizedBox(height: 20),
 
             // ── Tab bar ──
-            _buildTabBar(),
+            _buildTabBar(business),
 
             // ── Tab content (switches by selected tab) ──
             _buildTabContent(),
@@ -445,6 +447,7 @@ class _BusinessDetailContentState
   // Action buttons: Call, Website, Instagram, Navigate, Share
   // ─────────────────────────────────────────────
   Widget _buildActionButtons() {
+    final l = L.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -471,7 +474,7 @@ class _BusinessDetailContentState
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Call Now',
+                      l.callNow,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
@@ -537,8 +540,26 @@ class _BusinessDetailContentState
   // ─────────────────────────────────────────────
   // Tab bar (Overview, Menu, Photos, Reviews)
   // ─────────────────────────────────────────────
-  Widget _buildTabBar() {
-    final tabs = ['Overview', 'Menu', 'Photos', 'Reviews'];
+  /// The tabs this business actually has.
+  ///
+  /// Menu is left out when there is no menu: the tab used to be there for
+  /// every business and showed the same invented one — hummus, lamb chops,
+  /// Israeli beer — on a hairdresser as readily as on a restaurant.
+  List<({String label, int index})> _tabsFor(Business business, L l) {
+    final hasMenu =
+        (ref.watch(businessMenuProvider(business.id)).valueOrNull ?? const [])
+            .isNotEmpty;
+    return [
+      (label: l.tabOverview, index: 0),
+      if (hasMenu) (label: l.tabMenu, index: 1),
+      (label: l.tabPhotos, index: 2),
+      (label: l.tabReviews, index: 3),
+    ];
+  }
+
+  Widget _buildTabBar(Business business) {
+    final l = L.of(context);
+    final tabs = _tabsFor(business, l);
 
     return Container(
       height: 48,
@@ -546,11 +567,11 @@ class _BusinessDetailContentState
         border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Row(
-        children: tabs.asMap().entries.map((entry) {
-          final isActive = entry.key == _selectedTab;
+        children: tabs.map((tab) {
+          final isActive = tab.index == _selectedTab;
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _selectedTab = entry.key),
+              onTap: () => setState(() => _selectedTab = tab.index),
               behavior: HitTestBehavior.opaque,
               child: Container(
                 decoration: BoxDecoration(
@@ -563,7 +584,7 @@ class _BusinessDetailContentState
                 ),
                 child: Center(
                   child: Text(
-                    entry.value,
+                    tab.label,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
@@ -596,7 +617,7 @@ class _BusinessDetailContentState
           ],
         );
       case 1:
-        return _buildMenuTab();
+        return _buildMenuTab(business);
       case 2:
         return _buildPhotosTab();
       case 3:
@@ -609,57 +630,28 @@ class _BusinessDetailContentState
   // ─────────────────────────────────────────────
   // Menu tab
   // ─────────────────────────────────────────────
-  Widget _buildMenuTab() {
-    final menuCategories = [
-      (
-        'Starters',
-        [
-          ('Hummus Plate', '₪32'),
-          ('Tahini with Mushrooms', '₪38'),
-          ('Chopped Salad', '₪28'),
-          ('Eggplant with Tehina', '₪34'),
-        ],
-      ),
-      (
-        'Grilled Meats',
-        [
-          ('Mixed Grill (500g)', '₪98'),
-          ('Chicken Skewers (4 pcs)', '₪68'),
-          ('Lamb Chops', '₪112'),
-          ('Beef Kebab', '₪78'),
-          ('Chicken Wings (8 pcs)', '₪52'),
-        ],
-      ),
-      (
-        'Sides',
-        [
-          ('French Fries', '₪22'),
-          ('Rice Pilaf', '₪18'),
-          ('Grilled Vegetables', '₪26'),
-        ],
-      ),
-      (
-        'Drinks',
-        [
-          ('Soft Drink', '₪14'),
-          ('Fresh Lemonade', '₪22'),
-          ('Israeli Beer', '₪28'),
-        ],
-      ),
-    ];
+  Widget _buildMenuTab(Business business) {
+    final items =
+        ref.watch(businessMenuProvider(business.id)).valueOrNull ??
+        const <menu.MenuItem>[];
+
+    // Grouped by the heading the admin gave each line. An item with none
+    // groups under the empty key and prints without a heading.
+    final sections = <String, List<menu.MenuItem>>{};
+    for (final item in items.where((i) => i.isAvailable)) {
+      sections.putIfAbsent(item.section ?? '', () => []).add(item);
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: menuCategories.map((cat) {
-          final (category, items) = cat;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
+        children: [
+          for (final entry in sections.entries) ...[
+            const SizedBox(height: 8),
+            if (entry.key.isNotEmpty) ...[
               Text(
-                category,
+                entry.key,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 16,
@@ -668,24 +660,44 @@ class _BusinessDetailContentState
                 ),
               ),
               const SizedBox(height: 12),
-              ...items.map((item) {
-                final (name, price) = item;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF3D3D3D),
-                        ),
+            ],
+            for (final item in entry.value)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.name,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              color: const Color(0xFF3D3D3D),
+                            ),
+                          ),
+                          if ((item.description ?? '').isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              item.description!,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 12,
+                                color: const Color(0xFF6D6D6D),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
+                    ),
+                    // A dish with no fixed price shows none, rather than ₪0.
+                    if (item.priceLabel != null) ...[
+                      const SizedBox(width: 12),
                       Text(
-                        price,
+                        item.priceLabel!,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 14,
@@ -694,13 +706,12 @@ class _BusinessDetailContentState
                         ),
                       ),
                     ],
-                  ),
-                );
-              }),
-              const Divider(color: Color(0xFFE7E7E7), height: 24),
-            ],
-          );
-        }).toList(),
+                  ],
+                ),
+              ),
+            const Divider(color: Color(0xFFE7E7E7), height: 24),
+          ],
+        ],
       ),
     );
   }
@@ -709,6 +720,7 @@ class _BusinessDetailContentState
   // Photos tab (with upload button)
   // ─────────────────────────────────────────────
   Widget _buildPhotosTab() {
+    final l = L.of(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -737,7 +749,7 @@ class _BusinessDetailContentState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Upload a Photo',
+                    l.uploadPhoto,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
@@ -747,7 +759,7 @@ class _BusinessDetailContentState
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Share your experience with the community',
+                    l.shareYourExperience,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 12,
@@ -828,6 +840,7 @@ class _BusinessDetailContentState
 
   // ── Google-style "Rate & Review" prompt ──
   Widget _buildWriteReviewPrompt() {
+    final l = L.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -840,7 +853,7 @@ class _BusinessDetailContentState
         child: Column(
           children: [
             Text(
-              'How was your experience?',
+              l.howWasExperience,
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 16,
@@ -850,7 +863,7 @@ class _BusinessDetailContentState
             ),
             const SizedBox(height: 4),
             Text(
-              'Rate and share your experience',
+              l.rateAndShare,
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 12,
@@ -892,14 +905,14 @@ class _BusinessDetailContentState
               const SizedBox(height: 8),
               Text(
                 _userRating == 1
-                    ? 'Poor'
+                    ? l.ratePoor
                     : _userRating == 2
-                    ? 'Fair'
+                    ? l.rateFair
                     : _userRating == 3
-                    ? 'Good'
+                    ? l.rateGood
                     : _userRating == 4
-                    ? 'Very Good'
-                    : 'Excellent!',
+                    ? l.rateVeryGood
+                    : l.rateExcellent,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 13,
@@ -916,6 +929,7 @@ class _BusinessDetailContentState
 
   // ── Expanded review form ──
   Widget _buildReviewForm() {
+    final l = L.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -929,7 +943,7 @@ class _BusinessDetailContentState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Write your review',
+              l.writeYourReview,
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 14,
@@ -943,8 +957,7 @@ class _BusinessDetailContentState
               maxLines: 4,
               style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13),
               decoration: InputDecoration(
-                hintText:
-                    'Share details about your experience at this place...',
+                hintText: l.reviewHint,
                 hintStyle: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 13,
@@ -989,7 +1002,7 @@ class _BusinessDetailContentState
                         ),
                       ),
                       child: Text(
-                        'Cancel',
+                        l.cancel,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 13,
@@ -1012,7 +1025,7 @@ class _BusinessDetailContentState
                             _userReviews.insert(0, {
                               'initials': 'YO',
                               'name': 'You',
-                              'date': 'Just now',
+                              'date': l.justNow,
                               'rating': _userRating,
                               'text': _reviewTextController.text.trim().isEmpty
                                   ? 'Rated $_userRating stars'
@@ -1039,7 +1052,7 @@ class _BusinessDetailContentState
                         ),
                       ),
                       child: Text(
-                        'Submit',
+                        l.submit,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 13,
@@ -1607,6 +1620,7 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
@@ -1727,7 +1741,7 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Your reply',
+                                l.yourReply,
                                 style: TextStyle(
                                   fontFamily: AppFonts.inter,
                                   fontSize: 11,
@@ -1757,7 +1771,7 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                     onTap: () =>
                         setState(() => _showReplyField = !_showReplyField),
                     child: Text(
-                      _showReplyField ? 'Cancel' : 'Reply',
+                      _showReplyField ? l.cancel : l.reply,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 12,
@@ -1787,7 +1801,7 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                               fontSize: 12,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Write a reply...',
+                              hintText: l.writeReplyHint,
                               hintStyle: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 12,
@@ -1809,8 +1823,8 @@ class _ReviewCardWithReplyState extends State<_ReviewCardWithReply> {
                               });
                               _replyController.clear();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Reply sent!'),
+                                SnackBar(
+                                  content: Text(l.replySent),
                                   backgroundColor: AppColors.midBlue,
                                 ),
                               );
@@ -1907,6 +1921,7 @@ class _ExpandableTextState extends State<_ExpandableText> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     if (widget.text.isEmpty) return const SizedBox.shrink();
 
     final style = TextStyle(
@@ -1942,7 +1957,7 @@ class _ExpandableTextState extends State<_ExpandableText> {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    _expanded ? 'See Less' : 'See More',
+                    _expanded ? l.seeLess : l.seeMore,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,

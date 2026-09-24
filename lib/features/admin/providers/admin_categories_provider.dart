@@ -39,9 +39,7 @@ class AdminCategoryListNotifier extends AdminTableNotifier {
     if (scope == null || scope.isEmpty) return;
 
     state.whenData((rows) {
-      state = AsyncValue.data(
-        rows.where((r) => r['scope'] == scope).toList(),
-      );
+      state = AsyncValue.data(rows.where((r) => r['scope'] == scope).toList());
     });
   }
 

@@ -38,7 +38,8 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
-  ConsumerState<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  ConsumerState<AdminDashboardScreen> createState() =>
+      _AdminDashboardScreenState();
 }
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
@@ -98,9 +99,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         body: Column(
           children: [
             // ── CRM-style top bar ──
-            _AdminTopBar(
-              sectionName: _sections[_selectedSection].$1,
-            ),
+            _AdminTopBar(sectionName: _sections[_selectedSection].$1),
             Expanded(
               child: isWide
                   ? Row(
@@ -115,7 +114,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           child: Container(
                             decoration: const BoxDecoration(
                               color: AppColors.adminContentBg,
-                              borderRadius: BorderRadius.only(topRight: Radius.circular(12)),
+                              borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(12),
+                              ),
                             ),
                             child: _buildSection(),
                           ),
@@ -129,36 +130,70 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           height: 52,
                           decoration: const BoxDecoration(
                             color: Colors.white,
-                            border: Border(bottom: BorderSide(color: AppColors.adminSidebarBorder, width: 1)),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: AppColors.adminSidebarBorder,
+                                width: 1,
+                              ),
+                            ),
                           ),
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             itemCount: _sections.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               final (label, icon) = _sections[index];
                               final sel = index == _selectedSection;
                               return GestureDetector(
-                                onTap: () => setState(() => _selectedSection = index),
+                                onTap: () =>
+                                    setState(() => _selectedSection = index),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 180),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: sel ? AppColors.adminActiveBg : Colors.transparent,
+                                    color: sel
+                                        ? AppColors.adminActiveBg
+                                        : Colors.transparent,
                                     borderRadius: BorderRadius.circular(6),
-                                    border: sel ? null : Border.all(color: AppColors.adminSearchBorder, width: 1),
+                                    border: sel
+                                        ? null
+                                        : Border.all(
+                                            color: AppColors.adminSearchBorder,
+                                            width: 1,
+                                          ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(icon, size: 16, color: sel ? AppColors.midBlue : AppColors.adminTextLight),
+                                      Icon(
+                                        icon,
+                                        size: 16,
+                                        color: sel
+                                            ? AppColors.midBlue
+                                            : AppColors.adminTextLight,
+                                      ),
                                       const SizedBox(width: 6),
-                                      Text(label, style: TextStyle(fontFamily: AppFonts.inter, 
-                                        fontSize: 13,
-                                        fontWeight: sel ? FontWeight.w500 : FontWeight.w400,
-                                        color: sel ? AppColors.midBlue : AppColors.adminTextMedium,
-                                      )),
+                                      Text(
+                                        label,
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.inter,
+                                          fontSize: 13,
+                                          fontWeight: sel
+                                              ? FontWeight.w500
+                                              : FontWeight.w400,
+                                          color: sel
+                                              ? AppColors.midBlue
+                                              : AppColors.adminTextMedium,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -221,7 +256,9 @@ class _AdminTopBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: AppColors.adminSidebarBorder, width: 1)),
+        border: Border(
+          bottom: BorderSide(color: AppColors.adminSidebarBorder, width: 1),
+        ),
       ),
       child: Row(
         children: [
@@ -236,21 +273,40 @@ class _AdminTopBar extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text('M4U', style: TextStyle(fontFamily: AppFonts.inter, 
-              fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5,
-            )),
+            child: Text(
+              'M4U',
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ניהול — מודיעין בשבילך', style: TextStyle(fontFamily: AppFonts.rubik, 
-                fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.adminTextDark,
-              )),
-              Text(sectionName, style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.adminTextLight,
-              )),
+              Text(
+                'ניהול — מודיעין בשבילך',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.adminTextDark,
+                ),
+              ),
+              Text(
+                sectionName,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.adminTextLight,
+                ),
+              ),
             ],
           ),
           const Spacer(),
@@ -265,12 +321,21 @@ class _AdminTopBar extends StatelessWidget {
             child: Row(
               children: [
                 const SizedBox(width: 12),
-                Icon(IconsaxPlusLinear.search_normal, size: 18, color: AppColors.adminTextLight),
+                Icon(
+                  IconsaxPlusLinear.search_normal,
+                  size: 18,
+                  color: AppColors.adminTextLight,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text('חיפוש...', style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 14, color: AppColors.adminTextLight,
-                  )),
+                  child: Text(
+                    'חיפוש...',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      color: AppColors.adminTextLight,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -284,10 +349,7 @@ class _AdminTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // Settings
-          _TopBarButton(
-            icon: IconsaxPlusLinear.setting_2,
-            onTap: () {},
-          ),
+          _TopBarButton(icon: IconsaxPlusLinear.setting_2, onTap: () {}),
           const SizedBox(width: 16),
           // User avatar
           Container(
@@ -301,9 +363,17 @@ class _AdminTopBar extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Center(child: Text('NL', style: TextStyle(fontFamily: AppFonts.inter, 
-              fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white,
-            ))),
+            child: Center(
+              child: Text(
+                'NL',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -315,7 +385,11 @@ class _TopBarButton extends StatelessWidget {
   final IconData icon;
   final int? badgeCount;
   final VoidCallback onTap;
-  const _TopBarButton({required this.icon, this.badgeCount, required this.onTap});
+  const _TopBarButton({
+    required this.icon,
+    this.badgeCount,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -331,7 +405,9 @@ class _TopBarButton extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            Center(child: Icon(icon, size: 18, color: AppColors.adminTextMedium)),
+            Center(
+              child: Icon(icon, size: 18, color: AppColors.adminTextMedium),
+            ),
             if (badgeCount != null)
               Positioned(
                 top: 4,
@@ -344,9 +420,17 @@ class _TopBarButton extends StatelessWidget {
                     borderRadius: BorderRadius.circular(50),
                     border: Border.all(color: Colors.white, width: 1.5),
                   ),
-                  child: Center(child: Text('$badgeCount', style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white,
-                  ))),
+                  child: Center(
+                    child: Text(
+                      '$badgeCount',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -364,7 +448,12 @@ class _Sidebar extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final Map<int, String> sectionGroups;
 
-  const _Sidebar({required this.sections, required this.selected, required this.onSelect, this.sectionGroups = const {}});
+  const _Sidebar({
+    required this.sections,
+    required this.selected,
+    required this.onSelect,
+    this.sectionGroups = const {},
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -373,18 +462,21 @@ class _Sidebar extends StatelessWidget {
     for (int i = 0; i < sections.length; i++) {
       if (sectionGroups.containsKey(i)) {
         if (i > 0) items.add(const SizedBox(height: 16));
-        items.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Text(
-            sectionGroups[i]!,
-            style: TextStyle(fontFamily: AppFonts.inter, 
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.adminTextMedium,
-              letterSpacing: 0.5,
+        items.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Text(
+              sectionGroups[i]!,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.adminTextMedium,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
-        ));
+        );
         items.add(const SizedBox(height: 4));
       }
       final (label, icon) = sections[i];
@@ -399,7 +491,10 @@ class _Sidebar extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: sel ? AppColors.adminActiveBg : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
@@ -413,11 +508,17 @@ class _Sidebar extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, 
-                        fontSize: 14,
-                        fontWeight: sel ? FontWeight.w500 : FontWeight.w400,
-                        color: sel ? AppColors.adminTextDark : AppColors.adminTextMedium,
-                      )),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 14,
+                          fontWeight: sel ? FontWeight.w500 : FontWeight.w400,
+                          color: sel
+                              ? AppColors.adminTextDark
+                              : AppColors.adminTextMedium,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -432,7 +533,9 @@ class _Sidebar extends StatelessWidget {
       width: 280,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(left: BorderSide(color: AppColors.adminSidebarBorder, width: 1)),
+        border: Border(
+          left: BorderSide(color: AppColors.adminSidebarBorder, width: 1),
+        ),
       ),
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -484,16 +587,33 @@ class _OverviewSection extends ConsumerWidget {
     final businesses = ref.watch(adminBusinessesProvider);
     final articles = ref.watch(adminArticlesProvider);
     final reviews = ref.watch(adminReviewsProvider);
-    final pending = businesses.where((b) => b.status == BusinessStatus.pending).length;
+    final pending = businesses
+        .where((b) => b.status == BusinessStatus.pending)
+        .length;
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
         // Header — CRM style
-        Text('סקירה כללית', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text(
+          'סקירה כללית',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: AppColors.adminTextDark,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text('נתונים בזמן אמת על כל הפעילות באפליקציה', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight)),
+        Text(
+          'נתונים בזמן אמת על כל הפעילות באפליקציה',
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            color: AppColors.adminTextLight,
+          ),
+        ),
         const SizedBox(height: 24),
 
         // Top metrics row — scrollable
@@ -502,11 +622,46 @@ class _OverviewSection extends ConsumerWidget {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _TopMetric('סה"כ משתמשים', '${users.length}', 'רשומים', Icons.people, AppColors.turquoise, null),
-              _TopMetric('החודש', '${users.where((u) => u.createdAt.isAfter(DateTime(2026, 8, 1))).length}', '↑ 11%', Icons.calendar_month, AppColors.success, '+11%'),
-              _TopMetric('השבוע', '${reviews.length}', 'ביקורות', Icons.rate_review, AppColors.midBlue, null),
-              _TopMetric('הכנסות', '₪24,500', 'סה"כ', Icons.payments, AppColors.gold, null),
-              _TopMetric('פעילות החודש', '${articles.length + reviews.length + businesses.length}', '↑ 32%', Icons.trending_up, const Color(0xFF8B5CF6), '+32%'),
+              _TopMetric(
+                'סה"כ משתמשים',
+                '${users.length}',
+                'רשומים',
+                Icons.people,
+                AppColors.turquoise,
+                null,
+              ),
+              _TopMetric(
+                'החודש',
+                '${users.where((u) => u.createdAt.isAfter(DateTime(2026, 8, 1))).length}',
+                '↑ 11%',
+                Icons.calendar_month,
+                AppColors.success,
+                '+11%',
+              ),
+              _TopMetric(
+                'השבוע',
+                '${reviews.length}',
+                'ביקורות',
+                Icons.rate_review,
+                AppColors.midBlue,
+                null,
+              ),
+              _TopMetric(
+                'הכנסות',
+                '₪24,500',
+                'סה"כ',
+                Icons.payments,
+                AppColors.gold,
+                null,
+              ),
+              _TopMetric(
+                'פעילות החודש',
+                '${articles.length + reviews.length + businesses.length}',
+                '↑ 32%',
+                Icons.trending_up,
+                const Color(0xFF8B5CF6),
+                '+32%',
+              ),
             ],
           ),
         ),
@@ -516,16 +671,34 @@ class _OverviewSection extends ConsumerWidget {
         if (isWide)
           SizedBox(
             height: 300,
-            child: Row(children: [
-              Expanded(flex: 3, child: _UsersChartCard()),
-              const SizedBox(width: 16),
-              Expanded(flex: 2, child: _TaskFunnelCard(users: users, businesses: businesses, articles: articles, pending: pending)),
-            ]),
+            child: Row(
+              children: [
+                Expanded(flex: 3, child: _UsersChartCard()),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: _TaskFunnelCard(
+                    users: users,
+                    businesses: businesses,
+                    articles: articles,
+                    pending: pending,
+                  ),
+                ),
+              ],
+            ),
           )
         else ...[
           SizedBox(height: 280, child: _UsersChartCard()),
           const SizedBox(height: 16),
-          SizedBox(height: 280, child: _TaskFunnelCard(users: users, businesses: businesses, articles: articles, pending: pending)),
+          SizedBox(
+            height: 280,
+            child: _TaskFunnelCard(
+              users: users,
+              businesses: businesses,
+              articles: articles,
+              pending: pending,
+            ),
+          ),
         ],
         const SizedBox(height: 24),
 
@@ -533,18 +706,37 @@ class _OverviewSection extends ConsumerWidget {
         if (isWide)
           SizedBox(
             height: 300,
-            child: Row(children: [
-              Expanded(child: _UsersByRoleCard(users: users)),
-              const SizedBox(width: 16),
-              Expanded(child: _ActivityBreakdownCard(users: users, businesses: businesses, articles: articles, reviews: reviews)),
-              const SizedBox(width: 16),
-              Expanded(child: _PendingCard(businesses: businesses, ref: ref)),
-            ]),
+            child: Row(
+              children: [
+                Expanded(child: _UsersByRoleCard(users: users)),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _ActivityBreakdownCard(
+                    users: users,
+                    businesses: businesses,
+                    articles: articles,
+                    reviews: reviews,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _PendingCard(businesses: businesses, ref: ref),
+                ),
+              ],
+            ),
           )
         else ...[
           SizedBox(height: 280, child: _UsersByRoleCard(users: users)),
           const SizedBox(height: 16),
-          SizedBox(height: 280, child: _ActivityBreakdownCard(users: users, businesses: businesses, articles: articles, reviews: reviews)),
+          SizedBox(
+            height: 280,
+            child: _ActivityBreakdownCard(
+              users: users,
+              businesses: businesses,
+              articles: articles,
+              reviews: reviews,
+            ),
+          ),
           const SizedBox(height: 16),
           _PendingCard(businesses: businesses, ref: ref),
         ],
@@ -565,7 +757,14 @@ class _TopMetric extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String? change;
-  const _TopMetric(this.label, this.value, this.sub, this.icon, this.color, this.change);
+  const _TopMetric(
+    this.label,
+    this.value,
+    this.sub,
+    this.icon,
+    this.color,
+    this.change,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -579,34 +778,77 @@ class _TopMetric extends StatelessWidget {
         border: Border.all(color: AppColors.adminCardBorder, width: 1),
         boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2))],
-            ),
-            child: Icon(icon, size: 20, color: color),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const Spacer(),
+              if (change != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        (change!.startsWith('+')
+                                ? AppColors.success
+                                : AppColors.error)
+                            .withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    change!,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: change!.startsWith('+')
+                          ? AppColors.success
+                          : AppColors.error,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const Spacer(),
-          if (change != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: (change!.startsWith('+') ? AppColors.success : AppColors.error).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(change!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, fontWeight: FontWeight.w600, color: change!.startsWith('+') ? AppColors.success : AppColors.error)),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 32,
+              fontWeight: FontWeight.w600,
+              color: AppColors.adminTextDark,
             ),
-        ]),
-        const Spacer(),
-        Text(value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
-        const SizedBox(height: 2),
-        Text(sub, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
-      ]),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            sub,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 12,
+              color: AppColors.adminTextLight,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -618,67 +860,109 @@ class _UsersChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _CardShell(
       title: 'רישומים חדשים — 30 יום אחרונים',
-      child: Expanded(child: Padding(
-        padding: const EdgeInsets.only(right: 8, top: 12),
-        child: LineChart(LineChartData(
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: 5,
-            getDrawingHorizontalLine: (_) => const FlLine(color: AppColors.adminCardBorder, strokeWidth: 0.5),
-          ),
-          titlesData: FlTitlesData(
-            rightTitles: const AxisTitles(),
-            topTitles: const AxisTitles(),
-            leftTitles: AxisTitles(sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30,
-              interval: 5,
-              getTitlesWidget: (v, _) => Text('${v.toInt()}', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 10, color: AppColors.adminTextLight)),
-            )),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 24,
-              interval: 5,
-              getTitlesWidget: (v, _) {
-                final day = v.toInt() + 1;
-                return Text('$day/8', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 10, color: AppColors.adminTextLight));
-              },
-            )),
-          ),
-          borderData: FlBorderData(show: false),
-          minY: 0, maxY: 25,
-          lineBarsData: [
-            LineChartBarData(
-              spots: List.generate(30, (i) => FlSpot(i.toDouble(), (5 + sin(i * 0.4) * 4 + (i / 6)).clamp(1, 22).toDouble())),
-              isCurved: true, curveSmoothness: 0.3,
-              color: AppColors.midBlue,
-              barWidth: 3,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
+      child: Expanded(
+        child: Padding(
+          padding: const EdgeInsets.only(right: 8, top: 12),
+          child: LineChart(
+            LineChartData(
+              gridData: FlGridData(
                 show: true,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.midBlue.withValues(alpha: 0.15),
-                    AppColors.midBlue.withValues(alpha: 0.02),
-                  ],
+                drawVerticalLine: false,
+                horizontalInterval: 5,
+                getDrawingHorizontalLine: (_) => const FlLine(
+                  color: AppColors.adminCardBorder,
+                  strokeWidth: 0.5,
+                ),
+              ),
+              titlesData: FlTitlesData(
+                rightTitles: const AxisTitles(),
+                topTitles: const AxisTitles(),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 30,
+                    interval: 5,
+                    getTitlesWidget: (v, _) => Text(
+                      '${v.toInt()}',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 10,
+                        color: AppColors.adminTextLight,
+                      ),
+                    ),
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 24,
+                    interval: 5,
+                    getTitlesWidget: (v, _) {
+                      final day = v.toInt() + 1;
+                      return Text(
+                        '$day/8',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 10,
+                          color: AppColors.adminTextLight,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              minY: 0,
+              maxY: 25,
+              lineBarsData: [
+                LineChartBarData(
+                  spots: List.generate(
+                    30,
+                    (i) => FlSpot(
+                      i.toDouble(),
+                      (5 + sin(i * 0.4) * 4 + (i / 6)).clamp(1, 22).toDouble(),
+                    ),
+                  ),
+                  isCurved: true,
+                  curveSmoothness: 0.3,
+                  color: AppColors.midBlue,
+                  barWidth: 3,
+                  dotData: const FlDotData(show: false),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.midBlue.withValues(alpha: 0.15),
+                        AppColors.midBlue.withValues(alpha: 0.02),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (_) => AppColors.navy,
+                  getTooltipItems: (spots) => spots
+                      .map(
+                        (s) => LineTooltipItem(
+                          '${s.y.toInt()} רישומים',
+                          TextStyle(
+                            fontFamily: AppFonts.inter,
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
             ),
-          ],
-          lineTouchData: LineTouchData(
-            touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => AppColors.navy,
-              getTooltipItems: (spots) => spots.map((s) => LineTooltipItem(
-                '${s.y.toInt()} רישומים',
-                TextStyle(fontFamily: AppFonts.inter, color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
-              )).toList(),
-            ),
           ),
-        )),
-      )),
+        ),
+      ),
     );
   }
 }
@@ -690,33 +974,54 @@ class _TaskFunnelCard extends StatelessWidget {
   final List<Business> businesses;
   final List<Article> articles;
   final int pending;
-  const _TaskFunnelCard({required this.users, required this.businesses, required this.articles, required this.pending});
+  const _TaskFunnelCard({
+    required this.users,
+    required this.businesses,
+    required this.articles,
+    required this.pending,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final published = articles.where((a) => a.status == ArticleStatus.published).length;
-    final drafts = articles.where((a) => a.status == ArticleStatus.draft).length;
-    final active = businesses.where((b) => b.status == BusinessStatus.active).length;
+    final published = articles
+        .where((a) => a.status == ArticleStatus.published)
+        .length;
+    final drafts = articles
+        .where((a) => a.status == ArticleStatus.draft)
+        .length;
+    final active = businesses
+        .where((b) => b.status == BusinessStatus.active)
+        .length;
     final total = pending + drafts + published + active;
 
     return _CardShell(
       title: 'סטטוס משימות',
-      child: Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        _FunnelRow('ממתין לטיפול', pending, total, const Color(0xFF8B5CF6)),
-        const SizedBox(height: 14),
-        _FunnelRow('טיוטות כתבות', drafts, total, AppColors.gold),
-        const SizedBox(height: 14),
-        _FunnelRow('כתבות מפורסמות', published, total, AppColors.success),
-        const SizedBox(height: 14),
-        _FunnelRow('עסקים פעילים', active, total, AppColors.turquoise),
-        const Spacer(),
-        Divider(color: AppColors.border.withValues(alpha: 0.5)),
-        Row(children: [
-          _FunnelStat('$total', 'סה"כ'),
-          _FunnelStat('${total > 0 ? ((published + active) / total * 100).toInt() : 0}%', 'אישור'),
-          _FunnelStat('+12%', 'מהשבוע שעבר'),
-        ]),
-      ])),
+      child: Expanded(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _FunnelRow('ממתין לטיפול', pending, total, const Color(0xFF8B5CF6)),
+            const SizedBox(height: 14),
+            _FunnelRow('טיוטות כתבות', drafts, total, AppColors.gold),
+            const SizedBox(height: 14),
+            _FunnelRow('כתבות מפורסמות', published, total, AppColors.success),
+            const SizedBox(height: 14),
+            _FunnelRow('עסקים פעילים', active, total, AppColors.turquoise),
+            const Spacer(),
+            Divider(color: AppColors.border.withValues(alpha: 0.5)),
+            Row(
+              children: [
+                _FunnelStat('$total', 'סה"כ'),
+                _FunnelStat(
+                  '${total > 0 ? ((published + active) / total * 100).toInt() : 0}%',
+                  'אישור',
+                ),
+                _FunnelStat('+12%', 'מהשבוע שעבר'),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -730,28 +1035,55 @@ class _FunnelRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-        child: Center(child: Text('$count', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w600, color: color))),
-      ),
-      const SizedBox(width: 12),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.adminTextDark)),
-        const SizedBox(height: 5),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: total > 0 ? count / total : 0,
-            backgroundColor: AppColors.adminProgressBg,
-            color: color,
-            minHeight: 8,
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
           ),
         ),
-      ])),
-    ]);
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 13,
+                  color: AppColors.adminTextDark,
+                ),
+              ),
+              const SizedBox(height: 5),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: total > 0 ? count / total : 0,
+                  backgroundColor: AppColors.adminProgressBg,
+                  color: color,
+                  minHeight: 8,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -761,11 +1093,30 @@ class _FunnelStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(child: Column(children: [
-      Text(value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
-      const SizedBox(height: 2),
-      Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
-    ]));
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppColors.adminTextDark,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 12,
+              color: AppColors.adminTextLight,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -784,28 +1135,85 @@ class _UsersByRoleCard extends StatelessWidget {
     return _CardShell(
       title: 'לפי תפקיד',
       subtitle: 'חלוקת המשתמשים',
-      child: Expanded(child: Row(children: [
-        Expanded(child: PieChart(PieChartData(
-          centerSpaceRadius: 36,
-          sectionsSpace: 2,
-          sections: [
-            PieChartSectionData(value: regulars.toDouble(), color: AppColors.turquoise, title: '', radius: 28),
-            PieChartSectionData(value: owners.toDouble(), color: AppColors.gold, title: '', radius: 28),
-            PieChartSectionData(value: admins.toDouble(), color: const Color(0xFF8B5CF6), title: '', radius: 28),
+      child: Expanded(
+        child: Row(
+          children: [
+            Expanded(
+              child: PieChart(
+                PieChartData(
+                  centerSpaceRadius: 36,
+                  sectionsSpace: 2,
+                  sections: [
+                    PieChartSectionData(
+                      value: regulars.toDouble(),
+                      color: AppColors.turquoise,
+                      title: '',
+                      radius: 28,
+                    ),
+                    PieChartSectionData(
+                      value: owners.toDouble(),
+                      color: AppColors.gold,
+                      title: '',
+                      radius: 28,
+                    ),
+                    PieChartSectionData(
+                      value: admins.toDouble(),
+                      color: const Color(0xFF8B5CF6),
+                      title: '',
+                      radius: 28,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _LegendDot(
+                  AppColors.turquoise,
+                  'תושבים',
+                  '$regulars',
+                  '${users.isNotEmpty ? (regulars / users.length * 100).toInt() : 0}%',
+                ),
+                const SizedBox(height: 10),
+                _LegendDot(
+                  AppColors.gold,
+                  'בעלי עסקים',
+                  '$owners',
+                  '${users.isNotEmpty ? (owners / users.length * 100).toInt() : 0}%',
+                ),
+                const SizedBox(height: 10),
+                _LegendDot(
+                  const Color(0xFF8B5CF6),
+                  'מנהלים',
+                  '$admins',
+                  '${users.isNotEmpty ? (admins / users.length * 100).toInt() : 0}%',
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  '${users.length}',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
+                ),
+                Text(
+                  'סה"כ',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 11,
+                    color: AppColors.grayText,
+                  ),
+                ),
+              ],
+            ),
           ],
-        ))),
-        const SizedBox(width: 8),
-        Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _LegendDot(AppColors.turquoise, 'תושבים', '$regulars', '${users.isNotEmpty ? (regulars / users.length * 100).toInt() : 0}%'),
-          const SizedBox(height: 10),
-          _LegendDot(AppColors.gold, 'בעלי עסקים', '$owners', '${users.isNotEmpty ? (owners / users.length * 100).toInt() : 0}%'),
-          const SizedBox(height: 10),
-          _LegendDot(const Color(0xFF8B5CF6), 'מנהלים', '$admins', '${users.isNotEmpty ? (admins / users.length * 100).toInt() : 0}%'),
-          const SizedBox(height: 14),
-          Text('${users.length}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.navy)),
-          Text('סה"כ', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText)),
-        ]),
-      ])),
+        ),
+      ),
     );
   }
 }
@@ -817,13 +1225,36 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
-      const SizedBox(width: 8),
-      Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.adminTextDark)),
-      const SizedBox(width: 8),
-      Text('$pct ($count)', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
-    ]);
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 13,
+            color: AppColors.adminTextDark,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$pct ($count)',
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 12,
+            color: AppColors.adminTextLight,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -834,23 +1265,34 @@ class _ActivityBreakdownCard extends StatelessWidget {
   final List<Business> businesses;
   final List<Article> articles;
   final List<Review> reviews;
-  const _ActivityBreakdownCard({required this.users, required this.businesses, required this.articles, required this.reviews});
+  const _ActivityBreakdownCard({
+    required this.users,
+    required this.businesses,
+    required this.articles,
+    required this.reviews,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final total = users.length + businesses.length + articles.length + reviews.length;
+    final total =
+        users.length + businesses.length + articles.length + reviews.length;
     return _CardShell(
       title: 'סוגי פעילות',
       subtitle: 'חלוקה לפי מודולים',
-      child: Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        _ActivityRow('משתמשים', users.length, total, AppColors.turquoise),
-        const SizedBox(height: 12),
-        _ActivityRow('עסקים', businesses.length, total, AppColors.midBlue),
-        const SizedBox(height: 12),
-        _ActivityRow('כתבות', articles.length, total, AppColors.success),
-        const SizedBox(height: 12),
-        _ActivityRow('ביקורות', reviews.length, total, AppColors.gold),
-      ])),
+      child: Expanded(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _ActivityRow('משתמשים', users.length, total, AppColors.turquoise),
+            const SizedBox(height: 12),
+            _ActivityRow('עסקים', businesses.length, total, AppColors.midBlue),
+            const SizedBox(height: 12),
+            _ActivityRow('כתבות', articles.length, total, AppColors.success),
+            const SizedBox(height: 12),
+            _ActivityRow('ביקורות', reviews.length, total, AppColors.gold),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -864,23 +1306,55 @@ class _ActivityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pct = total > 0 ? (count / total * 100).toInt() : 0;
-    return Row(children: [
-      SizedBox(width: 60, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.adminTextDark))),
-      const SizedBox(width: 10),
-      Expanded(child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: LinearProgressIndicator(
-          value: total > 0 ? count / total : 0,
-          backgroundColor: AppColors.adminProgressBg,
-          color: color,
-          minHeight: 8,
+    return Row(
+      children: [
+        SizedBox(
+          width: 60,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 13,
+              color: AppColors.adminTextDark,
+            ),
+          ),
         ),
-      )),
-      const SizedBox(width: 12),
-      Text('$count', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
-      const SizedBox(width: 6),
-      SizedBox(width: 36, child: Text('$pct%', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight))),
-    ]);
+        const SizedBox(width: 10),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: total > 0 ? count / total : 0,
+              backgroundColor: AppColors.adminProgressBg,
+              color: color,
+              minHeight: 8,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '$count',
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.adminTextDark,
+          ),
+        ),
+        const SizedBox(width: 6),
+        SizedBox(
+          width: 36,
+          child: Text(
+            '$pct%',
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 12,
+              color: AppColors.adminTextLight,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -893,79 +1367,141 @@ class _PendingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pending = businesses.where((b) => b.status == BusinessStatus.pending).toList();
+    final pending = businesses
+        .where((b) => b.status == BusinessStatus.pending)
+        .toList();
     return _CardShell(
       title: 'ממתינים לאישור',
       subtitle: '${pending.length} פריטים',
-      child: Expanded(child: pending.isEmpty
-        ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(IconsaxPlusBold.tick_circle, size: 24, color: AppColors.success.withValues(alpha: 0.5)),
-            ),
-            const SizedBox(height: 10),
-            Text('אין פריטים ממתינים', style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextLight, fontSize: 14)),
-          ]))
-        : ListView.separated(
-            itemCount: pending.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.adminCardBorder),
-            itemBuilder: (_, i) {
-              final b = pending[i];
-              return Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: const BoxDecoration(
-                  border: Border(right: BorderSide(color: AppColors.gold, width: 3)),
-                ),
-                child: Row(children: [
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.gold.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Icon(IconsaxPlusBold.shop, size: 18, color: AppColors.gold),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(b.name, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
-                    Text(b.category, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
-                  ])),
-                  InkWell(
-                    onTap: () => ref.read(adminBusinessesProvider.notifier).setStatus(b.id, BusinessStatus.active),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      width: 32, height: 32,
+      child: Expanded(
+        child: pending.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
                         color: AppColors.success.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.check, size: 16, color: AppColors.success),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  InkWell(
-                    onTap: () => ref.read(adminBusinessesProvider.notifier).setStatus(b.id, BusinessStatus.rejected),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      width: 32, height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
+                      child: Icon(
+                        IconsaxPlusBold.tick_circle,
+                        size: 24,
+                        color: AppColors.success.withValues(alpha: 0.5),
                       ),
-                      child: const Icon(Icons.close, size: 16, color: AppColors.error),
                     ),
-                  ),
-                ]),
-              );
-            },
-          ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'אין פריטים ממתינים',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        color: AppColors.adminTextLight,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : ListView.separated(
+                itemCount: pending.length,
+                separatorBuilder: (_, __) =>
+                    const Divider(height: 1, color: AppColors.adminCardBorder),
+                itemBuilder: (_, i) {
+                  final b = pending[i];
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        right: BorderSide(color: AppColors.gold, width: 3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Icon(
+                            IconsaxPlusBold.shop,
+                            size: 18,
+                            color: AppColors.gold,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                b.name,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.adminTextDark,
+                                ),
+                              ),
+                              Text(
+                                b.category,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 12,
+                                  color: AppColors.adminTextLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => ref
+                              .read(adminBusinessesProvider.notifier)
+                              .setStatus(b.id, BusinessStatus.active),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              size: 16,
+                              color: AppColors.success,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: () => ref
+                              .read(adminBusinessesProvider.notifier)
+                              .setStatus(b.id, BusinessStatus.rejected),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }
@@ -983,54 +1519,117 @@ class _RecentActivityCard extends StatelessWidget {
     return _CardShell(
       title: 'פעילות אחרונה',
       subtitle: 'ביקורות ורישומים',
-      child: Column(children: [
-        const SizedBox(height: 8),
-        ...reviews.take(4).map((r) {
-          final bizName = businesses.where((b) => b.id == r.businessId).firstOrNull?.name ?? '';
-          final accentColor = r.rating >= 4 ? AppColors.success : r.rating >= 3 ? AppColors.gold : AppColors.error;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 2),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              border: Border(
-                right: BorderSide(color: accentColor, width: 3),
-                bottom: const BorderSide(color: AppColors.adminDashBorder, width: 0.5, strokeAlign: BorderSide.strokeAlignCenter),
-              ),
-            ),
-            child: Row(children: [
-              const SizedBox(width: 12),
-              // CRM-style: icon square with rounded corners
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(9),
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          ...reviews.take(4).map((r) {
+            final bizName =
+                businesses
+                    .where((b) => b.id == r.businessId)
+                    .firstOrNull
+                    ?.name ??
+                '';
+            final accentColor = r.rating >= 4
+                ? AppColors.success
+                : r.rating >= 3
+                ? AppColors.gold
+                : AppColors.error;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  right: BorderSide(color: accentColor, width: 3),
+                  bottom: const BorderSide(
+                    color: AppColors.adminDashBorder,
+                    width: 0.5,
+                    strokeAlign: BorderSide.strokeAlignCenter,
+                  ),
                 ),
-                child: Center(child: Icon(IconsaxPlusBold.star, size: 18, color: accentColor)),
               ),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${r.userName} העיר על $bizName', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
-                const SizedBox(height: 2),
-                Text(r.text ?? '', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight), maxLines: 1, overflow: TextOverflow.ellipsis),
-              ])),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(IconsaxPlusBold.star_1, size: 12, color: accentColor),
-                  const SizedBox(width: 3),
-                  Text('${r.rating}', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w600, color: accentColor)),
-                ]),
+              child: Row(
+                children: [
+                  const SizedBox(width: 12),
+                  // CRM-style: icon square with rounded corners
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        IconsaxPlusBold.star,
+                        size: 18,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${r.userName} העיר על $bizName',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.adminTextDark,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          r.text ?? '',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            color: AppColors.adminTextLight,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          IconsaxPlusBold.star_1,
+                          size: 12,
+                          color: accentColor,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${r.rating}',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: accentColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ]),
-          );
-        }),
-      ]),
+            );
+          }),
+        ],
+      ),
     );
   }
 }
@@ -1053,15 +1652,33 @@ class _CardShell extends StatelessWidget {
         border: Border.all(color: AppColors.adminCardBorder, width: 1),
         boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.adminTextDark)),
-        if (subtitle != null) ...[
-          const SizedBox(height: 2),
-          Text(subtitle!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.adminTextDark,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle!,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 12,
+                color: AppColors.adminTextLight,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          child,
         ],
-        const SizedBox(height: 8),
-        child,
-      ]),
+      ),
     );
   }
 }
@@ -1082,7 +1699,11 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
   Widget build(BuildContext context) {
     final users = ref.watch(adminUsersProvider);
     var filtered = users.where((u) {
-      if (_search.isNotEmpty && !u.name.contains(_search) && !u.phone.contains(_search) && !u.email.contains(_search)) return false;
+      if (_search.isNotEmpty &&
+          !u.name.contains(_search) &&
+          !u.phone.contains(_search) &&
+          !u.email.contains(_search))
+        return false;
       if (_roleFilter != null && u.role != _roleFilter) return false;
       return true;
     }).toList();
@@ -1094,77 +1715,146 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: const BoxDecoration(
             color: Colors.white,
-            border: Border(bottom: BorderSide(color: AppColors.adminCardBorder, width: 1)),
+            border: Border(
+              bottom: BorderSide(color: AppColors.adminCardBorder, width: 1),
+            ),
           ),
-          child: Row(children: [
-            Expanded(
-              child: Container(
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColors.adminSearchBorder,
+                      width: 1,
+                    ),
+                  ),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'חיפוש לפי שם, טלפון, אימייל...',
+                      hintStyle: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 14,
+                        color: AppColors.adminTextLight,
+                      ),
+                      prefixIcon: Icon(
+                        IconsaxPlusLinear.search_normal,
+                        size: 18,
+                        color: AppColors.adminTextLight,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+                    onChanged: (v) => setState(() => _search = v),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
                 height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: AppColors.adminSearchBorder, width: 1),
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'חיפוש לפי שם, טלפון, אימייל...',
-                    hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight),
-                    prefixIcon: Icon(IconsaxPlusLinear.search_normal, size: 18, color: AppColors.adminTextLight),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: Border.all(
+                    color: AppColors.adminSearchBorder,
+                    width: 1,
                   ),
-                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-                  onChanged: (v) => setState(() => _search = v),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<UserRole?>(
+                    value: _roleFilter,
+                    hint: Text(
+                      'תפקיד',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 14,
+                        color: AppColors.adminTextMedium,
+                      ),
+                    ),
+                    icon: Icon(
+                      IconsaxPlusLinear.arrow_down_1,
+                      size: 16,
+                      color: AppColors.adminTextLight,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(
+                          'הכל',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      ...UserRole.values.map(
+                        (r) => DropdownMenuItem(
+                          value: r,
+                          child: Text(
+                            switch (r) {
+                              UserRole.admin => 'מנהל',
+                              UserRole.businessOwner => 'בעל עסק',
+                              UserRole.user => 'תושב',
+                            },
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _roleFilter = v),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              height: 40,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: AppColors.adminSearchBorder, width: 1),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<UserRole?>(
-                  value: _roleFilter,
-                  hint: Text('תפקיד', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextMedium)),
-                  icon: Icon(IconsaxPlusLinear.arrow_down_1, size: 16, color: AppColors.adminTextLight),
-                  items: [
-                    DropdownMenuItem(value: null, child: Text('הכל', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))),
-                    ...UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(switch (r) { UserRole.admin => 'מנהל', UserRole.businessOwner => 'בעל עסק', UserRole.user => 'תושב' }, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14)))),
-                  ],
-                  onChanged: (v) => setState(() => _roleFilter = v),
+              const SizedBox(width: 12),
+              SizedBox(
+                height: 40,
+                child: FilledButton.icon(
+                  onPressed: () => _showUserDialog(context, ref),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: Text(
+                    'משתמש חדש',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.midBlue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              height: 40,
-              child: FilledButton.icon(
-                onPressed: () => _showUserDialog(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text('משתמש חדש', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500)),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.midBlue,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ),
-          ]),
+            ],
+          ),
         ),
         // ── User list ──
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.all(0),
             itemCount: filtered.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.adminCardBorder),
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, color: AppColors.adminCardBorder),
             itemBuilder: (context, i) {
               final u = filtered[i];
               return Container(
                 color: Colors.white,
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 4,
+                  ),
                   leading: Container(
                     width: 40,
                     height: 40,
@@ -1174,43 +1864,114 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                           : AppColors.midBlue.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(9),
                     ),
-                    child: Center(child: Text(
-                      u.initials,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        color: u.isBanned ? AppColors.error : AppColors.midBlue,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    )),
-                  ),
-                  title: Row(children: [
-                    Text(u.name, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.adminTextDark)),
-                    const SizedBox(width: 8),
-                    _RoleBadge(u.role),
-                    if (u.isBanned) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(6),
+                    child: Center(
+                      child: Text(
+                        u.initials,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          color: u.isBanned
+                              ? AppColors.error
+                              : AppColors.midBlue,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
-                        child: Text('חסום', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: AppColors.error, fontWeight: FontWeight.w600)),
                       ),
+                    ),
+                  ),
+                  title: Row(
+                    children: [
+                      Text(
+                        u.name,
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          color: AppColors.adminTextDark,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _RoleBadge(u.role),
+                      if (u.isBanned) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'חסום',
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 11,
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ]),
+                  ),
                   subtitle: Text(
                     '${u.phone} • ${u.email} • ${u.neighborhood ?? "—"}',
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextLight),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 12,
+                      color: AppColors.adminTextLight,
+                    ),
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (v) => _handleUserAction(v, u),
-                    icon: Icon(IconsaxPlusLinear.more, size: 20, color: AppColors.adminTextLight),
+                    icon: Icon(
+                      IconsaxPlusLinear.more,
+                      size: 20,
+                      color: AppColors.adminTextLight,
+                    ),
                     itemBuilder: (_) => [
-                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))),
-                      PopupMenuItem(value: 'ban', child: Text(u.isBanned ? 'בטל חסימה' : 'חסום משתמש', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))),
-                      PopupMenuItem(value: 'makeBusinessOwner', child: Text('הפוך לבעל עסק', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14))),
-                      PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.error))),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Text(
+                          'עריכה',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'ban',
+                        child: Text(
+                          u.isBanned ? 'בטל חסימה' : 'חסום משתמש',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'makeBusinessOwner',
+                        child: Text(
+                          'הפוך לבעל עסק',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          'מחק',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   onTap: () => _showUserDialog(context, ref, user: u),
@@ -1226,9 +1987,12 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
   void _handleUserAction(String action, UserModel user) {
     final notifier = ref.read(adminUsersProvider.notifier);
     switch (action) {
-      case 'ban': notifier.toggleBan(user.id);
-      case 'makeBusinessOwner': notifier.setRole(user.id, UserRole.businessOwner);
-      case 'delete': notifier.remove(user.id);
+      case 'ban':
+        notifier.toggleBan(user.id);
+      case 'makeBusinessOwner':
+        notifier.setRole(user.id, UserRole.businessOwner);
+      case 'delete':
+        notifier.remove(user.id);
     }
   }
 }
@@ -1249,7 +2013,10 @@ class _BusinessesSectionState extends ConsumerState<_BusinessesSection> {
   Widget build(BuildContext context) {
     final businesses = ref.watch(adminBusinessesProvider);
     var filtered = businesses.where((b) {
-      if (_search.isNotEmpty && !b.name.contains(_search) && !b.category.contains(_search)) return false;
+      if (_search.isNotEmpty &&
+          !b.name.contains(_search) &&
+          !b.category.contains(_search))
+        return false;
       if (_statusFilter != null && b.status != _statusFilter) return false;
       return true;
     }).toList();
@@ -1258,29 +2025,64 @@ class _BusinessesSectionState extends ConsumerState<_BusinessesSection> {
       children: [
         Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(children: [
-            Expanded(child: TextField(
-              decoration: InputDecoration(hintText: 'חיפוש עסק...', prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.symmetric(horizontal: 12)),
-              onChanged: (v) => setState(() => _search = v),
-            )),
-            const SizedBox(width: 12),
-            DropdownButton<BusinessStatus?>(
-              value: _statusFilter,
-              hint: Text('סטטוס', style: TextStyle(fontFamily: AppFonts.rubik)),
-              items: [
-                DropdownMenuItem(value: null, child: Text('הכל', style: TextStyle(fontFamily: AppFonts.rubik))),
-                ...BusinessStatus.values.map((s) => DropdownMenuItem(value: s, child: Text(switch (s) { BusinessStatus.active => 'פעיל', BusinessStatus.pending => 'ממתין', BusinessStatus.suspended => 'מושהה', BusinessStatus.rejected => 'נדחה' }, style: TextStyle(fontFamily: AppFonts.rubik)))),
-              ],
-              onChanged: (v) => setState(() => _statusFilter = v),
-            ),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed: () => _showBusinessDialog(context, ref),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text('עסק חדש', style: TextStyle(fontFamily: AppFonts.rubik)),
-              style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise),
-            ),
-          ]),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'חיפוש עסק...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  onChanged: (v) => setState(() => _search = v),
+                ),
+              ),
+              const SizedBox(width: 12),
+              DropdownButton<BusinessStatus?>(
+                value: _statusFilter,
+                hint: Text(
+                  'סטטוס',
+                  style: TextStyle(fontFamily: AppFonts.rubik),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(
+                      'הכל',
+                      style: TextStyle(fontFamily: AppFonts.rubik),
+                    ),
+                  ),
+                  ...BusinessStatus.values.map(
+                    (s) => DropdownMenuItem(
+                      value: s,
+                      child: Text(switch (s) {
+                        BusinessStatus.active => 'פעיל',
+                        BusinessStatus.pending => 'ממתין',
+                        BusinessStatus.suspended => 'מושהה',
+                        BusinessStatus.rejected => 'נדחה',
+                      }, style: TextStyle(fontFamily: AppFonts.rubik)),
+                    ),
+                  ),
+                ],
+                onChanged: (v) => setState(() => _statusFilter = v),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: () => _showBusinessDialog(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'עסק חדש',
+                  style: TextStyle(fontFamily: AppFonts.rubik),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.turquoise,
+                ),
+              ),
+            ],
+          ),
         ),
         Expanded(
           child: ListView.separated(
@@ -1291,19 +2093,51 @@ class _BusinessesSectionState extends ConsumerState<_BusinessesSection> {
               final b = filtered[i];
               return ListTile(
                 leading: Icon(Icons.store, color: _statusColor(b.status)),
-                title: Row(children: [
-                  Flexible(child: Text(b.name, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-                  const SizedBox(width: 8),
-                  _StatusBadge(b.statusLabel, _statusColor(b.status)),
-                ]),
-                subtitle: Text('${b.category} • ${b.address} • slug: ${b.slug.isEmpty ? "—" : b.slug}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
+                title: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        b.name,
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _StatusBadge(b.statusLabel, _statusColor(b.status)),
+                  ],
+                ),
+                subtitle: Text(
+                  '${b.category} • ${b.address} • slug: ${b.slug.isEmpty ? "—" : b.slug}',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 12,
+                    color: AppColors.grayText,
+                  ),
+                ),
                 trailing: PopupMenuButton<String>(
                   onSelected: (v) => _handleBusinessAction(v, b),
                   itemBuilder: (_) => [
                     const PopupMenuItem(value: 'edit', child: Text('עריכה')),
-                    if (b.status != BusinessStatus.active) const PopupMenuItem(value: 'activate', child: Text('אשר')),
-                    if (b.status != BusinessStatus.suspended) const PopupMenuItem(value: 'suspend', child: Text('השהה')),
-                    const PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(color: AppColors.error))),
+                    if (b.status != BusinessStatus.active)
+                      const PopupMenuItem(
+                        value: 'activate',
+                        child: Text('אשר'),
+                      ),
+                    if (b.status != BusinessStatus.suspended)
+                      const PopupMenuItem(
+                        value: 'suspend',
+                        child: Text('השהה'),
+                      ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text(
+                        'מחק',
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                    ),
                   ],
                 ),
                 onTap: () => _showBusinessDialog(context, ref, business: b),
@@ -1325,10 +2159,14 @@ class _BusinessesSectionState extends ConsumerState<_BusinessesSection> {
   void _handleBusinessAction(String action, Business biz) {
     final notifier = ref.read(adminBusinessesProvider.notifier);
     switch (action) {
-      case 'edit': _showBusinessDialog(context, ref, business: biz);
-      case 'activate': notifier.setStatus(biz.id, BusinessStatus.active);
-      case 'suspend': notifier.setStatus(biz.id, BusinessStatus.suspended);
-      case 'delete': notifier.remove(biz.id);
+      case 'edit':
+        _showBusinessDialog(context, ref, business: biz);
+      case 'activate':
+        notifier.setStatus(biz.id, BusinessStatus.active);
+      case 'suspend':
+        notifier.setStatus(biz.id, BusinessStatus.suspended);
+      case 'delete':
+        notifier.remove(biz.id);
     }
   }
 }
@@ -1347,25 +2185,48 @@ class _ArticlesSectionState extends ConsumerState<_ArticlesSection> {
   @override
   Widget build(BuildContext context) {
     final articles = ref.watch(adminArticlesProvider);
-    var filtered = articles.where((a) => _search.isEmpty || a.title.contains(_search) || a.slug.contains(_search)).toList();
+    var filtered = articles
+        .where(
+          (a) =>
+              _search.isEmpty ||
+              a.title.contains(_search) ||
+              a.slug.contains(_search),
+        )
+        .toList();
 
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(children: [
-            Expanded(child: TextField(
-              decoration: InputDecoration(hintText: 'חיפוש כתבה...', prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.symmetric(horizontal: 12)),
-              onChanged: (v) => setState(() => _search = v),
-            )),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed: () => _showArticleDialog(context, ref),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text('כתבה חדשה', style: TextStyle(fontFamily: AppFonts.rubik)),
-              style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise),
-            ),
-          ]),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'חיפוש כתבה...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  onChanged: (v) => setState(() => _search = v),
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: () => _showArticleDialog(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'כתבה חדשה',
+                  style: TextStyle(fontFamily: AppFonts.rubik),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.turquoise,
+                ),
+              ),
+            ],
+          ),
         ),
         Expanded(
           child: ListView.separated(
@@ -1376,26 +2237,77 @@ class _ArticlesSectionState extends ConsumerState<_ArticlesSection> {
               final a = filtered[i];
               return ListTile(
                 leading: Icon(
-                  a.status == ArticleStatus.published ? Icons.public : a.status == ArticleStatus.draft ? Icons.edit_note : Icons.archive,
-                  color: a.status == ArticleStatus.published ? AppColors.success : a.status == ArticleStatus.draft ? AppColors.gold : AppColors.grayLight,
+                  a.status == ArticleStatus.published
+                      ? Icons.public
+                      : a.status == ArticleStatus.draft
+                      ? Icons.edit_note
+                      : Icons.archive,
+                  color: a.status == ArticleStatus.published
+                      ? AppColors.success
+                      : a.status == ArticleStatus.draft
+                      ? AppColors.gold
+                      : AppColors.grayLight,
                 ),
-                title: Row(children: [
-                  Flexible(child: Text(a.title, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-                  const SizedBox(width: 8),
-                  _StatusBadge(
-                    a.status == ArticleStatus.published ? 'פורסם' : a.status == ArticleStatus.draft ? 'טיוטה' : 'ארכיון',
-                    a.status == ArticleStatus.published ? AppColors.success : a.status == ArticleStatus.draft ? AppColors.gold : AppColors.grayLight,
+                title: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        a.title,
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _StatusBadge(
+                      a.status == ArticleStatus.published
+                          ? 'פורסם'
+                          : a.status == ArticleStatus.draft
+                          ? 'טיוטה'
+                          : 'ארכיון',
+                      a.status == ArticleStatus.published
+                          ? AppColors.success
+                          : a.status == ArticleStatus.draft
+                          ? AppColors.gold
+                          : AppColors.grayLight,
+                    ),
+                    if (a.isFeatured) ...[
+                      const SizedBox(width: 4),
+                      const Icon(Icons.star, size: 16, color: AppColors.gold),
+                    ],
+                  ],
+                ),
+                subtitle: Text(
+                  'slug: ${a.slug.isEmpty ? "—" : a.slug} • ${a.category.label} • ${a.viewCount} צפיות • meta: ${a.metaDescription?.isNotEmpty == true ? "✓" : "✗"}',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 12,
+                    color: AppColors.grayText,
                   ),
-                  if (a.isFeatured) ...[const SizedBox(width: 4), const Icon(Icons.star, size: 16, color: AppColors.gold)],
-                ]),
-                subtitle: Text('slug: ${a.slug.isEmpty ? "—" : a.slug} • ${a.category.label} • ${a.viewCount} צפיות • meta: ${a.metaDescription?.isNotEmpty == true ? "✓" : "✗"}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
+                ),
                 trailing: PopupMenuButton<String>(
                   onSelected: (v) => _handleArticleAction(v, a),
                   itemBuilder: (_) => [
                     const PopupMenuItem(value: 'edit', child: Text('עריכה')),
-                    if (a.status != ArticleStatus.published) const PopupMenuItem(value: 'publish', child: Text('פרסם')),
-                    if (a.status != ArticleStatus.draft) const PopupMenuItem(value: 'draft', child: Text('החזר לטיוטה')),
-                    const PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(color: AppColors.error))),
+                    if (a.status != ArticleStatus.published)
+                      const PopupMenuItem(
+                        value: 'publish',
+                        child: Text('פרסם'),
+                      ),
+                    if (a.status != ArticleStatus.draft)
+                      const PopupMenuItem(
+                        value: 'draft',
+                        child: Text('החזר לטיוטה'),
+                      ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text(
+                        'מחק',
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                    ),
                   ],
                 ),
                 onTap: () => _showArticleDialog(context, ref, article: a),
@@ -1410,10 +2322,14 @@ class _ArticlesSectionState extends ConsumerState<_ArticlesSection> {
   void _handleArticleAction(String action, Article a) {
     final notifier = ref.read(adminArticlesProvider.notifier);
     switch (action) {
-      case 'edit': _showArticleDialog(context, ref, article: a);
-      case 'publish': notifier.setStatus(a.id, ArticleStatus.published);
-      case 'draft': notifier.setStatus(a.id, ArticleStatus.draft);
-      case 'delete': notifier.remove(a.id);
+      case 'edit':
+        _showArticleDialog(context, ref, article: a);
+      case 'publish':
+        notifier.setStatus(a.id, ArticleStatus.published);
+      case 'draft':
+        notifier.setStatus(a.id, ArticleStatus.draft);
+      case 'delete':
+        notifier.remove(a.id);
     }
   }
 }
@@ -1434,15 +2350,49 @@ class _ReviewsSection extends ConsumerWidget {
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, i) {
         final r = reviews[i];
-        final bizName = businesses.where((b) => b.id == r.businessId).firstOrNull?.name ?? r.businessId;
+        final bizName =
+            businesses.where((b) => b.id == r.businessId).firstOrNull?.name ??
+            r.businessId;
         return ListTile(
           leading: CircleAvatar(
-            backgroundColor: r.rating >= 4 ? AppColors.success.withValues(alpha: 0.15) : r.rating >= 3 ? AppColors.gold.withValues(alpha: 0.15) : AppColors.error.withValues(alpha: 0.15),
-            child: Text('${r.rating.toInt()}', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, color: r.rating >= 4 ? AppColors.success : r.rating >= 3 ? AppColors.gold : AppColors.error)),
+            backgroundColor: r.rating >= 4
+                ? AppColors.success.withValues(alpha: 0.15)
+                : r.rating >= 3
+                ? AppColors.gold.withValues(alpha: 0.15)
+                : AppColors.error.withValues(alpha: 0.15),
+            child: Text(
+              '${r.rating.toInt()}',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontWeight: FontWeight.w700,
+                color: r.rating >= 4
+                    ? AppColors.success
+                    : r.rating >= 3
+                    ? AppColors.gold
+                    : AppColors.error,
+              ),
+            ),
           ),
-          title: Text('${r.userName} — $bizName', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600)),
-          subtitle: Text(r.text ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText)),
-          trailing: IconButton(icon: const Icon(Icons.delete_outline, color: AppColors.error), onPressed: () => ref.read(adminReviewsProvider.notifier).remove(r.id)),
+          title: Text(
+            '${r.userName} — $bizName',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          subtitle: Text(
+            r.text ?? '',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 13,
+              color: AppColors.grayText,
+            ),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppColors.error),
+            onPressed: () =>
+                ref.read(adminReviewsProvider.notifier).remove(r.id),
+          ),
         );
       },
     );
@@ -1459,16 +2409,49 @@ class _SettingsSection extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text('הגדרות אפליקציה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
+        Text(
+          'הגדרות אפליקציה',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.adminTextDark,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text('ניהול הגדרות כלליות של המערכת', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight)),
+        Text(
+          'ניהול הגדרות כלליות של המערכת',
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            color: AppColors.adminTextLight,
+          ),
+        ),
         const SizedBox(height: 20),
-        _SettingsTile('שם האפליקציה', 'מודיעין בשבילך', IconsaxPlusLinear.mobile),
+        _SettingsTile(
+          'שם האפליקציה',
+          'מודיעין בשבילך',
+          IconsaxPlusLinear.mobile,
+        ),
         _SettingsTile('גרסה', '1.0.0', IconsaxPlusLinear.info_circle),
-        _SettingsTile('התראות Push', 'פעיל', IconsaxPlusLinear.notification, statusColor: AppColors.success),
-        _SettingsTile('תחזוקה', 'כבוי', IconsaxPlusLinear.setting_3, statusColor: AppColors.adminTextLight),
+        _SettingsTile(
+          'התראות Push',
+          'פעיל',
+          IconsaxPlusLinear.notification,
+          statusColor: AppColors.success,
+        ),
+        _SettingsTile(
+          'תחזוקה',
+          'כבוי',
+          IconsaxPlusLinear.setting_3,
+          statusColor: AppColors.adminTextLight,
+        ),
         _SettingsTile('מפתח API — מפות', '••••••••', IconsaxPlusLinear.map),
-        _SettingsTile('Supabase URL', 'https://xxx.supabase.co', IconsaxPlusLinear.cloud),
+        _SettingsTile(
+          'Supabase URL',
+          'https://xxx.supabase.co',
+          IconsaxPlusLinear.cloud,
+        ),
       ],
     );
   }
@@ -1492,33 +2475,68 @@ class _SettingsTile extends StatelessWidget {
         border: Border.all(color: AppColors.adminCardBorder, width: 1),
         boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
-      child: Row(children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.midBlue.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.midBlue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: AppColors.midBlue),
           ),
-          child: Icon(icon, size: 20, color: AppColors.midBlue),
-        ),
-        const SizedBox(width: 14),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.adminTextDark)),
-            const SizedBox(height: 2),
-            Row(children: [
-              if (statusColor != null) ...[
-                Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
-                const SizedBox(width: 6),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: AppColors.adminTextDark,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    if (statusColor != null) ...[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Expanded(
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          color: AppColors.adminTextLight,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ],
-              Expanded(child: Text(value, style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextLight, fontSize: 13), overflow: TextOverflow.ellipsis)),
-            ]),
-          ],
-        )),
-        Icon(IconsaxPlusLinear.edit_2, size: 18, color: AppColors.adminTextLight),
-      ]),
+            ),
+          ),
+          Icon(
+            IconsaxPlusLinear.edit_2,
+            size: 18,
+            color: AppColors.adminTextLight,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1530,7 +2548,13 @@ class _MetricCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _MetricCard(this.title, this.value, this.icon, this.color, this.subtitle);
+  const _MetricCard(
+    this.title,
+    this.value,
+    this.icon,
+    this.color,
+    this.subtitle,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -1543,23 +2567,55 @@ class _MetricCard extends StatelessWidget {
         border: Border.all(color: AppColors.adminCardBorder, width: 1),
         boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2))],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, size: 20, color: color),
           ),
-          child: Icon(icon, size: 20, color: color),
-        ),
-        const SizedBox(height: 12),
-        Text(value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.adminTextDark)),
-        Text(title, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.adminTextLight)),
-        const SizedBox(height: 4),
-        Text(subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: color)),
-      ]),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 32,
+              fontWeight: FontWeight.w600,
+              color: AppColors.adminTextDark,
+            ),
+          ),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: AppColors.adminTextLight,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1581,7 +2637,15 @@ class _RoleBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: color, fontWeight: FontWeight.w500)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }
@@ -1599,7 +2663,15 @@ class _StatusBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: color, fontWeight: FontWeight.w500)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }
@@ -1616,54 +2688,129 @@ void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
 
   showDialog(
     context: context,
-    builder: (ctx) => StatefulBuilder(builder: (ctx, setDState) => Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        title: Text(isEdit ? 'עריכת משתמש' : 'משתמש חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
-        content: SizedBox(width: 400, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: nameC, decoration: const InputDecoration(labelText: 'שם מלא')),
-          const SizedBox(height: 12),
-          TextField(controller: emailC, decoration: const InputDecoration(labelText: 'אימייל')),
-          const SizedBox(height: 12),
-          TextField(controller: phoneC, decoration: const InputDecoration(labelText: 'טלפון')),
-          const SizedBox(height: 12),
-          TextField(controller: neighborhoodC, decoration: const InputDecoration(labelText: 'שכונה')),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<UserRole>(
-            value: role,
-            decoration: const InputDecoration(labelText: 'תפקיד'),
-            items: UserRole.values.map((r) => DropdownMenuItem(value: r, child: Text(switch (r) { UserRole.admin => 'מנהל', UserRole.businessOwner => 'בעל עסק', UserRole.user => 'תושב' }))).toList(),
-            onChanged: (v) => setDState(() => role = v!),
-          ),
-        ]))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextMedium)),
-          ),
-          FilledButton(
-            onPressed: () {
-              final notifier = ref.read(adminUsersProvider.notifier);
-              if (isEdit) {
-                notifier.update(user!.copyWith(name: nameC.text, email: emailC.text, phone: phoneC.text, neighborhood: neighborhoodC.text, role: role));
-              } else {
-                notifier.add(UserModel(id: 'u_${DateTime.now().millisecondsSinceEpoch}', name: nameC.text, email: emailC.text, phone: phoneC.text, neighborhood: neighborhoodC.text, role: role, createdAt: DateTime.now()));
-              }
-              Navigator.pop(ctx);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.midBlue,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDState) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text(
+            isEdit ? 'עריכת משתמש' : 'משתמש חדש',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontWeight: FontWeight.w700,
             ),
-            child: Text(isEdit ? 'שמור' : 'צור', style: TextStyle(fontFamily: AppFonts.inter, fontWeight: FontWeight.w500)),
           ),
-        ],
+          content: SizedBox(
+            width: 400,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameC,
+                    decoration: const InputDecoration(labelText: 'שם מלא'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: emailC,
+                    decoration: const InputDecoration(labelText: 'אימייל'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: phoneC,
+                    decoration: const InputDecoration(labelText: 'טלפון'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: neighborhoodC,
+                    decoration: const InputDecoration(labelText: 'שכונה'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<UserRole>(
+                    value: role,
+                    decoration: const InputDecoration(labelText: 'תפקיד'),
+                    items: UserRole.values
+                        .map(
+                          (r) => DropdownMenuItem(
+                            value: r,
+                            child: Text(switch (r) {
+                              UserRole.admin => 'מנהל',
+                              UserRole.businessOwner => 'בעל עסק',
+                              UserRole.user => 'תושב',
+                            }),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setDState(() => role = v!),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'ביטול',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  color: AppColors.adminTextMedium,
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                final notifier = ref.read(adminUsersProvider.notifier);
+                if (isEdit) {
+                  notifier.update(
+                    user!.copyWith(
+                      name: nameC.text,
+                      email: emailC.text,
+                      phone: phoneC.text,
+                      neighborhood: neighborhoodC.text,
+                      role: role,
+                    ),
+                  );
+                } else {
+                  notifier.add(
+                    UserModel(
+                      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
+                      name: nameC.text,
+                      email: emailC.text,
+                      phone: phoneC.text,
+                      neighborhood: neighborhoodC.text,
+                      role: role,
+                      createdAt: DateTime.now(),
+                    ),
+                  );
+                }
+                Navigator.pop(ctx);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.midBlue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                isEdit ? 'שמור' : 'צור',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    )),
+    ),
   );
 }
 
-void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? business}) {
+void _showBusinessDialog(
+  BuildContext context,
+  WidgetRef ref, {
+  Business? business,
+}) {
   final isEdit = business != null;
   final nameC = TextEditingController(text: business?.name ?? '');
   final slugC = TextEditingController(text: business?.slug ?? '');
@@ -1674,7 +2821,9 @@ void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? busines
   final emailC = TextEditingController(text: business?.email ?? '');
   final websiteC = TextEditingController(text: business?.website ?? '');
   final addressC = TextEditingController(text: business?.address ?? '');
-  final neighborhoodC = TextEditingController(text: business?.neighborhood ?? '');
+  final neighborhoodC = TextEditingController(
+    text: business?.neighborhood ?? '',
+  );
   final tagsC = TextEditingController(text: business?.tags.join(', ') ?? '');
 
   showDialog(
@@ -1682,55 +2831,175 @@ void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? busines
     builder: (ctx) => Directionality(
       textDirection: TextDirection.rtl,
       child: AlertDialog(
-        title: Text(isEdit ? 'עריכת עסק' : 'עסק חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
-        content: SizedBox(width: 500, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: nameC, decoration: const InputDecoration(labelText: 'שם העסק')),
-          const SizedBox(height: 10),
-          TextField(controller: slugC, decoration: const InputDecoration(labelText: 'Slug (URL)', hintText: 'pizza-frago')),
-          const SizedBox(height: 10),
-          TextField(controller: categoryC, decoration: const InputDecoration(labelText: 'קטגוריה')),
-          const SizedBox(height: 10),
-          TextField(controller: descC, decoration: const InputDecoration(labelText: 'תיאור'), maxLines: 3),
-          const SizedBox(height: 10),
-          TextField(controller: metaC, decoration: const InputDecoration(labelText: 'Meta Description', hintText: 'תיאור ל-SEO (עד 160 תווים)'), maxLength: 160),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: TextField(controller: phoneC, decoration: const InputDecoration(labelText: 'טלפון'))),
-            const SizedBox(width: 10),
-            Expanded(child: TextField(controller: emailC, decoration: const InputDecoration(labelText: 'אימייל'))),
-          ]),
-          const SizedBox(height: 10),
-          TextField(controller: websiteC, decoration: const InputDecoration(labelText: 'אתר')),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: TextField(controller: addressC, decoration: const InputDecoration(labelText: 'כתובת'))),
-            const SizedBox(width: 10),
-            Expanded(child: TextField(controller: neighborhoodC, decoration: const InputDecoration(labelText: 'שכונה'))),
-          ]),
-          const SizedBox(height: 10),
-          TextField(controller: tagsC, decoration: const InputDecoration(labelText: 'תגיות (מופרדות בפסיק)')),
-        ]))),
+        title: Text(
+          isEdit ? 'עריכת עסק' : 'עסק חדש',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: SizedBox(
+          width: 500,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameC,
+                  decoration: const InputDecoration(labelText: 'שם העסק'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: slugC,
+                  decoration: const InputDecoration(
+                    labelText: 'Slug (URL)',
+                    hintText: 'pizza-frago',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: categoryC,
+                  decoration: const InputDecoration(labelText: 'קטגוריה'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: descC,
+                  decoration: const InputDecoration(labelText: 'תיאור'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: metaC,
+                  decoration: const InputDecoration(
+                    labelText: 'Meta Description',
+                    hintText: 'תיאור ל-SEO (עד 160 תווים)',
+                  ),
+                  maxLength: 160,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: phoneC,
+                        decoration: const InputDecoration(labelText: 'טלפון'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: emailC,
+                        decoration: const InputDecoration(labelText: 'אימייל'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: websiteC,
+                  decoration: const InputDecoration(labelText: 'אתר'),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: addressC,
+                        decoration: const InputDecoration(labelText: 'כתובת'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: neighborhoodC,
+                        decoration: const InputDecoration(labelText: 'שכונה'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: tagsC,
+                  decoration: const InputDecoration(
+                    labelText: 'תגיות (מופרדות בפסיק)',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextMedium)),
+            child: Text(
+              'ביטול',
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                color: AppColors.adminTextMedium,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
               final notifier = ref.read(adminBusinessesProvider.notifier);
-              final tags = tagsC.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+              final tags = tagsC.text
+                  .split(',')
+                  .map((t) => t.trim())
+                  .where((t) => t.isNotEmpty)
+                  .toList();
               if (isEdit) {
-                notifier.update(business!.copyWith(name: nameC.text, slug: slugC.text, category: categoryC.text, description: descC.text, metaDescription: metaC.text, phone: phoneC.text, email: emailC.text, website: websiteC.text, address: addressC.text, neighborhood: neighborhoodC.text, tags: tags));
+                notifier.update(
+                  business!.copyWith(
+                    name: nameC.text,
+                    slug: slugC.text,
+                    category: categoryC.text,
+                    description: descC.text,
+                    metaDescription: metaC.text,
+                    phone: phoneC.text,
+                    email: emailC.text,
+                    website: websiteC.text,
+                    address: addressC.text,
+                    neighborhood: neighborhoodC.text,
+                    tags: tags,
+                  ),
+                );
               } else {
-                notifier.add(Business(id: 'b_${DateTime.now().millisecondsSinceEpoch}', name: nameC.text, slug: slugC.text, category: categoryC.text, description: descC.text, metaDescription: metaC.text, phone: phoneC.text, email: emailC.text, website: websiteC.text, address: addressC.text, neighborhood: neighborhoodC.text, latitude: 31.897, longitude: 35.010, tags: tags, status: BusinessStatus.active, createdAt: DateTime.now()));
+                notifier.add(
+                  Business(
+                    id: 'b_${DateTime.now().millisecondsSinceEpoch}',
+                    name: nameC.text,
+                    slug: slugC.text,
+                    category: categoryC.text,
+                    description: descC.text,
+                    metaDescription: metaC.text,
+                    phone: phoneC.text,
+                    email: emailC.text,
+                    website: websiteC.text,
+                    address: addressC.text,
+                    neighborhood: neighborhoodC.text,
+                    latitude: 31.897,
+                    longitude: 35.010,
+                    tags: tags,
+                    status: BusinessStatus.active,
+                    createdAt: DateTime.now(),
+                  ),
+                );
               }
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.midBlue,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: Text(isEdit ? 'שמור' : 'צור', style: TextStyle(fontFamily: AppFonts.inter, fontWeight: FontWeight.w500)),
+            child: Text(
+              isEdit ? 'שמור' : 'צור',
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),
@@ -1738,7 +3007,11 @@ void _showBusinessDialog(BuildContext context, WidgetRef ref, {Business? busines
   );
 }
 
-void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article}) {
+void _showArticleDialog(
+  BuildContext context,
+  WidgetRef ref, {
+  Article? article,
+}) {
   final isEdit = article != null;
   final titleC = TextEditingController(text: article?.title ?? '');
   final subtitleC = TextEditingController(text: article?.subtitle ?? '');
@@ -1746,7 +3019,9 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
   final bodyC = TextEditingController(text: article?.body ?? '');
   final authorC = TextEditingController(text: article?.author ?? '');
   final metaDescC = TextEditingController(text: article?.metaDescription ?? '');
-  final metaKeywordsC = TextEditingController(text: article?.metaKeywords ?? '');
+  final metaKeywordsC = TextEditingController(
+    text: article?.metaKeywords ?? '',
+  );
   final tagsC = TextEditingController(text: article?.tags.join(', ') ?? '');
   var category = article?.category ?? NewsCategory.municipal;
   var status = article?.status ?? ArticleStatus.draft;
@@ -1755,81 +3030,243 @@ void _showArticleDialog(BuildContext context, WidgetRef ref, {Article? article})
 
   showDialog(
     context: context,
-    builder: (ctx) => StatefulBuilder(builder: (ctx, setDState) => Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        title: Text(isEdit ? 'עריכת כתבה' : 'כתבה חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
-        content: SizedBox(width: 550, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: titleC, decoration: const InputDecoration(labelText: 'כותרת')),
-          const SizedBox(height: 10),
-          TextField(controller: subtitleC, decoration: const InputDecoration(labelText: 'כותרת משנה')),
-          const SizedBox(height: 10),
-          TextField(controller: slugC, decoration: const InputDecoration(labelText: 'Slug (URL)', hintText: 'my-article-title')),
-          const SizedBox(height: 10),
-          TextField(controller: authorC, decoration: const InputDecoration(labelText: 'כותב')),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: DropdownButtonFormField<NewsCategory>(
-              value: category,
-              decoration: const InputDecoration(labelText: 'קטגוריה'),
-              items: NewsCategory.values.map((c) => DropdownMenuItem(value: c, child: Text(c.label))).toList(),
-              onChanged: (v) => setDState(() => category = v!),
-            )),
-            const SizedBox(width: 10),
-            Expanded(child: DropdownButtonFormField<ArticleStatus>(
-              value: status,
-              decoration: const InputDecoration(labelText: 'סטטוס'),
-              items: [
-                DropdownMenuItem(value: ArticleStatus.draft, child: Text('טיוטה', style: TextStyle(fontFamily: AppFonts.rubik))),
-                DropdownMenuItem(value: ArticleStatus.published, child: Text('פורסם', style: TextStyle(fontFamily: AppFonts.rubik))),
-                DropdownMenuItem(value: ArticleStatus.archived, child: Text('ארכיון', style: TextStyle(fontFamily: AppFonts.rubik))),
-              ],
-              onChanged: (v) => setDState(() => status = v!),
-            )),
-          ]),
-          const SizedBox(height: 10),
-          TextField(controller: bodyC, decoration: const InputDecoration(labelText: 'תוכן', alignLabelWithHint: true), maxLines: 6),
-          const SizedBox(height: 14),
-          Text('SEO', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.navy)),
-          const SizedBox(height: 8),
-          TextField(controller: metaDescC, decoration: const InputDecoration(labelText: 'Meta Description', hintText: 'תיאור ל-SEO (עד 160 תווים)'), maxLength: 160),
-          const SizedBox(height: 10),
-          TextField(controller: metaKeywordsC, decoration: const InputDecoration(labelText: 'Meta Keywords', hintText: 'מופרדות בפסיק')),
-          const SizedBox(height: 10),
-          TextField(controller: tagsC, decoration: const InputDecoration(labelText: 'תגיות (מופרדות בפסיק)')),
-          const SizedBox(height: 10),
-          Row(children: [
-            Checkbox(value: isBreaking, onChanged: (v) => setDState(() => isBreaking = v!)),
-            Text('מבזק', style: TextStyle(fontFamily: AppFonts.rubik)),
-            const SizedBox(width: 20),
-            Checkbox(value: isFeatured, onChanged: (v) => setDState(() => isFeatured = v!)),
-            Text('מומלץ', style: TextStyle(fontFamily: AppFonts.rubik)),
-          ]),
-        ]))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.inter, color: AppColors.adminTextMedium)),
-          ),
-          FilledButton(
-            onPressed: () {
-              final notifier = ref.read(adminArticlesProvider.notifier);
-              final tags = tagsC.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
-              if (isEdit) {
-                notifier.update(article!.copyWith(title: titleC.text, subtitle: subtitleC.text, slug: slugC.text, body: bodyC.text, author: authorC.text, category: category, status: status, metaDescription: metaDescC.text, metaKeywords: metaKeywordsC.text, tags: tags, isBreaking: isBreaking, isFeatured: isFeatured, updatedAt: DateTime.now()));
-              } else {
-                notifier.add(Article(id: 'a_${DateTime.now().millisecondsSinceEpoch}', title: titleC.text, subtitle: subtitleC.text, slug: slugC.text, body: bodyC.text, author: authorC.text, category: category, publishedAt: DateTime.now(), status: status, metaDescription: metaDescC.text, metaKeywords: metaKeywordsC.text, tags: tags, isBreaking: isBreaking, isFeatured: isFeatured));
-              }
-              Navigator.pop(ctx);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.midBlue,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDState) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text(
+            isEdit ? 'עריכת כתבה' : 'כתבה חדשה',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontWeight: FontWeight.w700,
             ),
-            child: Text(isEdit ? 'שמור' : 'צור', style: TextStyle(fontFamily: AppFonts.inter, fontWeight: FontWeight.w500)),
           ),
-        ],
+          content: SizedBox(
+            width: 550,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleC,
+                    decoration: const InputDecoration(labelText: 'כותרת'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: subtitleC,
+                    decoration: const InputDecoration(labelText: 'כותרת משנה'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: slugC,
+                    decoration: const InputDecoration(
+                      labelText: 'Slug (URL)',
+                      hintText: 'my-article-title',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: authorC,
+                    decoration: const InputDecoration(labelText: 'כותב'),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<NewsCategory>(
+                          value: category,
+                          decoration: const InputDecoration(
+                            labelText: 'קטגוריה',
+                          ),
+                          items: NewsCategory.values
+                              .map(
+                                (c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Text(c.label),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (v) => setDState(() => category = v!),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: DropdownButtonFormField<ArticleStatus>(
+                          value: status,
+                          decoration: const InputDecoration(labelText: 'סטטוס'),
+                          items: [
+                            DropdownMenuItem(
+                              value: ArticleStatus.draft,
+                              child: Text(
+                                'טיוטה',
+                                style: TextStyle(fontFamily: AppFonts.rubik),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: ArticleStatus.published,
+                              child: Text(
+                                'פורסם',
+                                style: TextStyle(fontFamily: AppFonts.rubik),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: ArticleStatus.archived,
+                              child: Text(
+                                'ארכיון',
+                                style: TextStyle(fontFamily: AppFonts.rubik),
+                              ),
+                            ),
+                          ],
+                          onChanged: (v) => setDState(() => status = v!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: bodyC,
+                    decoration: const InputDecoration(
+                      labelText: 'תוכן',
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 6,
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'SEO',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppColors.navy,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: metaDescC,
+                    decoration: const InputDecoration(
+                      labelText: 'Meta Description',
+                      hintText: 'תיאור ל-SEO (עד 160 תווים)',
+                    ),
+                    maxLength: 160,
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: metaKeywordsC,
+                    decoration: const InputDecoration(
+                      labelText: 'Meta Keywords',
+                      hintText: 'מופרדות בפסיק',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: tagsC,
+                    decoration: const InputDecoration(
+                      labelText: 'תגיות (מופרדות בפסיק)',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: isBreaking,
+                        onChanged: (v) => setDState(() => isBreaking = v!),
+                      ),
+                      Text(
+                        'מבזק',
+                        style: TextStyle(fontFamily: AppFonts.rubik),
+                      ),
+                      const SizedBox(width: 20),
+                      Checkbox(
+                        value: isFeatured,
+                        onChanged: (v) => setDState(() => isFeatured = v!),
+                      ),
+                      Text(
+                        'מומלץ',
+                        style: TextStyle(fontFamily: AppFonts.rubik),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'ביטול',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  color: AppColors.adminTextMedium,
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                final notifier = ref.read(adminArticlesProvider.notifier);
+                final tags = tagsC.text
+                    .split(',')
+                    .map((t) => t.trim())
+                    .where((t) => t.isNotEmpty)
+                    .toList();
+                if (isEdit) {
+                  notifier.update(
+                    article!.copyWith(
+                      title: titleC.text,
+                      subtitle: subtitleC.text,
+                      slug: slugC.text,
+                      body: bodyC.text,
+                      author: authorC.text,
+                      category: category,
+                      status: status,
+                      metaDescription: metaDescC.text,
+                      metaKeywords: metaKeywordsC.text,
+                      tags: tags,
+                      isBreaking: isBreaking,
+                      isFeatured: isFeatured,
+                      updatedAt: DateTime.now(),
+                    ),
+                  );
+                } else {
+                  notifier.add(
+                    Article(
+                      id: 'a_${DateTime.now().millisecondsSinceEpoch}',
+                      title: titleC.text,
+                      subtitle: subtitleC.text,
+                      slug: slugC.text,
+                      body: bodyC.text,
+                      author: authorC.text,
+                      category: category,
+                      publishedAt: DateTime.now(),
+                      status: status,
+                      metaDescription: metaDescC.text,
+                      metaKeywords: metaKeywordsC.text,
+                      tags: tags,
+                      isBreaking: isBreaking,
+                      isFeatured: isFeatured,
+                    ),
+                  );
+                }
+                Navigator.pop(ctx);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.midBlue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                isEdit ? 'שמור' : 'צור',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    )),
+    ),
   );
 }

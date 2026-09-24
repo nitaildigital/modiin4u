@@ -41,7 +41,7 @@ class StepsRepository {
         .select('date, steps')
         .eq('profile_id', uid)
         .gte('date', _asDate(from))
-        .order('date');
+        .order('date', ascending: true);
 
     final byDate = {
       for (final r in List<Map<String, dynamic>>.from(rows))

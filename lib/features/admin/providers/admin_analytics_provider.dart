@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // ─── Real-Time Stats ───
 
-final adminRealTimeProvider = StateNotifierProvider<AdminRealTimeNotifier, Map<String, dynamic>>((ref) {
-  return AdminRealTimeNotifier();
-});
+final adminRealTimeProvider =
+    StateNotifierProvider<AdminRealTimeNotifier, Map<String, dynamic>>((ref) {
+      return AdminRealTimeNotifier();
+    });
 
 class AdminRealTimeNotifier extends StateNotifier<Map<String, dynamic>> {
   AdminRealTimeNotifier() : super(_generateRealTime());
@@ -32,11 +33,22 @@ Map<String, dynamic> _generateRealTime() {
     'errors_today': rng.nextInt(5),
     'api_latency_ms': 45 + rng.nextInt(30),
     // Live user locations (lat/lng near Modi'in)
-    'live_users': List.generate(25 + rng.nextInt(20), (i) => {
-      'lat': 31.89 + (rng.nextDouble() - 0.5) * 0.06,
-      'lng': 35.01 + (rng.nextDouble() - 0.5) * 0.06,
-      'neighborhood': ['אבני חן', 'בוכמן', 'מורשת', 'כפר האורנים', 'ישפרו סנטר', 'רמת הדר', 'ליגד סנטר'][rng.nextInt(7)],
-    }),
+    'live_users': List.generate(
+      25 + rng.nextInt(20),
+      (i) => {
+        'lat': 31.89 + (rng.nextDouble() - 0.5) * 0.06,
+        'lng': 35.01 + (rng.nextDouble() - 0.5) * 0.06,
+        'neighborhood': [
+          'אבני חן',
+          'בוכמן',
+          'מורשת',
+          'כפר האורנים',
+          'ישפרו סנטר',
+          'רמת הדר',
+          'ליגד סנטר',
+        ][rng.nextInt(7)],
+      },
+    ),
   };
 }
 
@@ -51,19 +63,34 @@ final _dailyAnalytics = <String, dynamic>{
   'dau': List.generate(30, (i) {
     final date = DateTime(2026, 8, 28).subtract(Duration(days: 29 - i));
     final base = date.weekday == 6 || date.weekday == 7 ? 680 : 1100;
-    return {'date': date.toIso8601String().split('T')[0], 'count': base + Random(i).nextInt(300)};
+    return {
+      'date': date.toIso8601String().split('T')[0],
+      'count': base + Random(i).nextInt(300),
+    };
   }),
   // WAU for last 12 weeks
   'wau': [
-    {'week': 'W23', 'count': 3200}, {'week': 'W24', 'count': 3450}, {'week': 'W25', 'count': 3680},
-    {'week': 'W26', 'count': 3520}, {'week': 'W27', 'count': 3890}, {'week': 'W28', 'count': 4100},
-    {'week': 'W29', 'count': 4250}, {'week': 'W30', 'count': 4380}, {'week': 'W31', 'count': 4500},
-    {'week': 'W32', 'count': 4680}, {'week': 'W33', 'count': 4820}, {'week': 'W34', 'count': 4950},
+    {'week': 'W23', 'count': 3200},
+    {'week': 'W24', 'count': 3450},
+    {'week': 'W25', 'count': 3680},
+    {'week': 'W26', 'count': 3520},
+    {'week': 'W27', 'count': 3890},
+    {'week': 'W28', 'count': 4100},
+    {'week': 'W29', 'count': 4250},
+    {'week': 'W30', 'count': 4380},
+    {'week': 'W31', 'count': 4500},
+    {'week': 'W32', 'count': 4680},
+    {'week': 'W33', 'count': 4820},
+    {'week': 'W34', 'count': 4950},
   ],
   // MAU for last 6 months
   'mau': [
-    {'month': 'מרץ', 'count': 8200}, {'month': 'אפריל', 'count': 9100}, {'month': 'מאי', 'count': 10500},
-    {'month': 'יוני', 'count': 11200}, {'month': 'יולי', 'count': 12800}, {'month': 'אוגוסט', 'count': 14200},
+    {'month': 'מרץ', 'count': 8200},
+    {'month': 'אפריל', 'count': 9100},
+    {'month': 'מאי', 'count': 10500},
+    {'month': 'יוני', 'count': 11200},
+    {'month': 'יולי', 'count': 12800},
+    {'month': 'אוגוסט', 'count': 14200},
   ],
   // Current stats
   'dau_current': 1247,
@@ -75,7 +102,13 @@ final _dailyAnalytics = <String, dynamic>{
 
   // Retention cohorts (% still active after N days)
   'retention': {
-    'day1': 72.0, 'day3': 58.0, 'day7': 45.0, 'day14': 38.0, 'day30': 28.0, 'day60': 22.0, 'day90': 18.0,
+    'day1': 72.0,
+    'day3': 58.0,
+    'day7': 45.0,
+    'day14': 38.0,
+    'day30': 28.0,
+    'day60': 22.0,
+    'day90': 18.0,
   },
   // Retention by month (for chart)
   'retention_monthly': [
@@ -92,12 +125,23 @@ final _dailyAnalytics = <String, dynamic>{
   'avg_sessions_per_user': 2.8,
   'avg_screens_per_session': 6.4,
   'peak_hours': [
-    {'hour': 7, 'users': 180}, {'hour': 8, 'users': 420}, {'hour': 9, 'users': 580},
-    {'hour': 10, 'users': 620}, {'hour': 11, 'users': 510}, {'hour': 12, 'users': 780},
-    {'hour': 13, 'users': 850}, {'hour': 14, 'users': 720}, {'hour': 15, 'users': 650},
-    {'hour': 16, 'users': 890}, {'hour': 17, 'users': 1050}, {'hour': 18, 'users': 980},
-    {'hour': 19, 'users': 1120}, {'hour': 20, 'users': 1180}, {'hour': 21, 'users': 940},
-    {'hour': 22, 'users': 620}, {'hour': 23, 'users': 340},
+    {'hour': 7, 'users': 180},
+    {'hour': 8, 'users': 420},
+    {'hour': 9, 'users': 580},
+    {'hour': 10, 'users': 620},
+    {'hour': 11, 'users': 510},
+    {'hour': 12, 'users': 780},
+    {'hour': 13, 'users': 850},
+    {'hour': 14, 'users': 720},
+    {'hour': 15, 'users': 650},
+    {'hour': 16, 'users': 890},
+    {'hour': 17, 'users': 1050},
+    {'hour': 18, 'users': 980},
+    {'hour': 19, 'users': 1120},
+    {'hour': 20, 'users': 1180},
+    {'hour': 21, 'users': 940},
+    {'hour': 22, 'users': 620},
+    {'hour': 23, 'users': 340},
   ],
 };
 
@@ -109,25 +153,120 @@ final adminContentPerformanceProvider = Provider<Map<String, dynamic>>((ref) {
 
 final _contentPerformance = <String, dynamic>{
   'top_articles': [
-    {'title': 'מרכז מסחרי חדש בכניסה לעיר', 'views': 4520, 'shares': 89, 'comments': 34, 'avg_read_time_sec': 142},
-    {'title': 'פארק ענבה — שעות פעילות חדשות', 'views': 3890, 'shares': 45, 'comments': 12, 'avg_read_time_sec': 98},
-    {'title': 'שוק איכרים חדש בכפר האורנים', 'views': 3210, 'shares': 67, 'comments': 28, 'avg_read_time_sec': 115},
-    {'title': 'קבוצת הכדורגל העירונית — עונה חדשה', 'views': 2780, 'shares': 52, 'comments': 41, 'avg_read_time_sec': 134},
-    {'title': 'בית ספר חדש ברמת דניאל', 'views': 2450, 'shares': 31, 'comments': 19, 'avg_read_time_sec': 87},
+    {
+      'title': 'מרכז מסחרי חדש בכניסה לעיר',
+      'views': 4520,
+      'shares': 89,
+      'comments': 34,
+      'avg_read_time_sec': 142,
+    },
+    {
+      'title': 'פארק ענבה — שעות פעילות חדשות',
+      'views': 3890,
+      'shares': 45,
+      'comments': 12,
+      'avg_read_time_sec': 98,
+    },
+    {
+      'title': 'שוק איכרים חדש בכפר האורנים',
+      'views': 3210,
+      'shares': 67,
+      'comments': 28,
+      'avg_read_time_sec': 115,
+    },
+    {
+      'title': 'קבוצת הכדורגל העירונית — עונה חדשה',
+      'views': 2780,
+      'shares': 52,
+      'comments': 41,
+      'avg_read_time_sec': 134,
+    },
+    {
+      'title': 'בית ספר חדש ברמת דניאל',
+      'views': 2450,
+      'shares': 31,
+      'comments': 19,
+      'avg_read_time_sec': 87,
+    },
   ],
   'top_businesses': [
-    {'name': 'פיצה פרגו', 'views': 8920, 'clicks_to_phone': 234, 'clicks_to_nav': 189, 'saves': 156, 'reviews_this_month': 12},
-    {'name': 'סופר פארם מודיעין', 'views': 7340, 'clicks_to_phone': 178, 'clicks_to_nav': 312, 'saves': 89, 'reviews_this_month': 8},
-    {'name': 'סטודיו שרה — יוגה ופילאטיס', 'views': 5120, 'clicks_to_phone': 145, 'clicks_to_nav': 98, 'saves': 234, 'reviews_this_month': 15},
-    {'name': 'ביסטרו מודיעין', 'views': 4870, 'clicks_to_phone': 167, 'clicks_to_nav': 201, 'saves': 112, 'reviews_this_month': 9},
-    {'name': 'קפה ביגה', 'views': 3980, 'clicks_to_phone': 89, 'clicks_to_nav': 145, 'saves': 78, 'reviews_this_month': 6},
+    {
+      'name': 'פיצה פרגו',
+      'views': 8920,
+      'clicks_to_phone': 234,
+      'clicks_to_nav': 189,
+      'saves': 156,
+      'reviews_this_month': 12,
+    },
+    {
+      'name': 'סופר פארם מודיעין',
+      'views': 7340,
+      'clicks_to_phone': 178,
+      'clicks_to_nav': 312,
+      'saves': 89,
+      'reviews_this_month': 8,
+    },
+    {
+      'name': 'סטודיו שרה — יוגה ופילאטיס',
+      'views': 5120,
+      'clicks_to_phone': 145,
+      'clicks_to_nav': 98,
+      'saves': 234,
+      'reviews_this_month': 15,
+    },
+    {
+      'name': 'ביסטרו מודיעין',
+      'views': 4870,
+      'clicks_to_phone': 167,
+      'clicks_to_nav': 201,
+      'saves': 112,
+      'reviews_this_month': 9,
+    },
+    {
+      'name': 'קפה ביגה',
+      'views': 3980,
+      'clicks_to_phone': 89,
+      'clicks_to_nav': 145,
+      'saves': 78,
+      'reviews_this_month': 6,
+    },
   ],
   'top_events': [
-    {'title': 'הופעת שלמה ארצי', 'views': 12400, 'ticket_clicks': 3200, 'shares': 456, 'rsvp': 890},
-    {'title': 'פסטיבל הבירה מודיעין', 'views': 8900, 'ticket_clicks': 1800, 'shares': 312, 'rsvp': 567},
-    {'title': 'ריצת ערב קהילתית', 'views': 3400, 'ticket_clicks': 0, 'shares': 89, 'rsvp': 234},
-    {'title': 'שוק אוכל רחוב', 'views': 2900, 'ticket_clicks': 0, 'shares': 67, 'rsvp': 189},
-    {'title': 'סדנת בישול איטלקי', 'views': 1800, 'ticket_clicks': 450, 'shares': 34, 'rsvp': 45},
+    {
+      'title': 'הופעת שלמה ארצי',
+      'views': 12400,
+      'ticket_clicks': 3200,
+      'shares': 456,
+      'rsvp': 890,
+    },
+    {
+      'title': 'פסטיבל הבירה מודיעין',
+      'views': 8900,
+      'ticket_clicks': 1800,
+      'shares': 312,
+      'rsvp': 567,
+    },
+    {
+      'title': 'ריצת ערב קהילתית',
+      'views': 3400,
+      'ticket_clicks': 0,
+      'shares': 89,
+      'rsvp': 234,
+    },
+    {
+      'title': 'שוק אוכל רחוב',
+      'views': 2900,
+      'ticket_clicks': 0,
+      'shares': 67,
+      'rsvp': 189,
+    },
+    {
+      'title': 'סדנת בישול איטלקי',
+      'views': 1800,
+      'ticket_clicks': 450,
+      'shares': 34,
+      'rsvp': 45,
+    },
   ],
   'search_queries': [
     {'query': 'פיצה', 'count': 342, 'results_avg': 8},
@@ -188,9 +327,12 @@ final _adAnalytics = <String, dynamic>{
 
   // Revenue trend (last 6 months)
   'revenue_trend': [
-    {'month': 'מרץ', 'amount': 22400}, {'month': 'אפריל', 'amount': 25800},
-    {'month': 'מאי', 'amount': 28600}, {'month': 'יוני', 'amount': 31200},
-    {'month': 'יולי', 'amount': 34800}, {'month': 'אוגוסט', 'amount': 38200},
+    {'month': 'מרץ', 'amount': 22400},
+    {'month': 'אפריל', 'amount': 25800},
+    {'month': 'מאי', 'amount': 28600},
+    {'month': 'יוני', 'amount': 31200},
+    {'month': 'יולי', 'amount': 34800},
+    {'month': 'אוגוסט', 'amount': 38200},
   ],
 
   // Ad performance
@@ -202,12 +344,48 @@ final _adAnalytics = <String, dynamic>{
 
   // Top performing placements
   'placement_performance': [
-    {'label': 'ראש עמוד הבית', 'impressions': 380000, 'clicks': 15200, 'ctr': 4.0, 'revenue': 12800},
-    {'label': 'אמצע עמוד הבית', 'impressions': 290000, 'clicks': 8700, 'ctr': 3.0, 'revenue': 8200},
-    {'label': 'בתוך כתבה', 'impressions': 210000, 'clicks': 7560, 'ctr': 3.6, 'revenue': 7600},
-    {'label': 'תחתית כתבה', 'impressions': 180000, 'clicks': 3600, 'ctr': 2.0, 'revenue': 4200},
-    {'label': 'סייד-בר עסק', 'impressions': 120000, 'clicks': 2640, 'ctr': 2.2, 'revenue': 3400},
-    {'label': 'תוצאות חיפוש', 'impressions': 60000, 'clicks': 1200, 'ctr': 2.0, 'revenue': 2000},
+    {
+      'label': 'ראש עמוד הבית',
+      'impressions': 380000,
+      'clicks': 15200,
+      'ctr': 4.0,
+      'revenue': 12800,
+    },
+    {
+      'label': 'אמצע עמוד הבית',
+      'impressions': 290000,
+      'clicks': 8700,
+      'ctr': 3.0,
+      'revenue': 8200,
+    },
+    {
+      'label': 'בתוך כתבה',
+      'impressions': 210000,
+      'clicks': 7560,
+      'ctr': 3.6,
+      'revenue': 7600,
+    },
+    {
+      'label': 'תחתית כתבה',
+      'impressions': 180000,
+      'clicks': 3600,
+      'ctr': 2.0,
+      'revenue': 4200,
+    },
+    {
+      'label': 'סייד-בר עסק',
+      'impressions': 120000,
+      'clicks': 2640,
+      'ctr': 2.2,
+      'revenue': 3400,
+    },
+    {
+      'label': 'תוצאות חיפוש',
+      'impressions': 60000,
+      'clicks': 1200,
+      'ctr': 2.0,
+      'revenue': 2000,
+    },
   ],
 
   // Conversion funnel for offers
@@ -221,11 +399,36 @@ final _adAnalytics = <String, dynamic>{
 
   // Top advertisers (revenue)
   'top_advertisers': [
-    {'name': 'סופר פארם מודיעין', 'revenue': 12400, 'campaigns': 4, 'active_since': '2024-01-01'},
-    {'name': 'פיצה פרגו', 'revenue': 9800, 'campaigns': 5, 'active_since': '2024-03-15'},
-    {'name': 'סטודיו שרה', 'revenue': 6200, 'campaigns': 3, 'active_since': '2024-09-01'},
-    {'name': 'ביסטרו מודיעין', 'revenue': 4800, 'campaigns': 2, 'active_since': '2026-08-01'},
-    {'name': 'קפה ביגה', 'revenue': 3200, 'campaigns': 1, 'active_since': '2026-06-01'},
+    {
+      'name': 'סופר פארם מודיעין',
+      'revenue': 12400,
+      'campaigns': 4,
+      'active_since': '2024-01-01',
+    },
+    {
+      'name': 'פיצה פרגו',
+      'revenue': 9800,
+      'campaigns': 5,
+      'active_since': '2024-03-15',
+    },
+    {
+      'name': 'סטודיו שרה',
+      'revenue': 6200,
+      'campaigns': 3,
+      'active_since': '2024-09-01',
+    },
+    {
+      'name': 'ביסטרו מודיעין',
+      'revenue': 4800,
+      'campaigns': 2,
+      'active_since': '2026-08-01',
+    },
+    {
+      'name': 'קפה ביגה',
+      'revenue': 3200,
+      'campaigns': 1,
+      'active_since': '2026-06-01',
+    },
   ],
 };
 
@@ -285,10 +488,30 @@ final _userAnalytics = <String, dynamic>{
 
   // User engagement segments
   'engagement_segments': [
-    {'segment': 'פעילים מאוד (5+ ביקורים/שבוע)', 'users': 1800, 'pct': 13, 'color': 'success'},
-    {'segment': 'פעילים (2-4 ביקורים/שבוע)', 'users': 4200, 'pct': 30, 'color': 'turquoise'},
-    {'segment': 'לפעמים (1 ביקור/שבוע)', 'users': 3800, 'pct': 27, 'color': 'gold'},
-    {'segment': 'לא פעילים (< 1/שבוע)', 'users': 2900, 'pct': 20, 'color': 'grayLight'},
+    {
+      'segment': 'פעילים מאוד (5+ ביקורים/שבוע)',
+      'users': 1800,
+      'pct': 13,
+      'color': 'success',
+    },
+    {
+      'segment': 'פעילים (2-4 ביקורים/שבוע)',
+      'users': 4200,
+      'pct': 30,
+      'color': 'turquoise',
+    },
+    {
+      'segment': 'לפעמים (1 ביקור/שבוע)',
+      'users': 3800,
+      'pct': 27,
+      'color': 'gold',
+    },
+    {
+      'segment': 'לא פעילים (< 1/שבוע)',
+      'users': 2900,
+      'pct': 20,
+      'color': 'grayLight',
+    },
     {'segment': 'נטושים (30+ יום)', 'users': 1500, 'pct': 10, 'color': 'error'},
   ],
 
@@ -324,15 +547,81 @@ final _userAnalytics = <String, dynamic>{
 
 // ─── Neighborhood Heatmap Data ───
 
-final adminNeighborhoodHeatmapProvider = Provider<List<Map<String, dynamic>>>((ref) {
+final adminNeighborhoodHeatmapProvider = Provider<List<Map<String, dynamic>>>((
+  ref,
+) {
   return [
-    {'name': 'אבני חן', 'lat': 31.9040, 'lng': 35.0090, 'users': 2400, 'businesses': 32, 'events_this_month': 8, 'avg_engagement': 4.2},
-    {'name': 'בוכמן', 'lat': 31.8980, 'lng': 35.0150, 'users': 2100, 'businesses': 28, 'events_this_month': 5, 'avg_engagement': 3.8},
-    {'name': 'מורשת', 'lat': 31.8920, 'lng': 35.0050, 'users': 1900, 'businesses': 22, 'events_this_month': 12, 'avg_engagement': 4.5},
-    {'name': 'כפר האורנים', 'lat': 31.9100, 'lng': 34.9950, 'users': 1700, 'businesses': 18, 'events_this_month': 4, 'avg_engagement': 3.6},
-    {'name': 'רמת הדר', 'lat': 31.8860, 'lng': 35.0200, 'users': 1400, 'businesses': 15, 'events_this_month': 3, 'avg_engagement': 3.4},
-    {'name': 'רמת דניאל', 'lat': 31.8800, 'lng': 35.0100, 'users': 1200, 'businesses': 12, 'events_this_month': 2, 'avg_engagement': 3.2},
-    {'name': 'שמשון', 'lat': 31.9150, 'lng': 35.0180, 'users': 1100, 'businesses': 10, 'events_this_month': 3, 'avg_engagement': 3.0},
-    {'name': 'עמק שילה', 'lat': 31.9200, 'lng': 35.0250, 'users': 900, 'businesses': 8, 'events_this_month': 1, 'avg_engagement': 2.8},
+    {
+      'name': 'אבני חן',
+      'lat': 31.9040,
+      'lng': 35.0090,
+      'users': 2400,
+      'businesses': 32,
+      'events_this_month': 8,
+      'avg_engagement': 4.2,
+    },
+    {
+      'name': 'בוכמן',
+      'lat': 31.8980,
+      'lng': 35.0150,
+      'users': 2100,
+      'businesses': 28,
+      'events_this_month': 5,
+      'avg_engagement': 3.8,
+    },
+    {
+      'name': 'מורשת',
+      'lat': 31.8920,
+      'lng': 35.0050,
+      'users': 1900,
+      'businesses': 22,
+      'events_this_month': 12,
+      'avg_engagement': 4.5,
+    },
+    {
+      'name': 'כפר האורנים',
+      'lat': 31.9100,
+      'lng': 34.9950,
+      'users': 1700,
+      'businesses': 18,
+      'events_this_month': 4,
+      'avg_engagement': 3.6,
+    },
+    {
+      'name': 'רמת הדר',
+      'lat': 31.8860,
+      'lng': 35.0200,
+      'users': 1400,
+      'businesses': 15,
+      'events_this_month': 3,
+      'avg_engagement': 3.4,
+    },
+    {
+      'name': 'רמת דניאל',
+      'lat': 31.8800,
+      'lng': 35.0100,
+      'users': 1200,
+      'businesses': 12,
+      'events_this_month': 2,
+      'avg_engagement': 3.2,
+    },
+    {
+      'name': 'שמשון',
+      'lat': 31.9150,
+      'lng': 35.0180,
+      'users': 1100,
+      'businesses': 10,
+      'events_this_month': 3,
+      'avg_engagement': 3.0,
+    },
+    {
+      'name': 'עמק שילה',
+      'lat': 31.9200,
+      'lng': 35.0250,
+      'users': 900,
+      'businesses': 8,
+      'events_this_month': 1,
+      'avg_engagement': 2.8,
+    },
   ];
 });

@@ -28,12 +28,16 @@ class BusinessListScreen extends ConsumerWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(IconsaxPlusLinear.arrow_right_3, color: Colors.black),
+          icon: const Icon(
+            IconsaxPlusLinear.arrow_right_3,
+            color: Colors.black,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           title,
-          style: TextStyle(fontFamily: AppFonts.rubik, 
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: Colors.black,
@@ -69,7 +73,8 @@ class BusinessListScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(16),
                       itemCount: list.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => BusinessListTile(business: list[i]),
+                      itemBuilder: (_, i) =>
+                          BusinessListTile(business: list[i]),
                     ),
                   ),
           ),

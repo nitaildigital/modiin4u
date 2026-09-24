@@ -19,7 +19,7 @@ class EventRepository {
           .or('title.ilike.%$search%,short_description.ilike.%$search%');
     }
 
-    final data = await query.order('start_date');
+    final data = await query.order('start_date', ascending: true);
     return List<Map<String, dynamic>>.from(data);
   }
 

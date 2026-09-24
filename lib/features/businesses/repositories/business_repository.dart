@@ -34,7 +34,9 @@ class BusinessRepository {
       query = query.inFilter('id', ids);
     }
     if (search != null && search.isNotEmpty) {
-      query = query.or('name.ilike.%$search%,short_description.ilike.%$search%');
+      query = query.or(
+        'name.ilike.%$search%,short_description.ilike.%$search%',
+      );
     }
 
     final data = await query.order('created_at', ascending: false);
@@ -48,12 +50,17 @@ class BusinessRepository {
         .select('entity_id')
         .eq('entity_type', 'business')
         .eq('category_id', categoryId);
-    return List<Map<String, dynamic>>.from(data).map((r) => r['entity_id'] as String).toList();
+    return List<Map<String, dynamic>>.from(
+      data,
+    ).map((r) => r['entity_id'] as String).toList();
   }
 
   /// How many businesses sit in each category, keyed by category id.
   Future<Map<String, int>> fetchCategoryCounts() async {
-    final data = await _client.from('entity_categories').select('category_id').eq('entity_type', 'business');
+    final data = await _client
+        .from('entity_categories')
+        .select('category_id')
+        .eq('entity_type', 'business');
 
     final counts = <String, int>{};
     for (final row in List<Map<String, dynamic>>.from(data)) {
@@ -77,12 +84,24 @@ class BusinessRepository {
   }
 
   Future<Map<String, dynamic>> create(Map<String, dynamic> business) async {
-    final data = await _client.from('businesses').insert(business).select().single();
+    final data = await _client
+        .from('businesses')
+        .insert(business)
+        .select()
+        .single();
     return data;
   }
 
-  Future<Map<String, dynamic>> update(String id, Map<String, dynamic> fields) async {
-    final data = await _client.from('businesses').update(fields).eq('id', id).select().single();
+  Future<Map<String, dynamic>> update(
+    String id,
+    Map<String, dynamic> fields,
+  ) async {
+    final data = await _client
+        .from('businesses')
+        .update(fields)
+        .eq('id', id)
+        .select()
+        .single();
     return data;
   }
 
@@ -101,7 +120,11 @@ class BusinessRepository {
   }
 
   Future<List<Map<String, dynamic>>> fetchNeighborhoods() async {
-    final data = await _client.from('neighborhoods').select().eq('is_active', true).order('sort_order');
+    final data = await _client
+        .from('neighborhoods')
+        .select()
+        .eq('is_active', true)
+        .order('sort_order', ascending: true);
     return List<Map<String, dynamic>>.from(data);
   }
 
@@ -111,7 +134,21 @@ class BusinessRepository {
         .select()
         .eq('scope', 'business')
         .eq('is_active', true)
-        .order('sort_order');
+        .order('sort_order', ascending: true);
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  /// A business's menu, in the order the admin set.
+  ///
+  /// Empty for most of them: the Menu tab used to show the same invented
+  /// menu on all 220 businesses, and the tab is now hidden when this comes
+  /// back with nothing.
+  Future<List<Map<String, dynamic>>> fetchMenuItems(String businessId) async {
+    final data = await _client
+        .from('business_menu_items')
+        .select()
+        .eq('business_id', businessId)
+        .order('sort_order', ascending: true);
     return List<Map<String, dynamic>>.from(data);
   }
 }

@@ -1114,4 +1114,70 @@ class LHe extends L {
 
   @override
   String get svcForms => 'טפסים';
+
+  @override
+  String get tabOverview => 'סקירה';
+
+  @override
+  String get tabMenu => 'תפריט';
+
+  @override
+  String get tabPhotos => 'תמונות';
+
+  @override
+  String get tabReviews => 'ביקורות';
+
+  @override
+  String get callNow => 'התקשרו עכשיו';
+
+  @override
+  String get uploadPhoto => 'העלאת תמונה';
+
+  @override
+  String get shareYourExperience => 'שתפו את החוויה שלכם עם הקהילה';
+
+  @override
+  String get howWasExperience => 'איך הייתה החוויה שלכם?';
+
+  @override
+  String get rateAndShare => 'דרגו ושתפו את החוויה שלכם';
+
+  @override
+  String get ratePoor => 'גרוע';
+
+  @override
+  String get rateFair => 'סביר';
+
+  @override
+  String get rateGood => 'טוב';
+
+  @override
+  String get rateVeryGood => 'טוב מאוד';
+
+  @override
+  String get rateExcellent => 'מצוין!';
+
+  @override
+  String get writeYourReview => 'כתבו ביקורת';
+
+  @override
+  String get reviewHint => 'שתפו פרטים על החוויה שלכם במקום הזה...';
+
+  @override
+  String get submit => 'שליחה';
+
+  @override
+  String get justNow => 'הרגע';
+
+  @override
+  String get yourReply => 'התגובה שלכם';
+
+  @override
+  String get reply => 'תגובה';
+
+  @override
+  String get writeReplyHint => 'כתבו תגובה...';
+
+  @override
+  String get replySent => 'התגובה נשלחה!';
 }

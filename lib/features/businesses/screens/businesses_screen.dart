@@ -69,7 +69,8 @@ class _MobileBusinessesContentState
                 Center(
                   child: Text(
                     'עסקים',
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.black,
@@ -96,7 +97,8 @@ class _MobileBusinessesContentState
                       onTap: () => context.push('/businesses/all'),
                       child: Text(
                         'ראה הכל',
-                        style: TextStyle(fontFamily: AppFonts.rubik, 
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF123A72),
@@ -151,7 +153,8 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: TextStyle(fontFamily: AppFonts.rubik, 
+      style: TextStyle(
+        fontFamily: AppFonts.rubik,
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: Colors.black,
@@ -177,8 +180,11 @@ class _SearchField extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(IconsaxPlusLinear.search_normal_1,
-              size: 20, color: Color(0xFF6D6D6D)),
+          const Icon(
+            IconsaxPlusLinear.search_normal_1,
+            size: 20,
+            color: Color(0xFF6D6D6D),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -190,7 +196,8 @@ class _SearchField extends StatelessWidget {
                 border: InputBorder.none,
                 isCollapsed: true,
                 hintText: 'חיפוש עסקים במודיעין',
-                hintStyle: TextStyle(fontFamily: AppFonts.rubik, 
+                hintStyle: TextStyle(
+                  fontFamily: AppFonts.rubik,
                   fontSize: 14,
                   color: const Color(0xFF6D6D6D),
                 ),
@@ -312,7 +319,8 @@ class _CategoryCard extends StatelessWidget {
             const Spacer(),
             Text(
               category.name,
-              style: TextStyle(fontFamily: AppFonts.rubik, 
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -324,7 +332,8 @@ class _CategoryCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '$count עסקים',
-                style: TextStyle(fontFamily: AppFonts.rubik, 
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.8),
                 ),

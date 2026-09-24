@@ -51,7 +51,9 @@ class AdminAuditNotifier extends AdminTableNotifier {
     state.whenData((rows) {
       state = AsyncValue.data(
         rows.where((r) {
-          if (_action != null && _action!.isNotEmpty && r['action'] != _action) {
+          if (_action != null &&
+              _action!.isNotEmpty &&
+              r['action'] != _action) {
             return false;
           }
           if (_admin != null && _admin!.isNotEmpty && r['admin_id'] != _admin) {

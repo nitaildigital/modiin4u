@@ -39,6 +39,6 @@ final offerBusinessesProvider = FutureProvider<List<Map<String, dynamic>>>((
       .from('businesses')
       .select('id, name')
       .eq('status', 'active')
-      .order('name');
+      .order('name', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });

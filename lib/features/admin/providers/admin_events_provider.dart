@@ -38,10 +38,7 @@ class AdminEventListNotifier extends AdminTableNotifier {
 
     final title = (e['title'] as String? ?? 'event').trim();
     final stamp = DateTime.now().millisecondsSinceEpoch;
-    return {
-      ...e,
-      'slug': '${_slugify(title)}-$stamp',
-    };
+    return {...e, 'slug': '${_slugify(title)}-$stamp'};
   }
 
   /// Hebrew titles leave nothing behind when only latin letters are kept, so
@@ -63,6 +60,6 @@ final eventVenuesProvider = FutureProvider<List<Map<String, dynamic>>>((
       .from('businesses')
       .select('id, name, address, latitude, longitude')
       .eq('status', 'active')
-      .order('name');
+      .order('name', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });

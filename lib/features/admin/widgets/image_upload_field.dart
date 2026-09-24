@@ -153,10 +153,7 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
                 children: [
                   TextFormField(
                     controller: widget.controller,
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
                     decoration: InputDecoration(
                       hintText: 'כתובת התמונה',
                       hintStyle: TextStyle(

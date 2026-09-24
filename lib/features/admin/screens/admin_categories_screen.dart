@@ -12,8 +12,7 @@ class AdminCategoriesScreen extends ConsumerStatefulWidget {
       _AdminCategoriesScreenState();
 }
 
-class _AdminCategoriesScreenState
-    extends ConsumerState<AdminCategoriesScreen> {
+class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
   String _scopeFilter = '';
   final _searchController = TextEditingController();
   final _debouncer = _Debouncer(milliseconds: 400);
@@ -29,232 +28,316 @@ class _AdminCategoriesScreenState
     final async = ref.watch(adminCategoryListProvider);
     final isWide = MediaQuery.of(context).size.width > 900;
 
-    return Column(children: [
-      // ─── Toolbar ───
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-              bottom:
-                  BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
-        ),
-        child: Row(children: [
-          SizedBox(
-            width: isWide ? 320 : 200,
-            height: 40,
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'חיפוש קטגוריה...',
-                hintStyle:
-                    TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
-                prefixIcon:
-                    const Icon(Icons.search, size: 18, color: AppColors.grayLight),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border)),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.border)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.turquoise)),
+    return Column(
+      children: [
+        // ─── Toolbar ───
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.border.withValues(alpha: 0.5),
               ),
-              onChanged: (v) => _debouncer.run(() {
-                ref
-                    .read(adminCategoryListProvider.notifier)
-                    .setSearch(v.isEmpty ? null : v);
-              }),
             ),
           ),
-          const SizedBox(width: 12),
-          _FilterChip('הכל', _scopeFilter.isEmpty, () {
-            setState(() => _scopeFilter = '');
-            ref.read(adminCategoryListProvider.notifier).setScopeFilter(null);
-          }),
-          _FilterChip('עסקים', _scopeFilter == 'business', () {
-            setState(() => _scopeFilter = 'business');
-            ref
-                .read(adminCategoryListProvider.notifier)
-                .setScopeFilter('business');
-          }),
-          _FilterChip('כתבות', _scopeFilter == 'article', () {
-            setState(() => _scopeFilter = 'article');
-            ref
-                .read(adminCategoryListProvider.notifier)
-                .setScopeFilter('article');
-          }),
-          _FilterChip('אירועים', _scopeFilter == 'event', () {
-            setState(() => _scopeFilter = 'event');
-            ref
-                .read(adminCategoryListProvider.notifier)
-                .setScopeFilter('event');
-          }),
-          const Spacer(),
-          async
-                  .whenData((list) => Text('${list.length} קטגוריות',
-                      style: TextStyle(fontFamily: AppFonts.rubik, 
-                          fontSize: 13, color: AppColors.grayText)))
-                  .value ??
-              const SizedBox.shrink(),
-          const SizedBox(width: 16),
-          FilledButton.icon(
-            onPressed: () => _showEditor(context, ref),
-            icon: const Icon(Icons.add, size: 18),
-            label:
-                Text('קטגוריה חדשה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
-              minimumSize: const Size(0, 40),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-        ]),
-      ),
-
-      // ─── Table ───
-      Expanded(
-        child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(
-              child: Text('שגיאה: $e',
-                  style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
-          data: (categories) {
-            if (categories.isEmpty) {
-              return Center(
-                  child: Text('אין קטגוריות',
-                      style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)));
-            }
-            return Column(children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(
-                    color: AppColors.surfaceLight,
-                    border: Border(
-                        bottom: BorderSide(
-                            color:
-                                AppColors.border.withValues(alpha: 0.5)))),
-                child: Row(children: [
-                  _Col('שם', flex: 3),
-                  _Col('scope', flex: 1),
-                  if (isWide) _Col('פריטים', flex: 1),
-                  if (isWide) _Col('סדר', flex: 1),
-                  _Col('סטטוס', flex: 1),
-                  const SizedBox(width: 40),
-                ]),
-              ),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: categories.length,
-                  separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      color: AppColors.border.withValues(alpha: 0.3)),
-                  itemBuilder: (_, i) {
-                    final c = categories[i];
-                    final isChild = c['parent_id'] != null;
-                    final active = c['is_active'] as bool? ?? true;
-                    final scope = c['scope'] as String? ?? '';
-                    final icon = c['icon'] as String? ?? '';
-
-                    return InkWell(
-                      onTap: () =>
-                          _showEditor(context, ref, category: c),
-                      child: Container(
-                        padding: EdgeInsets.only(
-                          right: isChild ? 44 : 20,
-                          left: 20,
-                          top: 10,
-                          bottom: 10,
-                        ),
-                        child: Row(children: [
-                          Expanded(
-                              flex: 3,
-                              child: Row(children: [
-                                if (icon.isNotEmpty)
-                                  Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 8),
-                                      child: Text(icon,
-                                          style: const TextStyle(
-                                              fontSize: 16))),
-                                Flexible(
-                                  child: Text(
-                                      c['name'] as String? ?? '',
-                                      style: TextStyle(fontFamily: AppFonts.rubik, 
-                                          fontSize: 14,
-                                          fontWeight: isChild
-                                              ? FontWeight.w400
-                                              : FontWeight.w600,
-                                          color: AppColors.navy)),
-                                ),
-                              ])),
-                          Expanded(
-                              flex: 1,
-                              child: _ScopePill(scope)),
-                          if (isWide)
-                            Expanded(
-                                flex: 1,
-                                child: Text(
-                                    '${c['item_count'] ?? 0}',
-                                    style: TextStyle(fontFamily: AppFonts.rubik, 
-                                        fontSize: 13,
-                                        color: AppColors.grayText))),
-                          if (isWide)
-                            Expanded(
-                                flex: 1,
-                                child: Text(
-                                    '${c['sort_order'] ?? 0}',
-                                    style: TextStyle(fontFamily: AppFonts.rubik, 
-                                        fontSize: 13,
-                                        color: AppColors.grayText))),
-                          Expanded(
-                              flex: 1,
-                              child: _StatusPill(
-                                  active ? 'פעיל' : 'מושבת',
-                                  active
-                                      ? AppColors.success
-                                      : AppColors.grayLight)),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert,
-                                size: 18, color: AppColors.grayLight),
-                            onSelected: (v) =>
-                                _handleAction(v, c),
-                            itemBuilder: (_) => [
-                              PopupMenuItem(
-                                  value: 'edit',
-                                  child: Text('עריכה',
-                                      style: TextStyle(fontFamily: AppFonts.rubik, 
-                                          fontSize: 13))),
-                              PopupMenuItem(
-                                  value: 'toggle',
-                                  child: Text(
-                                      active ? 'השבת' : 'הפעל',
-                                      style: TextStyle(fontFamily: AppFonts.rubik, 
-                                          fontSize: 13))),
-                              PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('מחק',
-                                      style: TextStyle(fontFamily: AppFonts.rubik, 
-                                          fontSize: 13,
-                                          color: AppColors.error))),
-                            ],
-                          ),
-                        ]),
-                      ),
-                    );
-                  },
+          child: Row(
+            children: [
+              SizedBox(
+                width: isWide ? 320 : 200,
+                height: 40,
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'חיפוש קטגוריה...',
+                    hintStyle: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 13,
+                      color: AppColors.grayLight,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 18,
+                      color: AppColors.grayLight,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.turquoise),
+                    ),
+                  ),
+                  onChanged: (v) => _debouncer.run(() {
+                    ref
+                        .read(adminCategoryListProvider.notifier)
+                        .setSearch(v.isEmpty ? null : v);
+                  }),
                 ),
               ),
-            ]);
-          },
+              const SizedBox(width: 12),
+              _FilterChip('הכל', _scopeFilter.isEmpty, () {
+                setState(() => _scopeFilter = '');
+                ref
+                    .read(adminCategoryListProvider.notifier)
+                    .setScopeFilter(null);
+              }),
+              _FilterChip('עסקים', _scopeFilter == 'business', () {
+                setState(() => _scopeFilter = 'business');
+                ref
+                    .read(adminCategoryListProvider.notifier)
+                    .setScopeFilter('business');
+              }),
+              _FilterChip('כתבות', _scopeFilter == 'article', () {
+                setState(() => _scopeFilter = 'article');
+                ref
+                    .read(adminCategoryListProvider.notifier)
+                    .setScopeFilter('article');
+              }),
+              _FilterChip('אירועים', _scopeFilter == 'event', () {
+                setState(() => _scopeFilter = 'event');
+                ref
+                    .read(adminCategoryListProvider.notifier)
+                    .setScopeFilter('event');
+              }),
+              const Spacer(),
+              async
+                      .whenData(
+                        (list) => Text(
+                          '${list.length} קטגוריות',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                      )
+                      .value ??
+                  const SizedBox.shrink(),
+              const SizedBox(width: 16),
+              FilledButton.icon(
+                onPressed: () => _showEditor(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'קטגוריה חדשה',
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.turquoise,
+                  minimumSize: const Size(0, 40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ]);
+
+        // ─── Table ───
+        Expanded(
+          child: async.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Text(
+                'שגיאה: $e',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+            data: (categories) {
+              if (categories.isEmpty) {
+                return Center(
+                  child: Text(
+                    'אין קטגוריות',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      color: AppColors.grayText,
+                    ),
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.border.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _Col('שם', flex: 3),
+                        _Col('scope', flex: 1),
+                        if (isWide) _Col('פריטים', flex: 1),
+                        if (isWide) _Col('סדר', flex: 1),
+                        _Col('סטטוס', flex: 1),
+                        const SizedBox(width: 40),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: categories.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        color: AppColors.border.withValues(alpha: 0.3),
+                      ),
+                      itemBuilder: (_, i) {
+                        final c = categories[i];
+                        final isChild = c['parent_id'] != null;
+                        final active = c['is_active'] as bool? ?? true;
+                        final scope = c['scope'] as String? ?? '';
+                        final icon = c['icon'] as String? ?? '';
+
+                        return InkWell(
+                          onTap: () => _showEditor(context, ref, category: c),
+                          child: Container(
+                            padding: EdgeInsets.only(
+                              right: isChild ? 44 : 20,
+                              left: 20,
+                              top: 10,
+                              bottom: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Row(
+                                    children: [
+                                      if (icon.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8,
+                                          ),
+                                          child: Text(
+                                            icon,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      Flexible(
+                                        child: Text(
+                                          c['name'] as String? ?? '',
+                                          style: TextStyle(
+                                            fontFamily: AppFonts.rubik,
+                                            fontSize: 14,
+                                            fontWeight: isChild
+                                                ? FontWeight.w400
+                                                : FontWeight.w600,
+                                            color: AppColors.navy,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(flex: 1, child: _ScopePill(scope)),
+                                if (isWide)
+                                  Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      '${c['item_count'] ?? 0}',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 13,
+                                        color: AppColors.grayText,
+                                      ),
+                                    ),
+                                  ),
+                                if (isWide)
+                                  Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      '${c['sort_order'] ?? 0}',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 13,
+                                        color: AppColors.grayText,
+                                      ),
+                                    ),
+                                  ),
+                                Expanded(
+                                  flex: 1,
+                                  child: _StatusPill(
+                                    active ? 'פעיל' : 'מושבת',
+                                    active
+                                        ? AppColors.success
+                                        : AppColors.grayLight,
+                                  ),
+                                ),
+                                PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.more_vert,
+                                    size: 18,
+                                    color: AppColors.grayLight,
+                                  ),
+                                  onSelected: (v) => _handleAction(v, c),
+                                  itemBuilder: (_) => [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Text(
+                                        'עריכה',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'toggle',
+                                      child: Text(
+                                        active ? 'השבת' : 'הפעל',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Text(
+                                        'מחק',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   void _handleAction(String action, Map<String, dynamic> c) {
@@ -269,29 +352,49 @@ class _AdminCategoriesScreenState
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('מחיקת קטגוריה',
-                style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
-            content: Text('למחוק את "${c['name']}"? כל תת-הקטגוריות יימחקו גם.',
-                style: TextStyle(fontFamily: AppFonts.rubik)),
+            title: Text(
+              'מחיקת קטגוריה',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: Text(
+              'למחוק את "${c['name']}"? כל תת-הקטגוריות יימחקו גם.',
+              style: TextStyle(fontFamily: AppFonts.rubik),
+            ),
             actions: [
               TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  'ביטול',
+                  style: TextStyle(fontFamily: AppFonts.rubik),
+                ),
+              ),
               TextButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    notifier.deleteCategory(id);
-                  },
-                  child: Text('מחק',
-                      style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  notifier.deleteCategory(id);
+                },
+                child: Text(
+                  'מחק',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
             ],
           ),
         );
     }
   }
 
-  void _showEditor(BuildContext context, WidgetRef ref,
-      {Map<String, dynamic>? category}) {
+  void _showEditor(
+    BuildContext context,
+    WidgetRef ref, {
+    Map<String, dynamic>? category,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -311,8 +414,7 @@ class _CategoryEditorDialog extends ConsumerStatefulWidget {
       _CategoryEditorDialogState();
 }
 
-class _CategoryEditorDialogState
-    extends ConsumerState<_CategoryEditorDialog> {
+class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
 
@@ -334,10 +436,12 @@ class _CategoryEditorDialogState
     _name = TextEditingController(text: c?['name'] as String? ?? '');
     _slug = TextEditingController(text: c?['slug'] as String? ?? '');
     _icon = TextEditingController(text: c?['icon'] as String? ?? '');
-    _description =
-        TextEditingController(text: c?['description'] as String? ?? '');
+    _description = TextEditingController(
+      text: c?['description'] as String? ?? '',
+    );
     _sortOrder = TextEditingController(
-        text: (c?['sort_order'] as int?)?.toString() ?? '0');
+      text: (c?['sort_order'] as int?)?.toString() ?? '0',
+    );
     _scope = c?['scope'] as String? ?? 'business';
     _parentId = c?['parent_id'] as String?;
     _isActive = c?['is_active'] as bool? ?? true;
@@ -368,37 +472,58 @@ class _CategoryEditorDialogState
           textDirection: TextDirection.rtl,
           child: Form(
             key: _formKey,
-            child: Column(children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: const BoxDecoration(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
                     color: AppColors.navy,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(14))),
-                child: Row(children: [
-                  Text(_isEditing ? 'עריכת קטגוריה' : 'קטגוריה חדשה',
-                      style: TextStyle(fontFamily: AppFonts.rubik, 
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(14),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        _isEditing ? 'עריכת קטגוריה' : 'קטגוריה חדשה',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white)),
-                  const Spacer(),
-                  IconButton(
-                      icon: const Icon(Icons.close,
-                          color: Colors.white, size: 20),
-                      onPressed: () => Navigator.pop(context)),
-                ]),
-              ),
-              Expanded(
-                child: ListView(
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
-                      _field('שם *', _name,
-                          validator: (v) =>
-                              v == null || v.isEmpty ? 'שדה חובה' : null),
-                      _field('Slug *', _slug,
-                          validator: (v) =>
-                              v == null || v.isEmpty ? 'שדה חובה' : null),
+                      _field(
+                        'שם *',
+                        _name,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      ),
+                      _field(
+                        'Slug *',
+                        _slug,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      ),
                       _field('אייקון (אמוג\'י)', _icon),
                       _field('תיאור', _description, maxLines: 2),
                       _field('סדר מיון', _sortOrder),
@@ -406,25 +531,50 @@ class _CategoryEditorDialogState
                       DropdownButtonFormField<String>(
                         value: _scope,
                         decoration: InputDecoration(
-                            labelText: 'Scope',
-                            labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10)),
+                          labelText: 'Scope',
+                          labelStyle: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
                         items: [
                           DropdownMenuItem(
-                              value: 'business',
-                              child: Text('עסקים',
-                                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                            value: 'business',
+                            child: Text(
+                              'עסקים',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                           DropdownMenuItem(
-                              value: 'article',
-                              child: Text('כתבות',
-                                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                            value: 'article',
+                            child: Text(
+                              'כתבות',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                           DropdownMenuItem(
-                              value: 'event',
-                              child: Text('אירועים',
-                                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                            value: 'event',
+                            child: Text(
+                              'אירועים',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setState(() {
                           _scope = v!;
@@ -435,74 +585,124 @@ class _CategoryEditorDialogState
                       DropdownButtonFormField<String?>(
                         value: _parentId,
                         decoration: InputDecoration(
-                            labelText: 'קטגוריית אב',
-                            labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10)),
+                          labelText: 'קטגוריית אב',
+                          labelStyle: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
                         items: [
                           DropdownMenuItem(
-                              value: null,
-                              child: Text('— ללא (קטגוריה ראשית) —',
-                                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                          ...parents.map((p) => DropdownMenuItem(
+                            value: null,
+                            child: Text(
+                              '— ללא (קטגוריה ראשית) —',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          ...parents.map(
+                            (p) => DropdownMenuItem(
                               value: p['id'] as String,
-                              child: Text(p['name'] as String,
-                                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)))),
+                              child: Text(
+                                p['name'] as String,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setState(() => _parentId = v),
                       ),
                       const SizedBox(height: 12),
                       SwitchListTile(
-                        title: Text('פעיל',
-                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)),
+                        title: Text(
+                          'פעיל',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 14,
+                          ),
+                        ),
                         value: _isActive,
                         onChanged: (v) => setState(() => _isActive = v),
                         activeColor: AppColors.turquoise,
                         contentPadding: EdgeInsets.zero,
                       ),
-                    ]),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.border))),
-                child: Row(children: [
-                  const Spacer(),
-                  TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: _saving ? null : _save,
-                    style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.turquoise,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                    child: _saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור קטגוריה',
-                            style: TextStyle(fontFamily: AppFonts.rubik, 
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600)),
+                    ],
                   ),
-                ]),
-              ),
-            ]),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'ביטול',
+                          style: TextStyle(fontFamily: AppFonts.rubik),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _saving ? null : _save,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.turquoise,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                _isEditing ? 'שמור' : 'צור קטגוריה',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _field(String label, TextEditingController controller,
-      {int maxLines = 1, String? Function(String?)? validator}) {
+  Widget _field(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
@@ -514,8 +714,10 @@ class _CategoryEditorDialogState
           labelText: label,
           labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
         ),
       ),
     );
@@ -539,17 +741,19 @@ class _CategoryEditorDialogState
     try {
       final notifier = ref.read(adminCategoryListProvider.notifier);
       if (_isEditing) {
-        await notifier.updateCategory(
-            widget.category!['id'] as String, fields);
+        await notifier.updateCategory(widget.category!['id'] as String, fields);
       } else {
         await notifier.createCategory(fields);
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
             content: Text('שגיאה: $e'),
-            backgroundColor: AppColors.error));
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -574,11 +778,18 @@ class _ScopePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6)),
-      child: Text(label,
-          style: TextStyle(fontFamily: AppFonts.rubik, 
-              fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -593,11 +804,18 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6)),
-      child: Text(label,
-          style: TextStyle(fontFamily: AppFonts.rubik, 
-              fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -610,12 +828,17 @@ class _Col extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-        flex: flex,
-        child: Text(label,
-            style: TextStyle(fontFamily: AppFonts.rubik, 
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.grayLight)));
+      flex: flex,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.grayLight,
+        ),
+      ),
+    );
   }
 }
 
@@ -640,15 +863,19 @@ class _FilterChip extends StatelessWidget {
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-                color: selected ? AppColors.turquoise : AppColors.border,
-                width: 0.5),
+              color: selected ? AppColors.turquoise : AppColors.border,
+              width: 0.5,
+            ),
           ),
-          child: Text(label,
-              style: TextStyle(fontFamily: AppFonts.rubik, 
-                  fontSize: 12,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color:
-                      selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? AppColors.turquoise : AppColors.grayText,
+            ),
+          ),
         ),
       ),
     );
@@ -663,7 +890,8 @@ class _Debouncer {
 
   void run(VoidCallback action) {
     _pending?.ignore();
-    _pending = Future.delayed(Duration(milliseconds: milliseconds))
-        .then((_) => action());
+    _pending = Future.delayed(
+      Duration(milliseconds: milliseconds),
+    ).then((_) => action());
   }
 }

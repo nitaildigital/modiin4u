@@ -3,11 +3,7 @@ class BusinessHours {
   final String? openTime; // "09:00"
   final String? closeTime; // "22:00"
 
-  const BusinessHours({
-    required this.dayOfWeek,
-    this.openTime,
-    this.closeTime,
-  });
+  const BusinessHours({required this.dayOfWeek, this.openTime, this.closeTime});
 
   bool get isClosed => openTime == null || closeTime == null;
 
@@ -193,8 +189,10 @@ class Business {
       if (h.isClosed) continue;
       final openParts = h.openTime!.split(':');
       final closeParts = h.closeTime!.split(':');
-      final openMinutes = int.parse(openParts[0]) * 60 + int.parse(openParts[1]);
-      final closeMinutes = int.parse(closeParts[0]) * 60 + int.parse(closeParts[1]);
+      final openMinutes =
+          int.parse(openParts[0]) * 60 + int.parse(openParts[1]);
+      final closeMinutes =
+          int.parse(closeParts[0]) * 60 + int.parse(closeParts[1]);
       final nowMinutes = now.hour * 60 + now.minute;
 
       if (closeMinutes > openMinutes) {
@@ -214,12 +212,12 @@ class Business {
   /// The kosher certification as it should read on screen, or null when the
   /// business carries none.
   String? get kosherLabel => switch (kosherStatus) {
-        'rabbanut' => 'רבנות',
-        'mehadrin' => 'מהדרין',
-        'badatz' => 'בד"ץ',
-        'other' => 'כשר',
-        _ => null,
-      };
+    'rabbanut' => 'רבנות',
+    'mehadrin' => 'מהדרין',
+    'badatz' => 'בד"ץ',
+    'other' => 'כשר',
+    _ => null,
+  };
 
   factory Business.fromJson(Map<String, dynamic> json) {
     final joinedNeighborhood = json['neighborhoods'];
@@ -235,8 +233,8 @@ class Business {
       slug: (json['slug'] as String?) ?? '',
       category: (json['category'] as String?) ?? '',
       subcategory: json['subcategory'] as String?,
-      description: (json['short_description'] ?? json['full_description'])
-          as String?,
+      description:
+          (json['short_description'] ?? json['full_description']) as String?,
       metaDescription: json['meta_description'] as String?,
       phone: json['phone'] as String?,
       website: json['website'] as String?,
@@ -252,9 +250,9 @@ class Business {
       tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? const [],
       hours: joinedHours is List
           ? joinedHours
-              .whereType<Map<String, dynamic>>()
-              .map(BusinessHours.fromJson)
-              .toList()
+                .whereType<Map<String, dynamic>>()
+                .map(BusinessHours.fromJson)
+                .toList()
           : const [],
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
       reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,

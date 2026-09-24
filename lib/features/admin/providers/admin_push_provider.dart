@@ -36,10 +36,7 @@ class AdminPushListNotifier extends AdminTableNotifier {
   Future<void> scheduleNotification(String id, DateTime when) async {
     await SupabaseConfig.client
         .from('push_campaigns')
-        .update({
-          'status': 'scheduled',
-          'scheduled_at': when.toIso8601String(),
-        })
+        .update({'status': 'scheduled', 'scheduled_at': when.toIso8601String()})
         .eq('id', id);
     await load();
   }

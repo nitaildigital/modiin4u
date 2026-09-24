@@ -150,9 +150,11 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
     if (has(['מסעד', 'גריל', 'פיצ', 'סושי', 'המבורגר', 'איטלקי', 'אסיאתי'])) {
       return IconsaxPlusBold.reserve;
     }
-    if (has(['קפה', 'ארוחת בוקר', 'גלידות', 'קונדיטור'])) return IconsaxPlusBold.coffee;
+    if (has(['קפה', 'ארוחת בוקר', 'גלידות', 'קונדיטור']))
+      return IconsaxPlusBold.coffee;
     if (has(['בר', 'אלכוהול', 'קריוקי'])) return IconsaxPlusBold.cup;
-    if (has(['אסתטיק', 'טיפוח', 'יופי', 'ספא', 'מספר'])) return IconsaxPlusBold.brush_1;
+    if (has(['אסתטיק', 'טיפוח', 'יופי', 'ספא', 'מספר']))
+      return IconsaxPlusBold.brush_1;
     if (has(['ספורט', 'כושר'])) return IconsaxPlusBold.weight;
     if (has(['דלק', 'רכב', 'פנצ'])) return IconsaxPlusBold.car;
     if (has(['לימוד', 'חוג', 'גן'])) return IconsaxPlusBold.book_1;
@@ -172,22 +174,62 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   // ── Nav links ──
   // ── Categories — 8 gradient cards, 4 per row ──
   List<_Category> get _categoriesDemo => [
-    _Category(name: _t('Restaurants', 'מסעדות'), count: 126, icon: IconsaxPlusBold.reserve,
-        start: const Color(0xFF1B3A2D), end: const Color(0xFF2E5A47)),
-    _Category(name: _t('Coffee Shops', 'בתי קפה'), count: 38, icon: IconsaxPlusBold.coffee,
-        start: const Color(0xFF3E2723), end: const Color(0xFF5D4037)),
-    _Category(name: _t('Bars & Nightlife', 'ברים וחיי לילה'), count: 24, icon: IconsaxPlusBold.cup,
-        start: const Color(0xFF2D1B4E), end: const Color(0xFF4A2D6E)),
-    _Category(name: _t('Beauty & Grooming', 'יופי וטיפוח'), count: 42, icon: IconsaxPlusBold.brush_1,
-        start: const Color(0xFF4E1B3A), end: const Color(0xFF6E2D54)),
-    _Category(name: _t('Sports & Fitness', 'ספורט וכושר'), count: 31, icon: IconsaxPlusBold.weight,
-        start: const Color(0xFF1A237E), end: const Color(0xFF283593)),
-    _Category(name: _t('Hairdressers', 'מספרות'), count: 27, icon: IconsaxPlusBold.scissor,
-        start: const Color(0xFF4E342E), end: const Color(0xFF6D4C41)),
-    _Category(name: _t('Home Services', 'שירותים לבית'), count: 51, icon: IconsaxPlusBold.setting_2,
-        start: const Color(0xFF263238), end: const Color(0xFF37474F)),
-    _Category(name: _t('Education', 'חינוך והעשרה'), count: 19, icon: IconsaxPlusBold.book_1,
-        start: const Color(0xFF1B5E20), end: const Color(0xFF2E7D32)),
+    _Category(
+      name: _t('Restaurants', 'מסעדות'),
+      count: 126,
+      icon: IconsaxPlusBold.reserve,
+      start: const Color(0xFF1B3A2D),
+      end: const Color(0xFF2E5A47),
+    ),
+    _Category(
+      name: _t('Coffee Shops', 'בתי קפה'),
+      count: 38,
+      icon: IconsaxPlusBold.coffee,
+      start: const Color(0xFF3E2723),
+      end: const Color(0xFF5D4037),
+    ),
+    _Category(
+      name: _t('Bars & Nightlife', 'ברים וחיי לילה'),
+      count: 24,
+      icon: IconsaxPlusBold.cup,
+      start: const Color(0xFF2D1B4E),
+      end: const Color(0xFF4A2D6E),
+    ),
+    _Category(
+      name: _t('Beauty & Grooming', 'יופי וטיפוח'),
+      count: 42,
+      icon: IconsaxPlusBold.brush_1,
+      start: const Color(0xFF4E1B3A),
+      end: const Color(0xFF6E2D54),
+    ),
+    _Category(
+      name: _t('Sports & Fitness', 'ספורט וכושר'),
+      count: 31,
+      icon: IconsaxPlusBold.weight,
+      start: const Color(0xFF1A237E),
+      end: const Color(0xFF283593),
+    ),
+    _Category(
+      name: _t('Hairdressers', 'מספרות'),
+      count: 27,
+      icon: IconsaxPlusBold.scissor,
+      start: const Color(0xFF4E342E),
+      end: const Color(0xFF6D4C41),
+    ),
+    _Category(
+      name: _t('Home Services', 'שירותים לבית'),
+      count: 51,
+      icon: IconsaxPlusBold.setting_2,
+      start: const Color(0xFF263238),
+      end: const Color(0xFF37474F),
+    ),
+    _Category(
+      name: _t('Education', 'חינוך והעשרה'),
+      count: 19,
+      icon: IconsaxPlusBold.book_1,
+      start: const Color(0xFF1B5E20),
+      end: const Color(0xFF2E7D32),
+    ),
   ];
 
   // ── Filter pills — index matches _Business.tags ──
@@ -202,87 +244,147 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   List<_Business> get _businessesDemo => [
     _Business(
       name: _t('Urban Plate Kitchen & Bar', 'אורבן פלייט קיטשן & בר'),
-      categoryIndex: 0, category: _t('Restaurants', 'מסעדות'),
+      categoryIndex: 0,
+      category: _t('Restaurants', 'מסעדות'),
       area: _t('Hatikva Quarter', 'רובע התקווה'),
-      rating: 4.8, reviews: 214, isOpen: true, tags: {0, 1},
-      imageBg: const Color(0xFFDDD0C2), logoBg: const Color(0xFFE0CDBE),
+      rating: 4.8,
+      reviews: 214,
+      isOpen: true,
+      tags: {0, 1},
+      imageBg: const Color(0xFFDDD0C2),
+      logoBg: const Color(0xFFE0CDBE),
     ),
     _Business(
       name: _t('Cafe Anava', 'קפה ענבה'),
-      categoryIndex: 1, category: _t('Coffee Shops', 'בתי קפה'),
+      categoryIndex: 1,
+      category: _t('Coffee Shops', 'בתי קפה'),
       area: _t('Anava Park', 'פארק ענבה'),
-      rating: 4.6, reviews: 158, isOpen: true, tags: {0, 1},
-      imageBg: const Color(0xFFE2D4C4), logoBg: const Color(0xFFD8C7B8),
+      rating: 4.6,
+      reviews: 158,
+      isOpen: true,
+      tags: {0, 1},
+      imageBg: const Color(0xFFE2D4C4),
+      logoBg: const Color(0xFFD8C7B8),
     ),
     _Business(
       name: _t('The Copper Room', 'החדר הנחושת'),
-      categoryIndex: 2, category: _t('Bars & Nightlife', 'ברים וחיי לילה'),
+      categoryIndex: 2,
+      category: _t('Bars & Nightlife', 'ברים וחיי לילה'),
       area: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-      rating: 4.4, reviews: 92, isOpen: false, tags: {2},
-      imageBg: const Color(0xFFD2C6DE), logoBg: const Color(0xFFD9C8DE),
+      rating: 4.4,
+      reviews: 92,
+      isOpen: false,
+      tags: {2},
+      imageBg: const Color(0xFFD2C6DE),
+      logoBg: const Color(0xFFD9C8DE),
     ),
     _Business(
       name: _t('Soleil Spa & Beauty', 'ספא סוליי'),
-      categoryIndex: 3, category: _t('Beauty & Grooming', 'יופי וטיפוח'),
+      categoryIndex: 3,
+      category: _t('Beauty & Grooming', 'יופי וטיפוח'),
       area: _t('Hatikva Quarter', 'רובע התקווה'),
-      rating: 4.9, reviews: 301, isOpen: true, tags: {0, 1, 3},
-      imageBg: const Color(0xFFD6C6DE), logoBg: const Color(0xFFDCE2C6),
+      rating: 4.9,
+      reviews: 301,
+      isOpen: true,
+      tags: {0, 1, 3},
+      imageBg: const Color(0xFFD6C6DE),
+      logoBg: const Color(0xFFDCE2C6),
     ),
     _Business(
       name: _t('Modiin Fit Studio', 'סטודיו מודיעין פיט'),
-      categoryIndex: 4, category: _t('Sports & Fitness', 'ספורט וכושר'),
+      categoryIndex: 4,
+      category: _t('Sports & Fitness', 'ספורט וכושר'),
       area: _t('Modiin Mall', 'קניון מודיעין'),
-      rating: 4.7, reviews: 176, isOpen: true, tags: {0, 1},
-      imageBg: const Color(0xFFC6D6E4), logoBg: const Color(0xFFCBD4DE),
+      rating: 4.7,
+      reviews: 176,
+      isOpen: true,
+      tags: {0, 1},
+      imageBg: const Color(0xFFC6D6E4),
+      logoBg: const Color(0xFFCBD4DE),
     ),
     _Business(
       name: _t('Studio Bella', 'סטודיו בלה'),
-      categoryIndex: 5, category: _t('Hairdressers', 'מספרות'),
+      categoryIndex: 5,
+      category: _t('Hairdressers', 'מספרות'),
       area: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-      rating: 4.5, reviews: 128, isOpen: true, tags: {0, 3},
-      imageBg: const Color(0xFFDCE2C6), logoBg: const Color(0xFFCADEC9),
+      rating: 4.5,
+      reviews: 128,
+      isOpen: true,
+      tags: {0, 3},
+      imageBg: const Color(0xFFDCE2C6),
+      logoBg: const Color(0xFFCADEC9),
     ),
     _Business(
       name: _t('FixIt Modiin', 'פיקסאיט מודיעין'),
-      categoryIndex: 6, category: _t('Home Services', 'שירותים לבית'),
+      categoryIndex: 6,
+      category: _t('Home Services', 'שירותים לבית'),
       area: _t('Anava Park', 'פארק ענבה'),
-      rating: 4.3, reviews: 64, isOpen: false, tags: {2, 3},
-      imageBg: const Color(0xFFC8DDD8), logoBg: const Color(0xFFC6DAD8),
+      rating: 4.3,
+      reviews: 64,
+      isOpen: false,
+      tags: {2, 3},
+      imageBg: const Color(0xFFC8DDD8),
+      logoBg: const Color(0xFFC6DAD8),
     ),
     _Business(
       name: _t('Anava Learning Center', 'מרכז הלמידה ענבה'),
-      categoryIndex: 7, category: _t('Education', 'חינוך והעשרה'),
+      categoryIndex: 7,
+      category: _t('Education', 'חינוך והעשרה'),
       area: _t('Anava Park', 'פארק ענבה'),
-      rating: 4.8, reviews: 143, isOpen: true, tags: {0, 1},
-      imageBg: const Color(0xFFD6E2C6), logoBg: const Color(0xFFDCE2C6),
+      rating: 4.8,
+      reviews: 143,
+      isOpen: true,
+      tags: {0, 1},
+      imageBg: const Color(0xFFD6E2C6),
+      logoBg: const Color(0xFFDCE2C6),
     ),
     _Business(
       name: _t('Pizza Moretti', 'פיצה מורטי'),
-      categoryIndex: 0, category: _t('Restaurants', 'מסעדות'),
+      categoryIndex: 0,
+      category: _t('Restaurants', 'מסעדות'),
       area: _t('Modiin Mall', 'קניון מודיעין'),
-      rating: 4.2, reviews: 388, isOpen: true, tags: {0, 3},
-      imageBg: const Color(0xFFE0CDBE), logoBg: const Color(0xFFDDD0C2),
+      rating: 4.2,
+      reviews: 388,
+      isOpen: true,
+      tags: {0, 3},
+      imageBg: const Color(0xFFE0CDBE),
+      logoBg: const Color(0xFFDDD0C2),
     ),
     _Business(
       name: _t('Roasters Corner', 'פינת הקלייה'),
-      categoryIndex: 1, category: _t('Coffee Shops', 'בתי קפה'),
+      categoryIndex: 1,
+      category: _t('Coffee Shops', 'בתי קפה'),
       area: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-      rating: 4.7, reviews: 97, isOpen: true, tags: {0, 1, 2},
-      imageBg: const Color(0xFFCBD4DE), logoBg: const Color(0xFFC6D6E4),
+      rating: 4.7,
+      reviews: 97,
+      isOpen: true,
+      tags: {0, 1, 2},
+      imageBg: const Color(0xFFCBD4DE),
+      logoBg: const Color(0xFFC6D6E4),
     ),
     _Business(
       name: _t('Glow Nail Bar', 'גלואו נייל בר'),
-      categoryIndex: 3, category: _t('Beauty & Grooming', 'יופי וטיפוח'),
+      categoryIndex: 3,
+      category: _t('Beauty & Grooming', 'יופי וטיפוח'),
       area: _t('Modiin Mall', 'קניון מודיעין'),
-      rating: 4.6, reviews: 205, isOpen: false, tags: {1, 3},
-      imageBg: const Color(0xFFD9C8DE), logoBg: const Color(0xFFD6C6DE),
+      rating: 4.6,
+      reviews: 205,
+      isOpen: false,
+      tags: {1, 3},
+      imageBg: const Color(0xFFD9C8DE),
+      logoBg: const Color(0xFFD6C6DE),
     ),
     _Business(
       name: _t('Modiin Home Electric', 'מודיעין חשמל לבית'),
-      categoryIndex: 6, category: _t('Home Services', 'שירותים לבית'),
+      categoryIndex: 6,
+      category: _t('Home Services', 'שירותים לבית'),
       area: _t('Hatikva Quarter', 'רובע התקווה'),
-      rating: 4.4, reviews: 51, isOpen: true, tags: {0, 2, 3},
-      imageBg: const Color(0xFFCADEC9), logoBg: const Color(0xFFC8DDD8),
+      rating: 4.4,
+      reviews: 51,
+      isOpen: true,
+      tags: {0, 2, 3},
+      imageBg: const Color(0xFFCADEC9),
+      logoBg: const Color(0xFFC8DDD8),
     ),
   ];
 
@@ -354,10 +456,13 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
     return _businesses.where((b) {
       if (_selectedCategory >= 0) {
         final name = _categories[_selectedCategory].name;
-        final inCategory = _live ? b.terms.contains(name) : b.categoryIndex == _selectedCategory;
+        final inCategory = _live
+            ? b.terms.contains(name)
+            : b.categoryIndex == _selectedCategory;
         if (!inCategory) return false;
       }
-      if (_selectedFilter >= 0 && !_matchesFilter(b, _selectedFilter)) return false;
+      if (_selectedFilter >= 0 && !_matchesFilter(b, _selectedFilter))
+        return false;
       if (q.isEmpty) return true;
       return b.name.toLowerCase().contains(q) ||
           b.category.toLowerCase().contains(q) ||
@@ -368,25 +473,65 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
 
   // ── Featured professionals ──
   List<_Professional> get _professionalsDemo => [
-    _Professional(name: _t('Adi Ben-Ami', 'עדי בן-עמי'), profession: _t('Interior Designer', 'מעצבת פנים'),
-        rating: 4.9, reviews: 87, avatarBg: const Color(0xFFE0CDBE), verified: true),
-    _Professional(name: _t('Yaron Cohen', 'ירון כהן'), profession: _t('Electrician', 'חשמלאי'),
-        rating: 4.8, reviews: 132, avatarBg: const Color(0xFFC6D6E4), verified: true),
-    _Professional(name: _t('Maya Levi', 'מאיה לוי'), profession: _t('Personal Trainer', 'מאמנת אישית'),
-        rating: 4.9, reviews: 64, avatarBg: const Color(0xFFD9C8DE), verified: false),
-    _Professional(name: _t('Ronen Shapira', 'רונן שפירא'), profession: _t('Plumber', 'אינסטלטור'),
-        rating: 4.6, reviews: 158, avatarBg: const Color(0xFFDCE2C6), verified: true),
-    _Professional(name: _t('Noa Barak', 'נועה ברק'), profession: _t('Private Tutor', 'מורה פרטית'),
-        rating: 5.0, reviews: 43, avatarBg: const Color(0xFFC8DDD8), verified: false),
-    _Professional(name: _t('Eitan Mor', 'איתן מור'), profession: _t('Handyman', 'הנדימן'),
-        rating: 4.5, reviews: 211, avatarBg: const Color(0xFFD8C7B8), verified: true),
+    _Professional(
+      name: _t('Adi Ben-Ami', 'עדי בן-עמי'),
+      profession: _t('Interior Designer', 'מעצבת פנים'),
+      rating: 4.9,
+      reviews: 87,
+      avatarBg: const Color(0xFFE0CDBE),
+      verified: true,
+    ),
+    _Professional(
+      name: _t('Yaron Cohen', 'ירון כהן'),
+      profession: _t('Electrician', 'חשמלאי'),
+      rating: 4.8,
+      reviews: 132,
+      avatarBg: const Color(0xFFC6D6E4),
+      verified: true,
+    ),
+    _Professional(
+      name: _t('Maya Levi', 'מאיה לוי'),
+      profession: _t('Personal Trainer', 'מאמנת אישית'),
+      rating: 4.9,
+      reviews: 64,
+      avatarBg: const Color(0xFFD9C8DE),
+      verified: false,
+    ),
+    _Professional(
+      name: _t('Ronen Shapira', 'רונן שפירא'),
+      profession: _t('Plumber', 'אינסטלטור'),
+      rating: 4.6,
+      reviews: 158,
+      avatarBg: const Color(0xFFDCE2C6),
+      verified: true,
+    ),
+    _Professional(
+      name: _t('Noa Barak', 'נועה ברק'),
+      profession: _t('Private Tutor', 'מורה פרטית'),
+      rating: 5.0,
+      reviews: 43,
+      avatarBg: const Color(0xFFC8DDD8),
+      verified: false,
+    ),
+    _Professional(
+      name: _t('Eitan Mor', 'איתן מור'),
+      profession: _t('Handyman', 'הנדימן'),
+      rating: 4.5,
+      reviews: 211,
+      avatarBg: const Color(0xFFD8C7B8),
+      verified: true,
+    ),
   ];
 
   void _scrollToResults() {
     final ctx = _resultsKey.currentContext;
     if (ctx == null) return;
-    Scrollable.ensureVisible(ctx,
-        duration: const Duration(milliseconds: 400), curve: Curves.easeOut, alignment: 0.05);
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+      alignment: 0.05,
+    );
   }
 
   @override
@@ -434,15 +579,34 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
       padding: const EdgeInsets.only(top: 56),
       child: Column(
         children: [
-          Text(_t('Businesses & Professionals in Modiin', 'עסקים ובעלי מקצוע במודיעין'),
-              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.black, height: 1.23),
-              textAlign: TextAlign.center),
+          Text(
+            _t(
+              'Businesses & Professionals in Modiin',
+              'עסקים ובעלי מקצוע במודיעין',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
+              fontSize: 44,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+              height: 1.23,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 14),
           Text(
-              _t('Find trusted local businesses, service providers and professionals — all in one place.',
-                  'מצאו עסקים מקומיים, נותני שירות ובעלי מקצוע מומלצים – הכל במקום אחד.'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kIconGrey, height: 1.19),
-              textAlign: TextAlign.center),
+            _t(
+              'Find trusted local businesses, service providers and professionals — all in one place.',
+              'מצאו עסקים מקומיים, נותני שירות ובעלי מקצוע מומלצים – הכל במקום אחד.',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 16,
+              color: _kIconGrey,
+              height: 1.19,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 40),
           Center(
             child: ConstrainedBox(
@@ -466,13 +630,21 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(50),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 24, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
       child: Row(
         children: [
           const SizedBox(width: 24),
-          const Icon(IconsaxPlusLinear.search_normal_1, size: 20, color: _kIconGrey),
+          const Icon(
+            IconsaxPlusLinear.search_normal_1,
+            size: 20,
+            color: _kIconGrey,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -482,13 +654,23 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 _shown = _pageSize;
               }),
               onSubmitted: (_) => _scrollToResults(),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kHeading),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 16,
+                color: _kHeading,
+              ),
               decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
-                hintText: _t('Search businesses, services or professionals in Modiin...',
-                    'חפשו עסקים, שירותים או בעלי מקצוע במודיעין...'),
-                hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kIconGrey),
+                hintText: _t(
+                  'Search businesses, services or professionals in Modiin...',
+                  'חפשו עסקים, שירותים או בעלי מקצוע במודיעין...',
+                ),
+                hintStyle: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 16,
+                  color: _kIconGrey,
+                ),
               ),
             ),
           ),
@@ -502,7 +684,11 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 },
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(IconsaxPlusLinear.close_circle, size: 20, color: _kIconGrey),
+                  child: Icon(
+                    IconsaxPlusLinear.close_circle,
+                    size: 20,
+                    color: _kIconGrey,
+                  ),
                 ),
               ),
             ),
@@ -520,8 +706,15 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   color: AppColors.midBlue,
                   borderRadius: BorderRadius.circular(50),
                 ),
-                child: Text(_t('Search', 'חיפוש'),
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                child: Text(
+                  _t('Search', 'חיפוש'),
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ),
@@ -544,33 +737,46 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: Text(_t('Browse by Category', 'עיון לפי קטגוריה'),
-                      style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                  child: Text(
+                    _t('Browse by Category', 'עיון לפי קטגוריה'),
+                    style: TextStyle(
+                      fontFamily: AppFonts.nunito,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.midBlue,
+                    ),
+                  ),
                 ),
                 if (_live && _liveCategoryCount > 8) ...[
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
-                      onTap: () => setState(() => _allCategories = !_allCategories),
+                      onTap: () =>
+                          setState(() => _allCategories = !_allCategories),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                              _allCategories
-                                  ? IconsaxPlusLinear.arrow_up_2
-                                  : IconsaxPlusLinear.arrow_down_1,
-                              size: 18,
-                              color: AppColors.midBlue),
+                            _allCategories
+                                ? IconsaxPlusLinear.arrow_up_2
+                                : IconsaxPlusLinear.arrow_down_1,
+                            size: 18,
+                            color: AppColors.midBlue,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             _allCategories
                                 ? _t('Show fewer', 'הצג פחות')
-                                : _t('All $_liveCategoryCount categories',
-                                    'כל $_liveCategoryCount הקטגוריות'),
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.midBlue),
+                                : _t(
+                                    'All $_liveCategoryCount categories',
+                                    'כל $_liveCategoryCount הקטגוריות',
+                                  ),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.midBlue,
+                            ),
                           ),
                         ],
                       ),
@@ -586,11 +792,21 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(IconsaxPlusLinear.close_circle, size: 18, color: AppColors.midBlue),
+                          const Icon(
+                            IconsaxPlusLinear.close_circle,
+                            size: 18,
+                            color: AppColors.midBlue,
+                          ),
                           const SizedBox(width: 6),
-                          Text(_t('Clear category', 'נקה קטגוריה'),
-                              style: TextStyle(fontFamily: AppFonts.inter, 
-                                  fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                          Text(
+                            _t('Clear category', 'נקה קטגוריה'),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.midBlue,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -602,7 +818,8 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
               builder: (context, constraints) {
                 const gap = 25.0;
                 const perRow = 4;
-                final cardWidth = (constraints.maxWidth - gap * (perRow - 1)) / perRow;
+                final cardWidth =
+                    (constraints.maxWidth - gap * (perRow - 1)) / perRow;
                 return Wrap(
                   spacing: gap,
                   runSpacing: gap,
@@ -650,11 +867,28 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_t('Featured in Modiin', 'מומלצים במודיעין'),
-                          style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                      Text(
+                        _t('Featured in Modiin', 'מומלצים במודיעין'),
+                        style: TextStyle(
+                          fontFamily: AppFonts.nunito,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.midBlue,
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      Text(_t('Highest rated businesses by Modiin residents', 'העסקים המדורגים ביותר על ידי תושבי מודיעין'),
-                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21)),
+                      Text(
+                        _t(
+                          'Highest rated businesses by Modiin residents',
+                          'העסקים המדורגים ביותר על ידי תושבי מודיעין',
+                        ),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          color: _kGreyText,
+                          height: 1.21,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -664,9 +898,17 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _carouselArrow(controller: _featured, step: 420, isNext: false),
+                      _carouselArrow(
+                        controller: _featured,
+                        step: 420,
+                        isNext: false,
+                      ),
                       const SizedBox(width: 12),
-                      _carouselArrow(controller: _featured, step: 420, isNext: true),
+                      _carouselArrow(
+                        controller: _featured,
+                        step: 420,
+                        isNext: true,
+                      ),
                     ],
                   ),
                 ),
@@ -707,7 +949,9 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   // ─────────────────────────────────────────────
   Widget _buildResultsSection() {
     final results = _visibleBusinesses;
-    final categoryName = _selectedCategory >= 0 ? _categories[_selectedCategory].name : null;
+    final categoryName = _selectedCategory >= 0
+        ? _categories[_selectedCategory].name
+        : null;
 
     return Padding(
       key: _resultsKey,
@@ -720,14 +964,27 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
               categoryName == null
                   ? _t('All Businesses in Modiin', 'כל העסקים במודיעין')
                   : _t('$categoryName in Modiin', '$categoryName במודיעין'),
-              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
+              style: TextStyle(
+                fontFamily: AppFonts.nunito,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: AppColors.midBlue,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               results.length == 1
                   ? _t('1 business found', 'נמצא עסק אחד')
-                  : _t('${results.length} businesses found', 'נמצאו ${results.length} עסקים'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
+                  : _t(
+                      '${results.length} businesses found',
+                      'נמצאו ${results.length} עסקים',
+                    ),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: _kGreyText,
+                height: 1.21,
+              ),
             ),
             const SizedBox(height: 24),
             Wrap(
@@ -752,7 +1009,8 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 builder: (context, constraints) {
                   const gap = 20.0;
                   const perRow = 4;
-                  final cardWidth = (constraints.maxWidth - gap * (perRow - 1)) / perRow;
+                  final cardWidth =
+                      (constraints.maxWidth - gap * (perRow - 1)) / perRow;
                   final visible = results.take(_shown).toList();
                   return Wrap(
                     spacing: gap,
@@ -784,20 +1042,31 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
                       onTap: () => setState(
-                          () => _shown = (_shown + _pageSize).clamp(0, results.length)),
+                        () => _shown = (_shown + _pageSize).clamp(
+                          0,
+                          results.length,
+                        ),
+                      ),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 40,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(color: AppColors.midBlue),
                           borderRadius: BorderRadius.circular(50),
                         ),
                         child: Text(
-                          _t('Show more (${results.length - _shown} left)',
-                              'הצג עוד (נותרו ${results.length - _shown})'),
-                          style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.midBlue),
+                          _t(
+                            'Show more (${results.length - _shown} left)',
+                            'הצג עוד (נותרו ${results.length - _shown})',
+                          ),
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.midBlue,
+                          ),
                         ),
                       ),
                     ),
@@ -822,13 +1091,36 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(IconsaxPlusLinear.shop, size: 44, color: _kGreyText.withValues(alpha: 0.5)),
+          Icon(
+            IconsaxPlusLinear.shop,
+            size: 44,
+            color: _kGreyText.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 16),
-          Text(_t('No businesses match your search', 'לא נמצאו עסקים שתואמים לחיפוש'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading)),
+          Text(
+            _t(
+              'No businesses match your search',
+              'לא נמצאו עסקים שתואמים לחיפוש',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: _kHeading,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(_t('Try a different category, filter or search term.', 'נסו קטגוריה, סינון או מילת חיפוש אחרים.'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
+          Text(
+            _t(
+              'Try a different category, filter or search term.',
+              'נסו קטגוריה, סינון או מילת חיפוש אחרים.',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: _kGreyText,
+            ),
+          ),
           const SizedBox(height: 20),
           MouseRegion(
             cursor: SystemMouseCursors.click,
@@ -842,13 +1134,23 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.midBlue,
                   borderRadius: BorderRadius.circular(50),
                 ),
-                child: Text(_t('Reset filters', 'איפוס סינון'),
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                child: Text(
+                  _t('Reset filters', 'איפוס סינון'),
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ),
@@ -867,17 +1169,35 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_t('Top Professionals', 'בעלי המקצוע המובילים'),
-                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+            Text(
+              _t('Top Professionals', 'בעלי המקצוע המובילים'),
+              style: TextStyle(
+                fontFamily: AppFonts.nunito,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: AppColors.midBlue,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(_t('Verified service providers, rated by your neighbours', 'נותני שירות מאומתים, מדורגים על ידי השכנים שלכם'),
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21)),
+            Text(
+              _t(
+                'Verified service providers, rated by your neighbours',
+                'נותני שירות מאומתים, מדורגים על ידי השכנים שלכם',
+              ),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: _kGreyText,
+                height: 1.21,
+              ),
+            ),
             const SizedBox(height: 32),
             LayoutBuilder(
               builder: (context, constraints) {
                 const gap = 20.0;
                 const perRow = 6;
-                final cardWidth = (constraints.maxWidth - gap * (perRow - 1)) / perRow;
+                final cardWidth =
+                    (constraints.maxWidth - gap * (perRow - 1)) / perRow;
                 return Wrap(
                   spacing: gap,
                   runSpacing: gap,
@@ -921,15 +1241,29 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_t('Own a business in Modiin?', 'יש לכם עסק במודיעין?'),
-                        style: TextStyle(fontFamily: AppFonts.nunito, 
-                            fontSize: 32, fontWeight: FontWeight.w600, color: Colors.white, height: 1.25)),
+                    Text(
+                      _t('Own a business in Modiin?', 'יש לכם עסק במודיעין?'),
+                      style: TextStyle(
+                        fontFamily: AppFonts.nunito,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        height: 1.25,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Text(
-                        _t('List it on Modiin4u and get discovered by thousands of local residents every month.',
-                            'הוסיפו אותו למודיעין4u ותתגלו על ידי אלפי תושבים מקומיים מדי חודש.'),
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                            fontSize: 16, color: Colors.white.withValues(alpha: 0.9), height: 1.4)),
+                      _t(
+                        'List it on Modiin4u and get discovered by thousands of local residents every month.',
+                        'הוסיפו אותו למודיעין4u ותתגלו על ידי אלפי תושבים מקומיים מדי חודש.',
+                      ),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 16,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        height: 1.4,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -939,14 +1273,23 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 child: GestureDetector(
                   onTap: () {},
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 18,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(60),
                     ),
-                    child: Text(_t('Add Your Business', 'הוסיפו את העסק שלכם'),
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                            fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+                    child: Text(
+                      _t('Add Your Business', 'הוסיפו את העסק שלכם'),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.midBlue,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -970,7 +1313,10 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
           if (!controller.hasClients) return;
           final delta = step * (isNext ? 1 : -1);
           controller.animateTo(
-            (controller.offset + delta).clamp(0.0, controller.position.maxScrollExtent),
+            (controller.offset + delta).clamp(
+              0.0,
+              controller.position.maxScrollExtent,
+            ),
             duration: const Duration(milliseconds: 280),
             curve: Curves.easeOut,
           );
@@ -980,14 +1326,24 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
           height: 40,
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: shadow ? const Color(0xFFF6F6F6) : _kBorder),
+            border: Border.all(
+              color: shadow ? const Color(0xFFF6F6F6) : _kBorder,
+            ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: shadow
-                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 1))]
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
                 : null,
           ),
           child: Icon(
-            isNext ? IconsaxPlusLinear.arrow_right_3 : IconsaxPlusLinear.arrow_left_2,
+            isNext
+                ? IconsaxPlusLinear.arrow_right_3
+                : IconsaxPlusLinear.arrow_left_2,
             size: 20,
             color: AppColors.midBlue,
           ),
@@ -1030,10 +1386,12 @@ class _Business {
   // ── Populated only for real listings from the WordPress export ──
   final String imageUrl, logoUrl, phone, hours;
   final bool kosher, delivery;
+
   /// Real listings have a view count but often no rating, so [rating] is 0
   /// for them and this carries the popularity signal the site does keep.
   final int views;
   final List<String> terms;
+
   /// Set for listings built from the export. Inferring this from whether a
   /// field is filled misreads the real listings that have no categories and
   /// no phone — they exist, and they were showing demo badges.
@@ -1101,7 +1459,9 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1648), // 1600 content + 24 padding each side
+        constraints: const BoxConstraints(
+          maxWidth: 1648,
+        ), // 1600 content + 24 padding each side
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: child,
@@ -1116,9 +1476,21 @@ class _Section extends StatelessWidget {
 /// `webHtmlElementStrategy` matters: the WordPress uploads are served with
 /// no CORS headers, so CanvasKit cannot decode them and has to hand the URL
 /// to a plain <img> element.
-Widget _remoteImage(String url, Color base,
-    {double? width, double? height, BorderRadius? radius, double glyph = 28}) {
-  final fallback = _imagePlaceholder(base, width: width, height: height, radius: radius, glyph: glyph);
+Widget _remoteImage(
+  String url,
+  Color base, {
+  double? width,
+  double? height,
+  BorderRadius? radius,
+  double glyph = 28,
+}) {
+  final fallback = _imagePlaceholder(
+    base,
+    width: width,
+    height: height,
+    radius: radius,
+    glyph: glyph,
+  );
   if (url.isEmpty) return fallback;
   return ClipRRect(
     borderRadius: radius ?? BorderRadius.circular(999),
@@ -1129,13 +1501,20 @@ Widget _remoteImage(String url, Color base,
       fit: BoxFit.cover,
       webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
       errorBuilder: (_, _, _) => fallback,
-      loadingBuilder: (context, child, progress) => progress == null ? child : fallback,
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : fallback,
     ),
   );
 }
 
 /// Gradient stand-in for a photo that has no asset yet.
-Widget _imagePlaceholder(Color base, {double? width, double? height, BorderRadius? radius, double glyph = 28}) {
+Widget _imagePlaceholder(
+  Color base, {
+  double? width,
+  double? height,
+  BorderRadius? radius,
+  double glyph = 28,
+}) {
   return Container(
     width: width,
     height: height,
@@ -1149,7 +1528,11 @@ Widget _imagePlaceholder(Color base, {double? width, double? height, BorderRadiu
       ),
     ),
     child: Center(
-      child: Icon(IconsaxPlusLinear.image, size: glyph, color: Colors.white.withValues(alpha: 0.35)),
+      child: Icon(
+        IconsaxPlusLinear.image,
+        size: glyph,
+        color: Colors.white.withValues(alpha: 0.35),
+      ),
     ),
   );
 }
@@ -1196,11 +1579,19 @@ class _CategoryCardState extends State<_CategoryCard> {
               colors: [c.end, c.start],
             ),
             border: Border.all(
-              color: widget.isSelected ? AppColors.turquoise : Colors.transparent,
+              color: widget.isSelected
+                  ? AppColors.turquoise
+                  : Colors.transparent,
               width: 3,
             ),
             boxShadow: _hovered
-                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 18, offset: const Offset(0, 8))]
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
                 : null,
           ),
           child: Stack(
@@ -1222,7 +1613,11 @@ class _CategoryCardState extends State<_CategoryCard> {
               PositionedDirectional(
                 top: 20,
                 end: 20,
-                child: Icon(c.icon, size: 48, color: Colors.white.withValues(alpha: 0.15)),
+                child: Icon(
+                  c.icon,
+                  size: 48,
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
               ),
               if (widget.isSelected)
                 PositionedDirectional(
@@ -1231,8 +1626,15 @@ class _CategoryCardState extends State<_CategoryCard> {
                   child: Container(
                     width: 26,
                     height: 26,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.turquoise),
-                    child: const Icon(Icons.check, size: 16, color: Colors.white),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.turquoise,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               PositionedDirectional(
@@ -1245,13 +1647,25 @@ class _CategoryCardState extends State<_CategoryCard> {
                   children: [
                     Text(
                       c.name,
-                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white, height: 1.22),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        height: 1.22,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    Text('${c.count} ${widget.businessesLabel}',
-                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: Colors.white.withValues(alpha: 0.9))),
+                    Text(
+                      '${c.count} ${widget.businessesLabel}',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1270,7 +1684,11 @@ class _FilterPill extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  const _FilterPill({required this.label, required this.isSelected, required this.onTap});
+  const _FilterPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   State<_FilterPill> createState() => _FilterPillState();
@@ -1294,7 +1712,11 @@ class _FilterPillState extends State<_FilterPill> {
           padding: const EdgeInsets.symmetric(horizontal: 28),
           decoration: BoxDecoration(
             color: selected ? AppColors.midBlue : Colors.white,
-            border: Border.all(color: selected ? AppColors.midBlue : (_hovered ? AppColors.turquoise : _kPillBorder)),
+            border: Border.all(
+              color: selected
+                  ? AppColors.midBlue
+                  : (_hovered ? AppColors.turquoise : _kPillBorder),
+            ),
             borderRadius: BorderRadius.circular(50),
           ),
           // mainAxisSize.min keeps the pill hugging its label — a Container
@@ -1304,7 +1726,8 @@ class _FilterPillState extends State<_FilterPill> {
             children: [
               Text(
                 widget.label,
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: selected ? Colors.white : _kBodyText,
@@ -1348,7 +1771,10 @@ class _BusinessCardState extends State<_BusinessCard> {
   Widget _chip(String label, Color bg, Color fg, {bool dot = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1360,8 +1786,15 @@ class _BusinessCardState extends State<_BusinessCard> {
             ),
             const SizedBox(width: 6),
           ],
-          Text(label,
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: fg,
+            ),
+          ),
         ],
       ),
     );
@@ -1394,11 +1827,16 @@ class _BusinessCardState extends State<_BusinessCard> {
                   // Stack's default hardEdge clip cuts it in half.
                   clipBehavior: Clip.none,
                   children: [
-                    _remoteImage(b.imageUrl, b.imageBg,
-                        width: double.infinity,
-                        height: 168,
-                        radius: const BorderRadius.vertical(top: Radius.circular(11)),
-                        glyph: 30),
+                    _remoteImage(
+                      b.imageUrl,
+                      b.imageBg,
+                      width: double.infinity,
+                      height: 168,
+                      radius: const BorderRadius.vertical(
+                        top: Radius.circular(11),
+                      ),
+                      glyph: 30,
+                    ),
                     PositionedDirectional(
                       start: 12,
                       top: 12,
@@ -1410,9 +1848,14 @@ class _BusinessCardState extends State<_BusinessCard> {
                           if (b.isLive) ...[
                             if (b.kosher)
                               _chip(widget.kosherLabel, _kOpenBg, _kOpenText),
-                            if (b.kosher && b.delivery) const SizedBox(width: 6),
+                            if (b.kosher && b.delivery)
+                              const SizedBox(width: 6),
                             if (b.delivery)
-                              _chip(widget.deliveryLabel, _kDeliveryBg, AppColors.midBlue),
+                              _chip(
+                                widget.deliveryLabel,
+                                _kDeliveryBg,
+                                AppColors.midBlue,
+                              ),
                           ] else
                             _chip(
                               b.isOpen ? widget.openLabel : widget.closedLabel,
@@ -1428,7 +1871,10 @@ class _BusinessCardState extends State<_BusinessCard> {
                         end: 12,
                         top: 12,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(6),
@@ -1436,11 +1882,21 @@ class _BusinessCardState extends State<_BusinessCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(IconsaxPlusBold.star_1, size: 13, color: AppColors.gold),
+                              const Icon(
+                                IconsaxPlusBold.star_1,
+                                size: 13,
+                                color: AppColors.gold,
+                              ),
                               const SizedBox(width: 4),
-                              Text(b.rating.toStringAsFixed(1),
-                                  style: TextStyle(fontFamily: AppFonts.inter, 
-                                      fontSize: 12, fontWeight: FontWeight.w600, color: _kHeading)),
+                              Text(
+                                b.rating.toStringAsFixed(1),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: _kHeading,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1457,7 +1913,12 @@ class _BusinessCardState extends State<_BusinessCard> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: _remoteImage(b.logoUrl, b.logoBg, radius: BorderRadius.circular(9), glyph: 18),
+                        child: _remoteImage(
+                          b.logoUrl,
+                          b.logoBg,
+                          radius: BorderRadius.circular(9),
+                          glyph: 18,
+                        ),
                       ),
                     ),
                   ],
@@ -1471,34 +1932,65 @@ class _BusinessCardState extends State<_BusinessCard> {
                     children: [
                       Text(
                         b.name,
-                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: _kHeading,
+                          height: 1.22,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Text(b.category,
-                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                          Text(
+                            b.category,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.midBlue,
+                            ),
+                          ),
                           const SizedBox(width: 6),
-                          const Text('•', style: TextStyle(color: _kGreyText, fontSize: 13)),
+                          const Text(
+                            '•',
+                            style: TextStyle(color: _kGreyText, fontSize: 13),
+                          ),
                           const SizedBox(width: 6),
-                          const Icon(IconsaxPlusLinear.location, size: 13, color: _kIconGrey),
+                          const Icon(
+                            IconsaxPlusLinear.location,
+                            size: 13,
+                            color: _kIconGrey,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
-                            child: Text(b.area,
-                                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kGreyText),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              b.area,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 13,
+                                color: _kGreyText,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 6),
                       Text(
-                          b.isLive
-                              ? '${b.views} ${widget.viewsLabel}'
-                              : '${b.reviews} ${widget.reviewsLabel}',
-                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText)),
+                        b.isLive
+                            ? '${b.views} ${widget.viewsLabel}'
+                            : '${b.reviews} ${widget.reviewsLabel}',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          color: _kGreyText,
+                        ),
+                      ),
                       const Spacer(),
                       Row(
                         children: [
@@ -1507,15 +1999,23 @@ class _BusinessCardState extends State<_BusinessCard> {
                               height: 44,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: _hovered ? AppColors.midBlue : Colors.white,
+                                color: _hovered
+                                    ? AppColors.midBlue
+                                    : Colors.white,
                                 border: Border.all(color: AppColors.midBlue),
                                 borderRadius: BorderRadius.circular(60),
                               ),
-                              child: Text(widget.viewLabel,
-                                  style: TextStyle(fontFamily: AppFonts.inter, 
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                      color: _hovered ? Colors.white : AppColors.midBlue)),
+                              child: Text(
+                                widget.viewLabel,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: _hovered
+                                      ? Colors.white
+                                      : AppColors.midBlue,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -1528,7 +2028,8 @@ class _BusinessCardState extends State<_BusinessCard> {
                             child: GestureDetector(
                               onTap: b.phone.isEmpty
                                   ? null
-                                  : () => launchUrl(Uri.parse('tel:${b.phone}')),
+                                  : () =>
+                                        launchUrl(Uri.parse('tel:${b.phone}')),
                               child: Container(
                                 width: 44,
                                 height: 44,
@@ -1536,9 +2037,13 @@ class _BusinessCardState extends State<_BusinessCard> {
                                   border: Border.all(color: _kBorder),
                                   borderRadius: BorderRadius.circular(60),
                                 ),
-                                child: Icon(IconsaxPlusLinear.call,
-                                    size: 18,
-                                    color: b.phone.isEmpty ? _kIconGrey : AppColors.midBlue),
+                                child: Icon(
+                                  IconsaxPlusLinear.call,
+                                  size: 18,
+                                  color: b.phone.isEmpty
+                                      ? _kIconGrey
+                                      : AppColors.midBlue,
+                                ),
                               ),
                             ),
                           ),
@@ -1603,7 +2108,13 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    _remoteImage(p.imageUrl, p.avatarBg, width: 88, height: 88, glyph: 24),
+                    _remoteImage(
+                      p.imageUrl,
+                      p.avatarBg,
+                      width: 88,
+                      height: 88,
+                      glyph: 24,
+                    ),
                     if (p.verified)
                       PositionedDirectional(
                         end: 0,
@@ -1616,7 +2127,11 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                             color: AppColors.turquoise,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
-                          child: const Icon(Icons.check, size: 14, color: Colors.white),
+                          child: const Icon(
+                            Icons.check,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                   ],
@@ -1625,7 +2140,12 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
               const SizedBox(height: 16),
               Text(
                 p.name,
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: _kHeading),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: _kHeading,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -1633,7 +2153,11 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
               const SizedBox(height: 4),
               Text(
                 p.profession,
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kGreyText),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 13,
+                  color: _kGreyText,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -1646,7 +2170,12 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                   height: 32,
                   child: Text(
                     p.description,
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText, height: 1.35),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 12,
+                      color: _kGreyText,
+                      height: 1.35,
+                    ),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -1656,22 +2185,41 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(IconsaxPlusBold.star_1, size: 14, color: AppColors.gold),
+                    const Icon(
+                      IconsaxPlusBold.star_1,
+                      size: 14,
+                      color: AppColors.gold,
+                    ),
                     const SizedBox(width: 4),
-                    Text(p.rating.toStringAsFixed(1),
-                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, fontWeight: FontWeight.w600, color: _kHeading)),
+                    Text(
+                      p.rating.toStringAsFixed(1),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _kHeading,
+                      ),
+                    ),
                     const SizedBox(width: 4),
                     Flexible(
-                      child: Text('(${p.reviews})',
-                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        '(${p.reviews})',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          color: _kGreyText,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
               const SizedBox(height: 16),
               GestureDetector(
-                onTap: p.phone.isEmpty ? null : () => launchUrl(Uri.parse('tel:${p.phone}')),
+                onTap: p.phone.isEmpty
+                    ? null
+                    : () => launchUrl(Uri.parse('tel:${p.phone}')),
                 child: Container(
                   width: double.infinity,
                   height: 40,
@@ -1681,11 +2229,15 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                     border: Border.all(color: AppColors.midBlue),
                     borderRadius: BorderRadius.circular(60),
                   ),
-                  child: Text(widget.contactLabel,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: _hovered ? Colors.white : AppColors.midBlue)),
+                  child: Text(
+                    widget.contactLabel,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: _hovered ? Colors.white : AppColors.midBlue,
+                    ),
+                  ),
                 ),
               ),
             ],

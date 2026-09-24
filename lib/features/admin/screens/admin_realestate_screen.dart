@@ -8,7 +8,8 @@ class AdminRealEstateScreen extends ConsumerStatefulWidget {
   const AdminRealEstateScreen({super.key});
 
   @override
-  ConsumerState<AdminRealEstateScreen> createState() => _AdminRealEstateScreenState();
+  ConsumerState<AdminRealEstateScreen> createState() =>
+      _AdminRealEstateScreenState();
 }
 
 class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
@@ -28,107 +29,231 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
     final listingsAsync = ref.watch(adminListingListProvider);
     final isWide = MediaQuery.of(context).size.width > 900;
 
-    return Column(children: [
-      // ─── Toolbar ───
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
-        ),
-        child: Row(children: [
-          SizedBox(
-            width: isWide ? 280 : 180,
-            height: 40,
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'חיפוש כתובת / שכונה...',
-                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
-                prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.turquoise)),
+    return Column(
+      children: [
+        // ─── Toolbar ───
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.border.withValues(alpha: 0.5),
               ),
-              onChanged: (v) => _debouncer.run(() {
-                ref.read(adminListingListProvider.notifier).setSearch(v.isEmpty ? null : v);
+            ),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: isWide ? 280 : 180,
+                height: 40,
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'חיפוש כתובת / שכונה...',
+                    hintStyle: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 13,
+                      color: AppColors.grayLight,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 18,
+                      color: AppColors.grayLight,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.turquoise),
+                    ),
+                  ),
+                  onChanged: (v) => _debouncer.run(() {
+                    ref
+                        .read(adminListingListProvider.notifier)
+                        .setSearch(v.isEmpty ? null : v);
+                  }),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Type filters
+              _FilterChip(
+                'הכל',
+                _typeFilter.isEmpty && _statusFilter.isEmpty,
+                () {
+                  setState(() {
+                    _typeFilter = '';
+                    _statusFilter = '';
+                  });
+                  ref
+                      .read(adminListingListProvider.notifier)
+                      .setKindFilter(null);
+                  ref
+                      .read(adminListingListProvider.notifier)
+                      .setStatusFilter(null);
+                },
+              ),
+              _FilterChip('השכרה', _typeFilter == 'rent', () {
+                setState(() {
+                  _typeFilter = 'rent';
+                  _statusFilter = '';
+                });
+                ref
+                    .read(adminListingListProvider.notifier)
+                    .setKindFilter('rent');
+                ref
+                    .read(adminListingListProvider.notifier)
+                    .setStatusFilter(null);
               }),
-            ),
+              _FilterChip('מכירה', _typeFilter == 'sale', () {
+                setState(() {
+                  _typeFilter = 'sale';
+                  _statusFilter = '';
+                });
+                ref
+                    .read(adminListingListProvider.notifier)
+                    .setKindFilter('sale');
+                ref
+                    .read(adminListingListProvider.notifier)
+                    .setStatusFilter(null);
+              }),
+
+              if (isWide) ...[
+                Container(
+                  width: 1,
+                  height: 24,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  color: AppColors.border,
+                ),
+                _FilterChip('פעיל', _statusFilter == 'active', () {
+                  setState(() => _statusFilter = 'active');
+                  ref
+                      .read(adminListingListProvider.notifier)
+                      .setStatusFilter('active');
+                }),
+                _FilterChip('ממתין', _statusFilter == 'pending', () {
+                  setState(() => _statusFilter = 'pending');
+                  ref
+                      .read(adminListingListProvider.notifier)
+                      .setStatusFilter('pending');
+                }),
+              ],
+
+              const Spacer(),
+              listingsAsync
+                      .whenData(
+                        (list) => Text(
+                          '${list.length} נכסים',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                      )
+                      .value ??
+                  const SizedBox.shrink(),
+              const SizedBox(width: 16),
+              FilledButton.icon(
+                onPressed: () => _showListingEditor(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'נכס חדש',
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.turquoise,
+                  minimumSize: const Size(0, 40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-
-          // Type filters
-          _FilterChip('הכל', _typeFilter.isEmpty && _statusFilter.isEmpty, () {
-            setState(() { _typeFilter = ''; _statusFilter = ''; });
-            ref.read(adminListingListProvider.notifier).setKindFilter(null);
-            ref.read(adminListingListProvider.notifier).setStatusFilter(null);
-          }),
-          _FilterChip('השכרה', _typeFilter == 'rent', () {
-            setState(() { _typeFilter = 'rent'; _statusFilter = ''; });
-            ref.read(adminListingListProvider.notifier).setKindFilter('rent');
-            ref.read(adminListingListProvider.notifier).setStatusFilter(null);
-          }),
-          _FilterChip('מכירה', _typeFilter == 'sale', () {
-            setState(() { _typeFilter = 'sale'; _statusFilter = ''; });
-            ref.read(adminListingListProvider.notifier).setKindFilter('sale');
-            ref.read(adminListingListProvider.notifier).setStatusFilter(null);
-          }),
-
-          if (isWide) ...[
-            Container(width: 1, height: 24, margin: const EdgeInsets.symmetric(horizontal: 8), color: AppColors.border),
-            _FilterChip('פעיל', _statusFilter == 'active', () {
-              setState(() => _statusFilter = 'active');
-              ref.read(adminListingListProvider.notifier).setStatusFilter('active');
-            }),
-            _FilterChip('ממתין', _statusFilter == 'pending', () {
-              setState(() => _statusFilter = 'pending');
-              ref.read(adminListingListProvider.notifier).setStatusFilter('pending');
-            }),
-          ],
-
-          const Spacer(),
-          listingsAsync.whenData((list) => Text('${list.length} נכסים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
-          const SizedBox(width: 16),
-          FilledButton.icon(
-            onPressed: () => _showListingEditor(context, ref),
-            icon: const Icon(Icons.add, size: 18),
-            label: Text('נכס חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
-              minimumSize: const Size(0, 40),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-        ]),
-      ),
-
-      // ─── Table ───
-      Expanded(
-        child: listingsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-            const SizedBox(height: 12),
-            Text('שגיאה בטעינת נכסים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error)),
-            Text('$e', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
-            const SizedBox(height: 12),
-            TextButton(onPressed: () => ref.read(adminListingListProvider.notifier).load(), child: const Text('נסה שוב')),
-          ])),
-          data: (listings) {
-            if (listings.isEmpty) {
-              return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.apartment_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
-                const SizedBox(height: 12),
-                Text('אין נכסים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
-              ]));
-            }
-            return _ListingTable(listings: listings, isWide: isWide, onTap: (l) => _showListingEditor(context, ref, listing: l), onAction: _handleAction);
-          },
         ),
-      ),
-    ]);
+
+        // ─── Table ───
+        Expanded(
+          child: listingsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'שגיאה בטעינת נכסים',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      color: AppColors.error,
+                    ),
+                  ),
+                  Text(
+                    '$e',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 12,
+                      color: AppColors.grayText,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () =>
+                        ref.read(adminListingListProvider.notifier).load(),
+                    child: const Text('נסה שוב'),
+                  ),
+                ],
+              ),
+            ),
+            data: (listings) {
+              if (listings.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.apartment_outlined,
+                        size: 48,
+                        color: AppColors.grayLight.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'אין נכסים',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          color: AppColors.grayText,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return _ListingTable(
+                listings: listings,
+                isWide: isWide,
+                onTap: (l) => _showListingEditor(context, ref, listing: l),
+                onAction: _handleAction,
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   void _handleAction(String action, Map<String, dynamic> listing) {
@@ -144,26 +269,64 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
       case 'activate':
         notifier.updateStatus(id, 'active');
       case 'sold':
-        notifier.updateStatus(id, listing['kind'] == 'rent' ? 'rented' : 'sold');
+        notifier.updateStatus(
+          id,
+          listing['kind'] == 'rent' ? 'rented' : 'sold',
+        );
       case 'expire':
         notifier.updateStatus(id, 'expired');
       case 'delete':
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('מחיקת נכס', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
-            content: Text('למחוק את "${listing['address']}"?', style: TextStyle(fontFamily: AppFonts.rubik)),
+            title: Text(
+              'מחיקת נכס',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: Text(
+              'למחוק את "${listing['address']}"?',
+              style: TextStyle(fontFamily: AppFonts.rubik),
+            ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
-              TextButton(onPressed: () { Navigator.pop(ctx); notifier.deleteListing(id); }, child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  'ביטול',
+                  style: TextStyle(fontFamily: AppFonts.rubik),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  notifier.deleteListing(id);
+                },
+                child: Text(
+                  'מחק',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
             ],
           ),
         );
     }
   }
 
-  void _showListingEditor(BuildContext context, WidgetRef ref, {Map<String, dynamic>? listing}) {
-    showDialog(context: context, barrierDismissible: false, builder: (ctx) => _ListingEditorDialog(listing: listing));
+  void _showListingEditor(
+    BuildContext context,
+    WidgetRef ref, {
+    Map<String, dynamic>? listing,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _ListingEditorDialog(listing: listing),
+    );
   }
 }
 
@@ -174,82 +337,266 @@ class _ListingTable extends StatelessWidget {
   final bool isWide;
   final void Function(Map<String, dynamic>) onTap;
   final void Function(String, Map<String, dynamic>) onAction;
-  const _ListingTable({required this.listings, required this.isWide, required this.onTap, required this.onAction});
+  const _ListingTable({
+    required this.listings,
+    required this.isWide,
+    required this.onTap,
+    required this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(color: AppColors.surfaceLight, border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5)))),
-        child: Row(children: [
-          _Col('כתובת', flex: 3),
-          _Col('שכונה', flex: 2),
-          _Col('סוג', flex: 1),
-          _Col('חדרים', flex: 1),
-          if (isWide) _Col('מ"ר', flex: 1),
-          _Col('מחיר', flex: 2),
-          _Col('סטטוס', flex: 1),
-          if (isWide) _Col('צפיות', flex: 1),
-          const SizedBox(width: 40),
-        ]),
-      ),
-      Expanded(
-        child: ListView.separated(
-          itemCount: listings.length,
-          separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.3)),
-          itemBuilder: (_, i) {
-            final l = listings[i];
-            final kind = l['kind'] as String? ?? 'sale';
-            final status = l['status'] as String? ?? 'pending';
-            final price =
-                (l['kind'] == 'rent' ? l['price_per_month'] : l['price'])
-                    as num? ??
-                0;
-            final isFeatured = l['is_featured'] as bool? ?? false;
-            final isBroker = l['is_broker'] as bool? ?? false;
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceLight,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.border.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              _Col('כתובת', flex: 3),
+              _Col('שכונה', flex: 2),
+              _Col('סוג', flex: 1),
+              _Col('חדרים', flex: 1),
+              if (isWide) _Col('מ"ר', flex: 1),
+              _Col('מחיר', flex: 2),
+              _Col('סטטוס', flex: 1),
+              if (isWide) _Col('צפיות', flex: 1),
+              const SizedBox(width: 40),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            itemCount: listings.length,
+            separatorBuilder: (_, __) => Divider(
+              height: 1,
+              color: AppColors.border.withValues(alpha: 0.3),
+            ),
+            itemBuilder: (_, i) {
+              final l = listings[i];
+              final kind = l['kind'] as String? ?? 'sale';
+              final status = l['status'] as String? ?? 'pending';
+              final price =
+                  (l['kind'] == 'rent' ? l['price_per_month'] : l['price'])
+                      as num? ??
+                  0;
+              final isFeatured = l['is_featured'] as bool? ?? false;
+              final isBroker = l['is_broker'] as bool? ?? false;
 
-            return InkWell(
-              onTap: () => onTap(l),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(children: [
-                  Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      if (isFeatured) Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.star, size: 14, color: AppColors.gold)),
-                      Flexible(child: Text(l['address'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis)),
-                    ]),
-                    if (isBroker) Text('מתווך', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)),
-                  ])),
-                  Expanded(flex: 2, child: Text(l['neighborhood'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                  Expanded(flex: 1, child: _TypeBadge(kind)),
-                  Expanded(flex: 1, child: Text('${l['rooms'] ?? '—'}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
-                  if (isWide) Expanded(flex: 1, child: Text('${l['sqm'] ?? '—'}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
-                  Expanded(flex: 2, child: Text(_formatPrice(price, kind), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navy))),
-                  Expanded(flex: 1, child: _StatusPill(status)),
-                  if (isWide) Expanded(flex: 1, child: Text('${l['view_count'] ?? 0}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
-                    onSelected: (v) => onAction(v, l),
-                    itemBuilder: (_) => [
-                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      if (status == 'pending') ...[
-                        PopupMenuItem(value: 'approve', child: Text('אישור ופרסום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.success))),
-                        PopupMenuItem(value: 'reject', child: Text('דחייה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
-                      ],
-                      if (status != 'active' && status != 'pending') PopupMenuItem(value: 'activate', child: Text('הפעל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      if (status == 'active') PopupMenuItem(value: 'sold', child: Text(kind == 'rent' ? 'סמן כהושכר' : 'סמן כנמכר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      if (status != 'expired') PopupMenuItem(value: 'expire', child: Text('סמן כפג תוקף', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
+              return InkWell(
+                onTap: () => onTap(l),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                if (isFeatured)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Icon(
+                                      Icons.star,
+                                      size: 14,
+                                      color: AppColors.gold,
+                                    ),
+                                  ),
+                                Flexible(
+                                  child: Text(
+                                    l['address'] as String? ?? '',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.navy,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (isBroker)
+                              Text(
+                                'מתווך',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 10,
+                                  color: AppColors.grayLight,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          l['neighborhood'] as String? ?? '',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      Expanded(flex: 1, child: _TypeBadge(kind)),
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          '${l['rooms'] ?? '—'}',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                      ),
+                      if (isWide)
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${l['sqm'] ?? '—'}',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 13,
+                              color: AppColors.grayText,
+                            ),
+                          ),
+                        ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          _formatPrice(price, kind),
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ),
+                      Expanded(flex: 1, child: _StatusPill(status)),
+                      if (isWide)
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${l['view_count'] ?? 0}',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 13,
+                              color: AppColors.grayText,
+                            ),
+                          ),
+                        ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: AppColors.grayLight,
+                        ),
+                        onSelected: (v) => onAction(v, l),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(
+                              'עריכה',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          if (status == 'pending') ...[
+                            PopupMenuItem(
+                              value: 'approve',
+                              child: Text(
+                                'אישור ופרסום',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'reject',
+                              child: Text(
+                                'דחייה',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (status != 'active' && status != 'pending')
+                            PopupMenuItem(
+                              value: 'activate',
+                              child: Text(
+                                'הפעל',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          if (status == 'active')
+                            PopupMenuItem(
+                              value: 'sold',
+                              child: Text(
+                                kind == 'rent' ? 'סמן כהושכר' : 'סמן כנמכר',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          if (status != 'expired')
+                            PopupMenuItem(
+                              value: 'expire',
+                              child: Text(
+                                'סמן כפג תוקף',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              'מחק',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ]),
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   String _formatPrice(num price, String type) {
@@ -280,7 +627,8 @@ class _ListingEditorDialog extends ConsumerStatefulWidget {
   const _ListingEditorDialog({this.listing});
 
   @override
-  ConsumerState<_ListingEditorDialog> createState() => _ListingEditorDialogState();
+  ConsumerState<_ListingEditorDialog> createState() =>
+      _ListingEditorDialogState();
 }
 
 class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
@@ -329,13 +677,25 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
         ? null
         : (l['kind'] == 'rent' ? l['price_per_month'] : l['price']) as num?;
     _price = TextEditingController(text: existingPrice?.toString() ?? '');
-    _rooms = TextEditingController(text: (l?['rooms'] as num?)?.toString() ?? '');
+    _rooms = TextEditingController(
+      text: (l?['rooms'] as num?)?.toString() ?? '',
+    );
     _sqm = TextEditingController(text: (l?['sqm'] as num?)?.toString() ?? '');
-    _floor = TextEditingController(text: (l?['floor'] as num?)?.toString() ?? '');
-    _totalFloors = TextEditingController(text: (l?['total_floors'] as num?)?.toString() ?? '');
-    _description = TextEditingController(text: l?['description'] as String? ?? '');
-    _contactName = TextEditingController(text: l?['contact_name'] as String? ?? '');
-    _contactPhone = TextEditingController(text: l?['contact_phone'] as String? ?? '');
+    _floor = TextEditingController(
+      text: (l?['floor'] as num?)?.toString() ?? '',
+    );
+    _totalFloors = TextEditingController(
+      text: (l?['total_floors'] as num?)?.toString() ?? '',
+    );
+    _description = TextEditingController(
+      text: l?['description'] as String? ?? '',
+    );
+    _contactName = TextEditingController(
+      text: l?['contact_name'] as String? ?? '',
+    );
+    _contactPhone = TextEditingController(
+      text: l?['contact_phone'] as String? ?? '',
+    );
 
     _kind = l?['kind'] as String? ?? 'rent';
     _propertyType = l?['property_type'] as String? ?? 'apartment';
@@ -352,9 +712,16 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
 
   @override
   void dispose() {
-    _address.dispose(); _title.dispose(); _price.dispose(); _rooms.dispose();
-    _sqm.dispose(); _floor.dispose(); _totalFloors.dispose(); _description.dispose();
-    _contactName.dispose(); _contactPhone.dispose();
+    _address.dispose();
+    _title.dispose();
+    _price.dispose();
+    _rooms.dispose();
+    _sqm.dispose();
+    _floor.dispose();
+    _totalFloors.dispose();
+    _description.dispose();
+    _contactName.dispose();
+    _contactPhone.dispose();
     super.dispose();
   }
 
@@ -369,146 +736,444 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
           textDirection: TextDirection.rtl,
           child: Form(
             key: _formKey,
-            child: Column(children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
-                child: Row(children: [
-                  Text(_isEditing ? 'עריכת נכס' : 'נכס חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-                  const Spacer(),
-                  IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
-                ]),
-              ),
-
-              Expanded(
-                child: ListView(padding: const EdgeInsets.all(20), children: [
-                  // `title` is NOT NULL on the table and the form never
-                  // collected it, so even a corrected save would have failed.
-                  _field('כותרת *', _title, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
-                  Row(children: [
-                    Expanded(child: DropdownButtonFormField<String>(
-                      value: _kind,
-                      decoration: InputDecoration(labelText: 'סוג מודעה *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                      items: [
-                        DropdownMenuItem(value: 'rent', child: Text('השכרה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                        DropdownMenuItem(value: 'sale', child: Text('מכירה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      ],
-                      onChanged: (v) => setState(() => _kind = v!),
-                    )),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('מחיר *', _price, hint: _kind == 'rent' ? '6000' : '2500000', validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null)),
-                  ]),
-                  Row(children: [
-                    Expanded(child: DropdownButtonFormField<String>(
-                      value: _propertyType,
-                      decoration: InputDecoration(labelText: 'סוג נכס', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                      items: const [
-                        ('apartment', 'דירה'), ('penthouse', 'פנטהאוז'),
-                        ('garden', 'דירת גן'), ('duplex', 'דופלקס'),
-                        ('villa', 'וילה'), ('studio', 'סטודיו'), ('other', 'אחר'),
-                      ].map((t) => DropdownMenuItem(value: t.$1, child: Text(t.$2, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)))).toList(),
-                      onChanged: (v) => setState(() => _propertyType = v!),
-                    )),
-                    const SizedBox(width: 12),
-                    // The neighbourhood is a row in `neighborhoods`, so it is
-                    // picked rather than typed — a typed name matched nothing.
-                    Expanded(child: Consumer(builder: (_, ref, _) {
-                      final hoods = ref.watch(adminNeighborhoodOptionsProvider);
-                      return DropdownButtonFormField<String>(
-                        value: _neighborhoodId,
-                        decoration: InputDecoration(labelText: 'שכונה', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                        items: [
-                          for (final h in hoods.valueOrNull ?? const <Map<String, dynamic>>[])
-                            DropdownMenuItem(value: h['id'] as String, child: Text(h['name'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                        ],
-                        onChanged: (v) => setState(() => _neighborhoodId = v),
-                      );
-                    })),
-                  ]),
-                  _field('כתובת *', _address, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
-                  Row(children: [
-                    Expanded(child: _field('חדרים', _rooms, hint: '4')),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('מ"ר', _sqm, hint: '110')),
-                  ]),
-                  Row(children: [
-                    Expanded(child: _field('קומה', _floor, hint: '3')),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('סה"כ קומות', _totalFloors, hint: '6')),
-                  ]),
-                  _field('תיאור', _description, maxLines: 3),
-                  const SizedBox(height: 8),
-                  Text('פרטי קשר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
-                  const SizedBox(height: 8),
-                  Row(children: [
-                    Expanded(child: _field('שם', _contactName)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('טלפון', _contactPhone)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text('מאפיינים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 8, runSpacing: 4, children: [
-                    _toggle('חניה', _hasParking, (v) => setState(() => _hasParking = v)),
-                    _toggle('מעלית', _hasElevator, (v) => setState(() => _hasElevator = v)),
-                    _toggle('מרפסת', _hasBalcony, (v) => setState(() => _hasBalcony = v)),
-                    _toggle('מחסן', _hasStorage, (v) => setState(() => _hasStorage = v)),
-                    _toggle('ממ"ד', _hasMamad, (v) => setState(() => _hasMamad = v)),
-                    _toggle('מרוהט', _isFurnished, (v) => setState(() => _isFurnished = v)),
-                    _toggle('מתווך', _isBroker, (v) => setState(() => _isBroker = v)),
-                    _toggle('מומלץ', _isFeatured, (v) => setState(() => _isFeatured = v)),
-                  ]),
-                  const SizedBox(height: 16),
-                  Text('סטטוס', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _status,
-                    decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                    items: [
-                      DropdownMenuItem(value: 'pending', child: Text('ממתין', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      DropdownMenuItem(value: 'active', child: Text('פעיל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      DropdownMenuItem(value: _kind == 'rent' ? 'rented' : 'sold', child: Text(_kind == 'rent' ? 'הושכר' : 'נמכר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      DropdownMenuItem(value: 'expired', child: Text('פג תוקף', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.navy,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(14),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        _isEditing ? 'עריכת נכס' : 'נכס חדש',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
-                    onChanged: (v) => setState(() => _status = v!),
                   ),
-                ]),
-              ),
+                ),
 
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
-                child: Row(children: [
-                  const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: _saving ? null : _save,
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    child: _saving
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור נכס', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      // `title` is NOT NULL on the table and the form never
+                      // collected it, so even a corrected save would have failed.
+                      _field(
+                        'כותרת *',
+                        _title,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _kind,
+                              decoration: InputDecoration(
+                                labelText: 'סוג מודעה *',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: [
+                                DropdownMenuItem(
+                                  value: 'rent',
+                                  child: Text(
+                                    'השכרה',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'sale',
+                                  child: Text(
+                                    'מכירה',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (v) => setState(() => _kind = v!),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _field(
+                              'מחיר *',
+                              _price,
+                              hint: _kind == 'rent' ? '6000' : '2500000',
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'שדה חובה' : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _propertyType,
+                              decoration: InputDecoration(
+                                labelText: 'סוג נכס',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items:
+                                  const [
+                                        ('apartment', 'דירה'),
+                                        ('penthouse', 'פנטהאוז'),
+                                        ('garden', 'דירת גן'),
+                                        ('duplex', 'דופלקס'),
+                                        ('villa', 'וילה'),
+                                        ('studio', 'סטודיו'),
+                                        ('other', 'אחר'),
+                                      ]
+                                      .map(
+                                        (t) => DropdownMenuItem(
+                                          value: t.$1,
+                                          child: Text(
+                                            t.$2,
+                                            style: TextStyle(
+                                              fontFamily: AppFonts.rubik,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged: (v) =>
+                                  setState(() => _propertyType = v!),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // The neighbourhood is a row in `neighborhoods`, so it is
+                          // picked rather than typed — a typed name matched nothing.
+                          Expanded(
+                            child: Consumer(
+                              builder: (_, ref, _) {
+                                final hoods = ref.watch(
+                                  adminNeighborhoodOptionsProvider,
+                                );
+                                return DropdownButtonFormField<String>(
+                                  value: _neighborhoodId,
+                                  decoration: InputDecoration(
+                                    labelText: 'שכונה',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                  ),
+                                  items: [
+                                    for (final h
+                                        in hoods.valueOrNull ??
+                                            const <Map<String, dynamic>>[])
+                                      DropdownMenuItem(
+                                        value: h['id'] as String,
+                                        child: Text(
+                                          h['name'] as String,
+                                          style: TextStyle(
+                                            fontFamily: AppFonts.rubik,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                  onChanged: (v) =>
+                                      setState(() => _neighborhoodId = v),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      _field(
+                        'כתובת *',
+                        _address,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(child: _field('חדרים', _rooms, hint: '4')),
+                          const SizedBox(width: 12),
+                          Expanded(child: _field('מ"ר', _sqm, hint: '110')),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(child: _field('קומה', _floor, hint: '3')),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _field(
+                              'סה"כ קומות',
+                              _totalFloors,
+                              hint: '6',
+                            ),
+                          ),
+                        ],
+                      ),
+                      _field('תיאור', _description, maxLines: 3),
+                      const SizedBox(height: 8),
+                      Text(
+                        'פרטי קשר',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(child: _field('שם', _contactName)),
+                          const SizedBox(width: 12),
+                          Expanded(child: _field('טלפון', _contactPhone)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'מאפיינים',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          _toggle(
+                            'חניה',
+                            _hasParking,
+                            (v) => setState(() => _hasParking = v),
+                          ),
+                          _toggle(
+                            'מעלית',
+                            _hasElevator,
+                            (v) => setState(() => _hasElevator = v),
+                          ),
+                          _toggle(
+                            'מרפסת',
+                            _hasBalcony,
+                            (v) => setState(() => _hasBalcony = v),
+                          ),
+                          _toggle(
+                            'מחסן',
+                            _hasStorage,
+                            (v) => setState(() => _hasStorage = v),
+                          ),
+                          _toggle(
+                            'ממ"ד',
+                            _hasMamad,
+                            (v) => setState(() => _hasMamad = v),
+                          ),
+                          _toggle(
+                            'מרוהט',
+                            _isFurnished,
+                            (v) => setState(() => _isFurnished = v),
+                          ),
+                          _toggle(
+                            'מתווך',
+                            _isBroker,
+                            (v) => setState(() => _isBroker = v),
+                          ),
+                          _toggle(
+                            'מומלץ',
+                            _isFeatured,
+                            (v) => setState(() => _isFeatured = v),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'סטטוס',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _status,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'pending',
+                            child: Text(
+                              'ממתין',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'active',
+                            child: Text(
+                              'פעיל',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: _kind == 'rent' ? 'rented' : 'sold',
+                            child: Text(
+                              _kind == 'rent' ? 'הושכר' : 'נמכר',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'expired',
+                            child: Text(
+                              'פג תוקף',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => _status = v!),
+                      ),
+                    ],
                   ),
-                ]),
-              ),
-            ]),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'ביטול',
+                          style: TextStyle(fontFamily: AppFonts.rubik),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _saving ? null : _save,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.turquoise,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                _isEditing ? 'שמור' : 'צור נכס',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _field(String label, TextEditingController controller, {int maxLines = 1, String? hint, String? Function(String?)? validator}) {
+  Widget _field(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    String? hint,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
-        controller: controller, maxLines: maxLines, validator: validator,
+        controller: controller,
+        maxLines: maxLines,
+        validator: validator,
         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
         decoration: InputDecoration(
-          labelText: label, hintText: hint,
+          labelText: label,
+          hintText: hint,
           labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
         ),
       ),
     );
@@ -516,8 +1181,12 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
 
   Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) {
     return FilterChip(
-      label: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)),
-      selected: value, onSelected: onChanged,
+      label: Text(
+        label,
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
+      ),
+      selected: value,
+      onSelected: onChanged,
       selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
       checkmarkColor: AppColors.turquoise,
       side: BorderSide(color: value ? AppColors.turquoise : AppColors.border),
@@ -570,7 +1239,12 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('שגיאה: $e'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('שגיאה: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -596,8 +1270,19 @@ class _StatusPill extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -615,8 +1300,19 @@ class _TypeBadge extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -628,7 +1324,18 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+    return Expanded(
+      flex: flex,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.grayLight,
+        ),
+      ),
+    );
   }
 }
 
@@ -643,15 +1350,29 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
       child: InkWell(
-        onTap: onTap, borderRadius: BorderRadius.circular(6),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent,
+            color: selected
+                ? AppColors.turquoise.withValues(alpha: 0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5),
+            border: Border.all(
+              color: selected ? AppColors.turquoise : AppColors.border,
+              width: 0.5,
+            ),
           ),
-          child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? AppColors.turquoise : AppColors.grayText,
+            ),
+          ),
         ),
       ),
     );
@@ -664,6 +1385,8 @@ class _Debouncer {
   Future<void>? _pending;
   void run(VoidCallback action) {
     _pending?.ignore();
-    _pending = Future.delayed(Duration(milliseconds: milliseconds)).then((_) => action());
+    _pending = Future.delayed(
+      Duration(milliseconds: milliseconds),
+    ).then((_) => action());
   }
 }

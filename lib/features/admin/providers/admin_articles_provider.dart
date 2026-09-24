@@ -24,7 +24,7 @@ final articleCategoriesProvider = FutureProvider<List<Map<String, dynamic>>>((
       .select('id, name, slug, scope, is_active, sort_order')
       .eq('scope', 'article')
       .eq('is_active', true)
-      .order('sort_order');
+      .order('sort_order', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });
 

@@ -85,10 +85,7 @@ class AdminTeamNotifier extends AdminTableNotifier {
   }
 
   Future<void> updateRole(String id, Map<String, dynamic> fields) async {
-    await SupabaseConfig.client
-        .from('admin_roles')
-        .update(fields)
-        .eq('id', id);
+    await SupabaseConfig.client.from('admin_roles').update(fields).eq('id', id);
   }
 
   /// Built-in roles cannot be removed; the column exists to say so.
@@ -107,7 +104,7 @@ final adminRolesProvider = FutureProvider<List<Map<String, dynamic>>>((
   final rows = await SupabaseConfig.client
       .from('admin_roles')
       .select('id, name, label, description, is_system')
-      .order('name');
+      .order('name', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });
 
@@ -117,6 +114,6 @@ final adminCandidateProfilesProvider =
       final rows = await SupabaseConfig.client
           .from('profiles')
           .select('id, full_name, email')
-          .order('full_name');
+          .order('full_name', ascending: true);
       return List<Map<String, dynamic>>.from(rows);
     });

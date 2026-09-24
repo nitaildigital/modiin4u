@@ -9,6 +9,7 @@ class BusinessCard extends StatelessWidget {
   final String category;
   final double rating;
   final int reviewCount;
+
   /// Null when the business has no opening hours on record, in which case
   /// no open/closed tag is shown rather than claiming it is closed.
   final bool? isOpen;
@@ -59,7 +60,8 @@ class BusinessCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             name,
-                            style: TextStyle(fontFamily: AppFonts.rubik, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: context.textPrimary,
@@ -74,7 +76,8 @@ class BusinessCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '$category · $neighborhood',
-                      style: TextStyle(fontFamily: AppFonts.rubik, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubik,
                         fontSize: 13,
                         color: AppColors.grayText,
                       ),
@@ -86,7 +89,8 @@ class BusinessCard extends StatelessWidget {
                         const SizedBox(width: 3),
                         Text(
                           rating.toStringAsFixed(1),
-                          style: TextStyle(fontFamily: AppFonts.rubik, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: context.textPrimary,
@@ -95,7 +99,8 @@ class BusinessCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '($reviewCount)',
-                          style: TextStyle(fontFamily: AppFonts.rubik, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
                             fontSize: 12,
                             color: AppColors.grayLight,
                           ),
@@ -113,7 +118,8 @@ class BusinessCard extends StatelessWidget {
                             ),
                             child: Text(
                               kosher!,
-                              style: TextStyle(fontFamily: AppFonts.rubik, 
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
                                 fontSize: 11,
                                 color: AppColors.midBlue,
                                 fontWeight: FontWeight.w500,
@@ -151,7 +157,8 @@ class _StatusTag extends StatelessWidget {
       ),
       child: Text(
         isOpen ? 'פתוח' : 'סגור',
-        style: TextStyle(fontFamily: AppFonts.rubik, 
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: isOpen ? AppColors.success : AppColors.error,

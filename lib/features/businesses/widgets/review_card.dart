@@ -39,7 +39,8 @@ class ReviewCard extends StatelessWidget {
                 backgroundColor: AppColors.midBlue.withValues(alpha: 0.1),
                 child: Text(
                   userName.characters.first,
-                  style: TextStyle(fontFamily: AppFonts.rubik, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.midBlue,
@@ -55,7 +56,8 @@ class ReviewCard extends StatelessWidget {
                       children: [
                         Text(
                           userName,
-                          style: TextStyle(fontFamily: AppFonts.rubik, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: context.textPrimary,
@@ -83,7 +85,8 @@ class ReviewCard extends StatelessWidget {
                                 const SizedBox(width: 3),
                                 Text(
                                   'תושב מאומת',
-                                  style: TextStyle(fontFamily: AppFonts.rubik, 
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubik,
                                     fontSize: 10,
                                     color: AppColors.turquoise,
                                     fontWeight: FontWeight.w500,
@@ -98,7 +101,8 @@ class ReviewCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       date,
-                      style: TextStyle(fontFamily: AppFonts.rubik, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubik,
                         fontSize: 12,
                         color: AppColors.grayLight,
                       ),
@@ -121,7 +125,8 @@ class ReviewCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             text,
-            style: TextStyle(fontFamily: AppFonts.rubik, 
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
               fontSize: 14,
               color: AppColors.grayText,
               height: 1.4,
@@ -146,7 +151,8 @@ class ReviewCard extends StatelessWidget {
                 children: [
                   Text(
                     'תגובת בעל העסק',
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.midBlue,
@@ -155,7 +161,8 @@ class ReviewCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     ownerReply!,
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
                       fontSize: 13,
                       color: AppColors.grayText,
                       height: 1.4,

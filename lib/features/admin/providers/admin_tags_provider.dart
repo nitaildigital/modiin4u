@@ -36,11 +36,12 @@ class AdminTagListNotifier extends AdminTableNotifier {
     if (by == null || by.isEmpty) return;
 
     state.whenData((rows) {
-      final sorted = [...rows]..sort((a, b) {
-        final x = a[by], y = b[by];
-        if (x is num && y is num) return y.compareTo(x);
-        return '$x'.compareTo('$y');
-      });
+      final sorted = [...rows]
+        ..sort((a, b) {
+          final x = a[by], y = b[by];
+          if (x is num && y is num) return y.compareTo(x);
+          return '$x'.compareTo('$y');
+        });
       state = AsyncValue.data(sorted);
     });
   }

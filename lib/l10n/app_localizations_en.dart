@@ -1125,4 +1125,71 @@ class LEn extends L {
 
   @override
   String get svcForms => 'Forms';
+
+  @override
+  String get tabOverview => 'Overview';
+
+  @override
+  String get tabMenu => 'Menu';
+
+  @override
+  String get tabPhotos => 'Photos';
+
+  @override
+  String get tabReviews => 'Reviews';
+
+  @override
+  String get callNow => 'Call Now';
+
+  @override
+  String get uploadPhoto => 'Upload a Photo';
+
+  @override
+  String get shareYourExperience => 'Share your experience with the community';
+
+  @override
+  String get howWasExperience => 'How was your experience?';
+
+  @override
+  String get rateAndShare => 'Rate and share your experience';
+
+  @override
+  String get ratePoor => 'Poor';
+
+  @override
+  String get rateFair => 'Fair';
+
+  @override
+  String get rateGood => 'Good';
+
+  @override
+  String get rateVeryGood => 'Very Good';
+
+  @override
+  String get rateExcellent => 'Excellent!';
+
+  @override
+  String get writeYourReview => 'Write your review';
+
+  @override
+  String get reviewHint =>
+      'Share details about your experience at this place...';
+
+  @override
+  String get submit => 'Submit';
+
+  @override
+  String get justNow => 'Just now';
+
+  @override
+  String get yourReply => 'Your reply';
+
+  @override
+  String get reply => 'Reply';
+
+  @override
+  String get writeReplyHint => 'Write a reply...';
+
+  @override
+  String get replySent => 'Reply sent!';
 }

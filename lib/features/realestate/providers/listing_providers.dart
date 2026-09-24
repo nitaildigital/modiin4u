@@ -130,7 +130,7 @@ final listingNeighborhoodsProvider =
           .from('neighborhoods')
           .select('id, name')
           .eq('is_active', true)
-          .order('sort_order');
+          .order('sort_order', ascending: true);
       return List<Map<String, dynamic>>.from(
         rows,
       ).map((r) => (id: r['id'] as String, name: r['name'] as String)).toList();

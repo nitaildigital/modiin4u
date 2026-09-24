@@ -8,7 +8,8 @@ class AdminAgreementsScreen extends ConsumerStatefulWidget {
   const AdminAgreementsScreen({super.key});
 
   @override
-  ConsumerState<AdminAgreementsScreen> createState() => _AdminAgreementsScreenState();
+  ConsumerState<AdminAgreementsScreen> createState() =>
+      _AdminAgreementsScreenState();
 }
 
 class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
@@ -28,172 +29,443 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
     final asyncData = ref.watch(adminAgreementListProvider);
     final isWide = MediaQuery.of(context).size.width > 900;
 
-    return Column(children: [
-      // ─── Stats bar ───
-      asyncData.whenData((list) {
-        final active = list.where((a) => a['status'] == 'active').toList();
-        final monthly = active.fold<double>(0.0, (sum, a) {
-          final price = (a['price'] as num?)?.toDouble() ?? 0;
-          final discount = (a['discount_pct'] as num?)?.toDouble() ?? 0;
-          final net = price * (1 - discount / 100);
-          final cycle = a['billing_cycle'] as String? ?? 'monthly';
-          return sum + (cycle == 'yearly' ? net / 12 : cycle == 'quarterly' ? net / 3 : net);
-        });
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    return Column(
+      children: [
+        // ─── Stats bar ───
+        asyncData.whenData((list) {
+              final active = list
+                  .where((a) => a['status'] == 'active')
+                  .toList();
+              final monthly = active.fold<double>(0.0, (sum, a) {
+                final price = (a['price'] as num?)?.toDouble() ?? 0;
+                final discount = (a['discount_pct'] as num?)?.toDouble() ?? 0;
+                final net = price * (1 - discount / 100);
+                final cycle = a['billing_cycle'] as String? ?? 'monthly';
+                return sum +
+                    (cycle == 'yearly'
+                        ? net / 12
+                        : cycle == 'quarterly'
+                        ? net / 3
+                        : net);
+              });
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppColors.border.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _StatChip(
+                      'הכנסה חודשית',
+                      '₪${monthly.toStringAsFixed(0)}',
+                      AppColors.turquoise,
+                    ),
+                    const SizedBox(width: 16),
+                    _StatChip(
+                      'הסכמים פעילים',
+                      '${active.length}',
+                      AppColors.success,
+                    ),
+                    const SizedBox(width: 16),
+                    _StatChip('סה"כ הסכמים', '${list.length}', AppColors.navy),
+                  ],
+                ),
+              );
+            }).value ??
+            const SizedBox.shrink(),
+
+        // ─── Toolbar ───
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
-          ),
-          child: Row(children: [
-            _StatChip('הכנסה חודשית', '₪${monthly.toStringAsFixed(0)}', AppColors.turquoise),
-            const SizedBox(width: 16),
-            _StatChip('הסכמים פעילים', '${active.length}', AppColors.success),
-            const SizedBox(width: 16),
-            _StatChip('סה"כ הסכמים', '${list.length}', AppColors.navy),
-          ]),
-        );
-      }).value ?? const SizedBox.shrink(),
-
-      // ─── Toolbar ───
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
-        ),
-        child: Row(children: [
-          SizedBox(
-            width: isWide ? 280 : 180,
-            height: 40,
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'חיפוש לפי עסק...',
-                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
-                prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.turquoise)),
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.border.withValues(alpha: 0.5),
               ),
-              onChanged: (v) => _debouncer.run(() {
-                ref.read(adminAgreementListProvider.notifier).setSearch(v.isEmpty ? null : v);
-              }),
             ),
           ),
-          const SizedBox(width: 12),
-          _FilterChip('הכל', _statusFilter.isEmpty, () { setState(() => _statusFilter = ''); ref.read(adminAgreementListProvider.notifier).setStatusFilter(null); }),
-          _FilterChip('פעיל', _statusFilter == 'active', () { setState(() => _statusFilter = 'active'); ref.read(adminAgreementListProvider.notifier).setStatusFilter('active'); }),
-          _FilterChip('מושהה', _statusFilter == 'paused', () { setState(() => _statusFilter = 'paused'); ref.read(adminAgreementListProvider.notifier).setStatusFilter('paused'); }),
-          _FilterChip('בוטל', _statusFilter == 'cancelled', () { setState(() => _statusFilter = 'cancelled'); ref.read(adminAgreementListProvider.notifier).setStatusFilter('cancelled'); }),
-          _FilterChip('פג תוקף', _statusFilter == 'expired', () { setState(() => _statusFilter = 'expired'); ref.read(adminAgreementListProvider.notifier).setStatusFilter('expired'); }),
-          const Spacer(),
-          asyncData.whenData((list) => Text('${list.length} הסכמים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
-          const SizedBox(width: 16),
-          FilledButton.icon(
-            onPressed: () => _showEditor(context, ref),
-            icon: const Icon(Icons.add, size: 18),
-            label: Text('הסכם חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, minimumSize: const Size(0, 40), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-          ),
-        ]),
-      ),
-
-      // ─── Table ───
-      Expanded(
-        child: asyncData.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('שגיאה: $e', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
-          data: (list) {
-            if (list.isEmpty) {
-              return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.handshake_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
-                const SizedBox(height: 12),
-                Text('אין הסכמים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
-              ]));
-            }
-            return Column(children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(color: AppColors.surfaceLight, border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5)))),
-                child: Row(children: [
-                  _Col('עסק', flex: 3),
-                  _Col('סוג', flex: 2),
-                  if (isWide) _Col('מחיר', flex: 1),
-                  if (isWide) _Col('מחזור', flex: 1),
-                  _Col('סטטוס', flex: 1),
-                  if (isWide) _Col('תקופה', flex: 2),
-                  const SizedBox(width: 40),
-                ]),
-              ),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.3)),
-                  itemBuilder: (_, i) {
-                    final a = list[i];
-                    final status = a['status'] as String? ?? 'active';
-                    final price = (a['price'] as num?)?.toDouble() ?? 0;
-                    final discount = (a['discount_pct'] as num?)?.toDouble() ?? 0;
-                    final net = price * (1 - discount / 100);
-                    final cycle = a['billing_cycle'] as String? ?? '';
-                    final cycleLabel = _cycleLabel(cycle);
-                    final typeLabel = _typeLabel(a['type'] as String? ?? '');
-                    final start = a['start_date'] as String? ?? '';
-                    final end = a['end_date'] as String? ?? '';
-
-                    return InkWell(
-                      onTap: () => _showEditor(context, ref, agreement: a),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        child: Row(children: [
-                          Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(a['business_name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
-                            Text(a['name'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
-                          ])),
-                          Expanded(flex: 2, child: Text(typeLabel, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
-                          if (isWide) Expanded(flex: 1, child: Text(discount > 0 ? '₪${net.toStringAsFixed(0)} (${discount.toInt()}%-)' : '₪${price.toStringAsFixed(0)}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, fontFeatures: [const FontFeature.tabularFigures()]))),
-                          if (isWide) Expanded(flex: 1, child: Text(cycleLabel, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
-                          Expanded(flex: 1, child: _StatusPill(status)),
-                          if (isWide) Expanded(flex: 2, child: Text('$start → $end', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayText))),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
-                            onSelected: (v) => _handleAction(v, a),
-                            itemBuilder: (_) => [
-                              PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                              if (status != 'active') PopupMenuItem(value: 'activate', child: Text('הפעל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                              if (status == 'active') PopupMenuItem(value: 'pause', child: Text('השהה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                              PopupMenuItem(value: 'cancel', child: Text('בטל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
-                            ],
-                          ),
-                        ]),
-                      ),
-                    );
-                  },
+          child: Row(
+            children: [
+              SizedBox(
+                width: isWide ? 280 : 180,
+                height: 40,
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'חיפוש לפי עסק...',
+                    hintStyle: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 13,
+                      color: AppColors.grayLight,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 18,
+                      color: AppColors.grayLight,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.turquoise),
+                    ),
+                  ),
+                  onChanged: (v) => _debouncer.run(() {
+                    ref
+                        .read(adminAgreementListProvider.notifier)
+                        .setSearch(v.isEmpty ? null : v);
+                  }),
                 ),
               ),
-            ]);
-          },
+              const SizedBox(width: 12),
+              _FilterChip('הכל', _statusFilter.isEmpty, () {
+                setState(() => _statusFilter = '');
+                ref
+                    .read(adminAgreementListProvider.notifier)
+                    .setStatusFilter(null);
+              }),
+              _FilterChip('פעיל', _statusFilter == 'active', () {
+                setState(() => _statusFilter = 'active');
+                ref
+                    .read(adminAgreementListProvider.notifier)
+                    .setStatusFilter('active');
+              }),
+              _FilterChip('מושהה', _statusFilter == 'paused', () {
+                setState(() => _statusFilter = 'paused');
+                ref
+                    .read(adminAgreementListProvider.notifier)
+                    .setStatusFilter('paused');
+              }),
+              _FilterChip('בוטל', _statusFilter == 'cancelled', () {
+                setState(() => _statusFilter = 'cancelled');
+                ref
+                    .read(adminAgreementListProvider.notifier)
+                    .setStatusFilter('cancelled');
+              }),
+              _FilterChip('פג תוקף', _statusFilter == 'expired', () {
+                setState(() => _statusFilter = 'expired');
+                ref
+                    .read(adminAgreementListProvider.notifier)
+                    .setStatusFilter('expired');
+              }),
+              const Spacer(),
+              asyncData
+                      .whenData(
+                        (list) => Text(
+                          '${list.length} הסכמים',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                      )
+                      .value ??
+                  const SizedBox.shrink(),
+              const SizedBox(width: 16),
+              FilledButton.icon(
+                onPressed: () => _showEditor(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'הסכם חדש',
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.turquoise,
+                  minimumSize: const Size(0, 40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ]);
+
+        // ─── Table ───
+        Expanded(
+          child: asyncData.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Text(
+                'שגיאה: $e',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+            data: (list) {
+              if (list.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.handshake_outlined,
+                        size: 48,
+                        color: AppColors.grayLight.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'אין הסכמים',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          color: AppColors.grayText,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.border.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _Col('עסק', flex: 3),
+                        _Col('סוג', flex: 2),
+                        if (isWide) _Col('מחיר', flex: 1),
+                        if (isWide) _Col('מחזור', flex: 1),
+                        _Col('סטטוס', flex: 1),
+                        if (isWide) _Col('תקופה', flex: 2),
+                        const SizedBox(width: 40),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: list.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        color: AppColors.border.withValues(alpha: 0.3),
+                      ),
+                      itemBuilder: (_, i) {
+                        final a = list[i];
+                        final status = a['status'] as String? ?? 'active';
+                        final price = (a['price'] as num?)?.toDouble() ?? 0;
+                        final discount =
+                            (a['discount_pct'] as num?)?.toDouble() ?? 0;
+                        final net = price * (1 - discount / 100);
+                        final cycle = a['billing_cycle'] as String? ?? '';
+                        final cycleLabel = _cycleLabel(cycle);
+                        final typeLabel = _typeLabel(
+                          a['type'] as String? ?? '',
+                        );
+                        final start = a['start_date'] as String? ?? '';
+                        final end = a['end_date'] as String? ?? '';
+
+                        return InkWell(
+                          onTap: () => _showEditor(context, ref, agreement: a),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        a['business_name'] as String? ?? '',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.navy,
+                                        ),
+                                      ),
+                                      Text(
+                                        a['name'] as String? ?? '',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 11,
+                                          color: AppColors.grayLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    typeLabel,
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                      color: AppColors.grayText,
+                                    ),
+                                  ),
+                                ),
+                                if (isWide)
+                                  Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      discount > 0
+                                          ? '₪${net.toStringAsFixed(0)} (${discount.toInt()}%-)'
+                                          : '₪${price.toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        fontFeatures: [
+                                          const FontFeature.tabularFigures(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                if (isWide)
+                                  Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      cycleLabel,
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 12,
+                                        color: AppColors.grayText,
+                                      ),
+                                    ),
+                                  ),
+                                Expanded(flex: 1, child: _StatusPill(status)),
+                                if (isWide)
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      '$start → $end',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 11,
+                                        color: AppColors.grayText,
+                                      ),
+                                    ),
+                                  ),
+                                PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.more_vert,
+                                    size: 18,
+                                    color: AppColors.grayLight,
+                                  ),
+                                  onSelected: (v) => _handleAction(v, a),
+                                  itemBuilder: (_) => [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Text(
+                                        'עריכה',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                    if (status != 'active')
+                                      PopupMenuItem(
+                                        value: 'activate',
+                                        child: Text(
+                                          'הפעל',
+                                          style: TextStyle(
+                                            fontFamily: AppFonts.rubik,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    if (status == 'active')
+                                      PopupMenuItem(
+                                        value: 'pause',
+                                        child: Text(
+                                          'השהה',
+                                          style: TextStyle(
+                                            fontFamily: AppFonts.rubik,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    PopupMenuItem(
+                                      value: 'cancel',
+                                      child: Text(
+                                        'בטל',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   void _handleAction(String action, Map<String, dynamic> a) {
     final notifier = ref.read(adminAgreementListProvider.notifier);
     final id = a['id'] as String;
     switch (action) {
-      case 'edit': _showEditor(context, ref, agreement: a);
-      case 'activate': notifier.updateStatus(id, 'active');
-      case 'pause': notifier.updateStatus(id, 'paused');
-      case 'cancel': notifier.updateStatus(id, 'cancelled');
+      case 'edit':
+        _showEditor(context, ref, agreement: a);
+      case 'activate':
+        notifier.updateStatus(id, 'active');
+      case 'pause':
+        notifier.updateStatus(id, 'paused');
+      case 'cancel':
+        notifier.updateStatus(id, 'cancelled');
     }
   }
 
-  void _showEditor(BuildContext context, WidgetRef ref, {Map<String, dynamic>? agreement}) {
-    showDialog(context: context, barrierDismissible: false, builder: (ctx) => _AgreementEditorDialog(agreement: agreement));
+  void _showEditor(
+    BuildContext context,
+    WidgetRef ref, {
+    Map<String, dynamic>? agreement,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _AgreementEditorDialog(agreement: agreement),
+    );
   }
 
   String _typeLabel(String t) => switch (t) {
@@ -222,10 +494,12 @@ class _AgreementEditorDialog extends ConsumerStatefulWidget {
   const _AgreementEditorDialog({this.agreement});
 
   @override
-  ConsumerState<_AgreementEditorDialog> createState() => _AgreementEditorDialogState();
+  ConsumerState<_AgreementEditorDialog> createState() =>
+      _AgreementEditorDialogState();
 }
 
-class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> {
+class _AgreementEditorDialogState
+    extends ConsumerState<_AgreementEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
 
@@ -251,14 +525,24 @@ class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> 
   void initState() {
     super.initState();
     final a = widget.agreement;
-    _businessName = TextEditingController(text: a?['business_name'] as String? ?? '');
+    _businessName = TextEditingController(
+      text: a?['business_name'] as String? ?? '',
+    );
     _name = TextEditingController(text: a?['name'] as String? ?? '');
-    _description = TextEditingController(text: a?['description'] as String? ?? '');
-    _price = TextEditingController(text: (a?['price'] as num?)?.toString() ?? '');
-    _discount = TextEditingController(text: (a?['discount_pct'] as num?)?.toString() ?? '0');
+    _description = TextEditingController(
+      text: a?['description'] as String? ?? '',
+    );
+    _price = TextEditingController(
+      text: (a?['price'] as num?)?.toString() ?? '',
+    );
+    _discount = TextEditingController(
+      text: (a?['discount_pct'] as num?)?.toString() ?? '0',
+    );
     _startDate = TextEditingController(text: a?['start_date'] as String? ?? '');
     _endDate = TextEditingController(text: a?['end_date'] as String? ?? '');
-    _salesperson = TextEditingController(text: a?['salesperson'] as String? ?? '');
+    _salesperson = TextEditingController(
+      text: a?['salesperson'] as String? ?? '',
+    );
     _notes = TextEditingController(text: a?['notes'] as String? ?? '');
     _type = a?['type'] as String? ?? 'subscription';
     _billingCycle = a?['billing_cycle'] as String? ?? 'monthly';
@@ -269,9 +553,15 @@ class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> 
 
   @override
   void dispose() {
-    _businessName.dispose(); _name.dispose(); _description.dispose();
-    _price.dispose(); _discount.dispose(); _startDate.dispose(); _endDate.dispose();
-    _salesperson.dispose(); _notes.dispose();
+    _businessName.dispose();
+    _name.dispose();
+    _description.dispose();
+    _price.dispose();
+    _discount.dispose();
+    _startDate.dispose();
+    _endDate.dispose();
+    _salesperson.dispose();
+    _notes.dispose();
     super.dispose();
   }
 
@@ -286,113 +576,329 @@ class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> 
           textDirection: TextDirection.rtl,
           child: Form(
             key: _formKey,
-            child: Column(children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
-                child: Row(children: [
-                  Text(_isEditing ? 'עריכת הסכם' : 'הסכם חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-                  const Spacer(),
-                  IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
-                ]),
-              ),
-              Expanded(
-                child: ListView(padding: const EdgeInsets.all(20), children: [
-                  _field('שם עסק *', _businessName, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
-                  _field('שם הסכם *', _name, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
-                  _field('תיאור', _description, maxLines: 2),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    Expanded(child: DropdownButtonFormField<String>(
-                      value: _type,
-                      decoration: InputDecoration(labelText: 'סוג', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                      items: const [
-                        DropdownMenuItem(value: 'subscription', child: Text('מנוי')),
-                        DropdownMenuItem(value: 'banner', child: Text('באנר')),
-                        DropdownMenuItem(value: 'push', child: Text('Push')),
-                        DropdownMenuItem(value: 'featured', child: Text('מומלץ')),
-                        DropdownMenuItem(value: 'sponsored', child: Text('ממומן')),
-                        DropdownMenuItem(value: 'custom', child: Text('מותאם')),
-                      ],
-                      onChanged: (v) => setState(() => _type = v!),
-                    )),
-                    const SizedBox(width: 12),
-                    Expanded(child: DropdownButtonFormField<String>(
-                      value: _billingCycle,
-                      decoration: InputDecoration(labelText: 'מחזור חיוב', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                      items: const [
-                        DropdownMenuItem(value: 'monthly', child: Text('חודשי')),
-                        DropdownMenuItem(value: 'quarterly', child: Text('רבעוני')),
-                        DropdownMenuItem(value: 'yearly', child: Text('שנתי')),
-                        DropdownMenuItem(value: 'one_time', child: Text('חד פעמי')),
-                      ],
-                      onChanged: (v) => setState(() => _billingCycle = v!),
-                    )),
-                  ]),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    Expanded(child: _field('מחיר (₪) *', _price, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('הנחה %', _discount)),
-                  ]),
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 8, runSpacing: 4, children: [
-                    FilterChip(label: Text('כולל מע"מ', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)), selected: _vatIncluded, onSelected: (v) => setState(() => _vatIncluded = v), selectedColor: AppColors.turquoise.withValues(alpha: 0.15), checkmarkColor: AppColors.turquoise, side: BorderSide(color: _vatIncluded ? AppColors.turquoise : AppColors.border)),
-                    FilterChip(label: Text('חידוש אוטומטי', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)), selected: _autoRenew, onSelected: (v) => setState(() => _autoRenew = v), selectedColor: AppColors.turquoise.withValues(alpha: 0.15), checkmarkColor: AppColors.turquoise, side: BorderSide(color: _autoRenew ? AppColors.turquoise : AppColors.border)),
-                  ]),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    Expanded(child: _field('תאריך התחלה', _startDate)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('תאריך סיום', _endDate)),
-                  ]),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: _status,
-                    decoration: InputDecoration(labelText: 'סטטוס', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                    items: const [
-                      DropdownMenuItem(value: 'active', child: Text('פעיל')),
-                      DropdownMenuItem(value: 'paused', child: Text('מושהה')),
-                      DropdownMenuItem(value: 'cancelled', child: Text('בוטל')),
-                      DropdownMenuItem(value: 'expired', child: Text('פג תוקף')),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.navy,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(14),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        _isEditing ? 'עריכת הסכם' : 'הסכם חדש',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
-                    onChanged: (v) => setState(() => _status = v!),
                   ),
-                  const SizedBox(height: 12),
-                  _field('איש מכירות', _salesperson),
-                  _field('הערות', _notes, maxLines: 2),
-                ]),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
-                child: Row(children: [
-                  const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: _saving ? null : _save,
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    child: _saving
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור הסכם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      _field(
+                        'שם עסק *',
+                        _businessName,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      ),
+                      _field(
+                        'שם הסכם *',
+                        _name,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      ),
+                      _field('תיאור', _description, maxLines: 2),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _type,
+                              decoration: InputDecoration(
+                                labelText: 'סוג',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'subscription',
+                                  child: Text('מנוי'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'banner',
+                                  child: Text('באנר'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'push',
+                                  child: Text('Push'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'featured',
+                                  child: Text('מומלץ'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'sponsored',
+                                  child: Text('ממומן'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'custom',
+                                  child: Text('מותאם'),
+                                ),
+                              ],
+                              onChanged: (v) => setState(() => _type = v!),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _billingCycle,
+                              decoration: InputDecoration(
+                                labelText: 'מחזור חיוב',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'monthly',
+                                  child: Text('חודשי'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'quarterly',
+                                  child: Text('רבעוני'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'yearly',
+                                  child: Text('שנתי'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'one_time',
+                                  child: Text('חד פעמי'),
+                                ),
+                              ],
+                              onChanged: (v) =>
+                                  setState(() => _billingCycle = v!),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _field(
+                              'מחיר (₪) *',
+                              _price,
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'שדה חובה' : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(child: _field('הנחה %', _discount)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          FilterChip(
+                            label: Text(
+                              'כולל מע"מ',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 12,
+                              ),
+                            ),
+                            selected: _vatIncluded,
+                            onSelected: (v) => setState(() => _vatIncluded = v),
+                            selectedColor: AppColors.turquoise.withValues(
+                              alpha: 0.15,
+                            ),
+                            checkmarkColor: AppColors.turquoise,
+                            side: BorderSide(
+                              color: _vatIncluded
+                                  ? AppColors.turquoise
+                                  : AppColors.border,
+                            ),
+                          ),
+                          FilterChip(
+                            label: Text(
+                              'חידוש אוטומטי',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 12,
+                              ),
+                            ),
+                            selected: _autoRenew,
+                            onSelected: (v) => setState(() => _autoRenew = v),
+                            selectedColor: AppColors.turquoise.withValues(
+                              alpha: 0.15,
+                            ),
+                            checkmarkColor: AppColors.turquoise,
+                            side: BorderSide(
+                              color: _autoRenew
+                                  ? AppColors.turquoise
+                                  : AppColors.border,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(child: _field('תאריך התחלה', _startDate)),
+                          const SizedBox(width: 12),
+                          Expanded(child: _field('תאריך סיום', _endDate)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: _status,
+                        decoration: InputDecoration(
+                          labelText: 'סטטוס',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'active',
+                            child: Text('פעיל'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'paused',
+                            child: Text('מושהה'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'cancelled',
+                            child: Text('בוטל'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'expired',
+                            child: Text('פג תוקף'),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => _status = v!),
+                      ),
+                      const SizedBox(height: 12),
+                      _field('איש מכירות', _salesperson),
+                      _field('הערות', _notes, maxLines: 2),
+                    ],
                   ),
-                ]),
-              ),
-            ]),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'ביטול',
+                          style: TextStyle(fontFamily: AppFonts.rubik),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _saving ? null : _save,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.turquoise,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                _isEditing ? 'שמור' : 'צור הסכם',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _field(String label, TextEditingController controller, {int maxLines = 1, String? Function(String?)? validator}) {
+  Widget _field(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
-        controller: controller, maxLines: maxLines, validator: validator,
+        controller: controller,
+        maxLines: maxLines,
+        validator: validator,
         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-        decoration: InputDecoration(labelText: label, labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+        ),
       ),
     );
   }
@@ -419,13 +925,22 @@ class _AgreementEditorDialogState extends ConsumerState<_AgreementEditorDialog> 
     try {
       final notifier = ref.read(adminAgreementListProvider.notifier);
       if (_isEditing) {
-        await notifier.updateAgreement(widget.agreement!['id'] as String, fields);
+        await notifier.updateAgreement(
+          widget.agreement!['id'] as String,
+          fields,
+        );
       } else {
         await notifier.createAgreement(fields);
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('שגיאה: $e'), backgroundColor: AppColors.error));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('שגיאה: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -443,12 +958,34 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: color, fontFeatures: [const FontFeature.tabularFigures()])),
-        const SizedBox(width: 8),
-        Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
-      ]),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: color,
+              fontFeatures: [const FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 12,
+              color: AppColors.grayText,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -468,8 +1005,19 @@ class _StatusPill extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -481,7 +1029,18 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+    return Expanded(
+      flex: flex,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.grayLight,
+        ),
+      ),
+    );
   }
 }
 
@@ -501,11 +1060,24 @@ class _FilterChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent,
+            color: selected
+                ? AppColors.turquoise.withValues(alpha: 0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5),
+            border: Border.all(
+              color: selected ? AppColors.turquoise : AppColors.border,
+              width: 0.5,
+            ),
           ),
-          child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? AppColors.turquoise : AppColors.grayText,
+            ),
+          ),
         ),
       ),
     );
@@ -518,6 +1090,8 @@ class _Debouncer {
   Future<void>? _pending;
   void run(VoidCallback action) {
     _pending?.ignore();
-    _pending = Future.delayed(Duration(milliseconds: milliseconds)).then((_) => action());
+    _pending = Future.delayed(
+      Duration(milliseconds: milliseconds),
+    ).then((_) => action());
   }
 }

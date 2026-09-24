@@ -2208,6 +2208,138 @@ abstract class L {
   /// In he, this message translates to:
   /// **'טפסים'**
   String get svcForms;
+
+  /// No description provided for @tabOverview.
+  ///
+  /// In he, this message translates to:
+  /// **'סקירה'**
+  String get tabOverview;
+
+  /// No description provided for @tabMenu.
+  ///
+  /// In he, this message translates to:
+  /// **'תפריט'**
+  String get tabMenu;
+
+  /// No description provided for @tabPhotos.
+  ///
+  /// In he, this message translates to:
+  /// **'תמונות'**
+  String get tabPhotos;
+
+  /// No description provided for @tabReviews.
+  ///
+  /// In he, this message translates to:
+  /// **'ביקורות'**
+  String get tabReviews;
+
+  /// No description provided for @callNow.
+  ///
+  /// In he, this message translates to:
+  /// **'התקשרו עכשיו'**
+  String get callNow;
+
+  /// No description provided for @uploadPhoto.
+  ///
+  /// In he, this message translates to:
+  /// **'העלאת תמונה'**
+  String get uploadPhoto;
+
+  /// No description provided for @shareYourExperience.
+  ///
+  /// In he, this message translates to:
+  /// **'שתפו את החוויה שלכם עם הקהילה'**
+  String get shareYourExperience;
+
+  /// No description provided for @howWasExperience.
+  ///
+  /// In he, this message translates to:
+  /// **'איך הייתה החוויה שלכם?'**
+  String get howWasExperience;
+
+  /// No description provided for @rateAndShare.
+  ///
+  /// In he, this message translates to:
+  /// **'דרגו ושתפו את החוויה שלכם'**
+  String get rateAndShare;
+
+  /// No description provided for @ratePoor.
+  ///
+  /// In he, this message translates to:
+  /// **'גרוע'**
+  String get ratePoor;
+
+  /// No description provided for @rateFair.
+  ///
+  /// In he, this message translates to:
+  /// **'סביר'**
+  String get rateFair;
+
+  /// No description provided for @rateGood.
+  ///
+  /// In he, this message translates to:
+  /// **'טוב'**
+  String get rateGood;
+
+  /// No description provided for @rateVeryGood.
+  ///
+  /// In he, this message translates to:
+  /// **'טוב מאוד'**
+  String get rateVeryGood;
+
+  /// No description provided for @rateExcellent.
+  ///
+  /// In he, this message translates to:
+  /// **'מצוין!'**
+  String get rateExcellent;
+
+  /// No description provided for @writeYourReview.
+  ///
+  /// In he, this message translates to:
+  /// **'כתבו ביקורת'**
+  String get writeYourReview;
+
+  /// No description provided for @reviewHint.
+  ///
+  /// In he, this message translates to:
+  /// **'שתפו פרטים על החוויה שלכם במקום הזה...'**
+  String get reviewHint;
+
+  /// No description provided for @submit.
+  ///
+  /// In he, this message translates to:
+  /// **'שליחה'**
+  String get submit;
+
+  /// No description provided for @justNow.
+  ///
+  /// In he, this message translates to:
+  /// **'הרגע'**
+  String get justNow;
+
+  /// No description provided for @yourReply.
+  ///
+  /// In he, this message translates to:
+  /// **'התגובה שלכם'**
+  String get yourReply;
+
+  /// No description provided for @reply.
+  ///
+  /// In he, this message translates to:
+  /// **'תגובה'**
+  String get reply;
+
+  /// No description provided for @writeReplyHint.
+  ///
+  /// In he, this message translates to:
+  /// **'כתבו תגובה...'**
+  String get writeReplyHint;
+
+  /// No description provided for @replySent.
+  ///
+  /// In he, this message translates to:
+  /// **'התגובה נשלחה!'**
+  String get replySent;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -24,7 +24,7 @@ final neighborhoodsProvider = FutureProvider<List<Map<String, dynamic>>>((
       .from('neighborhoods')
       .select('id, name, slug, is_active, sort_order')
       .eq('is_active', true)
-      .order('sort_order');
+      .order('sort_order', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });
 
@@ -37,7 +37,7 @@ final businessCategoriesProvider = FutureProvider<List<Map<String, dynamic>>>((
       .select('id, name, slug, scope, parent_id, is_active, sort_order')
       .eq('scope', 'business')
       .eq('is_active', true)
-      .order('sort_order');
+      .order('sort_order', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });
 
@@ -93,7 +93,9 @@ class AdminBusinessListNotifier
     try {
       var query = SupabaseConfig.client
           .from('businesses')
-          .select('*, neighborhoods!businesses_neighborhood_id_fkey(id, name, slug)');
+          .select(
+            '*, neighborhoods!businesses_neighborhood_id_fkey(id, name, slug)',
+          );
 
       if (_status != null && _status!.isNotEmpty) {
         query = query.eq('status', _status!);
@@ -104,7 +106,8 @@ class AdminBusinessListNotifier
       }
 
       final rows = await query.order('created_at', ascending: false).limit(500);
-      if (mounted) state = AsyncValue.data(List<Map<String, dynamic>>.from(rows));
+      if (mounted)
+        state = AsyncValue.data(List<Map<String, dynamic>>.from(rows));
     } catch (e, st) {
       if (mounted) state = AsyncValue.error(e, st);
     }
@@ -172,7 +175,10 @@ class AdminBusinessListNotifier
   // ── Categories ──
 
   /// Replaces the categories a business belongs to.
-  Future<void> setCategories(String businessId, List<String> categoryIds) async {
+  Future<void> setCategories(
+    String businessId,
+    List<String> categoryIds,
+  ) async {
     final client = SupabaseConfig.client;
     await client
         .from('entity_categories')
@@ -213,4 +219,44 @@ class AdminBusinessListNotifier
     ];
     if (rows.isNotEmpty) await client.from('business_hours').insert(rows);
   }
+}
+
+/// The menu lines for one business, for the editor's Menu tab.
+///
+/// Migration 00023 adds the table. Before it, the app's Menu tab showed the
+/// same invented menu on all 220 businesses, and there was nowhere to put a
+/// real one.
+final adminMenuItemsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((
+      ref,
+      businessId,
+    ) async {
+      final rows = await SupabaseConfig.client
+          .from('business_menu_items')
+          .select()
+          .eq('business_id', businessId)
+          .order('sort_order', ascending: true);
+      return List<Map<String, dynamic>>.from(rows);
+    });
+
+/// Replaces a business's menu with what the editor holds.
+///
+/// Deleting and re-inserting rather than diffing: a menu is a handful of
+/// rows, it is edited rarely, and this keeps the order the editor shows as
+/// the order that is stored.
+Future<void> saveMenuItems(
+  String businessId,
+  List<Map<String, dynamic>> items,
+) async {
+  final client = SupabaseConfig.client;
+  await client
+      .from('business_menu_items')
+      .delete()
+      .eq('business_id', businessId);
+  if (items.isEmpty) return;
+
+  await client.from('business_menu_items').insert([
+    for (var i = 0; i < items.length; i++)
+      {...items[i], 'business_id': businessId, 'sort_order': i},
+  ]);
 }

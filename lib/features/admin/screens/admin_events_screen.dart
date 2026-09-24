@@ -27,93 +27,189 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
     final eventsAsync = ref.watch(adminEventListProvider);
     final isWide = MediaQuery.of(context).size.width > 900;
 
-    return Column(children: [
-      // ─── Toolbar ───
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
-        ),
-        child: Row(children: [
-          SizedBox(
-            width: isWide ? 320 : 200,
-            height: 40,
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'חיפוש אירוע...',
-                hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayLight),
-                prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.grayLight),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.turquoise)),
+    return Column(
+      children: [
+        // ─── Toolbar ───
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.border.withValues(alpha: 0.5),
               ),
-              onChanged: (v) => _debouncer.run(() {
-                ref.read(adminEventListProvider.notifier).setSearch(v.isEmpty ? null : v);
+            ),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: isWide ? 320 : 200,
+                height: 40,
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'חיפוש אירוע...',
+                    hintStyle: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 13,
+                      color: AppColors.grayLight,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 18,
+                      color: AppColors.grayLight,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.turquoise),
+                    ),
+                  ),
+                  onChanged: (v) => _debouncer.run(() {
+                    ref
+                        .read(adminEventListProvider.notifier)
+                        .setSearch(v.isEmpty ? null : v);
+                  }),
+                ),
+              ),
+              const SizedBox(width: 12),
+              _FilterChip('הכל', _statusFilter.isEmpty, () {
+                setState(() => _statusFilter = '');
+                ref.read(adminEventListProvider.notifier).setStatusFilter(null);
               }),
-            ),
+              _FilterChip('פורסם', _statusFilter == 'published', () {
+                setState(() => _statusFilter = 'published');
+                ref
+                    .read(adminEventListProvider.notifier)
+                    .setStatusFilter('published');
+              }),
+              _FilterChip('טיוטה', _statusFilter == 'draft', () {
+                setState(() => _statusFilter = 'draft');
+                ref
+                    .read(adminEventListProvider.notifier)
+                    .setStatusFilter('draft');
+              }),
+              _FilterChip('בוטל', _statusFilter == 'cancelled', () {
+                setState(() => _statusFilter = 'cancelled');
+                ref
+                    .read(adminEventListProvider.notifier)
+                    .setStatusFilter('cancelled');
+              }),
+              const Spacer(),
+              eventsAsync
+                      .whenData(
+                        (list) => Text(
+                          '${list.length} אירועים',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                      )
+                      .value ??
+                  const SizedBox.shrink(),
+              const SizedBox(width: 16),
+              FilledButton.icon(
+                onPressed: () => _showEventEditor(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'אירוע חדש',
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.turquoise,
+                  minimumSize: const Size(0, 40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          _FilterChip('הכל', _statusFilter.isEmpty, () {
-            setState(() => _statusFilter = '');
-            ref.read(adminEventListProvider.notifier).setStatusFilter(null);
-          }),
-          _FilterChip('פורסם', _statusFilter == 'published', () {
-            setState(() => _statusFilter = 'published');
-            ref.read(adminEventListProvider.notifier).setStatusFilter('published');
-          }),
-          _FilterChip('טיוטה', _statusFilter == 'draft', () {
-            setState(() => _statusFilter = 'draft');
-            ref.read(adminEventListProvider.notifier).setStatusFilter('draft');
-          }),
-          _FilterChip('בוטל', _statusFilter == 'cancelled', () {
-            setState(() => _statusFilter = 'cancelled');
-            ref.read(adminEventListProvider.notifier).setStatusFilter('cancelled');
-          }),
-          const Spacer(),
-          eventsAsync.whenData((list) => Text('${list.length} אירועים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))).value ?? const SizedBox.shrink(),
-          const SizedBox(width: 16),
-          FilledButton.icon(
-            onPressed: () => _showEventEditor(context, ref),
-            icon: const Icon(Icons.add, size: 18),
-            label: Text('אירוע חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
-              minimumSize: const Size(0, 40),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-        ]),
-      ),
-
-      // ─── Table ───
-      Expanded(
-        child: eventsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-            const SizedBox(height: 12),
-            Text('שגיאה בטעינת אירועים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error)),
-            Text('$e', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText)),
-            const SizedBox(height: 12),
-            TextButton(onPressed: () => ref.read(adminEventListProvider.notifier).load(), child: const Text('נסה שוב')),
-          ])),
-          data: (events) {
-            if (events.isEmpty) {
-              return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.event_outlined, size: 48, color: AppColors.grayLight.withValues(alpha: 0.5)),
-                const SizedBox(height: 12),
-                Text('אין אירועים', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText)),
-              ]));
-            }
-            return _EventTable(events: events, isWide: isWide, onTap: (ev) => _showEventEditor(context, ref, event: ev), onAction: _handleAction);
-          },
         ),
-      ),
-    ]);
+
+        // ─── Table ───
+        Expanded(
+          child: eventsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'שגיאה בטעינת אירועים',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      color: AppColors.error,
+                    ),
+                  ),
+                  Text(
+                    '$e',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 12,
+                      color: AppColors.grayText,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () =>
+                        ref.read(adminEventListProvider.notifier).load(),
+                    child: const Text('נסה שוב'),
+                  ),
+                ],
+              ),
+            ),
+            data: (events) {
+              if (events.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.event_outlined,
+                        size: 48,
+                        color: AppColors.grayLight.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'אין אירועים',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          color: AppColors.grayText,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return _EventTable(
+                events: events,
+                isWide: isWide,
+                onTap: (ev) => _showEventEditor(context, ref, event: ev),
+                onAction: _handleAction,
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   void _handleAction(String action, Map<String, dynamic> event) {
@@ -132,19 +228,54 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text('מחיקת אירוע', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
-            content: Text('למחוק את "${event['title']}"?', style: TextStyle(fontFamily: AppFonts.rubik)),
+            title: Text(
+              'מחיקת אירוע',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: Text(
+              'למחוק את "${event['title']}"?',
+              style: TextStyle(fontFamily: AppFonts.rubik),
+            ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
-              TextButton(onPressed: () { Navigator.pop(ctx); notifier.deleteEvent(id); }, child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error))),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  'ביטול',
+                  style: TextStyle(fontFamily: AppFonts.rubik),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  notifier.deleteEvent(id);
+                },
+                child: Text(
+                  'מחק',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
             ],
           ),
         );
     }
   }
 
-  void _showEventEditor(BuildContext context, WidgetRef ref, {Map<String, dynamic>? event}) {
-    showDialog(context: context, barrierDismissible: false, builder: (ctx) => _EventEditorDialog(event: event));
+  void _showEventEditor(
+    BuildContext context,
+    WidgetRef ref, {
+    Map<String, dynamic>? event,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _EventEditorDialog(event: event),
+    );
   }
 }
 
@@ -155,79 +286,266 @@ class _EventTable extends StatelessWidget {
   final bool isWide;
   final void Function(Map<String, dynamic>) onTap;
   final void Function(String, Map<String, dynamic>) onAction;
-  const _EventTable({required this.events, required this.isWide, required this.onTap, required this.onAction});
+  const _EventTable({
+    required this.events,
+    required this.isWide,
+    required this.onTap,
+    required this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(color: AppColors.surfaceLight, border: Border(bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5)))),
-        child: Row(children: [
-          _Col('שם אירוע', flex: 3),
-          _Col('תאריך', flex: 2),
-          if (isWide) _Col('מיקום', flex: 2),
-          _Col('קטגוריה', flex: 1),
-          _Col('סטטוס', flex: 1),
-          if (isWide) _Col('נרשמים', flex: 1),
-          const SizedBox(width: 40),
-        ]),
-      ),
-      Expanded(
-        child: ListView.separated(
-          itemCount: events.length,
-          separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.3)),
-          itemBuilder: (_, i) {
-            final ev = events[i];
-            final status = ev['status'] as String? ?? 'draft';
-            final registered = ev['registered_count'] as int? ?? 0;
-            final capacity = ev['max_capacity'] as int? ?? 0;
-            final isFeatured = ev['is_featured'] as bool? ?? false;
-            final isFree = ev['is_free'] as bool? ?? false;
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceLight,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.border.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              _Col('שם אירוע', flex: 3),
+              _Col('תאריך', flex: 2),
+              if (isWide) _Col('מיקום', flex: 2),
+              _Col('קטגוריה', flex: 1),
+              _Col('סטטוס', flex: 1),
+              if (isWide) _Col('נרשמים', flex: 1),
+              const SizedBox(width: 40),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            itemCount: events.length,
+            separatorBuilder: (_, __) => Divider(
+              height: 1,
+              color: AppColors.border.withValues(alpha: 0.3),
+            ),
+            itemBuilder: (_, i) {
+              final ev = events[i];
+              final status = ev['status'] as String? ?? 'draft';
+              final registered = ev['registered_count'] as int? ?? 0;
+              final capacity = ev['max_capacity'] as int? ?? 0;
+              final isFeatured = ev['is_featured'] as bool? ?? false;
+              final isFree = ev['is_free'] as bool? ?? false;
 
-            return InkWell(
-              onTap: () => onTap(ev),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(children: [
-                  Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      if (isFeatured) Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.star, size: 14, color: AppColors.gold)),
-                      if (isFree) Padding(padding: const EdgeInsets.only(left: 4), child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(3)),
-                        child: Text('חינם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 9, color: AppColors.success, fontWeight: FontWeight.w600)),
-                      )),
-                      Flexible(child: Text(ev['title'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy), overflow: TextOverflow.ellipsis)),
-                    ]),
-                    if (ev['price'] != null) Text(ev['price'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
-                  ])),
-                  Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(ev['date'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
-                    Text(ev['time'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayLight)),
-                  ])),
-                  if (isWide) Expanded(flex: 2, child: Text(ev['location'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  Expanded(flex: 1, child: Text(ev['category'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText))),
-                  Expanded(flex: 1, child: _StatusPill(status)),
-                  if (isWide) Expanded(flex: 1, child: Text(capacity > 0 ? '$registered/$capacity' : '$registered', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
-                    onSelected: (v) => onAction(v, ev),
-                    itemBuilder: (_) => [
-                      PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      if (status != 'published') PopupMenuItem(value: 'publish', child: Text('פרסם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      if (status != 'draft') PopupMenuItem(value: 'draft', child: Text('החזר לטיוטה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      if (status != 'cancelled') PopupMenuItem(value: 'cancel', child: Text('בטל אירוע', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
+              return InkWell(
+                onTap: () => onTap(ev),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                if (isFeatured)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Icon(
+                                      Icons.star,
+                                      size: 14,
+                                      color: AppColors.gold,
+                                    ),
+                                  ),
+                                if (isFree)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.success.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                      child: Text(
+                                        'חינם',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 9,
+                                          color: AppColors.success,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                Flexible(
+                                  child: Text(
+                                    ev['title'] as String? ?? '',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.navy,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (ev['price'] != null)
+                              Text(
+                                ev['price'] as String,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 11,
+                                  color: AppColors.grayLight,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ev['date'] as String? ?? '',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              ev['time'] as String? ?? '',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 11,
+                                color: AppColors.grayLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isWide)
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            ev['location'] as String? ?? '',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.grayText,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          ev['category'] as String? ?? '',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 12,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                      ),
+                      Expanded(flex: 1, child: _StatusPill(status)),
+                      if (isWide)
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            capacity > 0
+                                ? '$registered/$capacity'
+                                : '$registered',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 13,
+                              color: AppColors.grayText,
+                            ),
+                          ),
+                        ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: AppColors.grayLight,
+                        ),
+                        onSelected: (v) => onAction(v, ev),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(
+                              'עריכה',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          if (status != 'published')
+                            PopupMenuItem(
+                              value: 'publish',
+                              child: Text(
+                                'פרסם',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          if (status != 'draft')
+                            PopupMenuItem(
+                              value: 'draft',
+                              child: Text(
+                                'החזר לטיוטה',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          if (status != 'cancelled')
+                            PopupMenuItem(
+                              value: 'cancel',
+                              child: Text(
+                                'בטל אירוע',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              'מחק',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ]),
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 }
 
@@ -261,7 +579,15 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
 
   bool get _isEditing => widget.event != null;
 
-  static const _categories = ['מוזיקה', 'ילדים ומשפחה', 'ספורט', 'עירייה וקהילה', 'קולינריה', 'תרבות', 'חינוך'];
+  static const _categories = [
+    'מוזיקה',
+    'ילדים ומשפחה',
+    'ספורט',
+    'עירייה וקהילה',
+    'קולינריה',
+    'תרבות',
+    'חינוך',
+  ];
 
   @override
   void initState() {
@@ -271,10 +597,14 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     _date = TextEditingController(text: e?['date'] as String? ?? '');
     _time = TextEditingController(text: e?['time'] as String? ?? '');
     _location = TextEditingController(text: e?['location'] as String? ?? '');
-    _description = TextEditingController(text: e?['description'] as String? ?? '');
+    _description = TextEditingController(
+      text: e?['description'] as String? ?? '',
+    );
     _organizer = TextEditingController(text: e?['organizer'] as String? ?? '');
     _price = TextEditingController(text: e?['price'] as String? ?? '');
-    _capacity = TextEditingController(text: (e?['max_capacity'] as int?)?.toString() ?? '');
+    _capacity = TextEditingController(
+      text: (e?['max_capacity'] as int?)?.toString() ?? '',
+    );
 
     _status = e?['status'] as String? ?? 'draft';
     _category = e?['category'] as String? ?? 'עירייה וקהילה';
@@ -284,8 +614,14 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
 
   @override
   void dispose() {
-    _title.dispose(); _date.dispose(); _time.dispose(); _location.dispose();
-    _description.dispose(); _organizer.dispose(); _price.dispose(); _capacity.dispose();
+    _title.dispose();
+    _date.dispose();
+    _time.dispose();
+    _location.dispose();
+    _description.dispose();
+    _organizer.dispose();
+    _price.dispose();
+    _capacity.dispose();
     super.dispose();
   }
 
@@ -300,97 +636,295 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
           textDirection: TextDirection.rtl,
           child: Form(
             key: _formKey,
-            child: Column(children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: const BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.vertical(top: Radius.circular(14))),
-                child: Row(children: [
-                  Text(_isEditing ? 'עריכת אירוע' : 'אירוע חדש', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-                  const Spacer(),
-                  IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
-                ]),
-              ),
-
-              Expanded(
-                child: ListView(padding: const EdgeInsets.all(20), children: [
-                  _field('שם אירוע *', _title, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
-                  Row(children: [
-                    Expanded(child: _field('תאריך *', _date, hint: '2026-09-15', validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('שעה *', _time, hint: '20:00', validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null)),
-                  ]),
-                  _field('מיקום *', _location, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
-                  _field('תיאור', _description, maxLines: 4),
-                  Row(children: [
-                    Expanded(child: _field('מארגן', _organizer)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('מחיר', _price, hint: '₪50 / חינם')),
-                  ]),
-                  Row(children: [
-                    Expanded(child: _field('קיבולת מקסימלית', _capacity, hint: '100')),
-                    const SizedBox(width: 12),
-                    Expanded(child: DropdownButtonFormField<String>(
-                      value: _category,
-                      decoration: InputDecoration(labelText: 'קטגוריה', labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                      items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)))).toList(),
-                      onChanged: (v) => setState(() => _category = v!),
-                    )),
-                  ]),
-                  const SizedBox(height: 16),
-                  Text('הגדרות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.navy)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _status,
-                    decoration: InputDecoration(labelText: 'סטטוס', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                    items: [
-                      DropdownMenuItem(value: 'draft', child: Text('טיוטה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      DropdownMenuItem(value: 'published', child: Text('פורסם', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      DropdownMenuItem(value: 'cancelled', child: Text('בוטל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.navy,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(14),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        _isEditing ? 'עריכת אירוע' : 'אירוע חדש',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ],
-                    onChanged: (v) => setState(() => _status = v!),
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 8, runSpacing: 4, children: [
-                    _toggle('חינם', _isFree, (v) => setState(() => _isFree = v)),
-                    _toggle('מומלץ', _isFeatured, (v) => setState(() => _isFeatured = v)),
-                  ]),
-                ]),
-              ),
+                ),
 
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
-                child: Row(children: [
-                  const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(context), child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik))),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: _saving ? null : _save,
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.turquoise, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    child: _saving
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isEditing ? 'שמור' : 'צור אירוע', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      _field(
+                        'שם אירוע *',
+                        _title,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _field(
+                              'תאריך *',
+                              _date,
+                              hint: '2026-09-15',
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'שדה חובה' : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _field(
+                              'שעה *',
+                              _time,
+                              hint: '20:00',
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'שדה חובה' : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      _field(
+                        'מיקום *',
+                        _location,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      ),
+                      _field('תיאור', _description, maxLines: 4),
+                      Row(
+                        children: [
+                          Expanded(child: _field('מארגן', _organizer)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _field('מחיר', _price, hint: '₪50 / חינם'),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _field(
+                              'קיבולת מקסימלית',
+                              _capacity,
+                              hint: '100',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _category,
+                              decoration: InputDecoration(
+                                labelText: 'קטגוריה',
+                                labelStyle: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                              ),
+                              items: _categories
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(
+                                        c,
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) => setState(() => _category = v!),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'הגדרות',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _status,
+                        decoration: InputDecoration(
+                          labelText: 'סטטוס',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'draft',
+                            child: Text(
+                              'טיוטה',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'published',
+                            child: Text(
+                              'פורסם',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'cancelled',
+                            child: Text(
+                              'בוטל',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => _status = v!),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          _toggle(
+                            'חינם',
+                            _isFree,
+                            (v) => setState(() => _isFree = v),
+                          ),
+                          _toggle(
+                            'מומלץ',
+                            _isFeatured,
+                            (v) => setState(() => _isFeatured = v),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ]),
-              ),
-            ]),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'ביטול',
+                          style: TextStyle(fontFamily: AppFonts.rubik),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _saving ? null : _save,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.turquoise,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                _isEditing ? 'שמור' : 'צור אירוע',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _field(String label, TextEditingController controller, {int maxLines = 1, String? hint, String? Function(String?)? validator}) {
+  Widget _field(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    String? hint,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
-        controller: controller, maxLines: maxLines, validator: validator,
+        controller: controller,
+        maxLines: maxLines,
+        validator: validator,
         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
         decoration: InputDecoration(
-          labelText: label, hintText: hint,
+          labelText: label,
+          hintText: hint,
           labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
         ),
       ),
     );
@@ -398,8 +932,12 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
 
   Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) {
     return FilterChip(
-      label: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12)),
-      selected: value, onSelected: onChanged,
+      label: Text(
+        label,
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
+      ),
+      selected: value,
+      onSelected: onChanged,
       selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
       checkmarkColor: AppColors.turquoise,
       side: BorderSide(color: value ? AppColors.turquoise : AppColors.border),
@@ -436,7 +974,12 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('שגיאה: $e'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('שגיאה: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -460,8 +1003,19 @@ class _StatusPill extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -473,7 +1027,18 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(flex: flex, child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grayLight)));
+    return Expanded(
+      flex: flex,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.grayLight,
+        ),
+      ),
+    );
   }
 }
 
@@ -488,15 +1053,29 @@ class _FilterChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
       child: InkWell(
-        onTap: onTap, borderRadius: BorderRadius.circular(6),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : Colors.transparent,
+            color: selected
+                ? AppColors.turquoise.withValues(alpha: 0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: selected ? AppColors.turquoise : AppColors.border, width: 0.5),
+            border: Border.all(
+              color: selected ? AppColors.turquoise : AppColors.border,
+              width: 0.5,
+            ),
           ),
-          child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.turquoise : AppColors.grayText)),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? AppColors.turquoise : AppColors.grayText,
+            ),
+          ),
         ),
       ),
     );
@@ -509,6 +1088,8 @@ class _Debouncer {
   Future<void>? _pending;
   void run(VoidCallback action) {
     _pending?.ignore();
-    _pending = Future.delayed(Duration(milliseconds: milliseconds)).then((_) => action());
+    _pending = Future.delayed(
+      Duration(milliseconds: milliseconds),
+    ).then((_) => action());
   }
 }
