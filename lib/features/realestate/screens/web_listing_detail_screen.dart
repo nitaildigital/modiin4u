@@ -16,7 +16,8 @@ class WebListingDetailContent extends StatefulWidget {
   const WebListingDetailContent({super.key, required this.listingId});
 
   @override
-  State<WebListingDetailContent> createState() => _WebListingDetailContentState();
+  State<WebListingDetailContent> createState() =>
+      _WebListingDetailContentState();
 }
 
 class _WebListingDetailContentState extends State<WebListingDetailContent> {
@@ -35,26 +36,64 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
 
   // ── Nav links ──
   List<_NavItem> get _navItems => [
-    _NavItem(label: _t('Professionals', 'בעלי מקצוע'), route: '/businesses', hasDropdown: true),
-    _NavItem(label: _t('Modiin News', 'חדשות מודיעין'), route: '/news', hasDropdown: true),
+    _NavItem(
+      label: _t('Professionals', 'בעלי מקצוע'),
+      route: '/businesses',
+      hasDropdown: true,
+    ),
+    _NavItem(
+      label: _t('Modiin News', 'חדשות מודיעין'),
+      route: '/news',
+      hasDropdown: true,
+    ),
     _NavItem(label: _t('Events', 'אירועים'), route: '/events'),
     _NavItem(label: _t('Deals', 'מבצעים'), route: '/deals'),
-    _NavItem(label: _t('Real Estate in Modiin', 'נדל"ן במודיעין'), route: '/realestate', isActive: true),
-    _NavItem(label: _t('Restaurants in Modiin', 'מסעדות במודיעין'), route: '/restaurants'),
-    _NavItem(label: _t('Businesses in Modiin', 'עסקים במודיעין'), route: '/businesses', hasDropdown: true),
+    _NavItem(
+      label: _t('Real Estate in Modiin', 'נדל"ן במודיעין'),
+      route: '/realestate',
+      isActive: true,
+    ),
+    _NavItem(
+      label: _t('Restaurants in Modiin', 'מסעדות במודיעין'),
+      route: '/restaurants',
+    ),
+    _NavItem(
+      label: _t('Businesses in Modiin', 'עסקים במודיעין'),
+      route: '/businesses',
+      hasDropdown: true,
+    ),
   ];
 
   // ── Mock data ──
-  String get _title => _t('Mini Penthouse 6 Rooms – Moriah Neighborhood', 'מיני פנטהאוז 6 חדרים – שכונת מוריה');
+  String get _title => _t(
+    'Mini Penthouse 6 Rooms – Moriah Neighborhood',
+    'מיני פנטהאוז 6 חדרים – שכונת מוריה',
+  );
   String get _address => _t('HaShvatim St 7, Modiin', 'רח׳ השבטים 7, מודיעין');
   String get _price => '₪4,350,000';
   String get _saleTag => _t('For Sale', 'למכירה');
 
   List<_Highlight> get _highlights => [
-    _Highlight(label: _t('Bedrooms', 'חדרי שינה'), value: '4', icon: IconsaxPlusLinear.building_3),
-    _Highlight(label: _t('Bathrooms', 'חדרי אמבטיה'), value: '2', icon: IconsaxPlusLinear.courthouse),
-    _Highlight(label: _t('Built-up Area', 'שטח בנוי'), value: '140 m²', icon: IconsaxPlusLinear.maximize_3),
-    _Highlight(label: _t('Floor', 'קומה'), value: _t('4 Floor', 'קומה 4'), icon: IconsaxPlusLinear.building_4),
+    _Highlight(
+      label: _t('Bedrooms', 'חדרי שינה'),
+      value: '4',
+      icon: IconsaxPlusLinear.building_3,
+    ),
+    _Highlight(
+      label: _t('Bathrooms', 'חדרי אמבטיה'),
+      value: '2',
+      icon: IconsaxPlusLinear.courthouse,
+    ),
+    _Highlight(
+      label: _t('Built-up Area', 'שטח בנוי'),
+      value: '140 m²',
+      icon: IconsaxPlusLinear.maximize_3,
+    ),
+    _Highlight(
+      label: _t('Floor', 'קומה'),
+      value: _t('4 Floor', 'קומה 4'),
+      icon: IconsaxPlusLinear.building_4,
+    ),
   ];
 
   String get _aboutProperty => _t(
@@ -63,10 +102,26 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
   );
 
   List<_SpecItem> get _specs => [
-    _SpecItem(label: _t('Balcony', 'מרפסת'), value: _t('Yes', 'כן'), icon: IconsaxPlusLinear.element_3),
-    _SpecItem(label: _t('Parking', 'חניה'), value: _t('Yes', 'כן'), icon: IconsaxPlusLinear.car),
-    _SpecItem(label: _t('Elevator', 'מעלית'), value: _t('Yes', 'כן'), icon: IconsaxPlusLinear.arrow_3),
-    _SpecItem(label: _t('Protected Space', 'ממ"ד'), value: _t('Yes', 'כן'), icon: IconsaxPlusLinear.shield_tick),
+    _SpecItem(
+      label: _t('Balcony', 'מרפסת'),
+      value: _t('Yes', 'כן'),
+      icon: IconsaxPlusLinear.element_3,
+    ),
+    _SpecItem(
+      label: _t('Parking', 'חניה'),
+      value: _t('Yes', 'כן'),
+      icon: IconsaxPlusLinear.car,
+    ),
+    _SpecItem(
+      label: _t('Elevator', 'מעלית'),
+      value: _t('Yes', 'כן'),
+      icon: IconsaxPlusLinear.arrow_3,
+    ),
+    _SpecItem(
+      label: _t('Protected Space', 'ממ"ד'),
+      value: _t('Yes', 'כן'),
+      icon: IconsaxPlusLinear.shield_tick,
+    ),
   ];
 
   String get _aboutNeighborhood1 => _t(
@@ -81,30 +136,72 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
 
   // ── Nearby properties in Moriah ──
   List<_NearbyProperty> get _nearbyProperties => [
-    _NearbyProperty(price: '₪7,500', perMonth: _t('/ In the month', '/ לחודש'), tag: _t('FOR Rent', 'להשכרה'),
-        area: '140 m²', rooms: _t('6 Rooms', '6 חדרים'), floor: _t('Floor 3', 'קומה 3'),
-        location: _t('Moriah, Modiin', 'מוריה, מודיעין'), imageBg: const Color(0xFFE0D4C8)),
-    _NearbyProperty(price: '₪3,790,000', tag: _t('FOR SALE', 'למכירה'),
-        area: '140 m²', rooms: _t('6 Rooms', '6 חדרים'), floor: _t('Floor 3', 'קומה 3'),
-        location: _t('Moriah, Modiin', 'מוריה, מודיעין'), imageBg: const Color(0xFFD4E4F7)),
-    _NearbyProperty(price: '₪5,690,000', tag: _t('FOR SALE', 'למכירה'),
-        area: '140 m²', rooms: _t('6 Rooms', '6 חדרים'), floor: _t('Floor 3', 'קומה 3'),
-        location: _t('Moriah, Modiin', 'מוריה, מודיעין'), imageBg: const Color(0xFFC8D8E0)),
-    _NearbyProperty(price: '₪7,500', perMonth: _t('/ In the month', '/ לחודש'), tag: _t('FOR Rent', 'להשכרה'),
-        area: '140 m²', rooms: _t('6 Rooms', '6 חדרים'), floor: _t('Floor 3', 'קומה 3'),
-        location: _t('Moriah, Modiin', 'מוריה, מודיעין'), imageBg: const Color(0xFFD8E8D4)),
+    _NearbyProperty(
+      price: '₪7,500',
+      perMonth: _t('/ In the month', '/ לחודש'),
+      tag: _t('FOR Rent', 'להשכרה'),
+      area: '140 m²',
+      rooms: _t('6 Rooms', '6 חדרים'),
+      floor: _t('Floor 3', 'קומה 3'),
+      location: _t('Moriah, Modiin', 'מוריה, מודיעין'),
+      imageBg: const Color(0xFFE0D4C8),
+    ),
+    _NearbyProperty(
+      price: '₪3,790,000',
+      tag: _t('FOR SALE', 'למכירה'),
+      area: '140 m²',
+      rooms: _t('6 Rooms', '6 חדרים'),
+      floor: _t('Floor 3', 'קומה 3'),
+      location: _t('Moriah, Modiin', 'מוריה, מודיעין'),
+      imageBg: const Color(0xFFD4E4F7),
+    ),
+    _NearbyProperty(
+      price: '₪5,690,000',
+      tag: _t('FOR SALE', 'למכירה'),
+      area: '140 m²',
+      rooms: _t('6 Rooms', '6 חדרים'),
+      floor: _t('Floor 3', 'קומה 3'),
+      location: _t('Moriah, Modiin', 'מוריה, מודיעין'),
+      imageBg: const Color(0xFFC8D8E0),
+    ),
+    _NearbyProperty(
+      price: '₪7,500',
+      perMonth: _t('/ In the month', '/ לחודש'),
+      tag: _t('FOR Rent', 'להשכרה'),
+      area: '140 m²',
+      rooms: _t('6 Rooms', '6 חדרים'),
+      floor: _t('Floor 3', 'קומה 3'),
+      location: _t('Moriah, Modiin', 'מוריה, מודיעין'),
+      imageBg: const Color(0xFFD8E8D4),
+    ),
   ];
 
   // ── Businesses in Moriah ──
   List<_BusinessCard> get _businesses => [
-    _BusinessCard(name: 'HaNahalım', subtitle: _t('Neighborhood, Modiin', 'שכונה, מודיעין'),
-        location: _t('Modiin, Israel', 'מודיעין, ישראל'), imageBg: const Color(0xFFE8D4B8)),
-    _BusinessCard(name: _t('Avni Chen / Kaiser', 'אבני חן / קייזר'), subtitle: _t('Neighborhood, Modiin', 'שכונה, מודיעין'),
-        location: _t('Modiin, Israel', 'מודיעין, ישראל'), imageBg: const Color(0xFFD4E4F7)),
-    _BusinessCard(name: _t('Keremim', 'כרמים'), subtitle: _t('Neighborhood, Modiin', 'שכונה, מודיעין'),
-        location: _t('Modiin, Israel', 'מודיעין, ישראל'), imageBg: const Color(0xFFC8D8E0)),
-    _BusinessCard(name: _t('The Birds', 'הציפורים'), subtitle: _t('Neighborhood, Modiin', 'שכונה, מודיעין'),
-        location: _t('Modiin, Israel', 'מודיעין, ישראל'), imageBg: const Color(0xFFD8E8D4)),
+    _BusinessCard(
+      name: 'HaNahalım',
+      subtitle: _t('Neighborhood, Modiin', 'שכונה, מודיעין'),
+      location: _t('Modiin, Israel', 'מודיעין, ישראל'),
+      imageBg: const Color(0xFFE8D4B8),
+    ),
+    _BusinessCard(
+      name: _t('Avni Chen / Kaiser', 'אבני חן / קייזר'),
+      subtitle: _t('Neighborhood, Modiin', 'שכונה, מודיעין'),
+      location: _t('Modiin, Israel', 'מודיעין, ישראל'),
+      imageBg: const Color(0xFFD4E4F7),
+    ),
+    _BusinessCard(
+      name: _t('Keremim', 'כרמים'),
+      subtitle: _t('Neighborhood, Modiin', 'שכונה, מודיעין'),
+      location: _t('Modiin, Israel', 'מודיעין, ישראל'),
+      imageBg: const Color(0xFFC8D8E0),
+    ),
+    _BusinessCard(
+      name: _t('The Birds', 'הציפורים'),
+      subtitle: _t('Neighborhood, Modiin', 'שכונה, מודיעין'),
+      location: _t('Modiin, Israel', 'מודיעין, ישראל'),
+      imageBg: const Color(0xFFD8E8D4),
+    ),
   ];
 
   @override
@@ -162,9 +259,23 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
             child: GestureDetector(
               onTap: () {},
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
-                decoration: BoxDecoration(color: AppColors.midBlue, borderRadius: BorderRadius.circular(60)),
-                child: Text(_t('Contact Us', 'צרו קשר'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.midBlue,
+                  borderRadius: BorderRadius.circular(60),
+                ),
+                child: Text(
+                  _t('Contact Us', 'צרו קשר'),
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ),
@@ -211,25 +322,45 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () => context.canPop() ? context.pop() : context.go('/realestate'),
-                  child: const Icon(IconsaxPlusLinear.arrow_left, size: 24, color: AppColors.navy),
+                  onTap: () => context.canPop()
+                      ? context.pop()
+                      : context.go('/realestate'),
+                  child: const Icon(
+                    IconsaxPlusLinear.arrow_left,
+                    size: 24,
+                    color: AppColors.navy,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(_title,
-                    style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                child: Text(
+                  _title,
+                  style: TextStyle(
+                    fontFamily: AppFonts.nunito,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navy,
+                  ),
+                ),
               ),
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () => setState(() => _isFavorited = !_isFavorited),
                   child: Container(
-                    width: 40, height: 40,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFF2F3F8)),
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFF2F3F8),
+                    ),
                     child: Icon(
-                      _isFavorited ? IconsaxPlusBold.heart : IconsaxPlusLinear.heart,
-                      size: 20, color: AppColors.midBlue,
+                      _isFavorited
+                          ? IconsaxPlusBold.heart
+                          : IconsaxPlusLinear.heart,
+                      size: 20,
+                      color: AppColors.midBlue,
                     ),
                   ),
                 ),
@@ -240,17 +371,39 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
           // Row 2: location + "For Sale" badge
           Row(
             children: [
-              const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
+              const Icon(
+                IconsaxPlusBold.location,
+                size: 16,
+                color: AppColors.turquoise,
+              ),
               const SizedBox(width: 8),
-              Text(_address, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black)),
+              Text(
+                _address,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
+              ),
               const SizedBox(width: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0033AC).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(50),
                 ),
-                child: Text(_saleTag, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF0033AC))),
+                child: Text(
+                  _saleTag,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF0033AC),
+                  ),
+                ),
               ),
             ],
           ),
@@ -279,11 +432,18 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                     child: Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                          begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                           colors: [Color(0xFF0058B5), Color(0xFF010A36)],
                         ),
                       ),
-                      child: Center(child: Icon(IconsaxPlusBold.home_2, size: 80, color: Colors.white.withValues(alpha: 0.15))),
+                      child: Center(
+                        child: Icon(
+                          IconsaxPlusBold.home_2,
+                          size: 80,
+                          color: Colors.white.withValues(alpha: 0.15),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -300,7 +460,13 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                               color: const Color(0xFFD4E4F7),
                               borderRadius: BorderRadius.circular(0),
                             ),
-                            child: Center(child: Icon(IconsaxPlusLinear.image, size: 32, color: Colors.black.withValues(alpha: 0.15))),
+                            child: Center(
+                              child: Icon(
+                                IconsaxPlusLinear.image,
+                                size: 32,
+                                color: Colors.black.withValues(alpha: 0.15),
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -312,14 +478,30 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                               Expanded(
                                 child: Container(
                                   color: const Color(0xFFE0D4C8),
-                                  child: Center(child: Icon(IconsaxPlusLinear.image, size: 32, color: Colors.black.withValues(alpha: 0.15))),
+                                  child: Center(
+                                    child: Icon(
+                                      IconsaxPlusLinear.image,
+                                      size: 32,
+                                      color: Colors.black.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Container(
                                   color: const Color(0xFFC8D8E0),
-                                  child: Center(child: Icon(IconsaxPlusLinear.image, size: 32, color: Colors.black.withValues(alpha: 0.15))),
+                                  child: Center(
+                                    child: Icon(
+                                      IconsaxPlusLinear.image,
+                                      size: 32,
+                                      color: Colors.black.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -337,13 +519,23 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(60),
                     ),
-                    child: Text(_t('Show all photos', 'הצג את כל התמונות'),
-                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+                    child: Text(
+                      _t('Show all photos', 'הצג את כל התמונות'),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.navy,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -400,13 +592,32 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_price, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.navy)),
+        Text(
+          _price,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
+            color: AppColors.navy,
+          ),
+        ),
         const SizedBox(height: 16),
         Row(
           children: [
-            const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
+            const Icon(
+              IconsaxPlusBold.location,
+              size: 16,
+              color: AppColors.turquoise,
+            ),
             const SizedBox(width: 8),
-            Text(_address, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black)),
+            Text(
+              _address,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: Colors.black,
+              ),
+            ),
           ],
         ),
       ],
@@ -420,8 +631,15 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_t('Highlights', 'דגשים'),
-            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+        Text(
+          _t('Highlights', 'דגשים'),
+          style: TextStyle(
+            fontFamily: AppFonts.nunito,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: AppColors.midBlue,
+          ),
+        ),
         const SizedBox(height: 32),
         SizedBox(
           width: 683,
@@ -458,9 +676,24 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(h.label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF5F5E5A))),
+              Text(
+                h.label,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 12,
+                  color: const Color(0xFF5F5E5A),
+                ),
+              ),
               const SizedBox(height: 6),
-              Text(h.value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black)),
+              Text(
+                h.value,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
             ],
           ),
         ],
@@ -475,13 +708,27 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_t('About This Property', 'על הנכס'),
-            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+        Text(
+          _t('About This Property', 'על הנכס'),
+          style: TextStyle(
+            fontFamily: AppFonts.nunito,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: AppColors.midBlue,
+          ),
+        ),
         const SizedBox(height: 24),
         SizedBox(
           width: 620,
-          child: Text(_aboutProperty,
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
+          child: Text(
+            _aboutProperty,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 16,
+              color: const Color(0xFF3D3D3D),
+              height: 1.6,
+            ),
+          ),
         ),
       ],
     );
@@ -494,8 +741,15 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_t('Property Specifications', 'מפרט הנכס'),
-            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+        Text(
+          _t('Property Specifications', 'מפרט הנכס'),
+          style: TextStyle(
+            fontFamily: AppFonts.nunito,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: AppColors.midBlue,
+          ),
+        ),
         const SizedBox(height: 24),
         SizedBox(
           width: 721,
@@ -506,7 +760,10 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                   padding: EdgeInsets.only(right: spec == _specs.last ? 0 : 16),
                   child: Container(
                     constraints: const BoxConstraints(minHeight: 132),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 20,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border.all(color: const Color(0xFFE7E7E7)),
@@ -517,9 +774,26 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                       children: [
                         Icon(spec.icon, size: 32, color: AppColors.midBlue),
                         const SizedBox(height: 16),
-                        Text(spec.label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black), textAlign: TextAlign.center),
+                        Text(
+                          spec.label,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 8),
-                        Text(spec.value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black), textAlign: TextAlign.center),
+                        Text(
+                          spec.value,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ],
                     ),
                   ),
@@ -539,8 +813,15 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_t('Where You\'ll Be', 'היכן תהיו'),
-            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+        Text(
+          _t('Where You\'ll Be', 'היכן תהיו'),
+          style: TextStyle(
+            fontFamily: AppFonts.nunito,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: AppColors.midBlue,
+          ),
+        ),
         const SizedBox(height: 24),
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -552,23 +833,42 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                 Container(
                   color: const Color(0xFFE8F0F8),
                   child: Center(
-                    child: Icon(IconsaxPlusBold.map_1, size: 60, color: AppColors.midBlue.withValues(alpha: 0.15)),
+                    child: Icon(
+                      IconsaxPlusBold.map_1,
+                      size: 60,
+                      color: AppColors.midBlue.withValues(alpha: 0.15),
+                    ),
                   ),
                 ),
                 // Map pin
                 Center(
                   child: Container(
-                    width: 48, height: 48,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 2.74, offset: const Offset(0, 2.74))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 2.74,
+                          offset: const Offset(0, 2.74),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: Container(
-                        width: 26, height: 26,
-                        decoration: const BoxDecoration(color: Color(0xFF006BF6), shape: BoxShape.circle),
-                        child: const Icon(IconsaxPlusLinear.user, size: 12, color: Colors.white),
+                        width: 26,
+                        height: 26,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF006BF6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          IconsaxPlusLinear.user,
+                          size: 12,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -590,20 +890,41 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_t('About Moriah', 'על שכונת מוריה'),
-              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+          Text(
+            _t('About Moriah', 'על שכונת מוריה'),
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: AppColors.midBlue,
+            ),
+          ),
           const SizedBox(height: 24),
           Stack(
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_aboutNeighborhood1,
-                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
+                  Text(
+                    _aboutNeighborhood1,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      color: const Color(0xFF3D3D3D),
+                      height: 1.6,
+                    ),
+                  ),
                   if (_aboutExpanded) ...[
                     const SizedBox(height: 16),
-                    Text(_aboutNeighborhood2,
-                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF3D3D3D), height: 1.6)),
+                    Text(
+                      _aboutNeighborhood2,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 16,
+                        color: const Color(0xFF3D3D3D),
+                        height: 1.6,
+                      ),
+                    ),
                   ],
                   if (!_aboutExpanded) const SizedBox(height: 100),
                 ],
@@ -611,12 +932,15 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
               // White gradient overlay when collapsed
               if (!_aboutExpanded)
                 Positioned(
-                  left: 0, right: 0, bottom: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
                   height: 222,
                   child: Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                         colors: [Color(0x00FFFFFF), Colors.white],
                       ),
                     ),
@@ -631,15 +955,25 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
               child: GestureDetector(
                 onTap: () => setState(() => _aboutExpanded = !_aboutExpanded),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border.all(color: AppColors.midBlue),
                     borderRadius: BorderRadius.circular(60),
                   ),
                   child: Text(
-                    _aboutExpanded ? _t('Show Less', 'הצג פחות') : _t('Read More', 'קרא עוד'),
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue),
+                    _aboutExpanded
+                        ? _t('Show Less', 'הצג פחות')
+                        : _t('Read More', 'קרא עוד'),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.midBlue,
+                    ),
                   ),
                 ),
               ),
@@ -665,34 +999,68 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_t('Contact This Property', 'צור קשר עם הנכס'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy)),
+          Text(
+            _t('Contact This Property', 'צור קשר עם הנכס'),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.navy,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(_t('Get in touch with our real estate expert', 'צור קשר עם המומחה לנדל"ן שלנו'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF3D3D3D))),
+          Text(
+            _t(
+              'Get in touch with our real estate expert',
+              'צור קשר עם המומחה לנדל"ן שלנו',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: const Color(0xFF3D3D3D),
+            ),
+          ),
           const SizedBox(height: 25),
           // Agent row
           Row(
             children: [
               // Avatar placeholder
               Container(
-                width: 56, height: 56,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFFD0D0D0),
                   border: Border.all(color: const Color(0xFFE0E0E0)),
                 ),
-                child: const Icon(IconsaxPlusBold.user, size: 24, color: Colors.white),
+                child: const Icon(
+                  IconsaxPlusBold.user,
+                  size: 24,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Zeev Schumacher',
-                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
+                  Text(
+                    'Zeev Schumacher',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text(_t('RGF Properties, Modiin', 'RGF נכסים, מודיעין'),
-                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D))),
+                  Text(
+                    _t('RGF Properties, Modiin', 'RGF נכסים, מודיעין'),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 12,
+                      color: const Color(0xFF6D6D6D),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -711,8 +1079,15 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                   borderRadius: BorderRadius.circular(60),
                 ),
                 child: Center(
-                  child: Text(_t('Contact', 'צור קשר'),
-                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                  child: Text(
+                    _t('Contact', 'צור קשר'),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -732,8 +1107,15 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_t('Properties in Moriah', 'נכסים במוריה'),
-              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+          Text(
+            _t('Properties in Moriah', 'נכסים במוריה'),
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: AppColors.midBlue,
+            ),
+          ),
           const SizedBox(height: 24),
           SizedBox(
             height: 275,
@@ -748,13 +1130,18 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                   itemBuilder: (context, index) {
                     return SizedBox(
                       width: 288,
-                      child: _NearbyPropertyCard(data: _nearbyProperties[index], isHebrew: _isHebrew),
+                      child: _NearbyPropertyCard(
+                        data: _nearbyProperties[index],
+                        isHebrew: _isHebrew,
+                      ),
                     );
                   },
                 ),
                 // Left arrow
                 Positioned(
-                  left: -20, top: 0, bottom: 0,
+                  left: -20,
+                  top: 0,
+                  bottom: 0,
                   child: Center(
                     child: _CarouselArrow(
                       isLeft: true,
@@ -768,7 +1155,9 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                 ),
                 // Right arrow
                 Positioned(
-                  right: -20, top: 0, bottom: 0,
+                  right: -20,
+                  top: 0,
+                  bottom: 0,
                   child: Center(
                     child: _CarouselArrow(
                       isLeft: false,
@@ -798,8 +1187,15 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_t('Businesses in Moriah', 'עסקים במוריה'),
-              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
+          Text(
+            _t('Businesses in Moriah', 'עסקים במוריה'),
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: AppColors.midBlue,
+            ),
+          ),
           const SizedBox(height: 24),
           SizedBox(
             height: 262,
@@ -820,7 +1216,9 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                 ),
                 // Left arrow
                 Positioned(
-                  left: -20, top: 0, bottom: 0,
+                  left: -20,
+                  top: 0,
+                  bottom: 0,
                   child: Center(
                     child: _CarouselArrow(
                       isLeft: true,
@@ -834,7 +1232,9 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
                 ),
                 // Right arrow
                 Positioned(
-                  right: -20, top: 0, bottom: 0,
+                  right: -20,
+                  top: 0,
+                  bottom: 0,
                   child: Center(
                     child: _CarouselArrow(
                       isLeft: false,
@@ -866,34 +1266,59 @@ class _WebListingDetailContentState extends State<WebListingDetailContent> {
 class _NavItem {
   final String label, route;
   final bool hasDropdown, isActive;
-  const _NavItem({required this.label, required this.route, this.hasDropdown = false, this.isActive = false});
+  const _NavItem({
+    required this.label,
+    required this.route,
+    this.hasDropdown = false,
+    this.isActive = false,
+  });
 }
 
 class _Highlight {
   final String label, value;
   final IconData icon;
-  const _Highlight({required this.label, required this.value, required this.icon});
+  const _Highlight({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 }
 
 class _SpecItem {
   final String label, value;
   final IconData icon;
-  const _SpecItem({required this.label, required this.value, required this.icon});
+  const _SpecItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 }
 
 class _NearbyProperty {
   final String price, tag, area, rooms, floor, location;
   final String? perMonth;
   final Color imageBg;
-  const _NearbyProperty({required this.price, required this.tag, required this.area,
-    required this.rooms, required this.floor, required this.location,
-    this.perMonth, this.imageBg = const Color(0xFFE8EEF4)});
+  const _NearbyProperty({
+    required this.price,
+    required this.tag,
+    required this.area,
+    required this.rooms,
+    required this.floor,
+    required this.location,
+    this.perMonth,
+    this.imageBg = const Color(0xFFE8EEF4),
+  });
 }
 
 class _BusinessCard {
   final String name, subtitle, location;
   final Color imageBg;
-  const _BusinessCard({required this.name, required this.subtitle, required this.location, this.imageBg = const Color(0xFFE8EEF4)});
+  const _BusinessCard({
+    required this.name,
+    required this.subtitle,
+    required this.location,
+    this.imageBg = const Color(0xFFE8EEF4),
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -923,7 +1348,12 @@ class _NavLinkButton extends StatefulWidget {
   final String label;
   final bool isActive, hasDropdown;
   final VoidCallback onTap;
-  const _NavLinkButton({required this.label, this.isActive = false, this.hasDropdown = false, required this.onTap});
+  const _NavLinkButton({
+    required this.label,
+    this.isActive = false,
+    this.hasDropdown = false,
+    required this.onTap,
+  });
 
   @override
   State<_NavLinkButton> createState() => _NavLinkButtonState();
@@ -946,7 +1376,9 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: widget.isActive ? AppColors.turquoise : Colors.transparent,
+                color: widget.isActive
+                    ? AppColors.turquoise
+                    : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -956,17 +1388,24 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
             children: [
               Text(
                 widget.label,
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: widget.isActive
                       ? AppColors.turquoise
-                      : (_hovered ? AppColors.midBlue : const Color(0xFF0F161E)),
+                      : (_hovered
+                            ? AppColors.midBlue
+                            : const Color(0xFF0F161E)),
                 ),
               ),
               if (widget.hasDropdown) ...[
                 const SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down, size: 18, color: const Color(0xFF21272A)),
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 18,
+                  color: const Color(0xFF21272A),
+                ),
               ],
             ],
           ),
@@ -998,16 +1437,25 @@ class _CarouselArrowState extends State<_CarouselArrow> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: 40, height: 40,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: _hovered ? const Color(0xFFF8F8F8) : Colors.white,
             shape: BoxShape.circle,
             border: Border.all(color: const Color(0xFFF6F6F6)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+              ),
+            ],
           ),
           child: Icon(
-            widget.isLeft ? IconsaxPlusLinear.arrow_left_2 : IconsaxPlusLinear.arrow_right_3,
-            size: 20, color: AppColors.midBlue,
+            widget.isLeft
+                ? IconsaxPlusLinear.arrow_left_2
+                : IconsaxPlusLinear.arrow_right_3,
+            size: 20,
+            color: AppColors.midBlue,
           ),
         ),
       ),
@@ -1040,10 +1488,18 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
           border: Border.all(color: const Color(0xFFE7E7E7)),
           borderRadius: BorderRadius.circular(12),
           boxShadow: _hovered
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4))]
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
               : [],
         ),
-        transform: _hovered ? Matrix4.translationValues(0, -2, 0) : Matrix4.identity(),
+        transform: _hovered
+            ? Matrix4.translationValues(0, -2, 0)
+            : Matrix4.identity(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1054,17 +1510,34 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
                   height: 150,
                   decoration: BoxDecoration(
                     color: d.imageBg,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
                   ),
-                  child: Center(child: Icon(IconsaxPlusLinear.image, size: 32, color: Colors.black.withValues(alpha: 0.15))),
+                  child: Center(
+                    child: Icon(
+                      IconsaxPlusLinear.image,
+                      size: 32,
+                      color: Colors.black.withValues(alpha: 0.15),
+                    ),
+                  ),
                 ),
                 // Heart button
                 Positioned(
-                  left: 10, top: 10,
+                  left: 10,
+                  top: 10,
                   child: Container(
-                    width: 40, height: 40,
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                    child: const Icon(IconsaxPlusLinear.heart, size: 20, color: AppColors.midBlue),
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      IconsaxPlusLinear.heart,
+                      size: 20,
+                      color: AppColors.midBlue,
+                    ),
                   ),
                 ),
               ],
@@ -1081,14 +1554,37 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
                     children: [
                       Row(
                         children: [
-                          Text(d.price, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                          Text(
+                            d.price,
+                            style: TextStyle(
+                              fontFamily: AppFonts.nunito,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.navy,
+                            ),
+                          ),
                           if (d.perMonth != null) ...[
                             const SizedBox(width: 8),
-                            Text(d.perMonth!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
+                            Text(
+                              d.perMonth!,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 14,
+                                color: const Color(0xFF5F5E5A),
+                              ),
+                            ),
                           ],
                         ],
                       ),
-                      Text(d.tag, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.turquoise)),
+                      Text(
+                        d.tag,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.turquoise,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -1106,9 +1602,20 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
                   // Location
                   Row(
                     children: [
-                      const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
+                      const Icon(
+                        IconsaxPlusBold.location,
+                        size: 16,
+                        color: AppColors.turquoise,
+                      ),
                       const SizedBox(width: 6),
-                      Text(d.location, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
+                      Text(
+                        d.location,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          color: const Color(0xFF5F5E5A),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -1126,7 +1633,14 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
       children: [
         Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
         const SizedBox(width: 8),
-        Text(text, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF3D3D3D))),
+        Text(
+          text,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 12,
+            color: const Color(0xFF3D3D3D),
+          ),
+        ),
       ],
     );
   }
@@ -1156,10 +1670,18 @@ class _BusinessCardWidgetState extends State<_BusinessCardWidget> {
           border: Border.all(color: const Color(0xFFE7E7E7)),
           borderRadius: BorderRadius.circular(12),
           boxShadow: _hovered
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4))]
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
               : [],
         ),
-        transform: _hovered ? Matrix4.translationValues(0, -2, 0) : Matrix4.identity(),
+        transform: _hovered
+            ? Matrix4.translationValues(0, -2, 0)
+            : Matrix4.identity(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1168,9 +1690,17 @@ class _BusinessCardWidgetState extends State<_BusinessCardWidget> {
               height: 150,
               decoration: BoxDecoration(
                 color: d.imageBg,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
               ),
-              child: Center(child: Icon(IconsaxPlusLinear.image, size: 32, color: Colors.black.withValues(alpha: 0.15))),
+              child: Center(
+                child: Icon(
+                  IconsaxPlusLinear.image,
+                  size: 32,
+                  color: Colors.black.withValues(alpha: 0.15),
+                ),
+              ),
             ),
             // Details
             Padding(
@@ -1178,15 +1708,41 @@ class _BusinessCardWidgetState extends State<_BusinessCardWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(d.name, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                  Text(
+                    d.name,
+                    style: TextStyle(
+                      fontFamily: AppFonts.nunito,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.navy,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(d.subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
+                  Text(
+                    d.subtitle,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      color: const Color(0xFF5F5E5A),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
+                      const Icon(
+                        IconsaxPlusBold.location,
+                        size: 16,
+                        color: AppColors.turquoise,
+                      ),
                       const SizedBox(width: 6),
-                      Text(d.location, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
+                      Text(
+                        d.location,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          color: const Color(0xFF5F5E5A),
+                        ),
+                      ),
                     ],
                   ),
                 ],

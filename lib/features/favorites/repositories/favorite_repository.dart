@@ -4,13 +4,14 @@ import '../../../core/supabase/supabase_config.dart';
 
 /// What can be saved. The `favorites` table keys rows by this plus the id, so
 /// one business and one article can share an id without colliding.
-enum FavoriteKind { business, article, event }
+enum FavoriteKind { business, article, event, listing }
 
 extension FavoriteKindValue on FavoriteKind {
   String get value => switch (this) {
     FavoriteKind.business => 'business',
     FavoriteKind.article => 'article',
     FavoriteKind.event => 'event',
+    FavoriteKind.listing => 'listing',
   };
 }
 
@@ -92,6 +93,7 @@ extension FavoriteResolve on FavoriteRepository {
     final businessIds = idsOf(FavoriteKind.business);
     final eventIds = idsOf(FavoriteKind.event);
     final articleIds = idsOf(FavoriteKind.article);
+    final listingIds = idsOf(FavoriteKind.listing);
 
     final results = await Future.wait([
       businessIds.isEmpty
@@ -117,6 +119,16 @@ extension FavoriteResolve on FavoriteRepository {
                 .from('articles')
                 .select('id, title, excerpt, featured_image, published_at')
                 .inFilter('id', articleIds)
+                .then(List<Map<String, dynamic>>.from),
+      listingIds.isEmpty
+          ? Future.value(const <Map<String, dynamic>>[])
+          : client
+                .from('listings')
+                .select(
+                  'id, title, address, cover_url, price, price_per_month, '
+                  'kind, created_at',
+                )
+                .inFilter('id', listingIds)
                 .then(List<Map<String, dynamic>>.from),
     ]);
 
@@ -156,6 +168,15 @@ extension FavoriteResolve on FavoriteRepository {
           imageUrl: text(r['featured_image']),
           route: '/article/${r['id']}',
           date: DateTime.tryParse(r['published_at'] as String? ?? ''),
+        ),
+      for (final r in results[3])
+        FavoriteEntry(
+          kind: FavoriteKind.listing,
+          id: r['id'] as String,
+          title: (r['title'] as String?) ?? '',
+          subtitle: text(r['address']),
+          imageUrl: text(r['cover_url']),
+          route: '/listing/${r['id']}',
         ),
     ];
   }

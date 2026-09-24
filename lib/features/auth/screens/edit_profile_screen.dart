@@ -26,6 +26,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   String? _selectedNeighborhood;
+
   /// Stored as the database key, not the label, so switching language does
   /// not change what is saved. Null until the person answers — the screen
   /// used to open on 'Married' / 'Yes' / '12 May 1990' for everybody.
@@ -551,5 +552,4 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ],
     );
   }
-
 }

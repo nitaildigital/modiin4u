@@ -1,31 +1,70 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../models/listing.dart';
+import '../providers/listing_providers.dart';
+
 /// Add Apartment – multi-step form wizard.
 /// Step 1: Basic Information (listing type, property type, title, price,
-///         location, bedrooms, bathrooms).
+///         address, neighbourhood, rooms, bathrooms).
 /// Step 2: Apartment Details (description, floor, total floors, area,
-///         parking, amenities).
+///         amenities).
 /// Step 3: Add Photos (main image, thumbnails, upload slots).
-class AddApartmentScreen extends StatefulWidget {
+///
+/// The form used to be a drawing: the inputs had no controllers, the
+/// dropdowns were a line of text with an arrow beside it, and "Submit" only
+/// advanced to the confirmation screen. Nothing was written, so every
+/// apartment a resident entered was lost the moment they left. It writes to
+/// `listings` now, as `pending`, for an administrator to approve.
+class AddApartmentScreen extends ConsumerStatefulWidget {
   const AddApartmentScreen({super.key});
 
   @override
-  State<AddApartmentScreen> createState() => _AddApartmentScreenState();
+  ConsumerState<AddApartmentScreen> createState() => _AddApartmentScreenState();
 }
 
-class _AddApartmentScreenState extends State<AddApartmentScreen> {
+class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
   int _currentStep = 0; // 0 = Basics, 1 = Details, 2 = Photos, 3 = Submitted
 
-  // Step 1 state
-  int _listingType = 0; // 0 = For Sale, 1 = For Rent
+  // ── Step 1 ──
+  ListingKind _kind = ListingKind.sale;
+  PropertyType? _propertyType;
+  final _title = TextEditingController();
+  final _price = TextEditingController();
+  final _address = TextEditingController();
+  String? _neighborhoodId;
+  double? _rooms;
+  int? _bathrooms;
 
-  // Step 2 state
-  final Set<String> _selectedAmenities = {};
+  // ── Step 2 ──
+  final _description = TextEditingController();
+  final _area = TextEditingController();
+  int? _floor;
+  int? _totalFloors;
 
-  static const _stepLabels = ['Basics', 'Details', 'Photos'];
+  /// Each chip maps to a boolean column, so a chip that is on is a value that
+  /// is actually stored. The mock had "Air Conditioning" and "Garden" chips
+  /// with nowhere to put them; a garden is a property type here, and there is
+  /// no column for air conditioning, so neither is offered rather than
+  /// offered and dropped.
+  final Set<_Amenity> _amenities = {};
+
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _price.dispose();
+    _address.dispose();
+    _description.dispose();
+    _area.dispose();
+    super.dispose();
+  }
 
   void _onNext() {
     if (_currentStep < 2) {
@@ -33,8 +72,82 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
     }
   }
 
-  void _onSubmit() {
-    setState(() => _currentStep = 3);
+  Future<void> _onSubmit() async {
+    if (_saving) return;
+    final l = L.of(context);
+
+    // Checked here rather than on the way out of step 1, so someone can fill
+    // the form in whatever order they like and still be told what is missing.
+    if (_title.text.trim().isEmpty) {
+      setState(() => _currentStep = 0);
+      _toast(l.errTitleRequired, error: true);
+      return;
+    }
+    final price = int.tryParse(_price.text.replaceAll(RegExp(r'[^0-9]'), ''));
+    if (price == null || price <= 0) {
+      setState(() => _currentStep = 0);
+      _toast(l.errPriceRequired, error: true);
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      final isRent = _kind == ListingKind.rent;
+      await ref
+          .read(listingRepositoryProvider)
+          .create(
+            title: _title.text.trim(),
+            description: _description.text.trim().isEmpty
+                ? null
+                : _description.text.trim(),
+            kind: _kind,
+            propertyType: _propertyType ?? PropertyType.apartment,
+            rooms: _rooms,
+            bathrooms: _bathrooms,
+            floor: _floor,
+            totalFloors: _totalFloors,
+            sqm: int.tryParse(_area.text.trim()),
+            // One column or the other, never both, so a rental does not read
+            // as a sale at the same number.
+            price: isRent ? null : price,
+            pricePerMonth: isRent ? price : null,
+            address: _address.text.trim().isEmpty ? null : _address.text.trim(),
+            neighborhoodId: _neighborhoodId,
+            hasParking: _amenities.contains(_Amenity.parking),
+            hasElevator: _amenities.contains(_Amenity.elevator),
+            hasStorage: _amenities.contains(_Amenity.storage),
+            hasBalcony: _amenities.contains(_Amenity.balcony),
+            hasMamad: _amenities.contains(_Amenity.mamad),
+          );
+
+      // So "My Apartments" shows it without the person having to pull to
+      // refresh.
+      ref.invalidate(myListingsProvider);
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _currentStep = 3;
+      });
+    } on StateError {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _toast(l.signInToPostListing, error: true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _toast(l.errCouldNotSubmit, error: true);
+    }
+  }
+
+  void _toast(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        backgroundColor: error ? AppColors.error : null,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   void _onBack() {
@@ -50,6 +163,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -82,8 +196,9 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Add Apartment',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            l.addApartment,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
@@ -98,7 +213,8 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                           child: Text(
                             'Step ${_currentStep + 1} of 3',
                             textAlign: TextAlign.right,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF123A72),
@@ -118,7 +234,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                   const SizedBox(height: 16),
                   _StepProgressBar(
                     currentStep: _currentStep,
-                    labels: _stepLabels,
+                    labels: [l.stepBasics, l.stepDetails, l.stepPhotos],
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -130,29 +246,30 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                   child: _currentStep == 0
                       ? _buildStep1()
                       : _currentStep == 1
-                          ? _buildStep2()
-                          : _currentStep == 2
-                              ? _buildStep3()
-                              : _buildConfirmation(),
+                      ? _buildStep2()
+                      : _currentStep == 2
+                      ? _buildStep3()
+                      : _buildConfirmation(),
                 ),
 
                 // ═══════════════════════════════════
                 // Bottom bar button
                 // ═══════════════════════════════════
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    border:
-                        Border(top: BorderSide(color: Color(0xFFE7E7E7))),
+                    border: Border(top: BorderSide(color: Color(0xFFE7E7E7))),
                   ),
                   child: GestureDetector(
                     onTap: _currentStep < 2
                         ? _onNext
                         : _currentStep == 2
-                            ? _onSubmit
-                            : () => context.pushReplacement('/my-apartments'),
+                        ? _onSubmit
+                        : () => context.pushReplacement('/my-apartments'),
                     child: Container(
                       width: double.infinity,
                       height: 44,
@@ -165,11 +282,12 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                         children: [
                           Text(
                             _currentStep == 3
-                                ? 'Back to My Apartments'
+                                ? l.backToMyApartments
                                 : _currentStep == 2
-                                    ? 'Submit for Approval'
-                                    : 'Next',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                                ? l.submitForApproval
+                                : l.next,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
@@ -200,13 +318,17 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
   // Step 1: Basic Information
   // ═══════════════════════════════════════════════
   Widget _buildStep1() {
+    final l = L.of(context);
+    final hoods = ref.watch(listingNeighborhoodsProvider);
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       children: [
         // Section header
         Text(
-          'Basic Information',
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          l.basicInformation,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1F1F1F),
@@ -214,8 +336,9 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Fill in the details about your property',
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          l.fillInPropertyDetails,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
@@ -225,24 +348,24 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
 
         // ── Listing Type (toggle) ──
         _FormCard(
-          label: 'Listing Type',
+          label: l.listingType,
           child: Row(
             children: [
               Expanded(
                 child: _ToggleButton(
-                  label: 'For Sale',
+                  label: l.forSale,
                   icon: IconsaxPlusLinear.tag,
-                  selected: _listingType == 0,
-                  onTap: () => setState(() => _listingType = 0),
+                  selected: _kind == ListingKind.sale,
+                  onTap: () => setState(() => _kind = ListingKind.sale),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _ToggleButton(
-                  label: 'For Rent',
+                  label: l.forRent,
                   icon: IconsaxPlusLinear.key,
-                  selected: _listingType == 1,
-                  onTap: () => setState(() => _listingType = 1),
+                  selected: _kind == ListingKind.rent,
+                  onTap: () => setState(() => _kind = ListingKind.rent),
                 ),
               ),
             ],
@@ -250,64 +373,136 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         ),
         const SizedBox(height: 16),
 
-        // ── Property Type (dropdown) ──
+        // ── Property Type ──
         _FormCard(
-          label: 'Property Type',
-          child: _DropdownRow(placeholder: 'Select property type'),
-        ),
-        const SizedBox(height: 16),
-
-        // ── Title (text input) ──
-        _FormCard(
-          label: 'Title',
-          child: _InputRow(
-            placeholder: 'e.g. Modern 3BR Apartment in City Center',
+          label: l.propertyType,
+          child: _DropdownRow<PropertyType>(
+            placeholder: l.selectPropertyType,
+            value: _propertyType,
+            items: [
+              for (final t in PropertyType.values)
+                DropdownMenuItem(
+                  value: t,
+                  child: Text(_propertyTypeLabel(l, t)),
+                ),
+            ],
+            onChanged: (v) => setState(() => _propertyType = v),
           ),
         ),
         const SizedBox(height: 16),
 
-        // ── Price (text input) ──
+        // ── Title ──
         _FormCard(
-          label: 'Price',
-          child: _InputRow(placeholder: 'Enter price'),
+          label: l.listingTitle,
+          child: _InputRow(controller: _title, placeholder: l.listingTitleHint),
         ),
         const SizedBox(height: 16),
 
-        // ── Location (text input) ──
+        // ── Price ──
+        //
+        // The label follows the listing type, because the number means a
+        // different thing for a rental and is stored in a different column.
         _FormCard(
-          label: 'Location',
-          child: _InputRow(placeholder: 'Enter neighborhood or area'),
+          label: _kind == ListingKind.rent ? l.pricePerMonth : l.price,
+          child: _InputRow(
+            controller: _price,
+            placeholder: l.enterPrice,
+            keyboardType: TextInputType.number,
+          ),
         ),
         const SizedBox(height: 16),
 
-        // ── Bedrooms (dropdown) ──
+        // ── Address ──
         _FormCard(
-          label: 'Bedrooms',
-          child: _DropdownRow(placeholder: 'Select number of bedrooms'),
+          label: l.address,
+          child: _InputRow(controller: _address, placeholder: l.enterAddress),
         ),
         const SizedBox(height: 16),
 
-        // ── Bathrooms (dropdown) ──
+        // ── Neighbourhood ──
+        //
+        // Stored as an id, so the list comes from the table rather than from
+        // anything typed. While it is loading the field is simply empty; it
+        // is optional, so a slow network must not block the form.
         _FormCard(
-          label: 'Bathrooms',
-          child: _DropdownRow(placeholder: 'Select number of bathrooms'),
+          label: l.neighborhood,
+          child: _DropdownRow<String>(
+            placeholder: l.selectHint,
+            value: _neighborhoodId,
+            items: [
+              for (final h
+                  in hoods.valueOrNull ?? const <({String id, String name})>[])
+                DropdownMenuItem(value: h.id, child: Text(h.name)),
+            ],
+            onChanged: (v) => setState(() => _neighborhoodId = v),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Rooms ──
+        //
+        // Half rooms are normal in a listing here, so the options step by a
+        // half rather than by a whole.
+        _FormCard(
+          label: l.roomsLabel,
+          child: _DropdownRow<double>(
+            placeholder: l.selectRooms,
+            value: _rooms,
+            items: [
+              for (var i = 1; i <= 16; i++)
+                DropdownMenuItem(value: i / 2, child: Text(_roomsLabel(i / 2))),
+            ],
+            onChanged: (v) => setState(() => _rooms = v),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Bathrooms ──
+        _FormCard(
+          label: l.bathrooms,
+          child: _DropdownRow<int>(
+            placeholder: l.selectBathrooms,
+            value: _bathrooms,
+            items: [
+              for (var i = 1; i <= 6; i++)
+                DropdownMenuItem(value: i, child: Text('$i')),
+            ],
+            onChanged: (v) => setState(() => _bathrooms = v),
+          ),
         ),
         const SizedBox(height: 24),
       ],
     );
   }
 
+  static String _propertyTypeLabel(L l, PropertyType t) => switch (t) {
+    PropertyType.apartment => l.propTypeApartment,
+    PropertyType.penthouse => l.propTypePenthouse,
+    PropertyType.garden => l.propTypeGarden,
+    PropertyType.duplex => l.propTypeDuplex,
+    PropertyType.villa => l.propTypeVilla,
+    PropertyType.studio => l.propTypeStudio,
+    PropertyType.other => l.propTypeOther,
+  };
+
+  /// 3.5 reads as "3.5"; 3.0 reads as "3".
+  static String _roomsLabel(double v) =>
+      v == v.roundToDouble() ? '${v.toInt()}' : '$v';
+
   // ═══════════════════════════════════════════════
   // Step 2: Apartment Details
   // ═══════════════════════════════════════════════
   Widget _buildStep2() {
+    final l = L.of(context);
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       children: [
         // Section header
         Text(
-          'Apartment Details',
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          l.apartmentDetails,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1F1F1F),
@@ -315,8 +510,9 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Add more details about your property',
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          l.addMoreDetails,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
@@ -324,7 +520,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         ),
         const SizedBox(height: 20),
 
-        // ── Description (tall text area) ──
+        // ── Description ──
         Container(
           height: 150,
           padding: const EdgeInsets.all(12),
@@ -337,30 +533,31 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Description',
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                l.description,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF1F1F1F),
                 ),
               ),
-              const SizedBox(height: 13),
+              const SizedBox(height: 8),
               Expanded(
                 child: TextField(
+                  controller: _description,
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
-                    fontWeight: FontWeight.w400,
                     color: const Color(0xFF1F1F1F),
                   ),
                   decoration: InputDecoration(
-                    hintText:
-                        'Describe your apartment, features and highlights',
-                    hintStyle: TextStyle(fontFamily: AppFonts.inter, 
+                    hintText: l.describeYourApartment,
+                    hintStyle: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
-                      fontWeight: FontWeight.w400,
                       color: const Color(0xFF6D6D6D),
                     ),
                     border: InputBorder.none,
@@ -374,76 +571,54 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         ),
         const SizedBox(height: 16),
 
-        // ── Floor & Total Floors (side by side) ──
+        // ── Floor / Total floors ──
         Row(
           children: [
             Expanded(
               child: _FormCard(
-                label: 'Floor',
-                child: _DropdownRow(placeholder: 'Select'),
+                label: l.floor,
+                child: _DropdownRow<int>(
+                  placeholder: l.selectHint,
+                  value: _floor,
+                  items: [
+                    for (var i = 0; i <= 40; i++)
+                      DropdownMenuItem(value: i, child: Text('$i')),
+                  ],
+                  onChanged: (v) => setState(() => _floor = v),
+                ),
               ),
             ),
             const SizedBox(width: 13),
             Expanded(
               child: _FormCard(
-                label: 'Total Floors',
-                child: _DropdownRow(placeholder: 'Select'),
+                label: l.totalFloors,
+                child: _DropdownRow<int>(
+                  placeholder: l.selectHint,
+                  value: _totalFloors,
+                  items: [
+                    for (var i = 1; i <= 40; i++)
+                      DropdownMenuItem(value: i, child: Text('$i')),
+                  ],
+                  onChanged: (v) => setState(() => _totalFloors = v),
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
 
-        // ── Area (m²) ──
+        // ── Area ──
         _FormCard(
-          label: 'Area (m²)',
-          child: Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 20,
-                  child: TextField(
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF1F1F1F),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Enter area',
-                      hintStyle: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                      isDense: true,
-                    ),
-                  ),
-                ),
-              ),
-              Text(
-                'm²',
-                style: TextStyle(fontFamily: AppFonts.inter, 
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF6D6D6D),
-                ),
-              ),
-            ],
+          label: l.areaSqm,
+          child: _InputRow(
+            controller: _area,
+            placeholder: l.enterArea,
+            keyboardType: TextInputType.number,
           ),
         ),
         const SizedBox(height: 16),
 
-        // ── Parking (dropdown) ──
-        _FormCard(
-          label: 'Parking',
-          child: _DropdownRow(placeholder: 'Select parking option'),
-        ),
-        const SizedBox(height: 16),
-
-        // ── Amenities (chip toggles) ──
+        // ── Amenities ──
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -455,57 +630,30 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Amenities',
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                l.amenities,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF1F1F1F),
                 ),
               ),
               const SizedBox(height: 13),
-              // Row 1
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  _AmenityChip(
-                    label: 'Balcony',
-                    icon: IconsaxPlusLinear.building_4,
-                    selected: _selectedAmenities.contains('Balcony'),
-                    onTap: () => _toggleAmenity('Balcony'),
-                  ),
-                  const SizedBox(width: 8),
-                  _AmenityChip(
-                    label: 'Air Conditioning',
-                    icon: IconsaxPlusLinear.wind,
-                    selected:
-                        _selectedAmenities.contains('Air Conditioning'),
-                    onTap: () => _toggleAmenity('Air Conditioning'),
-                  ),
-                  const SizedBox(width: 8),
-                  _AmenityChip(
-                    label: 'Garden',
-                    icon: IconsaxPlusLinear.tree,
-                    selected: _selectedAmenities.contains('Garden'),
-                    onTap: () => _toggleAmenity('Garden'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Row 2
-              Row(
-                children: [
-                  _AmenityChip(
-                    label: 'Storage',
-                    icon: IconsaxPlusLinear.box_1,
-                    selected: _selectedAmenities.contains('Storage'),
-                    onTap: () => _toggleAmenity('Storage'),
-                  ),
-                  const SizedBox(width: 8),
-                  _AmenityChip(
-                    label: 'Elevator',
-                    icon: IconsaxPlusLinear.arrow_3,
-                    selected: _selectedAmenities.contains('Elevator'),
-                    onTap: () => _toggleAmenity('Elevator'),
-                  ),
+                  for (final a in _Amenity.values)
+                    _AmenityChip(
+                      label: _amenityLabel(l, a),
+                      icon: a.icon,
+                      selected: _amenities.contains(a),
+                      onTap: () => setState(() {
+                        _amenities.contains(a)
+                            ? _amenities.remove(a)
+                            : _amenities.add(a);
+                      }),
+                    ),
                 ],
               ),
             ],
@@ -516,27 +664,26 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
     );
   }
 
-  void _toggleAmenity(String name) {
-    setState(() {
-      if (_selectedAmenities.contains(name)) {
-        _selectedAmenities.remove(name);
-      } else {
-        _selectedAmenities.add(name);
-      }
-    });
-  }
+  static String _amenityLabel(L l, _Amenity a) => switch (a) {
+    _Amenity.balcony => l.amenityBalcony,
+    _Amenity.parking => l.amenityParking,
+    _Amenity.elevator => l.amenityElevator,
+    _Amenity.storage => l.amenityStorage,
+    _Amenity.mamad => l.amenityMamad,
+  };
 
-  // ═══════════════════════════════════════════════
   // Step 3: Add Photos
   // ═══════════════════════════════════════════════
   Widget _buildStep3() {
+    final l = L.of(context);
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       children: [
         // Section header
         Text(
-          'Add Photos',
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          l.addPhotos,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1F1F1F),
@@ -544,8 +691,9 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Upload photos of your apartment',
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          l.uploadApartmentPhotos,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
@@ -553,8 +701,9 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'First photo will be used as the cover image',
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          l.firstPhotoIsCover,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: const Color(0xFFFF3434),
@@ -588,14 +737,17 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                       top: 10,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF123A72),
                           borderRadius: BorderRadius.circular(50),
                         ),
                         child: Text(
-                          'Main Image',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          l.mainImage,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 11,
                             fontWeight: FontWeight.w400,
                             color: Colors.white,
@@ -604,11 +756,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                       ),
                     ),
                     // Delete button
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: const _DeleteCircle(),
-                    ),
+                    Positioned(right: 8, top: 8, child: const _DeleteCircle()),
                   ],
                 ),
               ),
@@ -627,10 +775,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                               gradient: const LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  Color(0xFF0058B5),
-                                  Color(0xFF010A36),
-                                ],
+                                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
                               ),
                             ),
                           ),
@@ -652,10 +797,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                               gradient: const LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  Color(0xFF0058B5),
-                                  Color(0xFF010A36),
-                                ],
+                                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
                               ),
                             ),
                           ),
@@ -716,6 +858,7 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
   // Confirmation: Listing Submitted
   // ═══════════════════════════════════════════════
   Widget _buildConfirmation() {
+    final l = L.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: Column(
@@ -742,9 +885,10 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
 
           // Title
           Text(
-            'Listing Submitted!',
+            l.listingSubmitted,
             textAlign: TextAlign.center,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -756,10 +900,10 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
           SizedBox(
             width: 327,
             child: Text(
-              'Your apartment has been submitted for approval. '
-              'We\'ll review the details and publish it once approved.',
+              l.submittedForApprovalLong,
               textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
@@ -793,8 +937,9 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pending Approval',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        l.pendingApproval,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1F1F1F),
@@ -802,8 +947,9 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Your listing is being reviewed',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        l.listingBeingReviewed,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -821,10 +967,10 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
           SizedBox(
             width: 327,
             child: Text(
-              'You can check the status of your listing anytime '
-              'from the My Apartments page.',
+              l.checkStatusAnytimeLong,
               textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
@@ -843,14 +989,24 @@ class _AddApartmentScreenState extends State<AddApartmentScreen> {
 // Step progress bar (with checkmark for completed)
 // ═══════════════════════════════════════════════════
 
+/// The amenities that have somewhere to be stored. Each one is a boolean
+/// column on `listings`, so a chip that is on becomes a value that is kept.
+enum _Amenity {
+  balcony(IconsaxPlusLinear.building_4),
+  parking(IconsaxPlusLinear.car),
+  elevator(IconsaxPlusLinear.arrow_3),
+  storage(IconsaxPlusLinear.box_1),
+  mamad(IconsaxPlusLinear.shield_tick);
+
+  const _Amenity(this.icon);
+  final IconData icon;
+}
+
 class _StepProgressBar extends StatelessWidget {
   final int currentStep;
   final List<String> labels;
 
-  const _StepProgressBar({
-    required this.currentStep,
-    required this.labels,
-  });
+  const _StepProgressBar({required this.currentStep, required this.labels});
 
   @override
   Widget build(BuildContext context) {
@@ -881,13 +1037,13 @@ class _StepProgressBar extends StatelessWidget {
                     currentStep == 0
                         ? 0.0
                         : currentStep == 1
-                            ? 0.5
-                            : 1.0,
+                        ? 0.5
+                        : 1.0,
                     currentStep == 0
                         ? 0.0
                         : currentStep == 1
-                            ? 0.5
-                            : 1.0,
+                        ? 0.5
+                        : 1.0,
                     1.0,
                   ],
                 ),
@@ -913,8 +1069,7 @@ class _StepProgressBar extends StatelessWidget {
                             ? const Color(0xFF123A72)
                             : const Color(0xFFF6F6F6),
                         shape: BoxShape.circle,
-                        border:
-                            Border.all(color: Colors.white, width: 4),
+                        border: Border.all(color: Colors.white, width: 4),
                       ),
                       child: Center(
                         child: i < currentStep
@@ -927,7 +1082,8 @@ class _StepProgressBar extends StatelessWidget {
                             // Current or future: show number
                             : Text(
                                 '${i + 1}',
-                                style: TextStyle(fontFamily: AppFonts.inter, 
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                   color: i <= currentStep
@@ -942,7 +1098,8 @@ class _StepProgressBar extends StatelessWidget {
                     Text(
                       labels[i],
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: i <= currentStep
@@ -983,7 +1140,8 @@ class _FormCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF1F1F1F),
@@ -1016,8 +1174,7 @@ class _ToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        selected ? const Color(0xFF123A72) : const Color(0xFF6D6D6D);
+    final color = selected ? const Color(0xFF123A72) : const Color(0xFF6D6D6D);
 
     return GestureDetector(
       onTap: onTap,
@@ -1039,7 +1196,8 @@ class _ToggleButton extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: color,
@@ -1071,8 +1229,7 @@ class _AmenityChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        selected ? const Color(0xFF123A72) : const Color(0xFF6D6D6D);
+    final color = selected ? const Color(0xFF123A72) : const Color(0xFF6D6D6D);
 
     return GestureDetector(
       onTap: onTap,
@@ -1095,7 +1252,8 @@ class _AmenityChip extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: color,
@@ -1112,30 +1270,53 @@ class _AmenityChip extends StatelessWidget {
 // Dropdown-style row (placeholder + chevron)
 // ═══════════════════════════════════════════════════
 
-class _DropdownRow extends StatelessWidget {
+/// A dropdown, rather than a line of text with an arrow drawn next to it.
+///
+/// The mock version took only a placeholder and could not be opened, so every
+/// choice on the form — property type, rooms, floor — was unreachable.
+class _DropdownRow<T> extends StatelessWidget {
   final String placeholder;
-  const _DropdownRow({required this.placeholder});
+  final T? value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?> onChanged;
+
+  const _DropdownRow({
+    required this.placeholder,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            placeholder,
-            style: TextStyle(fontFamily: AppFonts.inter, 
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF6D6D6D),
-            ),
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<T>(
+        value: items.any((i) => i.value == value) ? value : null,
+        isExpanded: true,
+        isDense: true,
+        hint: Text(
+          placeholder,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: const Color(0xFF6D6D6D),
           ),
         ),
-        const Icon(
+        icon: const Icon(
           IconsaxPlusLinear.arrow_down_1,
           size: 20,
           color: Color(0xFF6D6D6D),
         ),
-      ],
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: const Color(0xFF1F1F1F),
+        ),
+        items: items,
+        onChanged: onChanged,
+      ),
     );
   }
 }
@@ -1144,23 +1325,38 @@ class _DropdownRow extends StatelessWidget {
 // Text input row (placeholder only, no chevron)
 // ═══════════════════════════════════════════════════
 
+/// A text field with a controller behind it.
+///
+/// It had none, so everything typed into the form was discarded on the way to
+/// the next step.
 class _InputRow extends StatelessWidget {
   final String placeholder;
-  const _InputRow({required this.placeholder});
+  final TextEditingController controller;
+  final TextInputType? keyboardType;
+
+  const _InputRow({
+    required this.placeholder,
+    required this.controller,
+    this.keyboardType,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 20,
       child: TextField(
-        style: TextStyle(fontFamily: AppFonts.inter, 
+        controller: controller,
+        keyboardType: keyboardType,
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: const Color(0xFF1F1F1F),
         ),
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: TextStyle(fontFamily: AppFonts.inter, 
+          hintStyle: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 14,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF6D6D6D),
@@ -1248,10 +1444,7 @@ class _DashedBorderPainter extends CustomPainter {
       double distance = 0;
       while (distance < metric.length) {
         final end = (distance + dashWidth).clamp(0.0, metric.length);
-        canvas.drawPath(
-          metric.extractPath(distance, end),
-          paint,
-        );
+        canvas.drawPath(metric.extractPath(distance, end), paint);
         distance += dashWidth + dashGap;
       }
     }

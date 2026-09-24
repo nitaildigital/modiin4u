@@ -54,54 +54,89 @@ class _Listing {
 // ── Demo data ──
 final _saleListings = [
   const _Listing(
-    price: '₪3,650,000', saleTag: 'FOR SALE',
+    price: '₪3,650,000',
+    saleTag: 'FOR SALE',
     address: '3 Yona Hanavi Street, Modiin',
-    area: '140 m²', rooms: '6 Rooms', floor: 'Floor 3',
-    isNew: true, viaBroker: true, imageBg: Color(0xFFD4E4F7),
+    area: '140 m²',
+    rooms: '6 Rooms',
+    floor: 'Floor 3',
+    isNew: true,
+    viaBroker: true,
+    imageBg: Color(0xFFD4E4F7),
   ),
   const _Listing(
-    price: '₪3,790,000', saleTag: 'FOR SALE',
+    price: '₪3,790,000',
+    saleTag: 'FOR SALE',
     address: '84 Menachem Begin Road',
-    area: '133 m²', rooms: '4 Rooms', floor: 'Floor 2',
-    isNew: true, imageBg: Color(0xFFE0D4C8),
+    area: '133 m²',
+    rooms: '4 Rooms',
+    floor: 'Floor 2',
+    isNew: true,
+    imageBg: Color(0xFFE0D4C8),
   ),
   const _Listing(
-    price: '₪5,690,000', saleTag: 'FOR SALE',
+    price: '₪5,690,000',
+    saleTag: 'FOR SALE',
     address: '73 Sarah Amano Street',
-    area: '145 m²', rooms: '4 Rooms', floor: 'Floor 3',
+    area: '145 m²',
+    rooms: '4 Rooms',
+    floor: 'Floor 3',
     imageBg: Color(0xFFC8D8E0),
   ),
   const _Listing(
-    price: '₪3,050,000', saleTag: 'FOR SALE',
+    price: '₪3,050,000',
+    saleTag: 'FOR SALE',
     address: '37 Ella Valley Street, Modiin',
-    area: '145 m²', rooms: '4 Rooms', floor: 'Floor 3',
+    area: '145 m²',
+    rooms: '4 Rooms',
+    floor: 'Floor 3',
     imageBg: Color(0xFFD8E8D4),
   ),
 ];
 
 final _rentListings = [
   const _Listing(
-    price: '₪7,500', perMonth: '/ In the month', saleTag: 'FOR RENT',
+    price: '₪7,500',
+    perMonth: '/ In the month',
+    saleTag: 'FOR RENT',
     address: 'Weizmann Street Heritage Modiin',
-    area: '140 m²', rooms: '6 Rooms', floor: 'Floor 3',
-    isNew: true, viaBroker: true, imageBg: Color(0xFFE4D8F0),
+    area: '140 m²',
+    rooms: '6 Rooms',
+    floor: 'Floor 3',
+    isNew: true,
+    viaBroker: true,
+    imageBg: Color(0xFFE4D8F0),
   ),
   const _Listing(
-    price: '₪12,000', perMonth: '/ In the month', saleTag: 'FOR RENT',
+    price: '₪12,000',
+    perMonth: '/ In the month',
+    saleTag: 'FOR RENT',
     address: '12 Yitzhak Shamir Street, Modiin (Legacy)',
-    area: '122 m²', rooms: '4 Rooms', floor: 'Floor 2',
-    isNew: true, imageBg: Color(0xFFD4E0F0),
+    area: '122 m²',
+    rooms: '4 Rooms',
+    floor: 'Floor 2',
+    isNew: true,
+    imageBg: Color(0xFFD4E0F0),
   ),
   const _Listing(
-    price: '₪6,500', perMonth: '/ In the month', saleTag: 'FOR RENT',
+    price: '₪6,500',
+    perMonth: '/ In the month',
+    saleTag: 'FOR RENT',
     address: 'Yitzhak Rabin Modiin Street',
-    area: '122 m²', rooms: '4 Rooms', floor: 'Floor 2',
-    viaBroker: true, imageBg: Color(0xFFF0E4D4),
+    area: '122 m²',
+    rooms: '4 Rooms',
+    floor: 'Floor 2',
+    viaBroker: true,
+    imageBg: Color(0xFFF0E4D4),
   ),
   const _Listing(
-    price: '₪8,500', perMonth: '/ In the month', saleTag: 'FOR RENT',
+    price: '₪8,500',
+    perMonth: '/ In the month',
+    saleTag: 'FOR RENT',
     address: '37 Ella Valley Street, Modiin',
-    area: '122 m²', rooms: '4 Rooms', floor: 'Floor 2',
+    area: '122 m²',
+    rooms: '4 Rooms',
+    floor: 'Floor 2',
     imageBg: Color(0xFFE8E0D8),
   ),
 ];
@@ -129,7 +164,8 @@ class _MobileRealEstateContent extends StatefulWidget {
   const _MobileRealEstateContent();
 
   @override
-  State<_MobileRealEstateContent> createState() => _MobileRealEstateContentState();
+  State<_MobileRealEstateContent> createState() =>
+      _MobileRealEstateContentState();
 }
 
 class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
@@ -171,7 +207,9 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
 
                 // ── Fixed header ──
                 Positioned(
-                  top: 0, left: 0, right: 0,
+                  top: 0,
+                  left: 0,
+                  right: 0,
                   child: Container(
                     color: const Color(0xE6FFFFFF),
                     child: Column(
@@ -180,7 +218,8 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                         // Title
                         Text(
                           'Filter Your Discover Feed',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: Colors.black,
@@ -194,25 +233,35 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                             height: 48,
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              border: Border.all(color: const Color(0xFFE7E7E7)),
+                              border: Border.all(
+                                color: const Color(0xFFE7E7E7),
+                              ),
                               borderRadius: BorderRadius.circular(50),
                             ),
                             child: Row(
                               children: [
                                 const SizedBox(width: 16),
-                                const Icon(IconsaxPlusLinear.search_normal_1,
-                                    size: 18, color: Color(0xFF6D6D6D)),
+                                const Icon(
+                                  IconsaxPlusLinear.search_normal_1,
+                                  size: 18,
+                                  color: Color(0xFF6D6D6D),
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     'Search by location, neighborhood...',
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
-                                        fontSize: 14,
-                                        color: const Color(0xFF6D6D6D)),
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
+                                      fontSize: 14,
+                                      color: const Color(0xFF6D6D6D),
+                                    ),
                                   ),
                                 ),
-                                const Icon(IconsaxPlusLinear.setting_4,
-                                    size: 20, color: AppColors.midBlue),
+                                const Icon(
+                                  IconsaxPlusLinear.setting_4,
+                                  size: 20,
+                                  color: AppColors.midBlue,
+                                ),
                                 const SizedBox(width: 16),
                               ],
                             ),
@@ -250,13 +299,17 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(type.icon,
-                                          size: 32, color: AppColors.midBlue),
+                                      Icon(
+                                        type.icon,
+                                        size: 32,
+                                        color: AppColors.midBlue,
+                                      ),
                                       const SizedBox(height: 6),
                                       Text(
                                         type.name,
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(fontFamily: AppFonts.inter, 
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.inter,
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
                                           color: Colors.black,
@@ -320,12 +373,16 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(IconsaxPlusLinear.map_1,
-                              size: 16, color: AppColors.navy),
+                          const Icon(
+                            IconsaxPlusLinear.map_1,
+                            size: 16,
+                            color: AppColors.navy,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'Sign up with Email',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: AppColors.navy,
@@ -375,7 +432,8 @@ class _TabButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: active ? 20 : 16,
             fontWeight: active ? FontWeight.w600 : FontWeight.w500,
             color: active ? AppColors.midBlue : const Color(0xFF6D6D6D),
@@ -410,24 +468,31 @@ class _ListingCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
-                child: Icon(IconsaxPlusLinear.image,
-                    size: 48, color: Color(0xFFBDBDBD)),
+                child: Icon(
+                  IconsaxPlusLinear.image,
+                  size: 48,
+                  color: Color(0xFFBDBDBD),
+                ),
               ),
             ),
             // Badges
             if (listing.viaBroker)
               Positioned(
-                left: 12, bottom: 12,
+                left: 12,
+                bottom: 12,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFCCD6EE),
                     borderRadius: BorderRadius.circular(50),
                   ),
                   child: Text(
                     'Via Broker',
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF0033AC),
@@ -437,17 +502,21 @@ class _ListingCard extends StatelessWidget {
               ),
             if (listing.isNew)
               Positioned(
-                right: 12, bottom: 12,
+                right: 12,
+                bottom: 12,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.turquoise,
                     borderRadius: BorderRadius.circular(50),
                   ),
                   child: Text(
                     'New',
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
@@ -457,15 +526,20 @@ class _ListingCard extends StatelessWidget {
               ),
             // Heart
             Positioned(
-              right: 12, top: 12,
+              right: 12,
+              top: 12,
               child: Container(
-                width: 40, height: 40,
+                width: 40,
+                height: 40,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(IconsaxPlusLinear.heart,
-                    size: 23, color: AppColors.midBlue),
+                child: const Icon(
+                  IconsaxPlusLinear.heart,
+                  size: 23,
+                  color: AppColors.midBlue,
+                ),
               ),
             ),
           ],
@@ -485,7 +559,8 @@ class _ListingCard extends StatelessWidget {
                     children: [
                       Text(
                         listing.price,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           color: AppColors.navy,
@@ -495,7 +570,8 @@ class _ListingCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           listing.perMonth!,
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             color: const Color(0xFF5F5E5A),
                           ),
@@ -505,7 +581,8 @@ class _ListingCard extends StatelessWidget {
                   ),
                   Text(
                     listing.saleTag,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: AppColors.turquoise,
@@ -517,14 +594,20 @@ class _ListingCard extends StatelessWidget {
               // Address
               Row(
                 children: [
-                  const Icon(IconsaxPlusLinear.location,
-                      size: 16, color: AppColors.turquoise),
+                  const Icon(
+                    IconsaxPlusLinear.location,
+                    size: 16,
+                    color: AppColors.turquoise,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       listing.address,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 14, color: const Color(0xFF5F5E5A)),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 14,
+                        color: const Color(0xFF5F5E5A),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -557,7 +640,11 @@ class _ListingCard extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           text,
-          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF3D3D3D)),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 12,
+            color: const Color(0xFF3D3D3D),
+          ),
         ),
       ],
     );

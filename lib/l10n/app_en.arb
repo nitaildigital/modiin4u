@@ -229,5 +229,127 @@
   "stillNeedHelp": "Still need help?",
   "contactOurSupportTeam": "Contact our support team",
   "contactUs": "Contact Us",
-  "selectHint": "Select"
+  "selectHint": "Select",
+  "addApartment": "Add Apartment",
+  "stepBasics": "Basics",
+  "stepDetails": "Details",
+  "stepPhotos": "Photos",
+  "next": "Next",
+  "submitForApproval": "Submit for Approval",
+  "basicInformation": "Basic Information",
+  "fillInPropertyDetails": "Fill in the details about your property",
+  "listingType": "Listing Type",
+  "propertyType": "Property Type",
+  "selectPropertyType": "Select property type",
+  "listingTitle": "Title",
+  "listingTitleHint": "e.g. Modern 3BR Apartment in City Center",
+  "price": "Price",
+  "enterPrice": "Enter price",
+  "pricePerMonth": "Monthly price",
+  "address": "Address",
+  "enterAddress": "Enter address",
+  "selectRooms": "Select number of rooms",
+  "bathrooms": "Bathrooms",
+  "selectBathrooms": "Select number of bathrooms",
+  "propTypeApartment": "Apartment",
+  "propTypePenthouse": "Penthouse",
+  "propTypeGarden": "Garden Apartment",
+  "propTypeDuplex": "Duplex",
+  "propTypeVilla": "Villa",
+  "propTypeStudio": "Studio",
+  "propTypeOther": "Other",
+  "apartmentDetails": "Apartment Details",
+  "addMoreDetails": "Add more details about your property",
+  "description": "Description",
+  "describeYourApartment": "Describe your apartment, features and highlights",
+  "floor": "Floor",
+  "totalFloors": "Total Floors",
+  "areaSqm": "Area (m²)",
+  "enterArea": "Enter area",
+  "amenities": "Amenities",
+  "amenityBalcony": "Balcony",
+  "amenityParking": "Parking",
+  "amenityElevator": "Elevator",
+  "amenityStorage": "Storage",
+  "amenityMamad": "Protected room",
+  "addPhotos": "Add Photos",
+  "uploadApartmentPhotos": "Upload photos of your apartment",
+  "mainImage": "Main Image",
+  "firstPhotoIsCover": "First photo will be used as the cover image",
+  "listingSubmitted": "Listing Submitted!",
+  "submittedForApproval": "Your apartment has been submitted for approval.",
+  "listingBeingReviewed": "Your listing is being reviewed",
+  "checkStatusAnytime": "You can check the status of your listing anytime",
+  "backToMyApartments": "Back to My Apartments",
+  "statusPending": "Pending",
+  "statusApproved": "Approved",
+  "statusRejected": "Rejected",
+  "noApartmentsYet": "No apartments listed yet",
+  "addYourFirstApartment": "Add your first apartment to get started.",
+  "searchApartments": "Search apartments",
+  "noApartmentsMatch": "No apartments match your search",
+  "errTitleRequired": "A title is required",
+  "errPriceRequired": "A price is required",
+  "errCouldNotSubmit": "Could not submit. Please try again.",
+  "signInToPostListing": "Sign in to post a listing",
+  "roomsLabel": "Rooms",
+  "submittedForApprovalLong": "Your apartment has been submitted for approval. We'll review the details and publish it once approved.",
+  "checkStatusAnytimeLong": "You can check the status of your listing anytime from the My Apartments page.",
+  "pendingApproval": "Pending Approval",
+  "submittedOn": "Submitted on {date}",
+  "@submittedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "pricePerMonthValue": "{price} / month",
+  "@pricePerMonthValue": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutThisProperty": "About This Property",
+  "propertySpecs": "Property Specifications",
+  "agent": "Contact person",
+  "contact": "Contact",
+  "readMore": "Read More",
+  "showLess": "Show Less",
+  "aboutNeighborhood": "About {name}",
+  "@aboutNeighborhood": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "propertiesIn": "Properties in {name}",
+  "@propertiesIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "listingNotFound": "This listing could not be found",
+  "sqmUnit": "m²",
+  "bathroomsUnit": "Bathrooms",
+  "whereYoullBe": "Where You'll Be",
+  "propertyLabel": "Property",
+  "viaBroker": "Via Broker",
+  "newBadge": "New",
+  "floorLabel": "Floor {n}",
+  "@floorLabel": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "viewOnMap": "View on Map",
+  "forSaleBadge": "FOR SALE",
+  "forRentBadge": "FOR RENT"
 }

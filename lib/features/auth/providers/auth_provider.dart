@@ -104,10 +104,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   // password field with "Remember Me" and "Forgot Password?", and sign-up
   // asks for a password and a confirmation.
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     await _client.auth.signInWithPassword(
       email: email.trim(),
       password: password,
@@ -205,7 +202,8 @@ class AuthNotifier extends StateNotifier<UserModel?> {
         if (mounted) state = _fromSession(user);
         return;
       }
-      if (mounted) state = _fromRow(row, user, isAdmin: await _isAdmin(user.id));
+      if (mounted)
+        state = _fromRow(row, user, isAdmin: await _isAdmin(user.id));
     } catch (_) {
       if (mounted) state = _fromSession(user);
     }

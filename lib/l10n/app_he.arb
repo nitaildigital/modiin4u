@@ -229,5 +229,127 @@
   "stillNeedHelp": "עדיין צריכים עזרה?",
   "contactOurSupportTeam": "צרו קשר עם צוות התמיכה שלנו",
   "contactUs": "צרו קשר",
-  "selectHint": "בחרו"
+  "selectHint": "בחרו",
+  "addApartment": "הוספת דירה",
+  "stepBasics": "בסיס",
+  "stepDetails": "פרטים",
+  "stepPhotos": "תמונות",
+  "next": "הבא",
+  "submitForApproval": "שליחה לאישור",
+  "basicInformation": "פרטים בסיסיים",
+  "fillInPropertyDetails": "מלאו את פרטי הנכס",
+  "listingType": "סוג המודעה",
+  "propertyType": "סוג הנכס",
+  "selectPropertyType": "בחרו סוג נכס",
+  "listingTitle": "כותרת",
+  "listingTitleHint": "לדוגמה: דירת 3 חדרים במרכז העיר",
+  "price": "מחיר",
+  "enterPrice": "הזינו מחיר",
+  "pricePerMonth": "מחיר לחודש",
+  "address": "כתובת",
+  "enterAddress": "הזינו כתובת",
+  "selectRooms": "בחרו מספר חדרים",
+  "bathrooms": "חדרי רחצה",
+  "selectBathrooms": "בחרו מספר חדרי רחצה",
+  "propTypeApartment": "דירה",
+  "propTypePenthouse": "פנטהאוז",
+  "propTypeGarden": "דירת גן",
+  "propTypeDuplex": "דופלקס",
+  "propTypeVilla": "וילה",
+  "propTypeStudio": "סטודיו",
+  "propTypeOther": "אחר",
+  "apartmentDetails": "פרטי הדירה",
+  "addMoreDetails": "הוסיפו פרטים נוספים על הנכס",
+  "description": "תיאור",
+  "describeYourApartment": "תארו את הדירה, המאפיינים והיתרונות",
+  "floor": "קומה",
+  "totalFloors": "סה״כ קומות",
+  "areaSqm": "שטח (מ״ר)",
+  "enterArea": "הזינו שטח",
+  "amenities": "מתקנים",
+  "amenityBalcony": "מרפסת",
+  "amenityParking": "חניה",
+  "amenityElevator": "מעלית",
+  "amenityStorage": "מחסן",
+  "amenityMamad": "ממ״ד",
+  "addPhotos": "הוספת תמונות",
+  "uploadApartmentPhotos": "העלו תמונות של הדירה",
+  "mainImage": "תמונה ראשית",
+  "firstPhotoIsCover": "התמונה הראשונה תשמש כתמונת השער",
+  "listingSubmitted": "המודעה נשלחה!",
+  "submittedForApproval": "הדירה שלכם נשלחה לאישור.",
+  "listingBeingReviewed": "המודעה שלכם בבדיקה",
+  "checkStatusAnytime": "תוכלו לבדוק את סטטוס המודעה בכל עת",
+  "backToMyApartments": "חזרה לדירות שלי",
+  "statusPending": "ממתין לאישור",
+  "statusApproved": "מאושר",
+  "statusRejected": "נדחה",
+  "noApartmentsYet": "עדיין אין דירות",
+  "addYourFirstApartment": "הוסיפו את הדירה הראשונה שלכם כדי להתחיל.",
+  "searchApartments": "חיפוש דירות",
+  "noApartmentsMatch": "לא נמצאו דירות מתאימות",
+  "errTitleRequired": "יש להזין כותרת",
+  "errPriceRequired": "יש להזין מחיר",
+  "errCouldNotSubmit": "לא ניתן היה לשלוח. נסו שוב.",
+  "signInToPostListing": "התחברו כדי לפרסם מודעה",
+  "roomsLabel": "חדרים",
+  "submittedForApprovalLong": "הדירה שלכם נשלחה לאישור. נבדוק את הפרטים ונפרסם אותה לאחר האישור.",
+  "checkStatusAnytimeLong": "תוכלו לבדוק את סטטוס המודעה בכל עת בעמוד ״הדירות שלי״.",
+  "pendingApproval": "ממתין לאישור",
+  "submittedOn": "נשלח ב-{date}",
+  "@submittedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "pricePerMonthValue": "{price} לחודש",
+  "@pricePerMonthValue": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutThisProperty": "על הנכס",
+  "propertySpecs": "מפרט הנכס",
+  "agent": "איש קשר",
+  "contact": "צור קשר",
+  "readMore": "קראו עוד",
+  "showLess": "הצג פחות",
+  "aboutNeighborhood": "על {name}",
+  "@aboutNeighborhood": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "propertiesIn": "נכסים ב{name}",
+  "@propertiesIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "listingNotFound": "המודעה לא נמצאה",
+  "sqmUnit": "מ״ר",
+  "bathroomsUnit": "חדרי רחצה",
+  "whereYoullBe": "איפה זה נמצא",
+  "propertyLabel": "נדל״ן",
+  "viaBroker": "באמצעות מתווך",
+  "newBadge": "חדש",
+  "floorLabel": "קומה {n}",
+  "@floorLabel": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "viewOnMap": "הצג במפה",
+  "forSaleBadge": "למכירה",
+  "forRentBadge": "להשכרה"
 }

@@ -1224,6 +1224,528 @@ abstract class L {
   /// In he, this message translates to:
   /// **'בחרו'**
   String get selectHint;
+
+  /// No description provided for @addApartment.
+  ///
+  /// In he, this message translates to:
+  /// **'הוספת דירה'**
+  String get addApartment;
+
+  /// No description provided for @stepBasics.
+  ///
+  /// In he, this message translates to:
+  /// **'בסיס'**
+  String get stepBasics;
+
+  /// No description provided for @stepDetails.
+  ///
+  /// In he, this message translates to:
+  /// **'פרטים'**
+  String get stepDetails;
+
+  /// No description provided for @stepPhotos.
+  ///
+  /// In he, this message translates to:
+  /// **'תמונות'**
+  String get stepPhotos;
+
+  /// No description provided for @next.
+  ///
+  /// In he, this message translates to:
+  /// **'הבא'**
+  String get next;
+
+  /// No description provided for @submitForApproval.
+  ///
+  /// In he, this message translates to:
+  /// **'שליחה לאישור'**
+  String get submitForApproval;
+
+  /// No description provided for @basicInformation.
+  ///
+  /// In he, this message translates to:
+  /// **'פרטים בסיסיים'**
+  String get basicInformation;
+
+  /// No description provided for @fillInPropertyDetails.
+  ///
+  /// In he, this message translates to:
+  /// **'מלאו את פרטי הנכס'**
+  String get fillInPropertyDetails;
+
+  /// No description provided for @listingType.
+  ///
+  /// In he, this message translates to:
+  /// **'סוג המודעה'**
+  String get listingType;
+
+  /// No description provided for @propertyType.
+  ///
+  /// In he, this message translates to:
+  /// **'סוג הנכס'**
+  String get propertyType;
+
+  /// No description provided for @selectPropertyType.
+  ///
+  /// In he, this message translates to:
+  /// **'בחרו סוג נכס'**
+  String get selectPropertyType;
+
+  /// No description provided for @listingTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'כותרת'**
+  String get listingTitle;
+
+  /// No description provided for @listingTitleHint.
+  ///
+  /// In he, this message translates to:
+  /// **'לדוגמה: דירת 3 חדרים במרכז העיר'**
+  String get listingTitleHint;
+
+  /// No description provided for @price.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיר'**
+  String get price;
+
+  /// No description provided for @enterPrice.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו מחיר'**
+  String get enterPrice;
+
+  /// No description provided for @pricePerMonth.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיר לחודש'**
+  String get pricePerMonth;
+
+  /// No description provided for @address.
+  ///
+  /// In he, this message translates to:
+  /// **'כתובת'**
+  String get address;
+
+  /// No description provided for @enterAddress.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו כתובת'**
+  String get enterAddress;
+
+  /// No description provided for @selectRooms.
+  ///
+  /// In he, this message translates to:
+  /// **'בחרו מספר חדרים'**
+  String get selectRooms;
+
+  /// No description provided for @bathrooms.
+  ///
+  /// In he, this message translates to:
+  /// **'חדרי רחצה'**
+  String get bathrooms;
+
+  /// No description provided for @selectBathrooms.
+  ///
+  /// In he, this message translates to:
+  /// **'בחרו מספר חדרי רחצה'**
+  String get selectBathrooms;
+
+  /// No description provided for @propTypeApartment.
+  ///
+  /// In he, this message translates to:
+  /// **'דירה'**
+  String get propTypeApartment;
+
+  /// No description provided for @propTypePenthouse.
+  ///
+  /// In he, this message translates to:
+  /// **'פנטהאוז'**
+  String get propTypePenthouse;
+
+  /// No description provided for @propTypeGarden.
+  ///
+  /// In he, this message translates to:
+  /// **'דירת גן'**
+  String get propTypeGarden;
+
+  /// No description provided for @propTypeDuplex.
+  ///
+  /// In he, this message translates to:
+  /// **'דופלקס'**
+  String get propTypeDuplex;
+
+  /// No description provided for @propTypeVilla.
+  ///
+  /// In he, this message translates to:
+  /// **'וילה'**
+  String get propTypeVilla;
+
+  /// No description provided for @propTypeStudio.
+  ///
+  /// In he, this message translates to:
+  /// **'סטודיו'**
+  String get propTypeStudio;
+
+  /// No description provided for @propTypeOther.
+  ///
+  /// In he, this message translates to:
+  /// **'אחר'**
+  String get propTypeOther;
+
+  /// No description provided for @apartmentDetails.
+  ///
+  /// In he, this message translates to:
+  /// **'פרטי הדירה'**
+  String get apartmentDetails;
+
+  /// No description provided for @addMoreDetails.
+  ///
+  /// In he, this message translates to:
+  /// **'הוסיפו פרטים נוספים על הנכס'**
+  String get addMoreDetails;
+
+  /// No description provided for @description.
+  ///
+  /// In he, this message translates to:
+  /// **'תיאור'**
+  String get description;
+
+  /// No description provided for @describeYourApartment.
+  ///
+  /// In he, this message translates to:
+  /// **'תארו את הדירה, המאפיינים והיתרונות'**
+  String get describeYourApartment;
+
+  /// No description provided for @floor.
+  ///
+  /// In he, this message translates to:
+  /// **'קומה'**
+  String get floor;
+
+  /// No description provided for @totalFloors.
+  ///
+  /// In he, this message translates to:
+  /// **'סה״כ קומות'**
+  String get totalFloors;
+
+  /// No description provided for @areaSqm.
+  ///
+  /// In he, this message translates to:
+  /// **'שטח (מ״ר)'**
+  String get areaSqm;
+
+  /// No description provided for @enterArea.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו שטח'**
+  String get enterArea;
+
+  /// No description provided for @amenities.
+  ///
+  /// In he, this message translates to:
+  /// **'מתקנים'**
+  String get amenities;
+
+  /// No description provided for @amenityBalcony.
+  ///
+  /// In he, this message translates to:
+  /// **'מרפסת'**
+  String get amenityBalcony;
+
+  /// No description provided for @amenityParking.
+  ///
+  /// In he, this message translates to:
+  /// **'חניה'**
+  String get amenityParking;
+
+  /// No description provided for @amenityElevator.
+  ///
+  /// In he, this message translates to:
+  /// **'מעלית'**
+  String get amenityElevator;
+
+  /// No description provided for @amenityStorage.
+  ///
+  /// In he, this message translates to:
+  /// **'מחסן'**
+  String get amenityStorage;
+
+  /// No description provided for @amenityMamad.
+  ///
+  /// In he, this message translates to:
+  /// **'ממ״ד'**
+  String get amenityMamad;
+
+  /// No description provided for @addPhotos.
+  ///
+  /// In he, this message translates to:
+  /// **'הוספת תמונות'**
+  String get addPhotos;
+
+  /// No description provided for @uploadApartmentPhotos.
+  ///
+  /// In he, this message translates to:
+  /// **'העלו תמונות של הדירה'**
+  String get uploadApartmentPhotos;
+
+  /// No description provided for @mainImage.
+  ///
+  /// In he, this message translates to:
+  /// **'תמונה ראשית'**
+  String get mainImage;
+
+  /// No description provided for @firstPhotoIsCover.
+  ///
+  /// In he, this message translates to:
+  /// **'התמונה הראשונה תשמש כתמונת השער'**
+  String get firstPhotoIsCover;
+
+  /// No description provided for @listingSubmitted.
+  ///
+  /// In he, this message translates to:
+  /// **'המודעה נשלחה!'**
+  String get listingSubmitted;
+
+  /// No description provided for @submittedForApproval.
+  ///
+  /// In he, this message translates to:
+  /// **'הדירה שלכם נשלחה לאישור.'**
+  String get submittedForApproval;
+
+  /// No description provided for @listingBeingReviewed.
+  ///
+  /// In he, this message translates to:
+  /// **'המודעה שלכם בבדיקה'**
+  String get listingBeingReviewed;
+
+  /// No description provided for @checkStatusAnytime.
+  ///
+  /// In he, this message translates to:
+  /// **'תוכלו לבדוק את סטטוס המודעה בכל עת'**
+  String get checkStatusAnytime;
+
+  /// No description provided for @backToMyApartments.
+  ///
+  /// In he, this message translates to:
+  /// **'חזרה לדירות שלי'**
+  String get backToMyApartments;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In he, this message translates to:
+  /// **'ממתין לאישור'**
+  String get statusPending;
+
+  /// No description provided for @statusApproved.
+  ///
+  /// In he, this message translates to:
+  /// **'מאושר'**
+  String get statusApproved;
+
+  /// No description provided for @statusRejected.
+  ///
+  /// In he, this message translates to:
+  /// **'נדחה'**
+  String get statusRejected;
+
+  /// No description provided for @noApartmentsYet.
+  ///
+  /// In he, this message translates to:
+  /// **'עדיין אין דירות'**
+  String get noApartmentsYet;
+
+  /// No description provided for @addYourFirstApartment.
+  ///
+  /// In he, this message translates to:
+  /// **'הוסיפו את הדירה הראשונה שלכם כדי להתחיל.'**
+  String get addYourFirstApartment;
+
+  /// No description provided for @searchApartments.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש דירות'**
+  String get searchApartments;
+
+  /// No description provided for @noApartmentsMatch.
+  ///
+  /// In he, this message translates to:
+  /// **'לא נמצאו דירות מתאימות'**
+  String get noApartmentsMatch;
+
+  /// No description provided for @errTitleRequired.
+  ///
+  /// In he, this message translates to:
+  /// **'יש להזין כותרת'**
+  String get errTitleRequired;
+
+  /// No description provided for @errPriceRequired.
+  ///
+  /// In he, this message translates to:
+  /// **'יש להזין מחיר'**
+  String get errPriceRequired;
+
+  /// No description provided for @errCouldNotSubmit.
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לשלוח. נסו שוב.'**
+  String get errCouldNotSubmit;
+
+  /// No description provided for @signInToPostListing.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי לפרסם מודעה'**
+  String get signInToPostListing;
+
+  /// No description provided for @roomsLabel.
+  ///
+  /// In he, this message translates to:
+  /// **'חדרים'**
+  String get roomsLabel;
+
+  /// No description provided for @submittedForApprovalLong.
+  ///
+  /// In he, this message translates to:
+  /// **'הדירה שלכם נשלחה לאישור. נבדוק את הפרטים ונפרסם אותה לאחר האישור.'**
+  String get submittedForApprovalLong;
+
+  /// No description provided for @checkStatusAnytimeLong.
+  ///
+  /// In he, this message translates to:
+  /// **'תוכלו לבדוק את סטטוס המודעה בכל עת בעמוד ״הדירות שלי״.'**
+  String get checkStatusAnytimeLong;
+
+  /// No description provided for @pendingApproval.
+  ///
+  /// In he, this message translates to:
+  /// **'ממתין לאישור'**
+  String get pendingApproval;
+
+  /// No description provided for @submittedOn.
+  ///
+  /// In he, this message translates to:
+  /// **'נשלח ב-{date}'**
+  String submittedOn(String date);
+
+  /// No description provided for @pricePerMonthValue.
+  ///
+  /// In he, this message translates to:
+  /// **'{price} לחודש'**
+  String pricePerMonthValue(String price);
+
+  /// No description provided for @aboutThisProperty.
+  ///
+  /// In he, this message translates to:
+  /// **'על הנכס'**
+  String get aboutThisProperty;
+
+  /// No description provided for @propertySpecs.
+  ///
+  /// In he, this message translates to:
+  /// **'מפרט הנכס'**
+  String get propertySpecs;
+
+  /// No description provided for @agent.
+  ///
+  /// In he, this message translates to:
+  /// **'איש קשר'**
+  String get agent;
+
+  /// No description provided for @contact.
+  ///
+  /// In he, this message translates to:
+  /// **'צור קשר'**
+  String get contact;
+
+  /// No description provided for @readMore.
+  ///
+  /// In he, this message translates to:
+  /// **'קראו עוד'**
+  String get readMore;
+
+  /// No description provided for @showLess.
+  ///
+  /// In he, this message translates to:
+  /// **'הצג פחות'**
+  String get showLess;
+
+  /// No description provided for @aboutNeighborhood.
+  ///
+  /// In he, this message translates to:
+  /// **'על {name}'**
+  String aboutNeighborhood(String name);
+
+  /// No description provided for @propertiesIn.
+  ///
+  /// In he, this message translates to:
+  /// **'נכסים ב{name}'**
+  String propertiesIn(String name);
+
+  /// No description provided for @listingNotFound.
+  ///
+  /// In he, this message translates to:
+  /// **'המודעה לא נמצאה'**
+  String get listingNotFound;
+
+  /// No description provided for @sqmUnit.
+  ///
+  /// In he, this message translates to:
+  /// **'מ״ר'**
+  String get sqmUnit;
+
+  /// No description provided for @bathroomsUnit.
+  ///
+  /// In he, this message translates to:
+  /// **'חדרי רחצה'**
+  String get bathroomsUnit;
+
+  /// No description provided for @whereYoullBe.
+  ///
+  /// In he, this message translates to:
+  /// **'איפה זה נמצא'**
+  String get whereYoullBe;
+
+  /// No description provided for @propertyLabel.
+  ///
+  /// In he, this message translates to:
+  /// **'נדל״ן'**
+  String get propertyLabel;
+
+  /// No description provided for @viaBroker.
+  ///
+  /// In he, this message translates to:
+  /// **'באמצעות מתווך'**
+  String get viaBroker;
+
+  /// No description provided for @newBadge.
+  ///
+  /// In he, this message translates to:
+  /// **'חדש'**
+  String get newBadge;
+
+  /// No description provided for @floorLabel.
+  ///
+  /// In he, this message translates to:
+  /// **'קומה {n}'**
+  String floorLabel(String n);
+
+  /// No description provided for @viewOnMap.
+  ///
+  /// In he, this message translates to:
+  /// **'הצג במפה'**
+  String get viewOnMap;
+
+  /// No description provided for @forSaleBadge.
+  ///
+  /// In he, this message translates to:
+  /// **'למכירה'**
+  String get forSaleBadge;
+
+  /// No description provided for @forRentBadge.
+  ///
+  /// In he, this message translates to:
+  /// **'להשכרה'**
+  String get forRentBadge;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../models/listing.dart';
+import '../providers/listing_providers.dart';
+import 'my_apartments_screen.dart' show formatShekels;
 import 'web_listing_detail_screen.dart';
 
+/// One apartment listing.
+///
+/// The whole page used to be a single invented flat: a fixed ₪3,650,000, a
+/// fixed address, an agent called Zeev Schumacher, and a paragraph about the
+/// Moriah neighbourhood — shown for every listing id the route was given,
+/// because the id was never read. It loads the row now, and a section with
+/// nothing behind it is left out rather than filled with a placeholder.
 class ListingDetailScreen extends StatelessWidget {
   final String listingId;
   const ListingDetailScreen({super.key, required this.listingId});
@@ -21,89 +38,101 @@ class ListingDetailScreen extends StatelessWidget {
   }
 }
 
-class _MobileListingDetailContent extends StatefulWidget {
+class _MobileListingDetailContent extends ConsumerStatefulWidget {
   final String listingId;
   const _MobileListingDetailContent({required this.listingId});
 
   @override
-  State<_MobileListingDetailContent> createState() => _MobileListingDetailContentState();
+  ConsumerState<_MobileListingDetailContent> createState() =>
+      _MobileListingDetailContentState();
 }
 
-class _MobileListingDetailContentState extends State<_MobileListingDetailContent> {
+class _MobileListingDetailContentState
+    extends ConsumerState<_MobileListingDetailContent> {
   int _selectedThumb = 0;
   bool _aboutExpanded = false;
 
-  // ── Mock data ──
-  static const _price = '₪3,650,000';
-  static const _address = '21 Sderot El Melachot, Modi\'in Maccabim-Re\'ut';
-  static const _distance = '2.1 km away';
-  static const _area = 140;
-  static const _bedrooms = 3;
-  static const _bathrooms = 3;
-  static const _agentName = 'Zeev Schumacher';
-  static const _agentCompany = 'RGF Properties, Modiin';
-  static const _aboutProperty =
-      'New directly from the contractor, mini penthouse 6 rooms, '
-      'excellent location in Avni Chen neighborhood, back apartment!! '
-      'Occupancy 4 months from signing the contract, built 140 m², '
-      'balcony 18 m². Payment schedule 20/80 without attachments.';
-
-  static const _aboutNeighborhood1 =
-      'Moriah is one of the southernmost neighborhoods of Modi\'in-Maccabim-Re\'ut. '
-      'Formerly known as Buchman South, the neighborhood began to be populated in 2007 '
-      'and is characterized primarily by private homes and semi-detached houses.';
-
-  static const _aboutNeighborhood2 =
-      'The neighborhood takes its name from women from ancient Jewish history, '
-      'including the four matriarchs and biblical heroines, which is also reflected '
-      'in many of the street names throughout the neighborhood. Today, Moriah combines '
-      'residential living with parks, recreation, education and neighborhood shopping. '
-      'Its southern location also places residents close to major roads and the city\'s '
-      'southern open spaces.';
-
-  static const _specs = [
-    _Spec('Balcony', 'Yes', IconsaxPlusBold.element_3),
-    _Spec('Parking', 'Yes', IconsaxPlusBold.car),
-    _Spec('Elevator', 'Yes', IconsaxPlusBold.arrow_3),
-    _Spec('Protected Space', 'Yes', IconsaxPlusBold.shield_tick),
-  ];
-
-  static const _nearbyListings = [
-    _NearbyListing('₪3,790,000', '84 Menachem Begin Road', 133, 4, 2, true, false),
-    _NearbyListing('₪5,690,000', '73 Sarah Amano Street', 145, 4, 3, false, false),
-    _NearbyListing('₪3,050,000', '37 Ella Valley Street, Modiin', 145, 4, 3, false, false),
+  /// The hero shows whichever thumbnail is chosen, so the cover and the
+  /// gallery are one list.
+  List<String> _photos(Listing l) => [
+    if (l.coverUrl != null && l.coverUrl!.isNotEmpty) l.coverUrl!,
+    ...l.gallery,
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final async = ref.watch(listingByIdProvider(widget.listingId));
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 430),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ═══════════════════════════════════
-                // 1. Hero image
-                // ═══════════════════════════════════
-                _buildHeroImage(),
+      body: async.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => _notFound(l),
+        data: (listing) {
+          if (listing == null) return _notFound(l);
+          return _content(l, listing);
+        },
+      ),
+    );
+  }
 
-                // ═══════════════════════════════════
-                // 2. Image thumbnails
-                // ═══════════════════════════════════
+  Widget _notFound(L l) => Stack(
+    children: [
+      Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            l.listingNotFound,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 15,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        left: 12,
+        top: 51,
+        child: _CircleButton(
+          icon: IconsaxPlusLinear.arrow_left,
+          onTap: () => context.pop(),
+        ),
+      ),
+    ],
+  );
+
+  Widget _content(L l, Listing listing) {
+    final photos = _photos(listing);
+    final price = listing.effectivePrice;
+    final hood = listing.neighborhoodName;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 430),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeroImage(listing, photos),
+
+              if (photos.length > 1) ...[
                 const SizedBox(height: 16),
-                _buildThumbnailRow(),
+                _buildThumbnailRow(photos),
+              ],
 
-                // ═══════════════════════════════════
-                // 3. Price
-                // ═══════════════════════════════════
+              // ── Price ──
+              if (price != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                   child: Text(
-                    _price,
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
+                    listing.kind == ListingKind.rent
+                        ? l.pricePerMonthValue(formatShekels(price))
+                        : formatShekels(price),
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -111,177 +140,171 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                   ),
                 ),
 
-                // ═══════════════════════════════════
-                // 4. Address + distance
-                // ═══════════════════════════════════
+              // ── Title ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  listing.title,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+
+              // ── Address ──
+              //
+              // The mock also showed "2.1 km away". Nothing measures that, so
+              // it is gone rather than made up.
+              if ((listing.address ?? hood) != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Row(
                     children: [
-                      const Icon(IconsaxPlusLinear.location,
-                          size: 16, color: Color(0xFF888888)),
+                      const Icon(
+                        IconsaxPlusLinear.location,
+                        size: 16,
+                        color: Color(0xFF888888),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _address,
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          listing.address ?? hood!,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
-                            fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Text(
-                        _distance,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
                     ],
                   ),
                 ),
 
-                // ═══════════════════════════════════
-                // 5. Stats row: Area / Bedrooms / Bathrooms
-                // ═══════════════════════════════════
+              // ── Area / rooms / bathrooms ──
+              //
+              // Only the ones the listing actually carries.
+              if (listing.sqm != null ||
+                  listing.rooms != null ||
+                  listing.bathrooms != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
                   child: Row(
                     children: [
-                      _StatCard(
-                        icon: IconsaxPlusLinear.maximize_3,
-                        value: '$_area',
-                        unit: 'm²',
-                      ),
-                      const SizedBox(width: 10),
-                      _StatCard(
-                        icon: IconsaxPlusLinear.building_3,
-                        value: '$_bedrooms',
-                        unit: 'Bedrooms',
-                      ),
-                      const SizedBox(width: 10),
-                      _StatCard(
-                        icon: IconsaxPlusLinear.courthouse,
-                        value: '$_bathrooms',
-                        unit: 'Bathrooms',
-                      ),
+                      if (listing.sqm != null) ...[
+                        _StatCard(
+                          icon: IconsaxPlusLinear.maximize_3,
+                          value: '${listing.sqm}',
+                          unit: l.sqmUnit,
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      if (listing.rooms != null) ...[
+                        _StatCard(
+                          icon: IconsaxPlusLinear.building_3,
+                          value:
+                              listing.rooms! == listing.rooms!.roundToDouble()
+                              ? '${listing.rooms!.toInt()}'
+                              : '${listing.rooms}',
+                          unit: l.roomsLabel,
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      if (listing.bathrooms != null)
+                        _StatCard(
+                          icon: IconsaxPlusLinear.courthouse,
+                          value: '${listing.bathrooms}',
+                          unit: l.bathroomsUnit,
+                        ),
                     ],
                   ),
                 ),
 
-                // ═══════════════════════════════════
-                // 6. Agent section
-                // ═══════════════════════════════════
-                _buildAgentSection(),
+              _buildAgentSection(l, listing),
 
-                // ═══════════════════════════════════
-                // 7. About This Property
-                // ═══════════════════════════════════
-                _buildSection('About This Property', _aboutProperty),
+              if ((listing.description ?? '').trim().isNotEmpty)
+                _buildSection(l.aboutThisProperty, listing.description!),
 
-                // ═══════════════════════════════════
-                // 8. Property Specifications (2×2 grid)
-                // ═══════════════════════════════════
-                _buildSpecsGrid(),
+              _buildSpecsGrid(l, listing),
 
-                // ═══════════════════════════════════
-                // 9. Where You'll Be (map)
-                // ═══════════════════════════════════
+              if (listing.latitude != null && listing.longitude != null)
                 _buildMapSection(),
 
-                // ═══════════════════════════════════
-                // 10. About Moriah (neighborhood)
-                // ═══════════════════════════════════
-                _buildNeighborhoodSection(),
+              if (hood != null &&
+                  (listing.neighborhoodDescription ?? '').trim().isNotEmpty)
+                _buildNeighborhoodSection(
+                  l,
+                  hood,
+                  listing.neighborhoodDescription!,
+                ),
 
-                // ═══════════════════════════════════
-                // 11. Properties in Moriah
-                // ═══════════════════════════════════
-                _buildNearbyProperties(),
+              _buildNearbyProperties(l, hood),
 
-                const SizedBox(height: 40),
-              ],
-            ),
+              const SizedBox(height: 40),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ───────────────────────────────────────────────
-  // Hero image (260px) with gradient + nav buttons
-  // ───────────────────────────────────────────────
-  Widget _buildHeroImage() {
+  Widget _buildHeroImage(Listing listing, List<String> photos) {
     return SizedBox(
       height: 260,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Image placeholder with gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment(0.0, -0.5),
-                end: Alignment(0.0, 1.0),
-                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+          // The photograph, or the same gradient as a fallback when the
+          // listing has none.
+          Stack(
+            fit: StackFit.expand,
+            children: [
+              NetworkPhoto(
+                url: photos.isEmpty
+                    ? null
+                    : photos[_selectedThumb.clamp(0, photos.length - 1)],
+                icon: IconsaxPlusBold.home_2,
+                iconSize: 80,
               ),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    IconsaxPlusBold.home_2,
-                    size: 80,
-                    color: Colors.white.withValues(alpha: 0.15),
-                  ),
-                ),
-                // Dark bottom gradient
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: const [0.0, 1.0],
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
-                        ],
+              Stack(
+                children: [
+                  // Dark bottom gradient
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: const [0.0, 1.0],
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.4),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
 
           // Back button (top-left)
           Positioned(
             left: 12,
             top: 51,
-            child: GestureDetector(
+            child: _CircleButton(
+              icon: IconsaxPlusLinear.arrow_left,
               onTap: () => context.pop(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  IconsaxPlusLinear.arrow_left,
-                  size: 20,
-                  color: Color(0xFF3D3D3D),
-                ),
-              ),
             ),
           ),
 
-          // Heart button (top-right)
+          // Heart button (top-right) — it was a drawing of a heart that did
+          // nothing; it saves the listing now.
           Positioned(
             right: 12,
             top: 51,
@@ -292,10 +315,11 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                IconsaxPlusLinear.heart,
-                size: 20,
-                color: Color(0xFF3D3D3D),
+              child: Center(
+                child: FavoriteButton(
+                  kind: FavoriteKind.listing,
+                  id: listing.id,
+                ),
               ),
             ),
           ),
@@ -307,37 +331,30 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
   // ───────────────────────────────────────────────
   // Image thumbnail row
   // ───────────────────────────────────────────────
-  Widget _buildThumbnailRow() {
+  Widget _buildThumbnailRow(List<String> photos) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        children: List.generate(5, (index) {
+        children: List.generate(photos.length, (index) {
           final isSelected = _selectedThumb == index;
           return Padding(
-            padding: EdgeInsets.only(right: index < 4 ? 8 : 0),
+            padding: EdgeInsets.only(right: index < photos.length - 1 ? 8 : 0),
             child: GestureDetector(
               onTap: () => setState(() => _selectedThumb = index),
               child: Container(
-                width: 66,
-                height: 44,
                 decoration: BoxDecoration(
-                  color: Color.lerp(
-                    const Color(0xFF0058B5),
-                    const Color(0xFF010A36),
-                    index * 0.2,
-                  ),
                   borderRadius: BorderRadius.circular(4),
                   border: isSelected
-                      ? Border.all(
-                          color: const Color(0xFF123A72), width: 2)
+                      ? Border.all(color: const Color(0xFF123A72), width: 2)
                       : null,
                 ),
-                child: Center(
-                  child: Icon(
-                    IconsaxPlusBold.image,
-                    size: 18,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
+                child: NetworkPhoto(
+                  url: photos[index],
+                  width: 66,
+                  height: 44,
+                  radius: BorderRadius.circular(4),
+                  icon: IconsaxPlusBold.image,
+                  iconSize: 18,
                 ),
               ),
             ),
@@ -350,15 +367,25 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
   // ───────────────────────────────────────────────
   // Agent section
   // ───────────────────────────────────────────────
-  Widget _buildAgentSection() {
+  /// Whoever to call about the listing.
+  ///
+  /// A listing can arrive with no agent and no contact at all — the client
+  /// enters ones that come in by telephone — so this is nothing at all rather
+  /// than an invented name.
+  Widget _buildAgentSection(L l, Listing listing) {
+    final name = listing.contactDisplayName;
+    final phone = listing.contactDisplayPhone;
+    if (name == null && phone == null) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Agent',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            l.agent,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -373,16 +400,13 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
             ),
             child: Row(
               children: [
-                // Avatar placeholder
-                Container(
+                NetworkPhoto(
+                  url: listing.agentPhotoUrl,
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFFD0D0D0),
-                  ),
-                  child: const Icon(IconsaxPlusBold.user,
-                      size: 20, color: Colors.white),
+                  radius: BorderRadius.circular(20),
+                  icon: IconsaxPlusBold.user,
+                  iconSize: 20,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -390,44 +414,51 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _agentName,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        name ?? phone!,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _agentCompany,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6D6D6D),
+                      if (listing.agentAgency != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          listing.agentAgency!,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            color: const Color(0xFF6D6D6D),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
-                Container(
-                  height: 37,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF123A72),
-                    borderRadius: BorderRadius.circular(60),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Contact',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
+                if (phone != null)
+                  GestureDetector(
+                    onTap: () => launchPhone(phone),
+                    child: Container(
+                      height: 37,
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF123A72),
+                        borderRadius: BorderRadius.circular(60),
+                      ),
+                      child: Center(
+                        child: Text(
+                          l.contact,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -447,7 +478,8 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
         children: [
           Text(
             title,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -456,7 +488,8 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
           const SizedBox(height: 12),
           Text(
             body,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF3D3D3D),
@@ -471,38 +504,54 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
   // ───────────────────────────────────────────────
   // Property Specifications 2×2 grid
   // ───────────────────────────────────────────────
-  Widget _buildSpecsGrid() {
+  /// Only the features the listing actually has.
+  ///
+  /// The mock listed Balcony / Parking / Lift / Protected room and answered
+  /// "Yes" to all four on every property. These are the booleans from the
+  /// row, and a listing with none of them shows no section.
+  Widget _buildSpecsGrid(L l, Listing listing) {
+    final specs = <_Spec>[
+      if (listing.hasBalcony)
+        _Spec(l.amenityBalcony, IconsaxPlusBold.element_3),
+      if (listing.hasParking) _Spec(l.amenityParking, IconsaxPlusBold.car),
+      if (listing.hasElevator)
+        _Spec(l.amenityElevator, IconsaxPlusBold.arrow_3),
+      if (listing.hasStorage) _Spec(l.amenityStorage, IconsaxPlusBold.box_1),
+      if (listing.hasMamad) _Spec(l.amenityMamad, IconsaxPlusBold.shield_tick),
+    ];
+    if (specs.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Property Specifications',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            l.propertySpecs,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
             ),
           ),
           const SizedBox(height: 12),
-          // Row 1
-          Row(
-            children: [
-              Expanded(child: _SpecCard(spec: _specs[0])),
-              const SizedBox(width: 12),
-              Expanded(child: _SpecCard(spec: _specs[1])),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Row 2
-          Row(
-            children: [
-              Expanded(child: _SpecCard(spec: _specs[2])),
-              const SizedBox(width: 12),
-              Expanded(child: _SpecCard(spec: _specs[3])),
-            ],
-          ),
+          // Two to a row, however many there are — the fixed 2×2 grid broke
+          // as soon as the count was not exactly four.
+          for (var i = 0; i < specs.length; i += 2)
+            Padding(
+              padding: EdgeInsets.only(bottom: i + 2 < specs.length ? 12 : 0),
+              child: Row(
+                children: [
+                  Expanded(child: _SpecCard(spec: specs[i])),
+                  const SizedBox(width: 12),
+                  if (i + 1 < specs.length)
+                    Expanded(child: _SpecCard(spec: specs[i + 1]))
+                  else
+                    const Expanded(child: SizedBox.shrink()),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -518,8 +567,9 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Where You\'ll Be',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            L.of(context).whereYoullBe,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -540,8 +590,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                       child: Icon(
                         IconsaxPlusBold.map_1,
                         size: 60,
-                        color: const Color(0xFF123A72)
-                            .withValues(alpha: 0.15),
+                        color: const Color(0xFF123A72).withValues(alpha: 0.15),
                       ),
                     ),
                   ),
@@ -556,8 +605,7 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black
-                                .withValues(alpha: 0.25),
+                            color: Colors.black.withValues(alpha: 0.25),
                             blurRadius: 2.74,
                             offset: const Offset(0, 2.74),
                           ),
@@ -589,14 +637,15 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                     child: Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(50),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black
-                                  .withValues(alpha: 0.15),
+                              color: Colors.black.withValues(alpha: 0.15),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -612,8 +661,9 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'View on Map',
-                              style: TextStyle(fontFamily: AppFonts.inter, 
+                              L.of(context).viewOnMap,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: const Color(0xFF0A1230),
@@ -636,15 +686,16 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
   // ───────────────────────────────────────────────
   // About Moriah (neighborhood) with fade + Read More
   // ───────────────────────────────────────────────
-  Widget _buildNeighborhoodSection() {
+  Widget _buildNeighborhoodSection(L l, String name, String about) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'About Moriah',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            l.aboutNeighborhood(name),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -657,76 +708,67 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _aboutNeighborhood1,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    about,
+                    maxLines: _aboutExpanded ? null : 5,
+                    overflow: _aboutExpanded
+                        ? TextOverflow.visible
+                        : TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
-                      fontWeight: FontWeight.w400,
                       color: const Color(0xFF3D3D3D),
                       height: 1.6,
                     ),
                   ),
-                  if (_aboutExpanded) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _aboutNeighborhood2,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF3D3D3D),
-                        height: 1.6,
-                      ),
-                    ),
-                  ],
-                  if (!_aboutExpanded) const SizedBox(height: 80),
                 ],
               ),
-              // White gradient overlay (only when collapsed)
               if (!_aboutExpanded)
                 Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  height: 120,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0x00FFFFFF),
-                          Color(0xFFFFFFFF),
-                        ],
+                  height: 60,
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0x00FFFFFF), Color(0xFFFFFFFF)],
+                        ),
                       ),
                     ),
                   ),
                 ),
             ],
           ),
-          // Read More button
-          Center(
-            child: GestureDetector(
-              onTap: () =>
-                  setState(() => _aboutExpanded = !_aboutExpanded),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(
-                      color: const Color(0xFF123A72)),
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Text(
-                  _aboutExpanded ? 'Show Less' : 'Read More',
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF123A72),
+          // Only worth offering when there is more to show.
+          if (about.length > 240)
+            Center(
+              child: GestureDetector(
+                onTap: () => setState(() => _aboutExpanded = !_aboutExpanded),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFF123A72)),
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Text(
+                    _aboutExpanded ? l.showLess : l.readMore,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF123A72),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -735,33 +777,73 @@ class _MobileListingDetailContentState extends State<_MobileListingDetailContent
   // ───────────────────────────────────────────────
   // Properties in Moriah
   // ───────────────────────────────────────────────
-  Widget _buildNearbyProperties() {
+  /// Other listings in the same neighbourhood. Three invented ones used to
+  /// sit here; the strip is left out entirely when there are none.
+  Widget _buildNearbyProperties(L l, String? hood) {
+    final nearby = ref
+        .watch(nearbyListingsProvider(widget.listingId))
+        .valueOrNull;
+    if (nearby == null || nearby.isEmpty || hood == null) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Properties in Moriah',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            l.propertiesIn(hood),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
             ),
           ),
           const SizedBox(height: 12),
-          ...List.generate(_nearbyListings.length, (index) {
-            final listing = _nearbyListings[index];
-            return Padding(
-              padding: EdgeInsets.only(
-                  bottom: index < _nearbyListings.length - 1 ? 16 : 0),
-              child: _NearbyListingCard(listing: listing),
-            );
-          }),
+          for (var i = 0; i < nearby.length; i++)
+            Padding(
+              padding: EdgeInsets.only(bottom: i < nearby.length - 1 ? 16 : 0),
+              child: _NearbyListingCard(
+                listing: nearby[i],
+                onTap: () => context.push('/listing/${nearby[i].id}'),
+              ),
+            ),
         ],
       ),
     );
   }
+}
+
+/// The white circle behind the back arrow.
+class _CircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _CircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 20, color: const Color(0xFF3D3D3D)),
+      ),
+    );
+  }
+}
+
+/// Opens the dialler. A number that cannot be dialled is left alone rather
+/// than reported, because there is nothing the reader could do about it.
+Future<void> launchPhone(String phone) async {
+  final uri = Uri(scheme: 'tel', path: phone.replaceAll(' ', ''));
+  if (await canLaunchUrl(uri)) await launchUrl(uri);
 }
 
 // ═══════════════════════════════════════════════
@@ -798,7 +880,8 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
@@ -807,7 +890,8 @@ class _StatCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   unit,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF3D3D3D),
@@ -827,10 +911,11 @@ class _StatCard extends StatelessWidget {
 // ═══════════════════════════════════════════════
 class _Spec {
   final String name;
-  final String value;
   final IconData icon;
 
-  const _Spec(this.name, this.value, this.icon);
+  /// There is no value beside the name any more. The card used to read
+  /// "Balcony / Yes", and it read "Yes" whether or not the flat had one.
+  const _Spec(this.name, this.icon);
 }
 
 // ═══════════════════════════════════════════════
@@ -856,19 +941,10 @@ class _SpecCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             spec.name,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            spec.value,
-            style: TextStyle(fontFamily: AppFonts.inter, 
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
               color: Colors.black,
             ),
             textAlign: TextAlign.center,
@@ -906,180 +982,204 @@ class _NearbyListing {
 // Nearby listing card
 // ═══════════════════════════════════════════════
 class _NearbyListingCard extends StatelessWidget {
-  final _NearbyListing listing;
-  const _NearbyListingCard({required this.listing});
+  final Listing listing;
+  final VoidCallback? onTap;
+  const _NearbyListingCard({required this.listing, this.onTap});
+
+  String _priceText(L l) {
+    final p = listing.effectivePrice;
+    if (p == null) return '';
+    return listing.kind == ListingKind.rent
+        ? l.pricePerMonthValue(formatShekels(p))
+        : formatShekels(p);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Image
-        SizedBox(
-          height: 200,
-          width: double.infinity,
-          child: Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+    final l = L.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image
+          SizedBox(
+            height: 200,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                    ),
                   ),
+                  child: const SizedBox.shrink(),
                 ),
-                child: Center(
-                  child: Icon(
-                    IconsaxPlusBold.home_2,
-                    size: 48,
-                    color: Colors.white.withValues(alpha: 0.15),
-                  ),
-                ),
-              ),
 
-              // Heart button
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    IconsaxPlusLinear.heart,
-                    size: 20,
-                    color: Color(0xFF123A72),
-                  ),
-                ),
-              ),
-
-              // New badge
-              if (listing.isNew)
+                // Heart button
                 Positioned(
                   right: 12,
-                  bottom: 12,
+                  top: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF17A9D0),
-                      borderRadius: BorderRadius.circular(50),
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
                     ),
-                    child: Text(
-                      'New',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
+                    child: Center(
+                      child: FavoriteButton(
+                        kind: FavoriteKind.listing,
+                        id: listing.id,
+                        color: const Color(0xFF123A72),
                       ),
                     ),
                   ),
                 ),
 
-              // Via Broker badge
-              if (listing.viaBroker)
-                Positioned(
-                  left: 12,
-                  bottom: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCCD6EE),
-                      borderRadius: BorderRadius.circular(50),
+                // New badge — anything posted in the last fortnight.
+                if (DateTime.now().difference(listing.createdAt).inDays < 14)
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF17A9D0),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Text(
+                        l.newBadge,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                    child: Text(
-                      'Via Broker',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                  ),
+
+                // Via Broker badge
+                if (listing.isBroker)
+                  Positioned(
+                    left: 12,
+                    bottom: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFCCD6EE),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Text(
+                        l.viaBroker,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF0033AC),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // Details
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Price + FOR SALE
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _priceText(l),
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubik,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF0A1230),
+                      ),
+                    ),
+                    Text(
+                      listing.kind == ListingKind.rent
+                          ? l.forRentBadge
+                          : l.forSaleBadge,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF0033AC),
+                        color: const Color(0xFF17A9D0),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-            ],
-          ),
-        ),
+                const SizedBox(height: 8),
 
-        // Details
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Price + FOR SALE
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    listing.price,
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF0A1230),
+                // Address
+                Row(
+                  children: [
+                    const Icon(
+                      IconsaxPlusBold.location,
+                      size: 16,
+                      color: Color(0xFF17A9D0),
                     ),
-                  ),
-                  Text(
-                    'FOR SALE',
-                    style: TextStyle(fontFamily: AppFonts.inter, 
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF17A9D0),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Address
-              Row(
-                children: [
-                  const Icon(IconsaxPlusBold.location,
-                      size: 16, color: Color(0xFF17A9D0)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      listing.address,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF5F5E5A),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        listing.address ?? listing.neighborhoodName ?? '',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF5F5E5A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+                  ],
+                ),
+                const SizedBox(height: 8),
 
-              // Area / Rooms / Floor chips
-              Row(
-                children: [
-                  _DetailChip(
-                    icon: IconsaxPlusLinear.maximize_3,
-                    text: '${listing.area} m²',
-                  ),
-                  const SizedBox(width: 31),
-                  _DetailChip(
-                    icon: IconsaxPlusLinear.building_3,
-                    text: '${listing.rooms} Rooms',
-                  ),
-                  const SizedBox(width: 31),
-                  _DetailChip(
-                    icon: IconsaxPlusLinear.building_4,
-                    text: 'Floor ${listing.floor}',
-                  ),
-                ],
-              ),
-            ],
+                // Area / Rooms / Floor chips
+                Row(
+                  children: [
+                    _DetailChip(
+                      icon: IconsaxPlusLinear.maximize_3,
+                      text: '${listing.sqm} ${l.sqmUnit}',
+                    ),
+                    const SizedBox(width: 31),
+                    _DetailChip(
+                      icon: IconsaxPlusLinear.building_3,
+                      text: '${listing.rooms} ${l.roomsLabel}',
+                    ),
+                    const SizedBox(width: 31),
+                    _DetailChip(
+                      icon: IconsaxPlusLinear.building_4,
+                      text: l.floorLabel('${listing.floor}'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1102,7 +1202,8 @@ class _DetailChip extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           text,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF3D3D3D),

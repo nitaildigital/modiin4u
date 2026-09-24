@@ -31,7 +31,8 @@ class _MobileNeighborhoodDetailContent extends StatefulWidget {
       _MobileNeighborhoodDetailContentState();
 }
 
-class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDetailContent> {
+class _MobileNeighborhoodDetailContentState
+    extends State<_MobileNeighborhoodDetailContent> {
   int _selectedThumb = 0;
 
   // ── Mock data ──
@@ -126,7 +127,8 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                   child: Text(
                     _name,
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -139,12 +141,16 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Row(
                     children: [
-                      const Icon(IconsaxPlusLinear.location,
-                          size: 16, color: Color(0xFF888888)),
+                      const Icon(
+                        IconsaxPlusLinear.location,
+                        size: 16,
+                        color: Color(0xFF888888),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         _city,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF6D6D6D),
@@ -202,9 +208,11 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
             child: Stack(
               children: [
                 Center(
-                  child: Icon(IconsaxPlusBold.buildings_2,
-                      size: 80,
-                      color: Colors.white.withValues(alpha: 0.15)),
+                  child: Icon(
+                    IconsaxPlusBold.buildings_2,
+                    size: 80,
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
                 ),
                 Positioned.fill(
                   child: DecoratedBox(
@@ -233,9 +241,14 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                 width: 40,
                 height: 40,
                 decoration: const BoxDecoration(
-                    color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(IconsaxPlusLinear.arrow_left,
-                    size: 20, color: Color(0xFF3D3D3D)),
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  IconsaxPlusLinear.arrow_left,
+                  size: 20,
+                  color: Color(0xFF3D3D3D),
+                ),
               ),
             ),
           ),
@@ -261,18 +274,22 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                 width: 66,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Color.lerp(const Color(0xFF0058B5),
-                      const Color(0xFF010A36), i * 0.2),
+                  color: Color.lerp(
+                    const Color(0xFF0058B5),
+                    const Color(0xFF010A36),
+                    i * 0.2,
+                  ),
                   borderRadius: BorderRadius.circular(4),
                   border: selected
-                      ? Border.all(
-                          color: const Color(0xFF123A72), width: 2)
+                      ? Border.all(color: const Color(0xFF123A72), width: 2)
                       : null,
                 ),
                 child: Center(
-                  child: Icon(IconsaxPlusBold.image,
-                      size: 18,
-                      color: Colors.white.withValues(alpha: 0.3)),
+                  child: Icon(
+                    IconsaxPlusBold.image,
+                    size: 18,
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
                 ),
               ),
             ),
@@ -327,25 +344,29 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
         children: [
           Text(
             'About $_name',
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
             ),
           ),
           const SizedBox(height: 12),
-          ..._aboutParagraphs.map((p) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  p,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF3D3D3D),
-                    height: 1.6,
-                  ),
+          ..._aboutParagraphs.map(
+            (p) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                p,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF3D3D3D),
+                  height: 1.6,
                 ),
-              )),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -362,7 +383,8 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
         children: [
           Text(
             title,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F1F1F),
@@ -370,8 +392,7 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
           ),
           const SizedBox(height: 12),
           // Listing cards
-          ...listings
-              .map((l) => _ListingCard(listing: l)),
+          ...listings.map((l) => _ListingCard(listing: l)),
 
           // Fade gradient + View All
           Stack(
@@ -395,16 +416,18 @@ class _MobileNeighborhoodDetailContentState extends State<_MobileNeighborhoodDet
                   onTap: () => context.goOrPush('/realestate'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 8),
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border.all(
-                          color: const Color(0xFF123A72)),
+                      border: Border.all(color: const Color(0xFF123A72)),
                       borderRadius: BorderRadius.circular(60),
                     ),
                     child: Text(
                       'View All',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF123A72),
@@ -454,7 +477,8 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             stat.value,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.black,
@@ -464,7 +488,8 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             stat.label,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: Colors.black,
@@ -534,10 +559,11 @@ class _ListingCard extends StatelessWidget {
                     ),
                   ),
                   child: Center(
-                    child: Icon(IconsaxPlusBold.home_2,
-                        size: 48,
-                        color:
-                            Colors.white.withValues(alpha: 0.15)),
+                    child: Icon(
+                      IconsaxPlusBold.home_2,
+                      size: 48,
+                      color: Colors.white.withValues(alpha: 0.15),
+                    ),
                   ),
                 ),
                 // Heart
@@ -548,10 +574,14 @@ class _ListingCard extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle),
-                    child: const Icon(IconsaxPlusLinear.heart,
-                        size: 20, color: Color(0xFF123A72)),
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      IconsaxPlusLinear.heart,
+                      size: 20,
+                      color: Color(0xFF123A72),
+                    ),
                   ),
                 ),
                 // Badges
@@ -561,16 +591,22 @@ class _ListingCard extends StatelessWidget {
                     bottom: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 6),
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFCCD6EE),
                         borderRadius: BorderRadius.circular(50),
                       ),
-                      child: Text('Via Broker',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF0033AC))),
+                      child: Text(
+                        'Via Broker',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF0033AC),
+                        ),
+                      ),
                     ),
                   ),
                 if (listing.isNew)
@@ -579,16 +615,22 @@ class _ListingCard extends StatelessWidget {
                     bottom: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 6),
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF17A9D0),
                         borderRadius: BorderRadius.circular(50),
                       ),
-                      child: Text('New',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white)),
+                      child: Text(
+                        'New',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -609,7 +651,8 @@ class _ListingCard extends StatelessWidget {
                       children: [
                         Text(
                           listing.price,
-                          style: TextStyle(fontFamily: AppFonts.rubik, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF0A1230),
@@ -619,7 +662,8 @@ class _ListingCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             listing.perMonth!,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF5F5E5A),
@@ -630,7 +674,8 @@ class _ListingCard extends StatelessWidget {
                     ),
                     Text(
                       listing.isRent ? 'FOR RENT' : 'FOR SALE',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF17A9D0),
@@ -643,13 +688,17 @@ class _ListingCard extends StatelessWidget {
                 // Address
                 Row(
                   children: [
-                    const Icon(IconsaxPlusBold.location,
-                        size: 16, color: Color(0xFF17A9D0)),
+                    const Icon(
+                      IconsaxPlusBold.location,
+                      size: 16,
+                      color: Color(0xFF17A9D0),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         listing.address,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF5F5E5A),
@@ -664,14 +713,17 @@ class _ListingCard extends StatelessWidget {
                 // Area / Rooms / Floor
                 Row(
                   children: [
-                    _chip(IconsaxPlusLinear.maximize_3,
-                        '${listing.area} m²'),
+                    _chip(IconsaxPlusLinear.maximize_3, '${listing.area} m²'),
                     const SizedBox(width: 31),
-                    _chip(IconsaxPlusLinear.building_3,
-                        '${listing.rooms} Rooms'),
+                    _chip(
+                      IconsaxPlusLinear.building_3,
+                      '${listing.rooms} Rooms',
+                    ),
                     const SizedBox(width: 31),
-                    _chip(IconsaxPlusLinear.building_4,
-                        'Floor ${listing.floor}'),
+                    _chip(
+                      IconsaxPlusLinear.building_4,
+                      'Floor ${listing.floor}',
+                    ),
                   ],
                 ),
               ],
@@ -690,7 +742,8 @@ class _ListingCard extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           text,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF3D3D3D),

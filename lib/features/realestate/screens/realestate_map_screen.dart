@@ -23,34 +23,118 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
 
   // ── Property pins ──
   static final _properties = [
-    _Property('₪3,650,000', '21 Sderot El Melachot', 140, 6, 3,
-        const LatLng(31.8960, 35.0080)),
-    _Property('₪3,790,000', '84 Menachem Begin Road', 133, 4, 2,
-        const LatLng(31.8945, 35.0120)),
-    _Property('₪5,690,000', '73 Sarah Amano Street', 145, 4, 3,
-        const LatLng(31.8910, 35.0060)),
-    _Property('₪3,050,000', '37 Ella Valley Street', 145, 4, 3,
-        const LatLng(31.8890, 35.0140)),
-    _Property('₪4,200,000', '15 Hashmonaim Blvd', 120, 5, 2,
-        const LatLng(31.8975, 35.0050)),
-    _Property('₪2,850,000', '8 Hapardes Street', 95, 4, 2,
-        const LatLng(31.8930, 35.0180)),
-    _Property('₪6,100,000', '22 Moriah Heights', 180, 7, 3,
-        const LatLng(31.8870, 35.0100)),
-    _Property('₪3,400,000', '5 Avni Chen Lane', 110, 5, 2,
-        const LatLng(31.8955, 35.0160)),
-    _Property('₪4,750,000', '31 Buchman Boulevard', 155, 6, 3,
-        const LatLng(31.8920, 35.0040)),
-    _Property('₪2,990,000', '19 Emek Hashalom', 100, 4, 2,
-        const LatLng(31.8985, 35.0130)),
-    _Property('₪3,950,000', '42 Reut Circle', 135, 5, 3,
-        const LatLng(31.8905, 35.0190)),
-    _Property('₪5,200,000', '7 Maccabim Road', 160, 6, 3,
-        const LatLng(31.8940, 35.0020)),
-    _Property('₪3,100,000', '28 Shimshon Street', 108, 4, 2,
-        const LatLng(31.8965, 35.0200)),
-    _Property('₪4,500,000', '14 Dvora Hanevia', 148, 5, 3,
-        const LatLng(31.8880, 35.0070)),
+    _Property(
+      '₪3,650,000',
+      '21 Sderot El Melachot',
+      140,
+      6,
+      3,
+      const LatLng(31.8960, 35.0080),
+    ),
+    _Property(
+      '₪3,790,000',
+      '84 Menachem Begin Road',
+      133,
+      4,
+      2,
+      const LatLng(31.8945, 35.0120),
+    ),
+    _Property(
+      '₪5,690,000',
+      '73 Sarah Amano Street',
+      145,
+      4,
+      3,
+      const LatLng(31.8910, 35.0060),
+    ),
+    _Property(
+      '₪3,050,000',
+      '37 Ella Valley Street',
+      145,
+      4,
+      3,
+      const LatLng(31.8890, 35.0140),
+    ),
+    _Property(
+      '₪4,200,000',
+      '15 Hashmonaim Blvd',
+      120,
+      5,
+      2,
+      const LatLng(31.8975, 35.0050),
+    ),
+    _Property(
+      '₪2,850,000',
+      '8 Hapardes Street',
+      95,
+      4,
+      2,
+      const LatLng(31.8930, 35.0180),
+    ),
+    _Property(
+      '₪6,100,000',
+      '22 Moriah Heights',
+      180,
+      7,
+      3,
+      const LatLng(31.8870, 35.0100),
+    ),
+    _Property(
+      '₪3,400,000',
+      '5 Avni Chen Lane',
+      110,
+      5,
+      2,
+      const LatLng(31.8955, 35.0160),
+    ),
+    _Property(
+      '₪4,750,000',
+      '31 Buchman Boulevard',
+      155,
+      6,
+      3,
+      const LatLng(31.8920, 35.0040),
+    ),
+    _Property(
+      '₪2,990,000',
+      '19 Emek Hashalom',
+      100,
+      4,
+      2,
+      const LatLng(31.8985, 35.0130),
+    ),
+    _Property(
+      '₪3,950,000',
+      '42 Reut Circle',
+      135,
+      5,
+      3,
+      const LatLng(31.8905, 35.0190),
+    ),
+    _Property(
+      '₪5,200,000',
+      '7 Maccabim Road',
+      160,
+      6,
+      3,
+      const LatLng(31.8940, 35.0020),
+    ),
+    _Property(
+      '₪3,100,000',
+      '28 Shimshon Street',
+      108,
+      4,
+      2,
+      const LatLng(31.8965, 35.0200),
+    ),
+    _Property(
+      '₪4,500,000',
+      '14 Dvora Hanevia',
+      148,
+      5,
+      3,
+      const LatLng(31.8880, 35.0070),
+    ),
   ];
 
   @override
@@ -86,11 +170,8 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                         width: 40,
                         height: 40,
                         child: GestureDetector(
-                          onTap: () =>
-                              setState(() => _selectedPin = i),
-                          child: _PropertyPin(
-                            isSelected: isSelected,
-                          ),
+                          onTap: () => setState(() => _selectedPin = i),
+                          child: _PropertyPin(isSelected: isSelected),
                         ),
                       );
                     }),
@@ -107,17 +188,14 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                 right: 16,
                 child: Container(
                   height: 48,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border:
-                        Border.all(color: const Color(0xFFE7E7E7)),
+                    border: Border.all(color: const Color(0xFFE7E7E7)),
                     borderRadius: BorderRadius.circular(50),
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            Colors.black.withValues(alpha: 0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 16,
                         offset: const Offset(0, 2),
                       ),
@@ -134,7 +212,8 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                       Expanded(
                         child: Text(
                           'Search by location, neighborhood...',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF6D6D6D),
@@ -161,8 +240,7 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                   bottom: 80,
                   child: _PropertyCard(
                     property: _properties[_selectedPin!],
-                    onClose: () =>
-                        setState(() => _selectedPin = null),
+                    onClose: () => setState(() => _selectedPin = null),
                   ),
                 ),
 
@@ -178,14 +256,15 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                     onTap: () => context.goOrPush('/realestate'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(50),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black
-                                .withValues(alpha: 0.25),
+                            color: Colors.black.withValues(alpha: 0.25),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -202,7 +281,8 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'View as List',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF0A1230),
@@ -298,10 +378,7 @@ class _PropertyCard extends StatelessWidget {
   final _Property property;
   final VoidCallback onClose;
 
-  const _PropertyCard({
-    required this.property,
-    required this.onClose,
-  });
+  const _PropertyCard({required this.property, required this.onClose});
 
   @override
   Widget build(BuildContext context) {
@@ -356,8 +433,11 @@ class _PropertyCard extends StatelessWidget {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.close,
-                          size: 16, color: Color(0xFF3D3D3D)),
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Color(0xFF3D3D3D),
+                      ),
                     ),
                   ),
                 ),
@@ -372,7 +452,8 @@ class _PropertyCard extends StatelessWidget {
             children: [
               Text(
                 property.price,
-                style: TextStyle(fontFamily: AppFonts.rubik, 
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF0A1230),
@@ -380,7 +461,8 @@ class _PropertyCard extends StatelessWidget {
               ),
               Text(
                 'FOR SALE',
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF17A9D0),
@@ -393,13 +475,17 @@ class _PropertyCard extends StatelessWidget {
           // Address
           Row(
             children: [
-              const Icon(IconsaxPlusBold.location,
-                  size: 14, color: Color(0xFF17A9D0)),
+              const Icon(
+                IconsaxPlusBold.location,
+                size: 14,
+                color: Color(0xFF17A9D0),
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   property.address,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF5F5E5A),
@@ -414,14 +500,11 @@ class _PropertyCard extends StatelessWidget {
           // Area / Rooms / Floor
           Row(
             children: [
-              _chip(IconsaxPlusLinear.maximize_3,
-                  '${property.area} m²'),
+              _chip(IconsaxPlusLinear.maximize_3, '${property.area} m²'),
               const SizedBox(width: 24),
-              _chip(IconsaxPlusLinear.building_3,
-                  '${property.rooms} Rooms'),
+              _chip(IconsaxPlusLinear.building_3, '${property.rooms} Rooms'),
               const SizedBox(width: 24),
-              _chip(IconsaxPlusLinear.building_4,
-                  'Floor ${property.floor}'),
+              _chip(IconsaxPlusLinear.building_4, 'Floor ${property.floor}'),
             ],
           ),
           const SizedBox(height: 12),
@@ -443,7 +526,8 @@ class _PropertyCard extends StatelessWidget {
                     children: [
                       Text(
                         'View Full Details',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.white,
@@ -474,7 +558,8 @@ class _PropertyCard extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           text,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
             fontSize: 12,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF3D3D3D),

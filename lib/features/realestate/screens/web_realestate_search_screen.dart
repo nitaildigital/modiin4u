@@ -64,28 +64,33 @@ class _WebRealEstateSearchContentState
 
   // ── Nav items ──
   List<_NavItem> get _navItems => [
-        _NavItem(
-            label: _t('Professionals', 'בעלי מקצוע'),
-            route: '/businesses',
-            hasDropdown: true),
-        _NavItem(
-            label: _t('Modiin News', 'חדשות מודיעין'),
-            route: '/news',
-            hasDropdown: true),
-        _NavItem(label: _t('Events', 'אירועים'), route: '/events'),
-        _NavItem(label: _t('Deals', 'מבצעים'), route: '/deals'),
-        _NavItem(
-            label: _t('Real Estate in Modiin', 'נדל"ן במודיעין'),
-            route: '/realestate',
-            isActive: true),
-        _NavItem(
-            label: _t('Restaurants in Modiin', 'מסעדות במודיעין'),
-            route: '/restaurants'),
-        _NavItem(
-            label: _t('Businesses in Modiin', 'עסקים במודיעין'),
-            route: '/businesses',
-            hasDropdown: true),
-      ];
+    _NavItem(
+      label: _t('Professionals', 'בעלי מקצוע'),
+      route: '/businesses',
+      hasDropdown: true,
+    ),
+    _NavItem(
+      label: _t('Modiin News', 'חדשות מודיעין'),
+      route: '/news',
+      hasDropdown: true,
+    ),
+    _NavItem(label: _t('Events', 'אירועים'), route: '/events'),
+    _NavItem(label: _t('Deals', 'מבצעים'), route: '/deals'),
+    _NavItem(
+      label: _t('Real Estate in Modiin', 'נדל"ן במודיעין'),
+      route: '/realestate',
+      isActive: true,
+    ),
+    _NavItem(
+      label: _t('Restaurants in Modiin', 'מסעדות במודיעין'),
+      route: '/restaurants',
+    ),
+    _NavItem(
+      label: _t('Businesses in Modiin', 'עסקים במודיעין'),
+      route: '/businesses',
+      hasDropdown: true,
+    ),
+  ];
 
   // ── Listing data ──
   List<SearchListing> get _allListings =>
@@ -152,8 +157,10 @@ class _WebRealEstateSearchContentState
               'assets/images/logo_white.svg',
               width: 90,
               height: 48,
-              colorFilter:
-                  const ColorFilter.mode(AppColors.midBlue, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                AppColors.midBlue,
+                BlendMode.srcIn,
+              ),
             ),
           ),
           const SizedBox(width: 20),
@@ -179,8 +186,10 @@ class _WebRealEstateSearchContentState
             child: GestureDetector(
               onTap: () => setState(() => _isHebrew = !_isHebrew),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 margin: const EdgeInsets.only(right: 12),
                 decoration: BoxDecoration(
                   border: Border.all(color: const Color(0xFFE0E0E0)),
@@ -189,14 +198,21 @@ class _WebRealEstateSearchContentState
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(IconsaxPlusLinear.global,
-                        size: 18, color: AppColors.midBlue),
+                    const Icon(
+                      IconsaxPlusLinear.global,
+                      size: 18,
+                      color: AppColors.midBlue,
+                    ),
                     const SizedBox(width: 6),
-                    Text(_isHebrew ? 'עב | EN' : 'EN | עב',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.midBlue)),
+                    Text(
+                      _isHebrew ? 'עב | EN' : 'EN | עב',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.midBlue,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -206,17 +222,20 @@ class _WebRealEstateSearchContentState
           GestureDetector(
             onTap: () {},
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
               decoration: BoxDecoration(
                 color: AppColors.midBlue,
                 borderRadius: BorderRadius.circular(60),
               ),
-              child: Text(_t('Contact Us', 'צור קשר'),
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white)),
+              child: Text(
+                _t('Contact Us', 'צור קשר'),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],
@@ -250,7 +269,9 @@ class _WebRealEstateSearchContentState
                   _buildTypeCheckbox('apartment', _t('Apartment', 'דירה')),
                   _buildTypeCheckbox('penthouse', _t('Penthouse', 'פנטהאוז')),
                   _buildTypeCheckbox(
-                      'garden', _t('Garden Apartment', 'דירת גן')),
+                    'garden',
+                    _t('Garden Apartment', 'דירת גן'),
+                  ),
                   _buildTypeCheckbox('duplex', _t('Duplex', 'דופלקס')),
                   _buildTypeCheckbox('villa', _t('Villa', 'וילה')),
                   _buildTypeCheckbox('studio', _t('Studio', 'סטודיו')),
@@ -287,7 +308,8 @@ class _WebRealEstateSearchContentState
                     .map((f) => floorLabel(_isHebrew, f))
                     .toList(),
                 onSelected: (i) => setState(
-                    () => _filters = _filters.copyWith(floor: floorOptions[i])),
+                  () => _filters = _filters.copyWith(floor: floorOptions[i]),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -298,14 +320,12 @@ class _WebRealEstateSearchContentState
                 value: _filters.neighborhood == 'any'
                     ? _t('Any', 'הכל')
                     : _filters.neighborhood,
-                options: [
-                  _t('Any', 'הכל'),
-                  ...neighborhoodOptions(_isHebrew),
-                ],
+                options: [_t('Any', 'הכל'), ...neighborhoodOptions(_isHebrew)],
                 onSelected: (i) => setState(() {
                   _filters = _filters.copyWith(
-                    neighborhood:
-                        i == 0 ? 'any' : neighborhoodOptions(_isHebrew)[i - 1],
+                    neighborhood: i == 0
+                        ? 'any'
+                        : neighborhoodOptions(_isHebrew)[i - 1],
                   );
                 }),
               ),
@@ -324,7 +344,8 @@ class _WebRealEstateSearchContentState
                   }),
                   child: Text(
                     _t('Clear all filters', 'נקה את כל הסינונים'),
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: AppColors.midBlue,
@@ -351,19 +372,27 @@ class _WebRealEstateSearchContentState
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          const Icon(IconsaxPlusLinear.search_normal_1,
-              size: 16, color: Color(0xFF6D6D6D)),
+          const Icon(
+            IconsaxPlusLinear.search_normal_1,
+            size: 16,
+            color: Color(0xFF6D6D6D),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: _searchController,
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                  fontSize: 14, color: AppColors.navy),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: AppColors.navy,
+              ),
               decoration: InputDecoration(
-                hintText: _t(
-                    'Search by location...', 'חיפוש לפי מיקום...'),
-                hintStyle: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 14, color: const Color(0xFF6D6D6D)),
+                hintText: _t('Search by location...', 'חיפוש לפי מיקום...'),
+                hintStyle: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  color: const Color(0xFF6D6D6D),
+                ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -375,16 +404,19 @@ class _WebRealEstateSearchContentState
     );
   }
 
-  Widget _buildFilterSection(
-      {required String title, required Widget child}) {
+  Widget _buildFilterSection({required String title, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.navy)),
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.navy,
+          ),
+        ),
         const SizedBox(height: 12),
         child,
       ],
@@ -443,15 +475,18 @@ class _WebRealEstateSearchContentState
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: checked
-                    ? const Icon(Icons.check,
-                        size: 12, color: Colors.white)
+                    ? const Icon(Icons.check, size: 12, color: Colors.white)
                     : null,
               ),
               const SizedBox(width: 8),
-              Text(label,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                      fontSize: 13,
-                      color: const Color(0xFF3D3D3D))),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 13,
+                  color: const Color(0xFF3D3D3D),
+                ),
+              ),
             ],
           ),
         ),
@@ -469,11 +504,15 @@ class _WebRealEstateSearchContentState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$startFormatted – $endFormatted',
-            style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF3D3D3D))),
+        Text(
+          '$startFormatted – $endFormatted',
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF3D3D3D),
+          ),
+        ),
         const SizedBox(height: 8),
         SliderTheme(
           data: SliderThemeData(
@@ -481,11 +520,11 @@ class _WebRealEstateSearchContentState
             inactiveTrackColor: const Color(0xFFE7E7E7),
             thumbColor: AppColors.midBlue,
             overlayColor: AppColors.midBlue.withValues(alpha: 0.1),
-            thumbShape:
-                const RoundSliderThumbShape(enabledThumbRadius: 9.5),
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9.5),
             trackHeight: 3,
-            rangeThumbShape:
-                const RoundRangeSliderThumbShape(enabledThumbRadius: 9.5),
+            rangeThumbShape: const RoundRangeSliderThumbShape(
+              enabledThumbRadius: 9.5,
+            ),
           ),
           child: RangeSlider(
             values: range,
@@ -493,7 +532,8 @@ class _WebRealEstateSearchContentState
             max: _priceMax,
             divisions: 90,
             onChanged: (values) => setState(
-                () => _filters = _filters.copyWith(priceRange: values)),
+              () => _filters = _filters.copyWith(priceRange: values),
+            ),
           ),
         ),
       ],
@@ -516,12 +556,16 @@ class _WebRealEstateSearchContentState
           PopupMenuItem(
             value: i,
             height: 40,
-            child: Text(options[i],
-                style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 14,
-                    color: options[i] == value
-                        ? AppColors.midBlue
-                        : const Color(0xFF3D3D3D))),
+            child: Text(
+              options[i],
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: options[i] == value
+                    ? AppColors.midBlue
+                    : const Color(0xFF3D3D3D),
+              ),
+            ),
           ),
       ],
       child: Container(
@@ -535,13 +579,20 @@ class _WebRealEstateSearchContentState
         child: Row(
           children: [
             Expanded(
-              child: Text(value,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                      fontSize: 14,
-                      color: const Color(0xFF3D3D3D))),
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  color: const Color(0xFF3D3D3D),
+                ),
+              ),
             ),
-            const Icon(Icons.keyboard_arrow_down,
-                size: 18, color: Color(0xFF7B899A)),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 18,
+              color: Color(0xFF7B899A),
+            ),
           ],
         ),
       ),
@@ -595,20 +646,25 @@ class _WebRealEstateSearchContentState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _t('${_listings.length} Apartments found $typeText',
-                          '${_listings.length} דירות נמצאו $typeText'),
-                      style: TextStyle(fontFamily: AppFonts.nunito, 
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.midBlue),
+                      _t(
+                        '${_listings.length} Apartments found $typeText',
+                        '${_listings.length} דירות נמצאו $typeText',
+                      ),
+                      style: TextStyle(
+                        fontFamily: AppFonts.nunito,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.midBlue,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _t('in Modiin Maccabim Reut',
-                          'במודיעין מכבים רעות'),
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 14,
-                          color: const Color(0xFF5F5E5A)),
+                      _t('in Modiin Maccabim Reut', 'במודיעין מכבים רעות'),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 14,
+                        color: const Color(0xFF5F5E5A),
+                      ),
                     ),
                   ],
                 ),
@@ -639,13 +695,19 @@ class _WebRealEstateSearchContentState
           Expanded(
             child: Text(
               _t('Sort by: Newest', 'מיון: חדש ביותר'),
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                  fontSize: 14, color: const Color(0xFF3D3D3D)),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: const Color(0xFF3D3D3D),
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Icon(Icons.keyboard_arrow_down,
-              size: 18, color: Color(0xFF7B899A)),
+          const Icon(
+            Icons.keyboard_arrow_down,
+            size: 18,
+            color: Color(0xFF7B899A),
+          ),
         ],
       ),
     );
@@ -658,24 +720,36 @@ class _WebRealEstateSearchContentState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(IconsaxPlusLinear.search_status,
-                size: 48, color: const Color(0xFF7B899A).withValues(alpha: 0.6)),
+            Icon(
+              IconsaxPlusLinear.search_status,
+              size: 48,
+              color: const Color(0xFF7B899A).withValues(alpha: 0.6),
+            ),
             const SizedBox(height: 16),
             Text(
-              _t('No apartments match your filters',
-                  'אין דירות שתואמות את הסינון'),
-              style: TextStyle(fontFamily: AppFonts.nunito, 
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.navy),
+              _t(
+                'No apartments match your filters',
+                'אין דירות שתואמות את הסינון',
+              ),
+              style: TextStyle(
+                fontFamily: AppFonts.nunito,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: AppColors.navy,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              _t('Try widening the price range or clearing a filter.',
-                  'נסו להרחיב את טווח המחירים או להסיר סינון.'),
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                  fontSize: 14, color: const Color(0xFF5F5E5A)),
+              _t(
+                'Try widening the price range or clearing a filter.',
+                'נסו להרחיב את טווח המחירים או להסיר סינון.',
+              ),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: const Color(0xFF5F5E5A),
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -692,8 +766,7 @@ class _WebRealEstateSearchContentState
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: const BoxDecoration(
-            border:
-                Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+            border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -715,9 +788,11 @@ class _WebRealEstateSearchContentState
                   ),
                 ),
                 child: Center(
-                  child: Icon(IconsaxPlusLinear.image,
-                      size: 40,
-                      color: Colors.black.withValues(alpha: 0.15)),
+                  child: Icon(
+                    IconsaxPlusLinear.image,
+                    size: 40,
+                    color: Colors.black.withValues(alpha: 0.15),
+                  ),
                 ),
               ),
               const SizedBox(width: 20),
@@ -734,25 +809,27 @@ class _WebRealEstateSearchContentState
                         children: [
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   listing.title,
-                                  style: TextStyle(fontFamily: AppFonts.nunito, 
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.navy),
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.nunito,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   listing.neighborhood,
-                                  style: TextStyle(fontFamily: AppFonts.inter, 
-                                      fontSize: 14,
-                                      color:
-                                          const Color(0xFF5F5E5A)),
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.inter,
+                                    fontSize: 14,
+                                    color: const Color(0xFF5F5E5A),
+                                  ),
                                 ),
                               ],
                             ),
@@ -767,9 +844,11 @@ class _WebRealEstateSearchContentState
                               shape: BoxShape.circle,
                             ),
                             child: const Center(
-                              child: Icon(IconsaxPlusLinear.heart,
-                                  size: 20,
-                                  color: AppColors.midBlue),
+                              child: Icon(
+                                IconsaxPlusLinear.heart,
+                                size: 20,
+                                color: AppColors.midBlue,
+                              ),
                             ),
                           ),
                         ],
@@ -778,35 +857,47 @@ class _WebRealEstateSearchContentState
                       // Specs row
                       Row(
                         children: [
-                          _specItem(IconsaxPlusLinear.ruler,
-                              '${listing.area} m²'),
+                          _specItem(
+                            IconsaxPlusLinear.ruler,
+                            '${listing.area} m²',
+                          ),
                           const SizedBox(width: 31),
-                          _specItem(IconsaxPlusLinear.house,
-                              '${listing.rooms} ${_t('Rooms', 'חדרים')}'),
+                          _specItem(
+                            IconsaxPlusLinear.house,
+                            '${listing.rooms} ${_t('Rooms', 'חדרים')}',
+                          ),
                           const SizedBox(width: 31),
-                          _specItem(IconsaxPlusLinear.building_4,
-                              '${_t('Floor', 'קומה')} ${listing.floor}'),
+                          _specItem(
+                            IconsaxPlusLinear.building_4,
+                            '${_t('Floor', 'קומה')} ${listing.floor}',
+                          ),
                           const SizedBox(width: 31),
-                          _specItem(IconsaxPlusLinear.category,
-                              listing.type),
+                          _specItem(IconsaxPlusLinear.category, listing.type),
                         ],
                       ),
                       const Spacer(),
                       // Price row + Contact button
                       Row(
                         children: [
-                          Text(listing.price,
-                              style: TextStyle(fontFamily: AppFonts.nunito, 
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.midBlue)),
+                          Text(
+                            listing.price,
+                            style: TextStyle(
+                              fontFamily: AppFonts.nunito,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.midBlue,
+                            ),
+                          ),
                           if (listing.perMonth != null) ...[
                             const SizedBox(width: 6),
-                            Text(listing.perMonth!,
-                                style: TextStyle(fontFamily: AppFonts.inter, 
-                                    fontSize: 14,
-                                    color:
-                                        const Color(0xFF5F5E5A))),
+                            Text(
+                              listing.perMonth!,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 14,
+                                color: const Color(0xFF5F5E5A),
+                              ),
+                            ),
                           ],
                           const Spacer(),
                           // Contact button
@@ -815,27 +906,29 @@ class _WebRealEstateSearchContentState
                             child: Container(
                               height: 40,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16),
+                                horizontal: 16,
+                              ),
                               decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: AppColors.midBlue),
-                                borderRadius:
-                                    BorderRadius.circular(60),
+                                border: Border.all(color: AppColors.midBlue),
+                                borderRadius: BorderRadius.circular(60),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Icon(
-                                      IconsaxPlusLinear.call,
-                                      size: 16,
-                                      color: AppColors.midBlue),
+                                    IconsaxPlusLinear.call,
+                                    size: 16,
+                                    color: AppColors.midBlue,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     _t('Contact', 'צור קשר'),
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.midBlue),
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.midBlue,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -860,9 +953,14 @@ class _WebRealEstateSearchContentState
       children: [
         Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
         const SizedBox(width: 6),
-        Text(text,
-            style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 12, color: const Color(0xFF3D3D3D))),
+        Text(
+          text,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 12,
+            color: const Color(0xFF3D3D3D),
+          ),
+        ),
       ],
     );
   }
@@ -876,19 +974,17 @@ class _WebRealEstateSearchContentState
       child: Stack(
         children: [
           // Map background with subtle pattern
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _MapBackgroundPainter(),
+          Positioned.fill(child: CustomPaint(painter: _MapBackgroundPainter())),
+          // Location pins using Align with fractional positioning
+          ..._mapPins.map(
+            (offset) => Align(
+              alignment: Alignment(
+                offset.dx * 2 - 1, // Convert 0..1 to -1..1
+                offset.dy * 2 - 1,
+              ),
+              child: _buildMapPin(),
             ),
           ),
-          // Location pins using Align with fractional positioning
-          ..._mapPins.map((offset) => Align(
-                alignment: Alignment(
-                  offset.dx * 2 - 1, // Convert 0..1 to -1..1
-                  offset.dy * 2 - 1,
-                ),
-                child: _buildMapPin(),
-              )),
         ],
       ),
     );
@@ -910,8 +1006,11 @@ class _WebRealEstateSearchContentState
         ],
       ),
       child: const Center(
-        child: Icon(IconsaxPlusBold.location,
-            size: 20, color: Color(0xFF006BF6)),
+        child: Icon(
+          IconsaxPlusBold.location,
+          size: 20,
+          color: Color(0xFF006BF6),
+        ),
       ),
     );
   }
@@ -949,38 +1048,76 @@ class _MapBackgroundPainter extends CustomPainter {
     final blockPaint = Paint()..color = const Color(0xFFD9D1BF);
     final blocks = [
       Rect.fromLTWH(
-          size.width * 0.05, size.height * 0.05, size.width * 0.12, size.height * 0.08),
+        size.width * 0.05,
+        size.height * 0.05,
+        size.width * 0.12,
+        size.height * 0.08,
+      ),
       Rect.fromLTWH(
-          size.width * 0.25, size.height * 0.2, size.width * 0.15, size.height * 0.1),
+        size.width * 0.25,
+        size.height * 0.2,
+        size.width * 0.15,
+        size.height * 0.1,
+      ),
       Rect.fromLTWH(
-          size.width * 0.55, size.height * 0.35, size.width * 0.1, size.height * 0.12),
+        size.width * 0.55,
+        size.height * 0.35,
+        size.width * 0.1,
+        size.height * 0.12,
+      ),
       Rect.fromLTWH(
-          size.width * 0.7, size.height * 0.1, size.width * 0.15, size.height * 0.08),
+        size.width * 0.7,
+        size.height * 0.1,
+        size.width * 0.15,
+        size.height * 0.08,
+      ),
       Rect.fromLTWH(
-          size.width * 0.1, size.height * 0.55, size.width * 0.12, size.height * 0.1),
+        size.width * 0.1,
+        size.height * 0.55,
+        size.width * 0.12,
+        size.height * 0.1,
+      ),
       Rect.fromLTWH(
-          size.width * 0.45, size.height * 0.6, size.width * 0.18, size.height * 0.08),
+        size.width * 0.45,
+        size.height * 0.6,
+        size.width * 0.18,
+        size.height * 0.08,
+      ),
       Rect.fromLTWH(
-          size.width * 0.75, size.height * 0.7, size.width * 0.12, size.height * 0.1),
+        size.width * 0.75,
+        size.height * 0.7,
+        size.width * 0.12,
+        size.height * 0.1,
+      ),
     ];
     for (final block in blocks) {
       canvas.drawRRect(
-          RRect.fromRectAndRadius(block, const Radius.circular(4)),
-          blockPaint);
+        RRect.fromRectAndRadius(block, const Radius.circular(4)),
+        blockPaint,
+      );
     }
 
     // Green areas (parks)
     final greenPaint = Paint()..color = const Color(0xFFC8D8B8);
     final parks = [
       Rect.fromLTWH(
-          size.width * 0.35, size.height * 0.4, size.width * 0.08, size.height * 0.06),
+        size.width * 0.35,
+        size.height * 0.4,
+        size.width * 0.08,
+        size.height * 0.06,
+      ),
       Rect.fromLTWH(
-          size.width * 0.6, size.height * 0.15, size.width * 0.06, size.height * 0.06),
+        size.width * 0.6,
+        size.height * 0.15,
+        size.width * 0.06,
+        size.height * 0.06,
+      ),
     ];
     for (final park in parks) {
       canvas.drawRRect(
-          RRect.fromRectAndRadius(park, const Radius.circular(8)),
-          greenPaint);
+        RRect.fromRectAndRadius(park, const Radius.circular(8)),
+        greenPaint,
+      );
     }
   }
 
@@ -995,11 +1132,12 @@ class _MapBackgroundPainter extends CustomPainter {
 class _NavItem {
   final String label, route;
   final bool hasDropdown, isActive;
-  const _NavItem(
-      {required this.label,
-      required this.route,
-      this.hasDropdown = false,
-      this.isActive = false});
+  const _NavItem({
+    required this.label,
+    required this.route,
+    this.hasDropdown = false,
+    this.isActive = false,
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -1010,11 +1148,12 @@ class _NavLinkButton extends StatefulWidget {
   final String label;
   final bool isActive, hasDropdown;
   final VoidCallback onTap;
-  const _NavLinkButton(
-      {required this.label,
-      this.isActive = false,
-      this.hasDropdown = false,
-      required this.onTap});
+  const _NavLinkButton({
+    required this.label,
+    this.isActive = false,
+    this.hasDropdown = false,
+    required this.onTap,
+  });
 
   @override
   State<_NavLinkButton> createState() => _NavLinkButtonState();
@@ -1035,17 +1174,14 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: widget.isActive
-                    ? AppColors.midBlue
-                    : Colors.transparent,
+                color: widget.isActive ? AppColors.midBlue : Colors.transparent,
                 width: 3,
               ),
             ),
           ),
           child: Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
               decoration: BoxDecoration(
                 color: _hovered && !widget.isActive
                     ? Colors.black.withValues(alpha: 0.04)
@@ -1058,7 +1194,8 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
                   Flexible(
                     child: Text(
                       widget.label,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 15,
                         fontWeight: widget.isActive
                             ? FontWeight.w600
@@ -1073,8 +1210,11 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
                   ),
                   if (widget.hasDropdown) ...[
                     const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down,
-                        size: 18, color: Color(0xFF21272A)),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: Color(0xFF21272A),
+                    ),
                   ],
                 ],
               ),

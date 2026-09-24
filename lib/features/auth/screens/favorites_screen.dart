@@ -36,6 +36,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
     _FilterDef(l.businesses, IconsaxPlusLinear.shop, FavoriteKind.business),
     _FilterDef(l.events, IconsaxPlusLinear.calendar_1, FavoriteKind.event),
     _FilterDef(l.news, IconsaxPlusLinear.document_text, FavoriteKind.article),
+    _FilterDef(l.propertyLabel, IconsaxPlusLinear.home_2, FavoriteKind.listing),
   ];
 
   @override
@@ -342,18 +343,21 @@ class _FavoriteCard extends StatelessWidget {
     FavoriteKind.business => l.business,
     FavoriteKind.event => l.event,
     FavoriteKind.article => l.news,
+    FavoriteKind.listing => l.propertyLabel,
   };
 
   Color get _typeColor => switch (entry.kind) {
     FavoriteKind.business => const Color(0xFF31AC4E),
     FavoriteKind.event => const Color(0xFF7247ED),
     FavoriteKind.article => const Color(0xFF1E40B5),
+    FavoriteKind.listing => const Color(0xFFD47D00),
   };
 
   IconData get _fallbackIcon => switch (entry.kind) {
     FavoriteKind.business => IconsaxPlusBold.shop,
     FavoriteKind.event => IconsaxPlusBold.calendar_1,
     FavoriteKind.article => IconsaxPlusBold.document_text,
+    FavoriteKind.listing => IconsaxPlusBold.home_2,
   };
 
   @override

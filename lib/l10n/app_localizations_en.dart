@@ -597,4 +597,281 @@ class LEn extends L {
 
   @override
   String get selectHint => 'Select';
+
+  @override
+  String get addApartment => 'Add Apartment';
+
+  @override
+  String get stepBasics => 'Basics';
+
+  @override
+  String get stepDetails => 'Details';
+
+  @override
+  String get stepPhotos => 'Photos';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get submitForApproval => 'Submit for Approval';
+
+  @override
+  String get basicInformation => 'Basic Information';
+
+  @override
+  String get fillInPropertyDetails => 'Fill in the details about your property';
+
+  @override
+  String get listingType => 'Listing Type';
+
+  @override
+  String get propertyType => 'Property Type';
+
+  @override
+  String get selectPropertyType => 'Select property type';
+
+  @override
+  String get listingTitle => 'Title';
+
+  @override
+  String get listingTitleHint => 'e.g. Modern 3BR Apartment in City Center';
+
+  @override
+  String get price => 'Price';
+
+  @override
+  String get enterPrice => 'Enter price';
+
+  @override
+  String get pricePerMonth => 'Monthly price';
+
+  @override
+  String get address => 'Address';
+
+  @override
+  String get enterAddress => 'Enter address';
+
+  @override
+  String get selectRooms => 'Select number of rooms';
+
+  @override
+  String get bathrooms => 'Bathrooms';
+
+  @override
+  String get selectBathrooms => 'Select number of bathrooms';
+
+  @override
+  String get propTypeApartment => 'Apartment';
+
+  @override
+  String get propTypePenthouse => 'Penthouse';
+
+  @override
+  String get propTypeGarden => 'Garden Apartment';
+
+  @override
+  String get propTypeDuplex => 'Duplex';
+
+  @override
+  String get propTypeVilla => 'Villa';
+
+  @override
+  String get propTypeStudio => 'Studio';
+
+  @override
+  String get propTypeOther => 'Other';
+
+  @override
+  String get apartmentDetails => 'Apartment Details';
+
+  @override
+  String get addMoreDetails => 'Add more details about your property';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get describeYourApartment =>
+      'Describe your apartment, features and highlights';
+
+  @override
+  String get floor => 'Floor';
+
+  @override
+  String get totalFloors => 'Total Floors';
+
+  @override
+  String get areaSqm => 'Area (m²)';
+
+  @override
+  String get enterArea => 'Enter area';
+
+  @override
+  String get amenities => 'Amenities';
+
+  @override
+  String get amenityBalcony => 'Balcony';
+
+  @override
+  String get amenityParking => 'Parking';
+
+  @override
+  String get amenityElevator => 'Elevator';
+
+  @override
+  String get amenityStorage => 'Storage';
+
+  @override
+  String get amenityMamad => 'Protected room';
+
+  @override
+  String get addPhotos => 'Add Photos';
+
+  @override
+  String get uploadApartmentPhotos => 'Upload photos of your apartment';
+
+  @override
+  String get mainImage => 'Main Image';
+
+  @override
+  String get firstPhotoIsCover => 'First photo will be used as the cover image';
+
+  @override
+  String get listingSubmitted => 'Listing Submitted!';
+
+  @override
+  String get submittedForApproval =>
+      'Your apartment has been submitted for approval.';
+
+  @override
+  String get listingBeingReviewed => 'Your listing is being reviewed';
+
+  @override
+  String get checkStatusAnytime =>
+      'You can check the status of your listing anytime';
+
+  @override
+  String get backToMyApartments => 'Back to My Apartments';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusApproved => 'Approved';
+
+  @override
+  String get statusRejected => 'Rejected';
+
+  @override
+  String get noApartmentsYet => 'No apartments listed yet';
+
+  @override
+  String get addYourFirstApartment =>
+      'Add your first apartment to get started.';
+
+  @override
+  String get searchApartments => 'Search apartments';
+
+  @override
+  String get noApartmentsMatch => 'No apartments match your search';
+
+  @override
+  String get errTitleRequired => 'A title is required';
+
+  @override
+  String get errPriceRequired => 'A price is required';
+
+  @override
+  String get errCouldNotSubmit => 'Could not submit. Please try again.';
+
+  @override
+  String get signInToPostListing => 'Sign in to post a listing';
+
+  @override
+  String get roomsLabel => 'Rooms';
+
+  @override
+  String get submittedForApprovalLong =>
+      'Your apartment has been submitted for approval. We\'ll review the details and publish it once approved.';
+
+  @override
+  String get checkStatusAnytimeLong =>
+      'You can check the status of your listing anytime from the My Apartments page.';
+
+  @override
+  String get pendingApproval => 'Pending Approval';
+
+  @override
+  String submittedOn(String date) {
+    return 'Submitted on $date';
+  }
+
+  @override
+  String pricePerMonthValue(String price) {
+    return '$price / month';
+  }
+
+  @override
+  String get aboutThisProperty => 'About This Property';
+
+  @override
+  String get propertySpecs => 'Property Specifications';
+
+  @override
+  String get agent => 'Contact person';
+
+  @override
+  String get contact => 'Contact';
+
+  @override
+  String get readMore => 'Read More';
+
+  @override
+  String get showLess => 'Show Less';
+
+  @override
+  String aboutNeighborhood(String name) {
+    return 'About $name';
+  }
+
+  @override
+  String propertiesIn(String name) {
+    return 'Properties in $name';
+  }
+
+  @override
+  String get listingNotFound => 'This listing could not be found';
+
+  @override
+  String get sqmUnit => 'm²';
+
+  @override
+  String get bathroomsUnit => 'Bathrooms';
+
+  @override
+  String get whereYoullBe => 'Where You\'ll Be';
+
+  @override
+  String get propertyLabel => 'Property';
+
+  @override
+  String get viaBroker => 'Via Broker';
+
+  @override
+  String get newBadge => 'New';
+
+  @override
+  String floorLabel(String n) {
+    return 'Floor $n';
+  }
+
+  @override
+  String get viewOnMap => 'View on Map';
+
+  @override
+  String get forSaleBadge => 'FOR SALE';
+
+  @override
+  String get forRentBadge => 'FOR RENT';
 }

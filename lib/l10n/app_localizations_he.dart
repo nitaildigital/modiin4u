@@ -590,4 +590,278 @@ class LHe extends L {
 
   @override
   String get selectHint => 'בחרו';
+
+  @override
+  String get addApartment => 'הוספת דירה';
+
+  @override
+  String get stepBasics => 'בסיס';
+
+  @override
+  String get stepDetails => 'פרטים';
+
+  @override
+  String get stepPhotos => 'תמונות';
+
+  @override
+  String get next => 'הבא';
+
+  @override
+  String get submitForApproval => 'שליחה לאישור';
+
+  @override
+  String get basicInformation => 'פרטים בסיסיים';
+
+  @override
+  String get fillInPropertyDetails => 'מלאו את פרטי הנכס';
+
+  @override
+  String get listingType => 'סוג המודעה';
+
+  @override
+  String get propertyType => 'סוג הנכס';
+
+  @override
+  String get selectPropertyType => 'בחרו סוג נכס';
+
+  @override
+  String get listingTitle => 'כותרת';
+
+  @override
+  String get listingTitleHint => 'לדוגמה: דירת 3 חדרים במרכז העיר';
+
+  @override
+  String get price => 'מחיר';
+
+  @override
+  String get enterPrice => 'הזינו מחיר';
+
+  @override
+  String get pricePerMonth => 'מחיר לחודש';
+
+  @override
+  String get address => 'כתובת';
+
+  @override
+  String get enterAddress => 'הזינו כתובת';
+
+  @override
+  String get selectRooms => 'בחרו מספר חדרים';
+
+  @override
+  String get bathrooms => 'חדרי רחצה';
+
+  @override
+  String get selectBathrooms => 'בחרו מספר חדרי רחצה';
+
+  @override
+  String get propTypeApartment => 'דירה';
+
+  @override
+  String get propTypePenthouse => 'פנטהאוז';
+
+  @override
+  String get propTypeGarden => 'דירת גן';
+
+  @override
+  String get propTypeDuplex => 'דופלקס';
+
+  @override
+  String get propTypeVilla => 'וילה';
+
+  @override
+  String get propTypeStudio => 'סטודיו';
+
+  @override
+  String get propTypeOther => 'אחר';
+
+  @override
+  String get apartmentDetails => 'פרטי הדירה';
+
+  @override
+  String get addMoreDetails => 'הוסיפו פרטים נוספים על הנכס';
+
+  @override
+  String get description => 'תיאור';
+
+  @override
+  String get describeYourApartment => 'תארו את הדירה, המאפיינים והיתרונות';
+
+  @override
+  String get floor => 'קומה';
+
+  @override
+  String get totalFloors => 'סה״כ קומות';
+
+  @override
+  String get areaSqm => 'שטח (מ״ר)';
+
+  @override
+  String get enterArea => 'הזינו שטח';
+
+  @override
+  String get amenities => 'מתקנים';
+
+  @override
+  String get amenityBalcony => 'מרפסת';
+
+  @override
+  String get amenityParking => 'חניה';
+
+  @override
+  String get amenityElevator => 'מעלית';
+
+  @override
+  String get amenityStorage => 'מחסן';
+
+  @override
+  String get amenityMamad => 'ממ״ד';
+
+  @override
+  String get addPhotos => 'הוספת תמונות';
+
+  @override
+  String get uploadApartmentPhotos => 'העלו תמונות של הדירה';
+
+  @override
+  String get mainImage => 'תמונה ראשית';
+
+  @override
+  String get firstPhotoIsCover => 'התמונה הראשונה תשמש כתמונת השער';
+
+  @override
+  String get listingSubmitted => 'המודעה נשלחה!';
+
+  @override
+  String get submittedForApproval => 'הדירה שלכם נשלחה לאישור.';
+
+  @override
+  String get listingBeingReviewed => 'המודעה שלכם בבדיקה';
+
+  @override
+  String get checkStatusAnytime => 'תוכלו לבדוק את סטטוס המודעה בכל עת';
+
+  @override
+  String get backToMyApartments => 'חזרה לדירות שלי';
+
+  @override
+  String get statusPending => 'ממתין לאישור';
+
+  @override
+  String get statusApproved => 'מאושר';
+
+  @override
+  String get statusRejected => 'נדחה';
+
+  @override
+  String get noApartmentsYet => 'עדיין אין דירות';
+
+  @override
+  String get addYourFirstApartment =>
+      'הוסיפו את הדירה הראשונה שלכם כדי להתחיל.';
+
+  @override
+  String get searchApartments => 'חיפוש דירות';
+
+  @override
+  String get noApartmentsMatch => 'לא נמצאו דירות מתאימות';
+
+  @override
+  String get errTitleRequired => 'יש להזין כותרת';
+
+  @override
+  String get errPriceRequired => 'יש להזין מחיר';
+
+  @override
+  String get errCouldNotSubmit => 'לא ניתן היה לשלוח. נסו שוב.';
+
+  @override
+  String get signInToPostListing => 'התחברו כדי לפרסם מודעה';
+
+  @override
+  String get roomsLabel => 'חדרים';
+
+  @override
+  String get submittedForApprovalLong =>
+      'הדירה שלכם נשלחה לאישור. נבדוק את הפרטים ונפרסם אותה לאחר האישור.';
+
+  @override
+  String get checkStatusAnytimeLong =>
+      'תוכלו לבדוק את סטטוס המודעה בכל עת בעמוד ״הדירות שלי״.';
+
+  @override
+  String get pendingApproval => 'ממתין לאישור';
+
+  @override
+  String submittedOn(String date) {
+    return 'נשלח ב-$date';
+  }
+
+  @override
+  String pricePerMonthValue(String price) {
+    return '$price לחודש';
+  }
+
+  @override
+  String get aboutThisProperty => 'על הנכס';
+
+  @override
+  String get propertySpecs => 'מפרט הנכס';
+
+  @override
+  String get agent => 'איש קשר';
+
+  @override
+  String get contact => 'צור קשר';
+
+  @override
+  String get readMore => 'קראו עוד';
+
+  @override
+  String get showLess => 'הצג פחות';
+
+  @override
+  String aboutNeighborhood(String name) {
+    return 'על $name';
+  }
+
+  @override
+  String propertiesIn(String name) {
+    return 'נכסים ב$name';
+  }
+
+  @override
+  String get listingNotFound => 'המודעה לא נמצאה';
+
+  @override
+  String get sqmUnit => 'מ״ר';
+
+  @override
+  String get bathroomsUnit => 'חדרי רחצה';
+
+  @override
+  String get whereYoullBe => 'איפה זה נמצא';
+
+  @override
+  String get propertyLabel => 'נדל״ן';
+
+  @override
+  String get viaBroker => 'באמצעות מתווך';
+
+  @override
+  String get newBadge => 'חדש';
+
+  @override
+  String floorLabel(String n) {
+    return 'קומה $n';
+  }
+
+  @override
+  String get viewOnMap => 'הצג במפה';
+
+  @override
+  String get forSaleBadge => 'למכירה';
+
+  @override
+  String get forRentBadge => 'להשכרה';
 }

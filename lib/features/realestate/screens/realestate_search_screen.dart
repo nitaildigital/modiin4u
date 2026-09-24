@@ -46,7 +46,8 @@ class _MobilePlaceholder extends StatelessWidget {
         elevation: 0,
         title: Text(
           listingType == 'rent' ? 'Apartments For Rent' : 'Apartments For Sale',
-          style: TextStyle(fontFamily: AppFonts.nunito, 
+          style: TextStyle(
+            fontFamily: AppFonts.nunito,
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
@@ -57,7 +58,11 @@ class _MobilePlaceholder extends StatelessWidget {
       body: Center(
         child: Text(
           'Mobile version coming soon',
-          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF5F5E5A)),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 16,
+            color: const Color(0xFF5F5E5A),
+          ),
         ),
       ),
     );

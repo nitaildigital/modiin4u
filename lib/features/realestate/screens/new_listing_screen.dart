@@ -33,10 +33,24 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
   final List<Uint8List> _images = [];
 
   final _neighborhoods = [
-    'הנחלים', 'אבני חן', 'נופים', 'המע"ר', 'הכרמים', 'מוריה', 'הפרחים', 'משואה',
+    'הנחלים',
+    'אבני חן',
+    'נופים',
+    'המע"ר',
+    'הכרמים',
+    'מוריה',
+    'הפרחים',
+    'משואה',
   ];
 
-  final _propertyTypes = ['דירה', 'דופלקס', 'פנטהאוז', 'דירת גן', 'קוטג\'', 'מסחרי'];
+  final _propertyTypes = [
+    'דירה',
+    'דופלקס',
+    'פנטהאוז',
+    'דירת גן',
+    'קוטג\'',
+    'מסחרי',
+  ];
 
   @override
   void dispose() {
@@ -57,7 +71,13 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('העלאת מודעה', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+          title: Text(
+            'העלאת מודעה',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
         body: user == null
             ? _buildLoginPrompt()
@@ -86,29 +106,65 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          _buildLabel('מחיר (₪)'),
-                          _buildTextField(_priceController, 'מחיר', TextInputType.number),
-                        ])),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('מחיר (₪)'),
+                              _buildTextField(
+                                _priceController,
+                                'מחיר',
+                                TextInputType.number,
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          _buildLabel('חדרים'),
-                          _buildTextField(_roomsController, 'חדרים', TextInputType.number),
-                        ])),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('חדרים'),
+                              _buildTextField(
+                                _roomsController,
+                                'חדרים',
+                                TextInputType.number,
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          _buildLabel('שטח (מ"ר)'),
-                          _buildTextField(_sqmController, 'מ"ר', TextInputType.number),
-                        ])),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('שטח (מ"ר)'),
+                              _buildTextField(
+                                _sqmController,
+                                'מ"ר',
+                                TextInputType.number,
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          _buildLabel('קומה'),
-                          _buildTextField(_floorController, 'קומה', TextInputType.number),
-                        ])),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('קומה'),
+                              _buildTextField(
+                                _floorController,
+                                'קומה',
+                                TextInputType.number,
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -118,12 +174,36 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _buildFeatureChip('חניה', _hasParking, (v) => setState(() => _hasParking = v)),
-                        _buildFeatureChip('מעלית', _hasElevator, (v) => setState(() => _hasElevator = v)),
-                        _buildFeatureChip('ממ"ד', _hasMamad, (v) => setState(() => _hasMamad = v)),
-                        _buildFeatureChip('מחסן', _hasStorage, (v) => setState(() => _hasStorage = v)),
-                        _buildFeatureChip('מרפסת', _hasBalcony, (v) => setState(() => _hasBalcony = v)),
-                        _buildFeatureChip('משופץ', _isRenovated, (v) => setState(() => _isRenovated = v)),
+                        _buildFeatureChip(
+                          'חניה',
+                          _hasParking,
+                          (v) => setState(() => _hasParking = v),
+                        ),
+                        _buildFeatureChip(
+                          'מעלית',
+                          _hasElevator,
+                          (v) => setState(() => _hasElevator = v),
+                        ),
+                        _buildFeatureChip(
+                          'ממ"ד',
+                          _hasMamad,
+                          (v) => setState(() => _hasMamad = v),
+                        ),
+                        _buildFeatureChip(
+                          'מחסן',
+                          _hasStorage,
+                          (v) => setState(() => _hasStorage = v),
+                        ),
+                        _buildFeatureChip(
+                          'מרפסת',
+                          _hasBalcony,
+                          (v) => setState(() => _hasBalcony = v),
+                        ),
+                        _buildFeatureChip(
+                          'משופץ',
+                          _isRenovated,
+                          (v) => setState(() => _isRenovated = v),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -134,28 +214,46 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         children: [
-                          ..._images.asMap().entries.map((entry) => Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.memory(entry.value, width: 100, height: 100, fit: BoxFit.cover),
-                                ),
-                                Positioned(
-                                  top: 4, right: 4,
-                                  child: GestureDetector(
-                                    onTap: () => setState(() => _images.removeAt(entry.key)),
-                                    child: Container(
-                                      width: 24, height: 24,
-                                      decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
-                                      child: const Icon(Icons.close, size: 14, color: AppColors.white),
+                          ..._images.asMap().entries.map(
+                            (entry) => Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.memory(
+                                      entry.value,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () => setState(
+                                        () => _images.removeAt(entry.key),
+                                      ),
+                                      child: Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.error,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          size: 14,
+                                          color: AppColors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          )),
+                          ),
                           GestureDetector(
                             onTap: _pickImages,
                             child: Container(
@@ -164,14 +262,28 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                               decoration: BoxDecoration(
                                 color: AppColors.surfaceLight,
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                                border: Border.all(
+                                  color: AppColors.border,
+                                  style: BorderStyle.solid,
+                                ),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.add_photo_alternate_outlined, size: 28, color: AppColors.turquoise),
+                                  const Icon(
+                                    Icons.add_photo_alternate_outlined,
+                                    size: 28,
+                                    color: AppColors.turquoise,
+                                  ),
                                   const SizedBox(height: 4),
-                                  Text('הוסיפו', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta)),
+                                  Text(
+                                    'הוסיפו',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 12,
+                                      color: AppColors.grayMeta,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -189,7 +301,12 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                     ),
                     const SizedBox(height: 16),
                     _buildLabel('טלפון ליצירת קשר'),
-                    _buildTextField(_phoneController, '050-0000000', TextInputType.phone, textDirection: TextDirection.ltr),
+                    _buildTextField(
+                      _phoneController,
+                      '050-0000000',
+                      TextInputType.phone,
+                      textDirection: TextDirection.ltr,
+                    ),
                     const SizedBox(height: 28),
                     Container(
                       decoration: BoxDecoration(
@@ -202,9 +319,19 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
                         ),
-                        child: Text('פרסום מודעה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.white)),
+                        child: Text(
+                          'פרסום מודעה',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -221,14 +348,37 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_outline, size: 48, color: AppColors.grayMeta.withValues(alpha: 0.5)),
+            Icon(
+              Icons.lock_outline,
+              size: 48,
+              color: AppColors.grayMeta.withValues(alpha: 0.5),
+            ),
             const SizedBox(height: 16),
-            Text('יש להתחבר כדי לפרסם מודעה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, color: AppColors.grayMeta)),
+            Text(
+              'יש להתחבר כדי לפרסם מודעה',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 16,
+                color: AppColors.grayMeta,
+              ),
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => context.push('/login'),
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14)),
-              child: Text('התחברות', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600)),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
+              ),
+              child: Text(
+                'התחברות',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
@@ -260,7 +410,12 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
         child: Center(
           child: Text(
             label,
-            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: isActive ? AppColors.white : AppColors.grayMeta),
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isActive ? AppColors.white : AppColors.grayMeta,
+            ),
           ),
         ),
       ),
@@ -270,7 +425,15 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.grayMeta)),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppColors.grayMeta,
+        ),
+      ),
     );
   }
 
@@ -292,14 +455,36 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         ),
-        hint: Text(hint, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayLight)),
-        items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)))).toList(),
+        hint: Text(
+          hint,
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 14,
+            color: AppColors.grayLight,
+          ),
+        ),
+        items: items
+            .map(
+              (item) => DropdownMenuItem(
+                value: item,
+                child: Text(
+                  item,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                ),
+              ),
+            )
+            .toList(),
         onChanged: onChanged,
       ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, TextInputType type, {TextDirection? textDirection}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint,
+    TextInputType type, {
+    TextDirection? textDirection,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: type,
@@ -311,24 +496,44 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayLight),
+      hintStyle: TextStyle(
+        fontFamily: AppFonts.rubik,
+        color: AppColors.grayLight,
+      ),
       filled: true,
       fillColor: AppColors.surfaceLight,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.turquoise, width: 1.5)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.turquoise, width: 1.5),
+      ),
     );
   }
 
-  Widget _buildFeatureChip(String label, bool selected, ValueChanged<bool> onChanged) {
+  Widget _buildFeatureChip(
+    String label,
+    bool selected,
+    ValueChanged<bool> onChanged,
+  ) {
     return GestureDetector(
       onTap: () => onChanged(!selected),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.turquoise.withValues(alpha: 0.1) : AppColors.surfaceLight,
+          color: selected
+              ? AppColors.turquoise.withValues(alpha: 0.1)
+              : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(50),
-          border: Border.all(color: selected ? AppColors.turquoise : AppColors.border),
+          border: Border.all(
+            color: selected ? AppColors.turquoise : AppColors.border,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -337,7 +542,15 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
               const Icon(Icons.check, size: 14, color: AppColors.turquoise),
               const SizedBox(width: 4),
             ],
-            Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: selected ? AppColors.turquoise : AppColors.grayText, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 13,
+                color: selected ? AppColors.turquoise : AppColors.grayText,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
           ],
         ),
       ),
@@ -346,7 +559,11 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
 
   Future<void> _pickImages() async {
     final picker = ImagePicker();
-    final images = await picker.pickMultiImage(maxWidth: 1024, maxHeight: 1024, imageQuality: 80);
+    final images = await picker.pickMultiImage(
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 80,
+    );
     for (final img in images) {
       final bytes = await img.readAsBytes();
       setState(() => _images.add(bytes));
@@ -354,10 +571,15 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
   }
 
   void _submitListing() {
-    if (_priceController.text.isEmpty || _neighborhood == null || _propertyType == null) {
+    if (_priceController.text.isEmpty ||
+        _neighborhood == null ||
+        _propertyType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('יש למלא את כל השדות הנדרשים', style: TextStyle(fontFamily: AppFonts.rubik)),
+          content: Text(
+            'יש למלא את כל השדות הנדרשים',
+            style: TextStyle(fontFamily: AppFonts.rubik),
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -368,22 +590,44 @@ class _NewListingScreenState extends ConsumerState<NewListingScreen> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
-              const Icon(Icons.check_circle, color: AppColors.success, size: 28),
+              const Icon(
+                Icons.check_circle,
+                color: AppColors.success,
+                size: 28,
+              ),
               const SizedBox(width: 10),
-              Text('המודעה פורסמה!', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+              Text(
+                'המודעה פורסמה!',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
-          content: Text('המודעה שלך פורסמה בהצלחה ותופיע בקרוב ברשימת הנכסים.', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)),
+          content: Text(
+            'המודעה שלך פורסמה בהצלחה ותופיע בקרוב ברשימת הנכסים.',
+            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 context.pop();
               },
-              child: Text('אישור', style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.turquoise, fontWeight: FontWeight.w600)),
+              child: Text(
+                'אישור',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  color: AppColors.turquoise,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
