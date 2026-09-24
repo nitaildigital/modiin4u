@@ -1,164 +1,81 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
-import 'web_events_category_screen.dart';
 
-/// Events map view – responsive wrapper.
-/// Desktop (> 1100px) renders the filtered "Event Category" layout;
-/// mobile keeps the existing app map UI.
+import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../models/event.dart';
+import '../providers/event_providers.dart';
+
+/// The events map.
+///
+/// Fourteen invented events lived in a `static final` list here, at invented
+/// coordinates, and every card's "View full details" pushed
+/// `/event/map_<hashCode of the title>` — an id no event has, so the button
+/// always landed on the detail screen's error state. The screen was also
+/// unreachable: nothing navigated to `/events-map` until the events list's
+/// floating button was corrected.
 class EventsMapScreen extends StatelessWidget {
   const EventsMapScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth > 1100) {
-          return const WebEventsCategoryContent();
-        }
-        return const _MobileEventsMapContent();
-      },
-    );
+    return const _MobileEventsMapContent();
   }
 }
 
-/// Mobile layout – event venue pins (purple) on the map with a search bar,
-/// tappable popup cards, and a "View as List" toggle.
-class _MobileEventsMapContent extends StatefulWidget {
+class _MobileEventsMapContent extends ConsumerStatefulWidget {
   const _MobileEventsMapContent();
 
   @override
-  State<_MobileEventsMapContent> createState() =>
+  ConsumerState<_MobileEventsMapContent> createState() =>
       _MobileEventsMapContentState();
 }
 
-class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
-  int? _selectedPin;
+class _MobileEventsMapContentState
+    extends ConsumerState<_MobileEventsMapContent> {
+  String? _selectedId;
+  final _searchController = TextEditingController();
+  Timer? _debounce;
 
-  // Modi'in center
   static const _center = LatLng(31.8928, 35.0104);
 
-  // ── Event venue pins (all purple #9032E1) ──
-  static final _events = [
-    _EventPin(
-      'Summer Music Night',
-      'Music',
-      '8:00 PM',
-      'Modiin Amphitheater',
-      '₪50', 124,
-      const LatLng(31.8960, 35.0080),
-    ),
-    _EventPin(
-      'Modiin Community Festival',
-      'Municipal & Community',
-      '10:00 AM',
-      'Modiin City Center',
-      'FREE', 86,
-      const LatLng(31.8945, 35.0120),
-    ),
-    _EventPin(
-      'Family Fun Day',
-      'Kids & Family',
-      '11:00 AM',
-      'Anava Park',
-      '₪20', 86,
-      const LatLng(31.8910, 35.0060),
-    ),
-    _EventPin(
-      'Live Jazz Evening',
-      'Music',
-      '8:30 PM',
-      'Local Cultural Center',
-      '₪60', 51,
-      const LatLng(31.8890, 35.0140),
-    ),
-    _EventPin(
-      'Kids Cooking Workshop',
-      'Kids & Family',
-      '8:30 PM',
-      'Local Cultural Center',
-      '₪60', 51,
-      const LatLng(31.8975, 35.0050),
-    ),
-    _EventPin(
-      'Morning Yoga in the Park',
-      'Sports',
-      '7:00 AM',
-      'Anava Park',
-      'FREE', 89,
-      const LatLng(31.8930, 35.0180),
-    ),
-    _EventPin(
-      'Community Running Event',
-      'Sports',
-      '19:00 PM',
-      'Anava Lake',
-      'FREE', 167,
-      const LatLng(31.8870, 35.0100),
-    ),
-    _EventPin(
-      'Outdoor Movie Night',
-      'Music',
-      '9:00 PM',
-      'Modiin Park',
-      '₪30', 203,
-      const LatLng(31.8955, 35.0160),
-    ),
-    _EventPin(
-      'Art Workshop for Kids',
-      'Kids & Family',
-      '10:00 AM',
-      'Community Center Buchman',
-      '₪40', 67,
-      const LatLng(31.8920, 35.0040),
-    ),
-    _EventPin(
-      'Local Market Day',
-      'Municipal & Community',
-      '9:00 AM',
-      'HaMar Center',
-      'FREE', 298,
-      const LatLng(31.8985, 35.0130),
-    ),
-    _EventPin(
-      'Stand-Up Comedy Night',
-      'Music',
-      '9:30 PM',
-      'Modiin Theater',
-      '₪80', 145,
-      const LatLng(31.8905, 35.0190),
-    ),
-    _EventPin(
-      'Book Club Meetup',
-      'Municipal & Community',
-      '7:00 PM',
-      'City Library',
-      'FREE', 34,
-      const LatLng(31.8940, 35.0020),
-    ),
-    _EventPin(
-      'Startup Networking',
-      'Municipal & Community',
-      '6:00 PM',
-      'WeWork Modiin',
-      'FREE', 112,
-      const LatLng(31.8965, 35.0095),
-    ),
-    _EventPin(
-      'Weekend Bike Tour',
-      'Sports',
-      '8:00 AM',
-      'Modiin Trails',
-      '₪25', 78,
-      const LatLng(31.8880, 35.0150),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _searchController.text = ref.read(eventSearchProvider);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      ref.read(eventSearchProvider.notifier).state = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    // A pin needs coordinates; an online event has none, so the map can show
+    // fewer than the list does.
+    final pinned =
+        (ref.watch(filteredEventsProvider).valueOrNull ?? const <Event>[])
+            .where((e) => e.latitude != 0 && e.longitude != 0)
+            .toList();
+    final selected = pinned.where((e) => e.id == _selectedId).firstOrNull;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -166,14 +83,11 @@ class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
           constraints: const BoxConstraints(maxWidth: 430),
           child: Stack(
             children: [
-              // ═══════════════════════════════════
-              // Map
-              // ═══════════════════════════════════
               FlutterMap(
                 options: MapOptions(
                   initialCenter: _center,
                   initialZoom: 14.5,
-                  onTap: (_, _) => setState(() => _selectedPin = null),
+                  onTap: (_, _) => setState(() => _selectedId = null),
                 ),
                 children: [
                   TileLayer(
@@ -182,26 +96,27 @@ class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
                     userAgentPackageName: 'com.modiin4u.app',
                   ),
                   MarkerLayer(
-                    markers: List.generate(_events.length, (i) {
-                      final e = _events[i];
-                      final isSelected = _selectedPin == i;
-                      return Marker(
-                        point: e.position,
-                        width: 40,
-                        height: 40,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedPin = i),
-                          child: _EventMapPin(isSelected: isSelected),
+                    markers: [
+                      for (final event in pinned)
+                        Marker(
+                          point: LatLng(event.latitude, event.longitude),
+                          width: 40,
+                          height: 40,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedId = event.id),
+                            child: _EventMapPin(
+                              isSelected: _selectedId == event.id,
+                            ),
+                          ),
                         ),
-                      );
-                    }),
+                    ],
                   ),
                 ],
               ),
 
-              // ═══════════════════════════════════
-              // Search bar
-              // ═══════════════════════════════════
+              // ── Search ──
+              //
+              // A `Text` before, with a filter icon that had no handler.
               Positioned(
                 top: 58,
                 left: 16,
@@ -230,52 +145,85 @@ class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          'Search events, concerts, activities...',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF6D6D6D),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: l.searchEvents,
+                            hintStyle: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              color: const Color(0xFF6D6D6D),
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
                           ),
                         ),
-                      ),
-                      const Icon(
-                        IconsaxPlusLinear.setting_4,
-                        size: 20,
-                        color: Color(0xFF123A72),
                       ),
                     ],
                   ),
                 ),
               ),
 
-              // ═══════════════════════════════════
-              // Selected pin card overlay
-              // ═══════════════════════════════════
-              if (_selectedPin != null)
+              if (pinned.isEmpty)
+                Positioned(
+                  top: 122,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      l.noEventsOnMap,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (selected != null)
                 Positioned(
                   left: 12,
                   right: 12,
                   bottom: 80,
                   child: _EventCard(
-                    event: _events[_selectedPin!],
-                    onClose: () => setState(() => _selectedPin = null),
+                    event: selected,
+                    onClose: () => setState(() => _selectedId = null),
                   ),
                 ),
 
-              // ═══════════════════════════════════
-              // "View as List" floating button
-              // ═══════════════════════════════════
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 16,
                 child: Center(
                   child: GestureDetector(
-                    onTap: () => context.push('/events'),
+                    onTap: () => context.pop(),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(50),
@@ -297,8 +245,9 @@ class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'View as List',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            l.listView,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF0A1230),
@@ -319,30 +268,6 @@ class _MobileEventsMapContentState extends State<_MobileEventsMapContent> {
 }
 
 // ═══════════════════════════════════════════════
-// Data model
-// ═══════════════════════════════════════════════
-class _EventPin {
-  final String title;
-  final String category;
-  final String time;
-  final String venue;
-  final String price;
-  final int interested;
-  final LatLng position;
-
-  const _EventPin(
-    this.title,
-    this.category,
-    this.time,
-    this.venue,
-    this.price,
-    this.interested,
-    this.position,
-  );
-
-  bool get isFree => price == 'FREE';
-}
-
 // ═══════════════════════════════════════════════
 // Purple event map pin (white circle + purple inner + calendar icon)
 // ═══════════════════════════════════════════════
@@ -389,195 +314,120 @@ class _EventMapPin extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════
-// Event popup card (horizontal layout: image + info)
+// Selected event card
 // ═══════════════════════════════════════════════
 class _EventCard extends StatelessWidget {
-  final _EventPin event;
+  final Event event;
   final VoidCallback onClose;
 
-  const _EventCard({
-    required this.event,
-    required this.onClose,
-  });
+  const _EventCard({required this.event, required this.onClose});
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final venue = event.venueName ?? event.address;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 16,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Top row: image + info
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image placeholder
-              Container(
-                width: 120,
-                height: 140,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+              Expanded(
+                child: Text(
+                  event.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0A1230),
                   ),
-                ),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Icon(
-                        IconsaxPlusBold.calendar_1,
-                        size: 32,
-                        color: Colors.white.withValues(alpha: 0.15),
-                      ),
-                    ),
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: GestureDetector(
-                        onTap: onClose,
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close,
-                              size: 14, color: Color(0xFF3D3D3D)),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-
-              // Info column
-              Expanded(
-                child: SizedBox(
-                  height: 140,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        event.title,
-                        style: TextStyle(fontFamily: AppFonts.rubik, 
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          height: 25 / 20,
-                          color: const Color(0xFF0A1230),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Category
-                      Text(
-                        event.category,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF5F5E5A),
-                        ),
-                      ),
-                      const SizedBox(height: 11),
-
-                      // Time
-                      Row(
-                        children: [
-                          const Icon(IconsaxPlusBold.clock,
-                              size: 14, color: Color(0xFF17A9D0)),
-                          const SizedBox(width: 8),
-                          Text(
-                            event.time,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF5F5E5A),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Venue
-                      Row(
-                        children: [
-                          const Icon(IconsaxPlusBold.location,
-                              size: 14, color: Color(0xFF17A9D0)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              event.venue,
-                              style: TextStyle(fontFamily: AppFonts.inter, 
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                color: const Color(0xFF5F5E5A),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-
-                      // Price + interested
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            event.price,
-                            style: TextStyle(fontFamily: AppFonts.rubik, 
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: event.isFree
-                                  ? const Color(0xFF123A72)
-                                  : const Color(0xFF0A1230),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              const Icon(IconsaxPlusBold.star_1,
-                                  size: 16, color: Color(0xFF17A9D0)),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${event.interested} interested',
-                                style: TextStyle(fontFamily: AppFonts.inter, 
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF3D3D3D),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onClose,
+                child: const Icon(
+                  Icons.close,
+                  size: 18,
+                  color: Color(0xFF6D6D6D),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
 
-          // "View Full Details" button
+          // A category line sat here; `events` carries no category, so the
+          // old card printed one that came from nowhere.
+          // An all-day event has no time to show, so the row is left out
+          // rather than printed empty.
+          if (event.displayTime != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(
+                  IconsaxPlusLinear.clock,
+                  size: 16,
+                  color: Color(0xFF17A9D0),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  event.displayTime!,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    color: const Color(0xFF5F5E5A),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          if (venue.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(
+                  IconsaxPlusLinear.location,
+                  size: 16,
+                  color: Color(0xFF17A9D0),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    venue,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      color: const Color(0xFF5F5E5A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          const SizedBox(height: 16),
           GestureDetector(
-            onTap: () => context.push('/event/map_${event.title.hashCode}'),
+            // This pushed `/event/map_<hashCode of the title>` — an id no
+            // event has — so the card's only action always failed.
+            onTap: () => context.push('/event/${event.id}'),
             child: Container(
               width: double.infinity,
               height: 44,
@@ -586,24 +436,14 @@ class _EventCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(60),
               ),
               child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View Full Details',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      IconsaxPlusLinear.arrow_right_3,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  ],
+                child: Text(
+                  l.viewFullDetails,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

@@ -1237,4 +1237,73 @@ class LHe extends L {
 
   @override
   String get noListingsOnMap => 'אין מודעות עם מיקום על המפה';
+
+  @override
+  String get createYourAccount => 'יצירת חשבון';
+
+  @override
+  String get accountType => 'סוג חשבון';
+
+  @override
+  String get accountResident => 'תושב/ת';
+
+  @override
+  String get accountResidentSub => 'לתושבי מודיעין ולחברי הקהילה.';
+
+  @override
+  String get accountBrokerSub => 'אני מתווך/ת נדל״ן מורשה.';
+
+  @override
+  String get enterFullName => 'הזינו שם מלא';
+
+  @override
+  String get enterEmail => 'הזינו אימייל';
+
+  @override
+  String get selectNeighborhood => 'בחרו שכונה';
+
+  @override
+  String get familyStatusFamily => 'משפחה';
+
+  @override
+  String get selectDateOfBirth => 'בחרו תאריך לידה';
+
+  @override
+  String get termsOfService => 'תנאי השימוש';
+
+  @override
+  String get privacyPolicy => 'מדיניות הפרטיות';
+
+  @override
+  String get alreadyHaveAccount => 'יש לכם כבר חשבון?';
+
+  @override
+  String get fillRequiredFields => 'יש למלא את שדות החובה';
+
+  @override
+  String get choosePassword => 'בחרו סיסמה';
+
+  @override
+  String get reenterPassword => 'הזינו שוב את הסיסמה';
+
+  @override
+  String get confirmPassword => 'אימות סיסמה';
+
+  @override
+  String get andConjunction => 'ו';
+
+  @override
+  String get privacyAndSecurity => 'פרטיות ואבטחה';
+
+  @override
+  String get changePasswordRow => 'שינוי סיסמה';
+
+  @override
+  String get searchEvents => 'חיפוש אירועים, הופעות ופעילויות';
+
+  @override
+  String get noEventsMatch => 'לא נמצאו אירועים מתאימים';
+
+  @override
+  String get noEventsOnMap => 'אין אירועים עם מיקום על המפה';
 }

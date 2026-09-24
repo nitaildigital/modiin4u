@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +28,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   AccountType _accountType = AccountType.resident;
   String? _selectedNeighborhood;
   String? _familyStatus;
-  String? _hasPet;
+  bool? _hasPet;
   DateTime? _dateOfBirth;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -45,12 +46,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   Future<void> _signUp() async {
+    final l = L.of(context);
     if (_nameController.text.trim().isEmpty ||
         _emailController.text.trim().isEmpty) {
-      _showError('Please fill in required fields');
+      _showError(l.fillRequiredFields);
       return;
     }
-    final l = L.of(context);
     if (_passwordController.text.length < 8) {
       _showError(l.errPasswordTooShort);
       return;
@@ -94,10 +95,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
       // The neighbourhood is stored as an id, so it is resolved once there
       // is a session to write with.
-      if (_selectedNeighborhood != null) {
+      // Family status, pet and date of birth were collected into state and
+      // never sent — three controls on the form that quietly did nothing.
+      // They have columns since migration 00020, so they are written here,
+      // once there is a session to write with, alongside the neighbourhood.
+      if (_selectedNeighborhood != null ||
+          _familyStatus != null ||
+          _hasPet != null ||
+          _dateOfBirth != null) {
         await ref
             .read(authProvider.notifier)
-            .updateProfile(neighborhood: _selectedNeighborhood);
+            .updateProfile(
+              neighborhood: _selectedNeighborhood,
+              familyStatus: _familyStatus,
+              hasPet: _hasPet,
+              dateOfBirth: _dateOfBirth,
+            );
       }
       if (!mounted) return;
       context.go('/');
@@ -186,6 +199,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       // Drawn for a phone; without this the form stretches across a desktop
@@ -225,7 +239,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         const SizedBox(height: 34),
                         // Title
                         Text(
-                          'Create Your Account',
+                          l.createYourAccount,
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 28,
@@ -248,7 +262,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         const SizedBox(height: 40),
                         // Account Type
                         Text(
-                          'Account Type',
+                          l.accountType,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
@@ -264,9 +278,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 type: AccountType.resident,
                                 icon: Icons.person_outline,
                                 iconColor: AppColors.turquoise,
-                                title: 'Resident',
-                                subtitle:
-                                    'For residents and community members.',
+                                title: l.accountResident,
+                                subtitle: l.accountResidentSub,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -275,7 +288,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 type: AccountType.broker,
                                 icon: Icons.business_outlined,
                                 iconColor: const Color(0xFFB0B0B0),
-                                title: 'Business',
+                                title: l.realEstateBroker,
                                 subtitle: 'I am a licensed real estate broker.',
                               ),
                             ),
@@ -284,29 +297,29 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         const SizedBox(height: 20),
                         // Form fields
                         _buildTextField(
-                          label: 'Full Name',
+                          label: l.fullName,
                           controller: _nameController,
-                          hint: 'Enter your full name',
+                          hint: l.enterFullName,
                         ),
                         const SizedBox(height: 20),
                         _buildTextField(
-                          label: 'Email',
+                          label: l.email,
                           controller: _emailController,
-                          hint: 'Enter your email',
+                          hint: l.enterEmail,
                           keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 20),
                         _buildTextField(
-                          label: 'Phone',
+                          label: l.phone,
                           controller: _phoneController,
-                          hint: 'Enter your phone number',
+                          hint: l.enterYourPhone,
                           keyboardType: TextInputType.phone,
                         ),
                         const SizedBox(height: 20),
                         // Neighborhood dropdown
                         _buildDropdownField(
-                          label: 'Neighborhood',
-                          hint: 'Select your neighborhood',
+                          label: l.neighborhood,
+                          hint: l.selectNeighborhood,
                           value: _selectedNeighborhood,
                           items: neighborhoods
                               .map(
@@ -331,39 +344,44 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           children: [
                             Expanded(
                               child: _buildDropdownField(
-                                label: 'Family Status',
-                                hint: 'Select',
+                                label: l.familyStatus,
+                                hint: l.selectHint,
                                 value: _familyStatus,
-                                items: ['Single', 'Married', 'Family']
-                                    .map(
-                                      (s) => DropdownMenuItem(
-                                        value: s,
-                                        child: Text(
-                                          s,
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.inter,
-                                            fontSize: 14,
+                                items:
+                                    [
+                                          ('single', l.single),
+                                          ('married', l.married),
+                                          ('family', l.familyStatusFamily),
+                                        ]
+                                        .map(
+                                          (s) => DropdownMenuItem(
+                                            value: s.$1,
+                                            child: Text(
+                                              s.$2,
+                                              style: TextStyle(
+                                                fontFamily: AppFonts.inter,
+                                                fontSize: 14,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
+                                        )
+                                        .toList(),
                                 onChanged: (val) =>
                                     setState(() => _familyStatus = val),
                               ),
                             ),
                             const SizedBox(width: 15),
                             Expanded(
-                              child: _buildDropdownField(
-                                label: 'Do you have a pet?',
-                                hint: 'Select',
+                              child: _buildDropdownField<bool>(
+                                label: l.doYouHaveAPet,
+                                hint: l.selectHint,
                                 value: _hasPet,
-                                items: ['Yes', 'No']
+                                items: [(true, l.yes), (false, l.no)]
                                     .map(
                                       (s) => DropdownMenuItem(
-                                        value: s,
+                                        value: s.$1,
                                         child: Text(
-                                          s,
+                                          s.$2,
                                           style: TextStyle(
                                             fontFamily: AppFonts.inter,
                                             fontSize: 14,
@@ -381,8 +399,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         const SizedBox(height: 20),
                         // Date of Birth
                         _buildDateField(
-                          label: 'Date of Birth',
-                          hint: 'Select your date of birth',
+                          label: l.dateOfBirth,
+                          hint: l.selectDateOfBirth,
                           value: _dateOfBirth,
                           onTap: () async {
                             final date = await showDatePicker(
@@ -398,9 +416,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ),
                         const SizedBox(height: 20),
                         _buildTextField(
-                          label: 'סיסמה',
+                          label: l.password,
                           controller: _passwordController,
-                          hint: 'בחרו סיסמה',
+                          hint: l.choosePassword,
                           isPassword: true,
                           obscure: _obscurePassword,
                           onToggleObscure: () => setState(
@@ -409,9 +427,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ),
                         const SizedBox(height: 20),
                         _buildTextField(
-                          label: 'אימות סיסמה',
+                          label: l.confirmPassword,
                           controller: _confirmPasswordController,
-                          hint: 'הזינו שוב את הסיסמה',
+                          hint: l.reenterPassword,
                           isPassword: true,
                           obscure: _obscureConfirm,
                           onToggleObscure: () => setState(
@@ -463,7 +481,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                     ),
                                     children: [
                                       TextSpan(
-                                        text: 'Terms of Service',
+                                        text: l.termsOfService,
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () =>
+                                              context.push('/terms'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.inter,
                                           fontSize: 14,
@@ -471,9 +492,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                           color: AppColors.midBlue,
                                         ),
                                       ),
-                                      const TextSpan(text: ' and '),
+                                      TextSpan(text: l.andConjunction),
                                       TextSpan(
-                                        text: 'Privacy Policy',
+                                        text: l.privacyPolicy,
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () =>
+                                              context.push('/terms'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.inter,
                                           fontSize: 14,
@@ -515,7 +539,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                     ),
                                   )
                                 : Text(
-                                    'Sign Up',
+                                    l.signUp,
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 16,
@@ -536,7 +560,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Already have an account?',
+                                  l.alreadyHaveAccount,
                                   style: TextStyle(
                                     fontFamily: AppFonts.inter,
                                     fontSize: 14,
@@ -546,7 +570,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Sign In',
+                                  l.signIn,
                                   style: TextStyle(
                                     fontFamily: AppFonts.inter,
                                     fontSize: 14,
@@ -741,12 +765,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 
-  Widget _buildDropdownField({
+  Widget _buildDropdownField<T>({
     required String label,
     required String hint,
-    required String? value,
-    required List<DropdownMenuItem<String>> items,
-    required ValueChanged<String?> onChanged,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,7 +785,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
+        DropdownButtonFormField<T>(
           initialValue: value,
           items: items,
           onChanged: onChanged,

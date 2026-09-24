@@ -2454,6 +2454,144 @@ abstract class L {
   /// In he, this message translates to:
   /// **'אין מודעות עם מיקום על המפה'**
   String get noListingsOnMap;
+
+  /// No description provided for @createYourAccount.
+  ///
+  /// In he, this message translates to:
+  /// **'יצירת חשבון'**
+  String get createYourAccount;
+
+  /// No description provided for @accountType.
+  ///
+  /// In he, this message translates to:
+  /// **'סוג חשבון'**
+  String get accountType;
+
+  /// No description provided for @accountResident.
+  ///
+  /// In he, this message translates to:
+  /// **'תושב/ת'**
+  String get accountResident;
+
+  /// No description provided for @accountResidentSub.
+  ///
+  /// In he, this message translates to:
+  /// **'לתושבי מודיעין ולחברי הקהילה.'**
+  String get accountResidentSub;
+
+  /// No description provided for @accountBrokerSub.
+  ///
+  /// In he, this message translates to:
+  /// **'אני מתווך/ת נדל״ן מורשה.'**
+  String get accountBrokerSub;
+
+  /// No description provided for @enterFullName.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו שם מלא'**
+  String get enterFullName;
+
+  /// No description provided for @enterEmail.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו אימייל'**
+  String get enterEmail;
+
+  /// No description provided for @selectNeighborhood.
+  ///
+  /// In he, this message translates to:
+  /// **'בחרו שכונה'**
+  String get selectNeighborhood;
+
+  /// No description provided for @familyStatusFamily.
+  ///
+  /// In he, this message translates to:
+  /// **'משפחה'**
+  String get familyStatusFamily;
+
+  /// No description provided for @selectDateOfBirth.
+  ///
+  /// In he, this message translates to:
+  /// **'בחרו תאריך לידה'**
+  String get selectDateOfBirth;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In he, this message translates to:
+  /// **'תנאי השימוש'**
+  String get termsOfService;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In he, this message translates to:
+  /// **'מדיניות הפרטיות'**
+  String get privacyPolicy;
+
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In he, this message translates to:
+  /// **'יש לכם כבר חשבון?'**
+  String get alreadyHaveAccount;
+
+  /// No description provided for @fillRequiredFields.
+  ///
+  /// In he, this message translates to:
+  /// **'יש למלא את שדות החובה'**
+  String get fillRequiredFields;
+
+  /// No description provided for @choosePassword.
+  ///
+  /// In he, this message translates to:
+  /// **'בחרו סיסמה'**
+  String get choosePassword;
+
+  /// No description provided for @reenterPassword.
+  ///
+  /// In he, this message translates to:
+  /// **'הזינו שוב את הסיסמה'**
+  String get reenterPassword;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In he, this message translates to:
+  /// **'אימות סיסמה'**
+  String get confirmPassword;
+
+  /// No description provided for @andConjunction.
+  ///
+  /// In he, this message translates to:
+  /// **'ו'**
+  String get andConjunction;
+
+  /// No description provided for @privacyAndSecurity.
+  ///
+  /// In he, this message translates to:
+  /// **'פרטיות ואבטחה'**
+  String get privacyAndSecurity;
+
+  /// No description provided for @changePasswordRow.
+  ///
+  /// In he, this message translates to:
+  /// **'שינוי סיסמה'**
+  String get changePasswordRow;
+
+  /// No description provided for @searchEvents.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש אירועים, הופעות ופעילויות'**
+  String get searchEvents;
+
+  /// No description provided for @noEventsMatch.
+  ///
+  /// In he, this message translates to:
+  /// **'לא נמצאו אירועים מתאימים'**
+  String get noEventsMatch;
+
+  /// No description provided for @noEventsOnMap.
+  ///
+  /// In he, this message translates to:
+  /// **'אין אירועים עם מיקום על המפה'**
+  String get noEventsOnMap;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

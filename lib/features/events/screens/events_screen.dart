@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../../../l10n/app_localizations.dart';
 import '../models/event.dart';
 import '../providers/event_providers.dart';
 import 'web_events_screen.dart';
@@ -30,12 +33,42 @@ class EventsScreen extends StatelessWidget {
 
 /// Events discovery screen – category circles, vertical event cards
 /// with date badges, time/location/price, and interest counts.
-class _MobileEventsContent extends ConsumerWidget {
+class _MobileEventsContent extends ConsumerStatefulWidget {
   const _MobileEventsContent();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final events = ref.watch(upcomingEventsProvider);
+  ConsumerState<_MobileEventsContent> createState() =>
+      _MobileEventsContentState();
+}
+
+class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
+  final _searchController = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.text = ref.read(eventSearchProvider);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      ref.read(eventSearchProvider.notifier).state = value;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final events = ref.watch(filteredEventsProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -60,7 +93,8 @@ class _MobileEventsContent extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'אירועים במודיעין',
-                          style: TextStyle(fontFamily: AppFonts.rubik, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF1F1F1F),
@@ -76,19 +110,23 @@ class _MobileEventsContent extends ConsumerWidget {
                           loading: () => const _EventListSkeleton(),
                           error: (_, _) => ErrorRetry(
                             onRetry: () =>
-                                ref.invalidate(upcomingEventsProvider),
+                                ref.invalidate(filteredEventsProvider),
                           ),
                           data: (list) => list.isEmpty
-                              ? const EmptyState(
-                                  icon: Icons.event_busy_outlined,
-                                  title: 'אין אירועים קרובים',
-                                  subtitle: 'אירועים חדשים יופיעו כאן',
-                                )
+                              ? (ref.watch(eventSearchProvider).isNotEmpty
+                                    ? EmptyState(
+                                        icon: Icons.search_off,
+                                        title: l.noEventsMatch,
+                                      )
+                                    : const EmptyState(
+                                        icon: Icons.event_busy_outlined,
+                                        title: 'אין אירועים קרובים',
+                                        subtitle: 'אירועים חדשים יופיעו כאן',
+                                      ))
                               : Column(
                                   children: [
                                     for (var i = 0; i < list.length; i++) ...[
-                                      _EventCard(
-                                          event: _Event.from(list[i])),
+                                      _EventCard(event: _Event.from(list[i])),
                                       if (i < list.length - 1)
                                         const SizedBox(height: 12),
                                     ],
@@ -112,42 +150,51 @@ class _MobileEventsContent extends ConsumerWidget {
                 ),
 
                 // ═══════════════════════════════════
-                // Floating "Add to Calendar" button
+                // Floating "view on map" button
                 // ═══════════════════════════════════
                 Positioned(
                   left: 0,
                   right: 0,
                   bottom: 16,
                   child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(50),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(IconsaxPlusLinear.calendar_1,
-                              size: 16, color: Color(0xFF0A1230)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'הוספה ליומן',
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF0A1230),
+                    child: GestureDetector(
+                      onTap: () => context.push('/events-map'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(50),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.25),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              IconsaxPlusLinear.map_1,
+                              size: 16,
+                              color: Color(0xFF0A1230),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              l.viewOnMapBtn,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF0A1230),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -165,9 +212,7 @@ class _MobileEventsContent extends ConsumerWidget {
   // ═══════════════════════════════════════════════
   Widget _buildStickyHeader(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-      ),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9)),
       child: Column(
         children: [
           // Title row
@@ -187,7 +232,8 @@ class _MobileEventsContent extends ConsumerWidget {
                 const Spacer(),
                 Text(
                   'אירועים',
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
@@ -219,19 +265,24 @@ class _MobileEventsContent extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'חיפוש אירועים, הופעות ופעילויות',
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF6D6D6D),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: L.of(context).searchEvents,
+                        hintStyle: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
                       ),
                     ),
-                  ),
-                  const Icon(
-                    IconsaxPlusLinear.setting_4,
-                    size: 20,
-                    color: Color(0xFF123A72),
                   ),
                 ],
               ),
@@ -280,8 +331,18 @@ class _Event {
   bool get isFree => price == 'חינם' || price == 'FREE';
 
   static const _months = [
-    'ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ',
-    'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ',
+    'ינו',
+    'פבר',
+    'מרץ',
+    'אפר',
+    'מאי',
+    'יונ',
+    'יול',
+    'אוג',
+    'ספט',
+    'אוק',
+    'נוב',
+    'דצמ',
   ];
 
   factory _Event.from(Event e) {
@@ -348,7 +409,8 @@ class _EventCard extends StatelessWidget {
                       children: [
                         Text(
                           event.month,
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF123A72),
@@ -358,7 +420,8 @@ class _EventCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           '${event.day}',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -395,7 +458,8 @@ class _EventCard extends StatelessWidget {
                 // Title
                 Text(
                   event.title,
-                  style: TextStyle(fontFamily: AppFonts.rubik, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0A1230),
@@ -406,7 +470,8 @@ class _EventCard extends StatelessWidget {
                 // Category
                 Text(
                   event.category,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF5F5E5A),
@@ -418,12 +483,16 @@ class _EventCard extends StatelessWidget {
                 Row(
                   children: [
                     // Time
-                    const Icon(IconsaxPlusBold.clock,
-                        size: 16, color: Color(0xFF17A9D0)),
+                    const Icon(
+                      IconsaxPlusBold.clock,
+                      size: 16,
+                      color: Color(0xFF17A9D0),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       event.time,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: const Color(0xFF5F5E5A),
@@ -431,13 +500,17 @@ class _EventCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     // Location
-                    const Icon(IconsaxPlusBold.location,
-                        size: 16, color: Color(0xFF17A9D0)),
+                    const Icon(
+                      IconsaxPlusBold.location,
+                      size: 16,
+                      color: Color(0xFF17A9D0),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         event.venue,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF5F5E5A),
@@ -456,7 +529,8 @@ class _EventCard extends StatelessWidget {
                     // Price
                     Text(
                       event.price,
-                      style: TextStyle(fontFamily: AppFonts.rubik, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubik,
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: event.isFree
@@ -475,7 +549,8 @@ class _EventCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '${event.interested} מתעניינים',
-                          style: TextStyle(fontFamily: AppFonts.inter, 
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF3D3D3D),

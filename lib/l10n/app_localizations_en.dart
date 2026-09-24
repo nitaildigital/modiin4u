@@ -1251,4 +1251,73 @@ class LEn extends L {
 
   @override
   String get noListingsOnMap => 'No listings have a location on the map yet';
+
+  @override
+  String get createYourAccount => 'Create Your Account';
+
+  @override
+  String get accountType => 'Account Type';
+
+  @override
+  String get accountResident => 'Regular User';
+
+  @override
+  String get accountResidentSub => 'For residents and community members.';
+
+  @override
+  String get accountBrokerSub => 'I am a licensed real estate broker.';
+
+  @override
+  String get enterFullName => 'Enter your full name';
+
+  @override
+  String get enterEmail => 'Enter your email';
+
+  @override
+  String get selectNeighborhood => 'Select your neighborhood';
+
+  @override
+  String get familyStatusFamily => 'Family';
+
+  @override
+  String get selectDateOfBirth => 'Select your date of birth';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account?';
+
+  @override
+  String get fillRequiredFields => 'Please fill in required fields';
+
+  @override
+  String get choosePassword => 'Choose a password';
+
+  @override
+  String get reenterPassword => 'Re-enter your password';
+
+  @override
+  String get confirmPassword => 'Confirm password';
+
+  @override
+  String get andConjunction => ' and ';
+
+  @override
+  String get privacyAndSecurity => 'Privacy & Security';
+
+  @override
+  String get changePasswordRow => 'Change password';
+
+  @override
+  String get searchEvents => 'Search events, shows and activities';
+
+  @override
+  String get noEventsMatch => 'No events match your search';
+
+  @override
+  String get noEventsOnMap => 'No events have a location on the map yet';
 }

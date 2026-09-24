@@ -41,3 +41,29 @@ final isAttendingProvider = FutureProvider.family<bool, String>((
   if (user == null) return false;
   return ref.watch(eventRepositoryProvider).isAttending(eventId);
 });
+
+/// What the events list is narrowed to. Empty means everything.
+///
+/// The search field on the events screen was a `Text`, so nothing could be
+/// typed and the repository's `search` argument — which has always been
+/// there — was never passed.
+final eventSearchProvider = StateProvider<String>((ref) => '');
+
+/// Upcoming events matching the search.
+final filteredEventsProvider = FutureProvider<List<Event>>((ref) async {
+  final query = ref.watch(eventSearchProvider).trim();
+  final events = await ref.watch(upcomingEventsProvider.future);
+  if (query.isEmpty) return events;
+
+  // Filtered here rather than in a query: the set is small and already
+  // loaded, so a round trip per keystroke would be worse.
+  final q = query.toLowerCase();
+  return events
+      .where(
+        (e) =>
+            e.title.toLowerCase().contains(q) ||
+            (e.venueName ?? '').toLowerCase().contains(q) ||
+            e.address.toLowerCase().contains(q),
+      )
+      .toList();
+});
