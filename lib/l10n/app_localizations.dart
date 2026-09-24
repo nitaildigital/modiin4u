@@ -2400,6 +2400,42 @@ abstract class L {
   /// In he, this message translates to:
   /// **'יש לבחור דירוג'**
   String get chooseRating;
+
+  /// No description provided for @realEstateInModiin.
+  ///
+  /// In he, this message translates to:
+  /// **'נדל״ן במודיעין'**
+  String get realEstateInModiin;
+
+  /// No description provided for @searchByLocation.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש לפי מיקום, שכונה...'**
+  String get searchByLocation;
+
+  /// No description provided for @viewOnMapBtn.
+  ///
+  /// In he, this message translates to:
+  /// **'הצג במפה'**
+  String get viewOnMapBtn;
+
+  /// No description provided for @noListingsYet.
+  ///
+  /// In he, this message translates to:
+  /// **'אין מודעות כרגע'**
+  String get noListingsYet;
+
+  /// No description provided for @noListingsYetBody.
+  ///
+  /// In he, this message translates to:
+  /// **'כשתפורסמנה דירות במודיעין, הן יופיעו כאן.'**
+  String get noListingsYetBody;
+
+  /// No description provided for @noListingsMatch.
+  ///
+  /// In he, this message translates to:
+  /// **'לא נמצאו מודעות מתאימות'**
+  String get noListingsMatch;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -519,5 +519,11 @@
   "reviewSubmitted": "Your review was sent and will appear once approved",
   "alreadyReviewed": "You have already reviewed this business",
   "signInToReview": "Sign in to leave a review",
-  "chooseRating": "Please choose a rating"
+  "chooseRating": "Please choose a rating",
+  "realEstateInModiin": "Real Estate in Modiin",
+  "searchByLocation": "Search by location, neighborhood...",
+  "viewOnMapBtn": "View on Map",
+  "noListingsYet": "No listings right now",
+  "noListingsYetBody": "When apartments are posted in Modiin, they will appear here.",
+  "noListingsMatch": "No listings match your search"
 }

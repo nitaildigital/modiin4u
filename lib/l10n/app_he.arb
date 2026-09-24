@@ -519,5 +519,11 @@
   "reviewSubmitted": "הביקורת נשלחה ותפורסם לאחר אישור",
   "alreadyReviewed": "כבר כתבתם ביקורת על העסק הזה",
   "signInToReview": "התחברו כדי לכתוב ביקורת",
-  "chooseRating": "יש לבחור דירוג"
+  "chooseRating": "יש לבחור דירוג",
+  "realEstateInModiin": "נדל״ן במודיעין",
+  "searchByLocation": "חיפוש לפי מיקום, שכונה...",
+  "viewOnMapBtn": "הצג במפה",
+  "noListingsYet": "אין מודעות כרגע",
+  "noListingsYetBody": "כשתפורסמנה דירות במודיעין, הן יופיעו כאן.",
+  "noListingsMatch": "לא נמצאו מודעות מתאימות"
 }

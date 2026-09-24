@@ -1223,4 +1223,23 @@ class LEn extends L {
 
   @override
   String get chooseRating => 'Please choose a rating';
+
+  @override
+  String get realEstateInModiin => 'Real Estate in Modiin';
+
+  @override
+  String get searchByLocation => 'Search by location, neighborhood...';
+
+  @override
+  String get viewOnMapBtn => 'View on Map';
+
+  @override
+  String get noListingsYet => 'No listings right now';
+
+  @override
+  String get noListingsYetBody =>
+      'When apartments are posted in Modiin, they will appear here.';
+
+  @override
+  String get noListingsMatch => 'No listings match your search';
 }

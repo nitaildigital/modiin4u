@@ -1210,4 +1210,22 @@ class LHe extends L {
 
   @override
   String get chooseRating => 'יש לבחור דירוג';
+
+  @override
+  String get realEstateInModiin => 'נדל״ן במודיעין';
+
+  @override
+  String get searchByLocation => 'חיפוש לפי מיקום, שכונה...';
+
+  @override
+  String get viewOnMapBtn => 'הצג במפה';
+
+  @override
+  String get noListingsYet => 'אין מודעות כרגע';
+
+  @override
+  String get noListingsYetBody => 'כשתפורסמנה דירות במודיעין, הן יופיעו כאן.';
+
+  @override
+  String get noListingsMatch => 'לא נמצאו מודעות מתאימות';
 }

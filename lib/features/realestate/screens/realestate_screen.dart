@@ -1,149 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../models/listing.dart';
+import '../providers/listing_providers.dart';
+import 'my_apartments_screen.dart' show formatShekels;
 import 'web_realestate_screen.dart';
 
-// ═══════════════════════════════════════════════
-// Property type chips
-// ═══════════════════════════════════════════════
-class _PropertyType {
-  final String name;
-  final IconData icon;
-  const _PropertyType(this.name, this.icon);
-}
-
-const _propertyTypes = [
-  _PropertyType('Apartment', IconsaxPlusBold.building_4),
-  _PropertyType('Penthouse', IconsaxPlusBold.building_3),
-  _PropertyType('Garden Apartment', IconsaxPlusBold.house),
-  _PropertyType('Duplex', IconsaxPlusBold.building),
-  _PropertyType('Villa', IconsaxPlusBold.house_2),
-  _PropertyType('Studio', IconsaxPlusBold.lamp),
-];
-
-// ═══════════════════════════════════════════════
-// Listing model
-// ═══════════════════════════════════════════════
-class _Listing {
-  final String price;
-  final String? perMonth;
-  final String saleTag;
-  final String address;
-  final String area;
-  final String rooms;
-  final String floor;
-  final bool isNew;
-  final bool viaBroker;
-  final Color imageBg;
-
-  const _Listing({
-    required this.price,
-    this.perMonth,
-    required this.saleTag,
-    required this.address,
-    required this.area,
-    required this.rooms,
-    required this.floor,
-    this.isNew = false,
-    this.viaBroker = false,
-    this.imageBg = const Color(0xFFE8EEF4),
-  });
-}
-
-// ── Demo data ──
-final _saleListings = [
-  const _Listing(
-    price: '₪3,650,000',
-    saleTag: 'FOR SALE',
-    address: '3 Yona Hanavi Street, Modiin',
-    area: '140 m²',
-    rooms: '6 Rooms',
-    floor: 'Floor 3',
-    isNew: true,
-    viaBroker: true,
-    imageBg: Color(0xFFD4E4F7),
-  ),
-  const _Listing(
-    price: '₪3,790,000',
-    saleTag: 'FOR SALE',
-    address: '84 Menachem Begin Road',
-    area: '133 m²',
-    rooms: '4 Rooms',
-    floor: 'Floor 2',
-    isNew: true,
-    imageBg: Color(0xFFE0D4C8),
-  ),
-  const _Listing(
-    price: '₪5,690,000',
-    saleTag: 'FOR SALE',
-    address: '73 Sarah Amano Street',
-    area: '145 m²',
-    rooms: '4 Rooms',
-    floor: 'Floor 3',
-    imageBg: Color(0xFFC8D8E0),
-  ),
-  const _Listing(
-    price: '₪3,050,000',
-    saleTag: 'FOR SALE',
-    address: '37 Ella Valley Street, Modiin',
-    area: '145 m²',
-    rooms: '4 Rooms',
-    floor: 'Floor 3',
-    imageBg: Color(0xFFD8E8D4),
-  ),
-];
-
-final _rentListings = [
-  const _Listing(
-    price: '₪7,500',
-    perMonth: '/ In the month',
-    saleTag: 'FOR RENT',
-    address: 'Weizmann Street Heritage Modiin',
-    area: '140 m²',
-    rooms: '6 Rooms',
-    floor: 'Floor 3',
-    isNew: true,
-    viaBroker: true,
-    imageBg: Color(0xFFE4D8F0),
-  ),
-  const _Listing(
-    price: '₪12,000',
-    perMonth: '/ In the month',
-    saleTag: 'FOR RENT',
-    address: '12 Yitzhak Shamir Street, Modiin (Legacy)',
-    area: '122 m²',
-    rooms: '4 Rooms',
-    floor: 'Floor 2',
-    isNew: true,
-    imageBg: Color(0xFFD4E0F0),
-  ),
-  const _Listing(
-    price: '₪6,500',
-    perMonth: '/ In the month',
-    saleTag: 'FOR RENT',
-    address: 'Yitzhak Rabin Modiin Street',
-    area: '122 m²',
-    rooms: '4 Rooms',
-    floor: 'Floor 2',
-    viaBroker: true,
-    imageBg: Color(0xFFF0E4D4),
-  ),
-  const _Listing(
-    price: '₪8,500',
-    perMonth: '/ In the month',
-    saleTag: 'FOR RENT',
-    address: '37 Ella Valley Street, Modiin',
-    area: '122 m²',
-    rooms: '4 Rooms',
-    floor: 'Floor 2',
-    imageBg: Color(0xFFE8E0D8),
-  ),
-];
-
-// ═══════════════════════════════════════════════
-// Real Estate Screen
-// ═══════════════════════════════════════════════
+/// The Real Estate tab.
+///
+/// This was eight invented flats held in two `const` lists — ₪3,650,000 at
+/// "3 Yona Hanavi Street" and so on — with cards that could not be tapped,
+/// property-type chips that selected but filtered nothing, a search field
+/// that was a `Text`, and a floating button labelled "Sign up with Email",
+/// copied from an auth screen, that did nothing. `listingsProvider` existed
+/// and this file imported nothing.
 class RealEstateScreen extends StatelessWidget {
   const RealEstateScreen({super.key});
 
@@ -160,23 +40,78 @@ class RealEstateScreen extends StatelessWidget {
   }
 }
 
-class _MobileRealEstateContent extends StatefulWidget {
+class _MobileRealEstateContent extends ConsumerStatefulWidget {
   const _MobileRealEstateContent();
 
   @override
-  State<_MobileRealEstateContent> createState() =>
+  ConsumerState<_MobileRealEstateContent> createState() =>
       _MobileRealEstateContentState();
 }
 
-class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
-  int _activeTab = 0; // 0 = For Sale, 1 = For Rent
-  int _selectedType = -1;
+class _MobileRealEstateContentState
+    extends ConsumerState<_MobileRealEstateContent> {
+  final _searchController = TextEditingController();
+  Timer? _debounce;
 
-  List<_Listing> get _listings =>
-      _activeTab == 0 ? _saleListings : _rentListings;
+  static const _types = [
+    (PropertyType.apartment, IconsaxPlusBold.building_4),
+    (PropertyType.penthouse, IconsaxPlusBold.building_3),
+    (PropertyType.garden, IconsaxPlusBold.house),
+    (PropertyType.duplex, IconsaxPlusBold.building),
+    (PropertyType.villa, IconsaxPlusBold.house_2),
+    (PropertyType.studio, IconsaxPlusBold.lamp),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // The tab opens on sale, which is what the two buttons below assume.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final f = ref.read(listingFilterProvider);
+      if (f.kind == null) {
+        ref.read(listingFilterProvider.notifier).state = f.copyWith(
+          kind: ListingKind.sale,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Typing runs a query, so it waits for a pause rather than firing on
+  /// every keystroke.
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      final f = ref.read(listingFilterProvider);
+      ref.read(listingFilterProvider.notifier).state = f.copyWith(
+        search: value.trim(),
+      );
+    });
+  }
+
+  static String _typeLabel(L l, PropertyType t) => switch (t) {
+    PropertyType.apartment => l.propTypeApartment,
+    PropertyType.penthouse => l.propTypePenthouse,
+    PropertyType.garden => l.propTypeGarden,
+    PropertyType.duplex => l.propTypeDuplex,
+    PropertyType.villa => l.propTypeVilla,
+    PropertyType.studio => l.propTypeStudio,
+    PropertyType.other => l.propTypeOther,
+  };
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final filter = ref.watch(listingFilterProvider);
+    final async = ref.watch(listingsProvider);
+    final listings = async.valueOrNull ?? const <Listing>[];
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -185,22 +120,39 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
             constraints: const BoxConstraints(maxWidth: 430),
             child: Stack(
               children: [
-                // ── Scrollable listing cards ──
                 CustomScrollView(
                   slivers: [
                     const SliverToBoxAdapter(child: SizedBox(height: 290)),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: _ListingCard(listing: _listings[index]),
+
+                    if (async.isLoading)
+                      const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (listings.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _empty(l, filter),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _ListingCard(
+                                listing: listings[index],
+                                onTap: () => context.push(
+                                  '/listing/${listings[index].id}',
+                                ),
+                              ),
+                            ),
+                            childCount: listings.length,
                           ),
-                          childCount: _listings.length,
                         ),
                       ),
-                    ),
+
                     const SliverToBoxAdapter(child: SizedBox(height: 72)),
                   ],
                 ),
@@ -215,9 +167,9 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                     child: Column(
                       children: [
                         const SizedBox(height: 8),
-                        // Title
                         Text(
-                          'Filter Your Discover Feed',
+                          // The title read "Filter Your Discover Feed".
+                          l.realEstateInModiin,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 16,
@@ -226,7 +178,8 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Search bar
+
+                        // Search — a `Text` before, so nothing could be typed.
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Container(
@@ -248,19 +201,24 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(
-                                    'Search by location, neighborhood...',
+                                  child: TextField(
+                                    controller: _searchController,
+                                    onChanged: _onSearchChanged,
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 14,
-                                      color: const Color(0xFF6D6D6D),
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: l.searchByLocation,
+                                      hintStyle: TextStyle(
+                                        fontFamily: AppFonts.inter,
+                                        fontSize: 14,
+                                        color: const Color(0xFF6D6D6D),
+                                      ),
+                                      border: InputBorder.none,
+                                      isDense: true,
                                     ),
                                   ),
-                                ),
-                                const Icon(
-                                  IconsaxPlusLinear.setting_4,
-                                  size: 20,
-                                  color: AppColors.midBlue,
                                 ),
                                 const SizedBox(width: 16),
                               ],
@@ -268,22 +226,30 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Property type chips
+
+                        // Property-type chips. These used to set a field that
+                        // nothing read, so a chip selected and the list
+                        // stayed exactly as it was.
                         SizedBox(
                           height: 100,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _propertyTypes.length,
-                            separatorBuilder: (_, __) =>
+                            itemCount: _types.length,
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(width: 12),
                             itemBuilder: (context, index) {
-                              final type = _propertyTypes[index];
-                              final selected = _selectedType == index;
+                              final (type, icon) = _types[index];
+                              final selected = filter.propertyType == type;
                               return GestureDetector(
-                                onTap: () => setState(() {
-                                  _selectedType = selected ? -1 : index;
-                                }),
+                                onTap: () {
+                                  final f = ref.read(listingFilterProvider);
+                                  ref
+                                      .read(listingFilterProvider.notifier)
+                                      .state = selected
+                                      ? f.copyWith(clearPropertyType: true)
+                                      : f.copyWith(propertyType: type);
+                                },
                                 child: Container(
                                   width: 100,
                                   decoration: BoxDecoration(
@@ -300,22 +266,31 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
-                                        type.icon,
-                                        size: 32,
-                                        color: AppColors.midBlue,
+                                        icon,
+                                        size: 28,
+                                        color: selected
+                                            ? AppColors.midBlue
+                                            : const Color(0xFF6D6D6D),
                                       ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        type.name,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.inter,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.black,
+                                      const SizedBox(height: 8),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                        child: Text(
+                                          _typeLabel(l, type),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontFamily: AppFonts.inter,
+                                            fontSize: 12,
+                                            fontWeight: selected
+                                                ? FontWeight.w600
+                                                : FontWeight.w400,
+                                            color: const Color(0xFF1F1F1F),
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -324,22 +299,22 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                             },
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        // For Sale / For Rent tabs
+                        const SizedBox(height: 12),
+
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Row(
                             children: [
                               _TabButton(
-                                label: 'For Sale',
-                                active: _activeTab == 0,
-                                onTap: () => setState(() => _activeTab = 0),
+                                label: l.forSale,
+                                active: filter.kind == ListingKind.sale,
+                                onTap: () => _setKind(ListingKind.sale),
                               ),
                               const SizedBox(width: 20),
                               _TabButton(
-                                label: 'For Rent',
-                                active: _activeTab == 1,
-                                onTap: () => setState(() => _activeTab = 1),
+                                label: l.forRent,
+                                active: filter.kind == ListingKind.rent,
+                                onTap: () => _setKind(ListingKind.rent),
                               ),
                             ],
                           ),
@@ -351,44 +326,50 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
                 ),
 
                 // ── Floating map button ──
+                //
+                // It read "Sign up with Email" and had no handler, which is
+                // why the map screen was reachable from nowhere in the app.
                 Positioned(
                   bottom: 16,
                   left: 0,
                   right: 0,
                   child: Center(
-                    child: Container(
-                      height: 40,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(50),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x40000000),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            IconsaxPlusLinear.map_1,
-                            size: 16,
-                            color: AppColors.navy,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Sign up with Email',
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                    child: GestureDetector(
+                      onTap: () => context.push('/realestate-map'),
+                      child: Container(
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(50),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x40000000),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              IconsaxPlusLinear.map_1,
+                              size: 16,
                               color: AppColors.navy,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 6),
+                            Text(
+                              l.viewOnMapBtn,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.navy,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -397,6 +378,62 @@ class _MobileRealEstateContentState extends State<_MobileRealEstateContent> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _setKind(ListingKind kind) {
+    final f = ref.read(listingFilterProvider);
+    ref.read(listingFilterProvider.notifier).state = f.copyWith(kind: kind);
+  }
+
+  Widget _empty(L l, ListingFilter filter) {
+    // "Nothing here yet" and "nothing matched what you asked for" are
+    // different things to a reader.
+    final filtering =
+        (filter.search ?? '').isNotEmpty || filter.propertyType != null;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF2F2F2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              IconsaxPlusLinear.home_2,
+              size: 30,
+              color: Color(0xFF6D6D6D),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            filtering ? l.noListingsMatch : l.noListingsYet,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F1F1F),
+            ),
+          ),
+          if (!filtering) ...[
+            const SizedBox(height: 8),
+            Text(
+              l.noListingsYetBody,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 13,
+                color: const Color(0xFF6D6D6D),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -448,202 +485,249 @@ class _TabButton extends StatelessWidget {
 // Listing card (full-width image + details)
 // ═══════════════════════════════════════════════
 class _ListingCard extends StatelessWidget {
-  final _Listing listing;
+  final Listing listing;
+  final VoidCallback? onTap;
 
-  const _ListingCard({required this.listing});
+  const _ListingCard({required this.listing, this.onTap});
+
+  /// 3.5 reads as "3.5"; 4.0 reads as "4".
+  static String _rooms(double v) =>
+      v == v.roundToDouble() ? '${v.toInt()}' : '$v';
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Image ──
-        Stack(
-          children: [
-            Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: listing.imageBg,
-                borderRadius: BorderRadius.circular(12),
+    final l = L.of(context);
+    final price = listing.effectivePrice;
+    final address = listing.address ?? listing.neighborhoodName;
+    // Anything posted in the last fortnight. The badge used to be a fixed
+    // flag on four of the eight invented flats.
+    final isNew = DateTime.now().difference(listing.createdAt).inDays < 14;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              // A flat pastel rectangle with a grey image glyph stood here.
+              NetworkPhoto(
+                url: listing.coverUrl,
+                height: 200,
+                width: double.infinity,
+                radius: BorderRadius.circular(12),
+                icon: IconsaxPlusBold.home_2,
+                iconSize: 48,
               ),
-              child: const Center(
-                child: Icon(
-                  IconsaxPlusLinear.image,
-                  size: 48,
-                  color: Color(0xFFBDBDBD),
-                ),
-              ),
-            ),
-            // Badges
-            if (listing.viaBroker)
-              Positioned(
-                left: 12,
-                bottom: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFCCD6EE),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Text(
-                    'Via Broker',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF0033AC),
+
+              if (listing.isBroker)
+                Positioned(
+                  left: 12,
+                  bottom: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCCD6EE),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Text(
+                      l.viaBroker,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF0033AC),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            if (listing.isNew)
+
+              if (isNew)
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.turquoise,
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Text(
+                      l.newBadge,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // A drawn heart before — it saves the listing now.
               Positioned(
                 right: 12,
-                bottom: 12,
+                top: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.turquoise,
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Text(
-                    'New',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                  child: Center(
+                    child: FavoriteButton(
+                      kind: FavoriteKind.listing,
+                      id: listing.id,
+                      iconSize: 23,
+                      color: AppColors.midBlue,
                     ),
                   ),
                 ),
               ),
-            // Heart
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  IconsaxPlusLinear.heart,
-                  size: 23,
-                  color: AppColors.midBlue,
-                ),
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
 
-        // ── Details ──
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Price + tag row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (price != null)
                       Text(
-                        listing.price,
+                        listing.kind == ListingKind.rent
+                            ? l.pricePerMonthValue(formatShekels(price))
+                            : formatShekels(price),
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           color: AppColors.navy,
                         ),
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    Text(
+                      listing.kind == ListingKind.rent
+                          ? l.forRentBadge
+                          : l.forSaleBadge,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.turquoise,
                       ),
-                      if (listing.perMonth != null) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          listing.perMonth!,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+                Text(
+                  listing.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0A1230),
+                  ),
+                ),
+
+                if (address != null && address.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        IconsaxPlusLinear.location,
+                        size: 16,
+                        color: AppColors.turquoise,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          address,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
                             color: const Color(0xFF5F5E5A),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
+                      ),
                     ],
                   ),
-                  Text(
-                    listing.saleTag,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.turquoise,
-                    ),
+                ],
+
+                // Only the figures the listing carries. Every one of the
+                // eight invented cards printed 140 m², 6 rooms and floor 3.
+                if (listing.sqm != null ||
+                    listing.rooms != null ||
+                    listing.floor != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (listing.sqm != null) ...[
+                        _Spec(
+                          icon: IconsaxPlusLinear.maximize_3,
+                          text: '${listing.sqm} ${l.sqmUnit}',
+                        ),
+                        const SizedBox(width: 24),
+                      ],
+                      if (listing.rooms != null) ...[
+                        _Spec(
+                          icon: IconsaxPlusLinear.building_3,
+                          text: '${_rooms(listing.rooms!)} ${l.roomsLabel}',
+                        ),
+                        const SizedBox(width: 24),
+                      ],
+                      if (listing.floor != null)
+                        _Spec(
+                          icon: IconsaxPlusLinear.building_4,
+                          text: l.floorLabel('${listing.floor}'),
+                        ),
+                    ],
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              // Address
-              Row(
-                children: [
-                  const Icon(
-                    IconsaxPlusLinear.location,
-                    size: 16,
-                    color: AppColors.turquoise,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      listing.address,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        color: const Color(0xFF5F5E5A),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Area · Rooms · Floor
-              Row(
-                children: [
-                  _detailChip(IconsaxPlusLinear.ruler, listing.area),
-                  const SizedBox(width: 31),
-                  _detailChip(IconsaxPlusLinear.building_3, listing.rooms),
-                  const SizedBox(width: 31),
-                  _detailChip(IconsaxPlusLinear.building, listing.floor),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+}
 
-  Widget _detailChip(IconData icon, String text) {
+/// One icon-and-text figure on a listing card.
+class _Spec extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _Spec({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
-        const SizedBox(width: 8),
+        Icon(icon, size: 16, color: const Color(0xFF6D6D6D)),
+        const SizedBox(width: 6),
         Text(
           text,
           style: TextStyle(
             fontFamily: AppFonts.inter,
-            fontSize: 12,
-            color: const Color(0xFF3D3D3D),
+            fontSize: 13,
+            color: const Color(0xFF5F5E5A),
           ),
         ),
       ],
