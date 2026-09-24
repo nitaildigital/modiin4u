@@ -921,14 +921,8 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
   Widget _addPhotoSlot(L l) {
     return GestureDetector(
       onTap: _uploading ? null : _pickPhotos,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: const Color(0xFFC6C6C6),
-            style: BorderStyle.solid,
-          ),
-        ),
+      child: CustomPaint(
+        painter: _DashedBorderPainter(),
         child: const Center(
           child: Icon(Icons.add, size: 28, color: Color(0xFF123A72)),
         ),
@@ -1456,49 +1450,9 @@ class _InputRow extends StatelessWidget {
 // Red delete circle (photo remove button)
 // ═══════════════════════════════════════════════════
 
-class _DeleteCircle extends StatelessWidget {
-  const _DeleteCircle();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 18,
-      height: 18,
-      decoration: const BoxDecoration(
-        color: Color(0xFFFF3434),
-        shape: BoxShape.circle,
-      ),
-      child: const Center(
-        child: Icon(Icons.close, size: 12, color: Colors.white),
-      ),
-    );
-  }
-}
-
 // ═══════════════════════════════════════════════════
 // Dashed upload slot (empty photo placeholder)
 // ═══════════════════════════════════════════════════
-
-class _UploadSlot extends StatelessWidget {
-  const _UploadSlot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: CustomPaint(
-        painter: _DashedBorderPainter(),
-        child: const Center(
-          child: Icon(Icons.add, size: 24, color: Color(0xFF123A72)),
-        ),
-      ),
-    );
-  }
-}
 
 // ═══════════════════════════════════════════════════
 // Dashed border painter

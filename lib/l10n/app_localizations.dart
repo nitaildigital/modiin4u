@@ -2436,6 +2436,24 @@ abstract class L {
   /// In he, this message translates to:
   /// **'לא נמצאו מודעות מתאימות'**
   String get noListingsMatch;
+
+  /// No description provided for @listView.
+  ///
+  /// In he, this message translates to:
+  /// **'תצוגת רשימה'**
+  String get listView;
+
+  /// No description provided for @viewFullDetails.
+  ///
+  /// In he, this message translates to:
+  /// **'לפרטים מלאים'**
+  String get viewFullDetails;
+
+  /// No description provided for @noListingsOnMap.
+  ///
+  /// In he, this message translates to:
+  /// **'אין מודעות עם מיקום על המפה'**
+  String get noListingsOnMap;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

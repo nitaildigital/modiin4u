@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -231,7 +233,7 @@ class _MobileListingDetailContentState
               _buildSpecsGrid(l, listing),
 
               if (listing.latitude != null && listing.longitude != null)
-                _buildMapSection(),
+                _buildMapSection(listing),
 
               if (hood != null &&
                   (listing.neighborhoodDescription ?? '').trim().isNotEmpty)
@@ -560,7 +562,18 @@ class _MobileListingDetailContentState
   // ───────────────────────────────────────────────
   // Where You'll Be (map preview)
   // ───────────────────────────────────────────────
-  Widget _buildMapSection() {
+  /// Opens the listing's coordinates in the phone's maps app.
+  static Future<void> _openInMaps(Listing listing) async {
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query='
+      '${listing.latitude},${listing.longitude}',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Widget _buildMapSection(Listing listing) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
@@ -583,15 +596,26 @@ class _MobileListingDetailContentState
               width: double.infinity,
               child: Stack(
                 children: [
-                  // Map placeholder
-                  Container(
-                    color: const Color(0xFFE8F0F8),
-                    child: Center(
-                      child: Icon(
-                        IconsaxPlusBold.map_1,
-                        size: 60,
-                        color: const Color(0xFF123A72).withValues(alpha: 0.15),
+                  // The real map. A flat pastel box with a faint glyph
+                  // stood here, while `flutter_map` was already used
+                  // elsewhere in this same feature and this section only
+                  // renders when the listing has coordinates.
+                  IgnorePointer(
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(
+                          listing.latitude!,
+                          listing.longitude!,
+                        ),
+                        initialZoom: 15.5,
                       ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.modiin4u.app',
+                        ),
+                      ],
                     ),
                   ),
 
@@ -620,7 +644,7 @@ class _MobileListingDetailContentState
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                            IconsaxPlusLinear.user,
+                            IconsaxPlusBold.home_2,
                             size: 12,
                             color: Colors.white,
                           ),
@@ -629,47 +653,52 @@ class _MobileListingDetailContentState
                     ),
                   ),
 
-                  // "Sign up with Email" floating button on map
+                  // Opens the address in the phone's maps app. It had no
+                  // handler at all, and the map behind it is wrapped in
+                  // IgnorePointer, so the location could not be opened.
                   Positioned(
                     left: 0,
                     right: 0,
                     bottom: 17,
                     child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(50),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              IconsaxPlusLinear.map_1,
-                              size: 16,
-                              color: Color(0xFF0A1230),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              L.of(context).viewOnMap,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF0A1230),
+                      child: GestureDetector(
+                        onTap: () => _openInMaps(listing),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(50),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                IconsaxPlusLinear.map_1,
+                                size: 16,
+                                color: Color(0xFF0A1230),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                L.of(context).viewOnMap,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF0A1230),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

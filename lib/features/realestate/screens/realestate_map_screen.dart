@@ -1,144 +1,75 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
-import '../../../core/router/app_router.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 
-/// Real-estate dedicated map view – shows property pins on the map
-/// with a search bar and a "View as List" toggle.
-class RealEstateMapScreen extends StatefulWidget {
+import '../../../core/router/app_router.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../models/listing.dart';
+import '../providers/listing_providers.dart';
+import 'my_apartments_screen.dart' show formatShekels;
+
+/// The real-estate map.
+///
+/// Fourteen invented properties lived in a `static final` list here, at
+/// invented coordinates, and every "View full details" pushed `/listing/1` —
+/// an id that cannot resolve, so the card's only action always failed. The
+/// screen was also unreachable: nothing in the app navigated to
+/// `/realestate-map` until the Real Estate tab's map button was wired up.
+class RealEstateMapScreen extends ConsumerStatefulWidget {
   const RealEstateMapScreen({super.key});
 
   @override
-  State<RealEstateMapScreen> createState() => _RealEstateMapScreenState();
+  ConsumerState<RealEstateMapScreen> createState() =>
+      _RealEstateMapScreenState();
 }
 
-class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
-  int? _selectedPin;
+class _RealEstateMapScreenState extends ConsumerState<RealEstateMapScreen> {
+  String? _selectedId;
+  final _searchController = TextEditingController();
+  Timer? _debounce;
 
-  // Modi'in center
   static const _center = LatLng(31.8928, 35.0104);
 
-  // ── Property pins ──
-  static final _properties = [
-    _Property(
-      '₪3,650,000',
-      '21 Sderot El Melachot',
-      140,
-      6,
-      3,
-      const LatLng(31.8960, 35.0080),
-    ),
-    _Property(
-      '₪3,790,000',
-      '84 Menachem Begin Road',
-      133,
-      4,
-      2,
-      const LatLng(31.8945, 35.0120),
-    ),
-    _Property(
-      '₪5,690,000',
-      '73 Sarah Amano Street',
-      145,
-      4,
-      3,
-      const LatLng(31.8910, 35.0060),
-    ),
-    _Property(
-      '₪3,050,000',
-      '37 Ella Valley Street',
-      145,
-      4,
-      3,
-      const LatLng(31.8890, 35.0140),
-    ),
-    _Property(
-      '₪4,200,000',
-      '15 Hashmonaim Blvd',
-      120,
-      5,
-      2,
-      const LatLng(31.8975, 35.0050),
-    ),
-    _Property(
-      '₪2,850,000',
-      '8 Hapardes Street',
-      95,
-      4,
-      2,
-      const LatLng(31.8930, 35.0180),
-    ),
-    _Property(
-      '₪6,100,000',
-      '22 Moriah Heights',
-      180,
-      7,
-      3,
-      const LatLng(31.8870, 35.0100),
-    ),
-    _Property(
-      '₪3,400,000',
-      '5 Avni Chen Lane',
-      110,
-      5,
-      2,
-      const LatLng(31.8955, 35.0160),
-    ),
-    _Property(
-      '₪4,750,000',
-      '31 Buchman Boulevard',
-      155,
-      6,
-      3,
-      const LatLng(31.8920, 35.0040),
-    ),
-    _Property(
-      '₪2,990,000',
-      '19 Emek Hashalom',
-      100,
-      4,
-      2,
-      const LatLng(31.8985, 35.0130),
-    ),
-    _Property(
-      '₪3,950,000',
-      '42 Reut Circle',
-      135,
-      5,
-      3,
-      const LatLng(31.8905, 35.0190),
-    ),
-    _Property(
-      '₪5,200,000',
-      '7 Maccabim Road',
-      160,
-      6,
-      3,
-      const LatLng(31.8940, 35.0020),
-    ),
-    _Property(
-      '₪3,100,000',
-      '28 Shimshon Street',
-      108,
-      4,
-      2,
-      const LatLng(31.8965, 35.0200),
-    ),
-    _Property(
-      '₪4,500,000',
-      '14 Dvora Hanevia',
-      148,
-      5,
-      3,
-      const LatLng(31.8880, 35.0070),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _searchController.text = ref.read(listingFilterProvider).search ?? '';
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      final f = ref.read(listingFilterProvider);
+      ref.read(listingFilterProvider.notifier).state = f.copyWith(
+        search: value.trim(),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    // A pin needs coordinates. A listing without them is not on the map,
+    // which is why the count here can differ from the list.
+    final pinned =
+        (ref.watch(listingsProvider).valueOrNull ?? const <Listing>[])
+            .where((x) => x.latitude != null && x.longitude != null)
+            .toList();
+    final selected = pinned.where((x) => x.id == _selectedId).firstOrNull;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -146,14 +77,11 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
           constraints: const BoxConstraints(maxWidth: 430),
           child: Stack(
             children: [
-              // ═══════════════════════════════════
-              // Map
-              // ═══════════════════════════════════
               FlutterMap(
                 options: MapOptions(
                   initialCenter: _center,
                   initialZoom: 14.5,
-                  onTap: (_, __) => setState(() => _selectedPin = null),
+                  onTap: (_, _) => setState(() => _selectedId = null),
                 ),
                 children: [
                   TileLayer(
@@ -162,26 +90,28 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                     userAgentPackageName: 'com.modiin4u.app',
                   ),
                   MarkerLayer(
-                    markers: List.generate(_properties.length, (i) {
-                      final p = _properties[i];
-                      final isSelected = _selectedPin == i;
-                      return Marker(
-                        point: p.position,
-                        width: 40,
-                        height: 40,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedPin = i),
-                          child: _PropertyPin(isSelected: isSelected),
+                    markers: [
+                      for (final listing in pinned)
+                        Marker(
+                          point: LatLng(listing.latitude!, listing.longitude!),
+                          width: 40,
+                          height: 40,
+                          child: GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedId = listing.id),
+                            child: _PropertyPin(
+                              isSelected: _selectedId == listing.id,
+                            ),
+                          ),
                         ),
-                      );
-                    }),
+                    ],
                   ),
                 ],
               ),
 
-              // ═══════════════════════════════════
-              // Search bar
-              // ═══════════════════════════════════
+              // ── Search ──
+              //
+              // A `Text` before, with a filter icon that had no handler.
               Positioned(
                 top: 58,
                 left: 16,
@@ -210,43 +140,75 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          'Search by location, neighborhood...',
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF6D6D6D),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: l.searchByLocation,
+                            hintStyle: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              color: const Color(0xFF6D6D6D),
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
                           ),
                         ),
-                      ),
-                      const Icon(
-                        IconsaxPlusLinear.setting_4,
-                        size: 20,
-                        color: Color(0xFF123A72),
                       ),
                     ],
                   ),
                 ),
               ),
 
-              // ═══════════════════════════════════
-              // Selected pin card (bottom sheet)
-              // ═══════════════════════════════════
-              if (_selectedPin != null)
+              // Nothing to pin at all — said plainly rather than leaving an
+              // empty map that looks broken.
+              if (pinned.isEmpty)
+                Positioned(
+                  top: 122,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      l.noListingsOnMap,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (selected != null)
                 Positioned(
                   left: 16,
                   right: 16,
                   bottom: 80,
                   child: _PropertyCard(
-                    property: _properties[_selectedPin!],
-                    onClose: () => setState(() => _selectedPin = null),
+                    listing: selected,
+                    onClose: () => setState(() => _selectedId = null),
                   ),
                 ),
 
-              // ═══════════════════════════════════
-              // "View as List" floating button
-              // ═══════════════════════════════════
               Positioned(
                 left: 0,
                 right: 0,
@@ -280,7 +242,7 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'View as List',
+                            l.listView,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 14,
@@ -300,27 +262,6 @@ class _RealEstateMapScreenState extends State<RealEstateMapScreen> {
       ),
     );
   }
-}
-
-// ═══════════════════════════════════════════════
-// Property data model
-// ═══════════════════════════════════════════════
-class _Property {
-  final String price;
-  final String address;
-  final int area;
-  final int rooms;
-  final int floor;
-  final LatLng position;
-
-  const _Property(
-    this.price,
-    this.address,
-    this.area,
-    this.rooms,
-    this.floor,
-    this.position,
-  );
 }
 
 // ═══════════════════════════════════════════════
@@ -361,7 +302,7 @@ class _PropertyPin extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: const Icon(
-            IconsaxPlusLinear.user,
+            IconsaxPlusBold.home_2,
             size: 12,
             color: Colors.white,
           ),
@@ -375,13 +316,21 @@ class _PropertyPin extends StatelessWidget {
 // Selected property card
 // ═══════════════════════════════════════════════
 class _PropertyCard extends StatelessWidget {
-  final _Property property;
+  final Listing listing;
   final VoidCallback onClose;
 
-  const _PropertyCard({required this.property, required this.onClose});
+  const _PropertyCard({required this.listing, required this.onClose});
+
+  /// 3.5 reads as "3.5"; 4.0 reads as "4".
+  static String _rooms(double v) =>
+      v == v.roundToDouble() ? '${v.toInt()}' : '$v';
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final price = listing.effectivePrice;
+    final address = listing.address ?? listing.neighborhoodName;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -399,68 +348,26 @@ class _PropertyCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Image placeholder
-          Container(
-            height: 140,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-              ),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    IconsaxPlusBold.home_2,
-                    size: 40,
-                    color: Colors.white.withValues(alpha: 0.15),
-                  ),
-                ),
-                // Close button
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: GestureDetector(
-                    onTap: onClose,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        size: 16,
-                        color: Color(0xFF3D3D3D),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Price + FOR SALE
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                property.price,
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF0A1230),
+              if (price != null)
+                Text(
+                  listing.kind == ListingKind.rent
+                      ? l.pricePerMonthValue(formatShekels(price))
+                      : formatShekels(price),
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0A1230),
+                  ),
                 ),
-              ),
+              const Spacer(),
+              // The badge said FOR SALE on every card, lettings included.
               Text(
-                'FOR SALE',
+                listing.kind == ListingKind.rent
+                    ? l.forRentBadge
+                    : l.forSaleBadge,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 12,
@@ -468,78 +375,108 @@ class _PropertyCard extends StatelessWidget {
                   color: const Color(0xFF17A9D0),
                 ),
               ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onClose,
+                child: const Icon(
+                  Icons.close,
+                  size: 18,
+                  color: Color(0xFF6D6D6D),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 6),
 
-          // Address
-          Row(
-            children: [
-              const Icon(
-                IconsaxPlusBold.location,
-                size: 14,
-                color: Color(0xFF17A9D0),
+          const SizedBox(height: 8),
+          Text(
+            listing.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF0A1230),
+            ),
+          ),
+
+          if (address != null && address.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(
+                  IconsaxPlusLinear.location,
+                  size: 16,
+                  color: Color(0xFF17A9D0),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    address,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      color: const Color(0xFF5F5E5A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          // Only the figures the listing carries; the card used to print
+          // "140 m², 6 Rooms, Floor 3" whatever it was.
+          if (listing.sqm != null ||
+              listing.rooms != null ||
+              listing.floor != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (listing.sqm != null) ...[
+                  _chip(
+                    IconsaxPlusLinear.maximize_3,
+                    '${listing.sqm} ${l.sqmUnit}',
+                  ),
+                  const SizedBox(width: 20),
+                ],
+                if (listing.rooms != null) ...[
+                  _chip(
+                    IconsaxPlusLinear.building_3,
+                    '${_rooms(listing.rooms!)} ${l.roomsLabel}',
+                  ),
+                  const SizedBox(width: 20),
+                ],
+                if (listing.floor != null)
+                  _chip(
+                    IconsaxPlusLinear.building_4,
+                    l.floorLabel('${listing.floor}'),
+                  ),
+              ],
+            ),
+          ],
+
+          const SizedBox(height: 16),
+          GestureDetector(
+            // This pushed `/listing/1` for every pin — an id that cannot
+            // resolve, so the card's only action always failed.
+            onTap: () => context.push('/listing/${listing.id}'),
+            child: Container(
+              width: double.infinity,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFF123A72),
+                borderRadius: BorderRadius.circular(60),
               ),
-              const SizedBox(width: 6),
-              Expanded(
+              child: Center(
                 child: Text(
-                  property.address,
+                  l.viewFullDetails,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF5F5E5A),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Area / Rooms / Floor
-          Row(
-            children: [
-              _chip(IconsaxPlusLinear.maximize_3, '${property.area} m²'),
-              const SizedBox(width: 24),
-              _chip(IconsaxPlusLinear.building_3, '${property.rooms} Rooms'),
-              const SizedBox(width: 24),
-              _chip(IconsaxPlusLinear.building_4, 'Floor ${property.floor}'),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // View Details button
-          SizedBox(
-            width: double.infinity,
-            child: GestureDetector(
-              onTap: () => context.push('/listing/1'),
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF123A72),
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'View Full Details',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        IconsaxPlusLinear.arrow_right_3,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                    ],
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -554,15 +491,14 @@ class _PropertyCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
+        Icon(icon, size: 16, color: const Color(0xFF6D6D6D)),
         const SizedBox(width: 6),
         Text(
           text,
           style: TextStyle(
             fontFamily: AppFonts.inter,
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF3D3D3D),
+            fontSize: 13,
+            color: const Color(0xFF5F5E5A),
           ),
         ),
       ],

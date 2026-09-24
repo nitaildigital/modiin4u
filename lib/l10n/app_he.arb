@@ -525,5 +525,8 @@
   "viewOnMapBtn": "הצג במפה",
   "noListingsYet": "אין מודעות כרגע",
   "noListingsYetBody": "כשתפורסמנה דירות במודיעין, הן יופיעו כאן.",
-  "noListingsMatch": "לא נמצאו מודעות מתאימות"
+  "noListingsMatch": "לא נמצאו מודעות מתאימות",
+  "listView": "תצוגת רשימה",
+  "viewFullDetails": "לפרטים מלאים",
+  "noListingsOnMap": "אין מודעות עם מיקום על המפה"
 }

@@ -1242,4 +1242,13 @@ class LEn extends L {
 
   @override
   String get noListingsMatch => 'No listings match your search';
+
+  @override
+  String get listView => 'List View';
+
+  @override
+  String get viewFullDetails => 'View Full Details';
+
+  @override
+  String get noListingsOnMap => 'No listings have a location on the map yet';
 }

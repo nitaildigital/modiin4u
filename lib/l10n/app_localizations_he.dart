@@ -1228,4 +1228,13 @@ class LHe extends L {
 
   @override
   String get noListingsMatch => 'לא נמצאו מודעות מתאימות';
+
+  @override
+  String get listView => 'תצוגת רשימה';
+
+  @override
+  String get viewFullDetails => 'לפרטים מלאים';
+
+  @override
+  String get noListingsOnMap => 'אין מודעות עם מיקום על המפה';
 }

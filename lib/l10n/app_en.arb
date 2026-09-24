@@ -525,5 +525,8 @@
   "viewOnMapBtn": "View on Map",
   "noListingsYet": "No listings right now",
   "noListingsYetBody": "When apartments are posted in Modiin, they will appear here.",
-  "noListingsMatch": "No listings match your search"
+  "noListingsMatch": "No listings match your search",
+  "listView": "List View",
+  "viewFullDetails": "View Full Details",
+  "noListingsOnMap": "No listings have a location on the map yet"
 }
