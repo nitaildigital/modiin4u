@@ -77,6 +77,81 @@ change password, the whole real-estate feature, both deals screens, steps,
 municipal. Biggest remaining: `business_detail_screen` (36),
 `signup_screen` (27), `events_map_screen` (45), `restaurants_map_screen` (39).
 
+## 1c. Design audit — 24 September
+
+47 Figma exports in `~/Downloads/M4U/` compared screen by screen against the
+code by six parallel read-only passes. Roughly 120 findings; grouped by cause
+below, worst first. Nothing here has been fixed yet.
+
+### A. Screens that are still entirely invented
+
+These were never converted. Each shows the same fiction to every user.
+
+| Screen | What it serves | File |
+|---|---|---|
+| **Real Estate tab** — the main one | 8 hardcoded flats. `listingsProvider` exists and this file imports nothing | `realestate/screens/realestate_screen.dart:55` |
+| **Real-estate map** | 14 invented pins; every "View Full Details" pushes `/listing/1`, which cannot resolve | `realestate/screens/realestate_map_screen.dart:25` |
+| **Neighbourhood detail** | Takes a `neighborhoodId` and never uses it — every neighbourhood renders as "Moriah" with invented counts | `realestate/screens/neighborhood_detail_screen.dart:39` |
+| **Restaurants map** | 24 invented places; details push `/business/restaurant_<hashCode>` | `restaurants/screens/restaurants_map_screen.dart:45` |
+| **Events map** | 14 invented events; details push `/event/map_<hashCode>` | `events/screens/events_map_screen.dart:45` |
+| **Home — "Deal Near You" / "Apartment Near You"** | Hardcoded tiles routing to `/deal/demo_0`, `/listing/demo_N` | `home/screens/home_screen.dart:390,455` |
+
+### B. Invented values on screens that are otherwise live
+
+- **Every event** is labelled "Music" (`event_detail_screen.dart:280`), attributed
+  to "Modiin Community Events" (`:490`), pinned at one fixed coordinate
+  (`:573`) while its real lat/long are parsed and ignored, and has a paragraph
+  about "Summer Music Night" appended to its description (`:549`).
+- **Shabbat candle-lighting** still prints `'Starts 18:42'`
+  (`municipal_screen.dart:306`) — the same class of unknowable claim removed
+  from the parking card the same day. Missed.
+- **The challenge card** prints 82,450 / 150,000 / 55% regardless of the
+  challenge (`steps_screen.dart:507`), now that a real one can exist.
+
+### C. Controls that are drawn and do nothing
+
+- **RSVP writes nothing.** `event_attendees` is untouched anywhere in `lib/`;
+  the button is a local `setState` and the state is lost on re-entry.
+  `event_detail_screen.dart:772`
+- **Reviews, replies and photo uploads on a business are in-memory only** and
+  show a success toast. `business_detail_screen.dart:1022, 1817, 783`
+- **"Continue with Google"** is an empty TODO; no OAuth anywhere.
+  `onboarding_screen.dart:150`
+- **Sign-up discards** date of birth, family status and pet — the same bug
+  fixed on Edit Profile, still present here. `signup_screen.dart:29` vs `:77`
+- **Edit Profile discards an edited email** and never uploads the chosen
+  avatar. `edit_profile_screen.dart:90`
+- **Seven search fields are `Text`, not `TextField`** — restaurants, events,
+  municipal, both maps, real estate, category lists.
+- Hearts on browse and neighbourhood cards, the My Apartments kebab,
+  "Contact Us", "View Challenge", "View on Map".
+
+### D. Written screens nobody can reach
+
+`/change-password`, `/change-language`, `/help-support`, `/terms` — all exist
+and are routed; Settings links to none of them and opens hardcoded bottom
+sheets instead. Also unreachable: `/events-map`, `/realestate-map`,
+`/neighborhood/:id`, and the side menu has no Logout.
+
+### E. Defects in the 24 September work itself
+
+- Weekly chart Y-axis is a fixed `['12K'…'0']` while bars scale to the week's
+  best day — bars do not line up with their own axis.
+  `steps_screen.dart:444` vs `:402`
+- Nearby-listing cards print "null m²", "4.0 Rooms", "Floor null".
+  `listing_detail_screen.dart:1162`
+- Nearby-listing cards ignore `coverUrl` and draw a gradient. `:1012`
+- Municipal quick-info row is lopsided after the parking card changed.
+
+### Correction to record
+
+An earlier summary said the real-estate feature was "entirely on live data".
+That was wrong. Three screens were converted — add apartment, my apartments,
+listing detail. The main Real Estate tab, its map and neighbourhood detail
+were not, and are listed in section A above.
+
+---
+
 ## 1b. How the app is meant to work
 
 Written down because the plan below only makes sense against it.

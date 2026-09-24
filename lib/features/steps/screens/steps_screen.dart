@@ -397,10 +397,26 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
     }
 
     // The scale follows the week's own best day, so a quiet week is not all
-    // stubs against a fixed 12,000 ceiling.
+    // stubs against a fixed 12,000 ceiling. The axis used to be a fixed
+    // 12K–0 list while the bars scaled, so a bar did not line up with its
+    // own gridline.
+    //
+    // The ceiling rounds up to a multiple of 6,000 because the axis draws
+    // seven labels — six gaps — so every label lands on a whole thousand.
+    // A week under the 10,000 goal therefore tops out at 12K, which is the
+    // scale the design drew.
     final best = data.map((d) => d.steps).reduce((a, b) => a > b ? a : b);
-    final maxSteps = (best < _goal ? _goal : best).toDouble();
+    final ceiling = best < _goal ? _goal : best;
+    final maxSteps = ((ceiling / 6000).ceil() * 6000).toDouble();
     const double barMaxH = 170;
+
+    final axisLabels = [
+      for (var i = 6; i >= 0; i--)
+        () {
+          final v = (maxSteps * i / 6).round();
+          return v >= 1000 ? '${v ~/ 1000}K' : '$v';
+        }(),
+    ];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -438,7 +454,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
-                      children: ['12K', '10K', '8K', '6K', '4K', '2K', '0']
+                      children: axisLabels
                           .map(
                             (l) => Text(
                               l,

@@ -986,6 +986,10 @@ class _NearbyListingCard extends StatelessWidget {
   final VoidCallback? onTap;
   const _NearbyListingCard({required this.listing, this.onTap});
 
+  /// 3.5 reads as "3.5"; 4.0 reads as "4" — the card printed "4.0 Rooms".
+  static String _roomsText(double v) =>
+      v == v.roundToDouble() ? '${v.toInt()}' : '$v';
+
   String _priceText(L l) {
     final p = listing.effectivePrice;
     if (p == null) return '';
@@ -1009,16 +1013,13 @@ class _NearbyListingCard extends StatelessWidget {
             width: double.infinity,
             child: Stack(
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                    ),
-                  ),
-                  child: const SizedBox.shrink(),
+                NetworkPhoto(
+                  url: listing.coverUrl,
+                  width: double.infinity,
+                  height: 200,
+                  radius: BorderRadius.circular(12),
+                  icon: IconsaxPlusBold.home_2,
+                  iconSize: 40,
                 ),
 
                 // Heart button
@@ -1156,23 +1157,28 @@ class _NearbyListingCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
 
-                // Area / Rooms / Floor chips
+                // Area / rooms / floor — only the ones this listing has.
                 Row(
                   children: [
-                    _DetailChip(
-                      icon: IconsaxPlusLinear.maximize_3,
-                      text: '${listing.sqm} ${l.sqmUnit}',
-                    ),
-                    const SizedBox(width: 31),
-                    _DetailChip(
-                      icon: IconsaxPlusLinear.building_3,
-                      text: '${listing.rooms} ${l.roomsLabel}',
-                    ),
-                    const SizedBox(width: 31),
-                    _DetailChip(
-                      icon: IconsaxPlusLinear.building_4,
-                      text: l.floorLabel('${listing.floor}'),
-                    ),
+                    if (listing.sqm != null) ...[
+                      _DetailChip(
+                        icon: IconsaxPlusLinear.maximize_3,
+                        text: '${listing.sqm} ${l.sqmUnit}',
+                      ),
+                      const SizedBox(width: 31),
+                    ],
+                    if (listing.rooms != null) ...[
+                      _DetailChip(
+                        icon: IconsaxPlusLinear.building_3,
+                        text: '${_roomsText(listing.rooms!)} ${l.roomsLabel}',
+                      ),
+                      const SizedBox(width: 31),
+                    ],
+                    if (listing.floor != null)
+                      _DetailChip(
+                        icon: IconsaxPlusLinear.building_4,
+                        text: l.floorLabel('${listing.floor}'),
+                      ),
                   ],
                 ),
               ],

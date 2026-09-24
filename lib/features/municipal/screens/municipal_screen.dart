@@ -33,7 +33,7 @@ class _MobileMunicipalContent extends StatelessWidget {
   /// "coming soon" until the client tells us what each should contain, so a
   /// resident can see which ones are ready rather than tapping dead tiles.
   static List<_Service> _servicesFor(L l) => [
-    _Service(l.svcParking, IconsaxPlusLinear.clock, '/parking'),
+    _Service(l.svcParking, IconsaxPlusLinear.car, '/parking'),
     _Service(l.svcShabbat, IconsaxPlusLinear.candle, null),
     _Service(l.svcInstitutions, IconsaxPlusLinear.bank, null),
     _Service(l.svcHealth, IconsaxPlusLinear.health, null),
@@ -129,13 +129,15 @@ class _MobileMunicipalContent extends StatelessWidget {
                       const SizedBox(height: 12),
 
                       // Quick Info cards
-                      const Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: _ShabbatCard()),
-                          SizedBox(width: 12),
-                          Expanded(child: _ParkingCard()),
-                        ],
+                      const IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: _ShabbatCard()),
+                            SizedBox(width: 12),
+                            Expanded(child: _ParkingCard()),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 36),
 
@@ -219,7 +221,6 @@ class _ShabbatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = L.of(context);
     return Container(
-      height: 141,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFFEF8EF),
@@ -275,7 +276,7 @@ class _ShabbatCard extends StatelessWidget {
               ],
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 16),
 
           // Date
           Text(
@@ -291,28 +292,11 @@ class _ShabbatCard extends StatelessWidget {
               color: const Color(0xFF0A1230),
             ),
           ),
-          const SizedBox(height: 12),
-
-          // Time row
-          Row(
-            children: [
-              const Icon(
-                IconsaxPlusLinear.clock,
-                size: 14,
-                color: Color(0xFF6D6D6D),
-              ),
-              const SizedBox(width: 7),
-              Text(
-                'Starts 18:42',
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF0A1230),
-                ),
-              ),
-            ],
-          ),
+          // A candle-lighting time used to sit here, printed as "Starts
+          // 18:42" every week of the year. It is an astronomical time that
+          // moves with the date and the town, and the project has no zmanim
+          // source, so the row is gone rather than guessed — the same call
+          // made for the parking card above.
         ],
       ),
     );
