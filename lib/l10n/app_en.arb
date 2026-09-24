@@ -509,5 +509,11 @@
   "yourReply": "Your reply",
   "reply": "Reply",
   "writeReplyHint": "Write a reply...",
-  "replySent": "Reply sent!"
+  "replySent": "Reply sent!",
+  "imGoing": "I'm going",
+  "going": "Going",
+  "signInToRsvp": "Sign in to RSVP",
+  "eventSoldOut": "This event is full",
+  "rsvpFailed": "Could not update. Please try again.",
+  "openInMaps": "Open in Maps"
 }

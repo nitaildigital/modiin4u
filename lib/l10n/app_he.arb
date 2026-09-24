@@ -509,5 +509,11 @@
   "yourReply": "התגובה שלכם",
   "reply": "תגובה",
   "writeReplyHint": "כתבו תגובה...",
-  "replySent": "התגובה נשלחה!"
+  "replySent": "התגובה נשלחה!",
+  "imGoing": "אני מגיע/ה",
+  "going": "מגיע/ה",
+  "signInToRsvp": "התחברו כדי להירשם לאירוע",
+  "eventSoldOut": "האירוע מלא",
+  "rsvpFailed": "לא ניתן היה לעדכן. נסו שוב.",
+  "openInMaps": "פתיחה במפות"
 }

@@ -5,6 +5,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/network_photo.dart';
@@ -59,7 +61,7 @@ class _MobileEventDetailContent extends ConsumerStatefulWidget {
 
 class _MobileEventDetailContentState
     extends ConsumerState<_MobileEventDetailContent> {
-  bool _isGoing = false;
+  bool _rsvpBusy = false;
 
   Event get event => widget.event;
 
@@ -102,12 +104,12 @@ class _MobileEventDetailContentState
                           height: 49,
                         ), // space for overlapping badges
                         _buildInfoSection(),
-                        _buildOrganizedBy(),
                         const SizedBox(height: 24),
                         _buildAbout(),
                         const SizedBox(height: 32),
                         const SizedBox(height: 32),
-                        _buildWhereIsIt(),
+                        if (event.latitude != 0 && event.longitude != 0)
+                          _buildWhereIsIt(event),
                         const SizedBox(height: 32),
                         _buildYouMayAlsoLike(),
                         const SizedBox(height: 24),
@@ -119,7 +121,7 @@ class _MobileEventDetailContentState
                 // ═══════════════════════════════════
                 // Sticky RSVP bar
                 // ═══════════════════════════════════
-                _buildBottomBar(),
+                _buildBottomBar(event),
               ],
             ),
           ),
@@ -266,27 +268,9 @@ class _MobileEventDetailContentState
             ),
           ),
 
-          // Category badge (right side, below hero)
-          Positioned(
-            right: 13,
-            top: 272,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF17A9D0),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Text(
-                'Music',
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
+          // A category badge sat here reading "Music" — the literal string,
+          // on every event in the app. `events` carries no category, so
+          // there is nothing to put in it.
         ],
       ),
     );
@@ -433,91 +417,11 @@ class _MobileEventDetailContentState
   // ═══════════════════════════════════════════════
   // Organized by section
   // ═══════════════════════════════════════════════
-  Widget _buildOrganizedBy() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'מארגן האירוע',
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6F6F6),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                // Organizer avatar
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFE7E7E7),
-                      width: 0.625,
-                    ),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      IconsaxPlusBold.building,
-                      size: 18,
-                      color: Colors.white.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Modiin Community Events',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Community & Municipal Events',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6D6D6D),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // An "Organized by" card sat here, naming "Modiin Community Events" with
+  // the strapline "Community & Municipal Events" — the same body on every
+  // event, whoever actually ran it. `events` has `organizer_id` and
+  // `business_id`; neither was read. The card is gone until one of them is.
 
-  // ═══════════════════════════════════════════════
-  // About This Event
   // ═══════════════════════════════════════════════
   Widget _buildAbout() {
     return Padding(
@@ -545,19 +449,9 @@ class _MobileEventDetailContentState
               color: const Color(0xFF3D3D3D),
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Whether you\'re coming with friends, family, or simply looking '
-            'for a great night out, Summer Music Night is the perfect way to '
-            'enjoy the summer evening.',
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              height: 1.6,
-              color: const Color(0xFF3D3D3D),
-            ),
-          ),
+          // A second paragraph was printed here on every event — the
+          // mockup's copy about "Summer Music Night", glued under whatever
+          // the real description said.
         ],
       ),
     );
@@ -569,8 +463,8 @@ class _MobileEventDetailContentState
   // ═══════════════════════════════════════════════
   // Where Is It? (mini FlutterMap)
   // ═══════════════════════════════════════════════
-  Widget _buildWhereIsIt() {
-    const venuePosition = LatLng(31.8928, 35.0104);
+  Widget _buildWhereIsIt(Event event) {
+    final venuePosition = LatLng(event.latitude, event.longitude);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -596,7 +490,7 @@ class _MobileEventDetailContentState
                   // Map
                   IgnorePointer(
                     child: FlutterMap(
-                      options: const MapOptions(
+                      options: MapOptions(
                         initialCenter: venuePosition,
                         initialZoom: 15.5,
                       ),
@@ -652,7 +546,7 @@ class _MobileEventDetailContentState
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Open in Maps',
+                              L.of(context).openInMaps,
                               style: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
@@ -752,7 +646,23 @@ class _MobileEventDetailContentState
   // ═══════════════════════════════════════════════
   // Bottom RSVP bar
   // ═══════════════════════════════════════════════
-  Widget _buildBottomBar() {
+  /// The RSVP button.
+  ///
+  /// It was `setState(() => _isGoing = !_isGoing)` against a local field:
+  /// it changed a word on screen, wrote nothing to `event_attendees`, and
+  /// reset to "not going" every time the page was opened — so anyone who had
+  /// already signed up was told they had not. It writes now, and reads back
+  /// what it wrote.
+  Widget _buildBottomBar(Event event) {
+    final l = L.of(context);
+    final signedIn = ref.watch(authProvider) != null;
+    final attending =
+        ref.watch(isAttendingProvider(event.id)).valueOrNull ?? false;
+    // A full event cannot take another name, so the button says so rather
+    // than accepting a tap that would mean nothing.
+    final soldOut = event.isSoldOut && !attending;
+    final enabled = !soldOut && !_rsvpBusy;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -769,37 +679,90 @@ class _MobileEventDetailContentState
       child: SafeArea(
         top: false,
         child: GestureDetector(
-          onTap: () => setState(() => _isGoing = !_isGoing),
+          onTap: enabled ? () => _toggleRsvp(event, signedIn, attending) : null,
           child: Container(
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF123A72),
+              color: enabled
+                  ? const Color(0xFF123A72)
+                  : const Color(0xFFB9C0CE),
               borderRadius: BorderRadius.circular(60),
             ),
             child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    IconsaxPlusLinear.tick_circle,
-                    size: 20,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isGoing ? 'מגיע/ה' : 'אני מגיע/ה',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+              child: _rsvpBusy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          attending
+                              ? IconsaxPlusBold.tick_circle
+                              : IconsaxPlusLinear.tick_circle,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          soldOut
+                              ? l.eventSoldOut
+                              : attending
+                              ? l.going
+                              : l.imGoing,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _toggleRsvp(Event event, bool signedIn, bool attending) async {
+    final l = L.of(context);
+    if (!signedIn) {
+      _rsvpToast(l.signInToRsvp);
+      return;
+    }
+
+    setState(() => _rsvpBusy = true);
+    try {
+      final repo = ref.read(eventRepositoryProvider);
+      attending
+          ? await repo.cancelAttendance(event.id)
+          : await repo.attend(event.id);
+
+      // The trigger from migration 00024 recounts `rsvp_count`, so the
+      // number beside the button has to be re-read too — it used to sit
+      // still while the label changed.
+      ref.invalidate(isAttendingProvider(event.id));
+      ref.invalidate(eventByIdProvider(event.id));
+    } catch (_) {
+      if (mounted) _rsvpToast(l.rsvpFailed);
+    } finally {
+      if (mounted) setState(() => _rsvpBusy = false);
+    }
+  }
+
+  void _rsvpToast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

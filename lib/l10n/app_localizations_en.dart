@@ -1192,4 +1192,22 @@ class LEn extends L {
 
   @override
   String get replySent => 'Reply sent!';
+
+  @override
+  String get imGoing => 'I\'m going';
+
+  @override
+  String get going => 'Going';
+
+  @override
+  String get signInToRsvp => 'Sign in to RSVP';
+
+  @override
+  String get eventSoldOut => 'This event is full';
+
+  @override
+  String get rsvpFailed => 'Could not update. Please try again.';
+
+  @override
+  String get openInMaps => 'Open in Maps';
 }

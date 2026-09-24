@@ -2340,6 +2340,42 @@ abstract class L {
   /// In he, this message translates to:
   /// **'התגובה נשלחה!'**
   String get replySent;
+
+  /// No description provided for @imGoing.
+  ///
+  /// In he, this message translates to:
+  /// **'אני מגיע/ה'**
+  String get imGoing;
+
+  /// No description provided for @going.
+  ///
+  /// In he, this message translates to:
+  /// **'מגיע/ה'**
+  String get going;
+
+  /// No description provided for @signInToRsvp.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי להירשם לאירוע'**
+  String get signInToRsvp;
+
+  /// No description provided for @eventSoldOut.
+  ///
+  /// In he, this message translates to:
+  /// **'האירוע מלא'**
+  String get eventSoldOut;
+
+  /// No description provided for @rsvpFailed.
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לעדכן. נסו שוב.'**
+  String get rsvpFailed;
+
+  /// No description provided for @openInMaps.
+  ///
+  /// In he, this message translates to:
+  /// **'פתיחה במפות'**
+  String get openInMaps;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

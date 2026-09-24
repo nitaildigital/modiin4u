@@ -1180,4 +1180,22 @@ class LHe extends L {
 
   @override
   String get replySent => 'התגובה נשלחה!';
+
+  @override
+  String get imGoing => 'אני מגיע/ה';
+
+  @override
+  String get going => 'מגיע/ה';
+
+  @override
+  String get signInToRsvp => 'התחברו כדי להירשם לאירוע';
+
+  @override
+  String get eventSoldOut => 'האירוע מלא';
+
+  @override
+  String get rsvpFailed => 'לא ניתן היה לעדכן. נסו שוב.';
+
+  @override
+  String get openInMaps => 'פתיחה במפות';
 }
