@@ -2628,6 +2628,24 @@ abstract class L {
   /// In he, this message translates to:
   /// **'שתפו את ההמלצה שלכם עם קהילת מודיעין.'**
   String get shareRecommendation;
+
+  /// No description provided for @mapLayerBusinesses.
+  ///
+  /// In he, this message translates to:
+  /// **'עסקים'**
+  String get mapLayerBusinesses;
+
+  /// No description provided for @mapLayerEvents.
+  ///
+  /// In he, this message translates to:
+  /// **'אירועים'**
+  String get mapLayerEvents;
+
+  /// No description provided for @mapLayerRealEstate.
+  ///
+  /// In he, this message translates to:
+  /// **'נדל\"ן'**
+  String get mapLayerRealEstate;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

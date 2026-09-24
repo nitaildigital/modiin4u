@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
 import '../../../core/theme/app_colors.dart';
-import '../data/map_pois.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../data/map_pois.dart';
+import '../providers/map_providers.dart';
 
 const _kBorder = Color(0xFFE7E7E7);
 const _kGrey = Color(0xFF5F5E5A);
@@ -16,48 +19,34 @@ const _kPlaceholder = Color(0xFF4F4F4F);
 /// Desktop map page (1920 × 950) — full-bleed OSM map under the 80px header,
 /// with the "Explore Modiin" layer card, a centred search pill and a
 /// detail slide-over for the selected pin.
-class WebMapContent extends StatefulWidget {
+class WebMapContent extends ConsumerStatefulWidget {
   const WebMapContent({super.key});
 
   @override
-  State<WebMapContent> createState() => _WebMapContentState();
+  ConsumerState<WebMapContent> createState() => _WebMapContentState();
 }
 
-class _WebMapContentState extends State<WebMapContent> {
+class _WebMapContentState extends ConsumerState<WebMapContent> {
   bool _isHebrew = false;
   final _mapController = MapController();
   final _searchController = TextEditingController();
 
-  final _activeLayers = <String>{
-    'Businesses',
-    'Events',
-    'Parkings',
-    'Real Estate',
-  };
+  final _activeLayers = <String>{'Businesses', 'Events', 'Real Estate'};
   MapPoi? _selectedPoi;
   String _query = '';
   int _slideIndex = 0;
 
-  /// Real business pins from the WordPress export. Empty until the asset
-  /// loads and empty if it fails, in which case the demo pins stand in.
-  List<MapPoi> _businessPois = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadBusinessPois().then((pois) {
-      if (mounted) setState(() => _businessPois = pois);
-    });
-  }
-
-  /// Real listings replace the demo pins on the Businesses layer only —
-  /// events, parking and real estate have no exported source yet.
-  List<MapPoi> get _allPois => _businessPois.isEmpty
-      ? mapPois
-      : [
-          ..._businessPois,
-          ...mapPois.where((p) => p.layer != 'Businesses'),
-        ];
+  /// The same pins the mobile map draws, from the same provider.
+  ///
+  /// This page used to read a frozen WordPress export and, when that was
+  /// empty, fall back to pins written into the source — "Cafe Greg",
+  /// "Pizza Prego", "Summer Music Night", four car parks and three
+  /// apartments, each with a rating and a review count nobody had given,
+  /// and each routing to `/business/demo_2` or `/listing/demo_0`, which
+  /// match no row. The events, parking and property layers came from that
+  /// list *always*, even when the export had loaded.
+  List<MapPoi> get _allPois =>
+      ref.watch(mapPoisProvider).valueOrNull ?? const <MapPoi>[];
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
@@ -71,7 +60,6 @@ class _WebMapContentState extends State<WebMapContent> {
   String _layerLabel(String layer) => switch (layer) {
     'Businesses' => _t('Businesses', 'עסקים'),
     'Events' => _t('Events', 'אירועים'),
-    'Parkings' => _t('Parkings', 'חניונים'),
     _ => _t('Real Estate', 'נדל"ן'),
   };
 
@@ -79,10 +67,12 @@ class _WebMapContentState extends State<WebMapContent> {
     var pois = _allPois.where((p) => _activeLayers.contains(p.layer));
     if (_query.isNotEmpty) {
       final q = _query.toLowerCase();
-      pois = pois.where((p) =>
-          p.name.toLowerCase().contains(q) ||
-          p.category.toLowerCase().contains(q) ||
-          (p.address ?? '').toLowerCase().contains(q));
+      pois = pois.where(
+        (p) =>
+            p.name.toLowerCase().contains(q) ||
+            p.category.toLowerCase().contains(q) ||
+            (p.address ?? '').toLowerCase().contains(q),
+      );
     }
     return pois.toList();
   }
@@ -237,9 +227,7 @@ class _WebMapContentState extends State<WebMapContent> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 8),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 8)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -247,7 +235,8 @@ class _WebMapContentState extends State<WebMapContent> {
         children: [
           Text(
             _t('Explore Modiin', 'גלו את מודיעין'),
-            style: TextStyle(fontFamily: AppFonts.nunito, 
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
               fontSize: 24,
               fontWeight: FontWeight.w600,
               height: 30 / 24,
@@ -260,7 +249,8 @@ class _WebMapContentState extends State<WebMapContent> {
               'Discover businesses, events and place around the city.',
               'גלו עסקים, אירועים ומקומות ברחבי העיר.',
             ),
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               height: 17 / 14,
@@ -275,7 +265,10 @@ class _WebMapContentState extends State<WebMapContent> {
     );
   }
 
-  Widget _buildLayerRow((String, IconData, Color) layer, {required bool isLast}) {
+  Widget _buildLayerRow(
+    (String, IconData, Color) layer, {
+    required bool isLast,
+  }) {
     final (name, icon, color) = layer;
     final isOn = _activeLayers.contains(name);
     return MouseRegion(
@@ -310,7 +303,8 @@ class _WebMapContentState extends State<WebMapContent> {
                     Flexible(
                       child: Text(
                         _layerLabel(name),
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           height: 17 / 14,
@@ -343,24 +337,28 @@ class _WebMapContentState extends State<WebMapContent> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(50),
-        boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 8),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 8)],
       ),
       child: Row(
         children: [
-          const Icon(IconsaxPlusLinear.search_normal_1, size: 20, color: _kIconGrey),
+          const Icon(
+            IconsaxPlusLinear.search_normal_1,
+            size: 20,
+            color: _kIconGrey,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
               controller: _searchController,
               onChanged: (v) => setState(() {
                 _query = v;
-                if (_selectedPoi != null && !_visiblePois.contains(_selectedPoi)) {
+                if (_selectedPoi != null &&
+                    !_visiblePois.contains(_selectedPoi)) {
                   _selectedPoi = null;
                 }
               }),
-              style: TextStyle(fontFamily: AppFonts.inter, 
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
                 height: 19 / 16,
@@ -373,7 +371,8 @@ class _WebMapContentState extends State<WebMapContent> {
                   'Search for places, businesses, or events',
                   'חיפוש מקומות, עסקים או אירועים',
                 ),
-                hintStyle: TextStyle(fontFamily: AppFonts.inter, 
+                hintStyle: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   height: 19 / 16,
@@ -390,8 +389,11 @@ class _WebMapContentState extends State<WebMapContent> {
                   _searchController.clear();
                   setState(() => _query = '');
                 },
-                child: const Icon(IconsaxPlusLinear.close_circle,
-                    size: 20, color: _kIconGrey),
+                child: const Icon(
+                  IconsaxPlusLinear.close_circle,
+                  size: 20,
+                  color: _kIconGrey,
+                ),
               ),
             ),
         ],
@@ -409,9 +411,7 @@ class _WebMapContentState extends State<WebMapContent> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 8),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 8)],
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -427,18 +427,28 @@ class _WebMapContentState extends State<WebMapContent> {
             const SizedBox(height: 24),
 
             // ── About ──
-            _sectionTitle(_aboutTitle(poi)),
-            const SizedBox(height: 12),
-            Text(
-              _aboutText(poi),
-              style: TextStyle(fontFamily: AppFonts.inter, 
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                height: 1.6,
-                color: _kBodyText,
+            //
+            // Only where the row carries a description. It used to compose
+            // one when it did not: any property with no text of its own got
+            // a paragraph about a "mini penthouse 6 rooms in Avni Chen,
+            // 140 m², balcony 18 m², payment schedule 20/80", every car park
+            // was declared open around the clock, and a business with no
+            // reviews was described as "rated - by 0 residents".
+            if (poi.description != null && poi.description!.isNotEmpty) ...[
+              _sectionTitle(_aboutTitle(poi)),
+              const SizedBox(height: 12),
+              Text(
+                poi.description!,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  height: 1.6,
+                  color: _kBodyText,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
             _buildThumbnails(poi),
             const SizedBox(height: 24),
 
@@ -468,7 +478,11 @@ class _WebMapContentState extends State<WebMapContent> {
         children: [
           Positioned.fill(
             child: photos.isEmpty
-                ? _imagePlaceholder(colors[_slideIndex % colors.length], radius: 12, glyphSize: 44)
+                ? _imagePlaceholder(
+                    colors[_slideIndex % colors.length],
+                    radius: 12,
+                    glyphSize: 44,
+                  )
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
@@ -480,7 +494,10 @@ class _WebMapContentState extends State<WebMapContent> {
                       // CanvasKit has to hand these to a plain <img>.
                       webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                       errorBuilder: (_, _, _) => _imagePlaceholder(
-                          colors[_slideIndex % colors.length], radius: 12, glyphSize: 44),
+                        colors[_slideIndex % colors.length],
+                        radius: 12,
+                        glyphSize: 44,
+                      ),
                     ),
                   ),
           ),
@@ -497,7 +514,8 @@ class _WebMapContentState extends State<WebMapContent> {
               ),
               child: Text(
                 '${_slideIndex % slideCount + 1} / $slideCount',
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   height: 15 / 12,
@@ -512,7 +530,9 @@ class _WebMapContentState extends State<WebMapContent> {
             top: 79,
             child: _GalleryArrow(
               icon: Icons.chevron_left,
-              onTap: () => setState(() => _slideIndex = (_slideIndex + slideCount - 1) % slideCount),
+              onTap: () => setState(
+                () => _slideIndex = (_slideIndex + slideCount - 1) % slideCount,
+              ),
             ),
           ),
           Positioned(
@@ -520,7 +540,8 @@ class _WebMapContentState extends State<WebMapContent> {
             top: 79,
             child: _GalleryArrow(
               icon: Icons.chevron_right,
-              onTap: () => setState(() => _slideIndex = (_slideIndex + 1) % slideCount),
+              onTap: () =>
+                  setState(() => _slideIndex = (_slideIndex + 1) % slideCount),
             ),
           ),
           // Close
@@ -541,7 +562,6 @@ class _WebMapContentState extends State<WebMapContent> {
     final label = switch (poi.layer) {
       'Real Estate' => _t('Apartment', 'דירה'),
       'Events' => _t('Event', 'אירוע'),
-      'Parkings' => _t('Parking', 'חניון'),
       _ => poi.category,
     };
     return Container(
@@ -558,7 +578,8 @@ class _WebMapContentState extends State<WebMapContent> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
               fontSize: 12,
               fontWeight: FontWeight.w500,
               height: 15 / 12,
@@ -582,7 +603,8 @@ class _WebMapContentState extends State<WebMapContent> {
             Flexible(
               child: Text(
                 poi.price ?? poi.name,
-                style: TextStyle(fontFamily: AppFonts.nunito, 
+                style: TextStyle(
+                  fontFamily: AppFonts.nunito,
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   height: 25 / 20,
@@ -598,7 +620,8 @@ class _WebMapContentState extends State<WebMapContent> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   _tag(poi)!,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     height: 15 / 12,
@@ -617,7 +640,8 @@ class _WebMapContentState extends State<WebMapContent> {
                 if (i > 0) const SizedBox(width: 16),
                 Text(
                   facts[i],
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     height: 15 / 12,
@@ -635,13 +659,18 @@ class _WebMapContentState extends State<WebMapContent> {
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 1),
-                child: Icon(IconsaxPlusLinear.location, size: 14, color: Color(0xFF454545)),
+                child: Icon(
+                  IconsaxPlusLinear.location,
+                  size: 14,
+                  color: Color(0xFF454545),
+                ),
               ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   poi.address ?? poi.venue!,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     height: 15 / 12,
@@ -683,9 +712,13 @@ class _WebMapContentState extends State<WebMapContent> {
                                 fit: BoxFit.cover,
                                 width: 75,
                                 height: 75,
-                                webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                                webHtmlElementStrategy:
+                                    WebHtmlElementStrategy.prefer,
                                 errorBuilder: (_, _, _) => _imagePlaceholder(
-                                    colors[(i + 1) % colors.length], radius: 7.2, glyphSize: 20),
+                                  colors[(i + 1) % colors.length],
+                                  radius: 7.2,
+                                  glyphSize: 20,
+                                ),
                               ),
                             )
                           : _imagePlaceholder(
@@ -704,7 +737,8 @@ class _WebMapContentState extends State<WebMapContent> {
                           child: Center(
                             child: Text(
                               '+$extra',
-                              style: TextStyle(fontFamily: AppFonts.inter, 
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 height: 19 / 16,
@@ -729,24 +763,19 @@ class _WebMapContentState extends State<WebMapContent> {
     switch (poi.layer) {
       case 'Real Estate':
         rows.addAll([
-          (_t('Property Type', 'סוג נכס'), _t('Apartment', 'דירה')),
-          (_t('Rooms', 'חדרים'), poi.rooms ?? '—'),
-          (_t('Floor', 'קומה'), poi.floor ?? '—'),
-          (_t('Size', 'שטח'), poi.area ?? '—'),
+          // "Property Type: Apartment" was printed for every pin, whatever
+          // the listing actually is. The pin does not carry the type, so the
+          // row is gone rather than guessed.
+          if (poi.rooms != null) (_t('Rooms', 'חדרים'), poi.rooms!),
+          if (poi.floor != null) (_t('Floor', 'קומה'), poi.floor!),
+          if (poi.area != null) (_t('Size', 'שטח'), poi.area!),
         ]);
       case 'Events':
         rows.addAll([
           (_t('Category', 'קטגוריה'), poi.category),
-          (_t('Venue', 'מיקום'), poi.venue ?? '—'),
-          (_t('Time', 'שעה'), poi.time ?? '—'),
-          (_t('Price', 'מחיר'), poi.eventPrice ?? '—'),
-        ]);
-      case 'Parkings':
-        rows.addAll([
-          (_t('Type', 'סוג'), poi.category),
-          (_t('Address', 'כתובת'), poi.address ?? '—'),
-          (_t('Access', 'גישה'), _t('24/7', '24/7')),
-          (_t('Payment', 'תשלום'), _t('Pango / Cellopark', 'פנגו / סלופארק')),
+          if (poi.venue != null) (_t('Venue', 'מיקום'), poi.venue!),
+          if (poi.time != null) (_t('Time', 'שעה'), poi.time!),
+          if (poi.eventPrice != null) (_t('Price', 'מחיר'), poi.eventPrice!),
         ]);
       default:
         rows.addAll([
@@ -754,14 +783,16 @@ class _WebMapContentState extends State<WebMapContent> {
           // Real listings have a rating for only some entries and no review
           // count at all, so both rows appear only when there is something
           // behind them — "Reviews 0" reads as a fact the site never claimed.
-          if (poi.rating != null) (_t('Rating', 'דירוג'), poi.rating!.toStringAsFixed(1)),
+          if (poi.rating != null)
+            (_t('Rating', 'דירוג'), poi.rating!.toStringAsFixed(1)),
           if (poi.reviewCount != null)
             (_t('Reviews', 'ביקורות'), '${poi.reviewCount}'),
           if (poi.viewCount != null) (_t('Views', 'צפיות'), '${poi.viewCount}'),
         ]);
     }
 
-    final style = TextStyle(fontFamily: AppFonts.inter, 
+    final style = TextStyle(
+      fontFamily: AppFonts.inter,
       fontSize: 12,
       fontWeight: FontWeight.w400,
       height: 15 / 12,
@@ -801,7 +832,8 @@ class _WebMapContentState extends State<WebMapContent> {
             children: [
               Text(
                 _t('View Full Details', 'לפרטים המלאים'),
-                style: TextStyle(fontFamily: AppFonts.inter, 
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   height: 24 / 16,
@@ -811,8 +843,11 @@ class _WebMapContentState extends State<WebMapContent> {
               const SizedBox(width: 8),
               Transform.flip(
                 flipX: _isHebrew,
-                child: const Icon(Icons.arrow_forward,
-                    size: 20, color: Colors.white),
+                child: const Icon(
+                  Icons.arrow_forward,
+                  size: 20,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
@@ -824,7 +859,8 @@ class _WebMapContentState extends State<WebMapContent> {
   // ── Slide-card helpers ──
   Widget _sectionTitle(String label) => Text(
     label,
-    style: TextStyle(fontFamily: AppFonts.inter, 
+    style: TextStyle(
+      fontFamily: AppFonts.inter,
       fontSize: 14,
       fontWeight: FontWeight.w500,
       height: 17 / 14,
@@ -835,55 +871,16 @@ class _WebMapContentState extends State<WebMapContent> {
   String _aboutTitle(MapPoi poi) => switch (poi.layer) {
     'Real Estate' => _t('About This Property', 'על הנכס'),
     'Events' => _t('About This Event', 'על האירוע'),
-    'Parkings' => _t('About This Parking', 'על החניון'),
     _ => _t('About This Business', 'על העסק'),
   };
 
-  /// Real listings carry the site's own blurb; demo POIs fall back to a
-  /// sentence generated from whatever fields they have.
-  String _aboutText(MapPoi poi) => poi.description ?? _generatedAboutText(poi);
-
-  String _generatedAboutText(MapPoi poi) => switch (poi.layer) {
-    'Real Estate' => _t(
-      'New directly from the contractor, mini penthouse 6 rooms, excellent '
-      'location in Avni Chen neighborhood, back apartment!! Occupancy 4 months '
-      'from signing the contract, built 140 m², balcony 18 m². Payment '
-      'schedule 20/80 without attachments.',
-      'חדשה ישירות מהקבלן, מיני פנטהאוז 6 חדרים, מיקום מעולה בשכונת אבני חן, '
-      'דירה אחורית!! אכלוס 4 חודשים ממועד חתימת החוזה, בנוי 140 מ"ר, '
-      'מרפסת 18 מ"ר. לוח תשלומים 20/80 ללא צמודים.',
-    ),
-    'Events' => _t(
-      '${poi.name} takes place at ${poi.venue ?? 'Modiin'} starting '
-      '${poi.time ?? 'this week'}. A local ${poi.category.toLowerCase()} event '
-      'open to residents and visitors — save your spot and see the full '
-      'schedule on the event page.',
-      '${poi.name} מתקיים ב${poi.venue ?? 'מודיעין'} בשעה ${poi.time ?? 'הקרובה'}. '
-      'אירוע ${poi.category} מקומי הפתוח לתושבים ולמבקרים — שמרו מקום וצפו '
-      'בלוח הזמנים המלא בעמוד האירוע.',
-    ),
-    'Parkings' => _t(
-      '${poi.name} is a public parking facility at ${poi.address ?? 'Modiin'}, '
-      'a short walk from the city center. Entry is available around the clock '
-      'and payment is supported through the usual parking apps.',
-      '${poi.name} הוא חניון ציבורי ב${poi.address ?? 'מודיעין'}, מרחק הליכה '
-      'קצר ממרכז העיר. הכניסה זמינה מסביב לשעון והתשלום נתמך באפליקציות '
-      'החניה המוכרות.',
-    ),
-    _ => _t(
-      '${poi.name} is a local ${poi.category.toLowerCase()} in Modiin, rated '
-      '${poi.rating ?? '-'} by ${poi.reviewCount ?? 0} residents. Find opening '
-      'hours, contact details and reviews on the business page.',
-      '${poi.name} הוא ${poi.category} מקומי במודיעין, בדירוג ${poi.rating ?? '-'} '
-      'מתוך ${poi.reviewCount ?? 0} ביקורות של תושבים. שעות פתיחה, פרטי קשר '
-      'וביקורות בעמוד העסק.',
-    ),
-  };
-
   String? _tag(MapPoi poi) => switch (poi.layer) {
-    'Real Estate' => _t(poi.saleTag ?? 'FOR SALE', 'למכירה'),
+    // Not "FOR SALE" by default — a listing that is let is not for sale.
+    'Real Estate' =>
+      poi.saleTag == null
+          ? null
+          : _t(poi.saleTag!, poi.saleTag == 'FOR RENT' ? 'להשכרה' : 'למכירה'),
     'Events' => poi.eventPrice,
-    'Parkings' => null,
     _ => poi.rating == null ? null : '★ ${poi.rating}',
   };
 
@@ -897,9 +894,11 @@ class _WebMapContentState extends State<WebMapContent> {
       poi.category,
       if (poi.time != null) poi.time!,
       if (poi.interestedCount != null)
-        _t('${poi.interestedCount} interested', '${poi.interestedCount} מתעניינים'),
+        _t(
+          '${poi.interestedCount} interested',
+          '${poi.interestedCount} מתעניינים',
+        ),
     ],
-    'Parkings' => [poi.category],
     _ => [
       poi.category,
       if (poi.reviewCount != null)
@@ -912,7 +911,10 @@ class _WebMapContentState extends State<WebMapContent> {
   List<List<Color>> _galleryColors(MapPoi poi) {
     final base = poi.color;
     return [
-      [Color.lerp(base, Colors.white, 0.35)!, Color.lerp(base, Colors.black, 0.55)!],
+      [
+        Color.lerp(base, Colors.white, 0.35)!,
+        Color.lerp(base, Colors.black, 0.55)!,
+      ],
       [const Color(0xFFE0D4C8), const Color(0xFFC0A891)],
       [const Color(0xFF26607F), const Color(0xFF081428)],
       [const Color(0xFF3B5B3A), const Color(0xFF0B1A16)],
@@ -923,8 +925,11 @@ class _WebMapContentState extends State<WebMapContent> {
 // ═══════════════════════════════════════════════
 // Shared bits
 // ═══════════════════════════════════════════════
-Widget _imagePlaceholder(List<Color> colors,
-    {double radius = 12, double glyphSize = 40}) {
+Widget _imagePlaceholder(
+  List<Color> colors, {
+  double radius = 12,
+  double glyphSize = 40,
+}) {
   return DecoratedBox(
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(radius),
@@ -956,7 +961,9 @@ class _LayerSwitch extends StatelessWidget {
       width: 44,
       height: 24,
       padding: const EdgeInsets.all(2),
-      alignment: isOn ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
+      alignment: isOn
+          ? AlignmentDirectional.centerEnd
+          : AlignmentDirectional.centerStart,
       decoration: BoxDecoration(
         color: isOn ? AppColors.midBlue : const Color(0xFFD9D9D9),
         borderRadius: BorderRadius.circular(50),
@@ -964,7 +971,10 @@ class _LayerSwitch extends StatelessWidget {
       child: Container(
         width: 20,
         height: 20,
-        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }
@@ -1001,7 +1011,11 @@ class _MapPin extends StatelessWidget {
   final Color color;
   final IconData icon;
   final bool isSelected;
-  const _MapPin({required this.color, required this.icon, this.isSelected = false});
+  const _MapPin({
+    required this.color,
+    required this.icon,
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1053,7 +1067,11 @@ class _MapFab extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: const [
-              BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 2)),
+              BoxShadow(
+                color: Color(0x1A000000),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
             ],
           ),
           child: Icon(icon, size: 22, color: AppColors.midBlue),

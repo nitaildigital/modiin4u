@@ -1324,4 +1324,13 @@ class LHe extends L {
 
   @override
   String get shareRecommendation => 'שתפו את ההמלצה שלכם עם קהילת מודיעין.';
+
+  @override
+  String get mapLayerBusinesses => 'עסקים';
+
+  @override
+  String get mapLayerEvents => 'אירועים';
+
+  @override
+  String get mapLayerRealEstate => 'נדל\"ן';
 }

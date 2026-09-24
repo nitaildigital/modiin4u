@@ -890,35 +890,47 @@ class _BusinessCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Rating
-                Row(
-                  children: [
-                    const Icon(
-                      IconsaxPlusBold.star_1,
-                      size: 14,
-                      color: Color(0xFFFFC107),
+                // Rating, but only where reviews have earned one. A gold
+                // star beside "0.0 (0)" reads as a bad score rather than as
+                // no score, and every business on this row has none yet.
+                if (data.reviews == 0)
+                  Text(
+                    L.of(context).notRatedYet,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 12,
+                      color: const Color(0xFF6D6D6D),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      data.rating.toString(),
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
+                  )
+                else
+                  Row(
+                    children: [
+                      const Icon(
+                        IconsaxPlusBold.star_1,
+                        size: 14,
+                        color: Color(0xFFFFC107),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${data.reviews})',
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 12,
-                        color: const Color(0xFF6D6D6D),
+                      const SizedBox(width: 6),
+                      Text(
+                        data.rating.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '(${data.reviews})',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ],
+                  ),
                 // Business type badge. The label is the shop's own
                 // description, which runs longer than the placeholder did, so
                 // it takes what room is left rather than pushing the card.

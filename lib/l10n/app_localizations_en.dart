@@ -1339,4 +1339,13 @@ class LEn extends L {
   @override
   String get shareRecommendation =>
       'Share your recommendation with the Modi\'in community.';
+
+  @override
+  String get mapLayerBusinesses => 'Businesses';
+
+  @override
+  String get mapLayerEvents => 'Events';
+
+  @override
+  String get mapLayerRealEstate => 'Real Estate';
 }

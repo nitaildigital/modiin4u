@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 import '../../../shared/widgets/network_photo.dart';
 import '../data/map_pois.dart';
@@ -98,12 +99,19 @@ class _MobileMapContentState extends ConsumerState<_MobileMapContent> {
     setState(() => _markers = built);
   }
 
-  static const _layers = [
-    ('Businesses', IconsaxPlusBold.shop, Color(0xFF17A9D0)),
-    ('Events', IconsaxPlusBold.calendar_1, Color(0xFF9032E1)),
-    ('Parkings', IconsaxPlusBold.car, Color(0xFF31AC4E)),
-    ('Real Estate', IconsaxPlusBold.house_2, Color(0xFF006BF6)),
-  ];
+  static String _layerLabel(BuildContext context, String layer) {
+    final l = L.of(context);
+    return switch (layer) {
+      'Businesses' => l.mapLayerBusinesses,
+      'Events' => l.mapLayerEvents,
+      _ => l.mapLayerRealEstate,
+    };
+  }
+
+  /// The shared list, not a second copy. This one still carried a Parkings
+  /// layer after that layer was dropped, so the toggle was drawn and could
+  /// only ever filter to nothing.
+  static const _layers = mapLayers;
 
   List<MapPoi> get _visiblePois {
     // Pins come from the database; an empty list while it loads simply means
@@ -237,15 +245,19 @@ class _MobileMapContentState extends ConsumerState<_MobileMapContent> {
                   itemCount: _layers.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
-                    final (label, icon, color) = _layers[index];
-                    final active = _activeLayers.contains(label);
+                    final (layer, icon, color) = _layers[index];
+                    final active = _activeLayers.contains(layer);
+                    // The tuple's first field is the layer key a pin carries,
+                    // so it stays English in the data and is translated only
+                    // where it is drawn.
+                    final label = _layerLabel(context, layer);
                     return GestureDetector(
                       onTap: () {
                         setState(() {
                           if (active) {
-                            _activeLayers.remove(label);
+                            _activeLayers.remove(layer);
                           } else {
-                            _activeLayers.add(label);
+                            _activeLayers.add(layer);
                           }
                           _selectedPoi = null;
                         });
@@ -502,8 +514,6 @@ class _PoiCard extends StatelessWidget {
         return _buildRealEstateDetails();
       case 'Events':
         return _buildEventDetails();
-      case 'Parkings':
-        return _buildParkingDetails();
       default:
         return _buildBusinessDetails();
     }
@@ -776,42 +786,6 @@ class _PoiCard extends StatelessWidget {
               ),
           ],
         ),
-      ],
-    );
-  }
-
-  // ── Parking card (simple) ──
-  Widget _buildParkingDetails() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          poi.name,
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.navy,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          poi.category,
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 14,
-            color: const Color(0xFF5F5E5A),
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (poi.address != null)
-          _infoRow(
-            IconsaxPlusLinear.location,
-            poi.address!,
-            AppColors.turquoise,
-          ),
       ],
     );
   }

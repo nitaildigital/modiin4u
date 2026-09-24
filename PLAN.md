@@ -13,11 +13,23 @@ not for the client.
 
 | Component | State |
 |---|---|
-| Mobile app | 44 screens built. News, businesses, restaurants, events, map, search, sign-in, favourites, settings and **real estate** are on live data. Deals, steps, community, games and the municipal services list still carry content packed inside the build. |
-| Website | 17 screens built, reading a frozen JSON export in `assets/data/`. Not deployed anywhere. |
+| Mobile app | 44 screens built. News, businesses, restaurants, events, map, search, sign-in, favourites, settings, **real estate**, **deals** and **steps** are on live data. Community, games and the municipal services list still carry content packed inside the build. |
+| Website | 17 screens built. The desktop layouts are reached through the same routes as mobile (>1100px), so they ship in the web build. Deployment assets are ready — see §1e — but no server exists yet. |
 | Backend | Live. 58 tables deployed. Migrations `00014`–`00025` all applied. |
 | Auth | Working end to end on a device: sign up, e-mail confirmation, sign in, password reset, profile row, account deletion. Blocked only on SMTP for the client's own first sign-in. |
-| Admin area | 23 sections on live data, reachable from the app for an administrator (web build only). **No moderation queue for resident-posted listings** — see D1. |
+| Admin area | 23 sections on live data, reachable from the app for an administrator (web build only). A moderation queue for resident-posted listings was added on 24 September. |
+
+### The tables that are empty
+
+Counted on 24 September. This is the single biggest thing standing between
+the app and a demo, and it is content, not code.
+
+`listings` 0 · `offers` 0 · `reviews` 0 · `challenges` 0 ·
+`real_estate_agents` 0 · `business_hours` 0 · `business_menu_items` 0
+
+Every one of those sections is built and reads its table. Each shows an
+honest empty state. None of them can show anything until the client supplies
+content — see §2.
 
 ### Live table row counts
 
@@ -94,6 +106,7 @@ These were never converted. Each shows the same fiction to every user.
 | **Neighbourhood detail** | Takes a `neighborhoodId` and never uses it — every neighbourhood renders as "Moriah" with invented counts | `realestate/screens/neighborhood_detail_screen.dart:39` |
 | **Restaurants map** | 24 invented places; details push `/business/restaurant_<hashCode>` | `restaurants/screens/restaurants_map_screen.dart:45` |
 | **Unearned ratings, on screen** | Business cards, restaurant cards and the business page all printed a gold star beside "0.0 (0)" — truthful, but it reads as a bad score rather than as no score. The restaurant card also carried "👁 0 Views", in English, against a column the table does not have | Reads "אין דירוג עדיין" until a review earns a score; the views figure is gone |
+| **City map** | `/map` is one of five bottom-nav tabs. The desktop layout read a frozen WordPress export and, whenever that was empty, fell back to pins written into the source — "Cafe Greg", "Pizza Prego", four car parks, three apartments — each with a rating and review count nobody had given, each routing to `/business/demo_2` or `/listing/demo_0`, which match no row. The Events, Parking and Real Estate layers came from that list **always**, even after the export loaded. A generator then wrote a description for any pin lacking one: every property got the same paragraph about a "mini penthouse 6 rooms in Avni Chen, 140 m², balcony 18 m², payment schedule 20/80", every car park was declared open around the clock, and a business with no reviews was described as "rated - by 0 residents". "Property Type: Apartment" was printed for every listing whatever it was | Both layouts read `mapPoisProvider`: businesses, events and listings, all live, each pin opening its own row. The generator is gone — no description means no About section. Parking is dropped: there is no table and could not be one |
 | **Events map** | 14 invented events; details push `/event/map_<hashCode>` | `events/screens/events_map_screen.dart:45` |
 | **Home — "Deal Near You" / "Apartment Near You"** | Hardcoded tiles routing to `/deal/demo_0`, `/listing/demo_N` | `home/screens/home_screen.dart:390,455` |
 
@@ -192,7 +205,13 @@ count trigger, review rating rollup. All applied.
 - **Help & Support** — entirely hardcoded English; "Contact Us" is an empty
   TODO.
 - **News list** — the design's per-category sections replaced by one flat
-  list; `articles` has no category column to group by.
+  list. Confirmed blocked on 24 September, not merely unfinished: `articles`
+  has no category column, and `entity_categories` holds 210 rows of which
+  **every one is `entity_type = 'business'`** — no article is linked to a
+  category anywhere. The `categories` table does carry news categories
+  (municipal, business-news, sports, education-news, culture, safety), so the
+  fix is a data job: link the 669 articles, then the sections follow. Nothing
+  can group them until then.
 - **Google sign-in** — an empty TODO on the first screen; no OAuth anywhere.
 - **~300 English strings** on mobile screens, ~600 on `web_*`.
 - **Games and Community** — placeholders, waiting on a product decision.
@@ -340,18 +359,30 @@ These unblock whole phases, so they should be chased in parallel with Phase A.
 
 With the anon key we can **read** everything but **write** nothing.
 
-### Blocking gap — real estate has no table
+### ~~Blocking gap — real estate has no table~~ → now an empty-table gap
 
-The schema has 50 tables and not one of them holds a property, listing or
-apartment. The app meanwhile carries nine real-estate routes, including one of
-the five bottom-navigation tabs, plus `/listing/:id`, `/new-listing`,
-`/my-apartments`, `/add-apartment`, `/realestate-map`, `/neighborhood/:id`,
-`/apartments-sale` and `/apartments-rent`, and the site export contains four
-apartments and four agents.
+`listings` and `real_estate_agents` exist and the whole section reads them.
+The gap moved: the tables are **empty**, and so are `offers`, `challenges`
+and `reviews`. Counted against the live database on 24 September:
 
-So the whole real-estate section cannot be put on live data, and the client
-cannot manage properties from the admin panel, until a table is designed and
-added. This needs raising before the section is promised as working.
+| Table | Rows | What depends on it |
+|---|---|---|
+| `articles` | 669 | News — fine |
+| `businesses` | 220 | Businesses, restaurants, the maps — fine |
+| `neighborhoods` | 10 | Filters throughout — fine |
+| `events` | 9 | Events tab — thin but real |
+| `profiles` | 2 | Us |
+| **`listings`** | **0** | Real Estate — a bottom-nav tab, showing its empty state |
+| **`offers`** | **0** | Deals — a whole section, empty |
+| **`challenges`** | **0** | Steps challenges |
+| **`real_estate_agents`** | **0** | Broker directory |
+| **`reviews`** | **0** | Every rating on every business |
+
+The screens are right and the empty states are honest. But a demo of Real
+Estate or Deals shows nothing, which reads as broken rather than as new.
+Either the client supplies the content or a seed is agreed — that is a
+decision, not a task, and it is the one worth putting in front of him
+first.
 
 ### Open questions for the client
 
@@ -362,7 +393,11 @@ added. This needs raising before the section is promised as working.
   content has two homes and needs a sync story.
 - Where does the web build get deployed? `modiin4u.co.il` is taken by WordPress,
   and the Flutter web build renders through CanvasKit, which search engines do
-  not read the way they read the current site.
+  not read the way they read the current site. Working assumption:
+  `app.modiin4u.co.il`, per §1e.
+- Is `app.modiin4u.co.il` the admin panel only, or the resident web app too?
+  The admin area is gated on `kIsWeb` rather than built separately, so today
+  one build serves both.
 
 ---
 

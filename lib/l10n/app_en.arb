@@ -557,5 +557,8 @@
   "noPlacesMatch": "No places match your search",
   "viewAsList": "View as List",
   "notRatedYet": "Not rated yet",
-  "shareRecommendation": "Share your recommendation with the Modi'in community."
+  "shareRecommendation": "Share your recommendation with the Modi'in community.",
+  "mapLayerBusinesses": "Businesses",
+  "mapLayerEvents": "Events",
+  "mapLayerRealEstate": "Real Estate"
 }

@@ -557,5 +557,8 @@
   "noPlacesMatch": "לא נמצאו מקומות מתאימים",
   "viewAsList": "תצוגת רשימה",
   "notRatedYet": "אין דירוג עדיין",
-  "shareRecommendation": "שתפו את ההמלצה שלכם עם קהילת מודיעין."
+  "shareRecommendation": "שתפו את ההמלצה שלכם עם קהילת מודיעין.",
+  "mapLayerBusinesses": "\u05e2\u05e1\u05e7\u05d9\u05dd",
+  "mapLayerEvents": "\u05d0\u05d9\u05e8\u05d5\u05e2\u05d9\u05dd",
+  "mapLayerRealEstate": "\u05e0\u05d3\u05dc\"\u05df"
 }
