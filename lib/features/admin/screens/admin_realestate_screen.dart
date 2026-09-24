@@ -62,17 +62,17 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
           // Type filters
           _FilterChip('הכל', _typeFilter.isEmpty && _statusFilter.isEmpty, () {
             setState(() { _typeFilter = ''; _statusFilter = ''; });
-            ref.read(adminListingListProvider.notifier).setTypeFilter(null);
+            ref.read(adminListingListProvider.notifier).setKindFilter(null);
             ref.read(adminListingListProvider.notifier).setStatusFilter(null);
           }),
           _FilterChip('השכרה', _typeFilter == 'rent', () {
             setState(() { _typeFilter = 'rent'; _statusFilter = ''; });
-            ref.read(adminListingListProvider.notifier).setTypeFilter('rent');
+            ref.read(adminListingListProvider.notifier).setKindFilter('rent');
             ref.read(adminListingListProvider.notifier).setStatusFilter(null);
           }),
           _FilterChip('מכירה', _typeFilter == 'sale', () {
             setState(() { _typeFilter = 'sale'; _statusFilter = ''; });
-            ref.read(adminListingListProvider.notifier).setTypeFilter('sale');
+            ref.read(adminListingListProvider.notifier).setKindFilter('sale');
             ref.read(adminListingListProvider.notifier).setStatusFilter(null);
           }),
 
@@ -137,10 +137,14 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
     switch (action) {
       case 'edit':
         _showListingEditor(context, ref, listing: listing);
+      case 'approve':
+        notifier.approve(id);
+      case 'reject':
+        notifier.reject(id);
       case 'activate':
         notifier.updateStatus(id, 'active');
       case 'sold':
-        notifier.updateStatus(id, listing['type'] == 'rent' ? 'rented' : 'sold');
+        notifier.updateStatus(id, listing['kind'] == 'rent' ? 'rented' : 'sold');
       case 'expire':
         notifier.updateStatus(id, 'expired');
       case 'delete':
@@ -196,9 +200,12 @@ class _ListingTable extends StatelessWidget {
           separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.3)),
           itemBuilder: (_, i) {
             final l = listings[i];
-            final type = l['type'] as String? ?? 'rent';
+            final kind = l['kind'] as String? ?? 'sale';
             final status = l['status'] as String? ?? 'pending';
-            final price = l['price'] as num? ?? 0;
+            final price =
+                (l['kind'] == 'rent' ? l['price_per_month'] : l['price'])
+                    as num? ??
+                0;
             final isFeatured = l['is_featured'] as bool? ?? false;
             final isBroker = l['is_broker'] as bool? ?? false;
 
@@ -215,10 +222,10 @@ class _ListingTable extends StatelessWidget {
                     if (isBroker) Text('מתווך', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 10, color: AppColors.grayLight)),
                   ])),
                   Expanded(flex: 2, child: Text(l['neighborhood'] as String? ?? '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                  Expanded(flex: 1, child: _TypeBadge(type)),
+                  Expanded(flex: 1, child: _TypeBadge(kind)),
                   Expanded(flex: 1, child: Text('${l['rooms'] ?? '—'}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                   if (isWide) Expanded(flex: 1, child: Text('${l['sqm'] ?? '—'}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
-                  Expanded(flex: 2, child: Text(_formatPrice(price, type), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navy))),
+                  Expanded(flex: 2, child: Text(_formatPrice(price, kind), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.navy))),
                   Expanded(flex: 1, child: _StatusPill(status)),
                   if (isWide) Expanded(flex: 1, child: Text('${l['view_count'] ?? 0}', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText))),
                   PopupMenuButton<String>(
@@ -226,8 +233,12 @@ class _ListingTable extends StatelessWidget {
                     onSelected: (v) => onAction(v, l),
                     itemBuilder: (_) => [
                       PopupMenuItem(value: 'edit', child: Text('עריכה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      if (status != 'active') PopupMenuItem(value: 'activate', child: Text('הפעל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      if (status == 'active') PopupMenuItem(value: 'sold', child: Text(type == 'rent' ? 'סמן כהושכר' : 'סמן כנמכר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status == 'pending') ...[
+                        PopupMenuItem(value: 'approve', child: Text('אישור ופרסום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.success))),
+                        PopupMenuItem(value: 'reject', child: Text('דחייה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
+                      ],
+                      if (status != 'active' && status != 'pending') PopupMenuItem(value: 'activate', child: Text('הפעל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      if (status == 'active') PopupMenuItem(value: 'sold', child: Text(kind == 'rent' ? 'סמן כהושכר' : 'סמן כנמכר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                       if (status != 'expired') PopupMenuItem(value: 'expire', child: Text('סמן כפג תוקף', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                       PopupMenuItem(value: 'delete', child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.error))),
                     ],
@@ -277,17 +288,22 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
   bool _saving = false;
 
   late final TextEditingController _address;
-  late final TextEditingController _neighborhood;
   late final TextEditingController _price;
   late final TextEditingController _rooms;
   late final TextEditingController _sqm;
   late final TextEditingController _floor;
+  late final TextEditingController _title;
   late final TextEditingController _totalFloors;
   late final TextEditingController _description;
   late final TextEditingController _contactName;
   late final TextEditingController _contactPhone;
 
-  String _type = 'rent';
+  /// `kind` on the table. It was called `_type` and written to a column
+  /// named `type`, which does not exist — so every save from this form was
+  /// rejected by PostgREST and creating a listing here never worked.
+  String _kind = 'rent';
+  String _propertyType = 'apartment';
+  String? _neighborhoodId;
   String _status = 'pending';
   bool _isBroker = false;
   bool _hasParking = false;
@@ -304,9 +320,15 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
   void initState() {
     super.initState();
     final l = widget.listing;
+    _title = TextEditingController(text: l?['title'] as String? ?? '');
     _address = TextEditingController(text: l?['address'] as String? ?? '');
-    _neighborhood = TextEditingController(text: l?['neighborhood'] as String? ?? '');
-    _price = TextEditingController(text: (l?['price'] as num?)?.toString() ?? '');
+    // Stored as an id against `neighborhoods`, not as free text.
+    _neighborhoodId = l?['neighborhood_id'] as String?;
+    // A rental is priced in `price_per_month`, a sale in `price`.
+    final existingPrice = l == null
+        ? null
+        : (l['kind'] == 'rent' ? l['price_per_month'] : l['price']) as num?;
+    _price = TextEditingController(text: existingPrice?.toString() ?? '');
     _rooms = TextEditingController(text: (l?['rooms'] as num?)?.toString() ?? '');
     _sqm = TextEditingController(text: (l?['sqm'] as num?)?.toString() ?? '');
     _floor = TextEditingController(text: (l?['floor'] as num?)?.toString() ?? '');
@@ -315,7 +337,8 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
     _contactName = TextEditingController(text: l?['contact_name'] as String? ?? '');
     _contactPhone = TextEditingController(text: l?['contact_phone'] as String? ?? '');
 
-    _type = l?['type'] as String? ?? 'rent';
+    _kind = l?['kind'] as String? ?? 'rent';
+    _propertyType = l?['property_type'] as String? ?? 'apartment';
     _status = l?['status'] as String? ?? 'pending';
     _isBroker = l?['is_broker'] as bool? ?? false;
     _hasParking = l?['has_parking'] as bool? ?? false;
@@ -329,7 +352,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
 
   @override
   void dispose() {
-    _address.dispose(); _neighborhood.dispose(); _price.dispose(); _rooms.dispose();
+    _address.dispose(); _title.dispose(); _price.dispose(); _rooms.dispose();
     _sqm.dispose(); _floor.dispose(); _totalFloors.dispose(); _description.dispose();
     _contactName.dispose(); _contactPhone.dispose();
     super.dispose();
@@ -359,21 +382,50 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
 
               Expanded(
                 child: ListView(padding: const EdgeInsets.all(20), children: [
+                  // `title` is NOT NULL on the table and the form never
+                  // collected it, so even a corrected save would have failed.
+                  _field('כותרת *', _title, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
                   Row(children: [
                     Expanded(child: DropdownButtonFormField<String>(
-                      value: _type,
-                      decoration: InputDecoration(labelText: 'סוג *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                      value: _kind,
+                      decoration: InputDecoration(labelText: 'סוג מודעה *', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                       items: [
                         DropdownMenuItem(value: 'rent', child: Text('השכרה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                         DropdownMenuItem(value: 'sale', child: Text('מכירה', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                       ],
-                      onChanged: (v) => setState(() => _type = v!),
+                      onChanged: (v) => setState(() => _kind = v!),
                     )),
                     const SizedBox(width: 12),
-                    Expanded(child: _field('מחיר *', _price, hint: _type == 'rent' ? '6000' : '2500000', validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null)),
+                    Expanded(child: _field('מחיר *', _price, hint: _kind == 'rent' ? '6000' : '2500000', validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null)),
+                  ]),
+                  Row(children: [
+                    Expanded(child: DropdownButtonFormField<String>(
+                      value: _propertyType,
+                      decoration: InputDecoration(labelText: 'סוג נכס', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                      items: const [
+                        ('apartment', 'דירה'), ('penthouse', 'פנטהאוז'),
+                        ('garden', 'דירת גן'), ('duplex', 'דופלקס'),
+                        ('villa', 'וילה'), ('studio', 'סטודיו'), ('other', 'אחר'),
+                      ].map((t) => DropdownMenuItem(value: t.$1, child: Text(t.$2, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)))).toList(),
+                      onChanged: (v) => setState(() => _propertyType = v!),
+                    )),
+                    const SizedBox(width: 12),
+                    // The neighbourhood is a row in `neighborhoods`, so it is
+                    // picked rather than typed — a typed name matched nothing.
+                    Expanded(child: Consumer(builder: (_, ref, _) {
+                      final hoods = ref.watch(adminNeighborhoodOptionsProvider);
+                      return DropdownButtonFormField<String>(
+                        value: _neighborhoodId,
+                        decoration: InputDecoration(labelText: 'שכונה', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                        items: [
+                          for (final h in hoods.valueOrNull ?? const <Map<String, dynamic>>[])
+                            DropdownMenuItem(value: h['id'] as String, child: Text(h['name'] as String, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                        ],
+                        onChanged: (v) => setState(() => _neighborhoodId = v),
+                      );
+                    })),
                   ]),
                   _field('כתובת *', _address, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
-                  _field('שכונה *', _neighborhood, validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null),
                   Row(children: [
                     Expanded(child: _field('חדרים', _rooms, hint: '4')),
                     const SizedBox(width: 12),
@@ -415,7 +467,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                     items: [
                       DropdownMenuItem(value: 'pending', child: Text('ממתין', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                       DropdownMenuItem(value: 'active', child: Text('פעיל', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
-                      DropdownMenuItem(value: _type == 'rent' ? 'rented' : 'sold', child: Text(_type == 'rent' ? 'הושכר' : 'נמכר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
+                      DropdownMenuItem(value: _kind == 'rent' ? 'rented' : 'sold', child: Text(_kind == 'rent' ? 'הושכר' : 'נמכר', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                       DropdownMenuItem(value: 'expired', child: Text('פג תוקף', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13))),
                     ],
                     onChanged: (v) => setState(() => _status = v!),
@@ -476,11 +528,19 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
+    final isRent = _kind == 'rent';
+    final price = num.tryParse(_price.text);
+
     final fields = <String, dynamic>{
-      'type': _type,
-      'price': num.tryParse(_price.text) ?? 0,
+      'title': _title.text.trim(),
+      'kind': _kind,
+      'property_type': _propertyType,
+      // One column or the other, and the unused one cleared, so a listing
+      // switched from sale to rent does not keep the old figure.
+      'price': isRent ? null : price,
+      'price_per_month': isRent ? price : null,
       'address': _address.text,
-      'neighborhood': _neighborhood.text,
+      'neighborhood_id': _neighborhoodId,
       'rooms': num.tryParse(_rooms.text),
       'sqm': int.tryParse(_sqm.text),
       'floor': int.tryParse(_floor.text),

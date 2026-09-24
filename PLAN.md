@@ -13,22 +13,52 @@ not for the client.
 
 | Component | State |
 |---|---|
-| Mobile app | 44 screens built. News, businesses, restaurants, events, map, search and sign-in are on live data. Deals, real estate, steps, community and games still carry content packed inside the build. |
+| Mobile app | 44 screens built. News, businesses, restaurants, events, map, search, sign-in, favourites, settings and **real estate** are on live data. Deals, steps, community, games and the municipal services list still carry content packed inside the build. |
 | Website | 17 screens built, reading a frozen JSON export in `assets/data/`. Not deployed anywhere. |
-| Backend | Live. 51 tables deployed. Real site content loaded — 220 businesses, 669 articles, 71 tags. Two migrations written and **not yet run**: `00014` (security) and `00015` (sign-in). |
-| Auth | Wired to Supabase — email code, session restore, profile row, account deletion. Waiting on two dashboard settings (C1b) before a resident can actually sign in. `profiles` = 0 rows, `admin_users` = 0 rows. |
-| Admin area | 23 sections built, no entry point from the app, not on live data. |
+| Backend | Live. 58 tables deployed. Migrations `00014`–`00020` all applied. |
+| Auth | Working end to end on a device: sign up, e-mail confirmation, sign in, password reset, profile row, account deletion. Blocked only on SMTP for the client's own first sign-in. |
+| Admin area | 23 sections on live data, reachable from the app for an administrator (web build only). **No moderation queue for resident-posted listings** — see D1. |
 
 ### Live table row counts
 
-`articles` 669, `businesses` 220, `admin_role_permissions` 102, `tags` 71,
-`categories` 29, `events` 10, `neighborhoods` 10, `home_blocks` 10,
-`admin_roles` 8, `ad_placements` 8, `feature_flags` 8, `point_rules` 8.
+`articles` 669, `businesses` 220, `entity_categories` 210,
+`admin_role_permissions` 102, `tags` 71, `categories` 29, `events` 10,
+`neighborhoods` 10, `home_blocks` 10, `admin_roles` 8, `ad_placements` 8,
+`feature_flags` 8, `point_rules` 8, `profiles` 2.
 
-Everything else is 0 — including `profiles`, `admin_users`, `business_hours`,
-`reviews`, `media`, `offers`, `favorites`, `daily_steps`.
+Still empty: `offers`, `reviews`, `business_hours`, `listings`,
+`real_estate_agents`, `challenges`, `daily_steps`, `games`, `media`,
+`app_settings`, `campaigns`.
+
+An empty table is not the same problem in each case. `listings` and `reviews`
+are empty because nobody has posted one yet, which is correct. `offers`,
+`challenges` and `business_hours` are empty because **nothing can create
+them** — there is no admin form and no import — so the screens that read them
+would show nothing even once wired.
 
 ---
+
+## 1a. What is still made up
+
+Audited 24 September by grepping every feature for database access and for
+hardcoded lists. This is the list of things the app currently *asserts* that
+are not true, ordered by how visible they are.
+
+| Screen | What it shows now | Table it should read | Table has data? |
+|---|---|---|---|
+| **Deals** | Invented offers on invented shops — "Nike Store", "mCaffeine", "Urban Plate Kitchen & Bar" — with counting-down timers that do not count | `offers`, `offer_claims` | No, and nothing can create one |
+| **Steps** | A fabricated step count, fabricated leaderboard, fabricated challenges | `daily_steps`, `challenges`, `challenge_participants` | No |
+| **Map POIs** | 63 hardcoded place names | `businesses` (has lat/long) | Yes — 220 rows |
+| **Municipal services** | A static list of services | none — genuinely static links | n/a, but the phone numbers need checking |
+| **Games** | Placeholder screen | `games`, `game_sessions` | No |
+| **Community** | Placeholder screen | `comments`, `reports` | No |
+| **Professionals** | Placeholder detail screen | `businesses` filtered by category | Yes |
+| **Business hours** | Nothing shown | `business_hours` | No — needs the admin form (built) to be used, or an import |
+| **Reviews** | Nothing shown | `reviews` | No — needs residents, which needs sign-in, which works now |
+
+**Fixed already** (was mock, now live): real estate — the whole feature, see
+the commit of 24 September; profile badge and the three profile fields;
+favourites; settings.
 
 ## 1b. How the app is meant to work
 
