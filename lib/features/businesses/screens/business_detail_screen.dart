@@ -16,6 +16,7 @@ import '../models/business.dart';
 import '../providers/business_providers.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
+import '../../../shared/widgets/web_chrome.dart';
 
 class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
@@ -82,8 +83,118 @@ class _BusinessDetailContentState
     super.dispose();
   }
 
+  /// The language the desktop chrome is in. The mobile layout follows the
+  /// app locale; the web pages each carry their own toggle, as the rest of
+  /// the `web_*` screens do.
+  bool _isHebrew = false;
+
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.maxWidth > 1100
+          ? _buildDesktop(context)
+          : _buildMobile(context),
+    );
+  }
+
+  /// Every business card on every desktop page opens this screen, and until
+  /// now it had no wide layout — it drew the mobile column at 430px in the
+  /// middle of the window. Same content, same providers, arranged for the
+  /// room: the photograph across the top, the page in the left column, and
+  /// the things you act on kept beside it rather than scrolled past.
+  Widget _buildDesktop(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          WebNavbar(
+            isHebrew: _isHebrew,
+            activeId: 'businesses',
+            onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildHero(0),
+                  const SizedBox(height: 24),
+                  WebSection(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _buildDesktopMain()),
+                        const SizedBox(width: 48),
+                        SizedBox(width: 440, child: _buildDesktopAside()),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 80),
+                  WebFooter(isHebrew: _isHebrew),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopMain() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          business.name,
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 34,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        if ((business.description ?? '').isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            business.description!,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 16,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+        ],
+        const SizedBox(height: 20),
+        _buildTabBar(business),
+        _buildTabContent(),
+      ],
+    );
+  }
+
+  /// The column that stays beside the page: what the business is, and what a
+  /// reader can do about it. On mobile these sit in a row under the name and
+  /// are easy to scroll past.
+  Widget _buildDesktopAside() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildRatingRow(),
+          const SizedBox(height: 16),
+          _buildAddressRow(),
+          _buildNeighborhoodLink(),
+          const SizedBox(height: 20),
+          _buildActionButtons(stacked: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
@@ -508,94 +619,105 @@ class _BusinessDetailContentState
   // ─────────────────────────────────────────────
   // Action buttons: Call, Website, Instagram, Navigate, Share
   // ─────────────────────────────────────────────
-  Widget _buildActionButtons() {
+  /// [stacked] puts the call button on its own line above the four icons.
+  ///
+  /// The row is laid out for a phone's full width. Beside the page on a
+  /// desktop it sits in a 440px column, where five controls on one line push
+  /// the call button's label past the card's edge.
+  /// [stacked] puts the call button on its own line above the four icons.
+  ///
+  /// The row is laid out for a phone's full width. Beside the page on a
+  /// desktop it sits in a 440px column, where five controls on one line push
+  /// the call button's label past the card's edge.
+  Widget _buildActionButtons({bool stacked = false}) {
     final l = L.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          // Call Now button
-          Expanded(
-            child: GestureDetector(
-              onTap: business.phone == null
-                  ? null
-                  : () => launchUrl(Uri.parse('tel:${business.phone}')),
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.midBlue,
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      IconsaxPlusLinear.call,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      l.callNow,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+
+    final call = GestureDetector(
+      onTap: business.phone == null
+          ? null
+          : () => launchUrl(Uri.parse('tel:${business.phone}')),
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColors.midBlue,
+          borderRadius: BorderRadius.circular(50),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(IconsaxPlusLinear.call, size: 16, color: Colors.white),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                l.callNow,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
                 ),
               ),
             ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Website button
-          _OutlineCircleButton(
-            icon: IconsaxPlusLinear.global,
-            color: AppColors.turquoise,
-            onTap: business.website == null
-                ? null
-                : () => launchUrl(Uri.parse(business.website!)),
-          ),
-
-          const SizedBox(width: 8),
-
-          // Instagram button
-          _OutlineCircleButton(
-            icon: IconsaxPlusLinear.instagram,
-            color: AppColors.turquoise,
-            onTap: business.instagram == null
-                ? null
-                : () => launchUrl(Uri.parse(business.instagram!)),
-          ),
-
-          const SizedBox(width: 8),
-
-          // Navigate button
-          _OutlineCircleButton(
-            icon: IconsaxPlusLinear.routing,
-            color: AppColors.turquoise,
-            onTap: () => launchUrl(
-              Uri.parse(
-                'https://waze.com/ul?ll=${business.latitude},'
-                '${business.longitude}&navigate=yes',
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // Share button
-          _OutlineCircleButton(
-            icon: IconsaxPlusLinear.export_1,
-            color: AppColors.turquoise,
-            onTap: _shareBusiness,
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+
+    final icons = <Widget>[
+      _OutlineCircleButton(
+        icon: IconsaxPlusLinear.global,
+        color: AppColors.turquoise,
+        onTap: business.website == null
+            ? null
+            : () => launchUrl(Uri.parse(business.website!)),
+      ),
+      const SizedBox(width: 8),
+      _OutlineCircleButton(
+        icon: IconsaxPlusLinear.instagram,
+        color: AppColors.turquoise,
+        onTap: business.instagram == null
+            ? null
+            : () => launchUrl(Uri.parse(business.instagram!)),
+      ),
+      const SizedBox(width: 8),
+      _OutlineCircleButton(
+        icon: IconsaxPlusLinear.routing,
+        color: AppColors.turquoise,
+        onTap: () => launchUrl(
+          Uri.parse(
+            'https://waze.com/ul?ll=${business.latitude},'
+            '${business.longitude}&navigate=yes',
+          ),
+        ),
+      ),
+      const SizedBox(width: 8),
+      _OutlineCircleButton(
+        icon: IconsaxPlusLinear.export_1,
+        color: AppColors.turquoise,
+        onTap: _shareBusiness,
+      ),
+    ];
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: stacked ? 0 : 16),
+      child: stacked
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                call,
+                const SizedBox(height: 12),
+                Row(children: icons),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: call),
+                const SizedBox(width: 12),
+                ...icons,
+              ],
+            ),
     );
   }
 
@@ -1392,6 +1514,24 @@ class _BusinessDetailContentState
 
   Widget _buildRatingSummary() {
     final summary = ref.watch(businessReviewSummaryProvider(business.id));
+
+    // No reviews means no score. This drew "0.0", five hollow stars and a
+    // distribution of five 0% bars, which reads as a business rated badly by
+    // people rather than one nobody has rated.
+    if (summary.total == 0) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Text(
+          L.of(context).notRatedYet,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            color: const Color(0xFF6D6D6D),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(

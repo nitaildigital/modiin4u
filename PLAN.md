@@ -402,6 +402,37 @@ English while the app opens in Hebrew, so English sat inside a right-to-left
 layout and the punctuation landed on the wrong side: `,Everything in Modiin`,
 `.in one place`, `?Don't have an account`. Translated.
 
+### Desktop layouts, started
+
+The Figma file has 17 web frames and all 17 are built. The screens below had
+no web design at all, so they follow the pattern the existing ones
+established — `WebNavbar`, a 1600px content column, `WebFooter` — rather than
+anything invented.
+
+**Business detail is done.** It mattered most: every business card on every
+desktop page opens it, and it was drawing the phone column stretched across
+the window, with no navbar and no footer. It is one file with two
+arrangements rather than a second copy — `build` switches at 1100 and both
+call the same builders, so the tabs, menu, photographs and reviews have one
+implementation. The photograph runs across the top; the page sits in the
+left column; rating, address, neighbourhood and the actions stay in a card
+beside it instead of being scrolled past.
+
+Two things found while looking at it in a browser:
+
+- the action row is laid out for a phone's full width, and in a 440px column
+  the call button's label ran past the card's edge. It stacks now, the four
+  icons on their own line.
+- the reviews panel drew "0.0", five hollow stars and five 0% bars for a
+  business nobody has reviewed — which reads as rated badly rather than not
+  rated. It says so instead, matching the rest of the app.
+
+**A caching note for anyone verifying a web build locally.** Flutter
+registers a service worker, so a rebuild keeps serving the old bundle even
+after a reload with a changed query string. Serve each build on a fresh port,
+or clear `caches` and unregister the worker first. Two rounds were lost to
+this.
+
 **Still true of the desktop layouts:** they are laid out for 1920 and only
 the navbar was hardened. Content columns are capped at 1600 and centre, which
 holds down to about 1100, but nothing below that has been looked at.
