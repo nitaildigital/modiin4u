@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
 
 import '../../../core/supabase/supabase_config.dart';
 
@@ -45,15 +46,38 @@ final articleCategoryIdsProvider = FutureProvider.family<List<String>, String>((
 
 class AdminArticleListNotifier
     extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
+  static const _pageSize = 500;
+
   String? _search;
   String? _status;
+
+  /// How many rows the table holds, which is not how many were fetched.
+  int totalCount = 0;
+
+  int _window = _pageSize;
+
+  bool get hasMore => totalCount > _window;
+
+  /// Set while widening the window, so the rows already on screen stay put
+  /// instead of being replaced by a spinner.
+  bool _loadingMore = false;
 
   AdminArticleListNotifier() : super(const AsyncValue.loading()) {
     load();
   }
 
+  Future<void> loadMore() async {
+    _window += _pageSize;
+    _loadingMore = true;
+    try {
+      await load();
+    } finally {
+      _loadingMore = false;
+    }
+  }
+
   Future<void> load() async {
-    state = const AsyncValue.loading();
+    if (!_loadingMore) state = const AsyncValue.loading();
     try {
       var query = SupabaseConfig.client.from('articles').select();
 
@@ -65,13 +89,19 @@ class AdminArticleListNotifier
         query = query.or('title.ilike.%$q%,slug.ilike.%$q%');
       }
 
+      // The count is asked for separately from the rows: there are 669
+      // articles against a 500 limit, so the panel reported "500 articles"
+      // and the oldest 169 could neither be seen nor edited.
       final rows = await query
           .order('published_at', ascending: false, nullsFirst: false)
-          .limit(500);
+          .limit(_window)
+          .count(CountOption.exact);
 
       if (mounted) {
+        totalCount = rows.count;
         state = AsyncValue.data([
-          for (final r in List<Map<String, dynamic>>.from(rows)) _toForm(r),
+          for (final r in List<Map<String, dynamic>>.from(rows.data))
+            _toForm(r),
         ]);
       }
     } catch (e, st) {

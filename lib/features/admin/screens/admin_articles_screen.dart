@@ -15,6 +15,7 @@ class AdminArticlesScreen extends ConsumerStatefulWidget {
 
 class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
   String _statusFilter = '';
+  bool _loadingMore = false;
   final _searchController = TextEditingController();
   final _debouncer = _Debouncer(milliseconds: 400);
 
@@ -27,6 +28,7 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
   @override
   Widget build(BuildContext context) {
     final articlesAsync = ref.watch(adminArticleListProvider);
+    final notifier = ref.watch(adminArticleListProvider.notifier);
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Column(
@@ -114,7 +116,9 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
               articlesAsync
                       .whenData(
                         (list) => Text(
-                          '${list.length} כתבות',
+                          notifier.hasMore
+                              ? '${list.length} מתוך ${notifier.totalCount} כתבות'
+                              : '${notifier.totalCount} כתבות',
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 13,
@@ -212,17 +216,72 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                   ),
                 );
               }
-              return _ArticleTable(
-                articles: articles,
-                isWide: isWide,
-                onTap: (a) => _showArticleEditor(context, ref, article: a),
-                onAction: _handleAction,
+              return Column(
+                children: [
+                  Expanded(
+                    child: _ArticleTable(
+                      articles: articles,
+                      isWide: isWide,
+                      onTap: (a) =>
+                          _showArticleEditor(context, ref, article: a),
+                      onAction: _handleAction,
+                    ),
+                  ),
+
+                  // Rows are fetched a page at a time, and there are more
+                  // articles than one page. Without this the oldest ones
+                  // could not be reached, let alone edited.
+                  if (notifier.hasMore)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        border: Border(
+                          top: BorderSide(
+                            color: AppColors.adminCardBorder,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Center(
+                        child: OutlinedButton.icon(
+                          onPressed: _loadingMore ? null : _loadMore,
+                          icon: _loadingMore
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.expand_more, size: 18),
+                          label: Text(
+                            'טען עוד (${notifier.totalCount - articles.length} נותרו)',
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _loadMore() async {
+    setState(() => _loadingMore = true);
+    try {
+      await ref.read(adminArticleListProvider.notifier).loadMore();
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
+    }
   }
 
   void _handleAction(String action, Map<String, dynamic> article) {

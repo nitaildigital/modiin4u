@@ -1,0 +1,42 @@
+-- Three policies that let the public key do anything
+--
+-- Found on 25 September by reading the live database with the anon key — the
+-- one that ships inside the JavaScript bundle at app.modiin4u.co.il, which
+-- anybody can read out of the page source. It is not a secret and was never
+-- meant to be one; the row level policies are what stand behind it.
+--
+-- Two of them did not stand. `dev_articles_full_access` and
+-- `dev_businesses_full_access` are `for all using (true) with check (true)`
+-- to role `public`, left behind from development. An `ALL` policy covers
+-- INSERT, UPDATE and DELETE as well as SELECT, so anyone at all could rewrite
+-- or delete any of the 669 articles and 220 businesses.
+--
+-- Confirmed without touching a row: an insert with no title came back 23502,
+-- a not-null violation, rather than 42501. The policy had already let it
+-- through; only the missing column stopped it.
+--
+-- The third, `profiles_select_public`, is `for select using (true)` with the
+-- comment "public profiles (name, avatar, neighborhood)" — but a policy is
+-- per row, not per column, so it hands out every column of the row. Reading
+-- the table with the anon key returns `email`, `phone`, `date_of_birth` and
+-- `family_status` for every resident. Two rows today; every resident in the
+-- city after launch.
+--
+-- Migration 00014 already wrote the policies these should have been replaced
+-- by. It dropped only the names it was introducing, so the 00013 ones stayed,
+-- and Postgres ORs permissive policies together: the loosest one wins. What
+-- remains after this migration:
+--
+--   articles   — read published, or anything if is_admin(); writes admin only
+--   businesses — read active, or own, or admin; update owner or admin
+--   profiles   — read and write your own row, or anything if is_admin()
+--
+-- Checked before dropping: the app reads `profiles` only by `id = auth.uid()`
+-- (auth_provider, preferences_provider); the steps leaderboard reaches other
+-- people's names through a `security definer` function, which is not subject
+-- to these policies; and both administrators are active rows in `admin_users`,
+-- so `is_admin()` is true for them and the panel keeps its access.
+
+drop policy if exists dev_articles_full_access on public.articles;
+drop policy if exists dev_businesses_full_access on public.businesses;
+drop policy if exists profiles_select_public on public.profiles;

@@ -501,12 +501,120 @@ this.
 the navbar was hardened. Content columns are capped at 1600 and centre, which
 holds down to about 1100, but nothing below that has been looked at.
 
+### Three policies that let the public key do anything — 25 September
+
+**Found and closed the same afternoon.** Migration `00027_drop_dev_policies.sql`,
+applied to the live database.
+
+The anon key ships inside the JavaScript bundle at app.modiin4u.co.il; anyone
+can read it out of the page source. That is normal and by design — the row
+level policies are what stand behind it. Three of them did not.
+
+- `dev_articles_full_access` and `dev_businesses_full_access` were
+  `for all using (true) with check (true)` to role `public`, left over from
+  development. `ALL` covers INSERT, UPDATE and DELETE, so **anybody at all
+  could rewrite or delete any of the 669 articles and 220 businesses.**
+  Confirmed without writing a row: an insert with no title returned `23502`,
+  a not-null violation, rather than `42501`. The policy had already let it
+  through; only the missing column stopped it.
+- `profiles_select_public` was `for select using (true)`, with the comment
+  "public profiles (name, avatar, neighborhood)". A policy applies to rows,
+  not columns, so it handed out the whole row: reading `profiles` with the
+  anon key returned `email`, `phone`, `date_of_birth` and `family_status`
+  for every resident. Two rows today. Every resident in the city after launch.
+
+**Why they survived.** Migration 00014 wrote the correct replacements —
+`profiles_read_own`, `articles_read_published` — but dropped only the names it
+was introducing. The 00013 and dev policies stayed, and Postgres ORs
+permissive policies together, so the loosest one decides. A tightening
+migration that does not drop what it replaces changes nothing.
+
+Checked before dropping: the app reads `profiles` only by `id = auth.uid()`;
+the steps leaderboard reaches other people's names through a `security
+definer` function, which these policies do not govern; and both
+administrators are active rows in `admin_users`, so `is_admin()` holds and the
+panel keeps its access. Tested inside a transaction and rolled back before
+being applied for real.
+
+Verified with the anon key afterwards: articles 667 (drafts no longer
+readable), businesses 219 (the pending one hidden), profiles 0 rows, and the
+insert probe now returns `42501`. The news page and the admin panel both
+still render.
+
+**Worth a look before launch:** no other table was scanned for a policy of
+this shape beyond the three named here. The `*_read_all` policies on
+categories, tags, neighbourhoods, feature flags and the rest are SELECT-only
+on reference data, which is intended.
+
 ---
 
-## 1f. Nineteen invented businesses, in the live database
+### What the live admin panel caught — 25 September
+
+Signed in to the deployed panel as the test account and worked the sections.
+Two defects, both invisible from the code alone:
+
+- **Analytics generated every figure at random.** `admin_analytics_provider`
+  built its numbers with `rng.nextInt` — "127 active now", "1,834 sessions
+  today", "6,720 page views" — and the Refresh button rolled them again, so a
+  second look gave different numbers with the same confidence. The database
+  holds two profiles. There is no analytics table behind any of it.
+- **The list capped at 500 rows and said so as if it were the total.**
+  `articles` has 669. The oldest 169 could not be seen, searched or edited,
+  and the header read "500 כתבות" as though that were the whole table. Both
+  notifiers now ask Postgres for the count separately from the rows
+  (`CountOption.exact`), so the header reads "500 מתוך 669 כתבות" and a
+  "load more" button under the table widens the window. **Both verified in a
+  browser**: the header reads "500 מתוך 669 כתבות" with "טען עוד (169 נותרו)"
+  beneath the table, and pressing it leaves the rows in place and the header
+  reading "669 כתבות".
+
+**The other twenty sections share that shape** and are under the cap today —
+businesses 220, tags 71, categories 29, neighbourhoods and events 10, and the
+rest empty. They will need the same two lines the day any of them passes 500;
+the notifier already reports `totalCount` and exposes `loadMore()`, so it is
+the header and the footer button only.
+
+**The news feed fetches all 669 articles at once** — `article_repository`
+orders by date with no limit, which works because Supabase's ceiling is 1000,
+and will stop working when the client's 670th article makes it 1001. Paging
+the reader's news list is a change to how that screen behaves, so it is
+flagged rather than done.
+
+---
+
+## 1f. What `supabase/seed_remote.sql` put in the live database
 
 **Decision on 24 September: leave them for now, remove before launch.**
 Recorded here so nobody has to rediscover it.
+
+The seed file wrote more than businesses. Matching its slugs against the live
+tables on 25 September:
+
+| | seeded | real |
+|---|---|---|
+| `businesses` | 19 | 201 (the WordPress import) |
+| `articles` | **8** | 661 |
+| `events` | **9 — all of them** | 0 |
+
+**The eight seeded articles carry invented view counts** — 3,200, 2,100,
+1,800, 1,450, 1,240, 890, 560, 430. They are the only articles in the table
+with a non-zero `view_count`, so the 11,670 total on the analytics tab is
+those eight numbers added up. The tab states that 8 of 669 articles carry a
+count, which is true and visible, but the figure behind it is seed fiction and
+will keep being reported as reach until the rows go.
+
+**Two of them are flagged `is_featured`** — `anaba-park-upgrade` and
+`light-rail-update` — so they are what the news page puts in its hero slot.
+Neither has a `featured_image`, which is why that slot renders a placeholder.
+The front page of the site leads on invented content with a missing picture.
+
+**All nine events are seeded**, and their 7,740 views are invented the same
+way. There is no real event in the table.
+
+Separately, **25 published articles have no `featured_image`**, and 17 of them
+are genuine WordPress imports (`water-park-ligad`, `ben-shemen-forest`,
+`mitzpe-natan` and so on) whose pictures did not come across in the import.
+That is a migration gap to close, not seed data to delete.
 
 `businesses` holds two populations, and they are easy to tell apart:
 

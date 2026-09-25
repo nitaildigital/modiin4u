@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
 
 import '../../../core/supabase/supabase_config.dart';
 
@@ -37,7 +38,24 @@ class AdminTableNotifier
   /// client asked for a trash rather than anything permanent.
   final String? softDeleteStatus;
 
+  /// How many rows one page holds. `loadMore` raises the window rather than
+  /// paging, because the tables sort and filter in place.
   final int limit;
+
+  /// How many rows the table holds in total, which is not the same as how
+  /// many were fetched. `articles` has 669 rows against a 500 limit, so the
+  /// panel said "500 articles" and the oldest 169 could not be reached or
+  /// edited — and nothing said so.
+  int totalCount = 0;
+
+  /// True while rows exist beyond the ones loaded.
+  bool get hasMore => totalCount > _window;
+
+  int _window = 0;
+
+  /// Set while widening the window, so the rows already on screen stay put
+  /// instead of being replaced by a spinner.
+  bool _loadingMore = false;
 
   String? _search;
   String? _status;
@@ -53,11 +71,12 @@ class AdminTableNotifier
     this.softDeleteStatus,
     this.limit = 500,
   }) : super(const AsyncValue.loading()) {
+    _window = limit;
     load();
   }
 
   Future<void> load() async {
-    state = const AsyncValue.loading();
+    if (!_loadingMore) state = const AsyncValue.loading();
     try {
       var query = SupabaseConfig.client.from(table).select(columns);
 
@@ -73,13 +92,26 @@ class AdminTableNotifier
 
       final rows = await query
           .order(orderBy, ascending: ascending, nullsFirst: false)
-          .limit(limit);
+          .limit(_window)
+          .count(CountOption.exact);
 
       if (mounted) {
-        state = AsyncValue.data(List<Map<String, dynamic>>.from(rows));
+        totalCount = rows.count;
+        state = AsyncValue.data(List<Map<String, dynamic>>.from(rows.data));
       }
     } catch (e, st) {
       if (mounted) state = AsyncValue.error(e, st);
+    }
+  }
+
+  /// Widens the window by another page and reloads.
+  Future<void> loadMore() async {
+    _window += limit;
+    _loadingMore = true;
+    try {
+      await load();
+    } finally {
+      _loadingMore = false;
     }
   }
 

@@ -1,15 +1,24 @@
-import 'dart:math';
-import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_analytics_provider.dart';
 
-/// Enhanced analytics overview — replaces the basic _OverviewSection.
-/// Covers: Real-time, DAU/WAU/MAU, retention, content performance,
-/// ad revenue, user demographics, search analytics, push stats.
+/// The Analytics section, on what the database can actually be asked.
+///
+/// This screen had five tabs and roughly a hundred figures, and every one of
+/// them was invented — see the note at the top of `admin_analytics_provider`
+/// for the list. It had a Refresh button wired to a random generator, so the
+/// numbers moved when it was pressed and read as live, and a map of
+/// twenty-five dots labelled as the people using the app right now.
+///
+/// Three tabs remain. Each figure on them is a row count, a sum of a column
+/// the schema actually carries, or nothing at all: where there is no source,
+/// the panel says which source it would need instead of estimating. Every
+/// card carries the table and column it came from underneath it, so the client
+/// can check any number against the data.
 class AdminAnalyticsScreen extends ConsumerStatefulWidget {
   const AdminAnalyticsScreen({super.key});
 
@@ -25,7 +34,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 5, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -64,23 +73,19 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen>
             indicatorWeight: 2.5,
             labelPadding: const EdgeInsets.symmetric(horizontal: 20),
             tabs: const [
-              Tab(text: 'זמן אמת'),
-              Tab(text: 'משתמשים ומעורבות'),
+              Tab(text: 'נתוני מערכת'),
               Tab(text: 'ביצועי תוכן'),
               Tab(text: 'פרסום והכנסות'),
-              Tab(text: 'דמוגרפיה'),
             ],
           ),
         ),
         Expanded(
           child: TabBarView(
             controller: _tabs,
-            children: [
-              _RealTimeTab(),
-              _EngagementTab(),
+            children: const [
+              _SystemDataTab(),
               _ContentTab(),
-              _RevenueTab(),
-              _DemographicsTab(),
+              _AdvertisingTab(),
             ],
           ),
         ),
@@ -90,1765 +95,836 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen>
 }
 
 // ══════════════════════════════════════════════
-// TAB 1 — REAL-TIME
+// TAB 1 — WHAT THE DATABASE HOLDS
 // ══════════════════════════════════════════════
 
-class _RealTimeTab extends ConsumerWidget {
+class _SystemDataTab extends ConsumerWidget {
+  const _SystemDataTab();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rt = ref.watch(adminRealTimeProvider);
-    final isWide = MediaQuery.of(context).size.width > 900;
-    final activeNow = rt['active_now'] as int;
-    final sessionsToday = rt['sessions_today'] as int;
-    final pageViews = rt['page_views_today'] as int;
-    final bounceRate = rt['bounce_rate_pct'] as int;
-    final searches = rt['searches_today'] as int;
-    final shares = rt['shares_today'] as int;
-    final newUsers = rt['new_users_today'] as int;
-    final errors = rt['errors_today'] as int;
-    final apiLatency = rt['api_latency_ms'] as int;
-    final liveUsers = rt['live_users'] as List<dynamic>;
-    final notiSent = rt['notifications_sent_today'] as int;
-    final notiOpened = rt['notifications_opened'] as int;
+    final counts = ref.watch(adminRowCountsProvider);
+    final cadence = ref.watch(adminPublishingCadenceProvider);
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // Header with refresh
-        Row(
-          children: [
-            Text(
-              'פעילות בזמן אמת',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.navy,
-              ),
-            ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: () =>
-                  ref.read(adminRealTimeProvider.notifier).refresh(),
-              icon: const Icon(Icons.refresh, size: 18),
-              label: Text(
-                'רענן',
-                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Live stats grid
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _LiveStatCard(
-              'משתמשים פעילים',
-              '$activeNow',
-              Icons.person,
-              AppColors.turquoise,
-              large: true,
-            ),
-            _LiveStatCard(
-              'iOS',
-              '${rt['active_ios']}',
-              Icons.phone_iphone,
-              AppColors.midBlue,
-            ),
-            _LiveStatCard(
-              'Android',
-              '${rt['active_android']}',
-              Icons.phone_android,
-              AppColors.success,
-            ),
-            _LiveStatCard(
-              'Web',
-              '${rt['active_web']}',
-              Icons.language,
-              AppColors.gold,
-            ),
-            _LiveStatCard(
-              'סשנים היום',
-              '$sessionsToday',
-              Icons.login,
-              AppColors.navy,
-            ),
-            _LiveStatCard(
-              'צפיות',
-              _fmtK(pageViews),
-              Icons.visibility,
-              AppColors.turquoise,
-            ),
-            _LiveStatCard(
-              'Bounce Rate',
-              '$bounceRate%',
-              Icons.keyboard_return,
-              bounceRate > 30 ? AppColors.error : AppColors.success,
-            ),
-            _LiveStatCard(
-              'חיפושים',
-              '$searches',
-              Icons.search,
-              AppColors.midBlue,
-            ),
-            _LiveStatCard('שיתופים', '$shares', Icons.share, AppColors.gold),
-            _LiveStatCard(
-              'משתמשים חדשים',
-              '$newUsers',
-              Icons.person_add,
-              AppColors.success,
-            ),
-            _LiveStatCard(
-              'Push נשלחו',
-              _fmtK(notiSent),
-              Icons.notifications,
-              AppColors.navy,
-            ),
-            _LiveStatCard(
-              'Push נפתחו',
-              _fmtK(notiOpened),
-              Icons.mark_email_read,
-              AppColors.turquoise,
-            ),
-            _LiveStatCard(
-              'שגיאות',
-              '$errors',
-              Icons.error_outline,
-              errors > 0 ? AppColors.error : AppColors.success,
-            ),
-            _LiveStatCard(
-              'Latency',
-              '${apiLatency}ms',
-              Icons.speed,
-              apiLatency > 60 ? AppColors.gold : AppColors.success,
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
-        // Live user map placeholder
-        _CardShell(
-          title: 'מפת משתמשים חיים — ${liveUsers.length} פעילים',
-          child: SizedBox(
-            height: 320,
-            child: _LiveUserMap(users: liveUsers.cast<Map<String, dynamic>>()),
-          ),
-        ),
-        const SizedBox(height: 30),
-      ],
-    );
-  }
-
-  String _fmtK(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
-}
-
-// ══════════════════════════════════════════════
-// TAB 2 — ENGAGEMENT (DAU/WAU/MAU, Retention, Sessions)
-// ══════════════════════════════════════════════
-
-class _EngagementTab extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final daily = ref.watch(adminDailyAnalyticsProvider);
-    final isWide = MediaQuery.of(context).size.width > 900;
-    final dau = daily['dau'] as List;
-    final wau = daily['wau'] as List;
-    final mau = daily['mau'] as List;
-    final retention = daily['retention'] as Map<String, dynamic>;
-    final peakHours = daily['peak_hours'] as List;
-
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Text(
-          'מעורבות משתמשים',
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppColors.navy,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // DAU / WAU / MAU cards
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _MetricCard(
-              'DAU',
-              '${daily['dau_current']}',
-              '+${daily['dau_change_pct']}%',
-              AppColors.turquoise,
-            ),
-            _MetricCard(
-              'WAU',
-              '${daily['wau_current']}',
-              '+${daily['wau_change_pct']}%',
-              AppColors.midBlue,
-            ),
-            _MetricCard(
-              'MAU',
-              '${daily['mau_current']}',
-              '+${daily['mau_change_pct']}%',
-              AppColors.success,
-            ),
-            _MetricCard(
-              'זמן ממוצע',
-              '${daily['avg_session_duration_min']} דק׳',
-              null,
-              AppColors.gold,
-            ),
-            _MetricCard(
-              'סשנים/משתמש',
-              '${daily['avg_sessions_per_user']}',
-              null,
-              AppColors.navy,
-            ),
-            _MetricCard(
-              'מסכים/סשן',
-              '${daily['avg_screens_per_session']}',
-              null,
-              const Color(0xFF8B5CF6),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
-        // DAU chart
-        _CardShell(
-          title: 'DAU — 30 יום אחרונים',
-          child: SizedBox(
-            height: 220,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12, right: 8),
-              child: LineChart(_buildDauChart(dau)),
-            ),
-          ),
+        _TabHeader(
+          title: 'נתוני מערכת',
+          subtitle: 'כל מספר כאן הוא ספירת שורות בטבלה, בזמן הטעינה.',
+          onRefresh: () {
+            ref.invalidate(adminRowCountsProvider);
+            ref.invalidate(adminPublishingCadenceProvider);
+          },
         ),
         const SizedBox(height: 20),
 
-        // WAU + MAU side by side
-        if (isWide)
-          Row(
+        counts.when(
+          loading: () => const _LoadingPanel(),
+          error: (e, _) => _ErrorPanel(error: e),
+          data: (c) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _CardShell(
-                  title: 'WAU — 12 שבועות',
-                  child: SizedBox(
-                    height: 200,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: BarChart(
-                        _buildBarChart(wau, 'week', 'count', AppColors.midBlue),
-                      ),
-                    ),
+              const _GroupHeading('תוכן במערכת'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _StatCard(
+                    label: 'כתבות',
+                    value: _int(c['articles']),
+                    source: 'articles',
+                    color: AppColors.turquoise,
                   ),
-                ),
+                  _StatCard(
+                    label: 'כתבות שפורסמו',
+                    value: _int(c['articles_published']),
+                    source: "articles · status = 'published'",
+                    color: AppColors.success,
+                  ),
+                  _StatCard(
+                    label: 'טיוטות',
+                    value: _int(c['articles_draft']),
+                    source: "articles · status = 'draft'",
+                    color: AppColors.gold,
+                  ),
+                  _StatCard(
+                    label: 'עסקים',
+                    value: _int(c['businesses']),
+                    source: 'businesses',
+                    color: AppColors.midBlue,
+                  ),
+                  _StatCard(
+                    label: 'עסקים פעילים',
+                    value: _int(c['businesses_active']),
+                    source: "businesses · status = 'active'",
+                    color: AppColors.success,
+                  ),
+                  _StatCard(
+                    label: 'עסקים ממתינים',
+                    value: _int(c['businesses_pending']),
+                    source: "businesses · status = 'pending'",
+                    color: AppColors.gold,
+                  ),
+                  _StatCard(
+                    label: 'אירועים',
+                    value: _int(c['events']),
+                    source: 'events',
+                    color: AppColors.turquoise,
+                  ),
+                  _StatCard(
+                    label: 'אירועים עתידיים',
+                    value: _int(c['events_upcoming']),
+                    source: 'events · start_date ≥ היום',
+                    color: AppColors.midBlue,
+                  ),
+                  _StatCard(
+                    label: 'מודעות נדל״ן',
+                    value: _int(c['listings']),
+                    source: 'listings',
+                    color: AppColors.navy,
+                  ),
+                  _StatCard(
+                    label: 'שכונות',
+                    value: _int(c['neighborhoods']),
+                    source: 'neighborhoods',
+                    color: AppColors.navy,
+                  ),
+                  _StatCard(
+                    label: 'קטגוריות',
+                    value: _int(c['categories']),
+                    source: 'categories',
+                    color: AppColors.navy,
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _CardShell(
-                  title: 'MAU — 6 חודשים',
-                  child: SizedBox(
-                    height: 200,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: BarChart(
-                        _buildBarChart(
-                          mau,
-                          'month',
-                          'count',
-                          AppColors.success,
-                        ),
-                      ),
-                    ),
+              const SizedBox(height: 24),
+
+              const _GroupHeading('תושבים רשומים'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _StatCard(
+                    label: 'תושבים רשומים',
+                    value: _int(c['residents']),
+                    source: 'profiles',
+                    color: AppColors.turquoise,
                   ),
-                ),
+                  _StatCard(
+                    label: 'מאומתים',
+                    value: _int(c['residents_verified']),
+                    source: 'profiles · is_verified',
+                    color: AppColors.success,
+                  ),
+                  _StatCard(
+                    label: 'אישרו התראות',
+                    value: _int(c['residents_push_on']),
+                    source: 'profiles · push_enabled',
+                    color: AppColors.midBlue,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              const _GroupHeading('מה שהתושבים הוסיפו'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _StatCard(
+                    label: 'ביקורות',
+                    value: _int(c['reviews']),
+                    source: 'reviews',
+                    color: AppColors.gold,
+                  ),
+                  _StatCard(
+                    label: 'תגובות',
+                    value: _int(c['comments']),
+                    source: 'comments',
+                    color: AppColors.gold,
+                  ),
+                  _StatCard(
+                    label: 'שמירות למועדפים',
+                    value: _int(c['favorites']),
+                    source: 'favorites',
+                    color: AppColors.turquoise,
+                  ),
+                  _StatCard(
+                    label: 'מבצעים',
+                    value: _int(c['offers']),
+                    source: 'offers',
+                    color: AppColors.midBlue,
+                  ),
+                  _StatCard(
+                    label: 'מימושי מבצע',
+                    value: _int(c['offer_claims']),
+                    source: 'offer_claims',
+                    color: AppColors.midBlue,
+                  ),
+                ],
               ),
             ],
-          )
-        else ...[
-          _CardShell(
-            title: 'WAU — 12 שבועות',
-            child: SizedBox(
-              height: 200,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: BarChart(
-                  _buildBarChart(wau, 'week', 'count', AppColors.midBlue),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _CardShell(
-            title: 'MAU — 6 חודשים',
-            child: SizedBox(
-              height: 200,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: BarChart(
-                  _buildBarChart(mau, 'month', 'count', AppColors.success),
-                ),
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 20),
-
-        // Retention
-        _CardShell(
-          title: 'שימור משתמשים (Retention)',
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: retention.entries.map((e) {
-                final pct = (e.value as num).toDouble();
-                return Column(
-                  children: [
-                    Text(
-                      '${pct.toInt()}%',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: pct > 40
-                            ? AppColors.success
-                            : pct > 20
-                            ? AppColors.gold
-                            : AppColors.error,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      e.key.replaceAll('day', 'D'),
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 11,
-                        color: AppColors.grayText,
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
 
-        // Peak hours
-        _CardShell(
-          title: 'שעות שיא',
-          child: SizedBox(
-            height: 200,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12, right: 8),
-              child: BarChart(
-                BarChartData(
-                  barGroups: peakHours.asMap().entries.map((e) {
-                    final users = (e.value as Map)['users'] as int;
-                    return BarChartGroupData(
-                      x: e.key,
-                      barRods: [
-                        BarChartRodData(
-                          toY: users.toDouble(),
-                          color: AppColors.turquoise,
-                          width: 14,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(4),
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                  titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(),
-                    topTitles: const AxisTitles(),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 36,
-                        getTitlesWidget: (v, _) => Text(
-                          _fmtK(v.toInt()),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 10,
-                            color: AppColors.grayLight,
-                          ),
-                        ),
+        cadence.when(
+          loading: () => const _LoadingPanel(),
+          error: (e, _) => _ErrorPanel(error: e),
+          data: (months) => months.isEmpty
+              ? const _NoteCard(
+                  title: 'קצב פרסום',
+                  lines: [
+                    'אין כתבות עם תאריך פרסום, ולכן אין ממה לבנות את הגרף.',
+                  ],
+                )
+              : _CardShell(
+                  title:
+                      'כתבות שפורסמו לחודש — ${months.length} החודשים האחרונים',
+                  footnote:
+                      'נספר מ-articles.published_at. זהו קצב הפרסום של '
+                      'המערכת, ולא מדד לצפיות או למעורבות.',
+                  child: SizedBox(
+                    height: 240,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        top: 16,
+                        end: 16,
+                        start: 8,
+                        bottom: 4,
                       ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 24,
-                        getTitlesWidget: (v, _) {
-                          if (v.toInt() < peakHours.length) {
-                            return Text(
-                              '${(peakHours[v.toInt()] as Map)['hour']}',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 10,
-                                color: AppColors.grayLight,
-                              ),
-                            );
-                          }
-                          return const Text('');
-                        },
-                      ),
+                      child: BarChart(_cadenceChart(months)),
                     ),
                   ),
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: 300,
-                  ),
-                  borderData: FlBorderData(show: false),
                 ),
-              ),
-            ),
-          ),
+        ),
+        const SizedBox(height: 24),
+
+        const _NoteCard(
+          title: 'מה עוד לא נמדד',
+          lines: [
+            'הנתונים בעמוד זה נקראים ישירות מהטבלאות. למדידת התנהגות — סשנים, '
+                'צפיות בעמודים, זמן שהייה ושימור — נדרשת שכבת מדידה שאינה '
+                'קיימת: אין טבלת אנליטיקה במסד הנתונים, ואף מסך באפליקציה '
+                'אינו כותב אירועי שימוש.',
+            'משתמשים פעילים כרגע, סשנים וצפיות בעמודים — דורשים טבלת אירועי '
+                'שימוש, או חיבור ל-Google Analytics / Firebase.',
+            'זמן שהייה ממוצע, Bounce Rate, מסכים לסשן ושימור (Retention) — '
+                'נגזרים מאותם אירועים, ולכן תלויים באותו חיבור.',
+            'פילוח לפי מכשיר וגרסת אפליקציה — העמודות device_os ו-app_version '
+                'קיימות ב-profiles אך ריקות; יתמלאו כשהאפליקציה תדווח עליהן '
+                'בהתחברות.',
+            'מסירה ופתיחה של התראות Push — דורשות שליחה בפועל דרך Firebase '
+                'ו-APNs ורישום מסירה. כרגע קמפיין נשמר ונכנס לתור אך אינו '
+                'נשלח, ואין יומן שליחות.',
+            'ערוצי רכישה, גיל ופילוח דמוגרפי — אין עמודות כאלה במסד הנתונים.',
+            'הקלקות לטלפון, לוואטסאפ ולניווט בעמוד עסק, וכן חיפושים ושאילתות '
+                'ללא תוצאות — דורשים רישום הקלקה וחיפוש; אין טבלאות כאלה.',
+          ],
         ),
         const SizedBox(height: 30),
       ],
     );
   }
 
-  LineChartData _buildDauChart(List dau) {
-    final spots = dau
-        .asMap()
-        .entries
-        .map(
-          (e) => FlSpot(e.key.toDouble(), (e.value as Map)['count'].toDouble()),
-        )
-        .toList();
-    return LineChartData(
-      minY: 0,
+  BarChartData _cadenceChart(List<Map<String, dynamic>> months) {
+    final maxCount = months.fold<int>(
+      0,
+      (m, r) => (r['count'] as int) > m ? r['count'] as int : m,
+    );
+    // A round step keeps the grid lines and the left labels on the same
+    // values whatever the tallest month happens to be.
+    final step = maxCount <= 10
+        ? 2.0
+        : maxCount <= 30
+        ? 10.0
+        : 20.0;
+
+    return BarChartData(
+      maxY: ((maxCount / step).ceil() + 1) * step,
+      barGroups: [
+        for (final e in months.asMap().entries)
+          BarChartGroupData(
+            x: e.key,
+            barRods: [
+              BarChartRodData(
+                toY: (e.value['count'] as int).toDouble(),
+                color: AppColors.turquoise,
+                width: 22,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(4),
+                ),
+              ),
+            ],
+          ),
+      ],
+      titlesData: FlTitlesData(
+        rightTitles: const AxisTitles(),
+        topTitles: const AxisTitles(),
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 36,
+            interval: step,
+            getTitlesWidget: (v, _) => Text(
+              '${v.toInt()}',
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 10,
+                color: AppColors.adminTextLight,
+              ),
+            ),
+          ),
+        ),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 26,
+            getTitlesWidget: (v, _) {
+              final i = v.toInt();
+              if (i < 0 || i >= months.length) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  months[i]['month'] as String,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 10,
+                    color: AppColors.adminTextLight,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
-        horizontalInterval: 400,
-      ),
-      titlesData: FlTitlesData(
-        rightTitles: const AxisTitles(),
-        topTitles: const AxisTitles(),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 40,
-            interval: 400,
-            getTitlesWidget: (v, _) => Text(
-              _fmtK(v.toInt()),
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontSize: 10,
-                color: AppColors.grayLight,
-              ),
-            ),
-          ),
-        ),
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 24,
-            interval: 5,
-            getTitlesWidget: (v, _) {
-              if (v.toInt() < dau.length) {
-                final d = (dau[v.toInt()] as Map)['date'] as String;
-                return Text(
-                  d.substring(8),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 10,
-                    color: AppColors.grayLight,
-                  ),
-                );
-              }
-              return const Text('');
-            },
-          ),
-        ),
+        horizontalInterval: step,
+        getDrawingHorizontalLine: (_) =>
+            const FlLine(color: AppColors.adminCardBorder, strokeWidth: 1),
       ),
       borderData: FlBorderData(show: false),
-      lineBarsData: [
-        LineChartBarData(
-          spots: spots,
-          isCurved: true,
-          curveSmoothness: 0.3,
-          color: AppColors.turquoise,
-          barWidth: 2,
-          dotData: const FlDotData(show: false),
-          belowBarData: BarAreaData(
-            show: true,
-            color: AppColors.turquoise.withValues(alpha: 0.08),
+      barTouchData: BarTouchData(
+        touchTooltipData: BarTouchTooltipData(
+          getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
+            '${months[group.x]['month']}\n${rod.toY.toInt()} כתבות',
+            TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 12,
+              color: Colors.white,
+            ),
           ),
-        ),
-      ],
-      lineTouchData: LineTouchData(
-        touchTooltipData: LineTouchTooltipData(
-          getTooltipItems: (spots) => spots
-              .map(
-                (s) => LineTooltipItem(
-                  '${s.y.toInt()} פעילים',
-                  TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
-                ),
-              )
-              .toList(),
         ),
       ),
     );
   }
-
-  BarChartData _buildBarChart(
-    List data,
-    String labelKey,
-    String valueKey,
-    Color color,
-  ) {
-    return BarChartData(
-      barGroups: data.asMap().entries.map((e) {
-        final v = ((e.value as Map)[valueKey] as num).toDouble();
-        return BarChartGroupData(
-          x: e.key,
-          barRods: [
-            BarChartRodData(
-              toY: v,
-              color: color,
-              width: 18,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(4),
-              ),
-            ),
-          ],
-        );
-      }).toList(),
-      titlesData: FlTitlesData(
-        rightTitles: const AxisTitles(),
-        topTitles: const AxisTitles(),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 40,
-            getTitlesWidget: (v, _) => Text(
-              _fmtK(v.toInt()),
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontSize: 10,
-                color: AppColors.grayLight,
-              ),
-            ),
-          ),
-        ),
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 24,
-            getTitlesWidget: (v, _) {
-              if (v.toInt() < data.length)
-                return Text(
-                  (data[v.toInt()] as Map)[labelKey].toString(),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 10,
-                    color: AppColors.grayLight,
-                  ),
-                );
-              return const Text('');
-            },
-          ),
-        ),
-      ),
-      gridData: FlGridData(show: true, drawVerticalLine: false),
-      borderData: FlBorderData(show: false),
-    );
-  }
-
-  String _fmtK(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
 }
 
 // ══════════════════════════════════════════════
-// TAB 3 — CONTENT PERFORMANCE
+// TAB 2 — CONTENT REACH
 // ══════════════════════════════════════════════
 
 class _ContentTab extends ConsumerWidget {
+  const _ContentTab();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cp = ref.watch(adminContentPerformanceProvider);
-    final isWide = MediaQuery.of(context).size.width > 900;
-    final topArticles = cp['top_articles'] as List;
-    final topBusinesses = cp['top_businesses'] as List;
-    final topEvents = cp['top_events'] as List;
-    final searches = cp['search_queries'] as List;
-    final zeroResults = cp['zero_result_searches'] as List;
-    final categories = cp['categories_distribution'] as List;
+    final reach = ref.watch(adminContentReachProvider);
+    final catalogue = ref.watch(adminCatalogueBreakdownProvider);
+    final isWide = MediaQuery.of(context).size.width > 1100;
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Text(
-          'ביצועי תוכן',
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppColors.navy,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Top articles
-        _CardShell(
-          title: '📰 כתבות מובילות',
-          child: _RankedTable(
-            headers: ['כתבה', 'צפיות', 'שיתופים', 'תגובות', 'זמן קריאה'],
-            rows: topArticles
-                .map(
-                  (a) => [
-                    a['title'] as String,
-                    '${a['views']}',
-                    '${a['shares']}',
-                    '${a['comments']}',
-                    '${((a['avg_read_time_sec'] as int) / 60).toStringAsFixed(1)} דק׳',
-                  ],
-                )
-                .toList(),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Top businesses
-        _CardShell(
-          title: '🏪 עסקים מובילים',
-          child: _RankedTable(
-            headers: ['עסק', 'צפיות', 'חיוגים', 'ניווטים', 'שמירות'],
-            rows: topBusinesses
-                .map(
-                  (b) => [
-                    b['name'] as String,
-                    '${b['views']}',
-                    '${b['clicks_to_phone']}',
-                    '${b['clicks_to_nav']}',
-                    '${b['saves']}',
-                  ],
-                )
-                .toList(),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Top events
-        _CardShell(
-          title: '🎉 אירועים מובילים',
-          child: _RankedTable(
-            headers: ['אירוע', 'צפיות', 'כרטיסים', 'שיתופים', 'RSVP'],
-            rows: topEvents
-                .map(
-                  (e) => [
-                    e['title'] as String,
-                    '${e['views']}',
-                    '${e['ticket_clicks']}',
-                    '${e['shares']}',
-                    '${e['rsvp']}',
-                  ],
-                )
-                .toList(),
-          ),
+        _TabHeader(
+          title: 'ביצועי תוכן',
+          subtitle:
+              'צפיות, שיתופים ושמירות הן העמודות שהטבלאות נושאות. '
+              'הן מצטברות מאז הפרסום — אין בהן חלוקה לפי תאריך.',
+          onRefresh: () {
+            ref.invalidate(adminContentReachProvider);
+            ref.invalidate(adminCatalogueBreakdownProvider);
+          },
         ),
         const SizedBox(height: 20),
 
-        // Search analytics + Zero results
-        if (isWide)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        reach.when(
+          loading: () => const _LoadingPanel(),
+          error: (e, _) => _ErrorPanel(error: e),
+          data: (r) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                flex: 3,
-                child: _CardShell(
-                  title: '🔍 חיפושים מובילים',
-                  child: _RankedTable(
-                    headers: ['שאילתה', 'חיפושים', 'תוצאות ממוצע'],
-                    rows: searches
-                        .map(
-                          (s) => [
-                            s['query'] as String,
-                            '${s['count']}',
-                            '${s['results_avg']}',
-                          ],
-                        )
-                        .toList(),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _StatCard(
+                    label: 'צפיות בכתבות',
+                    value: r.articleViews,
+                    source: 'סכום articles.view_count',
+                    color: AppColors.turquoise,
                   ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: _CardShell(
-                  title: '⚠️ חיפושים ללא תוצאות',
-                  child: Column(
-                    children: zeroResults
-                        .map(
-                          (z) => ListTile(
-                            dense: true,
-                            title: Text(
-                              z['query'] as String,
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '${z['count']}',
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.error,
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                  _StatCard(
+                    label: 'שיתופי כתבות',
+                    value: r.articleShares,
+                    source: 'סכום articles.share_count',
+                    color: AppColors.gold,
                   ),
-                ),
-              ),
-            ],
-          )
-        else ...[
-          _CardShell(
-            title: '🔍 חיפושים מובילים',
-            child: _RankedTable(
-              headers: ['שאילתה', 'חיפושים', 'תוצאות'],
-              rows: searches
-                  .map(
-                    (s) => [
-                      s['query'] as String,
-                      '${s['count']}',
-                      '${s['results_avg']}',
-                    ],
-                  )
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _CardShell(
-            title: '⚠️ חיפושים ללא תוצאות',
-            child: Column(
-              children: zeroResults
-                  .map(
-                    (z) => ListTile(
-                      dense: true,
-                      title: Text(
-                        z['query'] as String,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                        ),
-                      ),
-                      trailing: Text(
-                        '${z['count']}',
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 12,
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ],
-        const SizedBox(height: 20),
-
-        // Category distribution
-        _CardShell(
-          title: '📊 התפלגות לפי קטגוריה',
-          child: Column(
-            children: categories.map((c) {
-              final pct = c['pct'] as int;
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 4,
-                  horizontal: 12,
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 140,
-                      child: Text(
-                        c['name'] as String,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 12,
-                          color: AppColors.navy,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: pct / 100,
-                          minHeight: 16,
-                          backgroundColor: AppColors.surfaceLight,
-                          color: AppColors.turquoise.withValues(
-                            alpha: 0.7 + pct / 300,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 50,
-                      child: Text(
-                        '$pct%',
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 50,
-                      child: Text(
-                        '${c['businesses']}',
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 12,
-                          color: AppColors.grayText,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 30),
-      ],
-    );
-  }
-}
-
-// ══════════════════════════════════════════════
-// TAB 4 — AD & REVENUE
-// ══════════════════════════════════════════════
-
-class _RevenueTab extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ad = ref.watch(adminAdAnalyticsProvider);
-    final isWide = MediaQuery.of(context).size.width > 900;
-    final revenueTrend = ad['revenue_trend'] as List;
-    final revBySource = ad['revenue_by_source'] as List;
-    final placements = ad['placement_performance'] as List;
-    final funnel = ad['offer_funnel'] as Map<String, dynamic>;
-    final topAdvertisers = ad['top_advertisers'] as List;
-
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Text(
-          'פרסום והכנסות',
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppColors.navy,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Revenue headline metrics
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _MetricCard(
-              'הכנסות החודש',
-              '₪${_fmtK(ad['revenue_this_month'] as int)}',
-              '+${ad['revenue_growth_pct']}%',
-              AppColors.success,
-            ),
-            _MetricCard(
-              'MRR',
-              '₪${_fmtK(ad['mrr'] as int)}',
-              null,
-              AppColors.turquoise,
-            ),
-            _MetricCard(
-              'ARR (תחזית)',
-              '₪${_fmtK(ad['arr_estimated'] as int)}',
-              null,
-              AppColors.midBlue,
-            ),
-            _MetricCard(
-              'סה"כ השנה',
-              '₪${_fmtK(ad['revenue_total_year'] as int)}',
-              null,
-              AppColors.gold,
-            ),
-            _MetricCard(
-              'CTR ממוצע',
-              '${ad['overall_ctr']}%',
-              null,
-              AppColors.navy,
-            ),
-            _MetricCard(
-              'Fill Rate',
-              '${ad['fill_rate_pct']}%',
-              null,
-              const Color(0xFF8B5CF6),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        // Revenue trend chart
-        _CardShell(
-          title: '📈 מגמת הכנסות — 6 חודשים',
-          child: SizedBox(
-            height: 220,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12, right: 8),
-              child: BarChart(
-                BarChartData(
-                  barGroups: revenueTrend.asMap().entries.map((e) {
-                    final amt = ((e.value as Map)['amount'] as num).toDouble();
-                    return BarChartGroupData(
-                      x: e.key,
-                      barRods: [
-                        BarChartRodData(
-                          toY: amt,
-                          color: AppColors.success,
-                          width: 28,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(4),
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                  titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(),
-                    topTitles: const AxisTitles(),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 50,
-                        getTitlesWidget: (v, _) => Text(
-                          '₪${_fmtK(v.toInt())}',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 10,
-                            color: AppColors.grayLight,
-                          ),
-                        ),
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 24,
-                        getTitlesWidget: (v, _) {
-                          if (v.toInt() < revenueTrend.length)
-                            return Text(
-                              (revenueTrend[v.toInt()] as Map)['month']
-                                  .toString(),
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 10,
-                                color: AppColors.grayLight,
-                              ),
-                            );
-                          return const Text('');
-                        },
-                      ),
-                    ),
+                  _StatCard(
+                    label: 'שמירות כתבות',
+                    value: r.articleSaves,
+                    source: 'סכום articles.save_count',
+                    color: AppColors.midBlue,
                   ),
-                  gridData: FlGridData(show: true, drawVerticalLine: false),
-                  borderData: FlBorderData(show: false),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // Revenue by source + Offer funnel
-        if (isWide)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 3,
-                child: _CardShell(
-                  title: '💰 הכנסות לפי מקור',
-                  child: Column(
-                    children: revBySource.map((s) {
-                      final pct = s['pct'] as int;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 4,
-                          horizontal: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 130,
-                              child: Text(
-                                s['source'] as String,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: pct / 100,
-                                  minHeight: 14,
-                                  backgroundColor: AppColors.surfaceLight,
-                                  color: AppColors.success,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: 60,
-                              child: Text(
-                                '₪${_fmtK(s['amount'] as int)}',
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 40,
-                              child: Text(
-                                '$pct%',
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 11,
-                                  color: AppColors.grayText,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                  _StatCard(
+                    label: 'צפיות באירועים',
+                    value: r.eventViews,
+                    source: 'סכום events.view_count',
+                    color: AppColors.turquoise,
                   ),
-                ),
+                  _StatCard(
+                    label: 'הרשמות לאירועים',
+                    value: r.eventRsvps,
+                    source: 'סכום events.rsvp_count',
+                    color: AppColors.success,
+                  ),
+                  _StatCard(
+                    label: 'הוספות ליומן',
+                    value: r.eventCalendarAdds,
+                    source: 'סכום events.calendar_adds',
+                    color: AppColors.navy,
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: _CardShell(
-                  title: '🎯 משפך מבצעים',
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        _FunnelStep(
+              const SizedBox(height: 24),
+
+              _CardShell(
+                title: 'הכתבות הנצפות ביותר',
+                footnote:
+                    '${_fmtInt(r.articlesWithViews)} מתוך '
+                    '${_fmtInt(r.articleTotal)} כתבות נושאות ספירת צפיות '
+                    'שאינה אפס, ולכן זהו הדירוג של אותן כתבות בלבד.',
+                child: r.articlesWithViews == 0
+                    ? const _InlineEmpty(
+                        'אף כתבה לא נצפתה עדיין — כל הערכים בעמודה '
+                        'view_count הם אפס.',
+                      )
+                    : _RankedTable(
+                        headers: const ['כתבה', 'צפיות', 'שיתופים', 'שמירות'],
+                        rows: [
+                          for (final a in r.topArticles)
+                            if (((a['view_count'] as num?) ?? 0) > 0)
+                              [
+                                a['title'] as String? ?? '',
+                                _fmtInt(_int(a['view_count'])),
+                                _fmtInt(_int(a['share_count'])),
+                                _fmtInt(_int(a['save_count'])),
+                              ],
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 16),
+
+              _CardShell(
+                title: 'האירועים הנצפים ביותר',
+                footnote:
+                    '${_fmtInt(r.eventsWithViews)} מתוך '
+                    '${_fmtInt(r.eventTotal)} אירועים נושאים ספירת צפיות '
+                    'שאינה אפס.',
+                child: r.eventsWithViews == 0
+                    ? const _InlineEmpty(
+                        'אף אירוע לא נצפה עדיין — כל הערכים בעמודה '
+                        'view_count הם אפס.',
+                      )
+                    : _RankedTable(
+                        headers: const [
+                          'אירוע',
                           'צפיות',
-                          funnel['views'] as int,
-                          funnel['views'] as int,
-                        ),
-                        _FunnelStep(
-                          'הקלקות',
-                          funnel['clicks'] as int,
-                          funnel['views'] as int,
-                        ),
-                        _FunnelStep(
-                          'העתקת קוד',
-                          funnel['code_copies'] as int,
-                          funnel['views'] as int,
-                        ),
-                        _FunnelStep(
-                          'מימושים',
-                          funnel['claims'] as int,
-                          funnel['views'] as int,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Conversion: ${funnel['conversion_rate_pct']}%',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.success,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                          'הרשמות',
+                          'שיתופים',
+                          'יומן',
+                        ],
+                        rows: [
+                          for (final e in r.topEvents)
+                            if (((e['view_count'] as num?) ?? 0) > 0)
+                              [
+                                e['title'] as String? ?? '',
+                                _fmtInt(_int(e['view_count'])),
+                                _fmtInt(_int(e['rsvp_count'])),
+                                _fmtInt(_int(e['share_count'])),
+                                _fmtInt(_int(e['calendar_adds'])),
+                              ],
+                        ],
+                      ),
               ),
             ],
-          )
-        else ...[
-          _CardShell(
-            title: '💰 הכנסות לפי מקור',
-            child: Column(
-              children: revBySource
-                  .map(
-                    (s) => ListTile(
-                      dense: true,
-                      title: Text(
-                        s['source'] as String,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                        ),
-                      ),
-                      trailing: Text(
-                        '₪${_fmtK(s['amount'] as int)}',
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        const SizedBox(height: 20),
-
-        // Placement performance
-        _CardShell(
-          title: '📍 ביצועי מיקומי פרסום',
-          child: _RankedTable(
-            headers: ['מיקום', 'חשיפות', 'הקלקות', 'CTR', 'הכנסה'],
-            rows: placements
-                .map(
-                  (p) => [
-                    p['label'] as String,
-                    _fmtK(p['impressions'] as int),
-                    _fmtK(p['clicks'] as int),
-                    '${p['ctr']}%',
-                    '₪${_fmtK(p['revenue'] as int)}',
-                  ],
-                )
-                .toList(),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
 
-        // Top advertisers
-        _CardShell(
-          title: '🏆 מפרסמים מובילים',
-          child: _RankedTable(
-            headers: ['מפרסם', 'הכנסה', 'קמפיינים'],
-            rows: topAdvertisers
-                .map(
-                  (a) => [
-                    a['name'] as String,
-                    '₪${_fmtK(a['revenue'] as int)}',
-                    '${a['campaigns']}',
-                  ],
-                )
-                .toList(),
-          ),
+        catalogue.when(
+          loading: () => const _LoadingPanel(),
+          error: (e, _) => _ErrorPanel(error: e),
+          data: (b) {
+            final categories = _CardShell(
+              title: 'עסקים לפי קטגוריה',
+              footnote:
+                  'נספר מקישורי entity_categories עבור entity_type = '
+                  "'business'. עסק יכול להיות משויך ליותר מקטגוריה אחת.",
+              child: b.byCategory.isEmpty
+                  ? const _InlineEmpty('אין שיוכי קטגוריה לעסקים.')
+                  : _BarList(
+                      rows: b.byCategory,
+                      largest: _largest(b.byCategory),
+                      color: AppColors.turquoise,
+                    ),
+            );
+            final neighborhoods = _CardShell(
+              title: 'עסקים לפי שכונה',
+              footnote:
+                  'נספר מ-businesses.neighborhood_id. '
+                  '${_fmtInt(b.withoutNeighborhood)} מתוך '
+                  '${_fmtInt(b.businessTotal)} עסקים ללא שכונה, ולכן אינם '
+                  'מופיעים בפילוח.',
+              child: b.byNeighborhood.isEmpty
+                  ? const _InlineEmpty('אף עסק אינו משויך לשכונה.')
+                  : _BarList(
+                      rows: b.byNeighborhood,
+                      largest: _largest(b.byNeighborhood),
+                      color: AppColors.midBlue,
+                    ),
+            );
+
+            if (!isWide) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  categories,
+                  const SizedBox(height: 16),
+                  neighborhoods,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: categories),
+                const SizedBox(width: 16),
+                Expanded(child: neighborhoods),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 30),
       ],
     );
   }
-
-  String _fmtK(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
 }
 
 // ══════════════════════════════════════════════
-// TAB 5 — DEMOGRAPHICS
+// TAB 3 — ADVERTISING & REVENUE
 // ══════════════════════════════════════════════
 
-class _DemographicsTab extends ConsumerWidget {
+class _AdvertisingTab extends ConsumerWidget {
+  const _AdvertisingTab();
+
+  /// The `revenue_type` values the commerce migration defines, in Hebrew.
+  static const _revenueTypes = {
+    'subscription': 'מנויים',
+    'banner': 'באנרים',
+    'push': 'התראות ממומנות',
+    'featured': 'עסק מקודם',
+    'sponsored': 'תוכן ממומן',
+    'custom': 'אחר',
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ua = ref.watch(adminUserAnalyticsProvider);
-    final heatmap = ref.watch(adminNeighborhoodHeatmapProvider);
-    final isWide = MediaQuery.of(context).size.width > 900;
-    final acquisition = ua['acquisition'] as List;
-    final byNeighborhood = ua['by_neighborhood'] as List;
-    final byPlatform = ua['by_platform'] as List;
-    final byAge = ua['by_age'] as List;
-    final engSegments = ua['engagement_segments'] as List;
-    final pushStats = ua['push_stats'] as Map<String, dynamic>;
-    final gamification = ua['gamification'] as Map<String, dynamic>;
+    final campaigns = ref.watch(adminCampaignPerformanceProvider);
+    final revenue = ref.watch(adminRevenueSummaryProvider);
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Text(
-          'דמוגרפיה ומשתמשים',
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppColors.navy,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // User headline
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _MetricCard(
-              'סה"כ משתמשים',
-              '${ua['total_users']}',
-              null,
-              AppColors.turquoise,
-            ),
-            _MetricCard(
-              'מאומתים',
-              '${ua['verified_users']}',
-              null,
-              AppColors.success,
-            ),
-            _MetricCard(
-              'בעלי עסקים',
-              '${ua['business_owners']}',
-              null,
-              AppColors.gold,
-            ),
-            _MetricCard(
-              'חדשים החודש',
-              '${ua['new_users_this_month']}',
-              null,
-              AppColors.midBlue,
-            ),
-            _MetricCard(
-              'נטישה',
-              '${ua['churn_this_month']}',
-              null,
-              AppColors.error,
-            ),
-            _MetricCard(
-              'צמיחה נטו',
-              '+${ua['net_growth']}',
-              null,
-              AppColors.success,
-            ),
-          ],
+        _TabHeader(
+          title: 'פרסום והכנסות',
+          subtitle:
+              'סכומי העמודות בטבלאות campaigns ו-revenue_transactions, '
+              'כפי שהן כרגע.',
+          onRefresh: () {
+            ref.invalidate(adminCampaignPerformanceProvider);
+            ref.invalidate(adminRevenueSummaryProvider);
+          },
         ),
         const SizedBox(height: 20),
 
-        // Platform + Age side by side
-        if (isWide)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        const _GroupHeading('קמפיינים'),
+        const SizedBox(height: 10),
+        campaigns.when(
+          loading: () => const _LoadingPanel(),
+          error: (e, _) => _ErrorPanel(error: e),
+          data: (c) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _CardShell(
-                  title: '📱 פלטפורמה',
-                  child: SizedBox(
-                    height: 180,
-                    child: PieChart(
-                      PieChartData(
-                        sections: byPlatform.asMap().entries.map((e) {
-                          final p = e.value as Map;
-                          final colors = [
-                            AppColors.navy,
-                            AppColors.success,
-                            AppColors.turquoise,
-                          ];
-                          return PieChartSectionData(
-                            value: (p['pct'] as int).toDouble(),
-                            title: '${p['platform']}\n${p['pct']}%',
-                            color: colors[e.key % colors.length],
-                            radius: 55,
-                            titleStyle: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          );
-                        }).toList(),
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 30,
-                      ),
-                    ),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _StatCard(
+                    label: 'קמפיינים',
+                    value: c.campaigns,
+                    source: 'campaigns',
+                    color: AppColors.midBlue,
                   ),
-                ),
+                  _StatCard(
+                    label: 'קמפיינים פעילים',
+                    value: c.byStatus['active'] ?? 0,
+                    source: "campaigns · status = 'active'",
+                    color: AppColors.success,
+                  ),
+                  _StatCard(
+                    label: 'חשיפות',
+                    value: c.impressions,
+                    source: 'סכום impressions',
+                    color: AppColors.turquoise,
+                  ),
+                  _StatCard(
+                    label: 'חשיפות ייחודיות',
+                    value: c.uniqueImpressions,
+                    source: 'סכום unique_impressions',
+                    color: AppColors.turquoise,
+                  ),
+                  _StatCard(
+                    label: 'הקלקות',
+                    value: c.clicks,
+                    source: 'סכום clicks',
+                    color: AppColors.gold,
+                  ),
+                  _StatCard(
+                    label: 'המרות',
+                    value: c.conversions,
+                    source: 'סכום conversions',
+                    color: AppColors.success,
+                  ),
+                  // A rate over zero impressions is unknown, not zero per
+                  // cent, so it is shown as a dash.
+                  _StatCard.text(
+                    label: 'CTR',
+                    text: c.ctr == null ? '—' : '${c.ctr!.toStringAsFixed(2)}%',
+                    source: c.ctr == null
+                        ? 'אין חשיפות, ולכן אין יחס להציג'
+                        : 'clicks ÷ impressions',
+                    color: AppColors.navy,
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _CardShell(
-                  title: '👤 טווח גיל',
-                  child: Column(
-                    children: byAge.map((a) {
-                      final pct = a['pct'] as int;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 3,
-                          horizontal: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 50,
-                              child: Text(
-                                a['range'] as String,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: pct / 100,
-                                  minHeight: 14,
-                                  backgroundColor: AppColors.surfaceLight,
-                                  color: AppColors.midBlue,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$pct%',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
+              const SizedBox(height: 16),
+              _CardShell(
+                title: 'קמפיינים לפי מיקום פרסום',
+                footnote: c.impressions == 0
+                    ? 'עמודות impressions ו-clicks בטבלת campaigns מתעדכנות '
+                          'רק על ידי מערכת הגשה שמדווחת חשיפה והקלקה. אין '
+                          'כרגע מי שיכתוב אליהן, ולכן הן אפס — אלה אינם '
+                          'ביצועים חלשים אלא מדידה שטרם חוברה.'
+                    : 'נספר מ-campaigns.placement_id מול ad_placements.',
+                child: c.placements.isEmpty
+                    ? const _InlineEmpty('אין מיקומי פרסום מוגדרים.')
+                    : _RankedTable(
+                        headers: const ['מיקום', 'קמפיינים'],
+                        rows: [
+                          for (final p in c.placements)
+                            [
+                              p['label'] as String,
+                              _fmtInt(_int(p['campaigns'])),
+                            ],
+                        ],
+                      ),
               ),
             ],
-          )
-        else ...[
-          _CardShell(
-            title: '📱 פלטפורמה',
-            child: Column(
-              children: byPlatform
-                  .map(
-                    (p) => ListTile(
-                      dense: true,
-                      title: Text(
-                        p['platform'] as String,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                        ),
-                      ),
-                      trailing: Text(
-                        '${p['pct']}% (${p['users']})',
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        const SizedBox(height: 20),
-
-        // Engagement segments
-        _CardShell(
-          title: '🎯 פלחי מעורבות',
-          child: Column(
-            children: engSegments.map((s) {
-              final colorName = s['color'] as String;
-              final color = switch (colorName) {
-                'success' => AppColors.success,
-                'turquoise' => AppColors.turquoise,
-                'gold' => AppColors.gold,
-                'error' => AppColors.error,
-                _ => AppColors.grayLight,
-              };
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 3,
-                  horizontal: 12,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        s['segment'] as String,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${s['users']}',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${s['pct']}%',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 12,
-                        color: AppColors.grayText,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
 
-        // Acquisition channels + By neighborhood
-        if (isWide)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        const _GroupHeading('הכנסות'),
+        const SizedBox(height: 10),
+        revenue.when(
+          loading: () => const _LoadingPanel(),
+          error: (e, _) => _ErrorPanel(error: e),
+          data: (r) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _CardShell(
-                  title: '📥 ערוצי רכישה',
-                  child: Column(
-                    children: acquisition.map((a) {
-                      final pct = a['pct'] as int;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 3,
-                          horizontal: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 130,
-                              child: Text(
-                                a['channel'] as String,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: pct / 100,
-                                  minHeight: 14,
-                                  backgroundColor: AppColors.surfaceLight,
-                                  color: AppColors.turquoise,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$pct%',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _StatCard.text(
+                    label: 'סך הכל רשום',
+                    text: _fmtMoney(r.total),
+                    source: 'סכום revenue_transactions · amount',
+                    color: AppColors.navy,
                   ),
-                ),
+                  _StatCard.text(
+                    label: 'שולם',
+                    text: _fmtMoney(r.paid),
+                    source: "payment_status = 'paid'",
+                    color: AppColors.success,
+                  ),
+                  _StatCard.text(
+                    label: 'לתשלום',
+                    text: _fmtMoney(r.outstanding),
+                    source: 'pending · partial · overdue',
+                    color: AppColors.gold,
+                  ),
+                  _StatCard.text(
+                    label: 'נרשם החודש',
+                    text: _fmtMoney(r.thisMonth),
+                    source: 'created_at בחודש הנוכחי',
+                    color: AppColors.turquoise,
+                  ),
+                  _StatCard(
+                    label: 'תנועות',
+                    value: r.transactions,
+                    source: 'revenue_transactions',
+                    color: AppColors.midBlue,
+                  ),
+                  _StatCard(
+                    label: 'מנויים פעילים',
+                    value: r.activeSubscriptions,
+                    source: "subscriptions · status = 'active'",
+                    color: AppColors.success,
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _CardShell(
-                  title: '🏘️ לפי שכונה',
-                  child: Column(
-                    children: byNeighborhood.map((n) {
-                      final pct = n['pct'] as int;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 3,
-                          horizontal: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 90,
-                              child: Text(
-                                n['name'] as String,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                ),
-                              ),
+              const SizedBox(height: 16),
+              _CardShell(
+                title: 'הכנסות לפי סוג',
+                footnote: r.transactions == 0
+                    ? 'אין תנועות הכנסה במסד הנתונים. הן נוצרות במדור '
+                          '"הכנסות" בתפריט הצד, ומשם יתמלא הפילוח הזה.'
+                    : 'נספר מ-revenue_transactions.revenue_type.',
+                child: r.byType.isEmpty
+                    ? const _InlineEmpty(
+                        'טרם נרשמה תנועת הכנסה אחת — הסכום הוא אפס, ולא '
+                        'אומדן.',
+                      )
+                    : Column(
+                        children: [
+                          for (final t in r.byType)
+                            _StatRow(
+                              label:
+                                  _revenueTypes[t['type'] as String] ??
+                                  t['type'] as String,
+                              value: _fmtMoney(t['amount'] as double),
                             ),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: pct / 100,
-                                  minHeight: 14,
-                                  backgroundColor: AppColors.surfaceLight,
-                                  color: AppColors.midBlue,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${n['users']}',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '($pct%)',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 11,
-                                color: AppColors.grayText,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
+                        ],
+                      ),
               ),
             ],
-          )
-        else ...[
-          _CardShell(
-            title: '📥 ערוצי רכישה',
-            child: Column(
-              children: acquisition
-                  .map(
-                    (a) => ListTile(
-                      dense: true,
-                      title: Text(
-                        a['channel'] as String,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                        ),
-                      ),
-                      trailing: Text(
-                        '${a['pct']}%',
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
           ),
-          const SizedBox(height: 16),
-          _CardShell(
-            title: '🏘️ לפי שכונה',
-            child: Column(
-              children: byNeighborhood
-                  .map(
-                    (n) => ListTile(
-                      dense: true,
-                      title: Text(
-                        n['name'] as String,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                        ),
-                      ),
-                      trailing: Text(
-                        '${n['users']}',
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ],
-        const SizedBox(height: 20),
-
-        // Push stats + Gamification
-        if (isWide)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _CardShell(
-                  title: '🔔 ביצועי Push',
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        _PushStatRow(
-                          'נשלחו החודש',
-                          '${_fmtK(pushStats['sent_this_month'] as int)}',
-                        ),
-                        _PushStatRow(
-                          'אחוז מסירה',
-                          '${pushStats['delivered_pct']}%',
-                        ),
-                        _PushStatRow(
-                          'אחוז פתיחה',
-                          '${pushStats['opened_pct']}%',
-                        ),
-                        _PushStatRow(
-                          'אחוז הקלקה',
-                          '${pushStats['clicked_pct']}%',
-                        ),
-                        _PushStatRow(
-                          'Opt-out',
-                          '${pushStats['opt_out_pct']}%',
-                          isWarning: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _CardShell(
-                  title: '🎮 גיימיפיקציה',
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        _PushStatRow(
-                          'שחקנים פעילים',
-                          '${gamification['active_players']}',
-                        ),
-                        _PushStatRow(
-                          'נקודות חולקו',
-                          _fmtK(
-                            gamification['total_points_distributed'] as int,
-                          ),
-                        ),
-                        _PushStatRow(
-                          'ממוצע יומי',
-                          '${gamification['avg_daily_points']}',
-                        ),
-                        _PushStatRow(
-                          'צעדים היום',
-                          _fmtK(gamification['steps_tracked_today'] as int),
-                        ),
-                        _PushStatRow(
-                          'פרסים מומשו',
-                          '${gamification['rewards_claimed']}',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          )
-        else ...[
-          _CardShell(
-            title: '🔔 ביצועי Push',
-            child: Column(
-              children: [
-                _PushStatRow(
-                  'נשלחו',
-                  '${_fmtK(pushStats['sent_this_month'] as int)}',
-                ),
-                _PushStatRow('פתיחה', '${pushStats['opened_pct']}%'),
-                _PushStatRow(
-                  'Opt-out',
-                  '${pushStats['opt_out_pct']}%',
-                  isWarning: true,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-
-        const SizedBox(height: 20),
-
-        // Neighborhood heatmap grid
-        _CardShell(
-          title: '🗺️ מפת חום שכונות',
-          child: _NeighborhoodHeatGrid(data: heatmap),
         ),
         const SizedBox(height: 30),
       ],
     );
   }
-
-  String _fmtK(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
 }
 
 // ══════════════════════════════════════════════
 // SHARED WIDGETS
 // ══════════════════════════════════════════════
 
+/// A tab's title, the one line that says where its numbers come from, and the
+/// Refresh button.
+///
+/// Refresh used to regenerate random figures. It now invalidates the tab's
+/// providers, so pressing it re-reads the tables.
+class _TabHeader extends StatelessWidget {
+  final String title, subtitle;
+  final VoidCallback onRefresh;
+  const _TabHeader({
+    required this.title,
+    required this.subtitle,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.navy,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 13,
+                  height: 1.5,
+                  color: AppColors.adminTextLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        TextButton.icon(
+          onPressed: onRefresh,
+          icon: const Icon(Icons.refresh, size: 18),
+          label: Text(
+            'רענן',
+            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GroupHeading extends StatelessWidget {
+  final String text;
+  const _GroupHeading(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontFamily: AppFonts.rubik,
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: AppColors.adminTextMedium,
+      ),
+    );
+  }
+}
+
 class _CardShell extends StatelessWidget {
   final String title;
   final Widget child;
-  const _CardShell({required this.title, required this.child});
+
+  /// The line under the card that names the column the figures came from, or
+  /// explains why they are what they are. Every panel on this screen carries
+  /// one: it is what lets the client check a number rather than trust it.
+  final String? footnote;
+
+  const _CardShell({required this.title, required this.child, this.footnote});
 
   @override
   Widget build(BuildContext context) {
@@ -1876,88 +952,56 @@ class _CardShell extends StatelessWidget {
           ),
           const Divider(height: 1, color: AppColors.adminCardBorder),
           child,
+          if (footnote != null) ...[
+            const Divider(height: 1, color: AppColors.adminCardBorder),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Text(
+                footnote!,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 12,
+                  height: 1.6,
+                  color: AppColors.adminTextLight,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _LiveStatCard extends StatelessWidget {
-  final String label, value;
-  final IconData icon;
+/// One counted figure, with the table and column it was counted from.
+class _StatCard extends StatelessWidget {
+  final String label, source;
+  final String text;
   final Color color;
-  final bool large;
-  const _LiveStatCard(
-    this.label,
-    this.value,
-    this.icon,
-    this.color, {
-    this.large = false,
+
+  _StatCard({
+    required this.label,
+    required int value,
+    required this.source,
+    required this.color,
+  }) : text = _fmtInt(value);
+
+  /// For a figure that is not a plain count — a sum of money, a rate, or a
+  /// dash where there is nothing to divide.
+  const _StatCard.text({
+    required this.label,
+    required this.text,
+    required this.source,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: large ? 180 : 155,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: large ? color.withValues(alpha: 0.06) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: large
-              ? color.withValues(alpha: 0.2)
-              : AppColors.adminCardBorder,
-          width: 1,
-        ),
-        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: large ? 40 : 36,
-            height: large ? 40 : 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: large ? 22 : 18, color: color),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: large ? 32 : 22,
-              fontWeight: FontWeight.w600,
-              color: AppColors.adminTextDark,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              color: AppColors.adminTextLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  final String label, value;
-  final String? change;
-  final Color color;
-  const _MetricCard(this.label, this.value, this.change, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 170,
+      width: 200,
+      // Fixed, so that a source line long enough to take two lines does not
+      // make its card taller than the ones beside it in the same row.
+      height: 136,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1994,7 +1038,7 @@ class _MetricCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            value,
+            text,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 24,
@@ -2002,31 +1046,20 @@ class _MetricCard extends StatelessWidget {
               color: AppColors.adminTextDark,
             ),
           ),
-          if (change != null) ...[
-            const SizedBox(height: 2),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color:
-                    (change!.startsWith('+')
-                            ? AppColors.success
-                            : AppColors.error)
-                        .withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                change!,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: change!.startsWith('+')
-                      ? AppColors.success
-                      : AppColors.error,
-                ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: Text(
+              source,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 11,
+                height: 1.4,
+                color: AppColors.adminTextLight,
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -2126,65 +1159,88 @@ class _RankedTable extends StatelessWidget {
   }
 }
 
-class _FunnelStep extends StatelessWidget {
-  final String label;
-  final int value, max;
-  const _FunnelStep(this.label, this.value, this.max);
+/// A ranked list of `name` / `count` rows, drawn as bars against the largest.
+///
+/// The bars are proportions of the biggest row, not percentages of a whole:
+/// a business can sit in more than one category, so the counts do not add up
+/// to the catalogue and a percentage would be wrong.
+class _BarList extends StatelessWidget {
+  final List<Map<String, dynamic>> rows;
+
+  /// The largest count in [rows], which every bar is drawn against.
+  final int largest;
+
+  final Color color;
+  const _BarList({
+    required this.rows,
+    required this.largest,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final pct = max > 0 ? value / max : 0.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
         children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
-            ),
-          ),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: pct,
-                minHeight: 16,
-                backgroundColor: AppColors.surfaceLight,
-                color: AppColors.turquoise,
+          for (final r in rows)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      r['name'] as String,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubik,
+                        fontSize: 12,
+                        color: AppColors.navy,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: largest == 0 ? 0 : (r['count'] as int) / largest,
+                        minHeight: 14,
+                        backgroundColor: AppColors.surfaceLight,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 44,
+                    child: Text(
+                      _fmtInt(_int(r['count'])),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.adminTextDark,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 50,
-            child: Text(
-              _fmtK(value),
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
-
-  String _fmtK(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
 }
 
-class _PushStatRow extends StatelessWidget {
+class _StatRow extends StatelessWidget {
   final String label, value;
-  final bool isWarning;
-  const _PushStatRow(this.label, this.value, {this.isWarning = false});
+  const _StatRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         children: [
           Expanded(
@@ -2196,10 +1252,10 @@ class _PushStatRow extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontFamily: AppFonts.rubik,
+              fontFamily: AppFonts.inter,
               fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: isWarning ? AppColors.error : AppColors.navy,
+              fontWeight: FontWeight.w600,
+              color: AppColors.navy,
             ),
           ),
         ],
@@ -2208,216 +1264,165 @@ class _PushStatRow extends StatelessWidget {
   }
 }
 
-class _NeighborhoodHeatGrid extends StatelessWidget {
-  final List<Map<String, dynamic>> data;
-  const _NeighborhoodHeatGrid({required this.data});
+/// A calm panel for a figure the app has no source for.
+///
+/// It exists so that a section with nothing to draw reads as "this needs
+/// connecting" rather than as broken, and so that nobody is tempted to fill
+/// the space back in.
+class _NoteCard extends StatelessWidget {
+  final String title;
+  final List<String> lines;
+  const _NoteCard({required this.title, required this.lines});
 
   @override
   Widget build(BuildContext context) {
-    final maxUsers = data.fold<int>(0, (m, d) => max(m, d['users'] as int));
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: data.map((d) {
-          final users = d['users'] as int;
-          final intensity = maxUsers > 0 ? users / maxUsers : 0.0;
-          return Container(
-            width: 160,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.turquoise.withValues(
-                alpha: 0.05 + intensity * 0.25,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 18,
+                color: AppColors.adminTextMedium,
               ),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.turquoise.withValues(
-                  alpha: 0.2 + intensity * 0.3,
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.adminTextDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (final line in lines)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                line,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 13,
+                  height: 1.7,
+                  color: AppColors.adminTextMedium,
                 ),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  d['name'] as String,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$users משתמשים',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 11,
-                    color: AppColors.grayText,
-                  ),
-                ),
-                Text(
-                  '${d['businesses']} עסקים · ${d['events_this_month']} אירועים',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 10,
-                    color: AppColors.grayLight,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.star, size: 12, color: AppColors.gold),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${d['avg_engagement']}',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+        ],
       ),
     );
   }
 }
 
-/// A visual representation of live users scattered around Modi'in.
-/// Since we can't use an actual map (no external dependencies), we render
-/// a coordinate-space scatter plot with neighborhood labels.
-class _LiveUserMap extends StatelessWidget {
-  final List<Map<String, dynamic>> users;
-  const _LiveUserMap({required this.users});
+/// The body of a panel whose table is empty, in place of an empty frame.
+class _InlineEmpty extends StatelessWidget {
+  final String message;
+  const _InlineEmpty(this.message);
 
   @override
   Widget build(BuildContext context) {
-    // Bounding box around Modi'in
-    const minLat = 31.87, maxLat = 31.93;
-    const minLng = 34.98, maxLng = 35.04;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth;
-        final h = constraints.maxHeight;
-
-        return Stack(
-          children: [
-            // Grid background
-            CustomPaint(size: Size(w, h), painter: _GridPainter()),
-            // Label "מודיעין" in center
-            Positioned(
-              left: w * 0.45,
-              top: h * 0.05,
-              child: Text(
-                'מודיעין',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.navy.withValues(alpha: 0.15),
-                ),
-              ),
-            ),
-            // User dots
-            ...users.map((u) {
-              final lat = (u['lat'] as num).toDouble();
-              final lng = (u['lng'] as num).toDouble();
-              final x =
-                  ((lng - minLng) / (maxLng - minLng)).clamp(0.05, 0.95) * w;
-              final y =
-                  (1 - (lat - minLat) / (maxLat - minLat)).clamp(0.05, 0.95) *
-                  h;
-              return Positioned(
-                left: x - 5,
-                top: y - 5,
-                child: Tooltip(
-                  message: u['neighborhood'] as String? ?? '',
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: AppColors.turquoise.withValues(alpha: 0.7),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.turquoise.withValues(alpha: 0.3),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-            // Neighborhood labels
-            ..._neighborhoodPositions.entries.map((e) {
-              final x =
-                  ((e.value.$2 - minLng) / (maxLng - minLng)).clamp(
-                    0.05,
-                    0.95,
-                  ) *
-                  w;
-              final y =
-                  (1 - (e.value.$1 - minLat) / (maxLat - minLat)).clamp(
-                    0.05,
-                    0.95,
-                  ) *
-                  h;
-              return Positioned(
-                left: x - 30,
-                top: y - 18,
-                child: Text(
-                  e.key,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 9,
-                    color: AppColors.grayLight,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              );
-            }),
-          ],
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Text(
+        message,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 13,
+          height: 1.6,
+          color: AppColors.adminTextLight,
+        ),
+      ),
     );
   }
-
-  static const _neighborhoodPositions = {
-    'אבני חן': (31.904, 35.009),
-    'בוכמן': (31.898, 35.015),
-    'מורשת': (31.892, 35.005),
-    'כפר האורנים': (31.910, 34.995),
-    'רמת הדר': (31.886, 35.020),
-    'שמשון': (31.915, 35.018),
-    'עמק שילה': (31.920, 35.025),
-  };
 }
 
-class _GridPainter extends CustomPainter {
+class _LoadingPanel extends StatelessWidget {
+  const _LoadingPanel();
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.border.withValues(alpha: 0.2)
-      ..strokeWidth = 0.5;
-    for (var i = 0; i < 8; i++) {
-      final y = size.height * i / 7;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-      final x = size.width * i / 7;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 48),
+      child: Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-String _fmtK(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
+class _ErrorPanel extends StatelessWidget {
+  final Object error;
+  const _ErrorPanel({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'לא הצלחנו לקרוא את הנתונים',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.error,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$error',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 12,
+              height: 1.6,
+              color: AppColors.adminTextMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+int _int(Object? value) => (value as num?)?.toInt() ?? 0;
+
+/// The biggest `count` in a ranked list, which the bars are drawn against.
+int _largest(List<Map<String, dynamic>> rows) =>
+    rows.fold<int>(0, (m, r) => _int(r['count']) > m ? _int(r['count']) : m);
+
+/// Grouped by thousands rather than shortened to "0.7K": the point of this
+/// screen is that a figure can be checked against the table, and 669 reads
+/// as a count in a way that 0.7K does not.
+String _fmtInt(int n) {
+  final digits = n.abs().toString();
+  final out = StringBuffer(n < 0 ? '-' : '');
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) out.write(',');
+    out.write(digits[i]);
+  }
+  return out.toString();
+}
+
+String _fmtMoney(double amount) => '₪${_fmtInt(amount.round())}';

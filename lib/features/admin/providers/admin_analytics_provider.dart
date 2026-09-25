@@ -1,627 +1,475 @@
-import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
 
-// ─── Real-Time Stats ───
+import '../../../core/supabase/supabase_config.dart';
 
-final adminRealTimeProvider =
-    StateNotifierProvider<AdminRealTimeNotifier, Map<String, dynamic>>((ref) {
-      return AdminRealTimeNotifier();
+/// What the Analytics section can actually count.
+///
+/// Every provider in this file used to invent its figures. A random number
+/// generator filled in "127 active users now", "1,834 sessions today",
+/// "6,720 page views", "3,200 push notifications sent", a 22–30% bounce rate
+/// and a 45–75ms API latency, and a Refresh button regenerated them all — so
+/// the numbers moved when you pressed it and read as live. The rest of the file was a fixed
+/// table of invented figures: ₪284,500 of revenue, 1.24M ad impressions, a
+/// 14,200-user base with retention cohorts, acquisition channels and an age
+/// distribution, and twenty-five lat/lng points drawn on a map as the people
+/// using the app right now. The database holds two profiles.
+///
+/// There is no analytics, sessions, page-views or push-delivery table in this
+/// schema, and nothing in the app writes one, so sessions, bounce rate,
+/// session duration, DAU/WAU/MAU, retention, peak hours, device breakdown,
+/// acquisition channel, age, API latency and notification delivery have no
+/// source at all and cannot get one from these tables. They are gone.
+///
+/// What remains is counted: row counts, the `view_count` / `share_count` /
+/// `save_count` columns that `articles` and `events` carry, the
+/// `entity_categories` links, and the `impressions` / `clicks` / `conversions`
+/// columns on `campaigns` with the `amount` on `revenue_transactions`. Several
+/// of those totals are zero today. A counted nought is knowledge; it is shown
+/// as nought rather than filled in.
+
+/// Rows in each table the first tab reports on, keyed as below.
+///
+/// Read with `.count(CountOption.exact)` against a one-row window, so the
+/// count is the table's and not the page's. Advertising and revenue are
+/// counted by their own providers further down, next to the sums they go
+/// with.
+final adminRowCountsProvider = FutureProvider<Map<String, int>>((ref) async {
+  final today = DateTime.now().toIso8601String().split('T')[0];
+
+  final results = await Future.wait([
+    _countRows('profiles'),
+    _countRows('profiles', column: 'is_verified', equals: true),
+    _countRows('profiles', column: 'push_enabled', equals: true),
+    _countRows('businesses'),
+    _countRows('businesses', column: 'status', equals: 'active'),
+    _countRows('businesses', column: 'status', equals: 'pending'),
+    _countRows('articles'),
+    _countRows('articles', column: 'status', equals: 'published'),
+    _countRows('articles', column: 'status', equals: 'draft'),
+    _countRows('events'),
+    _countRows('events', column: 'start_date', gte: today),
+    _countRows('neighborhoods'),
+    _countRows('categories'),
+    _countRows('reviews'),
+    _countRows('comments'),
+    _countRows('offers'),
+    _countRows('offer_claims'),
+    _countRows('favorites'),
+    _countRows('listings'),
+  ]);
+
+  return {
+    'residents': results[0],
+    'residents_verified': results[1],
+    'residents_push_on': results[2],
+    'businesses': results[3],
+    'businesses_active': results[4],
+    'businesses_pending': results[5],
+    'articles': results[6],
+    'articles_published': results[7],
+    'articles_draft': results[8],
+    'events': results[9],
+    'events_upcoming': results[10],
+    'neighborhoods': results[11],
+    'categories': results[12],
+    'reviews': results[13],
+    'comments': results[14],
+    'offers': results[15],
+    'offer_claims': results[16],
+    'favorites': results[17],
+    'listings': results[18],
+  };
+});
+
+/// How many rows a table holds, optionally narrowed to one column's value.
+///
+/// `gte` is separate from `equals` because the only range this file asks for
+/// is "events that have not happened yet".
+Future<int> _countRows(
+  String table, {
+  String? column,
+  Object? equals,
+  String? gte,
+}) async {
+  var query = SupabaseConfig.client.from(table).select('id');
+  if (column != null && equals != null) query = query.eq(column, equals);
+  if (column != null && gte != null) query = query.gte(column, gte);
+  final res = await query.limit(1).count(CountOption.exact);
+  return res.count;
+}
+
+// ─── Content reach ───
+
+/// The reach columns `articles` and `events` carry.
+///
+/// `view_count` is incremented by the app when an item is opened. It is the
+/// only reach figure in the schema: there is no per-view row, so there is no
+/// date on a view and no way to say how many views happened today, this week
+/// or in any other window. These are lifetime totals, which is how they are
+/// labelled on the screen.
+class AdminContentReach {
+  /// The ten most-viewed articles: `title`, `view_count`, `share_count`,
+  /// `save_count`.
+  final List<Map<String, dynamic>> topArticles;
+
+  /// Every event, most-viewed first: `title`, `view_count`, `rsvp_count`,
+  /// `share_count`, `calendar_adds`.
+  final List<Map<String, dynamic>> topEvents;
+
+  final int articleViews, articleShares, articleSaves;
+  final int eventViews, eventRsvps, eventShares, eventCalendarAdds;
+
+  /// How many rows carry a non-zero `view_count`, against how many there are.
+  /// Eight of 669 articles do, which is worth saying next to the table: the
+  /// ranking is real but it is a ranking of eight.
+  final int articlesWithViews, articleTotal;
+  final int eventsWithViews, eventTotal;
+
+  const AdminContentReach({
+    required this.topArticles,
+    required this.topEvents,
+    required this.articleViews,
+    required this.articleShares,
+    required this.articleSaves,
+    required this.eventViews,
+    required this.eventRsvps,
+    required this.eventShares,
+    required this.eventCalendarAdds,
+    required this.articlesWithViews,
+    required this.articleTotal,
+    required this.eventsWithViews,
+    required this.eventTotal,
+  });
+}
+
+final adminContentReachProvider = FutureProvider<AdminContentReach>((
+  ref,
+) async {
+  final client = SupabaseConfig.client;
+
+  final articleRows = List<Map<String, dynamic>>.from(
+    await client
+        .from('articles')
+        .select('title, view_count, share_count, save_count')
+        .order('view_count', ascending: false),
+  );
+  final eventRows = List<Map<String, dynamic>>.from(
+    await client
+        .from('events')
+        .select('title, view_count, rsvp_count, share_count, calendar_adds')
+        .order('view_count', ascending: false),
+  );
+
+  int sum(List<Map<String, dynamic>> rows, String column) =>
+      rows.fold(0, (t, r) => t + ((r[column] as num?)?.toInt() ?? 0));
+
+  return AdminContentReach(
+    topArticles: articleRows.take(10).toList(),
+    topEvents: eventRows.take(10).toList(),
+    articleViews: sum(articleRows, 'view_count'),
+    articleShares: sum(articleRows, 'share_count'),
+    articleSaves: sum(articleRows, 'save_count'),
+    eventViews: sum(eventRows, 'view_count'),
+    eventRsvps: sum(eventRows, 'rsvp_count'),
+    eventShares: sum(eventRows, 'share_count'),
+    eventCalendarAdds: sum(eventRows, 'calendar_adds'),
+    articlesWithViews: articleRows
+        .where((r) => ((r['view_count'] as num?) ?? 0) > 0)
+        .length,
+    articleTotal: articleRows.length,
+    eventsWithViews: eventRows
+        .where((r) => ((r['view_count'] as num?) ?? 0) > 0)
+        .length,
+    eventTotal: eventRows.length,
+  );
+});
+
+// ─── Publishing cadence ───
+
+/// Articles published per calendar month, oldest first: `month` as `MM/YY`
+/// and `count`.
+///
+/// This is the one real time series the schema supports. It measures the
+/// newsroom's output rather than anyone's behaviour, which the chart says.
+final adminPublishingCadenceProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+      final rows = List<Map<String, dynamic>>.from(
+        await SupabaseConfig.client
+            .from('articles')
+            .select('published_at')
+            .eq('status', 'published')
+            .not('published_at', 'is', null)
+            .order('published_at', ascending: true),
+      );
+
+      final buckets = <String, int>{};
+      for (final r in rows) {
+        final at = DateTime.tryParse(r['published_at'] as String? ?? '');
+        if (at == null) continue;
+        final key = '${at.year}-${at.month.toString().padLeft(2, '0')}';
+        buckets[key] = (buckets[key] ?? 0) + 1;
+      }
+
+      final keys = buckets.keys.toList()..sort();
+      // Twelve months is what fits the chart's width without the labels
+      // colliding; the table holds twenty-three months of articles.
+      final recent = keys.length > 12 ? keys.sublist(keys.length - 12) : keys;
+
+      return [
+        for (final k in recent)
+          {
+            'month': '${k.substring(5)}/${k.substring(2, 4)}',
+            'count': buckets[k]!,
+          },
+      ];
     });
 
-class AdminRealTimeNotifier extends StateNotifier<Map<String, dynamic>> {
-  AdminRealTimeNotifier() : super(_generateRealTime());
+// ─── Catalogue breakdown ───
 
-  void refresh() => state = _generateRealTime();
+/// How the business catalogue divides up, by the columns that record it.
+class AdminCatalogueBreakdown {
+  /// `name` and `count` per category, largest first, from
+  /// `entity_categories` where `entity_type = 'business'`.
+  final List<Map<String, dynamic>> byCategory;
+
+  /// `name` and `count` per neighbourhood, largest first, from
+  /// `businesses.neighborhood_id`.
+  final List<Map<String, dynamic>> byNeighborhood;
+
+  /// Businesses with no neighbourhood set. Two hundred of the 220 imported
+  /// businesses have none, so a neighbourhood breakdown that did not say so
+  /// would be describing 9% of the catalogue as though it were all of it.
+  final int withoutNeighborhood;
+
+  final int businessTotal;
+
+  const AdminCatalogueBreakdown({
+    required this.byCategory,
+    required this.byNeighborhood,
+    required this.withoutNeighborhood,
+    required this.businessTotal,
+  });
 }
 
-Map<String, dynamic> _generateRealTime() {
-  final rng = Random();
-  return {
-    'active_now': 127 + rng.nextInt(60),
-    'active_ios': 68 + rng.nextInt(30),
-    'active_android': 42 + rng.nextInt(20),
-    'active_web': 17 + rng.nextInt(10),
-    'sessions_today': 1834 + rng.nextInt(200),
-    'page_views_today': 6720 + rng.nextInt(500),
-    'avg_session_duration_sec': 185 + rng.nextInt(60),
-    'bounce_rate_pct': 22 + rng.nextInt(8),
-    'searches_today': 342 + rng.nextInt(50),
-    'shares_today': 28 + rng.nextInt(15),
-    'new_users_today': 14 + rng.nextInt(8),
-    'notifications_sent_today': 3200 + rng.nextInt(300),
-    'notifications_opened': 1480 + rng.nextInt(200),
-    'errors_today': rng.nextInt(5),
-    'api_latency_ms': 45 + rng.nextInt(30),
-    // Live user locations (lat/lng near Modi'in)
-    'live_users': List.generate(
-      25 + rng.nextInt(20),
-      (i) => {
-        'lat': 31.89 + (rng.nextDouble() - 0.5) * 0.06,
-        'lng': 35.01 + (rng.nextDouble() - 0.5) * 0.06,
-        'neighborhood': [
-          'אבני חן',
-          'בוכמן',
-          'מורשת',
-          'כפר האורנים',
-          'ישפרו סנטר',
-          'רמת הדר',
-          'ליגד סנטר',
-        ][rng.nextInt(7)],
-      },
-    ),
-  };
-}
+final adminCatalogueBreakdownProvider = FutureProvider<AdminCatalogueBreakdown>(
+  (ref) async {
+    final client = SupabaseConfig.client;
 
-// ─── Daily Analytics (DAU/WAU/MAU + engagement) ───
+    final categoryLinks = List<Map<String, dynamic>>.from(
+      await client
+          .from('entity_categories')
+          .select('category_id, categories(name)')
+          .eq('entity_type', 'business'),
+    );
+    final businessRows = List<Map<String, dynamic>>.from(
+      await client.from('businesses').select('neighborhood_id'),
+    );
+    final neighborhoods = List<Map<String, dynamic>>.from(
+      await client.from('neighborhoods').select('id, name'),
+    );
 
-final adminDailyAnalyticsProvider = Provider<Map<String, dynamic>>((ref) {
-  return _dailyAnalytics;
-});
+    final perCategory = <String, int>{};
+    for (final link in categoryLinks) {
+      final name = (link['categories'] as Map?)?['name'] as String?;
+      if (name == null) continue;
+      perCategory[name] = (perCategory[name] ?? 0) + 1;
+    }
 
-final _dailyAnalytics = <String, dynamic>{
-  // DAU for last 30 days
-  'dau': List.generate(30, (i) {
-    final date = DateTime(2026, 8, 28).subtract(Duration(days: 29 - i));
-    final base = date.weekday == 6 || date.weekday == 7 ? 680 : 1100;
-    return {
-      'date': date.toIso8601String().split('T')[0],
-      'count': base + Random(i).nextInt(300),
+    final names = {
+      for (final n in neighborhoods) n['id'] as String: n['name'] as String,
     };
-  }),
-  // WAU for last 12 weeks
-  'wau': [
-    {'week': 'W23', 'count': 3200},
-    {'week': 'W24', 'count': 3450},
-    {'week': 'W25', 'count': 3680},
-    {'week': 'W26', 'count': 3520},
-    {'week': 'W27', 'count': 3890},
-    {'week': 'W28', 'count': 4100},
-    {'week': 'W29', 'count': 4250},
-    {'week': 'W30', 'count': 4380},
-    {'week': 'W31', 'count': 4500},
-    {'week': 'W32', 'count': 4680},
-    {'week': 'W33', 'count': 4820},
-    {'week': 'W34', 'count': 4950},
-  ],
-  // MAU for last 6 months
-  'mau': [
-    {'month': 'מרץ', 'count': 8200},
-    {'month': 'אפריל', 'count': 9100},
-    {'month': 'מאי', 'count': 10500},
-    {'month': 'יוני', 'count': 11200},
-    {'month': 'יולי', 'count': 12800},
-    {'month': 'אוגוסט', 'count': 14200},
-  ],
-  // Current stats
-  'dau_current': 1247,
-  'dau_change_pct': 11.3,
-  'wau_current': 4950,
-  'wau_change_pct': 8.7,
-  'mau_current': 14200,
-  'mau_change_pct': 10.9,
+    final perNeighborhood = <String, int>{};
+    var withoutNeighborhood = 0;
+    for (final b in businessRows) {
+      final id = b['neighborhood_id'] as String?;
+      final name = id == null ? null : names[id];
+      if (name == null) {
+        withoutNeighborhood++;
+        continue;
+      }
+      perNeighborhood[name] = (perNeighborhood[name] ?? 0) + 1;
+    }
 
-  // Retention cohorts (% still active after N days)
-  'retention': {
-    'day1': 72.0,
-    'day3': 58.0,
-    'day7': 45.0,
-    'day14': 38.0,
-    'day30': 28.0,
-    'day60': 22.0,
-    'day90': 18.0,
+    List<Map<String, dynamic>> ranked(Map<String, int> counts) {
+      final entries = counts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      return [
+        for (final e in entries) {'name': e.key, 'count': e.value},
+      ];
+    }
+
+    return AdminCatalogueBreakdown(
+      byCategory: ranked(perCategory),
+      byNeighborhood: ranked(perNeighborhood),
+      withoutNeighborhood: withoutNeighborhood,
+      businessTotal: businessRows.length,
+    );
   },
-  // Retention by month (for chart)
-  'retention_monthly': [
-    {'month': 'מרץ', 'd1': 68, 'd7': 41, 'd30': 24},
-    {'month': 'אפריל', 'd1': 70, 'd7': 43, 'd30': 25},
-    {'month': 'מאי', 'd1': 71, 'd7': 44, 'd30': 26},
-    {'month': 'יוני', 'd1': 72, 'd7': 45, 'd30': 27},
-    {'month': 'יולי', 'd1': 73, 'd7': 46, 'd30': 28},
-    {'month': 'אוגוסט', 'd1': 75, 'd7': 48, 'd30': 30},
-  ],
+);
 
-  // Session analytics
-  'avg_session_duration_min': 3.2,
-  'avg_sessions_per_user': 2.8,
-  'avg_screens_per_session': 6.4,
-  'peak_hours': [
-    {'hour': 7, 'users': 180},
-    {'hour': 8, 'users': 420},
-    {'hour': 9, 'users': 580},
-    {'hour': 10, 'users': 620},
-    {'hour': 11, 'users': 510},
-    {'hour': 12, 'users': 780},
-    {'hour': 13, 'users': 850},
-    {'hour': 14, 'users': 720},
-    {'hour': 15, 'users': 650},
-    {'hour': 16, 'users': 890},
-    {'hour': 17, 'users': 1050},
-    {'hour': 18, 'users': 980},
-    {'hour': 19, 'users': 1120},
-    {'hour': 20, 'users': 1180},
-    {'hour': 21, 'users': 940},
-    {'hour': 22, 'users': 620},
-    {'hour': 23, 'users': 340},
-  ],
-};
+// ─── Campaign performance ───
 
-// ─── Content Performance ───
+/// The counters `campaigns` carries, summed.
+///
+/// `impressions`, `unique_impressions`, `clicks` and `conversions` are real
+/// columns with a default of zero. Nothing in the app increments them yet, so
+/// they are zero until a banner is served through something that does — which
+/// the screen says rather than showing a made-up CTR.
+class AdminCampaignPerformance {
+  final int campaigns;
+  final int impressions, uniqueImpressions, clicks, conversions;
 
-final adminContentPerformanceProvider = Provider<Map<String, dynamic>>((ref) {
-  return _contentPerformance;
-});
+  /// Campaigns per `status`, from the `campaign_status` enum.
+  final Map<String, int> byStatus;
 
-final _contentPerformance = <String, dynamic>{
-  'top_articles': [
-    {
-      'title': 'מרכז מסחרי חדש בכניסה לעיר',
-      'views': 4520,
-      'shares': 89,
-      'comments': 34,
-      'avg_read_time_sec': 142,
-    },
-    {
-      'title': 'פארק ענבה — שעות פעילות חדשות',
-      'views': 3890,
-      'shares': 45,
-      'comments': 12,
-      'avg_read_time_sec': 98,
-    },
-    {
-      'title': 'שוק איכרים חדש בכפר האורנים',
-      'views': 3210,
-      'shares': 67,
-      'comments': 28,
-      'avg_read_time_sec': 115,
-    },
-    {
-      'title': 'קבוצת הכדורגל העירונית — עונה חדשה',
-      'views': 2780,
-      'shares': 52,
-      'comments': 41,
-      'avg_read_time_sec': 134,
-    },
-    {
-      'title': 'בית ספר חדש ברמת דניאל',
-      'views': 2450,
-      'shares': 31,
-      'comments': 19,
-      'avg_read_time_sec': 87,
-    },
-  ],
-  'top_businesses': [
-    {
-      'name': 'פיצה פרגו',
-      'views': 8920,
-      'clicks_to_phone': 234,
-      'clicks_to_nav': 189,
-      'saves': 156,
-      'reviews_this_month': 12,
-    },
-    {
-      'name': 'סופר פארם מודיעין',
-      'views': 7340,
-      'clicks_to_phone': 178,
-      'clicks_to_nav': 312,
-      'saves': 89,
-      'reviews_this_month': 8,
-    },
-    {
-      'name': 'סטודיו שרה — יוגה ופילאטיס',
-      'views': 5120,
-      'clicks_to_phone': 145,
-      'clicks_to_nav': 98,
-      'saves': 234,
-      'reviews_this_month': 15,
-    },
-    {
-      'name': 'ביסטרו מודיעין',
-      'views': 4870,
-      'clicks_to_phone': 167,
-      'clicks_to_nav': 201,
-      'saves': 112,
-      'reviews_this_month': 9,
-    },
-    {
-      'name': 'קפה ביגה',
-      'views': 3980,
-      'clicks_to_phone': 89,
-      'clicks_to_nav': 145,
-      'saves': 78,
-      'reviews_this_month': 6,
-    },
-  ],
-  'top_events': [
-    {
-      'title': 'הופעת שלמה ארצי',
-      'views': 12400,
-      'ticket_clicks': 3200,
-      'shares': 456,
-      'rsvp': 890,
-    },
-    {
-      'title': 'פסטיבל הבירה מודיעין',
-      'views': 8900,
-      'ticket_clicks': 1800,
-      'shares': 312,
-      'rsvp': 567,
-    },
-    {
-      'title': 'ריצת ערב קהילתית',
-      'views': 3400,
-      'ticket_clicks': 0,
-      'shares': 89,
-      'rsvp': 234,
-    },
-    {
-      'title': 'שוק אוכל רחוב',
-      'views': 2900,
-      'ticket_clicks': 0,
-      'shares': 67,
-      'rsvp': 189,
-    },
-    {
-      'title': 'סדנת בישול איטלקי',
-      'views': 1800,
-      'ticket_clicks': 450,
-      'shares': 34,
-      'rsvp': 45,
-    },
-  ],
-  'search_queries': [
-    {'query': 'פיצה', 'count': 342, 'results_avg': 8},
-    {'query': 'מסעדות', 'count': 289, 'results_avg': 24},
-    {'query': 'אירועים', 'count': 234, 'results_avg': 15},
-    {'query': 'כושר', 'count': 178, 'results_avg': 12},
-    {'query': 'משלוח', 'count': 156, 'results_avg': 18},
-    {'query': 'קפה', 'count': 145, 'results_avg': 9},
-    {'query': 'רופא', 'count': 134, 'results_avg': 6},
-    {'query': 'חניה', 'count': 112, 'results_avg': 4},
-    {'query': 'בית ספר', 'count': 98, 'results_avg': 7},
-    {'query': 'שוק', 'count': 87, 'results_avg': 3},
-  ],
-  'zero_result_searches': [
-    {'query': 'טרמפולינות', 'count': 23},
-    {'query': 'כביסה', 'count': 18},
-    {'query': 'מוסך', 'count': 15},
-    {'query': 'חשמלאי', 'count': 12},
-    {'query': 'וטרינר', 'count': 9},
-  ],
-  // Content by category
-  'categories_distribution': [
-    {'name': 'מסעדות ובתי קפה', 'businesses': 45, 'views': 34200, 'pct': 28},
-    {'name': 'בריאות וכושר', 'businesses': 22, 'views': 18900, 'pct': 15},
-    {'name': 'קמעונאות', 'businesses': 38, 'views': 16800, 'pct': 14},
-    {'name': 'שירותים מקצועיים', 'businesses': 31, 'views': 14200, 'pct': 12},
-    {'name': 'חינוך', 'businesses': 18, 'views': 12400, 'pct': 10},
-    {'name': 'פנאי ובידור', 'businesses': 14, 'views': 10800, 'pct': 9},
-    {'name': 'יופי וטיפוח', 'businesses': 16, 'views': 8400, 'pct': 7},
-    {'name': 'אחר', 'businesses': 12, 'views': 6200, 'pct': 5},
-  ],
-};
+  /// `label` and `campaigns` per slot, from `ad_placements`.
+  final List<Map<String, dynamic>> placements;
 
-// ─── Ad & Revenue Analytics ───
+  const AdminCampaignPerformance({
+    required this.campaigns,
+    required this.impressions,
+    required this.uniqueImpressions,
+    required this.clicks,
+    required this.conversions,
+    required this.byStatus,
+    required this.placements,
+  });
 
-final adminAdAnalyticsProvider = Provider<Map<String, dynamic>>((ref) {
-  return _adAnalytics;
-});
+  /// Click-through rate, or null when nothing has been served — a rate over
+  /// zero impressions is not zero per cent, it is unknown.
+  double? get ctr => impressions == 0 ? null : clicks / impressions * 100;
+}
 
-final _adAnalytics = <String, dynamic>{
-  // Revenue summary
-  'revenue_total_year': 284500,
-  'revenue_this_month': 38200,
-  'revenue_last_month': 34800,
-  'revenue_growth_pct': 9.8,
-  'mrr': 24500, // monthly recurring revenue
-  'arr_estimated': 294000,
+final adminCampaignPerformanceProvider =
+    FutureProvider<AdminCampaignPerformance>((ref) async {
+      final client = SupabaseConfig.client;
 
-  // Revenue by source
-  'revenue_by_source': [
-    {'source': 'מנויים חודשיים', 'amount': 14200, 'pct': 37},
-    {'source': 'באנרים ראשיים', 'amount': 8600, 'pct': 23},
-    {'source': 'Push ממומנים', 'amount': 5400, 'pct': 14},
-    {'source': 'עסק מומלץ', 'amount': 4200, 'pct': 11},
-    {'source': 'תוכן ממומן', 'amount': 3400, 'pct': 9},
-    {'source': 'חבילות מיוחדות', 'amount': 2400, 'pct': 6},
-  ],
+      final campaigns = List<Map<String, dynamic>>.from(
+        await client
+            .from('campaigns')
+            .select(
+              'status, placement_id, impressions, unique_impressions, '
+              'clicks, conversions',
+            ),
+      );
+      final placements = List<Map<String, dynamic>>.from(
+        await client
+            .from('ad_placements')
+            .select('id, label')
+            .order('sort_order', ascending: true),
+      );
 
-  // Revenue trend (last 6 months)
-  'revenue_trend': [
-    {'month': 'מרץ', 'amount': 22400},
-    {'month': 'אפריל', 'amount': 25800},
-    {'month': 'מאי', 'amount': 28600},
-    {'month': 'יוני', 'amount': 31200},
-    {'month': 'יולי', 'amount': 34800},
-    {'month': 'אוגוסט', 'amount': 38200},
-  ],
+      int sum(String column) =>
+          campaigns.fold(0, (t, r) => t + ((r[column] as num?)?.toInt() ?? 0));
 
-  // Ad performance
-  'total_impressions': 1240000,
-  'total_clicks': 38900,
-  'overall_ctr': 3.14,
-  'avg_cpm': 12.5,
-  'fill_rate_pct': 87,
+      final byStatus = <String, int>{};
+      final perPlacement = <String, int>{};
+      for (final c in campaigns) {
+        final status = c['status'] as String? ?? 'draft';
+        byStatus[status] = (byStatus[status] ?? 0) + 1;
+        final slot = c['placement_id'] as String?;
+        if (slot != null) perPlacement[slot] = (perPlacement[slot] ?? 0) + 1;
+      }
 
-  // Top performing placements
-  'placement_performance': [
-    {
-      'label': 'ראש עמוד הבית',
-      'impressions': 380000,
-      'clicks': 15200,
-      'ctr': 4.0,
-      'revenue': 12800,
-    },
-    {
-      'label': 'אמצע עמוד הבית',
-      'impressions': 290000,
-      'clicks': 8700,
-      'ctr': 3.0,
-      'revenue': 8200,
-    },
-    {
-      'label': 'בתוך כתבה',
-      'impressions': 210000,
-      'clicks': 7560,
-      'ctr': 3.6,
-      'revenue': 7600,
-    },
-    {
-      'label': 'תחתית כתבה',
-      'impressions': 180000,
-      'clicks': 3600,
-      'ctr': 2.0,
-      'revenue': 4200,
-    },
-    {
-      'label': 'סייד-בר עסק',
-      'impressions': 120000,
-      'clicks': 2640,
-      'ctr': 2.2,
-      'revenue': 3400,
-    },
-    {
-      'label': 'תוצאות חיפוש',
-      'impressions': 60000,
-      'clicks': 1200,
-      'ctr': 2.0,
-      'revenue': 2000,
-    },
-  ],
+      return AdminCampaignPerformance(
+        campaigns: campaigns.length,
+        impressions: sum('impressions'),
+        uniqueImpressions: sum('unique_impressions'),
+        clicks: sum('clicks'),
+        conversions: sum('conversions'),
+        byStatus: byStatus,
+        placements: [
+          for (final p in placements)
+            {
+              'label': p['label'] as String? ?? '',
+              'campaigns': perPlacement[p['id'] as String] ?? 0,
+            },
+        ],
+      );
+    });
 
-  // Conversion funnel for offers
-  'offer_funnel': {
-    'views': 45200,
-    'clicks': 8900,
-    'code_copies': 3400,
-    'claims': 1856,
-    'conversion_rate_pct': 4.1,
-  },
+// ─── Revenue ───
 
-  // Top advertisers (revenue)
-  'top_advertisers': [
-    {
-      'name': 'סופר פארם מודיעין',
-      'revenue': 12400,
-      'campaigns': 4,
-      'active_since': '2024-01-01',
-    },
-    {
-      'name': 'פיצה פרגו',
-      'revenue': 9800,
-      'campaigns': 5,
-      'active_since': '2024-03-15',
-    },
-    {
-      'name': 'סטודיו שרה',
-      'revenue': 6200,
-      'campaigns': 3,
-      'active_since': '2024-09-01',
-    },
-    {
-      'name': 'ביסטרו מודיעין',
-      'revenue': 4800,
-      'campaigns': 2,
-      'active_since': '2026-08-01',
-    },
-    {
-      'name': 'קפה ביגה',
-      'revenue': 3200,
-      'campaigns': 1,
-      'active_since': '2026-06-01',
-    },
-  ],
-};
+/// Money the panel has a record of, from `revenue_transactions`.
+///
+/// Every figure here is a sum of the `amount` column over rows that exist.
+/// The section used to report ₪284,500 for the year, an MRR and an ARR
+/// forecast against an empty table.
+class AdminRevenueSummary {
+  final int transactions;
 
-// ─── User Demographics & Behavior ───
+  /// Sums of `amount`, in shekels.
+  final double total, paid, outstanding, thisMonth;
 
-final adminUserAnalyticsProvider = Provider<Map<String, dynamic>>((ref) {
-  return _userAnalytics;
-});
+  /// `type` and `amount` per `revenue_type`, largest first.
+  final List<Map<String, dynamic>> byType;
 
-final _userAnalytics = <String, dynamic>{
-  'total_users': 14200,
-  'verified_users': 12800,
-  'business_owners': 196,
-  'new_users_this_month': 680,
-  'churn_this_month': 142,
-  'net_growth': 538,
+  /// Subscriptions with `status = 'active'`. Their value per month is not
+  /// derived here: `billing_cycle` spreads a price over a period the client
+  /// has not told us how to apportion, and an MRR is a claim, not a count.
+  final int activeSubscriptions;
 
-  // User acquisition channels
-  'acquisition': [
-    {'channel': 'אורגני (Google)', 'users': 4800, 'pct': 34},
-    {'channel': 'הפניה מחבר', 'users': 3200, 'pct': 22},
-    {'channel': 'פייסבוק', 'users': 2400, 'pct': 17},
-    {'channel': 'App Store / Play Store', 'users': 1800, 'pct': 13},
-    {'channel': 'קמפיינים', 'users': 1200, 'pct': 8},
-    {'channel': 'אחר', 'users': 800, 'pct': 6},
-  ],
+  const AdminRevenueSummary({
+    required this.transactions,
+    required this.total,
+    required this.paid,
+    required this.outstanding,
+    required this.thisMonth,
+    required this.byType,
+    required this.activeSubscriptions,
+  });
+}
 
-  // Users by neighborhood
-  'by_neighborhood': [
-    {'name': 'אבני חן', 'users': 2400, 'pct': 17},
-    {'name': 'בוכמן', 'users': 2100, 'pct': 15},
-    {'name': 'מורשת', 'users': 1900, 'pct': 13},
-    {'name': 'כפר האורנים', 'users': 1700, 'pct': 12},
-    {'name': 'רמת הדר', 'users': 1400, 'pct': 10},
-    {'name': 'רמת דניאל', 'users': 1200, 'pct': 9},
-    {'name': 'שמשון', 'users': 1100, 'pct': 8},
-    {'name': 'עמק שילה', 'users': 900, 'pct': 6},
-    {'name': 'אזור תעשייה', 'users': 600, 'pct': 4},
-    {'name': 'אחר', 'users': 900, 'pct': 6},
-  ],
-
-  // Platform distribution
-  'by_platform': [
-    {'platform': 'iOS', 'users': 6500, 'pct': 46},
-    {'platform': 'Android', 'users': 5700, 'pct': 40},
-    {'platform': 'Web', 'users': 2000, 'pct': 14},
-  ],
-
-  // Age distribution (estimated)
-  'by_age': [
-    {'range': '18-24', 'pct': 8},
-    {'range': '25-34', 'pct': 24},
-    {'range': '35-44', 'pct': 32},
-    {'range': '45-54', 'pct': 22},
-    {'range': '55+', 'pct': 14},
-  ],
-
-  // User engagement segments
-  'engagement_segments': [
-    {
-      'segment': 'פעילים מאוד (5+ ביקורים/שבוע)',
-      'users': 1800,
-      'pct': 13,
-      'color': 'success',
-    },
-    {
-      'segment': 'פעילים (2-4 ביקורים/שבוע)',
-      'users': 4200,
-      'pct': 30,
-      'color': 'turquoise',
-    },
-    {
-      'segment': 'לפעמים (1 ביקור/שבוע)',
-      'users': 3800,
-      'pct': 27,
-      'color': 'gold',
-    },
-    {
-      'segment': 'לא פעילים (< 1/שבוע)',
-      'users': 2900,
-      'pct': 20,
-      'color': 'grayLight',
-    },
-    {'segment': 'נטושים (30+ יום)', 'users': 1500, 'pct': 10, 'color': 'error'},
-  ],
-
-  // LTV estimate
-  'avg_ltv': 42.5, // ILS per user
-  'ltv_by_segment': {
-    'power': 120.0,
-    'active': 65.0,
-    'casual': 28.0,
-    'inactive': 8.0,
-    'churned': 0.0,
-  },
-
-  // Push notification performance
-  'push_stats': {
-    'sent_this_month': 42000,
-    'delivered_pct': 94.2,
-    'opened_pct': 38.5,
-    'clicked_pct': 12.8,
-    'opt_out_pct': 2.1,
-  },
-
-  // Gamification stats
-  'gamification': {
-    'total_points_distributed': 2840000,
-    'active_players': 4200,
-    'avg_daily_points': 45,
-    'steps_tracked_today': 18400000,
-    'rewards_claimed': 234,
-    'leaderboard_views': 890,
-  },
-};
-
-// ─── Neighborhood Heatmap Data ───
-
-final adminNeighborhoodHeatmapProvider = Provider<List<Map<String, dynamic>>>((
+final adminRevenueSummaryProvider = FutureProvider<AdminRevenueSummary>((
   ref,
-) {
-  return [
-    {
-      'name': 'אבני חן',
-      'lat': 31.9040,
-      'lng': 35.0090,
-      'users': 2400,
-      'businesses': 32,
-      'events_this_month': 8,
-      'avg_engagement': 4.2,
-    },
-    {
-      'name': 'בוכמן',
-      'lat': 31.8980,
-      'lng': 35.0150,
-      'users': 2100,
-      'businesses': 28,
-      'events_this_month': 5,
-      'avg_engagement': 3.8,
-    },
-    {
-      'name': 'מורשת',
-      'lat': 31.8920,
-      'lng': 35.0050,
-      'users': 1900,
-      'businesses': 22,
-      'events_this_month': 12,
-      'avg_engagement': 4.5,
-    },
-    {
-      'name': 'כפר האורנים',
-      'lat': 31.9100,
-      'lng': 34.9950,
-      'users': 1700,
-      'businesses': 18,
-      'events_this_month': 4,
-      'avg_engagement': 3.6,
-    },
-    {
-      'name': 'רמת הדר',
-      'lat': 31.8860,
-      'lng': 35.0200,
-      'users': 1400,
-      'businesses': 15,
-      'events_this_month': 3,
-      'avg_engagement': 3.4,
-    },
-    {
-      'name': 'רמת דניאל',
-      'lat': 31.8800,
-      'lng': 35.0100,
-      'users': 1200,
-      'businesses': 12,
-      'events_this_month': 2,
-      'avg_engagement': 3.2,
-    },
-    {
-      'name': 'שמשון',
-      'lat': 31.9150,
-      'lng': 35.0180,
-      'users': 1100,
-      'businesses': 10,
-      'events_this_month': 3,
-      'avg_engagement': 3.0,
-    },
-    {
-      'name': 'עמק שילה',
-      'lat': 31.9200,
-      'lng': 35.0250,
-      'users': 900,
-      'businesses': 8,
-      'events_this_month': 1,
-      'avg_engagement': 2.8,
-    },
-  ];
+) async {
+  final client = SupabaseConfig.client;
+
+  final rows = List<Map<String, dynamic>>.from(
+    await client
+        .from('revenue_transactions')
+        .select('amount, revenue_type, payment_status, created_at'),
+  );
+  final subscriptions = await _countRows(
+    'subscriptions',
+    column: 'status',
+    equals: 'active',
+  );
+
+  final now = DateTime.now();
+  final monthStart = DateTime(now.year, now.month);
+
+  double total = 0, paid = 0, outstanding = 0, thisMonth = 0;
+  final perType = <String, double>{};
+  for (final r in rows) {
+    final amount = (r['amount'] as num?)?.toDouble() ?? 0;
+    total += amount;
+    if (r['payment_status'] == 'paid') {
+      paid += amount;
+    } else if (r['payment_status'] == 'pending' ||
+        r['payment_status'] == 'overdue' ||
+        r['payment_status'] == 'partial') {
+      outstanding += amount;
+    }
+    final at = DateTime.tryParse(r['created_at'] as String? ?? '');
+    if (at != null && !at.isBefore(monthStart)) thisMonth += amount;
+    final type = r['revenue_type'] as String? ?? 'custom';
+    perType[type] = (perType[type] ?? 0) + amount;
+  }
+
+  final typeEntries = perType.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+
+  return AdminRevenueSummary(
+    transactions: rows.length,
+    total: total,
+    paid: paid,
+    outstanding: outstanding,
+    thisMonth: thisMonth,
+    byType: [
+      for (final e in typeEntries) {'type': e.key, 'amount': e.value},
+    ],
+    activeSubscriptions: subscriptions,
+  );
 });
