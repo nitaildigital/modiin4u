@@ -208,7 +208,10 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Image.asset(
-        'assets/images/hero_anaba.jpg',
+        // hero_anaba.jpg is 300x184 — a thumbnail, stretched two to three
+        // times over in a panel this size. This one is 853x1844 and
+        // portrait, which is the shape the panel actually is.
+        'assets/images/hero_modiin.jpg',
         height: _kPanelHeight,
         width: double.infinity,
         fit: BoxFit.cover,

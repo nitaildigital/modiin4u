@@ -1448,4 +1448,8 @@ class LEn extends L {
 
   @override
   String get onboardingTerms => 'By signing up you agree to our';
+
+  @override
+  String get onboardingTermsFull =>
+      'By signing up you agree to our Terms of Service and Privacy Policy';
 }

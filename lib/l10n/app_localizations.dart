@@ -2826,6 +2826,12 @@ abstract class L {
   /// In he, this message translates to:
   /// **'בהרשמה אתם מסכימים ל'**
   String get onboardingTerms;
+
+  /// No description provided for @onboardingTermsFull.
+  ///
+  /// In he, this message translates to:
+  /// **'בהרשמה אתם מסכימים לתנאי השימוש ומדיניות הפרטיות'**
+  String get onboardingTermsFull;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

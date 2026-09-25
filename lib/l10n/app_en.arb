@@ -590,5 +590,6 @@
   "onboardingSkip": "Skip",
   "continueWithGoogle": "Continue with Google",
   "dontHaveAccount": "Don't have an account?",
-  "onboardingTerms": "By signing up you agree to our"
+  "onboardingTerms": "By signing up you agree to our",
+  "onboardingTermsFull": "By signing up you agree to our Terms of Service and Privacy Policy"
 }

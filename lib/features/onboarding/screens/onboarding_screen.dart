@@ -39,7 +39,7 @@ class OnboardingScreen extends StatelessWidget {
         children: [
           // Background image
           Image.asset(
-            'assets/images/get_started_bg.png',
+            'assets/images/hero_modiin.jpg',
             fit: BoxFit.cover,
           ),
           // Dark overlay for readability
@@ -225,8 +225,7 @@ class OnboardingScreen extends StatelessWidget {
                       const SizedBox(height: 32),
                       // Terms text
                       Text(
-                        '${l.onboardingTerms} ${l.termsOfService} '
-                        '${l.andConjunction.trim()} ${l.privacyPolicy}',
+                        l.onboardingTermsFull,
                         textAlign: TextAlign.center,
                         style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 12,

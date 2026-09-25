@@ -1433,4 +1433,8 @@ class LHe extends L {
 
   @override
   String get onboardingTerms => 'בהרשמה אתם מסכימים ל';
+
+  @override
+  String get onboardingTermsFull =>
+      'בהרשמה אתם מסכימים לתנאי השימוש ומדיניות הפרטיות';
 }

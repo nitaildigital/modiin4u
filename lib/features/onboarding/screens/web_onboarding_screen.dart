@@ -38,7 +38,7 @@ class WebOnboardingContent extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/images/get_started_bg.png', fit: BoxFit.cover),
+          Image.asset('assets/images/hero_modiin.jpg', fit: BoxFit.cover),
           // The same overlay the phone layout uses, so the white type holds
           // against a photograph that is light in places.
           Container(
@@ -244,8 +244,7 @@ class WebOnboardingContent extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           Text(
-            '${l.onboardingTerms} ${l.termsOfService} '
-            '${l.andConjunction.trim()} ${l.privacyPolicy}',
+            l.onboardingTermsFull,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: AppFonts.inter,

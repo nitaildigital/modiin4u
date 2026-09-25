@@ -590,5 +590,6 @@
   "onboardingSkip": "דילוג",
   "continueWithGoogle": "המשך עם Google",
   "dontHaveAccount": "אין לכם חשבון?",
-  "onboardingTerms": "בהרשמה אתם מסכימים ל"
+  "onboardingTerms": "בהרשמה אתם מסכימים ל",
+  "onboardingTermsFull": "בהרשמה אתם מסכימים לתנאי השימוש ומדיניות הפרטיות"
 }
