@@ -96,8 +96,7 @@ class _NewsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final featured =
-        articles.firstWhere((a) => a.isFeatured, orElse: () => articles.first);
+    final featured = pickHeroArticle(articles);
     final rest = articles.where((a) => a.id != featured.id).toList();
 
     return RefreshIndicator(

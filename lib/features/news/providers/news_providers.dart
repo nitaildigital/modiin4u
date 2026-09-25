@@ -13,13 +13,37 @@ final publishedArticlesProvider = FutureProvider<List<Article>>((ref) async {
   return rows.map(Article.fromJson).toList();
 });
 
-/// The article shown in the hero slot — the featured one if there is a
-/// featured article, otherwise the most recent.
+/// The article shown in the hero slot.
+///
+/// The hero is a large picture with the headline across it, so an article
+/// with no `featured_image` leaves the slot as a grey placeholder — which is
+/// what the front page was showing, because both articles flagged featured
+/// happen to carry no image. Twenty-five published articles have none.
+///
+/// Which article is featured is the client's to decide in the admin panel, so
+/// this does not override him: it prefers a featured article that can
+/// actually fill the slot, and only falls back to a featured one without a
+/// picture if that is all there is.
 final featuredArticleProvider = FutureProvider<Article?>((ref) async {
   final articles = await ref.watch(publishedArticlesProvider.future);
-  if (articles.isEmpty) return null;
-  return articles.firstWhere((a) => a.isFeatured, orElse: () => articles.first);
+  return articles.isEmpty ? null : pickHeroArticle(articles);
 });
+
+/// The rule itself, in one place. The phone's list built its own copy of it
+/// and the two would drift apart, which is how the web and the phone came to
+/// disagree elsewhere in this app.
+Article pickHeroArticle(List<Article> articles) {
+  bool hasPicture(Article a) => (a.imageUrl ?? '').isNotEmpty;
+
+  return articles.firstWhere(
+    (a) => a.isFeatured && hasPicture(a),
+    orElse: () => articles.firstWhere(
+      (a) => a.isFeatured,
+      orElse: () =>
+          articles.firstWhere(hasPicture, orElse: () => articles.first),
+    ),
+  );
+}
 
 /// Every published article except the one in the hero slot.
 final restOfArticlesProvider = FutureProvider<List<Article>>((ref) async {

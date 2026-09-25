@@ -15,7 +15,10 @@ class NetworkPhoto extends StatelessWidget {
 
   /// The two colours behind the fallback icon. Defaults to the brand navy.
   final List<Color> gradient;
-  final IconData icon;
+  /// Null draws the gradient on its own. A glyph reads as "picture missing",
+  /// which is right on a thumbnail and wrong across a hero the size of the
+  /// page — there it looks broken rather than deliberate.
+  final IconData? icon;
   final double iconSize;
 
   /// The fallback icon's colour. Defaults to white at low opacity, which suits
@@ -48,13 +51,15 @@ class NetworkPhoto extends StatelessWidget {
           colors: gradient,
         ),
       ),
-      child: Center(
-        child: Icon(
-          icon,
-          size: iconSize,
-          color: iconColor ?? Colors.white.withValues(alpha: 0.28),
-        ),
-      ),
+      child: icon == null
+          ? null
+          : Center(
+              child: Icon(
+                icon,
+                size: iconSize,
+                color: iconColor ?? Colors.white.withValues(alpha: 0.28),
+              ),
+            ),
     );
 
     final src = url;

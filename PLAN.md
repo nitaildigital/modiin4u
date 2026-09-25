@@ -936,6 +936,31 @@ link is refused whatever the build says; and Brevo has to be set as the custom
 SMTP server, or reset mail goes through Supabase's own mailer, which is for
 testing and rate-limited to a handful an hour.
 
+### The front page led on a grey rectangle — 25 September
+
+Both articles flagged `is_featured` carry no `featured_image`, so the hero —
+a full-width picture with the headline across it — drew the brand gradient
+with a "picture missing" glyph in the middle of it. It read as broken.
+
+Two changes, neither of which touches the client's data:
+
+- **The hero prefers a featured article that has a picture**, falling back to
+  a featured one without, then to any article with a picture. Which article
+  is featured is his to set in the admin panel, and the moment he features one
+  with an image the slot fills.
+- **`NetworkPhoto`'s glyph is now optional**, and the hero passes none. A
+  glyph reads as "picture missing", which is right on a thumbnail and wrong
+  across a slot the size of the page. Gradient alone looks deliberate.
+
+The rule itself moved into `pickHeroArticle` because the phone's list had
+built its own copy of it — the same duplication that let the web and phone
+copy drift apart elsewhere.
+
+Note that those two featured articles are seeded rows (§1f), so this is
+cosmetic until they go or the client features something of his own.
+
+---
+
 ### Feature flags were a switch wired to a list in memory — 25 September
 
 `admin_flags_provider` held both its tabs in Dart lists. A toggle flipped the

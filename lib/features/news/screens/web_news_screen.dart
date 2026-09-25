@@ -219,7 +219,7 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _articlePhoto(article, glyphSize: 72),
+            _articlePhoto(article, glyphSize: 72, icon: null),
             // Bottom scrim — starts 39px below the top of the card
             Positioned(
               left: 0,
@@ -632,6 +632,7 @@ Widget _articlePhoto(
   Article article, {
   double radius = 12,
   double glyphSize = 40,
+  IconData? icon = IconsaxPlusLinear.image,
 }) {
   return NetworkPhoto(
     url: article.imageUrl,
@@ -639,7 +640,7 @@ Widget _articlePhoto(
     height: double.infinity,
     radius: radius == 0 ? null : BorderRadius.circular(radius),
     gradient: _photoGradients[article.id.hashCode.abs() % _photoGradients.length],
-    icon: IconsaxPlusLinear.image,
+    icon: icon,
     iconSize: glyphSize,
   );
 }
