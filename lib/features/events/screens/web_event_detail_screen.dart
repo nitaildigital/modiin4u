@@ -16,6 +16,7 @@ import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/event.dart';
 import '../providers/event_providers.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Event Detail — from the Figma export "Event Detail"
@@ -920,6 +921,7 @@ class _WebEventDetailContentState
                 ),
               ],
             ),
+            const OsmAttribution(),
           ],
         ),
       ),

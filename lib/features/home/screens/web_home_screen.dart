@@ -18,6 +18,7 @@ import '../../map/data/map_pois.dart';
 import '../../map/providers/map_providers.dart';
 import '../../news/models/article.dart';
 import '../../news/providers/news_providers.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Homepage — full desktop layout from Figma
@@ -949,6 +950,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
                       ),
                   ],
                 ),
+                const OsmAttribution(),
               ],
             );
           },

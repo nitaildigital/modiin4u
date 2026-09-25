@@ -1058,6 +1058,41 @@ Figma disagreed with the phone more often than with the web:
 and once with the web: the home search hint is `What are you looking for
 today?`, which the web had shortened.
 
+### Fourteen maps drawing OpenStreetMap tiles with no credit — 25 September
+
+Walked all 20 public routes on the deployed site watching the browser console
+and the failed requests. Nineteen were clean. `/realestate-map` failed to
+fetch tiles — which turned out to be OpenStreetMap throttling a burst from
+loading map pages back to back, not a defect — but it sent me to the policy,
+and the policy found something real.
+
+`tile.openstreetmap.org` is used by **14 screens**, phone and web. Its usage
+policy allows that, with conditions. One is not met:
+
+> Display visible OpenStreetMap attribution, typically "© OpenStreetMap
+> contributors". Never hide attribution behind toggles or off-screen.
+
+Not one of the fourteen said where the map came from. And the policy is as
+plain about the consequence: *"Access may be blocked without prior notice."*
+Being blocked would empty every map in the app at once, on both platforms,
+with nothing in the code to explain why.
+
+`lib/shared/widgets/osm_attribution.dart` is the credit, added to all
+fourteen. It is the plain always-visible kind rather than flutter_map's
+`RichAttributionWidget`, which hides the credit behind an "i" — which is the
+thing the policy forbids. One widget rather than fourteen copies, so the day
+the tile provider changes, the credit changes once.
+
+The other conditions are met: tiles are fetched only as they are viewed (no
+pre-seeding), and web pages send a Referer.
+
+**Worth raising with the client before launch.** The policy offers no SLA —
+*"Availability is best-effort"* — and a city app's maps going blank on a busy
+day is not a risk worth carrying for free. A paid tile provider is a cost
+decision, and it wants deciding before residents depend on it, not after.
+
+---
+
 ### A "Continue with Google" button that did nothing — 25 September
 
 Found by reading the browser console on the deployed site rather than the

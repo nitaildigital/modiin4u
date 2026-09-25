@@ -12,6 +12,7 @@ import '../../../l10n/app_localizations.dart';
 import '../models/event.dart';
 import '../providers/event_providers.dart';
 import 'web_events_map_screen.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 /// The events map.
 ///
@@ -117,6 +118,7 @@ class _MobileEventsMapContentState
                         ),
                     ],
                   ),
+                  const OsmAttribution(),
                 ],
               ),
 

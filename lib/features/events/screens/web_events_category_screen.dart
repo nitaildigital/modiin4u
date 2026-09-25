@@ -15,6 +15,7 @@ import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/event.dart';
 import '../providers/event_providers.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Events Category — three-panel layout from the Figma
@@ -604,6 +605,7 @@ class _WebEventsCategoryContentState
               ),
           ],
         ),
+        const OsmAttribution(),
       ],
     );
   }

@@ -15,6 +15,7 @@ import '../providers/event_providers.dart';
 import 'web_event_detail_screen.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 /// Event detail screen — responsive wrapper.
 /// Desktop (> 1100px) renders the web detail layout; mobile keeps the app UI.
@@ -510,6 +511,7 @@ class _MobileEventDetailContentState
                             ),
                           ],
                         ),
+                        const OsmAttribution(),
                       ],
                     ),
                   ),

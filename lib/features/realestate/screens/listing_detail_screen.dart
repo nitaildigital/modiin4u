@@ -15,6 +15,7 @@ import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 import 'my_apartments_screen.dart' show formatShekels;
 import 'web_listing_detail_screen.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 /// One apartment listing.
 ///
@@ -619,6 +620,7 @@ class _MobileListingDetailContentState
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                           userAgentPackageName: 'com.modiin4u.app',
                         ),
+                        const OsmAttribution(),
                       ],
                     ),
                   ),

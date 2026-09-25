@@ -13,6 +13,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 import 'my_apartments_screen.dart' show formatShekels;
 
 // ═══════════════════════════════════════════════════════════
@@ -439,6 +440,7 @@ class _WebRealEstateMapContentState
                   ),
               ],
             ),
+            const OsmAttribution(),
           ],
         ),
 

@@ -11,6 +11,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/restaurant_providers.dart';
 import 'web_restaurants_map_screen.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 /// Restaurants map view — responsive wrapper.
 /// Desktop (> 1100px) renders the web search + map layout; mobile keeps the app UI.
@@ -120,6 +121,7 @@ class _MobileRestaurantsMapContentState
                         ),
                     ],
                   ),
+                  const OsmAttribution(),
                 ],
               ),
 

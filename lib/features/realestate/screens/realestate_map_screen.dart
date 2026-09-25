@@ -14,6 +14,7 @@ import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 import 'my_apartments_screen.dart' show formatShekels;
 import 'web_realestate_map_screen.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 /// The real-estate map.
 ///
@@ -118,6 +119,7 @@ class _RealEstateMapScreenState extends ConsumerState<RealEstateMapScreen> {
                         ),
                     ],
                   ),
+                  const OsmAttribution(),
                 ],
               ),
 

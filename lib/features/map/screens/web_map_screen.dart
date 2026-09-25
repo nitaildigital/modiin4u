@@ -9,6 +9,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../data/map_pois.dart';
 import '../providers/map_providers.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 const _kBorder = Color(0xFFE7E7E7);
 const _kGrey = Color(0xFF5F5E5A);
@@ -213,6 +214,7 @@ class _WebMapContentState extends ConsumerState<WebMapContent> {
             );
           }).toList(),
         ),
+        const OsmAttribution(),
       ],
     );
   }

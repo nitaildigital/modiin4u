@@ -14,6 +14,7 @@ import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 import 'my_apartments_screen.dart' show formatShekels;
 
 // ═══════════════════════════════════════════════════════════
@@ -1135,6 +1136,7 @@ class _WebRealEstateSearchContentState
               ),
           ],
         ),
+        const OsmAttribution(),
       ],
     );
   }

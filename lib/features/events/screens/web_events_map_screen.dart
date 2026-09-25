@@ -13,6 +13,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/event.dart';
 import '../providers/event_providers.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Events Map — desktop layout for /events-map
@@ -450,6 +451,7 @@ class _WebEventsMapContentState extends ConsumerState<WebEventsMapContent> {
                   ),
               ],
             ),
+            const OsmAttribution(),
           ],
         ),
 

@@ -12,6 +12,7 @@ import '../../../shared/widgets/web_chrome.dart' show kContactEmail;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/restaurant_providers.dart';
+import '../../../shared/widgets/osm_attribution.dart';
 import '../widgets/restaurant_place_card.dart' show kHeartRed;
 
 // ═══════════════════════════════════════════════════════════
@@ -788,6 +789,7 @@ class _WebRestaurantsMapContentState
               ),
           ],
         ),
+        const OsmAttribution(),
       ],
     );
   }
