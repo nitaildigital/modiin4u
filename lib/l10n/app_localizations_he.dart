@@ -1437,4 +1437,12 @@ class LHe extends L {
   @override
   String get onboardingTermsFull =>
       'בהרשמה אתם מסכימים לתנאי השימוש ומדיניות הפרטיות';
+
+  @override
+  String resendAgainIn(String seconds) {
+    return 'אפשר לשלוח שוב בעוד $seconds שניות.';
+  }
+
+  @override
+  String get resendAgainSoon => 'אפשר לשלוח שוב בעוד רגע.';
 }

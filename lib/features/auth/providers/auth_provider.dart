@@ -32,6 +32,21 @@ final passwordResetPendingProvider = StateProvider<bool>((ref) => false);
 /// rather than acting on that first null.
 final authRestoringProvider = StateProvider<bool>((ref) => true);
 
+/// How long Supabase says to wait, from the refusal it sends back.
+///
+/// A resend that comes too soon is answered in English — "For security
+/// purposes, you can only request this after 47 seconds." That is not a
+/// sentence to hand a Hebrew reader, but the number in it is the useful part,
+/// so it is pulled out and the sentence rebuilt in their language. Null when
+/// the failure is not a rate limit, and the message is then shown as it came.
+String? resendWaitSeconds(Object error) {
+  if (error is! AuthException) return null;
+  final rateLimited =
+      error.statusCode == '429' || error.code == 'over_email_send_rate_limit';
+  if (!rateLimited) return null;
+  return RegExp(r'(\d+)\s*second').firstMatch(error.message)?.group(1) ?? '';
+}
+
 class AuthNotifier extends StateNotifier<UserModel?> {
   final SupabaseClient _client = SupabaseConfig.client;
   final Ref _ref;

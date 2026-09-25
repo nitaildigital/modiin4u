@@ -153,7 +153,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               } catch (e) {
                 if (ctx.mounted) Navigator.pop(ctx);
                 if (mounted) {
-                  _showError(e is AuthException ? e.message : l.errTooMany);
+                  final wait = resendWaitSeconds(e);
+                  _showError(
+                    wait == null
+                        ? (e is AuthException ? e.message : l.errTooMany)
+                        : wait.isEmpty
+                        ? l.resendAgainSoon
+                        : l.resendAgainIn(wait),
+                  );
                 }
               }
             },

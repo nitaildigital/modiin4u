@@ -1452,4 +1452,12 @@ class LEn extends L {
   @override
   String get onboardingTermsFull =>
       'By signing up you agree to our Terms of Service and Privacy Policy';
+
+  @override
+  String resendAgainIn(String seconds) {
+    return 'You can send it again in $seconds seconds.';
+  }
+
+  @override
+  String get resendAgainSoon => 'You can send it again in a moment.';
 }

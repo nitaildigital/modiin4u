@@ -2832,6 +2832,18 @@ abstract class L {
   /// In he, this message translates to:
   /// **'בהרשמה אתם מסכימים לתנאי השימוש ומדיניות הפרטיות'**
   String get onboardingTermsFull;
+
+  /// No description provided for @resendAgainIn.
+  ///
+  /// In he, this message translates to:
+  /// **'אפשר לשלוח שוב בעוד {seconds} שניות.'**
+  String resendAgainIn(String seconds);
+
+  /// No description provided for @resendAgainSoon.
+  ///
+  /// In he, this message translates to:
+  /// **'אפשר לשלוח שוב בעוד רגע.'**
+  String get resendAgainSoon;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

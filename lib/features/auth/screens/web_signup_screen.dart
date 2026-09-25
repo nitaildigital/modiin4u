@@ -188,12 +188,24 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
                 } catch (e) {
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (mounted) {
+                    final wait = resendWaitSeconds(e);
                     _showError(
-                      e is AuthException
-                          ? e.message
+                      wait == null
+                          ? (e is AuthException
+                                ? e.message
+                                : _t(
+                                    'Too many attempts. Try again in a few '
+                                        'minutes.',
+                                    'יותר מדי נסיונות. נסו שוב בעוד כמה דקות.',
+                                  ))
+                          : wait.isEmpty
+                          ? _t(
+                              'You can send it again in a moment.',
+                              'אפשר לשלוח שוב בעוד רגע.',
+                            )
                           : _t(
-                              'Too many attempts. Try again in a few minutes.',
-                              'יותר מדי נסיונות. נסו שוב בעוד כמה דקות.',
+                              'You can send it again in $wait seconds.',
+                              'אפשר לשלוח שוב בעוד $wait שניות.',
                             ),
                     );
                   }

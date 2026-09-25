@@ -591,5 +591,14 @@
   "continueWithGoogle": "המשך עם Google",
   "dontHaveAccount": "אין לכם חשבון?",
   "onboardingTerms": "בהרשמה אתם מסכימים ל",
-  "onboardingTermsFull": "בהרשמה אתם מסכימים לתנאי השימוש ומדיניות הפרטיות"
+  "onboardingTermsFull": "בהרשמה אתם מסכימים לתנאי השימוש ומדיניות הפרטיות",
+  "resendAgainIn": "אפשר לשלוח שוב בעוד {seconds} שניות.",
+  "@resendAgainIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "resendAgainSoon": "אפשר לשלוח שוב בעוד רגע."
 }

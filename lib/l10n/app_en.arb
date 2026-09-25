@@ -591,5 +591,14 @@
   "continueWithGoogle": "Continue with Google",
   "dontHaveAccount": "Don't have an account?",
   "onboardingTerms": "By signing up you agree to our",
-  "onboardingTermsFull": "By signing up you agree to our Terms of Service and Privacy Policy"
+  "onboardingTermsFull": "By signing up you agree to our Terms of Service and Privacy Policy",
+  "resendAgainIn": "You can send it again in {seconds} seconds.",
+  "@resendAgainIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "resendAgainSoon": "You can send it again in a moment."
 }
