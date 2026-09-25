@@ -410,7 +410,8 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                     PopupMenuItem(
                                       value: 'delete',
                                       child: Text(
-                                        'מחיקה',
+                                        // The row is not removed; it becomes status = 'expired'.
+                                        'סיום',
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,

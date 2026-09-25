@@ -236,7 +236,8 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
               ),
             ),
             content: Text(
-              'למחוק את "${event['title']}"?',
+              'לבטל את "${event['title']}"? האירוע ירד מהאפליקציה '
+              'וניתן יהיה להחזירו על ידי שינוי הסטטוס.',
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [
@@ -527,7 +528,8 @@ class _EventTable extends StatelessWidget {
                           PopupMenuItem(
                             value: 'delete',
                             child: Text(
-                              'מחק',
+                              // The row is not removed; it becomes status = 'cancelled'.
+                              'בטל',
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,

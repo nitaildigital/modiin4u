@@ -1058,6 +1058,58 @@ Figma disagreed with the phone more often than with the web:
 and once with the web: the home search hint is `What are you looking for
 today?`, which the web had shortened.
 
+### Delete, in the admin panel, does not delete — 25 September
+
+Tested the panel properly for the first time, signed in as a temporary
+super_admin made for the purpose and removed afterwards. Categories and
+articles were taken through a full round: create, edit, publish, archive,
+deactivate, delete, each step checked against the table rather than the
+screen.
+
+**What works.** Create writes every field. Edit saves. Search filters.
+Publishing sets `published_at` — so an article cannot be published without a
+date, which used to leave it out of every list ordered by one — and the
+anon key can see it immediately afterwards, which is the app. Archiving hides
+it from the anon key again. The 500-row cap fix reads "500 מתוך 669 כתבות"
+with a working "load more".
+
+**What does not.** *Delete deletes nothing.* Fourteen of the sections mark the
+row instead: categories, neighbourhoods, team, ad placements and home blocks
+set `is_active = false`; articles archive; businesses close; events,
+campaigns, push and agreements cancel; offers expire; listings are removed;
+comments are rejected. Only tags, agents and challenges truly delete.
+
+Marking rather than removing is the right behaviour — the client asked for a
+trash, and a category taken out outright would take its `entity_categories`
+links with it. The defect is that **nothing said so**. Twelve dialogs read
+"למחוק את X?" and the menus read "מחק". An administrator pressing it believes
+the thing is gone.
+
+Two dialogs made claims that were simply untrue:
+
+- Categories: *"all sub-categories will be deleted too"*. `categories.parent_id`
+  is `ON DELETE SET NULL`, not cascade, and the action does not delete
+  anything anyway. Both halves false.
+- Checked the two that turned out to be **true** and left them alone:
+  challenges does cascade to `challenge_participants`, and deleting an agent
+  does leave listings in place with `agent_id` set null.
+
+Fixed: seven dialogs now describe what happens to the row and whether it can
+be brought back. Eight menu labels changed from "delete" to the word for what
+they do — השבת, הסתר, בטל, סיים, הסר. Categories and articles each had **two
+menu items doing the same thing**, one of them called "delete"; that one is
+gone, along with its unreachable handler.
+
+**And the trash is not wired at all.** `trash` has a screen, a filter, a
+restore and an "empty it" button — and nothing writes to it. No provider
+inserts, no trigger. It holds zero rows and always will. The provider's own
+comment says the original row "lands here with the whole record in
+`entity_data`, enough to put it back"; that never happens. The screen now says
+so, the way the analytics and flags screens do. Building it is a real feature
+and wants the client's go-ahead.
+
+---
+
 ### Fourteen maps drawing OpenStreetMap tiles with no credit — 25 September
 
 Walked all 20 public routes on the deployed site watching the browser console

@@ -356,7 +356,8 @@ class _AdminHomeBuilderScreenState
                               PopupMenuItem(
                                 value: 'delete',
                                 child: Text(
-                                  'מחיקה',
+                                  // The row is not removed; it becomes is_active = false.
+                                  'השבתה',
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 13,

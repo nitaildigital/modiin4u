@@ -311,17 +311,16 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                         ),
                                       ),
                                     ),
-                                    PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text(
-                                        'מחק',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 13,
-                                          color: AppColors.error,
-                                        ),
-                                      ),
-                                    ),
+                                    // A third item reading "delete" stood
+                                    // here. It called setActive(id, false) —
+                                    // exactly what the item above it does —
+                                    // so the menu offered the same action
+                                    // twice, once under a word that promised
+                                    // something else. A category cannot be
+                                    // removed outright without taking its
+                                    // entity_categories links with it, which
+                                    // is why hiding is the only action there
+                                    // is.
                                   ],
                                 ),
                               ],
@@ -348,45 +347,6 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
         _showEditor(context, ref, category: c);
       case 'toggle':
         notifier.toggleActive(id);
-      case 'delete':
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(
-              'מחיקת קטגוריה',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            content: Text(
-              'למחוק את "${c['name']}"? כל תת-הקטגוריות יימחקו גם.',
-              style: TextStyle(fontFamily: AppFonts.rubik),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  'ביטול',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  notifier.deleteCategory(id);
-                },
-                child: Text(
-                  'מחק',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    color: AppColors.error,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
     }
   }
 

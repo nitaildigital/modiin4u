@@ -21,6 +21,11 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
 
     return Column(
       children: [
+        // Nothing writes to `trash` — not an editor, not a trigger — so this
+        // screen can only ever be empty. Saying so beats an empty table that
+        // reads as "nothing has been deleted yet".
+        const _NothingFillsThisNote(),
+
         // ─── Stats bar ───
         asyncData.whenData((list) {
               final byType = <String, int>{};
@@ -591,6 +596,46 @@ class _EntityTypePill extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w500,
               color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Why this screen is empty, said rather than left to be guessed.
+class _NothingFillsThisNote extends StatelessWidget {
+  const _NothingFillsThisNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.adminContentBg,
+        border: Border.all(color: AppColors.adminCardBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 18, color: AppColors.adminTextLight),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'סל המחזור עדיין אינו מתמלא. מחיקה במסכי הניהול מסמנת את '
+              'הרשומה — כתבה עוברת לארכיון, עסק מסומן כסגור — והרשומה '
+              'נשארת במקומה וניתן להחזירה משם. העברה אוטומטית לסל הזה טרם '
+              'נבנתה, ולכן המסך יישאר ריק.',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 12,
+                height: 1.5,
+                color: AppColors.adminTextLight,
+              ),
             ),
           ),
         ],

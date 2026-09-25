@@ -313,7 +313,8 @@ class _AdminNeighborhoodsScreenState
                                     PopupMenuItem(
                                       value: 'delete',
                                       child: Text(
-                                        'מחק',
+                                        // The row is not removed; it becomes is_active = false.
+                                        'הסתר',
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -359,7 +360,8 @@ class _AdminNeighborhoodsScreenState
               ),
             ),
             content: Text(
-              'למחוק את "${n['name']}"?',
+              'להסתיר את "${n['name']}"? השכונה תוסתר מהאפליקציה, '
+              'והעסקים והמודעות המשויכים אליה יישמרו.',
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [

@@ -287,7 +287,8 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
               ),
             ),
             content: Text(
-              'למחוק את "${listing['address']}"?',
+              'להסיר את "${listing['address']}"? המודעה תרד מהאפליקציה '
+              'וניתן יהיה להחזירה על ידי שינוי הסטטוס.',
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [
@@ -578,7 +579,8 @@ class _ListingTable extends StatelessWidget {
                           PopupMenuItem(
                             value: 'delete',
                             child: Text(
-                              'מחק',
+                              // The row is not removed; it becomes status = 'removed'.
+                              'הסר',
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,

@@ -295,7 +295,8 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
               ),
             ),
             content: Text(
-              'למחוק את "${notification['title']}"?',
+              'לבטל את "${notification['title']}"? ההודעה תסומן כמבוטלת '
+              'ולא תישלח.',
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [
@@ -602,7 +603,8 @@ class _PushTable extends StatelessWidget {
                           PopupMenuItem(
                             value: 'delete',
                             child: Text(
-                              'מחק',
+                              // The row is not removed; it becomes status = 'cancelled'.
+                              'בטל',
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,

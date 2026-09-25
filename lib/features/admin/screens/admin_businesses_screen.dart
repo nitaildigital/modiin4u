@@ -259,7 +259,8 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
               ),
             ),
             content: Text(
-              'למחוק את "${biz['name']}"?',
+              'לסמן את "${biz['name']}" כסגור? העסק ירד מהאפליקציה '
+              'וניתן יהיה להחזירו על ידי שינוי הסטטוס.',
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [

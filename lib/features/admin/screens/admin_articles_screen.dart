@@ -296,45 +296,6 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
         notifier.updateStatus(id, 'draft');
       case 'archive':
         notifier.updateStatus(id, 'archived');
-      case 'delete':
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(
-              'מחיקת כתבה',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            content: Text(
-              'למחוק את "${article['title']}"?',
-              style: TextStyle(fontFamily: AppFonts.rubik),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  'ביטול',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  notifier.deleteArticle(id);
-                },
-                child: Text(
-                  'מחק',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    color: AppColors.error,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
     }
   }
 
@@ -634,17 +595,12 @@ class _ArticleTable extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text(
-                              'מחק',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                                color: AppColors.error,
-                              ),
-                            ),
-                          ),
+                          // An item reading "delete" stood here. It asked
+                          // for confirmation and then archived the article —
+                          // exactly what "העבר לארכיון" above it does. There
+                          // is no permanent delete for an article: removing
+                          // one would take its comments with it. Offering the
+                          // word without the deed helped nobody.
                         ],
                       ),
                     ],

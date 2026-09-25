@@ -408,7 +408,8 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                                     PopupMenuItem(
                                       value: 'delete',
                                       child: Text(
-                                        'מחיקה',
+                                        // The row is not removed; it becomes status = 'cancelled'.
+                                        'ביטול',
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
