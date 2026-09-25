@@ -205,7 +205,8 @@ a device against the live database, with every test row deleted afterwards.
 ### Migrations added: 00021–00025
 
 Listing photo policies, steps leaderboard functions, business menus, RSVP
-count trigger, review rating rollup. All applied.
+count trigger, review rating rollup. **00026** adds avatar storage policies.
+All applied.
 
 ### Still outstanding
 
@@ -426,6 +427,27 @@ Two things found while looking at it in a browser:
 - the reviews panel drew "0.0", five hollow stars and five 0% bars for a
   business nobody has reviewed — which reads as rated badly rather than not
   rated. It says so instead, matching the rest of the app.
+
+**Ten more desktop layouts.** Account — login, sign-up, profile, edit
+profile, settings, favourites. Property and deals — add apartment, new
+listing, my apartments, deal detail. Each is a new `web_*` file plus a
+breakpoint in the mobile screen; the mobile bodies moved verbatim into
+`_buildMobile` and not one line of them changed. No provider, query, route
+or ARB key was added or altered — these screens were already on live data,
+so only the arrangement is new.
+
+Checked in a browser: `/my-apartments` and `/add-apartment` render with the
+navbar, the footer, and an honest "No apartments listed yet" — `listings`
+has no rows, and that is the right thing to show.
+
+**The avatar that was never uploaded.** Edit Profile has had a photo picker
+since it was built. It opened the gallery, put the chosen image in the avatar
+circle, and `_save` then called `updateProfile` without it. Someone picked a
+photograph, watched it appear, saved, and found it gone the next time. The
+`media` bucket admitted an administrator (00017) and a resident writing to
+their own listing folder (00021), but nothing for avatars — so there was
+nowhere for it to go. Migration **00026** scopes `avatars/<uid>/` the same
+way, and both the phone and desktop screens upload to it now.
 
 **A caching note for anyone verifying a web build locally.** Flutter
 registers a service worker, so a rebuild keeps serving the old bundle even

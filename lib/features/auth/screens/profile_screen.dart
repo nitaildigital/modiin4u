@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../l10n/app_localizations.dart';
+import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
+import 'web_profile_screen.dart';
 
 /// Profile screen – dark rounded header with avatar, name & badge,
 /// "Edit Profile" CTA, and a scrollable ACCOUNT menu card.
@@ -92,6 +94,17 @@ class ProfileScreen extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebProfileContent();
+        return _buildMobile(context, l, user);
+      },
+    );
+  }
+
+  /// The phone layout, which a laptop was also given — capped at 430px and
+  /// centred in white.
+  Widget _buildMobile(BuildContext context, L l, UserModel user) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(

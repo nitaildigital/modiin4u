@@ -8,6 +8,7 @@ import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../../settings/models/notification_preferences.dart';
 import '../../settings/providers/preferences_provider.dart';
+import 'web_settings_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -108,6 +109,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebSettingsContent();
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
     final signedIn = ref.watch(isLoggedInProvider);
     final prefs =

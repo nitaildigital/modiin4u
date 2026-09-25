@@ -7,9 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
+
+import '../../../core/supabase/supabase_config.dart';
 import '../../../core/constants/neighborhoods.dart';
 import '../../../core/theme/app_colors.dart';
+import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
+import 'web_edit_profile_screen.dart';
 
 /// Edit Profile screen – avatar with camera overlay, form fields
 /// (name, email, phone, neighborhood, family status, pet, DOB),
@@ -34,6 +39,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool? _hasPet;
   DateTime? _dateOfBirth;
   Uint8List? _avatarBytes;
+
+  /// Kept so the uploaded file keeps its own extension.
+  String? _avatarName;
 
   @override
   void initState() {
@@ -75,8 +83,52 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
     if (image != null) {
       final bytes = await image.readAsBytes();
-      setState(() => _avatarBytes = bytes);
+      setState(() {
+        _avatarBytes = bytes;
+        _avatarName = image.name;
+      });
     }
+  }
+
+  /// Puts the chosen photograph in storage and returns its address.
+  ///
+  /// The picker has always shown the image straight away, and `_save` never
+  /// sent it anywhere — someone picked a photograph, watched it appear, saved,
+  /// and found it gone next time. Migration 00026 scopes the `media` bucket to
+  /// `avatars/<your id>/`, which is the path built here.
+  Future<String?> _uploadAvatar() async {
+    final bytes = _avatarBytes;
+    if (bytes == null) return null;
+
+    final uid = SupabaseConfig.client.auth.currentUser?.id;
+    if (uid == null) return null;
+
+    final dot = (_avatarName ?? '').lastIndexOf('.');
+    final raw = dot == -1
+        ? '.jpg'
+        : (_avatarName ?? '').substring(dot).toLowerCase();
+    final ext = const {'.jpg', '.jpeg', '.png', '.webp'}.contains(raw)
+        ? raw
+        : '.jpg';
+
+    final path = 'avatars/$uid/${DateTime.now().microsecondsSinceEpoch}$ext';
+
+    await SupabaseConfig.client.storage
+        .from('media')
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(
+            contentType: switch (ext) {
+              '.png' => 'image/png',
+              '.webp' => 'image/webp',
+              _ => 'image/jpeg',
+            },
+            upsert: false,
+          ),
+        );
+
+    return SupabaseConfig.client.storage.from('media').getPublicUrl(path);
   }
 
   bool _saving = false;
@@ -87,12 +139,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (_saving) return;
     setState(() => _saving = true);
     try {
+      final avatarUrl = await _uploadAvatar();
+
       await ref
           .read(authProvider.notifier)
           .updateProfile(
             name: _nameController.text.trim(),
             phone: _phoneController.text.trim(),
             neighborhood: _selectedNeighborhood,
+            avatarUrl: avatarUrl,
             familyStatus: _familyStatus,
             hasPet: _hasPet,
             dateOfBirth: _dateOfBirth,
@@ -129,6 +184,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return const SizedBox.shrink();
     }
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebEditProfileContent();
+        return _buildMobile(context, l, user);
+      },
+    );
+  }
+
+  /// The phone layout, which a laptop was also given — capped at 430px and
+  /// centred in white.
+  Widget _buildMobile(BuildContext context, L l, UserModel user) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(

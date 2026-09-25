@@ -6,15 +6,32 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'web_new_listing_screen.dart';
 
-class NewListingScreen extends ConsumerStatefulWidget {
+class NewListingScreen extends StatelessWidget {
   const NewListingScreen({super.key});
 
   @override
-  ConsumerState<NewListingScreen> createState() => _NewListingScreenState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebNewListingContent();
+        return const _MobileNewListingContent();
+      },
+    );
+  }
 }
 
-class _NewListingScreenState extends ConsumerState<NewListingScreen> {
+class _MobileNewListingContent extends ConsumerStatefulWidget {
+  const _MobileNewListingContent();
+
+  @override
+  ConsumerState<_MobileNewListingContent> createState() =>
+      _MobileNewListingContentState();
+}
+
+class _MobileNewListingContentState
+    extends ConsumerState<_MobileNewListingContent> {
   int _listingType = 0;
   String? _propertyType;
   String? _neighborhood;

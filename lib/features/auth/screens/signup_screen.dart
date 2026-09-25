@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/neighborhoods.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
+import 'web_signup_screen.dart';
 
 enum AccountType { resident, broker }
 
@@ -199,6 +200,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebSignupContent();
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.white,

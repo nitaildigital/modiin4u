@@ -9,20 +9,37 @@ import '../../../l10n/month_names.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
+import 'web_my_apartments_screen.dart';
 
 /// My Apartments – what this person has posted, with its status.
 ///
 /// The list was three invented flats in Tel Aviv with fixed dates, shown to
 /// everyone and identical for everyone. It reads `listings` now, filtered to
 /// the signed-in owner by the row level security policy.
-class MyApartmentsScreen extends ConsumerStatefulWidget {
+class MyApartmentsScreen extends StatelessWidget {
   const MyApartmentsScreen({super.key});
 
   @override
-  ConsumerState<MyApartmentsScreen> createState() => _MyApartmentsScreenState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebMyApartmentsContent();
+        return const _MobileMyApartmentsContent();
+      },
+    );
+  }
 }
 
-class _MyApartmentsScreenState extends ConsumerState<MyApartmentsScreen> {
+class _MobileMyApartmentsContent extends ConsumerStatefulWidget {
+  const _MobileMyApartmentsContent();
+
+  @override
+  ConsumerState<_MobileMyApartmentsContent> createState() =>
+      _MobileMyApartmentsContentState();
+}
+
+class _MobileMyApartmentsContentState
+    extends ConsumerState<_MobileMyApartmentsContent> {
   final _searchController = TextEditingController();
 
   /// Searching is done here rather than in a query: this is one person's own

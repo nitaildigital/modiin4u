@@ -13,6 +13,7 @@ import '../providers/auth_provider.dart';
 import '../../favorites/providers/favorite_providers.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
+import 'web_favorites_screen.dart';
 
 /// Favorites screen – horizontal filter chips (All, Restaurants, Events,
 /// Bars, Apartments, News) and a scrollable list of favorited items,
@@ -41,6 +42,15 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebFavoritesContent();
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final l = L.of(context);
     final filters = _filtersFor(l);
     final signedIn = ref.watch(isLoggedInProvider);

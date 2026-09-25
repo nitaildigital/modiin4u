@@ -11,6 +11,7 @@ import '../../../l10n/month_names.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../models/offer.dart';
 import '../providers/offer_providers.dart';
+import 'web_deal_detail_screen.dart';
 
 /// One deal.
 ///
@@ -19,9 +20,26 @@ import '../providers/offer_providers.dart';
 /// 2026", opening hours of 6–10pm, a list of restrictions and three more
 /// invented deals underneath. It showed the same page for whatever id the
 /// route was given.
-class DealDetailScreen extends ConsumerWidget {
+class DealDetailScreen extends StatelessWidget {
   final String dealId;
   const DealDetailScreen({super.key, required this.dealId});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return WebDealDetailContent(dealId: dealId);
+        }
+        return _MobileDealDetailContent(dealId: dealId);
+      },
+    );
+  }
+}
+
+class _MobileDealDetailContent extends ConsumerWidget {
+  final String dealId;
+  const _MobileDealDetailContent({required this.dealId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

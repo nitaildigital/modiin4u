@@ -12,6 +12,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
+import 'web_add_apartment_screen.dart';
 
 /// Add Apartment – multi-step form wizard.
 /// Step 1: Basic Information (listing type, property type, title, price,
@@ -25,14 +26,30 @@ import '../providers/listing_providers.dart';
 /// advanced to the confirmation screen. Nothing was written, so every
 /// apartment a resident entered was lost the moment they left. It writes to
 /// `listings` now, as `pending`, for an administrator to approve.
-class AddApartmentScreen extends ConsumerStatefulWidget {
+class AddApartmentScreen extends StatelessWidget {
   const AddApartmentScreen({super.key});
 
   @override
-  ConsumerState<AddApartmentScreen> createState() => _AddApartmentScreenState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebAddApartmentContent();
+        return const _MobileAddApartmentContent();
+      },
+    );
+  }
 }
 
-class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
+class _MobileAddApartmentContent extends ConsumerStatefulWidget {
+  const _MobileAddApartmentContent();
+
+  @override
+  ConsumerState<_MobileAddApartmentContent> createState() =>
+      _MobileAddApartmentContentState();
+}
+
+class _MobileAddApartmentContentState
+    extends ConsumerState<_MobileAddApartmentContent> {
   int _currentStep = 0; // 0 = Basics, 1 = Details, 2 = Photos, 3 = Submitted
 
   // ── Step 1 ──
