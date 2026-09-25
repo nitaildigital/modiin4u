@@ -903,6 +903,48 @@ and it transforms how the app behaves.
 
 ## 5. Phase C — authentication
 
+### Where sign-up actually stands — 25 September
+
+Read from `/auth/v1/settings`, which is public:
+
+- **`mailer_autoconfirm` is `true`.** No confirmation e-mail is sent at all;
+  every sign-up is confirmed the moment it is made. So the dead link below is
+  not stopping anyone from registering today — but **nobody's address is
+  verified either**, and anyone can register with an e-mail they do not own.
+  Turning verification on is the client's call, and the day it goes on, the
+  link has to work.
+- **Password reset does send mail**, and it uses the same redirect, so that
+  flow is the one the redirect URL matters for right now.
+- `disable_signup` is false; e-mail is the only provider — no Google or Apple,
+  and the app does not offer them either, so nothing is mismatched.
+
+**The redirect.** `AUTH_REDIRECT_URL` is compiled in, defaulting to
+`https://app.modiin4u.co.il/auth/callback`. That host does not resolve:
+`modiin4u.co.il` points at uPress (185.108.148.183) and `app` has no record at
+all. Until the A record exists the deploy is built with
+`AUTH_REDIRECT_URL=http://45.93.94.49/auth/callback` so the flow can be tested
+against the server directly.
+
+That is a testing arrangement, not a shipping one. The link carries a
+one-time token in the URL, and over plain HTTP anyone on the path can read it
+and use it. A bare IP in an e-mail also reads as phishing to most filters.
+Both go away with the A record, HTTPS, and a rebuild.
+
+**Still to be done in the Supabase dashboard**, which needs an account there:
+the redirect must be listed under Authentication → URL Configuration or the
+link is refused whatever the build says; and Brevo has to be set as the custom
+SMTP server, or reset mail goes through Supabase's own mailer, which is for
+testing and rate-limited to a handful an hour.
+
+### The deploy key
+
+`tool/deploy_web.sh` now passes an identity. The server takes a key of its own
+(`~/.ssh/modiin4u_deploy`) rather than the default `id_ed25519`, and rsync was
+offering the wrong one — which fails as `Permission denied
+(publickey,password)`, indistinguishable from having no access at all. Set
+`DEPLOY_SSH_KEY` in `.env.local` to override; it falls back to that path.
+
+
 - [x] **C1** Email sign-in with a one-time code. Sign-in was a local object
       that fabricated a person out of whatever was typed — any address and any
       password let you in, and it was forgotten on the next launch. It is now

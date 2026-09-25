@@ -16,6 +16,13 @@
 #   DEPLOY_HOST=203.0.113.10
 #   DEPLOY_USER=root
 #   DEPLOY_PATH=/var/www/modiin4u
+#   DEPLOY_SSH_KEY=~/.ssh/modiin4u_deploy   # optional; see below
+#
+# The server takes a key of its own rather than the one `ssh` reaches for by
+# default, and offering the wrong key looks exactly like having no access:
+# "Permission denied (publickey,password)". If DEPLOY_SSH_KEY is not set this
+# falls back to ~/.ssh/modiin4u_deploy when that file exists, which is where
+# the deploy key was put.
 #
 set -euo pipefail
 
@@ -71,13 +78,24 @@ for line in open('.env.local', encoding='utf-8'):
 HOST=$(get DEPLOY_HOST)
 USER=$(get DEPLOY_USER)
 REMOTE_PATH=$(get DEPLOY_PATH)
+KEY=$(get DEPLOY_SSH_KEY)
+KEY="${KEY/#\~/$HOME}"
+if [ -z "$KEY" ] && [ -f "$HOME/.ssh/modiin4u_deploy" ]; then
+  KEY="$HOME/.ssh/modiin4u_deploy"
+fi
+
+# IdentitiesOnly so the agent does not offer every other key first; a server
+# that has seen too many refusals closes the connection before reaching this
+# one.
+SSH_CMD=(ssh)
+[ -n "$KEY" ] && SSH_CMD=(ssh -i "$KEY" -o IdentitiesOnly=yes)
 
 if [ -z "$HOST" ] || [ -z "$USER" ] || [ -z "$REMOTE_PATH" ]; then
   echo "DEPLOY_HOST, DEPLOY_USER and DEPLOY_PATH must all be in .env.local" >&2
   exit 1
 fi
 
-RSYNC_FLAGS=(-az --delete --human-readable)
+RSYNC_FLAGS=(-az --delete --human-readable -e "${SSH_CMD[*]}")
 $DRY_RUN && RSYNC_FLAGS+=(--dry-run --itemize-changes)
 
 echo "── uploading to $USER@$HOST:$REMOTE_PATH"
@@ -92,7 +110,8 @@ fi
 
 # nginx reads from disk on each request, so there is nothing to reload — but
 # the permissions have to let it.
-ssh "$USER@$HOST" "chown -R www-data:www-data '$REMOTE_PATH' && chmod -R a+rX '$REMOTE_PATH'"
+"${SSH_CMD[@]}" "$USER@$HOST" "chown -R www-data:www-data '$REMOTE_PATH' && chmod -R a+rX '$REMOTE_PATH'"
 
-echo "── done: https://app.modiin4u.co.il"
+echo "── done: http://$HOST/"
+echo "   the domain answers here too once its A record exists"
 echo "   a browser holding the old service worker may need one hard reload"
