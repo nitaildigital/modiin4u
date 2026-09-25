@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/web_chrome.dart' show kContactEmail;
+import 'web_help_support_screen.dart';
 
 /// Help & Support screen – search bar, FAQ accordion list with
 /// expandable items, and a "Contact Us" card at the bottom.
@@ -71,6 +72,17 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebHelpSupportContent();
+        }
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final l = L.of(context);
     final filtered = _filteredFor(l);
 

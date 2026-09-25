@@ -6,6 +6,8 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import 'web_change_language_screen.dart';
+
 /// Change Language screen – search bar, list of languages with flag
 /// emoji + radio buttons, and a midBlue "Save" pill button.
 class ChangeLanguageScreen extends ConsumerStatefulWidget {
@@ -60,6 +62,17 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebChangeLanguageContent();
+        }
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final filtered = _filtered;
 
     return Scaffold(

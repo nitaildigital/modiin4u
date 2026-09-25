@@ -268,6 +268,10 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                 color: _kHeading,
               ),
               decoration: InputDecoration(
+                // The app theme fills its fields and rounds them to 50px.
+                // Inside this bordered pill that drew a second, rounder one
+                // within the first.
+                filled: false,
                 isCollapsed: true,
                 border: InputBorder.none,
                 hintText: _t(
@@ -433,7 +437,14 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value) {
+  /// [valueDirection] forces the value's direction where it would otherwise
+  /// be decided by the surrounding text. A time range is bidi-neutral.
+  Widget _infoRow(
+    IconData icon,
+    String label,
+    String value, {
+    TextDirection? valueDirection,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -451,6 +462,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           const Spacer(),
           Text(
             value,
+            textDirection: valueDirection,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 14,
@@ -512,10 +524,13 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           ),
         ),
         const SizedBox(height: 16),
+        // A time range is bidi-neutral, so in Hebrew "08:00–19:00" renders
+        // as "19:00–08:00" — the opposite of what it says.
         _infoRow(
           IconsaxPlusLinear.clock,
           _t('Paid hours', 'שעות תשלום'),
           '08:00–19:00',
+          valueDirection: TextDirection.ltr,
         ),
         Row(
           children: [

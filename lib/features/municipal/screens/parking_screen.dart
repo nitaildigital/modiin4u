@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import 'web_parking_screen.dart';
 
 class ParkingScreen extends StatelessWidget {
   const ParkingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebParkingContent();
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(

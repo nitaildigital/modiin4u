@@ -7,6 +7,7 @@ import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../providers/search_providers.dart';
+import 'web_search_results_screen.dart';
 
 class SearchResultsScreen extends ConsumerWidget {
   final String query;
@@ -15,6 +16,17 @@ class SearchResultsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return WebSearchResultsContent(query: query);
+        }
+        return _buildMobile(context, ref);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context, WidgetRef ref) {
     final provider = searchResultsProvider(query);
     final results = ref.watch(provider);
 

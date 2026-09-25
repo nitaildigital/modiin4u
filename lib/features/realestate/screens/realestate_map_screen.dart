@@ -13,6 +13,7 @@ import '../../../l10n/app_localizations.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 import 'my_apartments_screen.dart' show formatShekels;
+import 'web_realestate_map_screen.dart';
 
 /// The real-estate map.
 ///
@@ -61,6 +62,17 @@ class _RealEstateMapScreenState extends ConsumerState<RealEstateMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebRealEstateMapContent();
+        }
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final l = L.of(context);
     // A pin needs coordinates. A listing without them is not on the map,
     // which is why the count here can differ from the list.

@@ -7,6 +7,8 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../shared/widgets/web_chrome.dart' show kContactEmail;
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/restaurant_providers.dart';
@@ -288,7 +290,11 @@ class _WebRestaurantsMapContentState
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
-              onTap: () {},
+              // This page carries its own copy of the navbar, and its
+              // Contact Us had an empty handler. The address is the one the
+              // footer publishes.
+              onTap: () =>
+                  launchUrl(Uri(scheme: 'mailto', path: kContactEmail)),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -467,6 +473,9 @@ class _WebRestaurantsMapContentState
                 color: AppColors.navy,
               ),
               decoration: InputDecoration(
+                // The app theme fills its fields and rounds them to 50px,
+                // which drew a second pill inside this one.
+                filled: false,
                 hintText: _t(
                   'Search restaurant or cuisine...',
                   'חיפוש מסעדה או סוג מטבח...',

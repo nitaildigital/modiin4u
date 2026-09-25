@@ -75,7 +75,16 @@ class WebSection extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 1648), // 1600 content + 24 padding each side
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: child,
+          // The column takes the full width it is given, rather than
+          // shrink-wrapping its child.
+          //
+          // `Center` passes loose constraints down, so a section whose
+          // content is only text collapsed to the width of that text and
+          // sat in the middle of the window. It looked right on every
+          // existing page purely because each of them happens to contain a
+          // Row with an Expanded in it. Two people building new sections hit
+          // this on the same afternoon, which is one more than it deserves.
+          child: SizedBox(width: double.infinity, child: child),
         ),
       ),
     );

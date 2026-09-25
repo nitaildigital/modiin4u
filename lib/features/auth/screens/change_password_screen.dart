@@ -9,6 +9,8 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import 'web_change_password_screen.dart';
+
 /// Change Password screen – lock illustration, subtitle,
 /// three password fields (current, new, confirm) with visibility
 /// toggles, and a midBlue "Change Password" button.
@@ -94,6 +96,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebChangePasswordContent();
+        }
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     final l = L.of(context);
     return Scaffold(
       backgroundColor: Colors.white,

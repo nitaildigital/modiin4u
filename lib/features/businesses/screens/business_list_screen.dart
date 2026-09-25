@@ -8,6 +8,7 @@ import '../../../shared/widgets/error_retry.dart';
 import '../models/business.dart';
 import '../providers/business_providers.dart';
 import '../widgets/business_card.dart';
+import 'web_business_list_screen.dart';
 
 /// Businesses in one category, or all of them when [categoryId] is null.
 class BusinessListScreen extends ConsumerWidget {
@@ -18,6 +19,17 @@ class BusinessListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return WebBusinessListContent(categoryId: categoryId, title: title);
+        }
+        return _buildMobile(context, ref);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context, WidgetRef ref) {
     final provider = businessesByCategoryProvider(categoryId);
     final businesses = ref.watch(provider);
 

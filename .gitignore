@@ -45,7 +45,12 @@ app.*.map.json
 /android/app/release
 
 # Games (Unity projects — managed separately)
-games/
+#
+# Anchored to the repository root. Without the leading slash this also
+# matched `lib/features/games/`, so the app's own Games screens were
+# silently untracked — `web_games_screen.dart` was written and would never
+# have been committed.
+/games/
 
 # Package lock (npm)
 package-lock.json

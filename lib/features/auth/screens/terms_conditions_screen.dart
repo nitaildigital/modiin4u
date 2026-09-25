@@ -3,6 +3,8 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import 'web_terms_conditions_screen.dart';
+
 /// Terms & Conditions screen – "Last updated" date row, scrollable
 /// legal text with 10 titled sections.
 class TermsConditionsScreen extends StatelessWidget {
@@ -10,6 +12,17 @@ class TermsConditionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) {
+          return const WebTermsConditionsContent();
+        }
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -91,9 +104,9 @@ class TermsConditionsScreen extends StatelessWidget {
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    itemCount: _sections.length,
+                    itemCount: kTermsSections.length,
                     itemBuilder: (context, index) {
-                      final section = _sections[index];
+                      final section = kTermsSections[index];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 24),
                         child: Column(
@@ -138,14 +151,16 @@ class TermsConditionsScreen extends StatelessWidget {
 // Legal content sections
 // ═══════════════════════════════════════════════
 
-class _TermsSection {
+class TermsSection {
   final String title;
   final String body;
-  const _TermsSection(this.title, this.body);
+  const TermsSection(this.title, this.body);
 }
 
-const _sections = <_TermsSection>[
-  _TermsSection(
+/// Named rather than private because the desktop screen reads the same list.
+/// Terms that drift between two copies of themselves are worse than no terms.
+const kTermsSections = <TermsSection>[
+  TermsSection(
     'Conditions of Use',
     'By using the Modiin4U app, you agree to be bound by these Terms & '
         'Conditions. If you do not agree with any part of these terms, you '
@@ -153,7 +168,7 @@ const _sections = <_TermsSection>[
         'replace these terms at any time. Your continued use of the app '
         'following any changes constitutes acceptance of those changes.',
   ),
-  _TermsSection(
+  TermsSection(
     'Privacy Policy',
     'Your privacy is important to us. Our Privacy Policy explains how we '
         'collect, use, and protect your personal information. By using '
@@ -161,7 +176,7 @@ const _sections = <_TermsSection>[
         'described in our Privacy Policy. We do not sell your personal data '
         'to third parties.',
   ),
-  _TermsSection(
+  TermsSection(
     'Intellectual Property',
     'All content, logos, graphics, and software used in the Modiin4U app '
         'are the property of Modiin4U or its licensors and are protected by '
@@ -169,7 +184,7 @@ const _sections = <_TermsSection>[
         'create derivative works from any content without our prior written '
         'consent.',
   ),
-  _TermsSection(
+  TermsSection(
     'User Account',
     'To access certain features, you may need to create an account. You '
         'are responsible for maintaining the confidentiality of your account '
@@ -177,7 +192,7 @@ const _sections = <_TermsSection>[
         'You agree to notify us immediately of any unauthorized use of your '
         'account.',
   ),
-  _TermsSection(
+  TermsSection(
     'User Conduct',
     'You agree to use Modiin4U only for lawful purposes. You must not '
         'post misleading, offensive, or harmful content. Harassment, spam, '
@@ -185,7 +200,7 @@ const _sections = <_TermsSection>[
         'businesses listed on the platform are strictly prohibited and may '
         'result in account suspension or termination.',
   ),
-  _TermsSection(
+  TermsSection(
     'Listings and Content',
     'Business listings, events, deals, and real estate information are '
         'provided for informational purposes only. While we strive to keep '
@@ -193,7 +208,7 @@ const _sections = <_TermsSection>[
         'accuracy, completeness, or reliability of any listing or user-'
         'submitted content.',
   ),
-  _TermsSection(
+  TermsSection(
     'Step Counter & Challenges',
     'The step counter and related fitness challenges are for recreational '
         'purposes only. Step data is tracked locally on your device and is '
@@ -201,7 +216,7 @@ const _sections = <_TermsSection>[
         'liable for any health-related decisions made based on step tracking '
         'data.',
   ),
-  _TermsSection(
+  TermsSection(
     'Limitation of Liability',
     'Modiin4U is provided "as is" without warranties of any kind. We '
         'shall not be liable for any indirect, incidental, special, or '
@@ -209,7 +224,7 @@ const _sections = <_TermsSection>[
         'of the app. Our total liability shall not exceed the amount you '
         'paid for the app, if any.',
   ),
-  _TermsSection(
+  TermsSection(
     'Changes to These Terms',
     'We may update these Terms & Conditions from time to time. When we '
         'do, we will revise the "Last updated" date at the top of this page. '
@@ -217,7 +232,7 @@ const _sections = <_TermsSection>[
         'informed about any changes. Continued use of the app after changes '
         'are posted constitutes your acceptance of the revised terms.',
   ),
-  _TermsSection(
+  TermsSection(
     'Contact Us',
     'If you have any questions or concerns about these Terms & '
         'Conditions, please contact us at support@modiin4u.co.il. We will '

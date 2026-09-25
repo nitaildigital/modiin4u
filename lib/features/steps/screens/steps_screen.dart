@@ -12,6 +12,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/step_entry.dart';
 import '../providers/steps_providers.dart';
+import 'web_steps_screen.dart';
 
 /// Step Counter screen – circular progress ring with daily stats,
 /// weekly bar chart, monthly challenge card with progress bar,
@@ -48,6 +49,15 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebStepsContent();
+        return _buildMobile();
+      },
+    );
+  }
+
+  Widget _buildMobile() {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -522,11 +532,31 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
   // ═══════════════════════════════════════════════
   // Card 3 — Monthly Challenge
   // ═══════════════════════════════════════════════
+  /// Reads the challenge row, not a figure written into this file.
+  ///
+  /// The card was gated on there being an active challenge, so it draws
+  /// nothing today — `challenges` has no rows. But its contents were
+  /// "Walk 150,000 steps", "82,450 / 150,000", "55%" and "Prize: ₪500
+  /// Shopping Voucher", all written in. The moment the client added a
+  /// challenge of their own, the card would have carried its name above
+  /// somebody else's numbers.
   Widget _buildMonthlyChallenge() {
     final l = L.of(context);
-    const progress = 82450;
-    const goal = 150000;
-    final fraction = progress / goal; // ~55%
+    final challenge = ref.watch(activeChallengeProvider).valueOrNull;
+    if (challenge == null) return const SizedBox.shrink();
+
+    final name = (challenge['name'] as String?)?.trim() ?? '';
+    final description = (challenge['description'] as String?)?.trim() ?? '';
+    final goal = (challenge['goal'] as num?)?.toInt();
+
+    // Row level security returns only this person's participation row.
+    final participants = challenge['challenge_participants'];
+    final progress = participants is List && participants.isNotEmpty
+        ? ((participants.first as Map)['progress'] as num?)?.toInt()
+        : null;
+    final fraction = (goal == null || goal <= 0 || progress == null)
+        ? null
+        : (progress / goal).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -571,7 +601,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                     ),
                     const SizedBox(height: 11),
                     Text(
-                      'Walk 150,000 steps',
+                      name,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 16,
@@ -581,7 +611,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'this month',
+                      description,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
@@ -593,10 +623,12 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                     // Prize row
                     Row(
                       children: [
+                        // A "Prize: ₪500 Shopping Voucher" line sat beside
+                        // this. `challenges` records no prize.
                         const Text('🏅', style: TextStyle(fontSize: 16)),
                         const SizedBox(width: 8),
                         Text(
-                          'Prize: ₪500 Shopping Voucher',
+                          name,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 12,
@@ -623,7 +655,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                     child: Row(
                       children: [
                         Text(
-                          '82,450',
+                          progress == null ? '—' : '$progress',
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 16,
@@ -633,7 +665,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '/ 150,000 steps',
+                          goal == null ? '' : '/ $goal',
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 12,
@@ -645,7 +677,9 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                     ),
                   ),
                   Text(
-                    '55%',
+                    fraction == null
+                        ? ''
+                        : '${(fraction * 100).round()}%',
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,

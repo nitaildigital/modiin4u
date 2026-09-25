@@ -232,6 +232,14 @@ All applied.
   fix is a data job: link the 669 articles, then the sections follow. Nothing
   can group them until then.
 - **Google sign-in** — an empty TODO on the first screen; no OAuth anywhere.
+- **The terms of service exist only in English.** Ten const sections in
+  `terms_conditions_screen.dart`, no Hebrew. The app opens in Hebrew and this
+  is the document a resident agrees to when they sign up, so it is the one
+  piece of text that ought not to be in the second language. The desktop page
+  wraps it in explicit LTR so its punctuation does not land on the wrong end
+  of every sentence, and says plainly that it is English only. **The client
+  needs to supply a Hebrew version** — it is not something to translate on
+  his behalf.
 - **The 19 seeded businesses** — see §1f. Kept deliberately for now; must go
   before launch.
 - **~300 English strings** on mobile screens, ~600 on `web_*`.
@@ -448,6 +456,40 @@ photograph, watched it appear, saved, and found it gone the next time. The
 their own listing folder (00021), but nothing for avatars — so there was
 nowhere for it to go. Migration **00026** scopes `avatars/<uid>/` the same
 way, and both the phone and desktop screens upload to it now.
+
+### What rendering the pages caught that the analyser could not
+
+Every screen now has a desktop layout except the auth callback and the
+splash, which centre their content and read correctly at any width. Sixteen
+this morning, forty-two now.
+
+Five defects surfaced only because somebody looked at the pages:
+
+- **`WebSection` shrink-wrapped its child.** `Center` passes loose
+  constraints, so a section containing only text collapsed to the width of
+  that text and sat in the middle of the window. Every existing page happened
+  to contain a `Row` with an `Expanded`, which hid it. Two people hit it on
+  the same afternoon. Fixed in `web_chrome.dart` so it stops being a trap.
+- **The app theme fills its text fields** and rounds them to 50px, so a
+  search field inside a custom-bordered pill drew a second, rounder pill
+  within the first. `filled: false` on the municipal and restaurants-map
+  fields.
+- **A time range is bidi-neutral**, so "08:00–19:00" rendered in Hebrew as
+  "19:00–08:00" — the opposite of what it says. Forced LTR.
+- **`.gitignore` swallowed a new file.** Line 48 read `games/` with no
+  leading slash, so it matched `lib/features/games/` as well as the Unity
+  projects it was written for. `web_games_screen.dart` would have been
+  written and never committed, silently. Anchored to `/games/`.
+- **Two pieces of invented content still on the phone**, found while building
+  their desktop twins. The community header carried "12,340 members · 48
+  posts today" and a row reading "23 new posts · 5 new members · 1 active
+  poll" — over a feed that has not opened, against a schema with no posts
+  table, no membership table and no poll. And the steps screen's challenge
+  card read "Walk 150,000 steps", "82,450 / 150,000", "55%" and "Prize: ₪500
+  Shopping Voucher", all written in. That card is gated on there being an
+  active challenge, so it draws nothing today — but the moment the client
+  added one, it would have shown that challenge's name above somebody else's
+  numbers. It reads the row now.
 
 **A caching note for anyone verifying a web build locally.** Flutter
 registers a service worker, so a rebuild keeps serving the old bundle even

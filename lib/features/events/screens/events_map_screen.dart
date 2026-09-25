@@ -11,6 +11,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../models/event.dart';
 import '../providers/event_providers.dart';
+import 'web_events_map_screen.dart';
 
 /// The events map.
 ///
@@ -25,7 +26,12 @@ class EventsMapScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _MobileEventsMapContent();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebEventsMapContent();
+        return const _MobileEventsMapContent();
+      },
+    );
   }
 }
 

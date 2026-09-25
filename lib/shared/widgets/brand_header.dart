@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
-class BrandHeader extends ConsumerWidget {
+class BrandHeader extends ConsumerStatefulWidget {
   final String? searchHint;
   final ValueChanged<String>? onSearch;
 
@@ -17,7 +17,29 @@ class BrandHeader extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BrandHeader> createState() => _BrandHeaderState();
+}
+
+class _BrandHeaderState extends ConsumerState<BrandHeader> {
+  /// The field had no controller, so the "שאל" button beside it could not
+  /// read what had been typed — it carried an empty handler and did nothing,
+  /// while pressing enter in the field worked. Both now do the same thing.
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _searchController.text.trim();
+    if (text.isEmpty) return;
+    widget.onSearch?.call(text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authProvider);
     final isLoggedIn = user != null;
 
@@ -138,8 +160,10 @@ class BrandHeader extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
+                        controller: _searchController,
                         textDirection: TextDirection.rtl,
-                        onSubmitted: onSearch,
+                        onSubmitted: (_) => _submit(),
+                        textInputAction: TextInputAction.search,
                         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.navy),
                         decoration: InputDecoration(
                           hintText: 'מה אתם מחפשים?',
@@ -151,7 +175,7 @@ class BrandHeader extends ConsumerWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: _submit,
                       child: Container(
                         margin: const EdgeInsets.all(5),
                         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),

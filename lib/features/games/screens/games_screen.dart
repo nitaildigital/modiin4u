@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import 'web_games_screen.dart';
 
 class GamesScreen extends StatelessWidget {
   const GamesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebGamesContent();
+        return _buildMobile(context);
+      },
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(

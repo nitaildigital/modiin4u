@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'web_community_screen.dart';
 
 class _Post {
   final String id;
@@ -88,6 +89,15 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1100) return const WebCommunityContent();
+        return _buildMobile();
+      },
+    );
+  }
+
+  Widget _buildMobile() {
     final user = ref.watch(authProvider);
     final isLoggedIn = user != null;
 
@@ -145,15 +155,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                               children: [
                                 const Icon(Icons.public, size: 14, color: Colors.white70),
                                 const SizedBox(width: 4),
+                                // "12,340 members" and "48 posts today" sat
+                                // here, over a feed that has not opened and
+                                // a schema with no posts table. Nothing
+                                // counts either figure.
                                 Text('קבוצה ציבורית', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: Colors.white70)),
-                                const SizedBox(width: 12),
-                                const Icon(Icons.people, size: 14, color: Colors.white70),
-                                const SizedBox(width: 4),
-                                Text('12,340 חברים', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: Colors.white70)),
-                                const SizedBox(width: 12),
-                                const Icon(Icons.article_outlined, size: 14, color: Colors.white70),
-                                const SizedBox(width: 4),
-                                Text('48 פוסטים היום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: Colors.white70)),
                               ],
                             ),
                           ],
@@ -166,21 +172,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                 ],
               ),
 
-              SliverToBoxAdapter(
-                child: Container(
-                  color: context.cardBg,
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-                  child: Row(
-                    children: [
-                      _GroupStat(Icons.trending_up, '23', 'פוסטים חדשים', AppColors.turquoise),
-                      const SizedBox(width: 8),
-                      _GroupStat(Icons.people_outline, '5', 'חברים חדשים', AppColors.success),
-                      const SizedBox(width: 8),
-                      _GroupStat(Icons.how_to_vote, '1', 'סקר פעיל', AppColors.gold),
-                    ],
-                  ),
-                ),
-              ),
+              // A stat row reading "23 new posts · 5 new members · 1 active
+              // poll" sat here. There is no posts table, no membership
+              // table and no poll anywhere in the schema.
 
               SliverToBoxAdapter(
                 child: Container(
@@ -775,38 +769,6 @@ class _PostCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _GroupStat extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color color;
-
-  const _GroupStat(this.icon, this.value, this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(value, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w700, color: color)),
-            const SizedBox(width: 4),
-            Flexible(child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11, color: AppColors.grayMeta), overflow: TextOverflow.ellipsis)),
-          ],
-        ),
       ),
     );
   }
