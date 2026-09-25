@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -16,6 +17,12 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Every word on this screen was English, while the app opens in Hebrew.
+    // English inside a right-to-left layout puts the punctuation on the wrong
+    // side, so the first thing anyone saw read ",Everything in Modiin" and
+    // "?Don't have an account".
+    final l = L.of(context);
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -55,7 +62,7 @@ class OnboardingScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Skip',
+                              l.onboardingSkip,
                               style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -86,7 +93,7 @@ class OnboardingScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 26),
                   child: Text(
-                    'Everything in Modiin,\nin one place.',
+                    l.onboardingTitle,
                     textAlign: TextAlign.center,
                     style: TextStyle(fontFamily: AppFonts.rubik, 
                       fontSize: 32,
@@ -101,7 +108,7 @@ class OnboardingScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 58),
                   child: Text(
-                    'Discover restaurants, businesses, events, deals, real estate and more.',
+                    l.onboardingSubtitle,
                     textAlign: TextAlign.center,
                     style: TextStyle(fontFamily: AppFonts.inter, 
                       fontSize: 14,
@@ -133,7 +140,7 @@ class OnboardingScreen extends StatelessWidget {
                             elevation: 0,
                           ),
                           child: Text(
-                            'Sign In',
+                            l.signIn,
                             style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -169,7 +176,7 @@ class OnboardingScreen extends StatelessWidget {
                             ),
                           ),
                           label: Text(
-                            'Continue with Google',
+                            l.continueWithGoogle,
                             style: TextStyle(fontFamily: AppFonts.inter, 
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -186,7 +193,7 @@ class OnboardingScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Don't have an account?",
+                              l.dontHaveAccount,
                               style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
@@ -195,7 +202,7 @@ class OnboardingScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Sign Up',
+                              l.signUp,
                               style: TextStyle(fontFamily: AppFonts.inter, 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -208,7 +215,8 @@ class OnboardingScreen extends StatelessWidget {
                       const SizedBox(height: 32),
                       // Terms text
                       Text(
-                        'By creating an account of signing up, you are agree to your Terms of Service and Privacy Policy',
+                        '${l.onboardingTerms} ${l.termsOfService} '
+                        '${l.andConjunction.trim()} ${l.privacyPolicy}',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontFamily: AppFonts.inter, 
                           fontSize: 12,

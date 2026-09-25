@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../../favorites/providers/favorite_providers.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../models/article.dart';
+import '../providers/news_providers.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Modiin News Detail — full desktop layout from Figma
@@ -17,18 +27,16 @@ const _kGrey = Color(0xFF5F5E5A);
 const _kIconGrey = Color(0xFF6D6D6D);
 const _kAvatarBg = Color(0xFFEDF3FE);
 
-class WebArticleContent extends StatefulWidget {
+class WebArticleContent extends ConsumerStatefulWidget {
   final String articleId;
   const WebArticleContent({super.key, required this.articleId});
 
   @override
-  State<WebArticleContent> createState() => _WebArticleContentState();
+  ConsumerState<WebArticleContent> createState() => _WebArticleContentState();
 }
 
-class _WebArticleContentState extends State<WebArticleContent> {
+class _WebArticleContentState extends ConsumerState<WebArticleContent> {
   bool _isHebrew = false;
-  bool _saved = false;
-  bool _commentsExpanded = false;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
@@ -36,140 +44,32 @@ class _WebArticleContentState extends State<WebArticleContent> {
   // ═══════════════════════════════════════════════
   // ARTICLE CONTENT
   // ═══════════════════════════════════════════════
+  //
+  // This page took an `articleId` and never read it. Whatever id it carried,
+  // it rendered one story — a municipal programme for women in Modi'in —
+  // with its own headline, five paragraphs, a bullet list, an author, four
+  // related articles, "359 views", and four comments from named residents
+  // ("Zeev Schumacher", "Moran Zelig", "Noam Garcia") with quoted opinions
+  // and timestamps. The `comments` table is empty and none of those people
+  // had said anything.
 
-  String get _title => _t(
-    "From now on, we can breathe a sigh of relief: The new municipal initiative that will give women in Modi'in complete confidence and tools for success.",
-    'מעכשיו אפשר לנשום לרווחה: היוזמה העירונית החדשה שתעניק לנשים במודיעין ביטחון מלא וכלים להצלחה.',
-  );
+  /// The row the route names. Null while it loads, and if it fails.
+  Article? get _article =>
+      ref.watch(articleByIdProvider(widget.articleId)).valueOrNull;
 
-  List<String?> get _body => [
-    _t(
-      "The women of Modi'in are receiving a new and powerful envelope that will change everything they knew about personal resilience, security and independence. The Municipality of Modi'in Maccabim Re'ut is launching a comprehensive urban plan that will give you all the tools you need to move forward with peace of mind and complete confidence.",
-      'הנשים במודיעין מקבלות מעטפת חדשה ועוצמתית שתשנה כל מה שידעו על חוסן אישי, ביטחון ועצמאות. עיריית מודיעין מכבים רעות משיקה תוכנית עירונית מקיפה שתעניק לכן את כל הכלים כדי להתקדם בשקט נפשי ובביטחון מלא.',
-    ),
-    _t(
-      'The new program is being launched under the leadership of the Multidisciplinary Center, managed by Dr. Orna Mager, Advisor to the Mayor for Gender Equality, together with the Education, Learning and Entrepreneurship Division. The important project was built in close collaboration with the Authority for the Advancement of the Status of Women, the Ministry of Welfare and Social Security, the Municipal Health Department, and the Treatment Center for Family Peace and Sexual Trauma in the Social Services Division.',
-      'התוכנית החדשה יוצאת לדרך בהובלת המרכז הרב תחומי, בניהולה של ד"ר אורנה מגר, יועצת ראש העיר לשוויון מגדרי, יחד עם אגף החינוך, הלמידה והיזמות. הפרויקט החשוב נבנה בשיתוף פעולה הדוק עם הרשות לקידום מעמד האישה, משרד הרווחה והביטחון החברתי, אגף הבריאות העירוני והמרכז לטיפול בשלום המשפחה ובטראומה מינית באגף השירותים החברתיים.',
-    ),
-    _t(
-      'The first course that has already been launched is a practical self-defense course, designed to directly strengthen the sense of competence and personal security of each and every one of us in the public space.',
-      'הקורס הראשון שכבר יצא לדרך הוא קורס מעשי בהגנה עצמית, שנועד לחזק באופן ישיר את תחושת המסוגלות והביטחון האישי של כל אחת מאיתנו במרחב הציבורי.',
-    ),
-    null, // image 38
-    _t(
-      'Throughout the coming year, a wide variety of workshops, professional meetings, and events will await you that will touch precisely on the points that are important to us:',
-      'במהלך השנה הקרובה יחכו לכן מגוון רחב של סדנאות, מפגשים מקצועיים ואירועים שייגעו בדיוק בנקודות שחשובות לנו:',
-    ),
-  ];
+  String get _title => _article?.title ?? '';
 
-  List<String> get _bullets => [
-    _t(
-      'A special package to strengthen the "Recruited Women" Program: resilience of women in reserve and permanent service.',
-      'תוכנית "נשים מגויסות": מעטפת מיוחדת לחיזוק החוסן של נשים בשירות מילואים ובשירות קבע.',
-    ),
-    _t(
-      'Trauma-sensitive therapeutic yoga Spaces of healing and growth: and a unique writing workshop used as a tool for healing.',
-      'מרחבים של ריפוי וצמיחה: יוגה טיפולית רגישת טראומה וסדנת כתיבה ייחודית ככלי לריפוי.',
-    ),
-    _t(
-      'Events to mark the International Day for Safety and awareness: Elimination of Violence against Women and important training to identify red flags and prevent violence.',
-      'בטיחות ומודעות: אירועים לציון היום הבינלאומי למאבק באלימות נגד נשים והדרכות חשובות לזיהוי דגלים אדומים ומניעת אלימות.',
-    ),
-    _t(
-      'A practical workshop for optimal Financial independence: management that will give you complete control.',
-      'עצמאות כלכלית: סדנה מעשית לניהול פיננסי מיטבי שתעניק לכן שליטה מלאה.',
-    ),
-  ];
-
-  List<String?> get _bodyAfter => [
-    _t(
-      'All of these activities are offered at subsidized prices that are particularly accessible to the public, at a symbolic cost of only 50 shekels per workshop.',
-      'כל הפעילויות מוצעות במחירים מסובסדים ונגישים במיוחד לציבור, בעלות סמלית של 50 שקלים בלבד לסדנה.',
-    ),
-    null, // image 39
-    _t(
-      'Want to receive all the first updates and secure your spot? All the details and the registration form are waiting for you right here:',
-      'רוצות לקבל את כל העדכונים ראשונות ולהבטיח את מקומכן? כל הפרטים וטופס ההרשמה מחכים לכן כאן:',
-    ),
-  ];
-
-  List<_Related> get _related => [
-    _Related(
-      id: 'muni_1',
-      title: _t(
-        'An end to cycle worries: Modiin is moving to a new and efficient model that will put your mind at ease',
-        'סוף לדאגות המחזור: מודיעין עוברת למודל חדש ויעיל שירגיע אתכם',
-      ),
-      date: _t('August 5, 2026 | 4:30 p.m.', '5 באוגוסט 2026 | 16:30'),
-      colors: const [Color(0xFF2C6E8F), Color(0xFF0A1A2E)],
-    ),
-    _Related(
-      id: 'muni_0',
-      title: _t(
-        'An end to cycle worries: Modiin is moving to a new and efficient model that will put your mind at ease',
-        'סוף לדאגות המחזור: מודיעין עוברת למודל חדש ויעיל שירגיע אתכם',
-      ),
-      date: _t('August 5, 2026 | 4:30 p.m.', '5 באוגוסט 2026 | 16:30'),
-      colors: const [Color(0xFF4A7A52), Color(0xFF0E1C1A)],
-    ),
-    _Related(
-      id: 'muni_2',
-      title: _t(
-        "No more heart palpitations: The new tool that will help parents in Modi'in register for after-school",
-        'לא עוד דפיקות לב: הכלי החדש שיעזור להורים במודיעין להירשם לצהרונים',
-      ),
-      date: _t('August 5, 2026 | 4:30 p.m.', '5 באוגוסט 2026 | 16:30'),
-      colors: const [Color(0xFF8A5A3B), Color(0xFF241209)],
-    ),
-    _Related(
-      id: 'muni_4',
-      title: _t(
-        "An engineering degree close to home: The Multidisciplinary Center in Modi'in and ORT College",
-        'תואר בהנדסה קרוב לבית: המרכז הרב תחומי במודיעין ומכללת אורט',
-      ),
-      date: _t('August 5, 2026 | 4:30 p.m.', '5 באוגוסט 2026 | 16:30'),
-      colors: const [Color(0xFF26607F), Color(0xFF081428)],
-    ),
-  ];
-
-  List<_Comment> get _comments => [
-    _Comment(
-      initials: 'SC',
-      name: _t('Zeev Schumacher', 'זאב שומכר'),
-      date: _t('August 5, 2026 · 5:12 PM', '5 באוגוסט 2026 · 17:12'),
-      text: _t(
-        'This is such an important initiative for women in Modiin. It’s great to see practical tools and support being made available locally.',
-        'זו יוזמה כל כך חשובה לנשים במודיעין. משמח לראות כלים מעשיים ותמיכה שזמינים כאן בעיר.',
-      ),
-    ),
-    _Comment(
-      initials: 'MZ',
-      name: _t('Moran Zelig', 'מורן זליג'),
-      date: _t('August 5, 2026 · 6:03 PM', '5 באוגוסט 2026 · 18:03'),
-      text: _t(
-        'I really like the focus on confidence and personal safety. These workshops can make a real difference in everyday life.',
-        'אני מאוד אוהבת את הדגש על ביטחון ובטיחות אישית. הסדנאות האלה יכולות לעשות שינוי אמיתי בחיי היומיום.',
-      ),
-    ),
-    _Comment(
-      initials: 'YL',
-      name: _t('Yael Levi', 'יעל לוי'),
-      date: _t('August 5, 2026 · 7:24 PM', '5 באוגוסט 2026 · 19:24'),
-      text: _t(
-        'The financial independence workshop sounds especially useful. I hope more residents hear about these programs.',
-        'סדנת העצמאות הכלכלית נשמעת שימושית במיוחד. אני מקווה שעוד תושבים ישמעו על התוכניות האלה.',
-      ),
-    ),
-    _Comment(
-      initials: 'NG',
-      name: _t('Noam Garcia', 'נועם גרסיה'),
-      date: _t('August 6, 2026 · 9:15 AM', '6 באוגוסט 2026 · 09:15'),
-      text: _t(
-        'It’s wonderful to have these kinds of activities available in the city at an affordable price. Looking forward to attending one of the workshops.',
-        'נפלא שיש פעילויות כאלה בעיר במחיר נגיש. מחכה להגיע לאחת הסדנאות.',
-      ),
-    ),
-  ];
+  /// The row's own body, split where the author left a blank line. Nothing
+  /// is composed, and a row with no body simply has no paragraphs.
+  List<String> get _paragraphs {
+    final body = _article?.body.trim() ?? '';
+    if (body.isEmpty) return const [];
+    return body
+        .split(RegExp(r'\n\s*\n'))
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+  }
 
   // ═══════════════════════════════════════════════
   // BUILD
@@ -189,7 +89,23 @@ class _WebArticleContentState extends State<WebArticleContent> {
               onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
-              child: SingleChildScrollView(
+              child: ref.watch(articleByIdProvider(widget.articleId)).when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (_, _) => Center(
+                  child: Text(
+                    _t(
+                      'We could not load this article.',
+                      'לא הצלחנו לטעון את הכתבה.',
+                    ),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 15,
+                      color: _kGrey,
+                    ),
+                  ),
+                ),
+                data: (_) => SingleChildScrollView(
                 child: Column(
                   children: [
                     const SizedBox(height: 59),
@@ -208,6 +124,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
                     const SizedBox(height: 103),
                     WebFooter(isHebrew: _isHebrew),
                   ],
+                ),
                 ),
               ),
             ),
@@ -243,10 +160,13 @@ class _WebArticleContentState extends State<WebArticleContent> {
           children: [
             Expanded(
               flex: 808,
-              child: _imagePlaceholder(
-                const [Color(0xFF1A4E8A), Color(0xFF07112E)],
-                radius: 0,
-                glyphSize: 64,
+              // The article's own photograph — 642 of the 669 rows carry
+              // one — and the brand panel where it has none.
+              child: NetworkPhoto(
+                url: _article?.imageUrl,
+                fit: BoxFit.cover,
+                icon: IconsaxPlusLinear.document_text,
+                iconSize: 64,
               ),
             ),
             Expanded(
@@ -259,24 +179,10 @@ class _WebArticleContentState extends State<WebArticleContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      height: 36,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.turquoise,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        _t('Municipality', 'עירייה'),
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          height: 24 / 14,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 21),
+                    // A turquoise "Municipality" badge sat here on every
+                    // article. `articles` has no category column and no row
+                    // is linked to one, so nothing can fill it.
+
                     Text(
                       _title,
                       style: TextStyle(fontFamily: AppFonts.nunito, 
@@ -300,34 +206,36 @@ class _WebArticleContentState extends State<WebArticleContent> {
     );
   }
 
+  /// The date and, where the row names one, its author.
+  ///
+  /// This read "August 5, 2026 | 4:34 p.m." on every article, beside "An
+  /// intelligence system for you" — a machine translation of מודיעין, the
+  /// city's name, read as the word for intelligence — and "12 Comments",
+  /// against an empty comments table.
   Widget _buildHeroMeta() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final article = _article;
+    if (article == null) return const SizedBox.shrink();
+
+    final author = article.author.trim();
+
+    return Row(
       children: [
-        Row(
-          children: [
-            SizedBox(
-              width: 241,
-              child: _metaItem(
-                icon: IconsaxPlusLinear.calendar_1,
-                label: _t('August 5, 2026 | 4:34 p.m.', '5 באוגוסט 2026 | 16:34'),
-                iconSize: 18,
-              ),
-            ),
-            const SizedBox(width: 31),
-            Flexible(
-              child: _metaItem(
-                icon: IconsaxPlusLinear.category,
-                label: _t('An intelligence system for you', 'מערכת מודיעין בשבילך'),
-              ),
-            ),
-          ],
+        Flexible(
+          child: _metaItem(
+            icon: IconsaxPlusLinear.calendar_1,
+            label: _dateTime(article.publishedAt, _isHebrew),
+            iconSize: 18,
+          ),
         ),
-        const SizedBox(height: 24),
-        _metaItem(
-          icon: IconsaxPlusLinear.message_text,
-          label: _t('12 Comments', '12 תגובות'),
-        ),
+        if (author.isNotEmpty) ...[
+          const SizedBox(width: 31),
+          Flexible(
+            child: _metaItem(
+              icon: IconsaxPlusLinear.user,
+              label: author,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -363,33 +271,29 @@ class _WebArticleContentState extends State<WebArticleContent> {
         ),
         const SizedBox(height: 114),
         _buildBody(),
-        const SizedBox(height: 61),
-        _buildInlineAd(),
-        const SizedBox(height: 82),
-        Text(
-          _t('12 Comments', '12 תגובות'),
-          style: TextStyle(fontFamily: AppFonts.nunito, 
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            height: 30 / 24,
-            color: AppColors.midBlue,
-          ),
-        ),
-        const SizedBox(height: 24),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 918),
-          child: _buildComments(),
-        ),
-        const SizedBox(height: 40),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 918),
-          child: _buildCommentPrompt(),
-        ),
+        // An advertising slot and a comment thread sat here. The slot was a
+        // gradient rectangle with no campaign behind it, and the thread was
+        // four comments from named residents — "Zeev Schumacher", "Moran
+        // Zelig", "Noam Garcia" — with quoted opinions and timestamps, under
+        // a heading reading "12 Comments". The `comments` table is empty and
+        // none of those people had written anything.
+        //
+        // Comments come back when the table has rows and posting is wired;
+        // the admin panel already moderates them.
       ],
     );
   }
 
   Widget _buildStatsBar() {
+    final saved = ref.watch(
+      isFavoriteProvider((kind: FavoriteKind.article, id: widget.articleId)),
+    );
+
+    final link = _article?.canonicalUrl;
+    final encodedLink = Uri.encodeComponent(link ?? '');
+    final encodedTitle = Uri.encodeComponent(_title);
+    final encodedShare = Uri.encodeComponent('$_title\n\n${link ?? ''}');
+
     return Container(
       height: 82,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -402,42 +306,72 @@ class _WebArticleContentState extends State<WebArticleContent> {
           Expanded(
             child: Row(
               children: [
-                Expanded(
-                  child: _statItem(
-                    icon: IconsaxPlusLinear.eye,
-                    value: '359',
-                    label: _t('Views', 'צפיות'),
-                    startPadding: 0,
+                // "359 views" and "83 shares" were printed for every
+                // article. The row keeps its own count, and shares are not
+                // recorded anywhere, so only a real count is shown.
+                if ((_article?.viewCount ?? 0) > 0)
+                  Expanded(
+                    child: _statItem(
+                      icon: IconsaxPlusLinear.eye,
+                      value: '${_article!.viewCount}',
+                      label: _t('Views', 'צפיות'),
+                      startPadding: 0,
+                    ),
                   ),
-                ),
                 Expanded(
                   child: _statItem(
-                    icon: _saved ? IconsaxPlusBold.archive : IconsaxPlusLinear.archive,
+                    // Was a bool held in this widget, so the next page load
+                    // forgot it. Writes to `favorites` now.
+                    icon: saved
+                        ? IconsaxPlusBold.archive
+                        : IconsaxPlusLinear.archive,
                     label: _t('Save', 'שמור'),
-                    onTap: () => setState(() => _saved = !_saved),
+                    onTap: () => ref
+                        .read(favoritesProvider.notifier)
+                        .toggle(FavoriteKind.article, widget.articleId),
                   ),
                 ),
                 Expanded(
                   child: _statItem(
                     icon: IconsaxPlusLinear.share,
-                    value: '83',
                     label: _t('Share', 'שיתוף'),
+                    onTap: () => Share.share('$_title\n\nModiin4u'),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 9),
+          if (link != null && link.isNotEmpty)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _shareIcon(const Color(0xFF1877F2), 'f'),
+              _shareIcon(
+                const Color(0xFF1877F2),
+                'f',
+                url:
+                    'https://www.facebook.com/sharer/sharer.php?u=$encodedLink',
+              ),
               const SizedBox(width: 19),
-              _shareIcon(const Color(0xFF4CAF50), null, icon: IconsaxPlusBold.message),
+              _shareIcon(
+                const Color(0xFF4CAF50),
+                null,
+                icon: IconsaxPlusBold.message,
+                url: 'https://wa.me/?text=$encodedShare',
+              ),
               const SizedBox(width: 19),
-              _shareIcon(Colors.black, 'X'),
+              _shareIcon(
+                Colors.black,
+                'X',
+                url: 'https://twitter.com/intent/tweet?text=$encodedShare',
+              ),
               const SizedBox(width: 19),
-              _shareIcon(const Color(0xFF2196F3), null, icon: IconsaxPlusBold.sms),
+              _shareIcon(
+                const Color(0xFF2196F3),
+                null,
+                icon: IconsaxPlusBold.sms,
+                url: 'mailto:?subject=$encodedTitle&body=$encodedShare',
+              ),
             ],
           ),
         ],
@@ -491,10 +425,21 @@ class _WebArticleContentState extends State<WebArticleContent> {
     );
   }
 
-  Widget _shareIcon(Color color, String? letter, {IconData? icon}) {
+  /// Four coloured circles with no handler before. They open the usual
+  /// share dialogs now, and are not drawn for a row with no public link —
+  /// the app's own web build is not published yet, so `canonical_url` on the
+  /// existing site is the only address a share can point at.
+  Widget _shareIcon(
+    Color color,
+    String? letter, {
+    IconData? icon,
+    required String url,
+  }) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      child: Container(
+      child: GestureDetector(
+        onTap: () => launchUrl(Uri.parse(url)),
+        child: Container(
         width: 32,
         height: 32,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
@@ -509,6 +454,7 @@ class _WebArticleContentState extends State<WebArticleContent> {
                     color: Colors.white,
                   ),
                 ),
+        ),
         ),
       ),
     );
@@ -532,57 +478,11 @@ class _WebArticleContentState extends State<WebArticleContent> {
       ));
     }
 
-    for (final block in _body) {
-      if (block == null) {
-        blocks.add(_inlineImage(516, 344, const [Color(0xFF3E6FA5), Color(0xFF122542)]));
-      } else {
-        addParagraph(block);
-      }
-    }
-
-    // Bulleted workshop list — 24px between items, 40px around the group
-    blocks.add(Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var i = 0; i < _bullets.length; i++) ...[
-          if (i > 0) const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsetsDirectional.only(top: 11, end: 12),
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: AppColors.turquoise,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  _bullets[i],
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    height: 1.6,
-                    color: _kBodyText,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    ));
-
-    for (final block in _bodyAfter) {
-      if (block == null) {
-        blocks.add(_inlineImage(583, 373, const [Color(0xFF4C7A5E), Color(0xFF12241B)]));
-      } else {
-        addParagraph(block);
-      }
+    // The bullet list and the two inline illustrations that used to sit
+    // between these paragraphs belonged to the one story this page always
+    // told. An article has a body; it does not have a bullet list.
+    for (final paragraph in _paragraphs) {
+      addParagraph(paragraph);
     }
 
     return Column(
@@ -613,194 +513,23 @@ class _WebArticleContentState extends State<WebArticleContent> {
   }
 
   /// In-article ad banner (image 37 — 796 × 228).
-  Widget _buildInlineAd() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth < 796 ? constraints.maxWidth : 796.0;
-        return Center(
-          child: SizedBox(
-            width: w,
-            height: 228 * (w / 796),
-            child: _imagePlaceholder(
-              const [Color(0xFFD4E4F7), Color(0xFF9FC0E2)],
-              glyphSize: 40,
-              glyphOpacity: 0.5,
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   // ─────────────────────────────────────────────
   // COMMENTS
   // ─────────────────────────────────────────────
-  Widget _buildComments() {
-    final list = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: _comments.map((c) => _CommentTile(comment: c, replyLabel: _t('Reply', 'תגובה'))).toList(),
-    );
 
-    if (_commentsExpanded) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          list,
-          const SizedBox(height: 24),
-          Center(child: _loadMoreButton(_t('Show Less', 'הצג פחות'))),
-        ],
-      );
-    }
 
-    return Stack(
-      alignment: AlignmentDirectional.bottomCenter,
-      children: [
-        list,
-        // Fade-out over the last stretch of the thread
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 222,
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x00FFFFFF), Color(0xFFFFFFFF)],
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: Center(child: _loadMoreButton(_t('Load More', 'טען עוד'))),
-        ),
-      ],
-    );
-  }
-
-  Widget _loadMoreButton(String label) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => setState(() => _commentsExpanded = !_commentsExpanded),
-        child: Container(
-          height: 46,
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.midBlue),
-            borderRadius: BorderRadius.circular(60),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(fontFamily: AppFonts.inter, 
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  height: 24 / 16,
-                  color: AppColors.midBlue,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCommentPrompt() {
-    return Container(
-      height: 106,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kBorder),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Color(0x1A000000), blurRadius: 16),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: const BoxDecoration(color: _kAvatarBg, shape: BoxShape.circle),
-            child: const Center(
-              child: Icon(IconsaxPlusLinear.user, size: 27, color: AppColors.midBlue),
-            ),
-          ),
-          const SizedBox(width: 17),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _t('Write a comment', 'כתבו תגובה'),
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    height: 24 / 20,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _t('To post a comment, you must be logged in.', 'כדי לפרסם תגובה יש להתחבר.'),
-                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: _kBodyText),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                decoration: BoxDecoration(
-                  color: AppColors.midBlue,
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(IconsaxPlusLinear.login, size: 20, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(
-                      _t('Login', 'התחברות'),
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        height: 24 / 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────
   // SIDEBAR — related news + ad
   // ─────────────────────────────────────────────
   Widget _buildSidebar() {
+    final related =
+        (ref.watch(publishedArticlesProvider).valueOrNull ?? const <Article>[])
+            .where((a) => a.id != widget.articleId)
+            .take(4)
+            .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -815,19 +544,18 @@ class _WebArticleContentState extends State<WebArticleContent> {
           ),
         ),
         const SizedBox(height: 40),
-        ..._related.map((r) => _RelatedRow(
-              related: r,
-              onTap: () => context.push('/article/${r.id}'),
-            )),
-        const SizedBox(height: 39),
-        SizedBox(
-          height: 260,
-          child: _imagePlaceholder(
-            const [Color(0xFFE0D4C8), Color(0xFFC0A891)],
-            glyphSize: 40,
-            glyphOpacity: 0.5,
+        // Four articles written into this file before, each with an invented
+        // headline and date. These are the newest published ones, with the
+        // article being read left out of its own sidebar.
+        ...related.map(
+          (a) => _RelatedRow(
+            article: a,
+            isHebrew: _isHebrew,
+            onTap: () => context.push('/article/${a.id}'),
           ),
         ),
+        // A 260px advertising panel sat here. There is no ad table and no
+        // campaign behind it — it was a gradient rectangle.
       ],
     );
   }
@@ -867,11 +595,6 @@ Widget _imagePlaceholder(
   );
 }
 
-class _Related {
-  final String id, title, date;
-  final List<Color> colors;
-  const _Related({required this.id, required this.title, required this.date, required this.colors});
-}
 
 class _Comment {
   final String initials, name, date, text;
@@ -879,10 +602,42 @@ class _Comment {
 }
 
 /// 426 × 121 related-news row — 110 × 80 thumb, 2-line title, date.
+const _enMonths = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const _heMonths = [
+  'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
+  'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
+];
+
+/// "August 5, 2026", or "5 באוגוסט 2026". `published_at` is UTC, so it is
+/// moved to the reader's zone first. Matches `web_news_screen.dart`.
+String _date(DateTime value, bool isHebrew) {
+  final d = value.toLocal();
+  return isHebrew
+      ? '${d.day} ב${_heMonths[d.month - 1]} ${d.year}'
+      : '${_enMonths[d.month - 1]} ${d.day}, ${d.year}';
+}
+
+/// The same, with the hour appended.
+String _dateTime(DateTime value, bool isHebrew) {
+  final d = value.toLocal();
+  final time =
+      '${d.hour.toString().padLeft(2, '0')}:'
+      '${d.minute.toString().padLeft(2, '0')}';
+  return '${_date(value, isHebrew)} | $time';
+}
+
 class _RelatedRow extends StatefulWidget {
-  final _Related related;
+  final Article article;
+  final bool isHebrew;
   final VoidCallback onTap;
-  const _RelatedRow({required this.related, required this.onTap});
+  const _RelatedRow({
+    required this.article,
+    required this.isHebrew,
+    required this.onTap,
+  });
 
   @override
   State<_RelatedRow> createState() => _RelatedRowState();
@@ -893,7 +648,7 @@ class _RelatedRowState extends State<_RelatedRow> {
 
   @override
   Widget build(BuildContext context) {
-    final r = widget.related;
+    final r = widget.article;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
@@ -911,7 +666,17 @@ class _RelatedRowState extends State<_RelatedRow> {
               SizedBox(
                 width: 110,
                 height: 80,
-                child: _imagePlaceholder(r.colors, radius: 6, glyphSize: 24),
+                // The row's own photograph, or the brand panel where it has
+                // none. Four pastel gradients stood in for these.
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: NetworkPhoto(
+                    url: r.imageUrl,
+                    fit: BoxFit.cover,
+                    icon: IconsaxPlusLinear.document_text,
+                    iconSize: 24,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -937,7 +702,7 @@ class _RelatedRowState extends State<_RelatedRow> {
                         const SizedBox(width: 9),
                         Flexible(
                           child: Text(
-                            r.date,
+                            _date(r.publishedAt, widget.isHebrew),
                             style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: _kGrey),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

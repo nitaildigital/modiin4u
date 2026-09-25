@@ -1,8 +1,6 @@
-import 'dart:typed_data';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -71,13 +69,17 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
   String _selectedCategory = 'הכל';
   final _categories = ['הכל', 'כללי', 'שאלה', 'המלצה', 'דיווח', 'שכנים'];
 
-  late List<_Post> _posts;
-
-  @override
-  void initState() {
-    super.initState();
-    _posts = _generateMockPosts();
-  }
+  /// Empty, and it has to stay empty until there is a table behind it.
+  ///
+  /// This screen used to open with a feed written into the source: named
+  /// residents holding conversations, a plumber and an electrician given as
+  /// telephone numbers, a named restaurant recommended with a claim about
+  /// its kashrut, and a pothole reported at a real street address with a
+  /// note that the municipality had been told. None of it came from
+  /// anywhere. Someone would have rung those numbers.
+  ///
+  /// There is no `posts` table in the schema, so nothing can fill this yet.
+  final List<_Post> _posts = [];
 
   List<_Post> get _filteredPosts {
     if (_selectedCategory == 'הכל') return _posts;
@@ -161,8 +163,6 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                   ),
                 ),
                 actions: [
-                  IconButton(icon: const Icon(Icons.search, size: 22), onPressed: () {}),
-                  IconButton(icon: const Icon(Icons.notifications_outlined, size: 22), onPressed: () {}),
                 ],
               ),
 
@@ -188,7 +188,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
                   margin: const EdgeInsets.only(top: 1),
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
                   child: GestureDetector(
-                    onTap: () => _showNewPostSheet(context, isLoggedIn, user?.name ?? ''),
+                    // Nowhere to write a post to, so it says so rather than
+                    // opening a composer.
+                    onTap: _showNotOpenYet,
                     child: Row(
                       children: [
                         Container(
@@ -278,6 +280,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
+              if (_filteredPosts.isEmpty)
+                SliverToBoxAdapter(child: _buildEmptyState())
+              else
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -310,7 +315,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
             boxShadow: [BoxShadow(color: const Color(0xFF00EEFF).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
           ),
           child: FloatingActionButton.extended(
-            onPressed: () => _showNewPostSheet(context, isLoggedIn, user?.name ?? ''),
+            onPressed: _showNotOpenYet,
             backgroundColor: Colors.transparent,
             elevation: 0,
             icon: const Icon(Icons.edit, color: AppColors.white, size: 20),
@@ -321,187 +326,38 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     );
   }
 
-  void _showNewPostSheet(BuildContext context, bool isLoggedIn, String userName) {
-    if (!isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('יש להתחבר כדי לפרסם', style: TextStyle(fontFamily: AppFonts.rubik)),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-      return;
-    }
-    final textController = TextEditingController();
-    String selectedCategory = 'כללי';
-    final categories = ['כללי', 'שאלה', 'המלצה', 'דיווח', 'שכנים'];
-    Uint8List? pickedImage;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: StatefulBuilder(
-          builder: (context, setSheetState) => Container(
-            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-            decoration: BoxDecoration(
-              color: context.cardBg,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: context.borderClr, borderRadius: BorderRadius.circular(2)))),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: AppColors.turquoise.withValues(alpha: 0.15),
-                      child: Text(userName.isNotEmpty ? userName[0] : '', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.turquoise)),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(userName, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600, color: context.textPrimary)),
-                        Text('פוסט ציבורי · קהילת מודיעין', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta)),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 34,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) {
-                      final cat = categories[i];
-                      final sel = cat == selectedCategory;
-                      return GestureDetector(
-                        onTap: () => setSheetState(() => selectedCategory = cat),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          decoration: BoxDecoration(
-                            color: sel ? AppColors.turquoise.withValues(alpha: 0.1) : context.surfaceDim,
-                            borderRadius: BorderRadius.circular(50),
-                            border: Border.all(color: sel ? AppColors.turquoise : context.borderClr),
-                          ),
-                          child: Center(child: Text(cat, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: sel ? AppColors.turquoise : AppColors.grayMeta, fontWeight: sel ? FontWeight.w600 : FontWeight.w400))),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: textController,
-                  maxLines: 5,
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, color: context.textPrimary),
-                  decoration: InputDecoration(
-                    hintText: 'מה עובר עליכם?',
-                    hintStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, color: AppColors.grayLight),
-                    filled: true,
-                    fillColor: context.surfaceDim,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: context.borderClr)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: context.borderClr)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.turquoise, width: 1.5)),
-                  ),
-                ),
-                if (pickedImage != null) ...[
-                  const SizedBox(height: 12),
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.memory(pickedImage!, height: 140, width: double.infinity, fit: BoxFit.cover),
-                      ),
-                      Positioned(
-                        top: 6,
-                        left: 6,
-                        child: GestureDetector(
-                          onTap: () => setSheetState(() => pickedImage = null),
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                            child: const Icon(Icons.close, size: 16, color: AppColors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _SheetAction(Icons.photo_outlined, 'תמונה', AppColors.success, () async {
-                      final picker = ImagePicker();
-                      final result = await picker.pickImage(source: ImageSource.gallery);
-                      if (result != null) {
-                        final bytes = await result.readAsBytes();
-                        setSheetState(() => pickedImage = bytes);
-                      }
-                    }),
-                    const SizedBox(width: 4),
-                    _SheetAction(Icons.location_on_outlined, 'מיקום', AppColors.error, () {}),
-                    const SizedBox(width: 4),
-                    _SheetAction(Icons.poll_outlined, 'סקר', AppColors.gold, () {}),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () {
-                        if (textController.text.trim().isEmpty) return;
-                        setState(() {
-                          _posts.insert(0, _Post(
-                            id: 'new_${DateTime.now().millisecondsSinceEpoch}',
-                            authorName: userName,
-                            authorInitials: userName.isNotEmpty ? userName[0] : '?',
-                            category: selectedCategory,
-                            content: textController.text.trim(),
-                            hasImage: pickedImage != null,
-                            imageLabel: 'תמונה שהועלתה',
-                            timeAgo: 'עכשיו',
-                            likes: 0,
-                            commentsCount: 0,
-                            shares: 0,
-                            comments: [],
-                          ));
-                        });
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                          content: Row(children: [
-                            const Icon(Icons.check_circle, color: AppColors.white, size: 20),
-                            const SizedBox(width: 10),
-                            Text('הפוסט פורסם!', style: TextStyle(fontFamily: AppFonts.rubik)),
-                          ]),
-                          backgroundColor: AppColors.success,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                        decoration: BoxDecoration(gradient: AppColors.cyanGradient, borderRadius: BorderRadius.circular(50)),
-                        child: Text('פרסום', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.white)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+  /// What the feed shows while there is nothing to show. Said plainly: a
+  /// blank scroll area reads as a screen that failed to load, and this one
+  /// has not failed — it has nothing yet.
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 48, 24, 64),
+      child: Column(
+        children: [
+          Icon(Icons.forum_outlined, size: 48, color: AppColors.grayLight),
+          const SizedBox(height: 16),
+          Text('הקהילה עוד לא נפתחה',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w600, color: context.textPrimary)),
+          const SizedBox(height: 8),
+          Text('בקרוב תוכלו לשתף כאן שאלות, המלצות ודיווחים שכונתיים.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, height: 1.5, color: AppColors.grayText)),
+        ],
       ),
     );
   }
+
+  void _showNotOpenYet() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('הקהילה עוד לא נפתחה', style: TextStyle(fontFamily: AppFonts.rubik)),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
 
   void _showCommentsSheet(BuildContext context, _Post post, bool isLoggedIn, String userName, String userInitials) {
     final commentController = TextEditingController();
@@ -721,172 +577,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     );
   }
 
-  List<_Post> _generateMockPosts() {
-    return [
-      _Post(
-        id: 'pinned_1',
-        authorName: 'מנהלי הקהילה',
-        authorInitials: 'מ',
-        category: 'כללי',
-        content: 'ברוכים הבאים לקהילת מודיעין! 🏙️\n\nכאן המקום לשתף שאלות, המלצות, דיווחים ועדכונים שכונתיים. שמרו על שיח מכבד — אנחנו שכנים!\n\nכללי הקהילה:\n• ללא פרסום ללא אישור\n• שיח מכבד בלבד\n• דיווחי תקלות — ציינו שכונה ורחוב',
-        timeAgo: 'פוסט מוצמד',
-        likes: 234,
-        commentsCount: 18,
-        shares: 12,
-        isPinned: true,
-        comments: [
-          _Comment(authorName: 'דנה כ.', authorInitials: 'ד', content: 'סוף סוף קבוצה מסודרת! 🎉', timeAgo: 'לפני 3 ימים', likes: 8),
-          _Comment(authorName: 'עמית ר.', authorInitials: 'ע', content: 'מעולה, תודה למנהלים', timeAgo: 'לפני 3 ימים', likes: 5),
-        ],
-      ),
-      _Post(
-        id: 'post_1',
-        authorName: 'רחלי מ.',
-        authorInitials: 'ר',
-        category: 'שאלה',
-        content: 'מישהו מכיר שרברב אמין בשכונת הפרחים? יש לנו נזילה מתחת לכיור כבר שבוע ואף אחד לא זמין 😩\n\nעדיפות למישהו עם המלצות',
-        timeAgo: 'לפני 23 דקות',
-        likes: 3,
-        commentsCount: 12,
-        shares: 0,
-        comments: [
-          _Comment(authorName: 'יוסי ד.', authorInitials: 'י', content: 'מוטי שרברב — 050-1234567. אמין, מגיע מהר, מחירים הוגנים. עשה לנו עבודה מעולה', timeAgo: 'לפני 20 דק׳', likes: 6),
-          _Comment(authorName: 'שרה ל.', authorInitials: 'ש', content: 'אני שנייה ליוסי! מוטי מעולה, הזמנתי אותו שלוש פעמים', timeAgo: 'לפני 18 דק׳', likes: 3),
-          _Comment(authorName: 'אורן ב.', authorInitials: 'א', content: 'יש גם את רונן — 050-9876543. קצת יותר יקר אבל מקצועי מאוד', timeAgo: 'לפני 15 דק׳', likes: 2),
-          _Comment(authorName: 'רחלי מ.', authorInitials: 'ר', content: 'תודה רבה! 🙏 התקשרתי למוטי, הוא מגיע מחר בבוקר', timeAgo: 'לפני 10 דק׳', likes: 4),
-        ],
-      ),
-      _Post(
-        id: 'post_2',
-        authorName: 'דני כ.',
-        authorInitials: 'ד',
-        category: 'המלצה',
-        content: 'חייבים לספר — אכלנו אתמול במסעדת נאיתאי ופשוט וואו! 🍜\n\nהאוכל התאילנדי הכי טוב שאכלתי מחוץ לבנגקוק. המון טעמים, מנות עשירות, שירות אדיב.\n\nממליץ בחום על הפאד תאי והקארי הירוק. הילדים אהבו את הנודלס.',
-        hasImage: true,
-        imageLabel: '🍜 נאיתאי',
-        timeAgo: 'לפני שעה',
-        likes: 28,
-        commentsCount: 7,
-        shares: 4,
-        comments: [
-          _Comment(authorName: 'מיכל ג.', authorInitials: 'מ', content: 'אוהבים שם! הסום טאם שלהם גם מושלם', timeAgo: 'לפני 50 דק׳', likes: 3),
-          _Comment(authorName: 'עידו ש.', authorInitials: 'ע', content: 'כשר?', timeAgo: 'לפני 45 דק׳', likes: 0),
-          _Comment(authorName: 'דני כ.', authorInitials: 'ד', content: 'כן, כשרות מהדרין!', timeAgo: 'לפני 40 דק׳', likes: 2),
-        ],
-      ),
-      _Post(
-        id: 'post_3',
-        authorName: 'אבי ש.',
-        authorInitials: 'א',
-        category: 'דיווח',
-        content: 'בור ענק ברחוב הפלמ"ח, ליד הגן ברחוב הפרחים 22. מסוכן ביותר! כמעט נפלתי מהאופניים.\n\nדיווחתי לעירייה אבל רציתי להזהיר — בבקשה להיזהר באזור, בייחוד בחושך.',
-        hasImage: true,
-        imageLabel: '⚠️ דיווח',
-        timeAgo: 'לפני 2 שעות',
-        likes: 45,
-        commentsCount: 9,
-        shares: 15,
-        comments: [
-          _Comment(authorName: 'נטע ר.', authorInitials: 'נ', content: 'ראיתי את זה! ממש מסוכן, תודה שדיווחת', timeAgo: 'לפני שעתיים', likes: 7),
-          _Comment(authorName: 'גלית א.', authorInitials: 'ג', content: 'גם אני דיווחתי ב-106. ככל שיותר אנשים ידווחו יטפלו יותר מהר', timeAgo: 'לפני שעתיים', likes: 11),
-          _Comment(authorName: 'ציון מ.', authorInitials: 'צ', content: 'למה תמיד לוקח להם נצח לתקן? 🤦', timeAgo: 'לפני שעה', likes: 5),
-        ],
-      ),
-      _Post(
-        id: 'post_4',
-        authorName: 'ליאת ב.',
-        authorInitials: 'ל',
-        category: 'שכנים',
-        content: 'מישהו רוצה להצטרף לקבוצת ריצה בערב? 🏃‍♀️\n\nאנחנו רצים כל יום שלישי וחמישי ב-20:00, יוצאים מהכניסה לפארק ענבה. מסלול 5 קמ. כל הרמות מוזמנות!\n\nיש כרגע 8 משתתפים קבועים ותמיד שמחים לקבל חדשים.',
-        timeAgo: 'לפני 3 שעות',
-        likes: 19,
-        commentsCount: 14,
-        shares: 3,
-        comments: [
-          _Comment(authorName: 'רון כ.', authorInitials: 'ר', content: 'אני בפנים! איפה בדיוק הנקודה?', timeAgo: 'לפני 3 שעות', likes: 1),
-          _Comment(authorName: 'ליאת ב.', authorInitials: 'ל', content: 'כניסה ראשית לפארק ענבה, ליד החניון. יש שלט גדול', timeAgo: 'לפני 3 שעות', likes: 2),
-          _Comment(authorName: 'שי מ.', authorInitials: 'ש', content: 'מתאים גם למתחילים? חזרתי מפציעה', timeAgo: 'לפני שעתיים', likes: 0),
-          _Comment(authorName: 'ליאת ב.', authorInitials: 'ל', content: 'בהחלט! רצים בקצב שנוח לכולם, ויש אפשרות ללכת חלק מהדרך', timeAgo: 'לפני שעתיים', likes: 3),
-        ],
-      ),
-      _Post(
-        id: 'post_5',
-        authorName: 'עומר ג.',
-        authorInitials: 'ע',
-        category: 'כללי',
-        content: 'שמתם לב שפתחו חנות ירקות חדשה במע"ר? ליד הדואר. נכנסתי היום — מגוון ענק של ירקות ופירות אורגניים, המחירים סבירים מאוד!\n\nשווה ביקור.',
-        timeAgo: 'לפני 5 שעות',
-        likes: 32,
-        commentsCount: 5,
-        shares: 8,
-        comments: [
-          _Comment(authorName: 'הדר ל.', authorInitials: 'ה', content: 'ראיתי! נראה מבטיח. יודע מה שעות הפתיחה?', timeAgo: 'לפני 4 שעות', likes: 1),
-          _Comment(authorName: 'עומר ג.', authorInitials: 'ע', content: 'א׳-ה׳ 7:00-20:00, ו׳ עד 14:00', timeAgo: 'לפני 4 שעות', likes: 4),
-        ],
-      ),
-      _Post(
-        id: 'post_6',
-        authorName: 'מירב ש.',
-        authorInitials: 'מ',
-        category: 'כללי',
-        content: 'תודה ענקית לכל מי שהשתתף באירוע הניקיון הקהילתי בשבת! 🧹✨\n\nהיינו 47 משתתפים ואספנו 120 שקיות זבל מפארק ענבה ומהאזורים הסמוכים. גאה להיות חלק מהקהילה הזו!',
-        hasImage: true,
-        imageLabel: '🧹 ניקיון קהילתי',
-        timeAgo: 'לפני 8 שעות',
-        likes: 89,
-        commentsCount: 22,
-        shares: 11,
-        comments: [
-          _Comment(authorName: 'יובל ד.', authorInitials: 'י', content: 'היה מדהים! מחכה לפעם הבאה', timeAgo: 'לפני 7 שעות', likes: 6),
-          _Comment(authorName: 'רינת מ.', authorInitials: 'ר', content: 'אשמח לשמוע על האירוע הבא מראש כדי להירשם', timeAgo: 'לפני 6 שעות', likes: 3),
-          _Comment(authorName: 'מירב ש.', authorInitials: 'מ', content: 'בהחלט! נפרסם כאן שבועיים מראש. האירוע הבא מתוכנן ל-29.08', timeAgo: 'לפני 5 שעות', likes: 9),
-        ],
-      ),
-      _Post(
-        id: 'post_7',
-        authorName: 'חני ק.',
-        authorInitials: 'ח',
-        category: 'שאלה',
-        content: 'מחפשת המלצה לגן ילדים פרטי באזור נופים/אבני חן לילד בן שנתיים. מה חשוב לי:\n\n• צוות חם ואוהב\n• חצר גדולה\n• ארוחות ביתיות\n• מצלמות\n\nתודה מראש! 🙏',
-        timeAgo: 'אתמול',
-        likes: 7,
-        commentsCount: 16,
-        shares: 1,
-        comments: [
-          _Comment(authorName: 'שירן ד.', authorInitials: 'ש', content: 'גן "שמש" ברחוב הזית! הבן שלי היה שם שנתיים, צוות מעולה. יש כל מה שחיפשת', timeAgo: 'אתמול', likes: 4),
-          _Comment(authorName: 'טל א.', authorInitials: 'ט', content: 'גן הדס ברחוב האלון — חצר ענקית ואוכל ביתי מעולה. גם מצלמות אונליין', timeAgo: 'אתמול', likes: 3),
-          _Comment(authorName: 'חני ק.', authorInitials: 'ח', content: 'תודה רבה!! יש לכם מספרי טלפון?', timeAgo: 'אתמול', likes: 0),
-        ],
-      ),
-    ];
-  }
 }
 
-class _SheetAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _SheetAction(this.icon, this.label, this.color, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: color, fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _PostCard extends StatelessWidget {
   final _Post post;

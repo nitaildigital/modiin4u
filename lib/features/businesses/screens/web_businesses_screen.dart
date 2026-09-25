@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/data/wp_content.dart';
+import '../../restaurants/providers/restaurant_providers.dart' show categoriesBySlugProvider;
+import '../models/business.dart';
+import '../providers/business_providers.dart';
 import '../../../shared/widgets/web_chrome.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -18,48 +21,44 @@ const _kHeading = Color(0xFF1C1C1E);
 const _kBodyText = Color(0xFF3D3D3D);
 const _kIconGrey = Color(0xFF6D6D6D);
 const _kPillBorder = Color(0xFFD1D1D1);
-const _kOpenBg = Color(0xFFE6F7EE);
-const _kOpenText = Color(0xFF12855A);
-const _kClosedBg = Color(0xFFFDECEC);
-const _kClosedText = Color(0xFFD64545);
+const _kKosherBg = Color(0xFFE6F7EE);
+const _kKosherText = Color(0xFF12855A);
 const _kDeliveryBg = Color(0xFFF0F7FD);
 
-class WebBusinessesContent extends StatefulWidget {
+/// Which categories each business is filed under, keyed by business id.
+///
+/// The `businesses` table has no category column of its own — the links live
+/// in `entity_categories` — so the card's category line, the category grid and
+/// the professionals row all come from one read of those 210 links rather than
+/// from a query per category.
+final _categoryLinksProvider = FutureProvider<Map<String, List<String>>>((ref) async {
+  final links = await ref.watch(businessRepositoryProvider).fetchCategoryLinks();
+  final byBusiness = <String, List<String>>{};
+  for (final link in links) {
+    byBusiness
+        .putIfAbsent(link['entity_id'] as String, () => [])
+        .add(link['category_id'] as String);
+  }
+  return byBusiness;
+});
+
+class WebBusinessesContent extends ConsumerStatefulWidget {
   const WebBusinessesContent({super.key});
 
   @override
-  State<WebBusinessesContent> createState() => _WebBusinessesContentState();
+  ConsumerState<WebBusinessesContent> createState() => _WebBusinessesContentState();
 }
 
-class _WebBusinessesContentState extends State<WebBusinessesContent> {
+class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent> {
   bool _isHebrew = false;
-  int _selectedCategory = -1; // -1 = all categories
+  String? _selectedCategory; // null = all categories
   int _selectedFilter = -1; // -1 = no pill selected
   String _query = '';
 
   final _searchCtrl = TextEditingController();
-  final _featured = ScrollController();
   final _resultsKey = GlobalKey();
 
-  /// The real directory, exported from the site. Empty until the asset
-  /// loads and empty forever if it fails — both fall through to the demo
-  /// listings below, so the page always renders.
-  List<WpBusiness> _wp = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadWpBusinesses().then((items) {
-      if (mounted) setState(() => _wp = items);
-    });
-    loadWpProfessionals().then((items) {
-      if (mounted) setState(() => _wpPros = items);
-    });
-  }
-
-  List<WpProfessional> _wpPros = const [];
-
-  /// How many listings the results grid shows. 200 at once makes a page so
+  /// How many listings the results grid shows. All 219 at once makes a page so
   /// long that the sections under it are unreachable, so it grows on demand.
   static const _pageSize = 24;
   int _shown = _pageSize;
@@ -67,72 +66,24 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   /// Whether the category grid is expanded past the first eight.
   bool _allCategories = false;
 
-  /// The site lists six providers and records no ratings for them, so the
-  /// cards show the provider's own blurb where a rating would sit.
-  List<_Professional> get _professionals {
-    if (_wpPros.isEmpty) return _professionalsDemo;
-    final palette = _categoryPalette;
-    return [
-      for (var i = 0; i < _wpPros.length; i++)
-        _Professional(
-          name: _wpPros[i].title,
-          profession: _wpPros[i].profession,
-          rating: 0,
-          reviews: 0,
-          avatarBg: palette[i % palette.length].$2,
-          verified: true,
-          imageUrl: _wpPros[i].image,
-          phone: _wpPros[i].phone,
-          description: _wpPros[i].description,
-          isLive: true,
-        ),
-    ];
+  /// The categories a service provider is filed under. A "professional" is not
+  /// a separate kind of record here — there is no such table — it is a
+  /// business in one of these categories.
+  static const _serviceSlugs = {
+    'services',
+    'health',
+    'beauty',
+    'automotive',
+    'education',
+  };
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
-  bool get _live => _wp.isNotEmpty;
-
-  /// The eight busiest categories in the directory. The site's term list is
-  /// long and uneven — it carries one-off campaign tags alongside real
-  /// categories — so the cards are derived from what businesses actually use
-  /// rather than hard-coded.
-  /// How many distinct categories the directory actually uses.
-  int get _liveCategoryCount {
-    final seen = <String>{};
-    for (final b in _wp) {
-      for (final t in b.terms) {
-        if (!t.contains('מלחמת')) seen.add(t);
-      }
-    }
-    return seen.length;
-  }
-
-  List<_Category> get _liveCategories {
-    final counts = <String, int>{};
-    for (final b in _wp) {
-      for (final t in b.terms) {
-        // The site tags businesses that stayed open during each war. Those
-        // are campaign lists, not categories, and they out-count real ones.
-        if (t.contains('מלחמת')) continue;
-        counts[t] = (counts[t] ?? 0) + 1;
-      }
-    }
-    final top = counts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final palette = _categoryPalette;
-    // The site uses 62 categories. Eight fit above the fold; the rest are a
-    // tap away rather than dropped, which is what used to happen.
-    final limit = _allCategories ? top.length : 8;
-    return [
-      for (var i = 0; i < top.length && i < limit; i++)
-        _Category(
-          name: top[i].key,
-          count: top[i].value,
-          icon: _iconForTerm(top[i].key),
-          start: palette[i % palette.length].$1,
-          end: palette[i % palette.length].$2,
-        ),
-    ];
-  }
+  String _t(String en, String he) => _isHebrew ? he : en;
 
   static const _categoryPalette = <(Color, Color)>[
     (Color(0xFF1B3A2D), Color(0xFF2E5A47)),
@@ -145,383 +96,125 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
     (Color(0xFF1B5E20), Color(0xFF2E7D32)),
   ];
 
-  static IconData _iconForTerm(String term) {
-    bool has(List<String> words) => words.any(term.contains);
-    if (has(['מסעד', 'גריל', 'פיצ', 'סושי', 'המבורגר', 'איטלקי', 'אסיאתי'])) {
-      return IconsaxPlusBold.reserve;
-    }
-    if (has(['קפה', 'ארוחת בוקר', 'גלידות', 'קונדיטור']))
-      return IconsaxPlusBold.coffee;
-    if (has(['בר', 'אלכוהול', 'קריוקי'])) return IconsaxPlusBold.cup;
-    if (has(['אסתטיק', 'טיפוח', 'יופי', 'ספא', 'מספר']))
-      return IconsaxPlusBold.brush_1;
-    if (has(['ספורט', 'כושר'])) return IconsaxPlusBold.weight;
-    if (has(['דלק', 'רכב', 'פנצ'])) return IconsaxPlusBold.car;
-    if (has(['לימוד', 'חוג', 'גן'])) return IconsaxPlusBold.book_1;
-    if (has(['בריאות', 'רופא', 'מרפא'])) return IconsaxPlusBold.health;
-    return IconsaxPlusBold.shop;
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    _featured.dispose();
-    super.dispose();
-  }
-
-  String _t(String en, String he) => _isHebrew ? he : en;
-
-  // ── Nav links ──
-  // ── Categories — 8 gradient cards, 4 per row ──
-  List<_Category> get _categoriesDemo => [
-    _Category(
-      name: _t('Restaurants', 'מסעדות'),
-      count: 126,
-      icon: IconsaxPlusBold.reserve,
-      start: const Color(0xFF1B3A2D),
-      end: const Color(0xFF2E5A47),
-    ),
-    _Category(
-      name: _t('Coffee Shops', 'בתי קפה'),
-      count: 38,
-      icon: IconsaxPlusBold.coffee,
-      start: const Color(0xFF3E2723),
-      end: const Color(0xFF5D4037),
-    ),
-    _Category(
-      name: _t('Bars & Nightlife', 'ברים וחיי לילה'),
-      count: 24,
-      icon: IconsaxPlusBold.cup,
-      start: const Color(0xFF2D1B4E),
-      end: const Color(0xFF4A2D6E),
-    ),
-    _Category(
-      name: _t('Beauty & Grooming', 'יופי וטיפוח'),
-      count: 42,
-      icon: IconsaxPlusBold.brush_1,
-      start: const Color(0xFF4E1B3A),
-      end: const Color(0xFF6E2D54),
-    ),
-    _Category(
-      name: _t('Sports & Fitness', 'ספורט וכושר'),
-      count: 31,
-      icon: IconsaxPlusBold.weight,
-      start: const Color(0xFF1A237E),
-      end: const Color(0xFF283593),
-    ),
-    _Category(
-      name: _t('Hairdressers', 'מספרות'),
-      count: 27,
-      icon: IconsaxPlusBold.scissor,
-      start: const Color(0xFF4E342E),
-      end: const Color(0xFF6D4C41),
-    ),
-    _Category(
-      name: _t('Home Services', 'שירותים לבית'),
-      count: 51,
-      icon: IconsaxPlusBold.setting_2,
-      start: const Color(0xFF263238),
-      end: const Color(0xFF37474F),
-    ),
-    _Category(
-      name: _t('Education', 'חינוך והעשרה'),
-      count: 19,
-      icon: IconsaxPlusBold.book_1,
-      start: const Color(0xFF1B5E20),
-      end: const Color(0xFF2E7D32),
-    ),
-  ];
-
-  // ── Filter pills — index matches _Business.tags ──
-  List<String> get _filtersDemo => [
-    _t('Open Now', 'פתוח עכשיו'),
-    _t('Top Rated', 'המדורגים ביותר'),
-    _t('New on Modiin4u', 'חדש במודיעין4u'),
-    _t('Home Service', 'שירות עד הבית'),
-  ];
-
-  // ── Directory ──
-  List<_Business> get _businessesDemo => [
-    _Business(
-      name: _t('Urban Plate Kitchen & Bar', 'אורבן פלייט קיטשן & בר'),
-      categoryIndex: 0,
-      category: _t('Restaurants', 'מסעדות'),
-      area: _t('Hatikva Quarter', 'רובע התקווה'),
-      rating: 4.8,
-      reviews: 214,
-      isOpen: true,
-      tags: {0, 1},
-      imageBg: const Color(0xFFDDD0C2),
-      logoBg: const Color(0xFFE0CDBE),
-    ),
-    _Business(
-      name: _t('Cafe Anava', 'קפה ענבה'),
-      categoryIndex: 1,
-      category: _t('Coffee Shops', 'בתי קפה'),
-      area: _t('Anava Park', 'פארק ענבה'),
-      rating: 4.6,
-      reviews: 158,
-      isOpen: true,
-      tags: {0, 1},
-      imageBg: const Color(0xFFE2D4C4),
-      logoBg: const Color(0xFFD8C7B8),
-    ),
-    _Business(
-      name: _t('The Copper Room', 'החדר הנחושת'),
-      categoryIndex: 2,
-      category: _t('Bars & Nightlife', 'ברים וחיי לילה'),
-      area: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-      rating: 4.4,
-      reviews: 92,
-      isOpen: false,
-      tags: {2},
-      imageBg: const Color(0xFFD2C6DE),
-      logoBg: const Color(0xFFD9C8DE),
-    ),
-    _Business(
-      name: _t('Soleil Spa & Beauty', 'ספא סוליי'),
-      categoryIndex: 3,
-      category: _t('Beauty & Grooming', 'יופי וטיפוח'),
-      area: _t('Hatikva Quarter', 'רובע התקווה'),
-      rating: 4.9,
-      reviews: 301,
-      isOpen: true,
-      tags: {0, 1, 3},
-      imageBg: const Color(0xFFD6C6DE),
-      logoBg: const Color(0xFFDCE2C6),
-    ),
-    _Business(
-      name: _t('Modiin Fit Studio', 'סטודיו מודיעין פיט'),
-      categoryIndex: 4,
-      category: _t('Sports & Fitness', 'ספורט וכושר'),
-      area: _t('Modiin Mall', 'קניון מודיעין'),
-      rating: 4.7,
-      reviews: 176,
-      isOpen: true,
-      tags: {0, 1},
-      imageBg: const Color(0xFFC6D6E4),
-      logoBg: const Color(0xFFCBD4DE),
-    ),
-    _Business(
-      name: _t('Studio Bella', 'סטודיו בלה'),
-      categoryIndex: 5,
-      category: _t('Hairdressers', 'מספרות'),
-      area: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-      rating: 4.5,
-      reviews: 128,
-      isOpen: true,
-      tags: {0, 3},
-      imageBg: const Color(0xFFDCE2C6),
-      logoBg: const Color(0xFFCADEC9),
-    ),
-    _Business(
-      name: _t('FixIt Modiin', 'פיקסאיט מודיעין'),
-      categoryIndex: 6,
-      category: _t('Home Services', 'שירותים לבית'),
-      area: _t('Anava Park', 'פארק ענבה'),
-      rating: 4.3,
-      reviews: 64,
-      isOpen: false,
-      tags: {2, 3},
-      imageBg: const Color(0xFFC8DDD8),
-      logoBg: const Color(0xFFC6DAD8),
-    ),
-    _Business(
-      name: _t('Anava Learning Center', 'מרכז הלמידה ענבה'),
-      categoryIndex: 7,
-      category: _t('Education', 'חינוך והעשרה'),
-      area: _t('Anava Park', 'פארק ענבה'),
-      rating: 4.8,
-      reviews: 143,
-      isOpen: true,
-      tags: {0, 1},
-      imageBg: const Color(0xFFD6E2C6),
-      logoBg: const Color(0xFFDCE2C6),
-    ),
-    _Business(
-      name: _t('Pizza Moretti', 'פיצה מורטי'),
-      categoryIndex: 0,
-      category: _t('Restaurants', 'מסעדות'),
-      area: _t('Modiin Mall', 'קניון מודיעין'),
-      rating: 4.2,
-      reviews: 388,
-      isOpen: true,
-      tags: {0, 3},
-      imageBg: const Color(0xFFE0CDBE),
-      logoBg: const Color(0xFFDDD0C2),
-    ),
-    _Business(
-      name: _t('Roasters Corner', 'פינת הקלייה'),
-      categoryIndex: 1,
-      category: _t('Coffee Shops', 'בתי קפה'),
-      area: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-      rating: 4.7,
-      reviews: 97,
-      isOpen: true,
-      tags: {0, 1, 2},
-      imageBg: const Color(0xFFCBD4DE),
-      logoBg: const Color(0xFFC6D6E4),
-    ),
-    _Business(
-      name: _t('Glow Nail Bar', 'גלואו נייל בר'),
-      categoryIndex: 3,
-      category: _t('Beauty & Grooming', 'יופי וטיפוח'),
-      area: _t('Modiin Mall', 'קניון מודיעין'),
-      rating: 4.6,
-      reviews: 205,
-      isOpen: false,
-      tags: {1, 3},
-      imageBg: const Color(0xFFD9C8DE),
-      logoBg: const Color(0xFFD6C6DE),
-    ),
-    _Business(
-      name: _t('Modiin Home Electric', 'מודיעין חשמל לבית'),
-      categoryIndex: 6,
-      category: _t('Home Services', 'שירותים לבית'),
-      area: _t('Hatikva Quarter', 'רובע התקווה'),
-      rating: 4.4,
-      reviews: 51,
-      isOpen: true,
-      tags: {0, 2, 3},
-      imageBg: const Color(0xFFCADEC9),
-      logoBg: const Color(0xFFC8DDD8),
-    ),
-  ];
+  static IconData _iconForSlug(String slug) => switch (slug) {
+    'restaurants' || 'meat' || 'fish' || 'mediterranean' || 'asian' => IconsaxPlusBold.reserve,
+    'pizza' => IconsaxPlusBold.cake,
+    'cafe-bakery' => IconsaxPlusBold.coffee,
+    'beauty' => IconsaxPlusBold.brush_1,
+    'sports-fitness' => IconsaxPlusBold.weight,
+    'automotive' => IconsaxPlusBold.car,
+    'education' => IconsaxPlusBold.book_1,
+    'health' => IconsaxPlusBold.health,
+    'shopping' => IconsaxPlusBold.bag_2,
+    'entertainment' => IconsaxPlusBold.ticket,
+    'services' => IconsaxPlusBold.setting_2,
+    _ => IconsaxPlusBold.shop,
+  };
 
   // ═══════════════════════════════════════════════
-  // LIVE DIRECTORY — real listings first, demo as the fallback
+  // LIVE DIRECTORY
+  //
+  // Eight categories with counts like "126 restaurants", twelve businesses
+  // with names, neighbourhoods, open/closed states and ratings up to 4.9, and
+  // six named professionals with review counts were all written into this
+  // screen. None of it came from anywhere, and every card pushed
+  // `/business/demo_<index>`, which matches no row and so opened nothing.
   // ═══════════════════════════════════════════════
 
-  List<_Category> get _categories => _live ? _liveCategories : _categoriesDemo;
+  Map<String, BusinessCategory> get _categoriesById {
+    final bySlug = ref.watch(categoriesBySlugProvider).valueOrNull ?? const {};
+    return {for (final c in bySlug.values) c.id: c};
+  }
 
-  /// Real listings carry kosher/delivery/rating flags, so the pills filter on
-  /// those rather than on the demo data's invented "open now" state.
-  List<String> get _filters => _live
-      ? [
-          _t('Kosher', 'כשר'),
-          _t('Delivery', 'משלוחים'),
-          _t('Rated', 'מדורגים'),
-          _t('Open on Shabbat', 'פתוח בשבת'),
-        ]
-      : _filtersDemo;
+  Map<String, List<String>> get _links =>
+      ref.watch(_categoryLinksProvider).valueOrNull ?? const {};
 
-  List<_Business> get _businesses {
-    if (!_live) return _businessesDemo;
-    final cats = _liveCategories;
-    final palette = _categoryPalette;
+  /// The directory's categories, busiest first, with the number of businesses
+  /// actually linked to each.
+  List<_Category> get _categories {
+    final counts = ref.watch(businessCountsByCategoryProvider).valueOrNull ?? const {};
+    final all = _categoriesById.values.toList()
+      ..sort((a, b) => (counts[b.id] ?? 0).compareTo(counts[a.id] ?? 0));
     return [
-      for (final b in _wp)
-        _Business(
-          name: b.title,
-          category: b.primaryTerm,
-          categoryIndex: cats.indexWhere((c) => b.terms.contains(c.name)),
-          area: b.shortAddress,
-          rating: b.rating ?? 0,
-          reviews: b.views,
-          isOpen: true,
-          tags: const {},
-          imageBg: palette[b.id % palette.length].$1,
-          logoBg: palette[(b.id + 3) % palette.length].$2,
-          imageUrl: b.image,
-          logoUrl: b.logo,
-          phone: b.phone,
-          hours: b.hours,
-          kosher: b.kosher,
-          delivery: b.delivery,
-          views: b.views,
-          terms: b.terms,
-          isLive: true,
+      for (final (i, c) in all.indexed)
+        _Category(
+          id: c.id,
+          name: c.name,
+          count: counts[c.id] ?? 0,
+          icon: _iconForSlug(c.slug),
+          start: _categoryPalette[i % _categoryPalette.length].$1,
+          end: _categoryPalette[i % _categoryPalette.length].$2,
         ),
     ];
   }
 
-  bool _matchesFilter(_Business b, int filter) {
-    if (!_live) return b.tags.contains(filter);
-    switch (filter) {
-      case 0:
-        return b.kosher;
-      case 1:
-        return b.delivery;
-      case 2:
-        return b.hasRating;
-      case 3:
-        return b.terms.any((t) => t.contains('פתוח בשבת'));
-      default:
-        return true;
-    }
+  /// The eight cards above the fold, or all of them once expanded.
+  List<_Category> get _visibleCategories {
+    final all = _categories;
+    return _allCategories ? all : all.take(8).toList();
+  }
+
+  /// Filter pills that a column can answer. "Open Now" needs opening hours and
+  /// `business_hours` is empty; "Top Rated" and "Rated" need reviews and there
+  /// are none; "Open on Shabbat" and "Home Service" name flags that are false
+  /// on all 219 rows. Each of those could only ever empty the grid.
+  List<String> get _filters => [
+    _t('Kosher', 'כשר'),
+    _t('Delivery', 'משלוחים'),
+  ];
+
+  bool _matchesFilter(_Business b, int filter) => switch (filter) {
+    0 => b.kosher,
+    1 => b.delivery,
+    _ => true,
+  };
+
+  List<_Business> get _businesses {
+    final rows = ref.watch(businessesProvider).valueOrNull ?? const <Business>[];
+    final byId = _categoriesById;
+    final links = _links;
+    return [
+      for (final (i, b) in rows.indexed)
+        _Business.of(
+          b,
+          categories: [
+            for (final id in links[b.id] ?? const <String>[])
+              if (byId[id] != null) byId[id]!,
+          ],
+          imageBg: _categoryPalette[i % _categoryPalette.length].$1,
+          logoBg: _categoryPalette[(i + 3) % _categoryPalette.length].$2,
+          unlistedCategory: _t('Business', 'עסק'),
+        ),
+    ];
   }
 
   List<_Business> get _visibleBusinesses {
     final q = _query.toLowerCase();
     return _businesses.where((b) {
-      if (_selectedCategory >= 0) {
-        final name = _categories[_selectedCategory].name;
-        final inCategory = _live
-            ? b.terms.contains(name)
-            : b.categoryIndex == _selectedCategory;
-        if (!inCategory) return false;
-      }
-      if (_selectedFilter >= 0 && !_matchesFilter(b, _selectedFilter))
+      if (_selectedCategory != null && !b.categoryIds.contains(_selectedCategory)) {
         return false;
+      }
+      if (_selectedFilter >= 0 && !_matchesFilter(b, _selectedFilter)) return false;
       if (q.isEmpty) return true;
       return b.name.toLowerCase().contains(q) ||
           b.category.toLowerCase().contains(q) ||
-          b.area.toLowerCase().contains(q) ||
-          b.terms.any((t) => t.toLowerCase().contains(q));
+          b.area.toLowerCase().contains(q);
     }).toList();
   }
 
-  // ── Featured professionals ──
-  List<_Professional> get _professionalsDemo => [
-    _Professional(
-      name: _t('Adi Ben-Ami', 'עדי בן-עמי'),
-      profession: _t('Interior Designer', 'מעצבת פנים'),
-      rating: 4.9,
-      reviews: 87,
-      avatarBg: const Color(0xFFE0CDBE),
-      verified: true,
-    ),
-    _Professional(
-      name: _t('Yaron Cohen', 'ירון כהן'),
-      profession: _t('Electrician', 'חשמלאי'),
-      rating: 4.8,
-      reviews: 132,
-      avatarBg: const Color(0xFFC6D6E4),
-      verified: true,
-    ),
-    _Professional(
-      name: _t('Maya Levi', 'מאיה לוי'),
-      profession: _t('Personal Trainer', 'מאמנת אישית'),
-      rating: 4.9,
-      reviews: 64,
-      avatarBg: const Color(0xFFD9C8DE),
-      verified: false,
-    ),
-    _Professional(
-      name: _t('Ronen Shapira', 'רונן שפירא'),
-      profession: _t('Plumber', 'אינסטלטור'),
-      rating: 4.6,
-      reviews: 158,
-      avatarBg: const Color(0xFFDCE2C6),
-      verified: true,
-    ),
-    _Professional(
-      name: _t('Noa Barak', 'נועה ברק'),
-      profession: _t('Private Tutor', 'מורה פרטית'),
-      rating: 5.0,
-      reviews: 43,
-      avatarBg: const Color(0xFFC8DDD8),
-      verified: false,
-    ),
-    _Professional(
-      name: _t('Eitan Mor', 'איתן מור'),
-      profession: _t('Handyman', 'הנדימן'),
-      rating: 4.5,
-      reviews: 211,
-      avatarBg: const Color(0xFFD8C7B8),
-      verified: true,
-    ),
-  ];
+  /// The service providers under the grid: businesses in the service
+  /// categories, newest first.
+  List<_Business> get _professionals {
+    final serviceIds = {
+      for (final c in _categoriesById.values)
+        if (_serviceSlugs.contains(c.slug)) c.id,
+    };
+    if (serviceIds.isEmpty) return const [];
+    return _businesses
+        .where((b) => b.categoryIds.any(serviceIds.contains))
+        .take(6)
+        .toList();
+  }
 
   void _scrollToResults() {
     final ctx = _resultsKey.currentContext;
@@ -553,7 +246,6 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   children: [
                     _buildHeroSection(),
                     _buildCategoriesSection(),
-                    _buildFeaturedSection(),
                     _buildResultsSection(),
                     _buildProfessionalsSection(),
                     _buildListBusinessCta(),
@@ -568,9 +260,6 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // STICKY NAVBAR — 1920 × 80
-  // ─────────────────────────────────────────────
   // ─────────────────────────────────────────────
   // HERO — title, subtitle, search bar
   // ─────────────────────────────────────────────
@@ -724,9 +413,15 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   }
 
   // ─────────────────────────────────────────────
-  // BROWSE BY CATEGORY — 8 gradient cards, 4 per row
+  // BROWSE BY CATEGORY — gradient cards, 4 per row
   // ─────────────────────────────────────────────
   Widget _buildCategoriesSection() {
+    final all = _categories;
+    // Nothing to browse until the categories arrive; a grid of empty tiles
+    // would only look like a page that had lost its content.
+    if (all.isEmpty) return const SizedBox.shrink();
+    final visible = _visibleCategories;
+
     return Padding(
       padding: const EdgeInsets.only(top: 64),
       child: _Section(
@@ -747,7 +442,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                     ),
                   ),
                 ),
-                if (_live && _liveCategoryCount > 8) ...[
+                if (all.length > 8) ...[
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
@@ -768,8 +463,8 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                             _allCategories
                                 ? _t('Show fewer', 'הצג פחות')
                                 : _t(
-                                    'All $_liveCategoryCount categories',
-                                    'כל $_liveCategoryCount הקטגוריות',
+                                    'All ${all.length} categories',
+                                    'כל ${all.length} הקטגוריות',
                                   ),
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
@@ -784,11 +479,11 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                   ),
                   const SizedBox(width: 20),
                 ],
-                if (_selectedCategory >= 0)
+                if (_selectedCategory != null)
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
-                      onTap: () => setState(() => _selectedCategory = -1),
+                      onTap: () => setState(() => _selectedCategory = null),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -823,16 +518,18 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 return Wrap(
                   spacing: gap,
                   runSpacing: gap,
-                  children: List.generate(_categories.length, (i) {
+                  children: List.generate(visible.length, (i) {
+                    final category = visible[i];
                     return SizedBox(
                       width: cardWidth,
                       child: _CategoryCard(
-                        category: _categories[i],
+                        category: category,
                         businessesLabel: _t('businesses', 'עסקים'),
-                        isSelected: _selectedCategory == i,
+                        isSelected: _selectedCategory == category.id,
                         onTap: () {
                           setState(() {
-                            _selectedCategory = _selectedCategory == i ? -1 : i;
+                            _selectedCategory =
+                                _selectedCategory == category.id ? null : category.id;
                             _shown = _pageSize;
                           });
                           _scrollToResults();
@@ -850,108 +547,14 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   }
 
   // ─────────────────────────────────────────────
-  // FEATURED BUSINESSES — 400-wide card carousel
-  // ─────────────────────────────────────────────
-  Widget _buildFeaturedSection() {
-    final featured = _businesses.where((b) => b.rating >= 4.6).toList();
-    return Padding(
-      padding: const EdgeInsets.only(top: 80),
-      child: _Section(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _t('Featured in Modiin', 'מומלצים במודיעין'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.nunito,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.midBlue,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _t(
-                          'Highest rated businesses by Modiin residents',
-                          'העסקים המדורגים ביותר על ידי תושבי מודיעין',
-                        ),
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          color: _kGreyText,
-                          height: 1.21,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 24),
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _carouselArrow(
-                        controller: _featured,
-                        step: 420,
-                        isNext: false,
-                      ),
-                      const SizedBox(width: 12),
-                      _carouselArrow(
-                        controller: _featured,
-                        step: 420,
-                        isNext: true,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 23),
-            SizedBox(
-              height: 372,
-              child: ListView.separated(
-                controller: _featured,
-                scrollDirection: Axis.horizontal,
-                itemCount: featured.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 20),
-                itemBuilder: (context, i) => SizedBox(
-                  width: 400,
-                  child: _BusinessCard(
-                    business: featured[i],
-                    openLabel: _t('Open Now', 'פתוח עכשיו'),
-                    closedLabel: _t('Closed', 'סגור'),
-                    reviewsLabel: _t('reviews', 'ביקורות'),
-                    viewsLabel: _t('views', 'צפיות'),
-                    kosherLabel: _t('Kosher', 'כשר'),
-                    deliveryLabel: _t('Delivery', 'משלוחים'),
-                    viewLabel: _t('View Business', 'לעמוד העסק'),
-                    onTap: () => context.push('/business/demo_$i'),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
   // RESULTS — filter pills, live count, 4-up grid
   // ─────────────────────────────────────────────
   Widget _buildResultsSection() {
+    final request = ref.watch(businessesProvider);
     final results = _visibleBusinesses;
-    final categoryName = _selectedCategory >= 0
-        ? _categories[_selectedCategory].name
-        : null;
+    final categoryName = _selectedCategory == null
+        ? null
+        : _categoriesById[_selectedCategory]?.name;
 
     return Padding(
       key: _resultsKey,
@@ -972,13 +575,22 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
               ),
             ),
             const SizedBox(height: 8),
+            // The count is only the truth once the rows are in; while the
+            // request is in flight it would read "0 businesses found".
             Text(
-              results.length == 1
-                  ? _t('1 business found', 'נמצא עסק אחד')
-                  : _t(
-                      '${results.length} businesses found',
-                      'נמצאו ${results.length} עסקים',
-                    ),
+              switch (request) {
+                AsyncLoading() => _t('Loading the directory…', 'טוען את המדריך…'),
+                AsyncError() => _t(
+                    'The directory could not be loaded.',
+                    'לא ניתן לטעון את המדריך.',
+                  ),
+                _ => results.length == 1
+                    ? _t('1 business found', 'נמצא עסק אחד')
+                    : _t(
+                        '${results.length} businesses found',
+                        'נמצאו ${results.length} עסקים',
+                      ),
+              },
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 14,
@@ -1002,7 +614,12 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
               }),
             ),
             const SizedBox(height: 32),
-            if (results.isEmpty)
+            if (request.isLoading)
+              const SizedBox(
+                height: 320,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (results.isEmpty)
               _buildEmptyResults()
             else ...[
               LayoutBuilder(
@@ -1021,14 +638,14 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                         height: 372,
                         child: _BusinessCard(
                           business: visible[i],
-                          openLabel: _t('Open Now', 'פתוח עכשיו'),
-                          closedLabel: _t('Closed', 'סגור'),
                           reviewsLabel: _t('reviews', 'ביקורות'),
-                          viewsLabel: _t('views', 'צפיות'),
+                          notRatedLabel: _t('Not rated yet', 'אין דירוג עדיין'),
                           kosherLabel: _t('Kosher', 'כשר'),
                           deliveryLabel: _t('Delivery', 'משלוחים'),
                           viewLabel: _t('View Business', 'לעמוד העסק'),
-                          onTap: () => context.push('/business/demo_$i'),
+                          // The card pushed `/business/demo_<index>` before,
+                          // which matches no row; this is the business's own id.
+                          onTap: () => context.push('/business/${visible[i].id}'),
                         ),
                       );
                     }),
@@ -1129,7 +746,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 _searchCtrl.clear();
                 setState(() {
                   _query = '';
-                  _selectedCategory = -1;
+                  _selectedCategory = null;
                   _selectedFilter = -1;
                 });
               },
@@ -1160,9 +777,16 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
   }
 
   // ─────────────────────────────────────────────
-  // TOP PROFESSIONALS — 6 cards, 6 per row
+  // SERVICE PROVIDERS — 6 cards, 6 per row
   // ─────────────────────────────────────────────
   Widget _buildProfessionalsSection() {
+    final professionals = _professionals;
+    // Six named providers with ratings and review counts used to stand here,
+    // and each opened a detail page describing the same invented plumber. A
+    // provider is a business in one of the service categories, so the row is
+    // drawn from those rows or not at all.
+    if (professionals.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.only(top: 80),
       child: _Section(
@@ -1170,7 +794,7 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _t('Top Professionals', 'בעלי המקצוע המובילים'),
+              _t('Professionals & Services', 'בעלי מקצוע ושירותים'),
               style: TextStyle(
                 fontFamily: AppFonts.nunito,
                 fontSize: 28,
@@ -1181,8 +805,8 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
             const SizedBox(height: 8),
             Text(
               _t(
-                'Verified service providers, rated by your neighbours',
-                'נותני שירות מאומתים, מדורגים על ידי השכנים שלכם',
+                'Service providers listed in the Modiin directory',
+                'נותני שירות הרשומים במדריך מודיעין',
               ),
               style: TextStyle(
                 fontFamily: AppFonts.inter,
@@ -1201,15 +825,14 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                 return Wrap(
                   spacing: gap,
                   runSpacing: gap,
-                  children: List.generate(_professionals.length, (i) {
+                  children: List.generate(professionals.length, (i) {
                     return SizedBox(
                       width: cardWidth,
                       child: _ProfessionalCard(
-                        professional: _professionals[i],
-                        reviewsLabel: _t('reviews', 'ביקורות'),
-                        verifiedLabel: _t('Verified', 'מאומת'),
+                        business: professionals[i],
                         contactLabel: _t('Contact', 'צרו קשר'),
-                        onTap: () => context.push('/professional/demo_$i'),
+                        onTap: () =>
+                            context.push('/business/${professionals[i].id}'),
                       ),
                     );
                   }),
@@ -1254,8 +877,8 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
                     const SizedBox(height: 12),
                     Text(
                       _t(
-                        'List it on Modiin4u and get discovered by thousands of local residents every month.',
-                        'הוסיפו אותו למודיעין4u ותתגלו על ידי אלפי תושבים מקומיים מדי חודש.',
+                        'Write to us and we will add it to the Modiin4u directory.',
+                        'כתבו לנו ונוסיף אותו למדריך מודיעין4u.',
                       ),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
@@ -1271,7 +894,21 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () {},
+                  // There is no self-service listing form, and the button had
+                  // an empty handler. It opens the office mailbox the rest of
+                  // the site's chrome uses.
+                  onTap: () => launchUrl(
+                    Uri(
+                      scheme: 'mailto',
+                      path: kContactEmail,
+                      queryParameters: {
+                        'subject': _t(
+                          'Adding my business to Modiin4u',
+                          'הוספת העסק שלי למודיעין4u',
+                        ),
+                      },
+                    ),
+                  ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 40,
@@ -1299,62 +936,6 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
       ),
     );
   }
-
-  Widget _carouselArrow({
-    required ScrollController controller,
-    required double step,
-    required bool isNext,
-    bool shadow = false,
-  }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {
-          if (!controller.hasClients) return;
-          final delta = step * (isNext ? 1 : -1);
-          controller.animateTo(
-            (controller.offset + delta).clamp(
-              0.0,
-              controller.position.maxScrollExtent,
-            ),
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOut,
-          );
-        },
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(
-              color: shadow ? const Color(0xFFF6F6F6) : _kBorder,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: shadow
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Icon(
-            isNext
-                ? IconsaxPlusLinear.arrow_right_3
-                : IconsaxPlusLinear.arrow_left_2,
-            size: 20,
-            color: AppColors.midBlue,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // FOOTER — 1920 × 632
-  // ─────────────────────────────────────────────
 }
 
 // ═══════════════════════════════════════════════
@@ -1362,11 +943,14 @@ class _WebBusinessesContentState extends State<WebBusinessesContent> {
 // ═══════════════════════════════════════════════
 
 class _Category {
+  /// The `categories` row id, which is also what the grid filters on.
+  final String id;
   final String name;
   final int count;
   final IconData icon;
   final Color start, end;
   const _Category({
+    required this.id,
     required this.name,
     required this.count,
     required this.icon,
@@ -1376,75 +960,75 @@ class _Category {
 }
 
 class _Business {
-  final String name, category, area;
-  final int categoryIndex, reviews;
+  /// The row's id, so a card opens the business it names.
+  final String id;
+  final String name, category, area, description;
   final double rating;
-  final bool isOpen;
-  final Set<int> tags;
+  final int reviewCount;
+  final bool kosher, delivery;
+  final String imageUrl, logoUrl, phone;
   final Color imageBg, logoBg;
 
-  // ── Populated only for real listings from the WordPress export ──
-  final String imageUrl, logoUrl, phone, hours;
-  final bool kosher, delivery;
-
-  /// Real listings have a view count but often no rating, so [rating] is 0
-  /// for them and this carries the popularity signal the site does keep.
-  final int views;
-  final List<String> terms;
-
-  /// Set for listings built from the export. Inferring this from whether a
-  /// field is filled misreads the real listings that have no categories and
-  /// no phone — they exist, and they were showing demo badges.
-  final bool isLive;
+  /// Every category this business is linked to, for the grid's filter.
+  final Set<String> categoryIds;
 
   const _Business({
+    required this.id,
     required this.name,
     required this.category,
-    required this.categoryIndex,
     required this.area,
+    required this.description,
     required this.rating,
-    required this.reviews,
-    required this.isOpen,
-    required this.tags,
+    required this.reviewCount,
+    required this.kosher,
+    required this.delivery,
+    required this.imageUrl,
+    required this.logoUrl,
+    required this.phone,
     required this.imageBg,
     required this.logoBg,
-    this.imageUrl = '',
-    this.logoUrl = '',
-    this.phone = '',
-    this.hours = '',
-    this.kosher = false,
-    this.delivery = false,
-    this.views = 0,
-    this.terms = const [],
-    this.isLive = false,
+    required this.categoryIds,
   });
+
+  factory _Business.of(
+    Business b, {
+    required List<BusinessCategory> categories,
+    required Color imageBg,
+    required Color logoBg,
+    required String unlistedCategory,
+  }) {
+    return _Business(
+      id: b.id,
+      name: b.name,
+      // 63 of the rows are in no category at all; those say "Business" rather
+      // than borrowing the name of one they are not in. A pizzeria is linked
+      // both to "restaurants" and to "pizza", and the child is the truer label.
+      category: categories.isEmpty
+          ? unlistedCategory
+          : categories
+                .firstWhere(
+                  (c) => c.parentId != null,
+                  orElse: () => categories.first,
+                )
+                .name,
+      // The neighbourhood where the row is filed under one — only 19 are — and
+      // the street address otherwise.
+      area: b.neighborhood.isNotEmpty ? b.neighborhood : b.address,
+      description: b.description?.trim() ?? '',
+      rating: b.rating,
+      reviewCount: b.reviewCount,
+      kosher: b.kosherStatus != null,
+      delivery: b.hasDelivery,
+      imageUrl: b.imageUrl ?? '',
+      logoUrl: b.logoUrl ?? '',
+      phone: b.phone ?? '',
+      imageBg: imageBg,
+      logoBg: logoBg,
+      categoryIds: {for (final c in categories) c.id},
+    );
+  }
 
   bool get hasRating => rating > 0;
-}
-
-class _Professional {
-  final String name, profession;
-  final double rating;
-  final int reviews;
-  final Color avatarBg;
-  final bool verified;
-
-  // ── Real providers from the WordPress export ──
-  final String imageUrl, phone, description;
-  final bool isLive;
-
-  const _Professional({
-    required this.name,
-    required this.profession,
-    required this.rating,
-    required this.reviews,
-    required this.avatarBg,
-    required this.verified,
-    this.imageUrl = '',
-    this.phone = '',
-    this.description = '',
-    this.isLive = false,
-  });
 }
 
 // ═══════════════════════════════════════════════
@@ -1471,11 +1055,8 @@ class _Section extends StatelessWidget {
   }
 }
 
-/// Real photo when the listing has one, gradient stand-in otherwise.
-///
-/// `webHtmlElementStrategy` matters: the WordPress uploads are served with
-/// no CORS headers, so CanvasKit cannot decode them and has to hand the URL
-/// to a plain <img> element.
+/// The row's photo, falling back to a gradient stand-in where it has none —
+/// 90 of the 219 businesses have no cover image.
 Widget _remoteImage(
   String url,
   Color base, {
@@ -1499,6 +1080,9 @@ Widget _remoteImage(
       width: width,
       height: height,
       fit: BoxFit.cover,
+      // Rendered by the browser's own <img> element rather than decoded into
+      // the CanvasKit surface, which is how these covers have always loaded
+      // here.
       webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
       errorBuilder: (_, _, _) => fallback,
       loadingBuilder: (context, child, progress) =>
@@ -1746,18 +1330,16 @@ class _FilterPillState extends State<_FilterPill> {
 // ─────────────────────────────────────────────
 class _BusinessCard extends StatefulWidget {
   final _Business business;
-  final String openLabel, closedLabel, reviewsLabel, viewLabel;
-  final String kosherLabel, deliveryLabel, viewsLabel;
+  final String reviewsLabel, notRatedLabel, viewLabel;
+  final String kosherLabel, deliveryLabel;
   final VoidCallback onTap;
   const _BusinessCard({
     required this.business,
-    required this.openLabel,
-    required this.closedLabel,
     required this.reviewsLabel,
+    required this.notRatedLabel,
     required this.viewLabel,
     required this.kosherLabel,
     required this.deliveryLabel,
-    required this.viewsLabel,
     required this.onTap,
   });
 
@@ -1768,34 +1350,21 @@ class _BusinessCard extends StatefulWidget {
 class _BusinessCardState extends State<_BusinessCard> {
   bool _hovered = false;
 
-  Widget _chip(String label, Color bg, Color fg, {bool dot = false}) {
+  Widget _chip(String label, Color bg, Color fg) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (dot) ...[
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: fg),
-            ),
-            const SizedBox(width: 6),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: fg,
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: fg,
+        ),
       ),
     );
   }
@@ -1819,7 +1388,7 @@ class _BusinessCardState extends State<_BusinessCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Photo + status badge + rating pill
+              // Photo + badges + rating pill
               SizedBox(
                 height: 168,
                 child: Stack(
@@ -1837,31 +1406,22 @@ class _BusinessCardState extends State<_BusinessCard> {
                       ),
                       glyph: 30,
                     ),
+                    // An "Open Now" badge stood here on every card. Opening
+                    // hours are kept in `business_hours`, which holds no rows,
+                    // so nothing on this page can know whether a place is open.
                     PositionedDirectional(
                       start: 12,
                       top: 12,
                       child: Row(
                         children: [
-                          // Real listings say what the site actually records —
-                          // kosher and delivery — instead of a live open/closed
-                          // state nothing in the export can back up.
-                          if (b.isLive) ...[
-                            if (b.kosher)
-                              _chip(widget.kosherLabel, _kOpenBg, _kOpenText),
-                            if (b.kosher && b.delivery)
-                              const SizedBox(width: 6),
-                            if (b.delivery)
-                              _chip(
-                                widget.deliveryLabel,
-                                _kDeliveryBg,
-                                AppColors.midBlue,
-                              ),
-                          ] else
+                          if (b.kosher)
+                            _chip(widget.kosherLabel, _kKosherBg, _kKosherText),
+                          if (b.kosher && b.delivery) const SizedBox(width: 6),
+                          if (b.delivery)
                             _chip(
-                              b.isOpen ? widget.openLabel : widget.closedLabel,
-                              b.isOpen ? _kOpenBg : _kClosedBg,
-                              b.isOpen ? _kOpenText : _kClosedText,
-                              dot: true,
+                              widget.deliveryLabel,
+                              _kDeliveryBg,
+                              AppColors.midBlue,
                             ),
                         ],
                       ),
@@ -1981,10 +1541,13 @@ class _BusinessCardState extends State<_BusinessCard> {
                         ],
                       ),
                       const SizedBox(height: 6),
+                      // A view count stood here, and `businesses` has no such
+                      // column. Until someone reviews a place there is no
+                      // number to print, so the card says as much.
                       Text(
-                        b.isLive
-                            ? '${b.views} ${widget.viewsLabel}'
-                            : '${b.reviews} ${widget.reviewsLabel}',
+                        b.reviewCount > 0
+                            ? '${b.reviewCount} ${widget.reviewsLabel}'
+                            : widget.notRatedLabel,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 12,
@@ -2018,35 +1581,32 @@ class _BusinessCardState extends State<_BusinessCard> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          // Dials the real number; inert on demo listings,
-                          // which have none.
-                          MouseRegion(
-                            cursor: b.phone.isEmpty
-                                ? SystemMouseCursors.basic
-                                : SystemMouseCursors.click,
-                            child: GestureDetector(
-                              onTap: b.phone.isEmpty
-                                  ? null
-                                  : () =>
-                                        launchUrl(Uri.parse('tel:${b.phone}')),
-                              child: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: _kBorder),
-                                  borderRadius: BorderRadius.circular(60),
-                                ),
-                                child: Icon(
-                                  IconsaxPlusLinear.call,
-                                  size: 18,
-                                  color: b.phone.isEmpty
-                                      ? _kIconGrey
-                                      : AppColors.midBlue,
+                          // Dials the business. 14 of the rows have no phone
+                          // number, and those draw no button rather than a dead
+                          // one.
+                          if (b.phone.isNotEmpty) ...[
+                            const SizedBox(width: 10),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () =>
+                                    launchUrl(Uri(scheme: 'tel', path: b.phone)),
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: _kBorder),
+                                    borderRadius: BorderRadius.circular(60),
+                                  ),
+                                  child: const Icon(
+                                    IconsaxPlusLinear.call,
+                                    size: 18,
+                                    color: AppColors.midBlue,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ],
@@ -2062,16 +1622,14 @@ class _BusinessCardState extends State<_BusinessCard> {
 }
 
 // ─────────────────────────────────────────────
-// PROFESSIONAL CARD — avatar, name, rating, CTA
+// PROVIDER CARD — logo, name, category, contact
 // ─────────────────────────────────────────────
 class _ProfessionalCard extends StatefulWidget {
-  final _Professional professional;
-  final String reviewsLabel, verifiedLabel, contactLabel;
+  final _Business business;
+  final String contactLabel;
   final VoidCallback onTap;
   const _ProfessionalCard({
-    required this.professional,
-    required this.reviewsLabel,
-    required this.verifiedLabel,
+    required this.business,
     required this.contactLabel,
     required this.onTap,
   });
@@ -2085,7 +1643,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.professional;
+    final b = widget.business;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
@@ -2102,44 +1660,18 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
           ),
           child: Column(
             children: [
-              SizedBox(
+              // A turquoise "Verified" tick sat on this avatar. `is_verified`
+              // is false on every row, so nothing here is verified.
+              _remoteImage(
+                b.logoUrl.isNotEmpty ? b.logoUrl : b.imageUrl,
+                b.logoBg,
                 width: 88,
                 height: 88,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    _remoteImage(
-                      p.imageUrl,
-                      p.avatarBg,
-                      width: 88,
-                      height: 88,
-                      glyph: 24,
-                    ),
-                    if (p.verified)
-                      PositionedDirectional(
-                        end: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 26,
-                          height: 26,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.turquoise,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.check,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                glyph: 24,
               ),
               const SizedBox(height: 16),
               Text(
-                p.name,
+                b.name,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 16,
@@ -2152,7 +1684,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
               ),
               const SizedBox(height: 4),
               Text(
-                p.profession,
+                b.category,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 13,
@@ -2163,83 +1695,50 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              // The site records no ratings for providers, so a real card shows
-              // the provider's own blurb where the stars would be.
-              if (p.isLive)
-                SizedBox(
-                  height: 32,
-                  child: Text(
-                    p.description,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      color: _kGreyText,
-                      height: 1.35,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+              // The provider's own blurb where the row has one, in the space a
+              // star rating used to fill with a score nobody had given.
+              SizedBox(
+                height: 32,
+                child: Text(
+                  b.description,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 12,
+                    color: _kGreyText,
+                    height: 1.35,
                   ),
-                )
-              else
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      IconsaxPlusBold.star_1,
-                      size: 14,
-                      color: AppColors.gold,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      p.rating.toStringAsFixed(1),
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _kHeading,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        '(${p.reviews})',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: _kGreyText,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: p.phone.isEmpty
-                    ? null
-                    : () => launchUrl(Uri.parse('tel:${p.phone}')),
-                child: Container(
-                  width: double.infinity,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: _hovered ? AppColors.midBlue : Colors.white,
-                    border: Border.all(color: AppColors.midBlue),
-                    borderRadius: BorderRadius.circular(60),
-                  ),
-                  child: Text(
-                    widget.contactLabel,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: _hovered ? Colors.white : AppColors.midBlue,
-                    ),
-                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(height: 16),
+              if (b.phone.isNotEmpty)
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => launchUrl(Uri(scheme: 'tel', path: b.phone)),
+                    child: Container(
+                      width: double.infinity,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _hovered ? AppColors.midBlue : Colors.white,
+                        border: Border.all(color: AppColors.midBlue),
+                        borderRadius: BorderRadius.circular(60),
+                      ),
+                      child: Text(
+                        widget.contactLabel,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: _hovered ? Colors.white : AppColors.midBlue,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

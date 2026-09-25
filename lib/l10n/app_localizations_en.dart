@@ -1348,4 +1348,104 @@ class LEn extends L {
 
   @override
   String get mapLayerRealEstate => 'Real Estate';
+
+  @override
+  String get helpTitle => 'Help & Support';
+
+  @override
+  String get helpSearchHint => 'Search for help';
+
+  @override
+  String get helpNoResults => 'Nothing matches your search';
+
+  @override
+  String get helpContactTitle => 'Still need help?';
+
+  @override
+  String get helpContactBody => 'Write to us and we\'ll get back to you.';
+
+  @override
+  String get helpContactButton => 'Contact us';
+
+  @override
+  String get helpQEditProfile => 'How do I edit my profile information?';
+
+  @override
+  String get helpAEditProfile =>
+      'Open Profile and tap “Edit Profile”. You can change your name, e-mail, phone number, neighbourhood, family status and date of birth, then tap Save.';
+
+  @override
+  String get helpQPassword => 'How do I change my password?';
+
+  @override
+  String get helpAPassword =>
+      'Go to Settings → Change password. Enter your current password, then the new one twice.';
+
+  @override
+  String get helpQLanguage => 'How do I change the app language?';
+
+  @override
+  String get helpALanguage =>
+      'Go to Settings → Language and choose Hebrew or English. The app changes straight away.';
+
+  @override
+  String get helpQFavorites => 'How do I save something to Favourites?';
+
+  @override
+  String get helpAFavorites =>
+      'Tap the heart on any business, event, news article or property. You need to be signed in for it to be saved.';
+
+  @override
+  String get helpQFindFavorites => 'Where are my saved Favourites?';
+
+  @override
+  String get helpAFindFavorites =>
+      'Open Profile and tap Favourites. You can filter by businesses, events, news or property, or see everything at once.';
+
+  @override
+  String get helpQBusinesses => 'How do I find businesses in Modi\'in?';
+
+  @override
+  String get helpABusinesses =>
+      'Use the Businesses tab. Search by name, browse by category, or open the Map tab to see them by location.';
+
+  @override
+  String get helpQEvents => 'How do I find events?';
+
+  @override
+  String get helpAEvents =>
+      'Open the Events section from the home screen. You can search, or switch to the map to see where each one is.';
+
+  @override
+  String get helpQRealEstate => 'How do I search for apartments?';
+
+  @override
+  String get helpARealEstate =>
+      'Open Real Estate from the home screen. Filter by neighbourhood, price, rooms and size, or browse the map.';
+
+  @override
+  String get helpQAccount => 'How do I delete my account?';
+
+  @override
+  String get helpAAccount =>
+      'Go to Settings and choose Delete account. This removes your profile and cannot be undone.';
+
+  @override
+  String get onboardingTitle => 'Everything in Modi\'in,\nin one place.';
+
+  @override
+  String get onboardingSubtitle =>
+      'Discover restaurants, businesses, events, deals, real estate and more.';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account?';
+
+  @override
+  String get onboardingTerms => 'By signing up you agree to our';
 }

@@ -30,6 +30,10 @@ class Article {
   final bool isFeatured;
   final List<String> relatedBusinessIds;
   final List<String> tags;
+  /// Where the story lives on the existing site. 390 of the 669 imported
+  /// rows carry one; it is what a share link points at, since the app's own
+  /// web build is not published yet.
+  final String? canonicalUrl;
   final String? metaDescription;
   final String? metaKeywords;
   final ArticleStatus status;
@@ -51,6 +55,7 @@ class Article {
     this.isFeatured = false,
     this.relatedBusinessIds = const [],
     this.tags = const [],
+    this.canonicalUrl,
     this.metaDescription,
     this.metaKeywords,
     this.status = ArticleStatus.published,
@@ -129,6 +134,7 @@ class Article {
           json['updated_at'] is String ? parseDate(json['updated_at']) : null,
       isBreaking: json['is_breaking'] as bool? ?? false,
       isFeatured: json['is_featured'] as bool? ?? false,
+      canonicalUrl: json['canonical_url'] as String?,
       metaDescription: json['meta_description'] as String?,
       metaKeywords: json['meta_keywords'] as String?,
       status: ArticleStatus.values.firstWhere(

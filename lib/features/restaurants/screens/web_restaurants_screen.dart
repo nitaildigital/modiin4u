@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../businesses/models/business.dart';
+import '../../businesses/providers/business_providers.dart';
+import '../providers/restaurant_providers.dart';
 import '../widgets/restaurant_place_card.dart';
 import '../../../shared/widgets/web_chrome.dart';
-import '../../../core/data/wp_content.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Restaurants — full desktop layout from Figma
@@ -13,74 +16,17 @@ import '../../../core/data/wp_content.dart';
 // ═══════════════════════════════════════════════════════════
 
 
-class WebRestaurantsContent extends StatefulWidget {
+class WebRestaurantsContent extends ConsumerStatefulWidget {
   const WebRestaurantsContent({super.key});
 
   @override
-  State<WebRestaurantsContent> createState() => _WebRestaurantsContentState();
+  ConsumerState<WebRestaurantsContent> createState() => _WebRestaurantsContentState();
 }
 
-class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
+class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
   bool _isHebrew = false;
-  int _selectedChip = -1;
-  int _bannerPage = 0;
   int _categoryPage = 0;
   final _searchController = TextEditingController();
-
-  /// Food and drink listings from the directory. Empty until the asset
-  /// loads and empty if it fails, in which case the demo places stand in.
-  List<WpBusiness> _food = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadWpBusinesses().then((all) {
-      if (!mounted) return;
-      setState(() => _food = all.where(_isFood).toList());
-    });
-  }
-
-  bool get _live => _food.isNotEmpty;
-
-  /// The site has no "restaurant" post type — eateries are businesses
-  /// carrying food categories, so they are matched on those.
-  static const _foodWords = [
-    'מסעד', 'פיצ', 'סושי', 'גריל', 'המבורגר', 'בורגר', 'אסיאתי', 'איטלקי',
-    'שווארמ', 'חומוס', 'פלאפל', 'בשרי', 'חלבי', 'דגים', 'קונדיטור',
-    'בית קפה', 'בתי קפה', 'ארוחת בוקר', 'גלידות', 'ברים', 'קייטרינג', 'מאפ',
-  ];
-
-  static bool _isFood(WpBusiness b) =>
-      b.terms.any((t) => _foodWords.any(t.contains));
-
-  /// Listings whose categories match [words], busiest first.
-  List<WpBusiness> _foodMatching(List<String> words, {int take = 8}) {
-    final matches = _food
-        .where((b) => b.terms.any((t) => words.any(t.contains)))
-        .toList();
-    return matches.take(take).toList();
-  }
-
-  RestaurantPlace _toPlace(WpBusiness b, Color marker) => RestaurantPlace(
-    name: b.title,
-    type: b.primaryTerm,
-    address: b.shortAddress,
-    rating: b.rating ?? 0,
-    reviews: 0,
-    views: b.views,
-    category: b.primaryTerm,
-    isKosher: b.kosher,
-    deliveryTime: b.delivery ? _t('Delivery', 'משלוחים') : null,
-    marker: marker,
-    imageBg: _placePalette[b.id % _placePalette.length],
-    imageUrl: b.image,
-    phone: b.phone,
-  );
-
-  static const _placePalette = [
-    Color(0xFFE3CFC4), Color(0xFFDCE0C4), Color(0xFFC4D4E0), Color(0xFFE0C4D4),
-    Color(0xFFC4E0D8), Color(0xFFE0DCC4), Color(0xFFD4C4E0), Color(0xFFC4C9E0),
-  ];
 
   @override
   void dispose() {
@@ -90,222 +36,8 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  // ── Nav links ──
-  // ── Hero category chips ──
-  List<_Chip> get _chips => [
-    _Chip(label: _t('Restaurants', 'מסעדות'), icon: IconsaxPlusLinear.reserve),
-    _Chip(label: _t('Coffee Shops', 'בתי קפה'), icon: IconsaxPlusLinear.coffee),
-    _Chip(label: _t('Bars', 'ברים'), icon: IconsaxPlusLinear.cup),
-    _Chip(label: _t('Takeaway', 'טייק אווי'), icon: IconsaxPlusLinear.shopping_bag),
-    _Chip(label: _t('Pizza', 'פיצה'), icon: IconsaxPlusLinear.cake),
-  ];
-
-  // ── Banner carousel ──
-  static const _banners = [
-    Color(0xFFD4E4F7),
-    Color(0xFFE0D4C8),
-    Color(0xFFC8D8E0),
-    Color(0xFFD8E8D4),
-    Color(0xFFE4D8F0),
-    Color(0xFFF0E4D4),
-  ];
-
-  // ── Food categories ──
-  List<_Category> get _categoriesDemo => [
-    _Category(name: _t('Japanese', 'יפני'), count: 12, imageBg: const Color(0xFFE8D5D0)),
-    _Category(name: _t('Sushi', 'סושי'), count: 10, imageBg: const Color(0xFFD5E3E8)),
-    _Category(name: _t('Italian', 'איטלקי'), count: 8, imageBg: const Color(0xFFE8E0CE)),
-    _Category(name: _t('Asian', 'אסייתי'), count: 9, imageBg: const Color(0xFFD9E8D5)),
-    _Category(name: _t('Israeli', 'ישראלי'), count: 14, imageBg: const Color(0xFFE8DCD0)),
-    _Category(name: _t('Mediterranean', 'ים תיכוני'), count: 7, imageBg: const Color(0xFFD0DFE8)),
-    _Category(name: _t('Burgers', 'המבורגרים'), count: 6, imageBg: const Color(0xFFE8D0D0)),
-    _Category(name: _t('Vegan', 'טבעוני'), count: 5, imageBg: const Color(0xFFDCE8D0)),
-    _Category(name: _t('Desserts', 'קינוחים'), count: 9, imageBg: const Color(0xFFE8D8E4)),
-  ];
-
-  // ── Popular restaurants ──
-  List<RestaurantPlace> get _popularDemo => [
-    RestaurantPlace(
-      name: _t('Shipudey Hatikva', 'שיפודי התקווה'),
-      type: _t('Restaurant', 'מסעדה'),
-      address: _t("HaMaccabim, Modi'in-Maccabim-Re'ut, Israel", 'המכבים, מודיעין-מכבים-רעות'),
-      rating: 4.8, reviews: 254, views: 428,
-      isKosher: true, category: _t('Israeli Dining', 'מטבח ישראלי'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFE3CFC4),
-    ),
-    RestaurantPlace(
-      name: _t('Pasta Basta', 'פסטה בסטה'),
-      type: _t('Restaurant', 'מסעדה'),
-      address: _t('HaOmanut St 2, Modiin', 'האומנות 2, מודיעין'),
-      rating: 4.8, reviews: 254, views: 428,
-      isKosher: true, category: _t('Israeli Dining', 'מטבח ישראלי'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFDCE0C4),
-    ),
-    RestaurantPlace(
-      name: _t('Sushi Bar Modiin', 'סושי בר מודיעין'),
-      type: _t('Restaurant', 'מסעדה'),
-      address: _t('HaShvatim St 7, Modiin', 'השבטים 7, מודיעין'),
-      rating: 4.8, reviews: 254, views: 428,
-      isKosher: true, category: _t('Israeli Dining', 'מטבח ישראלי'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFC9D8E0),
-    ),
-    RestaurantPlace(
-      name: _t('Sea & Spice', 'סי אנד ספייס'),
-      type: _t('Restaurant', 'מסעדה'),
-      address: _t("21 Sderot Modi'in-Maccabim-Re'ut, Israel", 'שדרות מודיעין 21, מודיעין-מכבים-רעות'),
-      rating: 4.5, reviews: 254, views: 428,
-      category: _t('Mediterraneant', 'ים תיכוני'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFD5DFD0),
-    ),
-  ];
-
-  // ── Coffee shops ──
-  List<RestaurantPlace> get _coffeeShopsDemo => [
-    RestaurantPlace(
-      name: _t('Fresh Coffee', 'פרש קופי'),
-      type: _t('Cafe', 'בית קפה'),
-      address: _t('HaNahalım St 8, Modiin', 'הנחלים 8, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      isKosher: true, marker: kCafeBlue, imageBg: const Color(0xFFE0D3C4),
-    ),
-    RestaurantPlace(
-      name: _t('3:16 John Caffe', '3:16 ג׳ון קפה'),
-      type: _t('Cafe', 'בית קפה'),
-      address: _t('HaShvatim St 10, Modiin', 'השבטים 10, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      isKosher: true, category: _t('Breakfast in Modiin', 'ארוחת בוקר במודיעין'),
-      marker: kCafeBlue, imageBg: const Color(0xFFD9DEE4),
-    ),
-    RestaurantPlace(
-      name: _t('Coffee Station', 'קופי סטיישן'),
-      type: _t('Cafe', 'בית קפה'),
-      address: _t('HaOmanut St 3, Modiin', 'האומנות 3, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      isKosher: true, marker: kCafeBlue, imageBg: const Color(0xFFE4DCCB),
-    ),
-    RestaurantPlace(
-      name: _t('Landwer Café', 'קפה לנדוור'),
-      type: _t('Cafe', 'בית קפה'),
-      address: _t('Derech Modiin 6, Modiin', 'דרך מודיעין 6, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      isKosher: true, category: _t('Breakfast in Modiin', 'ארוחת בוקר במודיעין'),
-      marker: kCafeBlue, imageBg: const Color(0xFFCFDCD8),
-    ),
-  ];
-
-  // ── Bars ──
-  List<RestaurantPlace> get _barsDemo => [
-    RestaurantPlace(
-      name: _t("Jim's Bar", 'הבר של ג׳ים'),
-      type: _t('Bar', 'בר'),
-      address: _t('HaOmanut St 5, Modiin', 'האומנות 5, מודיעין'),
-      rating: 4.5, reviews: 128, views: 187,
-      category: _t('Cocktails', 'קוקטיילים'),
-      marker: kBarRed, imageBg: const Color(0xFFD8CFD4),
-    ),
-    RestaurantPlace(
-      name: _t('The Duke', 'הדיוק'),
-      type: _t('Bar', 'בר'),
-      address: _t('Derech Modiin 8, Modiin', 'דרך מודיעין 8, מודיעין'),
-      rating: 4.5, reviews: 128, views: 187,
-      marker: kBarRed, imageBg: const Color(0xFFD2D6DE),
-    ),
-    RestaurantPlace(
-      name: _t('Wine House', 'בית היין'),
-      type: _t('Bar', 'בר'),
-      address: _t("14 Yehuda St, Modi'in-Maccabim-Re'ut, Israel", 'יהודה 14, מודיעין-מכבים-רעות'),
-      rating: 4.5, reviews: 128, views: 187,
-      marker: kBarRed, imageBg: const Color(0xFFDFD3C9),
-    ),
-    RestaurantPlace(
-      name: _t("Perry's Bar", 'הבר של פרי'),
-      type: _t('Cocktail Bar', 'בר קוקטיילים'),
-      address: _t("14 Yehuda St, Modi'in-Maccabim-Re'ut, Israel", 'יהודה 14, מודיעין-מכבים-רעות'),
-      rating: 4.5, reviews: 128, views: 187,
-      marker: kBarRed, imageBg: const Color(0xFFCCD4D9),
-    ),
-  ];
-
-  // ── Most loved ──
-  List<RestaurantPlace> get _mostLovedDemo => [
-    RestaurantPlace(
-      name: _t('Japan Japan Modiin', 'ג׳פן ג׳פן מודיעין'),
-      type: _t('Restaurant', 'מסעדה'),
-      address: _t('HaNahalım St 8, Modiin', 'הנחלים 8, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      marker: kRestaurantGreen, imageBg: const Color(0xFFDCD3C7),
-    ),
-    RestaurantPlace(
-      name: _t('Café Greg Modiin', 'קפה גרג מודיעין'),
-      type: _t('Coffee Shop', 'בית קפה'),
-      address: _t('HaOmanut St 3, Modiin', 'האומנות 3, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      marker: kCafeBlue, imageBg: const Color(0xFFD3DCE0),
-    ),
-    RestaurantPlace(
-      name: _t('The Red Sea Star', 'רד סי סטאר'),
-      type: _t('Bar', 'בר'),
-      address: _t('Derech Maccabim 6, Modiin', 'דרך המכבים 6, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      marker: kBarRed, imageBg: const Color(0xFFD9CFD9),
-    ),
-    RestaurantPlace(
-      name: _t('The Red Sea Star', 'רד סי סטאר'),
-      type: _t('Restaurant', 'מסעדה'),
-      address: _t('HaNahalım St 8, Modiin', 'הנחלים 8, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      marker: kRestaurantGreen, imageBg: const Color(0xFFD5DECE),
-    ),
-    RestaurantPlace(
-      name: _t('Biga Modiin', 'ביגה מודיעין'),
-      type: _t('Bar', 'בר'),
-      address: _t('Derech Modiin 6, Modiin', 'דרך מודיעין 6, מודיעין'),
-      rating: 4.8, reviews: 128, views: 187,
-      marker: kBarRed, imageBg: const Color(0xFFE0D8C9),
-    ),
-  ];
-
-  // ── Lunch nearby (delivery time instead of views) ──
-  List<RestaurantPlace> get _lunchNearbyDemo => [
-    RestaurantPlace(
-      name: _t('Orta Abylai Khan', 'אורטה אביליי חאן'),
-      type: _t('Restaurant · Asian', 'מסעדה · אסייתי'),
-      address: _t('Abylai Khan Ave 54, Modiin', 'שדרות אביליי חאן 54, מודיעין'),
-      rating: 4.8, reviews: 128, deliveryTime: _t('30–40 min', '30–40 דק׳'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFDDD2C5),
-    ),
-    RestaurantPlace(
-      name: _t('Japonica Dostyk', 'יאפוניקה דוסטיק'),
-      type: _t('Japanese · Sushi', 'יפני · סושי'),
-      address: _t('Mayina St 12, Modiin', 'מאיינה 12, מודיעין'),
-      rating: 4.8, reviews: 128, deliveryTime: _t('35–45 min', '35–45 דק׳'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFCFD9DE),
-    ),
-    RestaurantPlace(
-      name: _t('Marshal Abylai Khana', 'מרשל אביליי חאנה'),
-      type: _t('Restaurant · Fast Food', 'מסעדה · מזון מהיר'),
-      address: _t('Abylai Khan Ave 91, Modiin', 'שדרות אביליי חאן 91, מודיעין'),
-      rating: 4.8, reviews: 128, deliveryTime: _t('25–35 min', '25–35 דק׳'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFE2D6D0),
-    ),
-    RestaurantPlace(
-      name: _t('Mangal Doner Kaskelen', 'מנגל דונר קסקלן'),
-      type: _t('Turkish · Doner', 'טורקי · דונר'),
-      address: _t('Dostyk St 8, Modiin', 'דוסטיק 8, מודיעין'),
-      rating: 4.8, reviews: 128, deliveryTime: _t('20–30 min', '20–30 דק׳'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFD8DECB),
-    ),
-    RestaurantPlace(
-      name: _t('Orta Abylai Khan', 'אורטה אביליי חאן'),
-      type: _t('Restaurant', 'מסעדה'),
-      address: _t('Abylai Khan Ave 54, Modiin', 'שדרות אביליי חאן 54, מודיעין'),
-      rating: 4.8, reviews: 128, deliveryTime: _t('30–40 min', '30–40 דק׳'),
-      marker: kRestaurantGreen, imageBg: const Color(0xFFD2DCD9),
-    ),
-  ];
-
   // ═══════════════════════════════════════════════
-  // LIVE CONTENT — the directory's food listings, demo as the fallback
+  // LIVE CONTENT — the food categories and the businesses in them
   // ═══════════════════════════════════════════════
 
   static const _categoryPalette = [
@@ -314,68 +46,129 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
     Color(0xFFE8D8E4),
   ];
 
-  /// The nine busiest food categories, derived from the listings rather than
-  /// hard-coded — campaign tags are dropped, they are not cuisines.
+  static const _placePalette = [
+    Color(0xFFE3CFC4), Color(0xFFDCE0C4), Color(0xFFC4D4E0), Color(0xFFE0C4D4),
+    Color(0xFFC4E0D8), Color(0xFFE0DCC4), Color(0xFFD4C4E0), Color(0xFFC4C9E0),
+  ];
+
+  /// The food categories as the admin panel holds them: "restaurants", its
+  /// sub-categories, and the top-level "cafe-bakery".
+  ///
+  /// Nine cuisines used to be written into this screen — Japanese, Italian,
+  /// Vegan and Desserts among them, each with a count beside it — and not one
+  /// of them is a category in the database, so no card could be acted on and
+  /// no count came from anywhere. Busiest first, from the real links.
   List<_Category> get _categories {
-    if (!_live) return _categoriesDemo;
-    final counts = <String, int>{};
-    for (final b in _food) {
-      for (final t in b.terms) {
-        if (t.contains('מלחמת')) continue;
-        counts[t] = (counts[t] ?? 0) + 1;
-      }
-    }
-    final top = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final all = ref.watch(categoriesBySlugProvider).valueOrNull;
+    if (all == null) return const [];
+    final counts = ref.watch(businessCountsByCategoryProvider).valueOrNull ?? const {};
+
+    final parent = all['restaurants'];
+    final food = [
+      for (final c in all.values)
+        if (c.slug == 'cafe-bakery' ||
+            c.slug == 'restaurants' ||
+            (parent != null && c.parentId == parent.id))
+          c,
+    ]..sort((a, b) => (counts[b.id] ?? 0).compareTo(counts[a.id] ?? 0));
+
     return [
-      for (var i = 0; i < top.length && i < 9; i++)
+      for (final (i, c) in food.indexed)
         _Category(
-          name: top[i].key,
-          count: top[i].value,
+          id: c.id,
+          name: c.name,
+          count: counts[c.id] ?? 0,
           imageBg: _categoryPalette[i % _categoryPalette.length],
         ),
     ];
   }
 
-  List<RestaurantPlace> get _popular => _live
-      ? [
-          for (final b in _foodMatching(const ['מסעד', 'פיצ', 'גריל', 'סושי', 'איטלקי', 'אסיאתי']))
-            _toPlace(b, kRestaurantGreen),
-        ]
-      : _popularDemo;
+  List<Business> _inCategory(String slug) =>
+      ref.watch(businessesBySlugProvider(slug)).valueOrNull ?? const [];
 
-  List<RestaurantPlace> get _coffeeShops => _live
-      ? [
-          for (final b in _foodMatching(const ['בתי קפה', 'בית קפה', 'ארוחת בוקר', 'קונדיטור', 'גלידות']))
-            _toPlace(b, kCafeBlue),
-        ]
-      : _coffeeShopsDemo;
+  List<FoodPlace> get _foodPlaces =>
+      ref.watch(foodMapPlacesProvider).valueOrNull ?? const [];
 
-  List<RestaurantPlace> get _bars => _live
-      ? [for (final b in _foodMatching(const ['ברים', 'בר '])) _toPlace(b, kBarRed)]
-      : _barsDemo;
+  /// Food businesses the directory records a delivery service for. 66 of the
+  /// 219 rows say so, and `has_takeaway` is false on every one of them, so
+  /// this is the only serving option the page can claim.
+  ///
+  /// It used to be "Lunch Nearby", five invented places addressed on Abylai
+  /// Khan Avenue and Dostyk Street in Almaty, each promising a delivery window
+  /// — 30–40 min, 25–35 min — that no column holds.
+  List<_Entry> get _delivery => [
+    for (final (i, p) in _foodPlaces.where((p) => p.business.hasDelivery).take(10).indexed)
+      _placeOf(p, AppColors.turquoise, i),
+  ];
 
-  /// Only 36 of the food listings carry a rating, so "most loved" ranks by
-  /// rating where there is one and falls back to view count.
-  List<RestaurantPlace> get _mostLoved {
-    if (!_live) return _mostLovedDemo;
-    final rated = _food.where((b) => b.rating != null).toList()
+  /// The best-rated places. `reviews` is empty, so every row's rating is 0 and
+  /// this list is too — the section is left out of the page rather than
+  /// printing five places at "4.8" that nobody has rated.
+  List<_Entry> get _mostLoved {
+    final rated = _foodPlaces.where((p) => p.business.rating > 0).toList()
       ..sort((a, b) {
-        final byRating = b.rating!.compareTo(a.rating!);
-        return byRating != 0 ? byRating : b.views.compareTo(a.views);
+        final byRating = b.business.rating.compareTo(a.business.rating);
+        return byRating != 0
+            ? byRating
+            : b.business.reviewCount.compareTo(a.business.reviewCount);
       });
-    return [for (final b in rated.take(10)) _toPlace(b, kHeartRed)];
+    return [
+      for (final (i, p) in rated.take(10).indexed) _placeOf(p, kHeartRed, i),
+    ];
   }
 
-  /// Places that deliver — the closest thing the export has to "lunch nearby".
-  List<RestaurantPlace> get _lunchNearby => _live
-      ? [
-          for (final b in _food.where((b) => b.delivery).take(10))
-            _toPlace(b, AppColors.turquoise),
-        ]
-      : _lunchNearbyDemo;
+  _Entry _placeOf(FoodPlace place, Color marker, int index) =>
+      _place(place.business, place.categoryName, marker, index);
+
+  _Entry _place(Business b, String categoryName, Color marker, int index) {
+    final description = b.description?.trim() ?? '';
+    return _Entry(
+      b.id,
+      RestaurantPlace(
+        name: b.name,
+        // Its own blurb where the row has one, the category it sits in
+        // otherwise. Nothing is composed out of the two.
+        type: description.isNotEmpty ? description : categoryName,
+        address: b.address,
+        rating: b.rating,
+        reviews: b.reviewCount,
+        // Null for a place the directory records no delivery for, which the
+        // card now simply omits. It used to fall back to a view count there,
+        // and `businesses` has no such column.
+        deliveryTime: b.hasDelivery ? _t('Delivery', 'משלוחים') : null,
+        // The badge would otherwise repeat the line underneath it.
+        category: description.isNotEmpty ? categoryName : null,
+        // `kosher_level` is 'none' for a place with no certification, and the
+        // model maps that to null.
+        isKosher: b.kosherStatus != null,
+        marker: marker,
+        imageBg: _placePalette[index % _placePalette.length],
+        imageUrl: b.imageUrl ?? '',
+        phone: b.phone ?? '',
+      ),
+    );
+  }
+
+  List<_Entry> _places(List<Business> items, String categoryName, Color marker) => [
+    for (final (i, b) in items.take(8).indexed) _place(b, categoryName, marker, i),
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final categories = _categories;
+    final restaurants = _places(
+      _inCategory('restaurants'),
+      _t('Restaurant', 'מסעדה'),
+      kRestaurantGreen,
+    );
+    final cafes = _places(
+      _inCategory('cafe-bakery'),
+      _t('Cafe & Bakery', 'קפה ומאפה'),
+      kCafeBlue,
+    );
+    final mostLoved = _mostLoved;
+    final delivery = _delivery;
+
     return Directionality(
       textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
@@ -392,54 +185,48 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                 child: Column(
                   children: [
                     _buildHeroSection(),
-                    _buildBannerCarousel(),
-                    _buildCategoriesSection(),
-                    _buildPlacesSection(
-                      icon: IconsaxPlusLinear.reserve,
-                      accent: kRestaurantGreen,
-                      title: _t('Popular Restaurants in Modiin', 'מסעדות פופולריות במודיעין'),
-                      subtitle: _t('Top rated restaurants loved by locals.',
-                          'המסעדות המדורגות ביותר שהתושבים אוהבים.'),
-                      buttonLabel: _t('View all restaurants', 'כל המסעדות'),
-                      places: _popular,
-                    ),
-                    _buildPlacesSection(
-                      icon: IconsaxPlusLinear.coffee,
-                      accent: kCafeBlue,
-                      title: _t('Coffee Shops in Modiin', 'בתי קפה במודיעין'),
-                      subtitle: _t('Cozy places for great coffee and good vibes.',
-                          'מקומות נעימים לקפה טוב ואווירה טובה.'),
-                      buttonLabel: _t('View all coffee shops', 'כל בתי הקפה'),
-                      places: _coffeeShops,
-                    ),
-                    _buildPlacesSection(
-                      icon: IconsaxPlusLinear.cup,
-                      accent: kBarRed,
-                      title: _t('Bars in Modiin', 'ברים במודיעין'),
-                      subtitle: _t('Great spots for drinks and nightlife in Modiin.',
-                          'מקומות מעולים לשתייה וחיי לילה במודיעין.'),
-                      buttonLabel: _t('View all bars', 'כל הברים'),
-                      places: _bars,
-                    ),
-                    _buildPlacesSection(
-                      icon: IconsaxPlusLinear.heart,
-                      accent: kHeartRed,
-                      title: _t('Most Loved in Modiin', 'האהובים ביותר במודיעין'),
-                      subtitle: _t('The places locals love most.', 'המקומות שהתושבים הכי אוהבים.'),
-                      buttonLabel: _t('View all places', 'כל המקומות'),
-                      places: _mostLoved,
-                      compact: true,
-                    ),
-                    _buildPlacesSection(
-                      icon: IconsaxPlusLinear.clock,
-                      accent: AppColors.turquoise,
-                      title: _t('Lunch Nearby', 'ארוחת צהריים בקרבת מקום'),
-                      subtitle: _t('Find great places for lunch around Modiin.',
-                          'מצאו מקומות מעולים לארוחת צהריים במודיעין.'),
-                      buttonLabel: _t('View all places', 'כל המקומות'),
-                      places: _lunchNearby,
-                      compact: true,
-                    ),
+                    // Each section is left out until its rows arrive: a heading
+                    // over an empty row reads as a section that lost its
+                    // contents.
+                    if (categories.isNotEmpty) _buildCategoriesSection(categories),
+                    if (restaurants.isNotEmpty)
+                      _buildPlacesSection(
+                        icon: IconsaxPlusLinear.reserve,
+                        accent: kRestaurantGreen,
+                        title: _t('Restaurants in Modiin', 'מסעדות במודיעין'),
+                        subtitle: _t('The newest additions to the restaurants category.',
+                            'התוספות החדשות לקטגוריית המסעדות.'),
+                        places: restaurants,
+                      ),
+                    if (cafes.isNotEmpty)
+                      _buildPlacesSection(
+                        icon: IconsaxPlusLinear.coffee,
+                        accent: kCafeBlue,
+                        title: _t('Cafes & Bakeries in Modiin', 'קפה ומאפה במודיעין'),
+                        subtitle: _t('Places for coffee, breakfast and something baked.',
+                            'מקומות לקפה, ארוחת בוקר ומשהו מהתנור.'),
+                        places: cafes,
+                      ),
+                    if (mostLoved.isNotEmpty)
+                      _buildPlacesSection(
+                        icon: IconsaxPlusLinear.heart,
+                        accent: kHeartRed,
+                        title: _t('Most Loved in Modiin', 'האהובים ביותר במודיעין'),
+                        subtitle: _t('The best rated places in the directory.',
+                            'המקומות המדורגים ביותר במדריך.'),
+                        places: mostLoved,
+                        compact: true,
+                      ),
+                    if (delivery.isNotEmpty)
+                      _buildPlacesSection(
+                        icon: IconsaxPlusLinear.truck_fast,
+                        accent: AppColors.turquoise,
+                        title: _t('Delivery in Modiin', 'משלוחים במודיעין'),
+                        subtitle: _t('Places that deliver around Modiin.',
+                            'מקומות שמציעים משלוחים במודיעין.'),
+                        places: delivery,
+                        compact: true,
+                      ),
                     const SizedBox(height: 24),
                     WebFooter(isHebrew: _isHebrew),
                   ],
@@ -453,15 +240,12 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
   }
 
   // ─────────────────────────────────────────────
-  // STICKY NAVBAR
-  // ─────────────────────────────────────────────
-  // ─────────────────────────────────────────────
   // HERO
   // ─────────────────────────────────────────────
   Widget _buildHeroSection() {
     return SizedBox(
       width: double.infinity,
-      height: 662,
+      height: 560,
       child: Stack(
         children: [
           // Soft background wash behind the hero card
@@ -480,7 +264,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
             child: Container(
               constraints: const BoxConstraints(maxWidth: 1200),
               margin: const EdgeInsets.symmetric(horizontal: 40).copyWith(top: 48),
-              height: 551,
+              height: 450,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
                 gradient: const LinearGradient(
@@ -492,7 +276,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
               child: Stack(
                 children: [
                   Positioned(
-                    top: 0, left: 0, right: 0, height: 428,
+                    top: 0, left: 0, right: 0, height: 350,
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -507,7 +291,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                   SingleChildScrollView(
                     child: Column(
                       children: [
-                        const SizedBox(height: 112),
+                        const SizedBox(height: 96),
                         Text(
                           _t('Restaurants in Modiin', 'מסעדות במודיעין'),
                           style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23),
@@ -515,15 +299,15 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          _t('Discover the best restaurants, cafe and bars in Modiin',
-                              'גלו את המסעדות, בתי הקפה והברים הטובים ביותר במודיעין'),
+                          // The line named bars too. There is no bar category
+                          // in the directory, so the page has none to show.
+                          _t('Discover the restaurants, cafes and bakeries of Modiin',
+                              'גלו את המסעדות, בתי הקפה והמאפיות של מודיעין'),
                           style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 43),
                         _buildSearchBar(),
-                        const SizedBox(height: 31),
-                        _buildCategoryChips(),
                       ],
                     ),
                   ),
@@ -612,115 +396,17 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
     );
   }
 
-  Widget _buildCategoryChips() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      alignment: WrapAlignment.center,
-      children: List.generate(_chips.length, (i) {
-        final chip = _chips[i];
-        final selected = _selectedChip == i;
-        return MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedChip = selected ? -1 : i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.midBlue : Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(chip.icon, size: 14, color: selected ? Colors.white : AppColors.midBlue),
-                  const SizedBox(width: 8),
-                  Text(chip.label,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 12,
-                        color: selected ? Colors.white : AppColors.midBlue,
-                      )),
-                ],
-              ),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
   // ─────────────────────────────────────────────
-  // BANNER CAROUSEL — 3 wide promo cards
+  // EXPLORE CATEGORIES — cuisine cards
   // ─────────────────────────────────────────────
-  Widget _buildBannerCarousel() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 56),
-      child: _Section(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            const gap = 20.0;
-            final cols = constraints.maxWidth > 1200 ? 3 : (constraints.maxWidth > 800 ? 2 : 1);
-            final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
-            final pages = (_banners.length / cols).ceil();
-            final start = (_bannerPage * cols) % _banners.length;
-            final visible = List.generate(cols, (i) => _banners[(start + i) % _banners.length]);
-
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Row(
-                  children: [
-                    for (var i = 0; i < visible.length; i++) ...[
-                      if (i > 0) const SizedBox(width: gap),
-                      Container(
-                        width: cardWidth,
-                        height: 300,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [visible[i], Color.lerp(visible[i], AppColors.midBlue, 0.35)!],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                Positioned(
-                  left: -20, top: 130,
-                  child: _CarouselArrow(
-                    icon: IconsaxPlusLinear.arrow_left_2,
-                    onTap: () => setState(() => _bannerPage = (_bannerPage - 1 + pages) % pages),
-                  ),
-                ),
-                Positioned(
-                  right: -20, top: 130,
-                  child: _CarouselArrow(
-                    icon: IconsaxPlusLinear.arrow_right_3,
-                    onTap: () => setState(() => _bannerPage = (_bannerPage + 1) % pages),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // EXPLORE CATEGORIES — 7 cuisine cards
-  // ─────────────────────────────────────────────
-  Widget _buildCategoriesSection() {
+  Widget _buildCategoriesSection(List<_Category> categories) {
     return Padding(
       padding: const EdgeInsets.only(top: 64),
       child: _Section(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_t('Expore Categories', 'גלו קטגוריות'),
+            Text(_t('Explore Categories', 'גלו קטגוריות'),
                 style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue)),
             const SizedBox(height: 10),
             Text(_t('Discover restaurants by the food you love.', 'גלו מסעדות לפי האוכל שאתם אוהבים.'),
@@ -731,9 +417,9 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                 const gap = 18.0;
                 final cols = constraints.maxWidth > 1400 ? 7 : (constraints.maxWidth > 1000 ? 5 : 3);
                 final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
-                final pages = (_categories.length / cols).ceil();
-                final start = (_categoryPage * cols) % _categories.length;
-                final visible = List.generate(cols, (i) => _categories[(start + i) % _categories.length]);
+                final pages = (categories.length / cols).ceil();
+                final start = (_categoryPage * cols) % categories.length;
+                final visible = List.generate(cols, (i) => categories[(start + i) % categories.length]);
 
                 return Stack(
                   clipBehavior: Clip.none,
@@ -742,24 +428,41 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                       children: [
                         for (var i = 0; i < visible.length; i++) ...[
                           if (i > 0) const SizedBox(width: gap),
-                          SizedBox(width: cardWidth, child: _CategoryCard(category: visible[i])),
+                          SizedBox(
+                            width: cardWidth,
+                            child: _CategoryCard(
+                              category: visible[i],
+                              // The card was drawn with a pointer cursor and no
+                              // handler at all. This opens the listing for the
+                              // category it names.
+                              onTap: () => context.push(
+                                Uri(
+                                  path: '/businesses/category/${visible[i].id}',
+                                  queryParameters: {'title': visible[i].name},
+                                ).toString(),
+                              ),
+                            ),
+                          ),
                         ],
                       ],
                     ),
-                    Positioned(
-                      left: -19, top: 90,
-                      child: _CarouselArrow(
-                        icon: IconsaxPlusLinear.arrow_left_2,
-                        onTap: () => setState(() => _categoryPage = (_categoryPage - 1 + pages) % pages),
+                    // Only worth drawing when there is more than one page.
+                    if (pages > 1) ...[
+                      Positioned(
+                        left: -19, top: 90,
+                        child: _CarouselArrow(
+                          icon: IconsaxPlusLinear.arrow_left_2,
+                          onTap: () => setState(() => _categoryPage = (_categoryPage - 1 + pages) % pages),
+                        ),
                       ),
-                    ),
-                    Positioned(
-                      right: -19, top: 90,
-                      child: _CarouselArrow(
-                        icon: IconsaxPlusLinear.arrow_right_3,
-                        onTap: () => setState(() => _categoryPage = (_categoryPage + 1) % pages),
+                      Positioned(
+                        right: -19, top: 90,
+                        child: _CarouselArrow(
+                          icon: IconsaxPlusLinear.arrow_right_3,
+                          onTap: () => setState(() => _categoryPage = (_categoryPage + 1) % pages),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 );
               },
@@ -778,8 +481,7 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
     required Color accent,
     required String title,
     required String subtitle,
-    required String buttonLabel,
-    required List<RestaurantPlace> places,
+    required List<_Entry> places,
     bool compact = false,
   }) {
     return Padding(
@@ -812,7 +514,13 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                _ViewAllButton(label: buttonLabel, onTap: () {}),
+                // Every section's button read "View all …" and did nothing.
+                // The search page beside the map is where all of the places
+                // are, cuisine by cuisine.
+                _ViewAllButton(
+                  label: _t('Search all places', 'חיפוש כל המקומות'),
+                  onTap: () => context.push('/restaurants-map'),
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -828,13 +536,16 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
                   spacing: gap,
                   runSpacing: gap,
                   children: places
-                      .map((p) => SizedBox(
+                      .map((entry) => SizedBox(
                             width: cardWidth,
                             child: RestaurantCard(
-                              place: p,
+                              place: entry.place,
                               compact: compact,
                               isHebrew: _isHebrew,
-                              onTap: () => context.push('/restaurant/1'),
+                              // Each card used to push `/restaurant/1`, which
+                              // matches no row. Restaurants are businesses, and
+                              // this opens the one the card names.
+                              onTap: () => context.push('/business/${entry.id}'),
                             ),
                           ))
                       .toList(),
@@ -846,27 +557,29 @@ class _WebRestaurantsContentState extends State<WebRestaurantsContent> {
       ),
     );
   }
-
-  // ─────────────────────────────────────────────
-  // FOOTER
-  // ─────────────────────────────────────────────
 }
 
 // ═══════════════════════════════════════════════
 // DATA MODELS
 // ═══════════════════════════════════════════════
 
-class _Chip {
-  final String label;
-  final IconData icon;
-  const _Chip({required this.label, required this.icon});
+/// A card and the id of the business behind it.
+///
+/// The shared `RestaurantPlace` carries no id, so the two travel together and
+/// a tap opens the row the card was built from.
+class _Entry {
+  final String id;
+  final RestaurantPlace place;
+  const _Entry(this.id, this.place);
 }
 
 class _Category {
+  /// The `categories` row id, so a card can open that category's listing.
+  final String id;
   final String name;
   final int count;
   final Color imageBg;
-  const _Category({required this.name, required this.count, required this.imageBg});
+  const _Category({required this.id, required this.name, required this.count, required this.imageBg});
 }
 
 // ═══════════════════════════════════════════════
@@ -950,7 +663,8 @@ class _CarouselArrow extends StatelessWidget {
 
 class _CategoryCard extends StatefulWidget {
   final _Category category;
-  const _CategoryCard({required this.category});
+  final VoidCallback onTap;
+  const _CategoryCard({required this.category, required this.onTap});
 
   @override
   State<_CategoryCard> createState() => _CategoryCardState();
@@ -966,49 +680,52 @@ class _CategoryCardState extends State<_CategoryCard> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: _hovered ? AppColors.midBlue : kRBorder),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: _hovered
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 4))]
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [c.imageBg, Color.lerp(c.imageBg, Colors.black, 0.18)!],
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: _hovered ? AppColors.midBlue : kRBorder),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _hovered
+                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 4))]
+                : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [c.imageBg, Color.lerp(c.imageBg, Colors.black, 0.18)!],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(c.name,
-                      style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy),
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 8),
-                  Text('${c.count} ${_placesLabel(context)}',
-                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: kRGreyText),
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
-                ],
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(c.name,
+                        style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 8),
+                    Text('${c.count} ${_placesLabel(context)}',
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: kRGreyText),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

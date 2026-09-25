@@ -6,6 +6,15 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 
+/// How the city office is reached. These were already published in the
+/// footer as plain text; they are named here so the header's "Contact Us"
+/// leads somewhere rather than nowhere, and so a change lands in one place.
+const kContactPhone = '058-4770195';
+const kContactEmail = 'modiin4uoffice@gmail.com';
+
+/// The same number in international form, which is what wa.me expects.
+const kContactWhatsApp = '972584770195';
+
 // ═══════════════════════════════════════════════════════════
 // Shared desktop chrome — the sticky navbar and the footer that
 // every web_*_screen.dart page wraps its content in.
@@ -31,16 +40,26 @@ class WebNavItem {
 }
 
 /// The canonical nav, in display order.
-List<WebNavItem> webNavItems(bool isHebrew) {
+/// The nav links.
+///
+/// [short] drops the "in Modiin" that three of them carry. The full labels
+/// are drawn at 1920, which the design is laid out for; below roughly 1700
+/// the seven of them stop fitting and every label ellipsises at once — the
+/// bar read "Profess…  Modiin …  Real Estat…  Restauran…  Busine…" on a
+/// 1440 laptop. The whole site is Modiin, so the shorter forms lose nothing.
+List<WebNavItem> webNavItems(bool isHebrew, {bool short = false}) {
   String t(String en, String he) => isHebrew ? he : en;
+  String place(String en, String he) =>
+      short ? t(en, he) : t('$en in Modiin', '$he במודיעין');
+
   return [
     WebNavItem(id: 'professionals', label: t('Professionals', 'בעלי מקצוע'), route: '/businesses', hasDropdown: true),
     WebNavItem(id: 'news', label: t('Modiin News', 'חדשות מודיעין'), route: '/news', hasDropdown: true),
     WebNavItem(id: 'events', label: t('Events', 'אירועים'), route: '/events'),
     WebNavItem(id: 'deals', label: t('Deals', 'מבצעים'), route: '/deals'),
-    WebNavItem(id: 'realestate', label: t('Real Estate in Modiin', 'נדל"ן במודיעין'), route: '/realestate'),
-    WebNavItem(id: 'restaurants', label: t('Restaurants in Modiin', 'מסעדות במודיעין'), route: '/restaurants'),
-    WebNavItem(id: 'businesses', label: t('Businesses in Modiin', 'עסקים במודיעין'), route: '/businesses', hasDropdown: true),
+    WebNavItem(id: 'realestate', label: place('Real Estate', 'נדל"ן'), route: '/realestate'),
+    WebNavItem(id: 'restaurants', label: place('Restaurants', 'מסעדות'), route: '/restaurants'),
+    WebNavItem(id: 'businesses', label: place('Businesses', 'עסקים'), route: '/businesses', hasDropdown: true),
   ];
 }
 
@@ -83,13 +102,24 @@ class WebNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => _bar(context, constraints.maxWidth),
+    );
+  }
+
+  /// The design is drawn at 1920 with a 160px gutter. Held fixed, that gutter
+  /// takes a fifth of a 1440 laptop and the seven links truncate to "Pr…",
+  /// "M…", "Resta…". It shrinks with the window instead, down to 24.
+  Widget _bar(BuildContext context, double width) {
+    final gutter = ((width - 1600) / 2).clamp(24.0, 160.0);
+
     return Container(
       height: 80,
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: _kBorder)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 160),
+      padding: EdgeInsets.symmetric(horizontal: gutter),
       child: Row(
         children: [
           MouseRegion(
@@ -105,18 +135,24 @@ class WebNavbar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 20),
+          // Each link takes the room its own label needs, rather than an
+          // equal share that forces every one of them to ellipsise at once.
+          // The row scrolls if they genuinely do not fit.
           Expanded(
-            child: Row(
-              children: webNavItems(isHebrew).map((item) {
-                return Expanded(
-                  child: _NavLinkButton(
-                    label: item.label,
-                    isActive: item.id == activeId,
-                    hasDropdown: item.hasDropdown,
-                    onTap: () => context.go(item.route),
-                  ),
-                );
-              }).toList(),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: webNavItems(isHebrew, short: width < 1700)
+                    .map(
+                      (item) => _NavLinkButton(
+                        label: item.label,
+                        isActive: item.id == activeId,
+                        hasDropdown: item.hasDropdown,
+                        onTap: () => context.go(item.route),
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
           ),
           const SizedBox(width: 20),
@@ -148,7 +184,10 @@ class WebNavbar extends StatelessWidget {
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
-              onTap: onContactTap ?? () {},
+              // It read "Contact Us" and did nothing. The address below is
+              // the one the footer has always published.
+              onTap: onContactTap ??
+                  () => launchUrl(Uri(scheme: 'mailto', path: kContactEmail)),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
                 decoration: BoxDecoration(
@@ -386,9 +425,12 @@ class WebFooter extends StatelessWidget {
         Text(_t('We are here for\nany questions.', 'אנחנו כאן\nלכל שאלה.'),
             style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w500, color: Colors.white, height: 1.22)),
         const SizedBox(height: 40),
-        _FooterContactRow(icon: IconsaxPlusLinear.call, label: _t('Phone', 'טלפון'), value: '058-4770195'),
-        _FooterContactRow(icon: IconsaxPlusLinear.sms, label: _t('Email', 'אימייל'), value: 'modiin4uoffice@gmail.com'),
-        _FooterContactRow(icon: IconsaxPlusLinear.message, label: _t('WhatsApp', 'וואטסאפ'), value: '058-4770195'),
+        _FooterContactRow(icon: IconsaxPlusLinear.call, label: _t('Phone', 'טלפון'), value: kContactPhone,
+            uri: Uri(scheme: 'tel', path: kContactPhone)),
+        _FooterContactRow(icon: IconsaxPlusLinear.sms, label: _t('Email', 'אימייל'), value: kContactEmail,
+            uri: Uri(scheme: 'mailto', path: kContactEmail)),
+        _FooterContactRow(icon: IconsaxPlusLinear.message, label: _t('WhatsApp', 'וואטסאפ'), value: kContactPhone,
+            uri: Uri.parse('https://wa.me/$kContactWhatsApp')),
         const SizedBox(height: 16),
         Text(_t('Our Socials', 'הרשתות שלנו'),
             style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
@@ -481,10 +523,24 @@ class WebFooter extends StatelessWidget {
 class _FooterContactRow extends StatelessWidget {
   final IconData icon;
   final String label, value;
-  const _FooterContactRow({required this.icon, required this.label, required this.value});
+
+  /// Where tapping it goes. These were printed for people to copy by hand.
+  final Uri uri;
+
+  const _FooterContactRow({required this.icon, required this.label, required this.value, required this.uri});
 
   @override
   Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => launchUrl(uri),
+        child: _row(),
+      ),
+    );
+  }
+
+  Widget _row() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 34),
       child: Row(

@@ -1,26 +1,50 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../businesses/models/business.dart';
+import '../../businesses/providers/business_providers.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../../map/data/map_pois.dart';
+import '../../map/providers/map_providers.dart';
+import '../../news/models/article.dart';
+import '../../news/providers/news_providers.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Homepage — full desktop layout from Figma
+//
+// Every row of content on this page was written into the source: seven
+// invented news stories with August 2026 datelines and no link on them, a
+// road-works alert for a street nobody had checked, ten map pins at fixed
+// pixel offsets, four invented cafés with 4.8 ratings and view counts, and
+// six invented tradesmen with telephone buttons that did nothing. All of it
+// is read from the database now, or gone.
 // ═══════════════════════════════════════════════════════════
 
-class WebHomeContent extends StatefulWidget {
+class WebHomeContent extends ConsumerStatefulWidget {
   const WebHomeContent({super.key});
 
   @override
-  State<WebHomeContent> createState() => _WebHomeContentState();
+  ConsumerState<WebHomeContent> createState() => _WebHomeContentState();
 }
 
-class _WebHomeContentState extends State<WebHomeContent> {
+class _WebHomeContentState extends ConsumerState<WebHomeContent> {
   final _searchController = TextEditingController();
-  bool _showTrafficAlert = true;
   bool _isHebrew = false;
+
+  /// Which map layers the preview draws. The three rows in the map sidebar
+  /// were switches drawn permanently on with no handler behind them; they
+  /// filter the pins now, the way the map page's own rows do.
+  final _activeLayers = <String>{for (final layer in mapLayers) layer.$1};
 
   // ── Localization helper ──
   String _t(String en, String he) => _isHebrew ? he : en;
@@ -39,6 +63,43 @@ class _WebHomeContentState extends State<WebHomeContent> {
     }
   }
 
+  // ─────────────────────────────────────────────
+  // DATES
+  // ─────────────────────────────────────────────
+  static const _enMonths = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  static const _heMonths = [
+    'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
+    'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
+  ];
+
+  /// "August 5, 2026 | 16:36", or "5 באוגוסט 2026 | 16:36".
+  ///
+  /// `published_at` comes back as UTC, so it is moved to the reader's zone
+  /// before the hour is printed.
+  String _dateLine(DateTime value) {
+    final d = value.toLocal();
+    final time =
+        '${d.hour.toString().padLeft(2, '0')}:'
+        '${d.minute.toString().padLeft(2, '0')}';
+    return _isHebrew
+        ? '${d.day} ב${_heMonths[d.month - 1]} ${d.year} | $time'
+        : '${_enMonths[d.month - 1]} ${d.day}, ${d.year} | $time';
+  }
+
+  /// The [count] most recently published articles.
+  ///
+  /// `publishedArticlesProvider` orders by `created_at`, and all 669 rows
+  /// were imported in one batch within the same second, so that order says
+  /// nothing about when a story ran. Sorted on the publication date here.
+  List<Article> _newest(List<Article> all, int count) {
+    final sorted = [...all]
+      ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    return sorted.take(count).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -54,7 +115,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
                   _buildCategoryCards(),
                   _buildNewsSection(),
                   _buildMapSection(),
-                  _buildAiPicksSection(),
+                  _buildBusinessesSection(),
                   _buildProfessionalsSection(),
                   WebFooter(isHebrew: _isHebrew),
                 ],
@@ -110,8 +171,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
             // Nav links
             ..._navLinksLocalized.map((link) => _NavLink(
               label: link.$1,
-              hasDropdown: link.$2,
-              onTap: () => context.go(link.$3),
+              onTap: () => context.go(link.$2),
             )),
             const Spacer(),
             // Language toggle
@@ -137,21 +197,25 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 ),
               ),
             ),
-            // CTA
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.midBlue,
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Text(
-                  _t('Contact Us', 'צור קשר'),
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
+            // CTA — it read "Contact Us" and did nothing. The address is the
+            // one the footer has always published.
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => launchUrl(Uri(scheme: 'mailto', path: kContactEmail)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.midBlue,
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Text(
+                    _t('Contact Us', 'צור קשר'),
+                    style: TextStyle(fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -162,14 +226,18 @@ class _WebHomeContentState extends State<WebHomeContent> {
     );
   }
 
-  List<(String, bool, String)> get _navLinksLocalized => [
-    (_t('Businesses', 'עסקים'), true, '/businesses'),
-    (_t('Restaurants', 'מסעדות'), false, '/restaurants'),
-    (_t('Real Estate', 'נדל"ן'), false, '/realestate'),
-    (_t('Events', 'אירועים'), false, '/events'),
-    (_t('Deals', 'מבצעים'), false, '/deals'),
-    (_t('News', 'חדשות'), true, '/news'),
-    (_t('Professionals', 'בעלי מקצוע'), true, '/businesses'),
+  /// The nav, in display order.
+  ///
+  /// Three of these links carried a dropdown chevron and no dropdown. The
+  /// chevron is gone; the link itself goes where it always did.
+  List<(String, String)> get _navLinksLocalized => [
+    (_t('Businesses', 'עסקים'), '/businesses'),
+    (_t('Restaurants', 'מסעדות'), '/restaurants'),
+    (_t('Real Estate', 'נדל"ן'), '/realestate'),
+    (_t('Events', 'אירועים'), '/events'),
+    (_t('Deals', 'מבצעים'), '/deals'),
+    (_t('News', 'חדשות'), '/news'),
+    (_t('Professionals', 'בעלי מקצוע'), '/businesses'),
   ];
 
   // ─────────────────────────────────────────────
@@ -222,9 +290,6 @@ class _WebHomeContentState extends State<WebHomeContent> {
           const SizedBox(height: 32),
           // Quick filter pills
           _buildHeroPills(),
-          const SizedBox(height: 32),
-          // Traffic alert
-          if (_showTrafficAlert) _buildTrafficAlert(),
           const SizedBox(height: 60),
         ],
       ),
@@ -333,41 +398,10 @@ class _WebHomeContentState extends State<WebHomeContent> {
     );
   }
 
-  Widget _buildTrafficAlert() {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 950),
-        margin: const EdgeInsets.symmetric(horizontal: 24),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEF5E1),
-          border: Border.all(color: const Color(0xFFFFD89A)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            const Text('🚧', style: TextStyle(fontSize: 20)),
-            const SizedBox(width: 12),
-            Text(_t('Traffic update:', 'עדכון תנועה:'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                _t('Road work on Begin St. – expect delays in the area', 'עבודות כביש ברח׳ בגין – צפויים עיכובים באזור'),
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF1F1F1F)),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(_t('View details', 'צפה בפרטים'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, decoration: TextDecoration.underline)),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () => setState(() => _showTrafficAlert = false),
-              child: const Icon(Icons.close, size: 16, color: Color(0xFF6D6D6D)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // A road-works banner used to sit here, under a 🚧, reading "Road work on
+  // Begin St. – expect delays in the area", with an underlined "View details"
+  // that was a plain Text with no handler. There is no traffic source behind
+  // the app, so the alert was an invented fact about the city and is gone.
 
   // ─────────────────────────────────────────────
   // CATEGORY CARDS — 7 cards in a row
@@ -424,7 +458,15 @@ class _WebHomeContentState extends State<WebHomeContent> {
   // ─────────────────────────────────────────────
   // NEWS SECTION — two-column layout
   // ─────────────────────────────────────────────
+  /// The seven stories in this section were written into the file: invented
+  /// titles, invented excerpts, August 2026 datelines and grey rectangles
+  /// where the photograph goes. None of the seven cards carried a tap
+  /// handler, so the whole section was a picture of a news page.
+  ///
+  /// It reads `articles` now, through [publishedArticlesProvider], and each
+  /// card opens `/article/<uuid>`.
   Widget _buildNewsSection() {
+    final articles = ref.watch(publishedArticlesProvider);
     return _SectionWrapper(
       padding: const EdgeInsets.only(bottom: 56),
       child: Column(
@@ -437,7 +479,9 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_t('Intelligence News', 'חדשות מודיעין'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
+                    // It read "Intelligence News" in English — a machine
+                    // translation of מודיעין, the city's name.
+                    Text(_t('Modiin News', 'חדשות מודיעין'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
                     const SizedBox(height: 10),
                     Text(_t('Get the latest news, stories and important updates happening across the city.', 'קבלו את החדשות, הסיפורים והעדכונים החשובים ברחבי העיר.'),
                         style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
@@ -448,25 +492,50 @@ class _WebHomeContentState extends State<WebHomeContent> {
             ],
           ),
           const SizedBox(height: 24),
-          // Two-column grid
-          LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth > 1100) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildNewsLeftColumn()),
-                    const SizedBox(width: 26),
-                    Expanded(child: _buildNewsRightColumn()),
-                  ],
+          articles.when(
+            loading: _buildNewsSkeleton,
+            error: (_, _) => _buildNotice(
+              icon: IconsaxPlusLinear.wifi_square,
+              title: _t('News could not be loaded', 'לא ניתן לטעון את החדשות'),
+              body: _t('Check your connection and try again.', 'בדקו את החיבור לאינטרנט ונסו שוב.'),
+              actionLabel: _t('Try again', 'נסו שוב'),
+              onAction: () => ref.invalidate(publishedArticlesProvider),
+            ),
+            data: (all) {
+              if (all.isEmpty) {
+                return _buildNotice(
+                  icon: IconsaxPlusLinear.note,
+                  title: _t('No articles published yet', 'עדיין לא פורסמו כתבות'),
+                  body: _t('New stories will appear here as they are published.', 'כתבות חדשות יופיעו כאן עם פרסומן.'),
                 );
               }
-              return Column(
-                children: [
-                  _buildNewsLeftColumn(),
-                  const SizedBox(height: 24),
-                  _buildNewsRightColumn(),
-                ],
+              final latest = _newest(all, 7);
+              final lead = latest.take(3).toList();
+              final rest = latest.skip(3).toList();
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth > 1100) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _buildNewsLeftColumn(lead)),
+                        if (rest.isNotEmpty) ...[
+                          const SizedBox(width: 26),
+                          Expanded(child: _buildNewsRightColumn(rest)),
+                        ],
+                      ],
+                    );
+                  }
+                  return Column(
+                    children: [
+                      _buildNewsLeftColumn(lead),
+                      if (rest.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        _buildNewsRightColumn(rest),
+                      ],
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -475,69 +544,57 @@ class _WebHomeContentState extends State<WebHomeContent> {
     );
   }
 
-  Widget _buildNewsLeftColumn() {
-    final articles = [
-      (_t('Examples of costly mistakes in private construction that a good inspector can prevent',
-          'דוגמאות לטעויות יקרות בבנייה פרטית שמפקח טוב יכול למנוע'),
-       _t('Yaki Adir, one of the leading construction inspectors in Israel with over 30 years of experience, notes that in private construction projects there are thousands of decisions to be made.',
-          'יקי אדיר, אחד ממפקחי הבנייה המובילים בישראל עם למעלה מ-30 שנות ניסיון, מציין שבפרויקטים של בנייה פרטית יש אלפי החלטות לקבל.'),
-       _t('August 9, 2026 | 1:31 p.m.', '9 באוגוסט 2026 | 13:31')),
-      (_t('Torah wisdom meets community care in this week\'s parsha',
-          'חוכמת התורה פוגשת את הדאגה הקהילתית בפרשת השבוע'),
-       _t('In this week\'s Torah, there are several verses that command us to care for and be attentive to our surroundings.',
-          'בפרשת התורה השבוע, ישנם מספר פסוקים המצווים אותנו לדאוג ולהיות קשובים לסביבה שלנו.'),
-       _t('August 7, 2026 | 9:36 am', '7 באוגוסט 2026 | 9:36')),
-      (_t('The 2026 Israel Capoeira Championship was held in Modiin',
-          'אליפות ישראל בקפוארה 2026 התקיימה במודיעין'),
-       _t('Our city became a pilgrimage center for fans of Brazilian rhythm and energy this weekend.',
-          'העיר שלנו הפכה למוקד עלייה לרגל לחובבי הקצב והאנרגיה הברזילאית בסוף השבוע.'),
-       _t('August 5, 2026 | 4:38 p.m.', '5 באוגוסט 2026 | 16:38')),
-    ];
-
+  Widget _buildNewsLeftColumn(List<Article> articles) {
     return Column(
       children: articles.map((article) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: const Color(0xFFE7E7E7)),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(article.$1, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 22, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F), height: 1.22),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 14),
-                      Text(article.$2, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A), height: 1.4),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          const Icon(IconsaxPlusLinear.calendar_1, size: 16, color: Color(0xFF6D6D6D)),
-                          const SizedBox(width: 9),
-                          Text(article.$3, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
+          child: _HoverTap(
+            onTap: () => context.push('/article/${article.id}'),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFE7E7E7)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _articleText(article.title,
+                            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 22, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F), height: 1.22)),
+                        if ((article.excerpt ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          _articleText(article.excerpt!,
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A), height: 1.4)),
                         ],
-                      ),
-                    ],
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            const Icon(IconsaxPlusLinear.calendar_1, size: 16, color: Color(0xFF6D6D6D)),
+                            const SizedBox(width: 9),
+                            Text(_dateLine(article.publishedAt), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 21),
-                Container(
-                  width: 200,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFE0E8F0), Color(0xFFC8D4E0)]),
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 21),
+                  NetworkPhoto(
+                    url: article.imageUrl,
+                    width: 200,
+                    height: 140,
+                    radius: BorderRadius.circular(12),
+                    gradient: const [Color(0xFFE0E8F0), Color(0xFFC8D4E0)],
+                    icon: IconsaxPlusLinear.image,
+                    iconSize: 32,
+                    iconColor: const Color(0xFF9AA0A6),
                   ),
-                  child: const Center(child: Icon(IconsaxPlusLinear.image, size: 32, color: Color(0xFF9AA0A6))),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -545,30 +602,7 @@ class _WebHomeContentState extends State<WebHomeContent> {
     );
   }
 
-  Widget _buildNewsRightColumn() {
-    final articles = [
-      (_t('An end to cycle worries: Modiin is moving to a new efficient recycling model',
-          'סוף לדאגות המיחזור: מודיעין עוברת למודל מיחזור יעיל חדש'),
-       _t('The Municipality is taking a new step and upgrading the city\'s paper recycling system.',
-          'העירייה עושה צעד חדש ומשדרגת את מערכת מיחזור הנייר בעיר.'),
-       _t('August 5, 2026', '5 באוגוסט 2026')),
-      (_t('Good news: A thorough cleaning of the city center is beginning',
-          'בשורה טובה: מתחיל ניקיון יסודי של מרכז העיר'),
-       _t('The municipality is launching a large-scale campaign to upgrade the cleanliness.',
-          'העירייה משיקה מבצע רחב היקף לשדרוג הניקיון.'),
-       _t('August 5, 2026', '5 באוגוסט 2026')),
-      (_t('Modiin\'s 30th Anniversary Celebrations Are Underway',
-          'חגיגות 30 למודיעין בעיצומן'),
-       _t('This is going to be the hottest and most festive week of the summer.',
-          'זה הולך להיות השבוע הכי חם וחגיגי של הקיץ.'),
-       _t('July 29, 2026', '29 ביולי 2026')),
-      (_t('"We don\'t give up on them": A month of chills at Bnei Akiva',
-          '"אנחנו לא מוותרים עליהם": חודש של צמרמורת בבני עקיבא'),
-       _t('The members of the "Ra\'am" branch in Modi\'in decided not to give in memory of eight fallen graduates.',
-          'חברי סניף "רעם" במודיעין החליטו לא לוותר לזכר שמונה בוגרים שנפלו.'),
-       _t('July 29, 2026', '29 ביולי 2026')),
-    ];
-
+  Widget _buildNewsRightColumn(List<Article> articles) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       decoration: BoxDecoration(
@@ -579,49 +613,175 @@ class _WebHomeContentState extends State<WebHomeContent> {
       child: Column(
         children: List.generate(articles.length, (i) {
           final article = articles[i];
-          return Container(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            decoration: BoxDecoration(
-              border: i < articles.length - 1
-                  ? const Border(bottom: BorderSide(color: Color(0xFFE7E7E7)))
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(article.$1, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F), height: 1.3),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 8),
-                      Text(article.$2, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A), height: 1.4),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(IconsaxPlusLinear.calendar_1, size: 14, color: Color(0xFF6D6D6D)),
-                          const SizedBox(width: 8),
-                          Text(article.$3, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: const Color(0xFF6D6D6D))),
+          return _HoverTap(
+            onTap: () => context.push('/article/${article.id}'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              decoration: BoxDecoration(
+                border: i < articles.length - 1
+                    ? const Border(bottom: BorderSide(color: Color(0xFFE7E7E7)))
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _articleText(article.title,
+                            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF1F1F1F), height: 1.3)),
+                        if ((article.excerpt ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _articleText(article.excerpt!, maxLines: 1,
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A), height: 1.4)),
                         ],
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Icon(IconsaxPlusLinear.calendar_1, size: 14, color: Color(0xFF6D6D6D)),
+                            const SizedBox(width: 8),
+                            Text(_dateLine(article.publishedAt), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: const Color(0xFF6D6D6D))),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 21),
-                Container(
-                  width: 160,
-                  height: 105,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFE0E8F0), Color(0xFFC8D4E0)]),
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 21),
+                  NetworkPhoto(
+                    url: article.imageUrl,
+                    width: 160,
+                    height: 105,
+                    radius: BorderRadius.circular(12),
+                    gradient: const [Color(0xFFE0E8F0), Color(0xFFC8D4E0)],
+                    icon: IconsaxPlusLinear.image,
+                    iconSize: 24,
+                    iconColor: const Color(0xFF9AA0A6),
                   ),
-                  child: const Center(child: Icon(IconsaxPlusLinear.image, size: 24, color: Color(0xFF9AA0A6))),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }),
+      ),
+    );
+  }
+
+  /// Every article is published in Hebrew, whichever way the page toggle is
+  /// set, so its text lays out RTL even while the chrome is in English.
+  Widget _articleText(String value, {required TextStyle style, int maxLines = 2}) {
+    return Text(
+      value,
+      style: style,
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.right,
+      maxLines: maxLines,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  /// Placeholders at the geometry of the rows above, so the section does not
+  /// jump when the articles land.
+  Widget _buildNewsSkeleton() {
+    Widget row({required double imageWidth, required double imageHeight}) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFE7E7E7)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Skeleton(
+          child: Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLine(width: 240, fontSize: 22),
+                    SizedBox(height: 14),
+                    SkeletonLine(width: 180),
+                    SizedBox(height: 14),
+                    SkeletonLine(width: 120),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 21),
+              SkeletonBox(width: imageWidth, height: imageHeight, radius: 12),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final left = Column(
+          children: [for (var i = 0; i < 3; i++) row(imageWidth: 200, imageHeight: 140)],
+        );
+        final right = Column(
+          children: [for (var i = 0; i < 4; i++) row(imageWidth: 160, imageHeight: 105)],
+        );
+        if (constraints.maxWidth > 1100) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: left),
+              const SizedBox(width: 26),
+              Expanded(child: right),
+            ],
+          );
+        }
+        return Column(children: [left, const SizedBox(height: 24), right]);
+      },
+    );
+  }
+
+  /// The box a section shows in place of its content when the table is empty
+  /// or the request failed.
+  Widget _buildNotice({
+    required IconData icon,
+    required String title,
+    required String body,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 64, horizontal: 24),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 44, color: const Color(0xFF5F5E5A).withValues(alpha: 0.5)),
+          const SizedBox(height: 16),
+          Text(title, textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy)),
+          const SizedBox(height: 8),
+          Text(body, textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 24),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onAction,
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.midBlue,
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Text(actionLabel,
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -652,6 +812,8 @@ class _WebHomeContentState extends State<WebHomeContent> {
               );
             }
             return Column(
+              // Stretch, so the map below the sidebar has a width to fill.
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildMapSidebar(),
                 const SizedBox(height: 24),
@@ -673,25 +835,36 @@ class _WebHomeContentState extends State<WebHomeContent> {
         Text(_t('Discover businesses, events and places around the city.', 'גלו עסקים, אירועים ומקומות ברחבי העיר.'),
             style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
         const SizedBox(height: 32),
-        _MapToggle(label: _t('Businesses', 'עסקים'), icon: IconsaxPlusLinear.shop, color: const Color(0xFF006BF6)),
-        _MapToggle(label: _t('Events', 'אירועים'), icon: IconsaxPlusLinear.calendar, color: const Color(0xFF9032E1)),
-        _MapToggle(label: _t('Real Estate', 'נדל"ן'), icon: IconsaxPlusLinear.house_2, color: const Color(0xFF31AC4E), isLast: true),
+        for (final layer in mapLayers)
+          _MapToggle(
+            label: _layerLabel(layer.$1),
+            icon: layer.$2,
+            color: layer.$3,
+            isOn: _activeLayers.contains(layer.$1),
+            isLast: layer == mapLayers.last,
+            onTap: () => setState(() {
+              if (!_activeLayers.remove(layer.$1)) _activeLayers.add(layer.$1);
+            }),
+          ),
         const SizedBox(height: 32),
-        GestureDetector(
-          onTap: () => context.go('/map'),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.midBlue,
-              borderRadius: BorderRadius.circular(60),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(_t('Open Map', 'פתח מפה'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
-                const SizedBox(width: 8),
-                Icon(_isHebrew ? Icons.arrow_back : Icons.arrow_forward, size: 18, color: Colors.white),
-              ],
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => context.go('/map'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.midBlue,
+                borderRadius: BorderRadius.circular(60),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_t('Open Map', 'פתח מפה'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                  const SizedBox(width: 8),
+                  Icon(_isHebrew ? Icons.arrow_back : Icons.arrow_forward, size: 18, color: Colors.white),
+                ],
+              ),
             ),
           ),
         ),
@@ -699,91 +872,111 @@ class _WebHomeContentState extends State<WebHomeContent> {
     );
   }
 
+  /// The layer names in [mapLayers] are the ones the map page uses in code;
+  /// these are how they read on screen.
+  String _layerLabel(String layer) => switch (layer) {
+    'Businesses' => _t('Businesses', 'עסקים'),
+    'Events' => _t('Events', 'אירועים'),
+    _ => _t('Real Estate', 'נדל"ן'),
+  };
+
+  /// The map, at the pins the map page shows.
+  ///
+  /// This was a green gradient with ten white dots at hardcoded pixel offsets
+  /// and the words "Interactive Map" in the middle of it — no tiles, no
+  /// places, nothing to click. It reads [mapPoisProvider] now, the same source
+  /// the map page uses, so a pin is a business or an event that exists and
+  /// opens its own page.
   Widget _buildMapPreview() {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 400),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFD4E4D8), Color(0xFFA8C4B0), Color(0xFFC8D8C0), Color(0xFFB0C8B8)],
-        ),
+    final pois = ref.watch(mapPoisProvider);
+    return SizedBox(
+      height: 400,
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Stack(
-        children: [
-          // Map pins
-          ..._mapPins.map((pin) => Positioned(
-                top: pin.top,
-                left: pin.left,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))],
-                  ),
-                  child: Center(
-                    child: Container(width: 16, height: 16, decoration: BoxDecoration(color: pin.color, shape: BoxShape.circle)),
-                  ),
-                ),
-              )),
-          // Center label
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(_t('Interactive Map', 'מפה אינטראקטיבית'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
-            ),
+        child: pois.when(
+          loading: () => const Skeleton(child: SkeletonBox(height: 400, radius: 16)),
+          error: (_, _) => _buildNotice(
+            icon: IconsaxPlusLinear.wifi_square,
+            title: _t('The map could not be loaded', 'לא ניתן לטעון את המפה'),
+            body: _t('Check your connection and try again.', 'בדקו את החיבור לאינטרנט ונסו שוב.'),
+            actionLabel: _t('Try again', 'נסו שוב'),
+            onAction: () => ref.invalidate(mapPoisProvider),
           ),
-        ],
+          data: (all) {
+            final visible = all.where((p) => _activeLayers.contains(p.layer)).toList();
+            return FlutterMap(
+              options: MapOptions(
+                initialCenter: modiinCenter,
+                initialZoom: 13,
+                backgroundColor: const Color(0xFFF9F5ED),
+                // A preview, not the map itself: the page keeps scrolling
+                // under the pointer, and a tap opens the full map.
+                interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+                onTap: (_, _) => context.go('/map'),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.modiin4u.app',
+                  maxZoom: 19,
+                ),
+                MarkerLayer(
+                  markers: [
+                    for (final poi in visible)
+                      Marker(
+                        point: poi.position,
+                        width: 32,
+                        height: 32,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => context.push(poi.route ?? '/map'),
+                            child: Tooltip(
+                              message: poi.name,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))],
+                                ),
+                                child: Center(
+                                  child: Container(width: 16, height: 16, decoration: BoxDecoration(color: poi.color, shape: BoxShape.circle)),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  static final _mapPins = [
-    _MapPin(top: 60, left: 80, color: const Color(0xFF006BF6)),
-    _MapPin(top: 120, left: 200, color: const Color(0xFF006BF6)),
-    _MapPin(top: 50, left: 320, color: const Color(0xFF9032E1)),
-    _MapPin(top: 160, left: 400, color: const Color(0xFF9032E1)),
-    _MapPin(top: 240, left: 120, color: const Color(0xFF9032E1)),
-    _MapPin(top: 180, left: 350, color: const Color(0xFF31AC4E)),
-    _MapPin(top: 100, left: 480, color: const Color(0xFF31AC4E)),
-    _MapPin(top: 280, left: 260, color: const Color(0xFF31AC4E)),
-    _MapPin(top: 40, left: 150, color: const Color(0xFF006BF6)),
-    _MapPin(top: 300, left: 500, color: const Color(0xFF9032E1)),
-  ];
-
   // ─────────────────────────────────────────────
-  // AI PICKS — business cards
+  // BUSINESSES — cards from the directory
   // ─────────────────────────────────────────────
-  Widget _buildAiPicksSection() {
+  /// This section was headed "AI Picks · Recommended for You" over four
+  /// invented cafés: Premium Noga Café, 4.8 from 128 reviews with 187 views;
+  /// Olive & Fire, 4.8 from 254 with 428 views; Anaba Lounge and Sea & Spice
+  /// besides. Each card opened `/business/demo`, an id that matches no row,
+  /// and each carried a coloured dot saying it was open or closed.
+  ///
+  /// Nothing here recommends anything — there is no recommender, and not one
+  /// business in the table is flagged featured or recommended — so the badge
+  /// and the heading are gone and the row says what it is: businesses from
+  /// the directory, read through [businessesProvider].
+  Widget _buildBusinessesSection() {
+    final businesses = ref.watch(businessesProvider);
     return _SectionWrapper(
       padding: const EdgeInsets.only(bottom: 56),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // AI Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.turquoise.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(IconsaxPlusBold.magic_star, size: 20, color: AppColors.midBlue),
-                const SizedBox(width: 8),
-                Text(_t('AI Picks', 'המלצות AI'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
           // Header
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -792,9 +985,9 @@ class _WebHomeContentState extends State<WebHomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_t('Recommended for You', 'מומלץ עבורך'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
+                    Text(_t('Businesses in Modiin', 'עסקים במודיעין'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
                     const SizedBox(height: 10),
-                    Text(_t('Discover places, services and activities based on what matters to you.', 'גלו מקומות, שירותים ופעילויות על פי מה שחשוב לכם.'),
+                    Text(_t('Places, services and shops listed across the city.', 'מקומות, שירותים וחנויות מכל רחבי העיר.'),
                         style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
                   ],
                 ),
@@ -803,19 +996,38 @@ class _WebHomeContentState extends State<WebHomeContent> {
             ],
           ),
           const SizedBox(height: 24),
-          // Cards grid
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final cols = constraints.maxWidth > 1200 ? 4 : (constraints.maxWidth > 800 ? 2 : 1);
-              final gap = 24.0;
-              final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: _businessesLocalized.map((b) => SizedBox(
-                  width: cardWidth,
-                  child: _BusinessCard(data: b, onTap: () => context.push('/business/demo'), isHebrew: _isHebrew),
-                )).toList(),
+          businesses.when(
+            loading: () => _buildBusinessSkeleton(),
+            error: (_, _) => _buildNotice(
+              icon: IconsaxPlusLinear.wifi_square,
+              title: _t('Businesses could not be loaded', 'לא ניתן לטעון את העסקים'),
+              body: _t('Check your connection and try again.', 'בדקו את החיבור לאינטרנט ונסו שוב.'),
+              actionLabel: _t('Try again', 'נסו שוב'),
+              onAction: () => ref.invalidate(businessesProvider),
+            ),
+            data: (list) {
+              if (list.isEmpty) {
+                return _buildNotice(
+                  icon: IconsaxPlusLinear.shop,
+                  title: _t('No businesses listed yet', 'עדיין לא נרשמו עסקים'),
+                  body: _t('Businesses will appear here as they are approved.', 'עסקים יופיעו כאן עם אישורם.'),
+                );
+              }
+              final shown = list.take(4).toList();
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = constraints.maxWidth > 1200 ? 4 : (constraints.maxWidth > 800 ? 2 : 1);
+                  const gap = 24.0;
+                  final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: shown.map((b) => SizedBox(
+                      width: cardWidth,
+                      child: _BusinessCard(business: b, isHebrew: _isHebrew),
+                    )).toList(),
+                  );
+                },
               );
             },
           ),
@@ -824,81 +1036,151 @@ class _WebHomeContentState extends State<WebHomeContent> {
     );
   }
 
-  List<_BizData> get _businessesLocalized => [
-    _BizData(name: _t('Premium Noga Café', 'קפה נוגה פרימיום'), type: _t('Cafe', 'בית קפה'), address: _t('14 Yehuda St, Modi\'in', 'רח׳ יהודה 14, מודיעין'), rating: 4.8, reviews: 128, views: 187,
-        badge: _t('Breakfast in Modiin', 'ארוחת בוקר במודיעין'), gradient: [const Color(0xFF8B6914), const Color(0xFFC49B2C)], statusColor: const Color(0xFF006BF6)),
-    _BizData(name: _t('Olive & Fire', 'זית ואש'), type: _t('Restaurant', 'מסעדה'), address: _t('HaMaccabim, Modi\'in', 'המכבים, מודיעין'), rating: 4.8, reviews: 254, views: 428,
-        badge: _t('Israeli Dining', 'מטבח ישראלי'), gradient: [const Color(0xFF2D6A4F), const Color(0xFF40916C)], statusColor: const Color(0xFF31AC4E)),
-    _BizData(name: _t('Anaba Lounge', 'ענבה לאונג׳'), type: _t('Cocktail Bar', 'בר קוקטיילים'), address: _t('14 Yehuda St, Modi\'in', 'רח׳ יהודה 14, מודיעין'), rating: 4.5, reviews: 128, views: 187,
-        badge: _t('Mediterranean', 'ים תיכוני'), gradient: [const Color(0xFF6B1D2A), const Color(0xFF9B2335)], statusColor: const Color(0xFFCC0001)),
-    _BizData(name: _t('Sea & Spice', 'ים ותבלין'), type: _t('Restaurant', 'מסעדה'), address: _t('21 Sderot, Modi\'in', 'שדרות 21, מודיעין'), rating: 4.5, reviews: 254, views: 428,
-        badge: _t('Mediterranean', 'ים תיכוני'), gradient: [const Color(0xFF1A4B6E), const Color(0xFF2980B9)], statusColor: const Color(0xFF31AC4E)),
-  ];
+  Widget _buildBusinessSkeleton() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = constraints.maxWidth > 1200 ? 4 : (constraints.maxWidth > 800 ? 2 : 1);
+        const gap = 24.0;
+        final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+        return Skeleton(
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: List.generate(cols, (_) {
+              return SizedBox(
+                width: cardWidth,
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(height: 200, radius: 12),
+                    SizedBox(height: 20),
+                    SkeletonLine(width: 180, fontSize: 20),
+                    SizedBox(height: 10),
+                    SkeletonLine(width: 120),
+                    SizedBox(height: 18),
+                    SkeletonLine(width: 200),
+                    SizedBox(height: 18),
+                    SkeletonLine(width: 100),
+                  ],
+                ),
+              );
+            }),
+          ),
+        );
+      },
+    );
+  }
 
   // ─────────────────────────────────────────────
   // PROFESSIONALS
   // ─────────────────────────────────────────────
+  /// Six people were written into this section — Eldad Nona the refrigerator
+  /// technician, Omer Levi the electrician, Avi Cohen, Yossi Azulay, Daniel
+  /// Mizrahi and Noam Ben-David — with emoji for faces and "Call Now" buttons
+  /// that were plain Containers with no number behind them. Above them sat
+  /// six filter pills naming trades that are not categories in the database,
+  /// with the first drawn permanently selected and none of them tappable.
+  ///
+  /// There is no `professionals` table, and no source for one. What the nav
+  /// means by a professional is a business filed under Services, so the row
+  /// shows those, with the business's own telephone number on the button.
+  /// The section hides itself, heading and all, when that category is empty.
   Widget _buildProfessionalsSection() {
+    final categories = ref.watch(businessCategoriesProvider);
+    if (categories.isLoading) {
+      return _buildProfessionalsFrame(child: _buildProfessionalsSkeleton());
+    }
+    final services =
+        (categories.valueOrNull ?? const []).where((c) => c.slug == 'services').toList();
+    if (services.isEmpty) return const SizedBox.shrink();
+
+    final businesses = ref.watch(businessesByCategoryProvider(services.first.id));
+    return businesses.when(
+      loading: () => _buildProfessionalsFrame(child: _buildProfessionalsSkeleton()),
+      error: (_, _) => _buildProfessionalsFrame(
+        child: _buildNotice(
+          icon: IconsaxPlusLinear.wifi_square,
+          title: _t('This list could not be loaded', 'לא ניתן לטעון את הרשימה'),
+          body: _t('Check your connection and try again.', 'בדקו את החיבור לאינטרנט ונסו שוב.'),
+          actionLabel: _t('Try again', 'נסו שוב'),
+          onAction: () => ref.invalidate(businessesByCategoryProvider(services.first.id)),
+        ),
+      ),
+      data: (list) {
+        // Nothing to show means no heading either, rather than a title over
+        // an empty strip.
+        if (list.isEmpty) return const SizedBox.shrink();
+        final shown = list.take(6).toList();
+        return _buildProfessionalsFrame(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cols = constraints.maxWidth > 1200 ? 6 : (constraints.maxWidth > 800 ? 3 : 2);
+              const gap = 16.0;
+              final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: shown.map((b) => SizedBox(
+                  width: cardWidth,
+                  child: _ProfessionalCard(business: b, isHebrew: _isHebrew),
+                )).toList(),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  /// The heading and copy the professionals row sits under.
+  Widget _buildProfessionalsFrame({required Widget child}) {
     return _SectionWrapper(
       padding: const EdgeInsets.only(bottom: 56),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Text(_t('Find a Professional in Modiin', 'מצאו בעל מקצוע במודיעין'), style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.midBlue)),
           const SizedBox(height: 10),
-          Text(_t('Connect with trusted local professionals for your home, business and everyday needs.', 'התחברו עם בעלי מקצוע מקומיים אמינים לבית, לעסק ולצרכים היומיומיים.'),
+          Text(_t('Connect with local professionals for your home, business and everyday needs.', 'התחברו עם בעלי מקצוע מקומיים לבית, לעסק ולצרכים היומיומיים.'),
               style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
           const SizedBox(height: 24),
-          // Filter pills
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _proFiltersLocalized.asMap().entries.map((e) {
-              final isActive = e.key == 0;
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.midBlue : Colors.transparent,
-                  border: Border.all(color: isActive ? AppColors.midBlue : const Color(0xFF6D6D6D)),
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Text(e.value, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: isActive ? Colors.white : const Color(0xFF6D6D6D))),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-          // Professional cards
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final cols = constraints.maxWidth > 1200 ? 6 : (constraints.maxWidth > 800 ? 3 : 2);
-              final gap = 16.0;
-              final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: _professionalsLocalized.map((p) => SizedBox(
-                  width: cardWidth,
-                  child: _ProfessionalCard(data: p, isHebrew: _isHebrew),
-                )).toList(),
-              );
-            },
-          ),
+          child,
         ],
       ),
     );
   }
 
-  List<String> get _proFiltersLocalized => [_t('All', 'הכל'), _t('Refrigerator Technician', 'טכנאי מקררים'), _t('Plumber', 'שרברב'), _t('Electrician', 'חשמלאי'), _t('Cleaning', 'ניקיון'), _t('Handyman', 'הנדימן')];
-
-  List<_ProData> get _professionalsLocalized => [
-    _ProData(name: _t('Eldad Nona', 'אלדד נונא'), role: _t('Refrigerator Technician', 'טכנאי מקררים'), emoji: '🧊'),
-    _ProData(name: _t('Omer Levi', 'עומר לוי'), role: _t('Electrician', 'חשמלאי'), emoji: '⚡'),
-    _ProData(name: _t('Avi Cohen', 'אבי כהן'), role: _t('AC Technician', 'טכנאי מזגנים'), emoji: '❄️'),
-    _ProData(name: _t('Yossi Azulay', 'יוסי אזולאי'), role: _t('Handyman', 'הנדימן'), emoji: '🔧', filled: true),
-    _ProData(name: _t('Daniel Mizrahi', 'דניאל מזרחי'), role: _t('Handyman', 'הנדימן'), emoji: '🔧'),
-    _ProData(name: _t('Noam Ben-David', 'נועם בן-דוד'), role: _t('Cleaning', 'ניקיון'), emoji: '🧹'),
-  ];
+  Widget _buildProfessionalsSkeleton() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = constraints.maxWidth > 1200 ? 6 : (constraints.maxWidth > 800 ? 3 : 2);
+        const gap = 16.0;
+        final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+        return Skeleton(
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: List.generate(cols, (_) {
+              return SizedBox(
+                width: cardWidth,
+                child: const Column(
+                  children: [
+                    SkeletonCircle(size: 120),
+                    SizedBox(height: 18),
+                    SkeletonLine(width: 110, fontSize: 20),
+                    SizedBox(height: 10),
+                    SkeletonLine(width: 80),
+                    SizedBox(height: 34),
+                    SkeletonBox(height: 34, radius: 60),
+                  ],
+                ),
+              );
+            }),
+          ),
+        );
+      },
+    );
+  }
 
   // ─────────────────────────────────────────────
   // FOOTER
@@ -928,9 +1210,8 @@ class _SectionWrapper extends StatelessWidget {
 
 class _NavLink extends StatefulWidget {
   final String label;
-  final bool hasDropdown;
   final VoidCallback onTap;
-  const _NavLink({required this.label, required this.hasDropdown, required this.onTap});
+  const _NavLink({required this.label, required this.onTap});
 
   @override
   State<_NavLink> createState() => _NavLinkState();
@@ -956,10 +1237,6 @@ class _NavLinkState extends State<_NavLink> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(widget.label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 15, fontWeight: FontWeight.w500, color: const Color(0xFF0F161E))),
-              if (widget.hasDropdown) ...[
-                const SizedBox(width: 4),
-                const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF21272A)),
-              ],
             ],
           ),
         ),
@@ -996,67 +1273,89 @@ class _ViewAllButton extends StatelessWidget {
   }
 }
 
+/// One layer row beside the map preview.
+///
+/// The switch was drawn permanently blue and on, and the row had no handler:
+/// it looked like a control and was a picture of one. It reports [isOn] and
+/// calls [onTap] now.
 class _MapToggle extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
+  final bool isOn;
   final bool isLast;
-  const _MapToggle({required this.label, required this.icon, required this.color, this.isLast = false});
+  final VoidCallback onTap;
+  const _MapToggle({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.isOn,
+    required this.onTap,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        border: isLast ? null : const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 24, color: color),
-          const SizedBox(width: 16),
-          Expanded(child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F)))),
-          Container(
-            width: 44,
-            height: 24,
-            decoration: BoxDecoration(
-              color: AppColors.midBlue,
-              borderRadius: BorderRadius.circular(50),
-            ),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                width: 20,
-                height: 20,
-                margin: const EdgeInsets.only(right: 2),
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              ),
-            ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            border: isLast ? null : const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
           ),
-        ],
+          child: Row(
+            children: [
+              Icon(icon, size: 24, color: isOn ? color : const Color(0xFF9AA0A6)),
+              const SizedBox(width: 16),
+              Expanded(child: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F)))),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 44,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: isOn ? AppColors.midBlue : const Color(0xFFD5D7DB),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Align(
+                  alignment: isOn ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
 // ── Business card ──
-class _BizData {
-  final String name, type, address, badge;
-  final double rating;
-  final int reviews, views;
-  final List<Color> gradient;
-  final Color statusColor;
-  const _BizData({
-    required this.name, required this.type, required this.address,
-    required this.rating, required this.reviews, required this.views,
-    required this.badge, required this.gradient, required this.statusColor,
-  });
-}
-
+/// One business from the directory.
+///
+/// It took a `_BizData` of pre-written strings — name, type, address, rating,
+/// review count, view count, a badge and a status colour — which is how four
+/// invented cafés came to be hardcoded above it. It takes the row now, and
+/// only prints what the row carries:
+///
+/// * the rating, where reviews have earned one. Every business in the table
+///   has `review_count` 0, so a gold star beside "0.0 (0)" would have read as
+///   a bad score rather than as no score.
+/// * no view count at all: `businesses` has no such column, so the "187
+///   Views" on every card came from nowhere.
+/// * no open/closed dot: the query does not fetch opening hours, so the app
+///   cannot know, and the dot said "closed" for every shop in the city.
 class _BusinessCard extends StatefulWidget {
-  final _BizData data;
-  final VoidCallback onTap;
+  final Business business;
   final bool isHebrew;
-  const _BusinessCard({required this.data, required this.onTap, this.isHebrew = false});
+  const _BusinessCard({required this.business, this.isHebrew = false});
 
   @override
   State<_BusinessCard> createState() => _BusinessCardState();
@@ -1065,14 +1364,24 @@ class _BusinessCard extends StatefulWidget {
 class _BusinessCardState extends State<_BusinessCard> {
   bool _hovered = false;
 
+  String _t(String en, String he) => widget.isHebrew ? he : en;
+
   @override
   Widget build(BuildContext context) {
-    final d = widget.data;
+    final b = widget.business;
+    // `businesses` has no category column — categories are linked through
+    // `entity_categories` — so the line under the name is the shop's own
+    // short description where it has one.
+    final subtitle = b.category.isNotEmpty ? b.category : (b.description ?? '');
+    final address = b.address.isNotEmpty ? b.address : b.neighborhood;
+    final phone = b.phone;
+
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: () => context.push('/business/${b.id}'),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
@@ -1089,50 +1398,45 @@ class _BusinessCardState extends State<_BusinessCard> {
             children: [
               // Image
               Stack(
-                clipBehavior: Clip.none,
                 children: [
-                  Container(
+                  NetworkPhoto(
+                    url: b.imageUrl ?? b.logoUrl,
+                    width: double.infinity,
                     height: 200,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: d.gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                    ),
-                    child: Center(child: Icon(IconsaxPlusLinear.image, size: 40, color: Colors.white.withValues(alpha: 0.4))),
+                    radius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    icon: IconsaxPlusLinear.shop,
+                    iconSize: 40,
                   ),
-                  // Favorite
-                  Positioned(
-                    top: 12, left: 12,
-                    child: Container(
-                      width: 40, height: 40,
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                      child: const Center(child: Icon(IconsaxPlusLinear.heart, size: 20, color: AppColors.midBlue)),
-                    ),
-                  ),
-                  // Badge
-                  Positioned(
-                    top: 12, right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      decoration: BoxDecoration(color: const Color(0xFF0033AC), borderRadius: BorderRadius.circular(50)),
-                      child: Text(d.badge, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
+                  // Favourite — the heart was a white circle with nothing
+                  // behind the tap.
+                  PositionedDirectional(
+                    top: 12, start: 12,
+                    child: FavoriteButton(
+                      kind: FavoriteKind.business,
+                      id: b.id,
+                      size: 40,
+                      iconSize: 20,
                     ),
                   ),
-                  // Status dot
-                  Positioned(
-                    bottom: -20, right: 17,
-                    child: Container(
-                      width: 40, height: 40,
-                      decoration: BoxDecoration(
-                        color: d.statusColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: Icon(
-                        d.statusColor == const Color(0xFF31AC4E) ? Icons.check : (d.statusColor == const Color(0xFFCC0001) ? Icons.close : IconsaxPlusLinear.shop),
-                        size: 18, color: Colors.white,
+                  // The badge read "Breakfast in Modiin" and the like on every
+                  // card. The kosher certification is a real column, so that
+                  // is what the badge says where a business carries one.
+                  if (b.kosherLabel != null)
+                    PositionedDirectional(
+                      top: 12, end: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(color: const Color(0xFF0033AC), borderRadius: BorderRadius.circular(50)),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(IconsaxPlusBold.verify, size: 14, color: Colors.white),
+                            const SizedBox(width: 6),
+                            Text(b.kosherLabel!, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
               // Body
@@ -1141,53 +1445,61 @@ class _BusinessCardState extends State<_BusinessCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
-                    Text(d.name, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
-                    const SizedBox(height: 4),
-                    Text(d.type, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
-                    const SizedBox(height: 16),
-                    // Address
-                    Row(
-                      children: [
-                        const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(d.address, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A)), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Rating + views
-                    Row(
-                      children: [
-                        const Icon(IconsaxPlusBold.star_1, size: 16, color: Color(0xFFFFC107)),
-                        const SizedBox(width: 8),
-                        Text('${d.rating}', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
-                        const SizedBox(width: 4),
-                        Text('(${d.reviews})', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
-                        const SizedBox(width: 40),
-                        const Icon(IconsaxPlusLinear.eye, size: 16, color: Color(0xFF6D6D6D)),
-                        const SizedBox(width: 8),
-                        Text('${d.views}', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
-                        const SizedBox(width: 4),
-                        Text(widget.isHebrew ? 'צפיות' : 'Views', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Contact button
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.midBlue),
-                        borderRadius: BorderRadius.circular(60),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    Text(b.name, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(subtitle, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A)), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    ],
+                    if (address.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Row(
                         children: [
-                          const Icon(IconsaxPlusLinear.call, size: 16, color: AppColors.midBlue),
+                          const Icon(IconsaxPlusBold.location, size: 16, color: AppColors.turquoise),
                           const SizedBox(width: 8),
-                          Text(widget.isHebrew ? 'צור קשר' : 'Contact', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                          Expanded(child: Text(address, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A)), maxLines: 1, overflow: TextOverflow.ellipsis)),
                         ],
                       ),
-                    ),
+                    ],
+                    const SizedBox(height: 16),
+                    if (b.reviewCount == 0)
+                      Text(_t('Not rated yet', 'אין דירוג עדיין'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D)))
+                    else
+                      Row(
+                        children: [
+                          const Icon(IconsaxPlusBold.star_1, size: 16, color: Color(0xFFFFC107)),
+                          const SizedBox(width: 8),
+                          Text(b.rating.toStringAsFixed(1), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF1F1F1F))),
+                          const SizedBox(width: 4),
+                          Text('(${b.reviewCount})', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
+                        ],
+                      ),
+                    // The "Contact" button was a Container. It dials the
+                    // shop's own number now, and is absent where the row
+                    // carries none.
+                    if (phone != null && phone.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () => launchUrl(Uri(scheme: 'tel', path: phone)),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.midBlue),
+                              borderRadius: BorderRadius.circular(60),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(IconsaxPlusLinear.call, size: 16, color: AppColors.midBlue),
+                                const SizedBox(width: 8),
+                                Text(_t('Contact', 'צור קשר'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1200,16 +1512,16 @@ class _BusinessCardState extends State<_BusinessCard> {
 }
 
 // ── Professional card ──
-class _ProData {
-  final String name, role, emoji;
-  final bool filled;
-  const _ProData({required this.name, required this.role, required this.emoji, this.filled = false});
-}
-
+/// One business filed under Services.
+///
+/// It took a `_ProData` of a name, a trade and an emoji, which is how six
+/// invented tradesmen came to be hardcoded above it, one of them arbitrarily
+/// drawn with a filled button. It takes the row now: the business's own
+/// photograph, its own description, and its own number behind Call Now.
 class _ProfessionalCard extends StatefulWidget {
-  final _ProData data;
+  final Business business;
   final bool isHebrew;
-  const _ProfessionalCard({required this.data, this.isHebrew = false});
+  const _ProfessionalCard({required this.business, this.isHebrew = false});
 
   @override
   State<_ProfessionalCard> createState() => _ProfessionalCardState();
@@ -1218,74 +1530,117 @@ class _ProfessionalCard extends StatefulWidget {
 class _ProfessionalCardState extends State<_ProfessionalCard> {
   bool _hovered = false;
 
+  String _t(String en, String he) => widget.isHebrew ? he : en;
+
   @override
   Widget build(BuildContext context) {
-    final d = widget.data;
+    final b = widget.business;
+    final trade = b.category.isNotEmpty ? b.category : (b.description ?? '');
+    final phone = b.phone;
+
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: const Color(0xFFE7E7E7)),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: _hovered
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 4))]
-              : [],
-        ),
-        child: Column(
-          children: [
-            // Avatar
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [const Color(0xFFDDE4EC), const Color(0xFFC0CCD8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      child: GestureDetector(
+        onTap: () => context.push('/business/${b.id}'),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE7E7E7)),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _hovered
+                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 4))]
+                : [],
+          ),
+          child: Column(
+            children: [
+              // Avatar — an emoji sat here for want of a photograph.
+              NetworkPhoto(
+                url: b.logoUrl ?? b.imageUrl,
+                width: 120,
+                height: 120,
+                radius: BorderRadius.circular(60),
+                gradient: const [Color(0xFFDDE4EC), Color(0xFFC0CCD8)],
+                icon: IconsaxPlusLinear.user,
+                iconSize: 44,
+                iconColor: const Color(0xFF6D6D6D),
+              ),
+              const SizedBox(height: 16),
+              Text(b.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy)),
+              if (trade.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(trade, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A))),
+              ],
+              const SizedBox(height: 24),
+              // Call Now, or nothing where the business published no number.
+              if (phone != null && phone.isNotEmpty)
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => launchUrl(Uri(scheme: 'tel', path: phone)),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.midBlue),
+                        borderRadius: BorderRadius.circular(60),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(IconsaxPlusLinear.call, size: 16, color: AppColors.midBlue),
+                          const SizedBox(width: 8),
+                          Text(_t('Call Now', 'התקשר עכשיו'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: Center(child: Text(d.emoji, style: const TextStyle(fontSize: 40))),
-            ),
-            const SizedBox(height: 16),
-            Text(d.name, style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy), textAlign: TextAlign.center),
-            const SizedBox(height: 4),
-            Text(d.role, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF5F5E5A)), textAlign: TextAlign.center),
-            const SizedBox(height: 34),
-            // Call button
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: d.filled ? AppColors.midBlue : Colors.transparent,
-                border: Border.all(color: AppColors.midBlue),
-                borderRadius: BorderRadius.circular(60),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(IconsaxPlusLinear.call, size: 16, color: d.filled ? Colors.white : AppColors.midBlue),
-                  const SizedBox(width: 8),
-                  Text(widget.isHebrew ? 'התקשר עכשיו' : 'Call Now', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: d.filled ? Colors.white : AppColors.midBlue)),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ── Footer helpers ──
-// ── Map pin data ──
-class _MapPin {
-  final double top;
-  final double left;
-  final Color color;
-  const _MapPin({required this.top, required this.left, required this.color});
+/// A card that lifts slightly under the pointer and opens something when
+/// clicked. The news rows had the look of a link and no handler.
+class _HoverTap extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  const _HoverTap({required this.child, required this.onTap});
+
+  @override
+  State<_HoverTap> createState() => _HoverTapState();
 }
+
+class _HoverTapState extends State<_HoverTap> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _hovered ? 1.008 : 1.0,
+          duration: const Duration(milliseconds: 150),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+// The ten `_MapPin`s that used to be listed here — fixed top/left offsets in
+// three colours — were the whole of the map preview. The preview draws the
+// real map now, so the class has gone with them.

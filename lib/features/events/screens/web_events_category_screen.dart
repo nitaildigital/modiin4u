@@ -1,11 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/skeleton.dart';
+import '../../../shared/widgets/web_chrome.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../models/event.dart';
+import '../providers/event_providers.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Events Category — three-panel layout from the Figma
@@ -19,42 +28,57 @@ const _kTextDark = Color(0xFF3D3D3D);
 const _kTextGrey = Color(0xFF6D6D6D);
 const _kSubtitle = Color(0xFF5F5E5A);
 const _kCheckBorder = Color(0xFF7B899A);
-const _kSaveBg = Color(0xFFF2F3F8);
 const _kPinPurple = Color(0xFF9032E1);
 
-class WebEventsCategoryContent extends StatefulWidget {
+/// How the list is ordered. Both options read `start_date`, which is the only
+/// thing on an event that can be ordered.
+enum _Sort { soonest, latest }
+
+/// The three-panel events browser.
+///
+/// The list, the map pins and the sidebar counts were all written into the
+/// source: twelve invented events at invented coordinates, a category filter
+/// offering five categories that no column holds, counts of 157/32/24/45/15 and
+/// 157/117/40, a sort box that was a `Text` with a chevron beside it, and rows
+/// and pins that both opened `/event/demo_$i`.
+///
+/// It reads `events` now. The category filter is gone — an event has no
+/// category — and the price filter counts the rows it is looking at.
+class WebEventsCategoryContent extends ConsumerStatefulWidget {
   const WebEventsCategoryContent({super.key});
 
   @override
-  State<WebEventsCategoryContent> createState() =>
+  ConsumerState<WebEventsCategoryContent> createState() =>
       _WebEventsCategoryContentState();
 }
 
-class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
+class _WebEventsCategoryContentState
+    extends ConsumerState<WebEventsCategoryContent> {
   bool _isHebrew = false;
   final _searchController = TextEditingController();
   final _listController = ScrollController();
   final _mapController = MapController();
+  Timer? _debounce;
 
-  String _query = '';
-  /// Empty ⇒ "All Events". The export ships with Music pre-selected.
-  String _category = 'music';
   String _price = 'all'; // all | free | paid
-  int? _selectedPin;
-  final Set<int> _saved = {};
+  _Sort _sort = _Sort.soonest;
 
+  /// The event the cursor is over, in the list or on the map, so the two
+  /// panels highlight together. It was an index into the invented list.
+  String? _hoveredId;
+
+  /// Modiin city centre — where the map opens before it knows better.
   static const _center = LatLng(31.8928, 35.0104);
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(
-      () => setState(() => _query = _searchController.text.trim()),
-    );
+    _searchController.text = ref.read(eventSearchProvider);
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     _listController.dispose();
     super.dispose();
@@ -62,179 +86,103 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  List<_NavItem> get _navItems => [
-    _NavItem(label: _t('Professionals', 'בעלי מקצוע'), route: '/businesses', hasDropdown: true),
-    _NavItem(label: _t('Modiin News', 'חדשות מודיעין'), route: '/news', hasDropdown: true),
-    _NavItem(label: _t('Events', 'אירועים'), route: '/events', isActive: true),
-    _NavItem(label: _t('Deals', 'מבצעים'), route: '/deals'),
-    _NavItem(label: _t('Real Estate in Modiin', 'נדל"ן במודיעין'), route: '/realestate'),
-    _NavItem(label: _t('Restaurants in Modiin', 'מסעדות במודיעין'), route: '/restaurants'),
-    _NavItem(label: _t('Businesses in Modiin', 'עסקים במודיעין'), route: '/businesses', hasDropdown: true),
-  ];
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      ref.read(eventSearchProvider.notifier).state = value;
+    });
+  }
 
-  // ── Filter definitions (counts come from the export) ──
-  List<_Option> get _categoryOptions => [
-    _Option('all', _t('All Events', 'כל האירועים'), 157),
-    _Option('municipal', _t('Municipal & Community', 'עירוני וקהילתי'), 32),
-    _Option('music', _t('Music', 'מוזיקה'), 24),
-    _Option('kids', _t('Kids & Family', 'ילדים ומשפחה'), 45),
-    _Option('sports', _t('Sports', 'ספורט'), 15),
-  ];
+  // ── Reading a row ──
 
-  List<_Option> get _priceOptions => [
-    _Option('all', _t('All', 'הכל'), 157),
-    _Option('free', _t('Free', 'חינם'), 117),
-    _Option('paid', _t('Paid', 'בתשלום'), 40),
-  ];
+  String _shortMonth(DateTime date) {
+    const en = [
+      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+    ];
+    const he = [
+      'ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יונ׳',
+      'יול׳', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳',
+    ];
+    return (_isHebrew ? he : en)[date.month - 1];
+  }
 
-  String get _categoryLabel =>
-      _categoryOptions.firstWhere((o) => o.key == _category).label;
+  String? _timeRange(Event e) {
+    if (e.isAllDay) return _t('All day', 'כל היום');
+    final start = e.displayTime;
+    if (start == null) return null;
+    final endParts = (e.endTime ?? '').split(':');
+    if (endParts.length < 2) return start;
+    return '$start – ${endParts[0]}:${endParts[1]}';
+  }
 
-  // ── Results ──
-  List<_EventRow> get _allEvents => [
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '21', category: 'music',
-      title: _t('Summer Music Night', 'ערב מוזיקה קיצי'),
-      time: '8:00 PM – 11:00 PM',
-      address: _t("21 Sderot El Melachot, Modi'in Maccabim-Re'ut",
-          'שדרות אל המלאכות 21, מודיעין מכבים רעות'),
-      price: '₪50', interested: 124,
-      position: const LatLng(31.8932, 35.0145),
-      imageBg: const Color(0xFF3B2B63),
-    ),
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '27', category: 'music',
-      title: _t('Live Jazz Evening', 'ערב ג\'אז חי'),
-      time: '6:30 PM – 9:30 PM',
-      address: _t('Local Cultural Center, Modiin', 'מרכז התרבות המקומי, מודיעין'),
-      price: '₪60', interested: 51,
-      position: const LatLng(31.8905, 35.0126),
-      imageBg: const Color(0xFF4A2F55),
-    ),
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '28', category: 'music',
-      title: _t('Open Air Music & Movie', 'מוזיקה וסרט בחוץ'),
-      time: '8:30 PM – 11:00 PM',
-      address: _t('Modiin Park, Modiin', 'פארק מודיעין, מודיעין'),
-      price: _t('FREE', 'חינם'), interested: 93,
-      position: const LatLng(31.8960, 35.0080),
-      imageBg: const Color(0xFF2E4E8C),
-    ),
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '29', category: 'music',
-      title: _t('Indie Music Night', 'ערב אינדי'),
-      time: '9:00 PM – 12:00 AM',
-      address: _t('Anava Live Club, Modiin', 'מועדון ענבה לייב, מודיעין'),
-      price: '₪40', interested: 72,
-      position: const LatLng(31.8892, 35.0058),
-      imageBg: const Color(0xFF39304F),
-    ),
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '30', category: 'music',
-      title: _t('Acoustic Sunset Session', 'סשן אקוסטי בשקיעה'),
-      time: '7:00 PM – 9:30 PM',
-      address: _t('Anava Park, Modiin', 'פארק ענבה, מודיעין'),
-      price: _t('FREE', 'חינם'), interested: 86,
-      position: const LatLng(31.8948, 35.0188),
-      imageBg: const Color(0xFFB4715A),
-    ),
-    _EventRow(
-      month: _t('SEP', 'ספט'), day: '01', category: 'music',
-      title: _t('Modiin Rock Festival', 'פסטיבל הרוק של מודיעין'),
-      time: '7:30 PM – 11:30 PM',
-      address: _t('Modiin Amphitheater, Modiin', 'האמפיתאטרון, מודיעין'),
-      price: '₪75', interested: 168,
-      position: const LatLng(31.8975, 35.0112),
-      imageBg: const Color(0xFF7A2C3A),
-    ),
-    _EventRow(
-      month: _t('SEP', 'ספט'), day: '03', category: 'music',
-      title: _t('Classical Evening Under the Stars', 'ערב קלאסי תחת הכוכבים'),
-      time: '7:00 PM – 9:00 PM',
-      address: _t('Modiin Cultural Hall', 'היכל התרבות מודיעין'),
-      price: '₪45', interested: 43,
-      position: const LatLng(31.8918, 35.0035),
-      imageBg: const Color(0xFF2F4858),
-    ),
-    // ── Other categories, so the sidebar filters have something to show ──
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '22', category: 'municipal',
-      title: _t('Modiin Community Festival', 'פסטיבל הקהילה של מודיעין'),
-      time: '10:00 AM – 4:00 PM',
-      address: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-      price: _t('FREE', 'חינם'), interested: 86,
-      position: const LatLng(31.8945, 35.0120),
-      imageBg: const Color(0xFF2F6B4F),
-    ),
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '23', category: 'kids',
-      title: _t('Family Fun Day', 'יום כיף משפחתי'),
-      time: '11:00 AM – 3:00 PM',
-      address: _t('Anava Park, Modiin', 'פארק ענבה, מודיעין'),
-      price: '₪20', interested: 64,
-      position: const LatLng(31.8900, 35.0165),
-      imageBg: const Color(0xFFCB8B3E),
-    ),
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '29', category: 'kids',
-      title: _t('Kids Cooking Workshop', 'סדנת בישול לילדים'),
-      time: '10:30 AM – 12:30 PM',
-      address: _t('Community Center, Modiin', 'מרכז קהילתי, מודיעין'),
-      price: '₪30', interested: 35,
-      position: const LatLng(31.8938, 35.0052),
-      imageBg: const Color(0xFFB4715A),
-    ),
-    _EventRow(
-      month: _t('AUG', 'אוג'), day: '29', category: 'sports',
-      title: _t('Community Football Match', 'משחק כדורגל קהילתי'),
-      time: '10:30 AM – 12:00 PM',
-      address: _t('Community Center, Modiin', 'מרכז קהילתי, מודיעין'),
-      price: _t('FREE', 'חינם'), interested: 68,
-      position: const LatLng(31.8968, 35.0158),
-      imageBg: const Color(0xFF2F6B4F),
-    ),
-    _EventRow(
-      month: _t('SEP', 'ספט'), day: '05', category: 'sports',
-      title: _t('Modiin City Run', 'מרוץ העיר מודיעין'),
-      time: '6:30 AM – 10:00 AM',
-      address: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-      price: '₪65', interested: 212,
-      position: const LatLng(31.8888, 35.0098),
-      imageBg: const Color(0xFF17627A),
-    ),
-  ];
+  /// `Event.displayPrice` answers in Hebrew only, and this layout is shown in
+  /// both languages.
+  String? _priceOf(Event e) {
+    if (e.isFree) return _t('FREE', 'חינם');
+    final p = e.price;
+    if (p == null || p.isEmpty) return null;
+    return p.startsWith('₪') ? p : '₪$p';
+  }
 
-  List<_EventRow> get _events {
-    final q = _query.toLowerCase();
-    return _allEvents.where((e) {
-      if (q.isNotEmpty &&
-          !e.title.toLowerCase().contains(q) &&
-          !e.address.toLowerCase().contains(q)) {
-        return false;
-      }
-      if (_category != 'all' && e.category != _category) return false;
-      if (_price == 'free' && !e.isFree) return false;
-      if (_price == 'paid' && e.isFree) return false;
+  String? _place(Event e) {
+    if (e.isOnline) return _t('Online', 'אונליין');
+    final address = e.address;
+    if (address.isNotEmpty) return address;
+    return e.venueName;
+  }
+
+  bool _hasCoordinates(Event e) =>
+      !e.isOnline && e.latitude != 0 && e.longitude != 0;
+
+  /// The rows the panels are showing: the searched set, narrowed by price and
+  /// put in the chosen order.
+  List<Event> _visible(List<Event> events) {
+    final filtered = events.where((e) {
+      if (_price == 'free') return e.isFree;
+      if (_price == 'paid') return !e.isFree;
       return true;
     }).toList();
+
+    filtered.sort((a, b) {
+      final x = a.startsAt;
+      final y = b.startsAt;
+      // Rows without a date sort last either way, rather than jumping to the
+      // top as an epoch-zero date would.
+      if (x == null || y == null) return x == null ? 1 : -1;
+      return _sort == _Sort.soonest ? x.compareTo(y) : y.compareTo(x);
+    });
+    return filtered;
   }
 
   @override
   Widget build(BuildContext context) {
+    final events = ref.watch(filteredEventsProvider);
+
     return Directionality(
       textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            _buildNavbar(),
+            // The page carried its own copy of the navbar, including a
+            // "Contact Us" button whose handler was empty. It uses the shared
+            // chrome now, like the rest of the desktop pages.
+            WebNavbar(
+              isHebrew: _isHebrew,
+              activeId: 'events',
+              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
+            ),
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildFilterSidebar(),
-                  Expanded(flex: 900, child: _buildResultsPanel()),
-                  Expanded(flex: 726, child: _buildMapPanel()),
+                  _buildFilterSidebar(events.valueOrNull ?? const []),
+                  Expanded(flex: 900, child: _buildResultsPanel(events)),
+                  Expanded(
+                    flex: 726,
+                    child: _buildMapPanel(events.valueOrNull ?? const []),
+                  ),
                 ],
               ),
             ),
@@ -245,95 +193,18 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
   }
 
   // ─────────────────────────────────────────────
-  // NAVBAR — 1920 × 80
-  // ─────────────────────────────────────────────
-  Widget _buildNavbar() {
-    return Container(
-      height: 80,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _kBorder)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 160),
-      child: Row(
-        children: [
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => context.go('/'),
-              child: SvgPicture.asset(
-                'assets/images/logo_white.svg',
-                width: 90,
-                height: 48,
-                colorFilter: const ColorFilter.mode(AppColors.midBlue, BlendMode.srcIn),
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Row(
-              children: _navItems
-                  .map((item) => Expanded(
-                        child: _NavLinkButton(
-                          label: item.label,
-                          isActive: item.isActive,
-                          hasDropdown: item.hasDropdown,
-                          onTap: () => context.go(item.route),
-                        ),
-                      ))
-                  .toList(),
-            ),
-          ),
-          const SizedBox(width: 20),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => setState(() => _isHebrew = !_isHebrew),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                margin: const EdgeInsetsDirectional.only(end: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(IconsaxPlusLinear.global, size: 18, color: AppColors.midBlue),
-                    const SizedBox(width: 6),
-                    Text(_isHebrew ? 'עב | EN' : 'EN | עב',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                            fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
-                decoration: BoxDecoration(
-                  color: AppColors.midBlue,
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Text(_t('Contact Us', 'צור קשר'),
-                    style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
   // FILTER SIDEBAR — 294px
   // ─────────────────────────────────────────────
-  Widget _buildFilterSidebar() {
+  Widget _buildFilterSidebar(List<Event> events) {
+    // The counts beside each option are of the rows in hand. They were fixed
+    // numbers that no query produced.
+    final free = events.where((e) => e.isFree).length;
+    final options = [
+      _Option('all', _t('All', 'הכל'), events.length),
+      _Option('free', _t('Free', 'חינם'), free),
+      _Option('paid', _t('Paid', 'בתשלום'), events.length - free),
+    ];
+
     return Container(
       width: 294,
       decoration: const BoxDecoration(
@@ -346,17 +217,13 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSearchBox(),
-            const SizedBox(height: 16),
-            _buildFilterGroup(
-              title: _t('Event Category', 'קטגוריית אירוע'),
-              options: _categoryOptions,
-              isChecked: (o) => _category == o.key,
-              onTap: (o) => setState(() => _category = o.key),
-            ),
             const SizedBox(height: 24),
+            // An "Event Category" group sat above this one, offering Music,
+            // Kids & Family, Sports and the rest. `events` has no category
+            // column, so nothing could have answered it.
             _buildFilterGroup(
               title: _t('Price', 'מחיר'),
-              options: _priceOptions,
+              options: options,
               isChecked: (o) => _price == o.key,
               onTap: (o) => setState(() => _price = o.key),
             ),
@@ -382,9 +249,10 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
           Expanded(
             child: TextField(
               controller: _searchController,
+              onChanged: _onSearchChanged,
               style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.navy),
               decoration: InputDecoration(
-                hintText: _t('Search by location...', 'חיפוש לפי מיקום...'),
+                hintText: _t('Search events or places...', 'חיפוש אירועים או מקומות...'),
                 hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextGrey),
                 border: InputBorder.none,
                 isDense: true,
@@ -407,7 +275,7 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(fontFamily: AppFonts.inter,
                 fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
         const SizedBox(height: 17),
         for (var i = 0; i < options.length; i++) ...[
@@ -468,58 +336,88 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
   // ─────────────────────────────────────────────
   // RESULTS PANEL — 900px
   // ─────────────────────────────────────────────
-  Widget _buildResultsPanel() {
-    final events = _events;
+  Widget _buildResultsPanel(AsyncValue<List<Event>> events) {
     return Container(
       decoration: const BoxDecoration(
         border: BorderDirectional(end: BorderSide(color: _kBorder)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-            child: _buildResultsHeader(events.length),
-          ),
-          const SizedBox(height: 26),
-          Expanded(
-            child: events.isEmpty
-                ? _buildEmptyState()
-                : Scrollbar(
-                    controller: _listController,
-                    child: ListView.builder(
-                      controller: _listController,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: events.length,
-                      itemBuilder: (context, i) => _EventListRow(
-                        event: events[i],
-                        isHebrew: _isHebrew,
-                        selected: _selectedPin == i,
-                        saved: _saved.contains(i),
-                        onSave: () => setState(() =>
-                            _saved.contains(i) ? _saved.remove(i) : _saved.add(i)),
-                        onTap: () => context.push('/event/demo_$i'),
-                        onHover: (hovering) => setState(() {
-                          if (hovering) {
-                            _selectedPin = i;
-                          } else if (_selectedPin == i) {
-                            _selectedPin = null;
-                          }
-                        }),
+      child: events.when(
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              child: _buildResultsHeader(null),
+            ),
+            const SizedBox(height: 26),
+            const Expanded(child: _ResultsSkeleton()),
+          ],
+        ),
+        error: (_, _) => _buildNotice(
+          icon: IconsaxPlusLinear.wifi_square,
+          title: _t('Events could not be loaded', 'לא ניתן לטעון את האירועים'),
+          body: _t('Check your connection and try again.',
+              'בדקו את החיבור לאינטרנט ונסו שוב.'),
+          actionLabel: _t('Try again', 'נסו שוב'),
+          onAction: () => ref.invalidate(eventsProvider),
+        ),
+        data: (all) {
+          final visible = _visible(all);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                child: _buildResultsHeader(visible.length),
+              ),
+              const SizedBox(height: 26),
+              Expanded(
+                child: visible.isEmpty
+                    ? _buildEmptyState()
+                    : Scrollbar(
+                        controller: _listController,
+                        child: ListView.builder(
+                          controller: _listController,
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          itemCount: visible.length,
+                          itemBuilder: (context, i) {
+                            final event = visible[i];
+                            return _EventListRow(
+                              event: event,
+                              isHebrew: _isHebrew,
+                              month: event.startDate == null
+                                  ? null
+                                  : _shortMonth(event.startDate!),
+                              time: _timeRange(event),
+                              place: _place(event),
+                              price: _priceOf(event),
+                              selected: _hoveredId == event.id,
+                              onTap: () => context.push('/event/${event.id}'),
+                              onHover: (hovering) => setState(() {
+                                if (hovering) {
+                                  _hoveredId = event.id;
+                                } else if (_hoveredId == event.id) {
+                                  _hoveredId = null;
+                                }
+                              }),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildResultsHeader(int count) {
-    final headline = _category == 'all'
-        ? _t('$count Events found', '$count אירועים נמצאו')
-        : _t('$count $_categoryLabel Events found',
-            '$count אירועי $_categoryLabel נמצאו');
+  Widget _buildResultsHeader(int? count) {
+    // The headline named a category — "24 Music Events found" — from a filter
+    // with nothing behind it.
+    final headline = count == null
+        ? _t('Events in Modiin', 'אירועים במודיעין')
+        : _t('$count Events found', '$count אירועים נמצאו');
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -528,7 +426,7 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(headline,
-                  style: TextStyle(fontFamily: AppFonts.nunito, 
+                  style: TextStyle(fontFamily: AppFonts.nunito,
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       height: 34 / 28,
@@ -545,52 +443,119 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
     );
   }
 
+  /// The sort control. It was a `Text` reading "Sort by: Newest" with a chevron
+  /// drawn beside it and no menu behind either, so the order never changed.
   Widget _buildSortBox() {
-    return Container(
-      width: 166,
-      height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kBorder),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(_t('Sort by: Newest', 'מיון: חדש ביותר'),
+    return PopupMenuButton<_Sort>(
+      initialValue: _sort,
+      tooltip: '',
+      position: PopupMenuPosition.under,
+      onSelected: (value) => setState(() => _sort = value),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _Sort.soonest,
+          child: Text(_t('Soonest first', 'הקרוב ביותר'),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14)),
+        ),
+        PopupMenuItem(
+          value: _Sort.latest,
+          child: Text(_t('Latest first', 'המרוחק ביותר'),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14)),
+        ),
+      ],
+      child: Container(
+        width: 190,
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: _kBorder),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _sort == _Sort.soonest
+                    ? _t('Sort by: Soonest', 'מיון: הקרוב ביותר')
+                    : _t('Sort by: Latest', 'מיון: המרוחק ביותר'),
                 style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black),
-                overflow: TextOverflow.ellipsis),
-          ),
-          const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF4F4F4F)),
-        ],
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF4F4F4F)),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
+    final searching = ref.watch(eventSearchProvider).trim().isNotEmpty;
+    final filtering = _price != 'all';
+    return _buildNotice(
+      icon: searching || filtering
+          ? IconsaxPlusLinear.search_status
+          : IconsaxPlusLinear.calendar_1,
+      title: searching || filtering
+          ? _t('No events match your filters', 'אין אירועים שתואמים את הסינון')
+          : _t('No events listed yet', 'עדיין לא פורסמו אירועים'),
+      body: searching || filtering
+          ? _t('Try clearing a filter or searching for something else.',
+              'נסו להסיר סינון או לחפש משהו אחר.')
+          : _t('New events will appear here as they are published.',
+              'אירועים חדשים יופיעו כאן עם פרסומם.'),
+    );
+  }
+
+  Widget _buildNotice({
+    required IconData icon,
+    required String title,
+    required String body,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(IconsaxPlusLinear.search_status,
-                size: 48, color: _kCheckBorder.withValues(alpha: 0.6)),
+            Icon(icon, size: 48, color: _kCheckBorder.withValues(alpha: 0.6)),
             const SizedBox(height: 16),
             Text(
-              _t('No events match your filters', 'אין אירועים שתואמים את הסינון'),
-              style: TextStyle(fontFamily: AppFonts.nunito, 
+              title,
+              style: TextStyle(fontFamily: AppFonts.nunito,
                   fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              _t('Try clearing a filter or searching for something else.',
-                  'נסו להסיר סינון או לחפש משהו אחר.'),
+              body,
               style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kSubtitle),
               textAlign: TextAlign.center,
             ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 24),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: onAction,
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.midBlue,
+                      borderRadius: BorderRadius.circular(60),
+                    ),
+                    child: Text(actionLabel,
+                        style: TextStyle(fontFamily: AppFonts.inter,
+                            fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -600,14 +565,17 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
   // ─────────────────────────────────────────────
   // MAP PANEL — 726px, purple event pins
   // ─────────────────────────────────────────────
-  Widget _buildMapPanel() {
-    final events = _events;
+  Widget _buildMapPanel(List<Event> events) {
+    // An online event, or one whose row has no coordinates, gets no pin
+    // rather than a pin somewhere plausible.
+    final pinned = _visible(events).where(_hasCoordinates).toList();
+
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
         initialCenter: _center,
         initialZoom: 14.2,
-        onTap: (_, _) => setState(() => _selectedPin = null),
+        onTap: (_, _) => setState(() => _hoveredId = null),
       ),
       children: [
         TileLayer(
@@ -615,25 +583,26 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
           userAgentPackageName: 'com.modiin4u.app',
         ),
         MarkerLayer(
-          markers: List.generate(events.length, (i) {
-            return Marker(
-              point: events[i].position,
-              width: 40,
-              height: 44,
-              alignment: Alignment.topCenter,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                onEnter: (_) => setState(() => _selectedPin = i),
-                onExit: (_) => setState(() {
-                  if (_selectedPin == i) _selectedPin = null;
-                }),
-                child: GestureDetector(
-                  onTap: () => context.push('/event/demo_$i'),
-                  child: _MapPin(selected: _selectedPin == i),
+          markers: [
+            for (final event in pinned)
+              Marker(
+                point: LatLng(event.latitude, event.longitude),
+                width: 40,
+                height: 44,
+                alignment: Alignment.topCenter,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  onEnter: (_) => setState(() => _hoveredId = event.id),
+                  onExit: (_) => setState(() {
+                    if (_hoveredId == event.id) _hoveredId = null;
+                  }),
+                  child: GestureDetector(
+                    onTap: () => context.push('/event/${event.id}'),
+                    child: _MapPin(selected: _hoveredId == event.id),
+                  ),
                 ),
               ),
-            );
-          }),
+          ],
         ),
       ],
     );
@@ -643,40 +612,42 @@ class _WebEventsCategoryContentState extends State<WebEventsCategoryContent> {
 // ═══════════════════════════════════════════════
 // RESULT ROW — 851 × 203
 // ═══════════════════════════════════════════════
-class _EventListRow extends StatefulWidget {
-  final _EventRow event;
-  final bool isHebrew, selected, saved;
-  final VoidCallback onSave, onTap;
+class _EventListRow extends StatelessWidget {
+  final Event event;
+  final bool isHebrew, selected;
+
+  /// Null where the row does not carry the value, in which case the line is
+  /// left out rather than filled in.
+  final String? month, time, place, price;
+  final VoidCallback onTap;
   final ValueChanged<bool> onHover;
+
   const _EventListRow({
     required this.event,
     required this.isHebrew,
+    required this.month,
+    required this.time,
+    required this.place,
+    required this.price,
     required this.selected,
-    required this.saved,
-    required this.onSave,
     required this.onTap,
     required this.onHover,
   });
 
   @override
-  State<_EventListRow> createState() => _EventListRowState();
-}
-
-class _EventListRowState extends State<_EventListRow> {
-  @override
   Widget build(BuildContext context) {
-    final e = widget.event;
+    final e = event;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) => widget.onHover(true),
-      onExit: (_) => widget.onHover(false),
+      onEnter: (_) => onHover(true),
+      onExit: (_) => onHover(false),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            color: widget.selected ? _kSidebarBg : Colors.transparent,
+            color: selected ? _kSidebarBg : Colors.transparent,
             border: const Border(bottom: BorderSide(color: _kBorder)),
           ),
           child: Row(
@@ -689,42 +660,44 @@ class _EventListRowState extends State<_EventListRow> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: _imagePlaceholder(e.imageBg,
-                            radius: BorderRadius.zero, glyph: 30),
+                      child: NetworkPhoto(
+                        url: e.imageUrl,
+                        radius: BorderRadius.circular(12),
+                        icon: IconsaxPlusBold.calendar_1,
+                        iconSize: 30,
                       ),
                     ),
-                    PositionedDirectional(
-                      start: 8,
-                      top: 8,
-                      child: Container(
-                        width: 52,
-                        height: 57,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(e.month,
-                                style: TextStyle(fontFamily: AppFonts.inter, 
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.midBlue,
-                                    height: 15 / 12)),
-                            const SizedBox(height: 4),
-                            Text(e.day,
-                                style: TextStyle(fontFamily: AppFonts.inter, 
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black,
-                                    height: 22 / 18)),
-                          ],
+                    if (month != null)
+                      PositionedDirectional(
+                        start: 8,
+                        top: 8,
+                        child: Container(
+                          width: 52,
+                          height: 57,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(month!,
+                                  style: TextStyle(fontFamily: AppFonts.inter,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.midBlue,
+                                      height: 15 / 12)),
+                              const SizedBox(height: 4),
+                              Text('${e.startDate!.day}',
+                                  style: TextStyle(fontFamily: AppFonts.inter,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                      height: 22 / 18)),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -745,7 +718,7 @@ class _EventListRowState extends State<_EventListRow> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(e.title,
-                                    style: TextStyle(fontFamily: AppFonts.nunito, 
+                                    style: TextStyle(fontFamily: AppFonts.nunito,
                                         fontSize: 18,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.navy,
@@ -753,32 +726,29 @@ class _EventListRowState extends State<_EventListRow> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis),
                                 const SizedBox(height: 12),
-                                _metaRow(IconsaxPlusLinear.clock, e.time,
-                                    forceLtr: true),
-                                const SizedBox(height: 12),
-                                _metaRow(IconsaxPlusLinear.location, e.address),
+                                if (time != null) ...[
+                                  _metaRow(IconsaxPlusLinear.clock, time!,
+                                      forceLtr: true),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (place != null)
+                                  _metaRow(
+                                    e.isOnline
+                                        ? IconsaxPlusLinear.global
+                                        : IconsaxPlusLinear.location,
+                                    place!,
+                                  ),
                               ],
                             ),
                           ),
                           const SizedBox(width: 22),
-                          MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: GestureDetector(
-                              onTap: widget.onSave,
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: const BoxDecoration(
-                                    color: _kSaveBg, shape: BoxShape.circle),
-                                child: Icon(
-                                  widget.saved
-                                      ? IconsaxPlusBold.archive_1
-                                      : IconsaxPlusLinear.archive_1,
-                                  size: 20,
-                                  color: AppColors.midBlue,
-                                ),
-                              ),
-                            ),
+                          // Saving held a set of row indexes in the page's
+                          // own state, so it was forgotten on reload.
+                          FavoriteButton(
+                            kind: FavoriteKind.event,
+                            id: e.id,
+                            size: 40,
+                            iconSize: 20,
                           ),
                         ],
                       ),
@@ -787,46 +757,52 @@ class _EventListRowState extends State<_EventListRow> {
                         children: [
                           Expanded(
                             flex: 100,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(widget.isHebrew ? 'מחיר' : 'Price',
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
-                                        fontSize: 14, color: _kSubtitle, height: 17 / 14)),
-                                const SizedBox(height: 4),
-                                Text(e.price,
-                                    style: TextStyle(fontFamily: AppFonts.nunito, 
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w600,
-                                        color: e.isFree ? AppColors.midBlue : AppColors.navy,
-                                        height: 27 / 22)),
-                              ],
-                            ),
+                            child: price == null
+                                ? const SizedBox.shrink()
+                                : Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(isHebrew ? 'מחיר' : 'Price',
+                                          style: TextStyle(fontFamily: AppFonts.inter,
+                                              fontSize: 14, color: _kSubtitle, height: 17 / 14)),
+                                      const SizedBox(height: 4),
+                                      Text(price!,
+                                          style: TextStyle(fontFamily: AppFonts.nunito,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w600,
+                                              color: e.isFree ? AppColors.midBlue : AppColors.navy,
+                                              height: 27 / 22)),
+                                    ],
+                                  ),
                           ),
                           const SizedBox(width: 20),
+                          // The interest count appears once somebody has
+                          // RSVP'd. It was an invented figure on every row.
                           Expanded(
                             flex: 146,
-                            child: Row(
-                              children: [
-                                const Icon(IconsaxPlusLinear.star_1,
-                                    size: 14, color: AppColors.turquoise),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    widget.isHebrew
-                                        ? '${e.interested} מתעניינים'
-                                        : '${e.interested} people interested',
-                                    style: TextStyle(fontFamily: AppFonts.inter, 
-                                        fontSize: 12,
-                                        color: Colors.black,
-                                        height: 15 / 12),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                            child: e.rsvpCount == 0
+                                ? const SizedBox.shrink()
+                                : Row(
+                                    children: [
+                                      const Icon(IconsaxPlusLinear.star_1,
+                                          size: 14, color: AppColors.turquoise),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          isHebrew
+                                              ? '${e.rsvpCount} מתעניינים'
+                                              : '${e.rsvpCount} people interested',
+                                          style: TextStyle(fontFamily: AppFonts.inter,
+                                              fontSize: 12,
+                                              color: Colors.black,
+                                              height: 15 / 12),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
-                            ),
                           ),
                           const SizedBox(width: 20),
                           _viewDetailButton(),
@@ -868,7 +844,7 @@ class _EventListRowState extends State<_EventListRow> {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: onTap,
         child: Container(
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -881,10 +857,51 @@ class _EventListRowState extends State<_EventListRow> {
             children: [
               const Icon(IconsaxPlusLinear.export_3, size: 16, color: AppColors.midBlue),
               const SizedBox(width: 8),
-              Text(widget.isHebrew ? 'לפרטים' : 'View Detail',
-                  style: TextStyle(fontFamily: AppFonts.inter, 
+              Text(isHebrew ? 'לפרטים' : 'View Detail',
+                  style: TextStyle(fontFamily: AppFonts.inter,
                       fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Three result rows' worth of blocks, at the geometry of the real row.
+class _ResultsSkeleton extends StatelessWidget {
+  const _ResultsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton(
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        children: List.generate(
+          3,
+          (_) => const Padding(
+            padding: EdgeInsets.only(bottom: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBox(width: 261, height: 162, radius: 12),
+                SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonLine(width: 280, fontSize: 18),
+                      SizedBox(height: 14),
+                      SkeletonLine(width: 160, fontSize: 12),
+                      SizedBox(height: 12),
+                      SkeletonLine(width: 220, fontSize: 12),
+                      SizedBox(height: 28),
+                      SkeletonLine(width: 120, fontSize: 22),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -940,124 +957,8 @@ class _MapPin extends StatelessWidget {
 // DATA MODELS
 // ═══════════════════════════════════════════════
 
-class _NavItem {
-  final String label, route;
-  final bool hasDropdown, isActive;
-  const _NavItem({required this.label, required this.route, this.hasDropdown = false, this.isActive = false});
-}
-
 class _Option {
   final String key, label;
   final int count;
   const _Option(this.key, this.label, this.count);
-}
-
-class _EventRow {
-  final String month, day, category, title, time, address, price;
-  final int interested;
-  final LatLng position;
-  final Color imageBg;
-  const _EventRow({
-    required this.month,
-    required this.day,
-    required this.category,
-    required this.title,
-    required this.time,
-    required this.address,
-    required this.price,
-    required this.interested,
-    required this.position,
-    required this.imageBg,
-  });
-
-  bool get isFree => !price.contains('₪');
-}
-
-// ═══════════════════════════════════════════════
-// SHARED WIDGETS
-// ═══════════════════════════════════════════════
-
-/// Gradient stand-in for a photo that has no asset yet.
-Widget _imagePlaceholder(Color base, {double? width, double? height, BorderRadius? radius, double glyph = 28}) {
-  return Container(
-    width: width,
-    height: height,
-    decoration: BoxDecoration(
-      borderRadius: radius,
-      shape: radius == null ? BoxShape.circle : BoxShape.rectangle,
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [base, Color.lerp(base, Colors.black, 0.22)!],
-      ),
-    ),
-    child: Center(
-      child: Icon(IconsaxPlusLinear.image, size: glyph, color: Colors.white.withValues(alpha: 0.35)),
-    ),
-  );
-}
-
-class _NavLinkButton extends StatefulWidget {
-  final String label;
-  final bool isActive, hasDropdown;
-  final VoidCallback onTap;
-  const _NavLinkButton({required this.label, this.isActive = false, this.hasDropdown = false, required this.onTap});
-
-  @override
-  State<_NavLinkButton> createState() => _NavLinkButtonState();
-}
-
-class _NavLinkButtonState extends State<_NavLinkButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          height: 80,
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(
-              color: widget.isActive ? AppColors.midBlue : Colors.transparent,
-              width: 3,
-            )),
-          ),
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-              decoration: BoxDecoration(
-                color: _hovered && !widget.isActive ? Colors.black.withValues(alpha: 0.04) : Colors.transparent,
-                borderRadius: BorderRadius.circular(40),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      widget.label,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
-                        fontSize: 15,
-                        fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w500,
-                        color: widget.isActive ? AppColors.midBlue : const Color(0xFF0F161E),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (widget.hasDropdown) ...[
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF21272A)),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -538,26 +538,30 @@ class _EventCard extends StatelessWidget {
                             : const Color(0xFF0A1230),
                       ),
                     ),
-                    // Interested
-                    Row(
-                      children: [
-                        Icon(
-                          IconsaxPlusBold.star_1,
-                          size: 18,
-                          color: const Color(0xFF17A9D0),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${event.interested} מתעניינים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF3D3D3D),
+                    // Only once somebody has said they are coming. Every
+                    // event carries an rsvp_count of 0 today, and "0
+                    // מתעניינים" reads as a fact about the event rather than
+                    // as nothing having happened yet.
+                    if (event.interested > 0)
+                      Row(
+                        children: [
+                          Icon(
+                            IconsaxPlusBold.star_1,
+                            size: 18,
+                            color: const Color(0xFF17A9D0),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${event.interested} מתעניינים',
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF3D3D3D),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ],

@@ -1,15 +1,11 @@
-import 'dart:math';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../auth/models/user_model.dart';
-import '../../businesses/models/business.dart';
-import '../../businesses/models/review.dart';
-import '../../news/models/article.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../providers/admin_businesses_provider.dart';
 import '../providers/admin_data_provider.dart';
 import 'admin_businesses_screen.dart';
 import 'admin_articles_screen.dart';
@@ -83,6 +79,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     ('הגדרות', IconsaxPlusLinear.setting_2),
   ];
 
+  /// Where the settings pane sits in [_sections] — the top bar's gear jumps
+  /// here rather than doing nothing, which is what it used to do.
+  static const _settingsSection = 26;
+
   static const _sectionGroups = {
     0: 'ראשי',
     2: 'תוכן',
@@ -103,7 +103,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         body: Column(
           children: [
             // ── CRM-style top bar ──
-            _AdminTopBar(sectionName: _sections[_selectedSection].$1),
+            _AdminTopBar(
+              sectionName: _sections[_selectedSection].$1,
+              onOpenSettings: () =>
+                  setState(() => _selectedSection = _settingsSection),
+            ),
             Expanded(
               child: isWide
                   ? Row(
@@ -251,12 +255,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
 // ─── Top Bar (CRM-style) ───
 
-class _AdminTopBar extends StatelessWidget {
+class _AdminTopBar extends ConsumerWidget {
   final String sectionName;
-  const _AdminTopBar({required this.sectionName});
+  final VoidCallback onOpenSettings;
+  const _AdminTopBar({
+    required this.sectionName,
+    required this.onOpenSettings,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final signedIn = ref.watch(authProvider);
+
     return Container(
       height: 74,
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -316,68 +326,48 @@ class _AdminTopBar extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          // Search input
-          Container(
-            width: 260,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.adminSearchBorder, width: 1),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 12),
-                Icon(
-                  IconsaxPlusLinear.search_normal,
-                  size: 18,
-                  color: AppColors.adminTextLight,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'חיפוש...',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      color: AppColors.adminTextLight,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Notification bell
+          // There was a search box here that was a Text, not a field, and a
+          // bell carrying a permanent "3". Neither was connected to anything;
+          // each section has its own search, which does run.
           _TopBarButton(
-            icon: IconsaxPlusLinear.notification,
-            badgeCount: 3,
-            onTap: () {},
+            icon: IconsaxPlusLinear.setting_2,
+            onTap: onOpenSettings,
           ),
-          const SizedBox(width: 8),
-          // Settings
-          _TopBarButton(icon: IconsaxPlusLinear.setting_2, onTap: () {}),
           const SizedBox(width: 16),
-          // User avatar
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.midBlue, AppColors.turquoise],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          // The signed-in administrator, rather than the initials of the one
+          // invented person this panel used to be built around.
+          Tooltip(
+            message: signedIn?.name ?? 'לא מחובר',
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: signedIn == null
+                    ? null
+                    : const LinearGradient(
+                        colors: [AppColors.midBlue, AppColors.turquoise],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                color: signedIn == null ? AppColors.adminActiveBg : null,
+                borderRadius: BorderRadius.circular(8),
               ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                'NL',
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+              child: Center(
+                child: signedIn == null
+                    ? Icon(
+                        IconsaxPlusLinear.profile_circle,
+                        size: 18,
+                        color: AppColors.adminTextLight,
+                      )
+                    : Text(
+                        signedIn.initials,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -389,13 +379,8 @@ class _AdminTopBar extends StatelessWidget {
 
 class _TopBarButton extends StatelessWidget {
   final IconData icon;
-  final int? badgeCount;
   final VoidCallback onTap;
-  const _TopBarButton({
-    required this.icon,
-    this.badgeCount,
-    required this.onTap,
-  });
+  const _TopBarButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -409,37 +394,8 @@ class _TopBarButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(7),
           border: Border.all(color: AppColors.adminSidebarBorder, width: 1),
         ),
-        child: Stack(
-          children: [
-            Center(
-              child: Icon(icon, size: 18, color: AppColors.adminTextMedium),
-            ),
-            if (badgeCount != null)
-              Positioned(
-                top: 4,
-                left: 4,
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(50),
-                    border: Border.all(color: Colors.white, width: 1.5),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$badgeCount',
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
+        child: Center(
+          child: Icon(icon, size: 18, color: AppColors.adminTextMedium),
         ),
       ),
     );
@@ -584,1113 +540,19 @@ class _Sidebar extends StatelessWidget {
   }
 }
 
-// ─── Overview ───
-
-class _OverviewSection extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final users = ref.watch(adminUsersProvider);
-    final businesses = ref.watch(adminBusinessesProvider);
-    final articles = ref.watch(adminArticlesProvider);
-    final reviews = ref.watch(adminReviewsProvider);
-    final pending = businesses
-        .where((b) => b.status == BusinessStatus.pending)
-        .length;
-    final isWide = MediaQuery.of(context).size.width > 900;
-
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        // Header — CRM style
-        Text(
-          'סקירה כללית',
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: AppColors.adminTextDark,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'נתונים בזמן אמת על כל הפעילות באפליקציה',
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 14,
-            color: AppColors.adminTextLight,
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Top metrics row — scrollable
-        SizedBox(
-          height: 120,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _TopMetric(
-                'סה"כ משתמשים',
-                '${users.length}',
-                'רשומים',
-                Icons.people,
-                AppColors.turquoise,
-                null,
-              ),
-              _TopMetric(
-                'החודש',
-                '${users.where((u) => u.createdAt.isAfter(DateTime(2026, 8, 1))).length}',
-                '↑ 11%',
-                Icons.calendar_month,
-                AppColors.success,
-                '+11%',
-              ),
-              _TopMetric(
-                'השבוע',
-                '${reviews.length}',
-                'ביקורות',
-                Icons.rate_review,
-                AppColors.midBlue,
-                null,
-              ),
-              _TopMetric(
-                'הכנסות',
-                '₪24,500',
-                'סה"כ',
-                Icons.payments,
-                AppColors.gold,
-                null,
-              ),
-              _TopMetric(
-                'פעילות החודש',
-                '${articles.length + reviews.length + businesses.length}',
-                '↑ 32%',
-                Icons.trending_up,
-                const Color(0xFF8B5CF6),
-                '+32%',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Charts row
-        if (isWide)
-          SizedBox(
-            height: 300,
-            child: Row(
-              children: [
-                Expanded(flex: 3, child: _UsersChartCard()),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: _TaskFunnelCard(
-                    users: users,
-                    businesses: businesses,
-                    articles: articles,
-                    pending: pending,
-                  ),
-                ),
-              ],
-            ),
-          )
-        else ...[
-          SizedBox(height: 280, child: _UsersChartCard()),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 280,
-            child: _TaskFunnelCard(
-              users: users,
-              businesses: businesses,
-              articles: articles,
-              pending: pending,
-            ),
-          ),
-        ],
-        const SizedBox(height: 24),
-
-        // Bottom row: donut + activity + pending
-        if (isWide)
-          SizedBox(
-            height: 300,
-            child: Row(
-              children: [
-                Expanded(child: _UsersByRoleCard(users: users)),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _ActivityBreakdownCard(
-                    users: users,
-                    businesses: businesses,
-                    articles: articles,
-                    reviews: reviews,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _PendingCard(businesses: businesses, ref: ref),
-                ),
-              ],
-            ),
-          )
-        else ...[
-          SizedBox(height: 280, child: _UsersByRoleCard(users: users)),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 280,
-            child: _ActivityBreakdownCard(
-              users: users,
-              businesses: businesses,
-              articles: articles,
-              reviews: reviews,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _PendingCard(businesses: businesses, ref: ref),
-        ],
-        const SizedBox(height: 24),
-
-        // Recent activity
-        _RecentActivityCard(reviews: reviews, businesses: businesses),
-        const SizedBox(height: 30),
-      ],
-    );
-  }
-}
-
-// ─── Top Metric Chip ───
-
-class _TopMetric extends StatelessWidget {
-  final String label, value, sub;
-  final IconData icon;
-  final Color color;
-  final String? change;
-  const _TopMetric(
-    this.label,
-    this.value,
-    this.sub,
-    this.icon,
-    this.color,
-    this.change,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      margin: const EdgeInsets.only(left: 15),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.adminCardBorder, width: 1),
-        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, size: 20, color: color),
-              ),
-              const Spacer(),
-              if (change != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        (change!.startsWith('+')
-                                ? AppColors.success
-                                : AppColors.error)
-                            .withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    change!,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: change!.startsWith('+')
-                          ? AppColors.success
-                          : AppColors.error,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 32,
-              fontWeight: FontWeight.w600,
-              color: AppColors.adminTextDark,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            sub,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              color: AppColors.adminTextLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Line Chart Card ───
-
-class _UsersChartCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return _CardShell(
-      title: 'רישומים חדשים — 30 יום אחרונים',
-      child: Expanded(
-        child: Padding(
-          padding: const EdgeInsets.only(right: 8, top: 12),
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: 5,
-                getDrawingHorizontalLine: (_) => const FlLine(
-                  color: AppColors.adminCardBorder,
-                  strokeWidth: 0.5,
-                ),
-              ),
-              titlesData: FlTitlesData(
-                rightTitles: const AxisTitles(),
-                topTitles: const AxisTitles(),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 30,
-                    interval: 5,
-                    getTitlesWidget: (v, _) => Text(
-                      '${v.toInt()}',
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 10,
-                        color: AppColors.adminTextLight,
-                      ),
-                    ),
-                  ),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 24,
-                    interval: 5,
-                    getTitlesWidget: (v, _) {
-                      final day = v.toInt() + 1;
-                      return Text(
-                        '$day/8',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 10,
-                          color: AppColors.adminTextLight,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              minY: 0,
-              maxY: 25,
-              lineBarsData: [
-                LineChartBarData(
-                  spots: List.generate(
-                    30,
-                    (i) => FlSpot(
-                      i.toDouble(),
-                      (5 + sin(i * 0.4) * 4 + (i / 6)).clamp(1, 22).toDouble(),
-                    ),
-                  ),
-                  isCurved: true,
-                  curveSmoothness: 0.3,
-                  color: AppColors.midBlue,
-                  barWidth: 3,
-                  dotData: const FlDotData(show: false),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.midBlue.withValues(alpha: 0.15),
-                        AppColors.midBlue.withValues(alpha: 0.02),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (_) => AppColors.navy,
-                  getTooltipItems: (spots) => spots
-                      .map(
-                        (s) => LineTooltipItem(
-                          '${s.y.toInt()} רישומים',
-                          TextStyle(
-                            fontFamily: AppFonts.inter,
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Task Funnel Card ───
-
-class _TaskFunnelCard extends StatelessWidget {
-  final List<UserModel> users;
-  final List<Business> businesses;
-  final List<Article> articles;
-  final int pending;
-  const _TaskFunnelCard({
-    required this.users,
-    required this.businesses,
-    required this.articles,
-    required this.pending,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final published = articles
-        .where((a) => a.status == ArticleStatus.published)
-        .length;
-    final drafts = articles
-        .where((a) => a.status == ArticleStatus.draft)
-        .length;
-    final active = businesses
-        .where((b) => b.status == BusinessStatus.active)
-        .length;
-    final total = pending + drafts + published + active;
-
-    return _CardShell(
-      title: 'סטטוס משימות',
-      child: Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _FunnelRow('ממתין לטיפול', pending, total, const Color(0xFF8B5CF6)),
-            const SizedBox(height: 14),
-            _FunnelRow('טיוטות כתבות', drafts, total, AppColors.gold),
-            const SizedBox(height: 14),
-            _FunnelRow('כתבות מפורסמות', published, total, AppColors.success),
-            const SizedBox(height: 14),
-            _FunnelRow('עסקים פעילים', active, total, AppColors.turquoise),
-            const Spacer(),
-            Divider(color: AppColors.border.withValues(alpha: 0.5)),
-            Row(
-              children: [
-                _FunnelStat('$total', 'סה"כ'),
-                _FunnelStat(
-                  '${total > 0 ? ((published + active) / total * 100).toInt() : 0}%',
-                  'אישור',
-                ),
-                _FunnelStat('+12%', 'מהשבוע שעבר'),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FunnelRow extends StatelessWidget {
-  final String label;
-  final int count;
-  final int total;
-  final Color color;
-  const _FunnelRow(this.label, this.count, this.total, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              '$count',
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 13,
-                  color: AppColors.adminTextDark,
-                ),
-              ),
-              const SizedBox(height: 5),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: total > 0 ? count / total : 0,
-                  backgroundColor: AppColors.adminProgressBg,
-                  color: color,
-                  minHeight: 8,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FunnelStat extends StatelessWidget {
-  final String value, label;
-  const _FunnelStat(this.value, this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.adminTextDark,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              color: AppColors.adminTextLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Donut Chart — Users by Role ───
-
-class _UsersByRoleCard extends StatelessWidget {
-  final List<UserModel> users;
-  const _UsersByRoleCard({required this.users});
-
-  @override
-  Widget build(BuildContext context) {
-    final admins = users.where((u) => u.role == UserRole.admin).length;
-    final owners = users.where((u) => u.role == UserRole.businessOwner).length;
-    final regulars = users.where((u) => u.role == UserRole.user).length;
-
-    return _CardShell(
-      title: 'לפי תפקיד',
-      subtitle: 'חלוקת המשתמשים',
-      child: Expanded(
-        child: Row(
-          children: [
-            Expanded(
-              child: PieChart(
-                PieChartData(
-                  centerSpaceRadius: 36,
-                  sectionsSpace: 2,
-                  sections: [
-                    PieChartSectionData(
-                      value: regulars.toDouble(),
-                      color: AppColors.turquoise,
-                      title: '',
-                      radius: 28,
-                    ),
-                    PieChartSectionData(
-                      value: owners.toDouble(),
-                      color: AppColors.gold,
-                      title: '',
-                      radius: 28,
-                    ),
-                    PieChartSectionData(
-                      value: admins.toDouble(),
-                      color: const Color(0xFF8B5CF6),
-                      title: '',
-                      radius: 28,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _LegendDot(
-                  AppColors.turquoise,
-                  'תושבים',
-                  '$regulars',
-                  '${users.isNotEmpty ? (regulars / users.length * 100).toInt() : 0}%',
-                ),
-                const SizedBox(height: 10),
-                _LegendDot(
-                  AppColors.gold,
-                  'בעלי עסקים',
-                  '$owners',
-                  '${users.isNotEmpty ? (owners / users.length * 100).toInt() : 0}%',
-                ),
-                const SizedBox(height: 10),
-                _LegendDot(
-                  const Color(0xFF8B5CF6),
-                  'מנהלים',
-                  '$admins',
-                  '${users.isNotEmpty ? (admins / users.length * 100).toInt() : 0}%',
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  '${users.length}',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
-                ),
-                Text(
-                  'סה"כ',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 11,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LegendDot extends StatelessWidget {
-  final Color color;
-  final String label, count, pct;
-  const _LegendDot(this.color, this.label, this.count, this.pct);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 13,
-            color: AppColors.adminTextDark,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '$pct ($count)',
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 12,
-            color: AppColors.adminTextLight,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Activity Breakdown ───
-
-class _ActivityBreakdownCard extends StatelessWidget {
-  final List<UserModel> users;
-  final List<Business> businesses;
-  final List<Article> articles;
-  final List<Review> reviews;
-  const _ActivityBreakdownCard({
-    required this.users,
-    required this.businesses,
-    required this.articles,
-    required this.reviews,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final total =
-        users.length + businesses.length + articles.length + reviews.length;
-    return _CardShell(
-      title: 'סוגי פעילות',
-      subtitle: 'חלוקה לפי מודולים',
-      child: Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _ActivityRow('משתמשים', users.length, total, AppColors.turquoise),
-            const SizedBox(height: 12),
-            _ActivityRow('עסקים', businesses.length, total, AppColors.midBlue),
-            const SizedBox(height: 12),
-            _ActivityRow('כתבות', articles.length, total, AppColors.success),
-            const SizedBox(height: 12),
-            _ActivityRow('ביקורות', reviews.length, total, AppColors.gold),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActivityRow extends StatelessWidget {
-  final String label;
-  final int count, total;
-  final Color color;
-  const _ActivityRow(this.label, this.count, this.total, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    final pct = total > 0 ? (count / total * 100).toInt() : 0;
-    return Row(
-      children: [
-        SizedBox(
-          width: 60,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 13,
-              color: AppColors.adminTextDark,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: total > 0 ? count / total : 0,
-              backgroundColor: AppColors.adminProgressBg,
-              color: color,
-              minHeight: 8,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          '$count',
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.adminTextDark,
-          ),
-        ),
-        const SizedBox(width: 6),
-        SizedBox(
-          width: 36,
-          child: Text(
-            '$pct%',
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              color: AppColors.adminTextLight,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Pending Card ───
-
-class _PendingCard extends StatelessWidget {
-  final List<Business> businesses;
-  final WidgetRef ref;
-  const _PendingCard({required this.businesses, required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    final pending = businesses
-        .where((b) => b.status == BusinessStatus.pending)
-        .toList();
-    return _CardShell(
-      title: 'ממתינים לאישור',
-      subtitle: '${pending.length} פריטים',
-      child: Expanded(
-        child: pending.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        IconsaxPlusBold.tick_circle,
-                        size: 24,
-                        color: AppColors.success.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'אין פריטים ממתינים',
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        color: AppColors.adminTextLight,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : ListView.separated(
-                itemCount: pending.length,
-                separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: AppColors.adminCardBorder),
-                itemBuilder: (_, i) {
-                  final b = pending[i];
-                  return Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        right: BorderSide(color: AppColors.gold, width: 3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.gold.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Icon(
-                            IconsaxPlusBold.shop,
-                            size: 18,
-                            color: AppColors.gold,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                b.name,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.adminTextDark,
-                                ),
-                              ),
-                              Text(
-                                b.category,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 12,
-                                  color: AppColors.adminTextLight,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => ref
-                              .read(adminBusinessesProvider.notifier)
-                              .setStatus(b.id, BusinessStatus.active),
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.success.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.check,
-                              size: 16,
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        InkWell(
-                          onTap: () => ref
-                              .read(adminBusinessesProvider.notifier)
-                              .setStatus(b.id, BusinessStatus.rejected),
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.error.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 16,
-                              color: AppColors.error,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-      ),
-    );
-  }
-}
-
-// ─── Recent Activity Card ───
-
-class _RecentActivityCard extends StatelessWidget {
-  final List<Review> reviews;
-  final List<Business> businesses;
-  const _RecentActivityCard({required this.reviews, required this.businesses});
-
-  @override
-  Widget build(BuildContext context) {
-    return _CardShell(
-      title: 'פעילות אחרונה',
-      subtitle: 'ביקורות ורישומים',
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
-          ...reviews.take(4).map((r) {
-            final bizName =
-                businesses
-                    .where((b) => b.id == r.businessId)
-                    .firstOrNull
-                    ?.name ??
-                '';
-            final accentColor = r.rating >= 4
-                ? AppColors.success
-                : r.rating >= 3
-                ? AppColors.gold
-                : AppColors.error;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 2),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: Border(
-                  right: BorderSide(color: accentColor, width: 3),
-                  bottom: const BorderSide(
-                    color: AppColors.adminDashBorder,
-                    width: 0.5,
-                    strokeAlign: BorderSide.strokeAlignCenter,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 12),
-                  // CRM-style: icon square with rounded corners
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        IconsaxPlusBold.star,
-                        size: 18,
-                        color: accentColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${r.userName} העיר על $bizName',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.adminTextDark,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          r.text ?? '',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            color: AppColors.adminTextLight,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          IconsaxPlusBold.star_1,
-                          size: 12,
-                          color: accentColor,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${r.rating}',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: accentColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Card Shell ───
-
-class _CardShell extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final Widget child;
-  const _CardShell({required this.title, this.subtitle, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.adminCardBorder, width: 1),
-        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.adminTextDark,
-            ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              subtitle!,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 12,
-                color: AppColors.adminTextLight,
-              ),
-            ),
-          ],
-          const SizedBox(height: 8),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
 // ─── Users Section ───
 
+/// Residents with an account.
+///
+/// This listed six invented people and edited them in memory. It reads
+/// `profiles` now, and the two controls it offers — editing a profile and
+/// banning someone — write to that table.
+///
+/// The role filter and the "make a business owner" action are gone with the
+/// invented rows: `profiles` has no role column. Being an administrator is a
+/// row in `admin_users`, which the team section manages, and owning a
+/// business is `businesses.owner_id`, which the business editor sets. Nothing
+/// here could have set either.
 class _UsersSection extends ConsumerStatefulWidget {
   const _UsersSection();
   @override
@@ -1698,21 +560,18 @@ class _UsersSection extends ConsumerStatefulWidget {
 }
 
 class _UsersSectionState extends ConsumerState<_UsersSection> {
-  String _search = '';
-  UserRole? _roleFilter;
+  final _searchController = TextEditingController();
+  ProfileFilter _filter = ProfileFilter.all;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final users = ref.watch(adminUsersProvider);
-    var filtered = users.where((u) {
-      if (_search.isNotEmpty &&
-          !u.name.contains(_search) &&
-          !u.phone.contains(_search) &&
-          !u.email.contains(_search))
-        return false;
-      if (_roleFilter != null && u.role != _roleFilter) return false;
-      return true;
-    }).toList();
+    final asyncProfiles = ref.watch(adminProfilesProvider);
 
     return Column(
       children: [
@@ -1738,6 +597,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                     ),
                   ),
                   child: TextField(
+                    controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'חיפוש לפי שם, טלפון, אימייל...',
                       hintStyle: TextStyle(
@@ -1757,87 +617,49 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                       ),
                     ),
                     style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-                    onChanged: (v) => setState(() => _search = v),
+                    onChanged: (v) => ref
+                        .read(adminProfilesProvider.notifier)
+                        .setSearch(v.isEmpty ? null : v),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Container(
-                height: 40,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: AppColors.adminSearchBorder,
-                    width: 1,
-                  ),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<UserRole?>(
-                    value: _roleFilter,
-                    hint: Text(
-                      'תפקיד',
+              _FilterPill('הכל', _filter == ProfileFilter.all, () {
+                _setFilter(ProfileFilter.all);
+              }),
+              _FilterPill('מאומתים', _filter == ProfileFilter.verified, () {
+                _setFilter(ProfileFilter.verified);
+              }),
+              _FilterPill('חסומים', _filter == ProfileFilter.banned, () {
+                _setFilter(ProfileFilter.banned);
+              }),
+              const SizedBox(width: 12),
+              // An account is created when the resident first signs in — that
+              // is what puts the row in `auth.users` this table points at. The
+              // panel cannot make one, so the button says so rather than
+              // opening a form that could not save.
+              Tooltip(
+                message:
+                    'חשבון נוצר כשהתושב נכנס לאפליקציה בפעם הראשונה. '
+                    'לא ניתן ליצור משתמש מכאן.',
+                child: SizedBox(
+                  height: 40,
+                  child: FilledButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(
+                      'משתמש חדש',
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
-                        color: AppColors.adminTextMedium,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    icon: Icon(
-                      IconsaxPlusLinear.arrow_down_1,
-                      size: 16,
-                      color: AppColors.adminTextLight,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: null,
-                        child: Text(
-                          'הכל',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                          ),
-                        ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.midBlue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      ...UserRole.values.map(
-                        (r) => DropdownMenuItem(
-                          value: r,
-                          child: Text(
-                            switch (r) {
-                              UserRole.admin => 'מנהל',
-                              UserRole.businessOwner => 'בעל עסק',
-                              UserRole.user => 'תושב',
-                            },
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                    onChanged: (v) => setState(() => _roleFilter = v),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                height: 40,
-                child: FilledButton.icon(
-                  onPressed: () => _showUserDialog(context, ref),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(
-                    'משתמש חדש',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.midBlue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
@@ -1847,141 +669,26 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
         ),
         // ── User list ──
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(0),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) =>
-                const Divider(height: 1, color: AppColors.adminCardBorder),
-            itemBuilder: (context, i) {
-              final u = filtered[i];
-              return Container(
-                color: Colors.white,
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 4,
-                  ),
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: u.isBanned
-                          ? AppColors.error.withValues(alpha: 0.1)
-                          : AppColors.midBlue.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Center(
-                      child: Text(
-                        u.initials,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          color: u.isBanned
-                              ? AppColors.error
-                              : AppColors.midBlue,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                  title: Row(
-                    children: [
-                      Text(
-                        u.name,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                          color: AppColors.adminTextDark,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _RoleBadge(u.role),
-                      if (u.isBanned) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.error.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'חסום',
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 11,
-                              color: AppColors.error,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  subtitle: Text(
-                    '${u.phone} • ${u.email} • ${u.neighborhood ?? "—"}',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      color: AppColors.adminTextLight,
-                    ),
-                  ),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (v) => _handleUserAction(v, u),
-                    icon: Icon(
-                      IconsaxPlusLinear.more,
-                      size: 20,
-                      color: AppColors.adminTextLight,
-                    ),
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Text(
-                          'עריכה',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'ban',
-                        child: Text(
-                          u.isBanned ? 'בטל חסימה' : 'חסום משתמש',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'makeBusinessOwner',
-                        child: Text(
-                          'הפוך לבעל עסק',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(
-                          'מחק',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            color: AppColors.error,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  onTap: () => _showUserDialog(context, ref, user: u),
-                ),
+          child: asyncProfiles.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => _AdminError(
+              message: 'לא ניתן לטעון את רשימת המשתמשים',
+              detail: '$e',
+              onRetry: () => ref.read(adminProfilesProvider.notifier).load(),
+            ),
+            data: (rows) {
+              if (rows.isEmpty) {
+                return const _AdminEmpty(
+                  icon: IconsaxPlusLinear.profile_2user,
+                  message: 'אין משתמשים להצגה',
+                );
+              }
+              return ListView.separated(
+                padding: EdgeInsets.zero,
+                itemCount: rows.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, color: AppColors.adminCardBorder),
+                itemBuilder: (context, i) => _profileTile(rows[i]),
               );
             },
           ),
@@ -1990,423 +697,415 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
     );
   }
 
-  void _handleUserAction(String action, UserModel user) {
-    final notifier = ref.read(adminUsersProvider.notifier);
+  void _setFilter(ProfileFilter filter) {
+    setState(() => _filter = filter);
+    ref.read(adminProfilesProvider.notifier).setFilter(filter);
+  }
+
+  Widget _profileTile(Map<String, dynamic> p) {
+    final id = p['id'] as String;
+    final name = (p['full_name'] as String?)?.trim();
+    final isBanned = p['is_banned'] == true;
+    final neighborhood = p['neighborhoods'] is Map
+        ? (p['neighborhoods'] as Map)['name'] as String?
+        : null;
+
+    return Container(
+      color: Colors.white,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isBanned
+                ? AppColors.error.withValues(alpha: 0.1)
+                : AppColors.midBlue.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Center(
+            child: Text(
+              _initials(name),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                color: isBanned ? AppColors.error : AppColors.midBlue,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                // A profile can only be created with a name, but an empty
+                // string gets through; saying so beats printing nothing.
+                name == null || name.isEmpty ? 'ללא שם' : name,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: AppColors.adminTextDark,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (p['is_verified'] == true) ...[
+              const SizedBox(width: 8),
+              _Tag('מאומת', AppColors.success),
+            ],
+            if (p['is_broker'] == true) ...[
+              const SizedBox(width: 6),
+              _Tag('מתווך', AppColors.midBlue),
+            ],
+            if (isBanned) ...[
+              const SizedBox(width: 6),
+              _Tag('חסום', AppColors.error),
+            ],
+          ],
+        ),
+        subtitle: Text(
+          [
+            if ((p['phone'] as String?)?.isNotEmpty ?? false) p['phone'],
+            if ((p['email'] as String?)?.isNotEmpty ?? false) p['email'],
+            if (neighborhood != null) neighborhood,
+          ].join(' • '),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 12,
+            color: AppColors.adminTextLight,
+          ),
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (v) => _handleUserAction(v, id, isBanned),
+          icon: Icon(
+            IconsaxPlusLinear.more,
+            size: 20,
+            color: AppColors.adminTextLight,
+          ),
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'edit',
+              child: Text(
+                'עריכה',
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+              ),
+            ),
+            PopupMenuItem(
+              value: 'ban',
+              child: Text(
+                isBanned ? 'בטל חסימה' : 'חסום משתמש',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  color: isBanned ? null : AppColors.error,
+                ),
+              ),
+            ),
+          ],
+        ),
+        onTap: () => _showProfileDialog(context, ref, profile: p),
+      ),
+    );
+  }
+
+  void _handleUserAction(String action, String id, bool isBanned) {
     switch (action) {
+      case 'edit':
+        final row = ref
+            .read(adminProfilesProvider)
+            .valueOrNull
+            ?.firstWhere((p) => p['id'] == id, orElse: () => const {});
+        if (row != null && row.isNotEmpty) {
+          _showProfileDialog(context, ref, profile: row);
+        }
       case 'ban':
-        notifier.toggleBan(user.id);
-      case 'makeBusinessOwner':
-        notifier.setRole(user.id, UserRole.businessOwner);
-      case 'delete':
-        notifier.remove(user.id);
+        _run(
+          () => ref
+              .read(adminProfilesProvider.notifier)
+              .setBanned(id, !isBanned),
+          isBanned ? 'החסימה בוטלה' : 'המשתמש נחסם',
+        );
+    }
+  }
+
+  /// Runs a write and says what happened.
+  ///
+  /// Every action in this panel used to change a list in memory and show
+  /// nothing; a failed write has to be visible, or the client goes on
+  /// believing he has acted.
+  Future<void> _run(Future<void> Function() write, String done) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await write();
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(done)));
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.error,
+          content: Text('הפעולה נכשלה: $e'),
+        ),
+      );
     }
   }
 }
 
-// ─── Businesses Section ───
-
-class _BusinessesSection extends ConsumerStatefulWidget {
-  const _BusinessesSection();
-  @override
-  ConsumerState<_BusinessesSection> createState() => _BusinessesSectionState();
-}
-
-class _BusinessesSectionState extends ConsumerState<_BusinessesSection> {
-  String _search = '';
-  BusinessStatus? _statusFilter;
-
-  @override
-  Widget build(BuildContext context) {
-    final businesses = ref.watch(adminBusinessesProvider);
-    var filtered = businesses.where((b) {
-      if (_search.isNotEmpty &&
-          !b.name.contains(_search) &&
-          !b.category.contains(_search))
-        return false;
-      if (_statusFilter != null && b.status != _statusFilter) return false;
-      return true;
-    }).toList();
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'חיפוש עסק...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  onChanged: (v) => setState(() => _search = v),
-                ),
-              ),
-              const SizedBox(width: 12),
-              DropdownButton<BusinessStatus?>(
-                value: _statusFilter,
-                hint: Text(
-                  'סטטוס',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text(
-                      'הכל',
-                      style: TextStyle(fontFamily: AppFonts.rubik),
-                    ),
-                  ),
-                  ...BusinessStatus.values.map(
-                    (s) => DropdownMenuItem(
-                      value: s,
-                      child: Text(switch (s) {
-                        BusinessStatus.active => 'פעיל',
-                        BusinessStatus.pending => 'ממתין',
-                        BusinessStatus.suspended => 'מושהה',
-                        BusinessStatus.rejected => 'נדחה',
-                      }, style: TextStyle(fontFamily: AppFonts.rubik)),
-                    ),
-                  ),
-                ],
-                onChanged: (v) => setState(() => _statusFilter = v),
-              ),
-              const SizedBox(width: 12),
-              FilledButton.icon(
-                onPressed: () => _showBusinessDialog(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  'עסק חדש',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, i) {
-              final b = filtered[i];
-              return ListTile(
-                leading: Icon(Icons.store, color: _statusColor(b.status)),
-                title: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        b.name,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _StatusBadge(b.statusLabel, _statusColor(b.status)),
-                  ],
-                ),
-                subtitle: Text(
-                  '${b.category} • ${b.address} • slug: ${b.slug.isEmpty ? "—" : b.slug}',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 12,
-                    color: AppColors.grayText,
-                  ),
-                ),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (v) => _handleBusinessAction(v, b),
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'edit', child: Text('עריכה')),
-                    if (b.status != BusinessStatus.active)
-                      const PopupMenuItem(
-                        value: 'activate',
-                        child: Text('אשר'),
-                      ),
-                    if (b.status != BusinessStatus.suspended)
-                      const PopupMenuItem(
-                        value: 'suspend',
-                        child: Text('השהה'),
-                      ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text(
-                        'מחק',
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                    ),
-                  ],
-                ),
-                onTap: () => _showBusinessDialog(context, ref, business: b),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Color _statusColor(BusinessStatus s) => switch (s) {
-    BusinessStatus.active => AppColors.success,
-    BusinessStatus.pending => AppColors.gold,
-    BusinessStatus.suspended => AppColors.error,
-    BusinessStatus.rejected => AppColors.grayLight,
-  };
-
-  void _handleBusinessAction(String action, Business biz) {
-    final notifier = ref.read(adminBusinessesProvider.notifier);
-    switch (action) {
-      case 'edit':
-        _showBusinessDialog(context, ref, business: biz);
-      case 'activate':
-        notifier.setStatus(biz.id, BusinessStatus.active);
-      case 'suspend':
-        notifier.setStatus(biz.id, BusinessStatus.suspended);
-      case 'delete':
-        notifier.remove(biz.id);
-    }
-  }
-}
-
-// ─── Articles Section ───
-
-class _ArticlesSection extends ConsumerStatefulWidget {
-  const _ArticlesSection();
-  @override
-  ConsumerState<_ArticlesSection> createState() => _ArticlesSectionState();
-}
-
-class _ArticlesSectionState extends ConsumerState<_ArticlesSection> {
-  String _search = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final articles = ref.watch(adminArticlesProvider);
-    var filtered = articles
-        .where(
-          (a) =>
-              _search.isEmpty ||
-              a.title.contains(_search) ||
-              a.slug.contains(_search),
-        )
-        .toList();
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'חיפוש כתבה...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  onChanged: (v) => setState(() => _search = v),
-                ),
-              ),
-              const SizedBox(width: 12),
-              FilledButton.icon(
-                onPressed: () => _showArticleDialog(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  'כתבה חדשה',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, i) {
-              final a = filtered[i];
-              return ListTile(
-                leading: Icon(
-                  a.status == ArticleStatus.published
-                      ? Icons.public
-                      : a.status == ArticleStatus.draft
-                      ? Icons.edit_note
-                      : Icons.archive,
-                  color: a.status == ArticleStatus.published
-                      ? AppColors.success
-                      : a.status == ArticleStatus.draft
-                      ? AppColors.gold
-                      : AppColors.grayLight,
-                ),
-                title: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        a.title,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _StatusBadge(
-                      a.status == ArticleStatus.published
-                          ? 'פורסם'
-                          : a.status == ArticleStatus.draft
-                          ? 'טיוטה'
-                          : 'ארכיון',
-                      a.status == ArticleStatus.published
-                          ? AppColors.success
-                          : a.status == ArticleStatus.draft
-                          ? AppColors.gold
-                          : AppColors.grayLight,
-                    ),
-                    if (a.isFeatured) ...[
-                      const SizedBox(width: 4),
-                      const Icon(Icons.star, size: 16, color: AppColors.gold),
-                    ],
-                  ],
-                ),
-                subtitle: Text(
-                  'slug: ${a.slug.isEmpty ? "—" : a.slug} • ${a.category.label} • ${a.viewCount} צפיות • meta: ${a.metaDescription?.isNotEmpty == true ? "✓" : "✗"}',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 12,
-                    color: AppColors.grayText,
-                  ),
-                ),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (v) => _handleArticleAction(v, a),
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'edit', child: Text('עריכה')),
-                    if (a.status != ArticleStatus.published)
-                      const PopupMenuItem(
-                        value: 'publish',
-                        child: Text('פרסם'),
-                      ),
-                    if (a.status != ArticleStatus.draft)
-                      const PopupMenuItem(
-                        value: 'draft',
-                        child: Text('החזר לטיוטה'),
-                      ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text(
-                        'מחק',
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                    ),
-                  ],
-                ),
-                onTap: () => _showArticleDialog(context, ref, article: a),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _handleArticleAction(String action, Article a) {
-    final notifier = ref.read(adminArticlesProvider.notifier);
-    switch (action) {
-      case 'edit':
-        _showArticleDialog(context, ref, article: a);
-      case 'publish':
-        notifier.setStatus(a.id, ArticleStatus.published);
-      case 'draft':
-        notifier.setStatus(a.id, ArticleStatus.draft);
-      case 'delete':
-        notifier.remove(a.id);
-    }
-  }
+String _initials(String? name) {
+  final parts = (name ?? '').trim().split(RegExp(r'\s+'))
+    ..removeWhere((p) => p.isEmpty);
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) return parts.first.characters.first;
+  return '${parts.first.characters.first}${parts[1].characters.first}';
 }
 
 // ─── Reviews Section ───
 
-class _ReviewsSection extends ConsumerWidget {
+/// Reviews awaiting moderation.
+///
+/// This listed three invented reviews and its delete button dropped one from
+/// a list in memory. `reviews` has no rows yet, so the honest state of this
+/// screen is empty — and approving one, once they arrive, is what moves the
+/// business's rating, because migration 00025 counts approved reviews only.
+class _ReviewsSection extends ConsumerStatefulWidget {
   const _ReviewsSection();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final reviews = ref.watch(adminReviewsProvider);
-    final businesses = ref.watch(adminBusinessesProvider);
+  ConsumerState<_ReviewsSection> createState() => _ReviewsSectionState();
+}
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: reviews.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (context, i) {
-        final r = reviews[i];
-        final bizName =
-            businesses.where((b) => b.id == r.businessId).firstOrNull?.name ??
-            r.businessId;
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: r.rating >= 4
-                ? AppColors.success.withValues(alpha: 0.15)
-                : r.rating >= 3
-                ? AppColors.gold.withValues(alpha: 0.15)
-                : AppColors.error.withValues(alpha: 0.15),
-            child: Text(
-              '${r.rating.toInt()}',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontWeight: FontWeight.w700,
-                color: r.rating >= 4
-                    ? AppColors.success
-                    : r.rating >= 3
-                    ? AppColors.gold
-                    : AppColors.error,
-              ),
+class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
+  String _statusFilter = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final asyncReviews = ref.watch(adminReviewsProvider);
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: AppColors.adminCardBorder, width: 1),
             ),
           ),
-          title: Text(
-            '${r.userName} — $bizName',
+          child: Row(
+            children: [
+              _FilterPill('הכל', _statusFilter.isEmpty, () => _setStatus('')),
+              _FilterPill(
+                'ממתין',
+                _statusFilter == 'pending',
+                () => _setStatus('pending'),
+              ),
+              _FilterPill(
+                'מאושר',
+                _statusFilter == 'approved',
+                () => _setStatus('approved'),
+              ),
+              _FilterPill(
+                'נדחה',
+                _statusFilter == 'rejected',
+                () => _setStatus('rejected'),
+              ),
+              const Spacer(),
+              // Nothing is printed while the count is unknown, rather than a
+              // zero that reads as "no reviews".
+              asyncReviews
+                      .whenData(
+                        (rows) => Text(
+                          rows.isEmpty ? 'אין ביקורות' : '${rows.length} ביקורות',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 13,
+                            color: AppColors.adminTextLight,
+                          ),
+                        ),
+                      )
+                      .value ??
+                  const SizedBox.shrink(),
+            ],
+          ),
+        ),
+        Expanded(
+          child: asyncReviews.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => _AdminError(
+              message: 'לא ניתן לטעון את הביקורות',
+              detail: '$e',
+              onRetry: () => ref.read(adminReviewsProvider.notifier).load(),
+            ),
+            data: (rows) {
+              if (rows.isEmpty) {
+                return const _AdminEmpty(
+                  icon: IconsaxPlusLinear.star,
+                  message: 'אין ביקורות',
+                  detail: 'ביקורות שתושבים יכתבו על עסקים יופיעו כאן לאישור.',
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                itemCount: rows.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, color: AppColors.adminCardBorder),
+                itemBuilder: (context, i) => _reviewTile(rows[i]),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _setStatus(String status) {
+    setState(() => _statusFilter = status);
+    ref
+        .read(adminReviewsProvider.notifier)
+        .setStatusFilter(status.isEmpty ? null : status);
+  }
+
+  Widget _reviewTile(Map<String, dynamic> r) {
+    final id = r['id'] as String;
+    final status = r['status'] as String? ?? 'pending';
+    final rating = (r['rating'] as num?)?.toInt();
+    final author = r['profiles'] is Map
+        ? (r['profiles'] as Map)['full_name'] as String?
+        : null;
+    final business = r['businesses'] is Map
+        ? (r['businesses'] as Map)['name'] as String?
+        : null;
+    final color = rating == null
+        ? AppColors.adminTextLight
+        : rating >= 4
+        ? AppColors.success
+        : rating >= 3
+        ? AppColors.gold
+        : AppColors.error;
+
+    return Container(
+      color: status == 'pending' ? AppColors.gold.withValues(alpha: 0.04) : null,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: color.withValues(alpha: 0.15),
+          child: Text(
+            rating?.toString() ?? '—',
             style: TextStyle(
               fontFamily: AppFonts.rubik,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
           ),
-          subtitle: Text(
-            r.text ?? '',
+        ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                // The reviewer's name and the business come from the joins.
+                // Where a join is missing the row is broken, and it says that
+                // rather than filling the gap with an id.
+                [author ?? 'מחבר לא ידוע', business ?? 'עסק לא ידוע'].join(' — '),
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: AppColors.adminTextDark,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _Tag(_statusLabel(status), _statusColor(status)),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            (r['body'] as String?)?.trim().isNotEmpty == true
+                ? r['body'] as String
+                : 'דירוג בלבד, ללא טקסט',
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 13,
               color: AppColors.grayText,
             ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
-            onPressed: () =>
-                ref.read(adminReviewsProvider.notifier).remove(r.id),
-          ),
-        );
-      },
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (status != 'approved')
+              IconButton(
+                tooltip: 'אשר',
+                icon: const Icon(Icons.check, color: AppColors.success),
+                onPressed: () => _run(
+                  () => ref.read(adminReviewsProvider.notifier).approve(id),
+                  'הביקורת אושרה',
+                ),
+              ),
+            if (status != 'rejected')
+              IconButton(
+                tooltip: 'דחה',
+                icon: const Icon(Icons.close, color: AppColors.error),
+                onPressed: () => _run(
+                  () => ref.read(adminReviewsProvider.notifier).reject(id),
+                  'הביקורת נדחתה',
+                ),
+              ),
+          ],
+        ),
+      ),
     );
+  }
+
+  String _statusLabel(String status) => switch (status) {
+    'approved' => 'מאושר',
+    'pending' => 'ממתין',
+    'rejected' => 'נדחה',
+    'hidden' => 'מוסתר',
+    _ => status,
+  };
+
+  Color _statusColor(String status) => switch (status) {
+    'approved' => AppColors.success,
+    'pending' => AppColors.gold,
+    'rejected' => AppColors.error,
+    _ => AppColors.adminTextLight,
+  };
+
+  Future<void> _run(Future<void> Function() write, String done) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await write();
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(done)));
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.error,
+          content: Text('הפעולה נכשלה: $e'),
+        ),
+      );
+    }
   }
 }
 
 // ─── Settings Section ───
 
+/// What the panel can say about its own configuration.
+///
+/// This listed six settings with a pencil beside each: an app version, a push
+/// switch, a maintenance switch, a masked maps key and `https://xxx.supabase.co`
+/// where the project URL belongs. None of them were read from anywhere and the
+/// pencil edited nothing. `app_settings` exists as a table but has no rows and
+/// nothing reads it, so the two values below are all this screen can honestly
+/// show, and the notice says what is missing.
 class _SettingsSection extends StatelessWidget {
   const _SettingsSection();
 
@@ -2439,24 +1138,46 @@ class _SettingsSection extends StatelessWidget {
           'מודיעין בשבילך',
           IconsaxPlusLinear.mobile,
         ),
-        _SettingsTile('גרסה', '1.0.0', IconsaxPlusLinear.info_circle),
-        _SettingsTile(
-          'התראות Push',
-          'פעיל',
-          IconsaxPlusLinear.notification,
-          statusColor: AppColors.success,
-        ),
-        _SettingsTile(
-          'תחזוקה',
-          'כבוי',
-          IconsaxPlusLinear.setting_3,
-          statusColor: AppColors.adminTextLight,
-        ),
-        _SettingsTile('מפתח API — מפות', '••••••••', IconsaxPlusLinear.map),
         _SettingsTile(
           'Supabase URL',
-          'https://xxx.supabase.co',
+          SupabaseConfig.supabaseUrl,
           IconsaxPlusLinear.cloud,
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.gold.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.gold.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                IconsaxPlusLinear.info_circle,
+                size: 20,
+                color: AppColors.gold,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'הגדרות הניתנות לעריכה — התראות Push, מצב תחזוקה, מפתחות API — '
+                  'אינן מחוברות לטבלה. הן יופיעו כאן כשיהיה להן מקום לשמור אליו '
+                  '(app_settings ריקה).',
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 13,
+                    height: 1.5,
+                    color: AppColors.adminTextMedium,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -2467,8 +1188,7 @@ class _SettingsTile extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final Color? statusColor;
-  const _SettingsTile(this.label, this.value, this.icon, {this.statusColor});
+  const _SettingsTile(this.label, this.value, this.icon);
 
   @override
   Widget build(BuildContext context) {
@@ -2507,39 +1227,17 @@ class _SettingsTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Row(
-                  children: [
-                    if (statusColor != null) ...[
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: statusColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                    Expanded(
-                      child: Text(
-                        value,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          color: AppColors.adminTextLight,
-                          fontSize: 13,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    color: AppColors.adminTextLight,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ),
-          Icon(
-            IconsaxPlusLinear.edit_2,
-            size: 18,
-            color: AppColors.adminTextLight,
           ),
         ],
       ),
@@ -2549,94 +1247,13 @@ class _SettingsTile extends StatelessWidget {
 
 // ─── Shared Widgets ───
 
-class _MetricCard extends StatelessWidget {
-  final String title, value, subtitle;
-  final IconData icon;
+class _Tag extends StatelessWidget {
+  final String label;
   final Color color;
-
-  const _MetricCard(
-    this.title,
-    this.value,
-    this.icon,
-    this.color,
-    this.subtitle,
-  );
+  const _Tag(this.label, this.color);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.adminCardBorder, width: 1),
-        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(icon, size: 20, color: color),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 32,
-              fontWeight: FontWeight.w600,
-              color: AppColors.adminTextDark,
-            ),
-          ),
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 14,
-              color: AppColors.adminTextLight,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoleBadge extends StatelessWidget {
-  final UserRole role;
-  const _RoleBadge(this.role);
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (role) {
-      UserRole.admin => ('מנהל', AppColors.error),
-      UserRole.businessOwner => ('בעל עסק', AppColors.midBlue),
-      UserRole.user => ('תושב', AppColors.adminTextLight),
-    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -2649,33 +1266,154 @@ class _RoleBadge extends StatelessWidget {
           fontFamily: AppFonts.inter,
           fontSize: 11,
           color: color,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
 }
 
-class _StatusBadge extends StatelessWidget {
+class _FilterPill extends StatelessWidget {
   final String label;
-  final Color color;
-  const _StatusBadge(this.label, this.color);
+  final bool selected;
+  final VoidCallback onTap;
+  const _FilterPill(this.label, this.selected, this.onTap);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.adminActiveBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: selected ? AppColors.midBlue : AppColors.adminSearchBorder,
+              width: 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? AppColors.midBlue : AppColors.adminTextMedium,
+            ),
+          ),
+        ),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.inter,
-          fontSize: 11,
-          color: color,
-          fontWeight: FontWeight.w500,
+    );
+  }
+}
+
+/// An empty list, said plainly.
+///
+/// Several of these tables have no rows yet, and an empty panel has to read as
+/// "nothing here" rather than as a screen that failed to load.
+class _AdminEmpty extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final String? detail;
+  const _AdminEmpty({required this.icon, required this.message, this.detail});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 48,
+              color: AppColors.adminTextLight.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 15,
+                color: AppColors.adminTextMedium,
+              ),
+            ),
+            if (detail != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                detail!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 13,
+                  color: AppColors.adminTextLight,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminError extends StatelessWidget {
+  final String message;
+  final String detail;
+  final VoidCallback onRetry;
+  const _AdminError({
+    required this.message,
+    required this.detail,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              IconsaxPlusLinear.danger,
+              size: 40,
+              color: AppColors.error.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 15,
+                color: AppColors.adminTextDark,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              detail,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 12,
+                color: AppColors.adminTextLight,
+              ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(
+                'נסה שוב',
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -2684,13 +1422,25 @@ class _StatusBadge extends StatelessWidget {
 
 // ─── Dialogs ───
 
-void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
-  final isEdit = user != null;
-  final nameC = TextEditingController(text: user?.name ?? '');
-  final emailC = TextEditingController(text: user?.email ?? '');
-  final phoneC = TextEditingController(text: user?.phone ?? '');
-  final neighborhoodC = TextEditingController(text: user?.neighborhood ?? '');
-  var role = user?.role ?? UserRole.user;
+/// Edits one profile.
+///
+/// It only offers what `profiles` holds and the panel may set. It has no
+/// create mode: `profiles.id` references `auth.users`, so a row cannot be
+/// invented here — the old dialog built one with a made-up id and put it in a
+/// list in memory.
+void _showProfileDialog(
+  BuildContext context,
+  WidgetRef ref, {
+  required Map<String, dynamic> profile,
+}) {
+  final id = profile['id'] as String;
+  final nameC = TextEditingController(
+    text: profile['full_name'] as String? ?? '',
+  );
+  final emailC = TextEditingController(text: profile['email'] as String? ?? '');
+  final phoneC = TextEditingController(text: profile['phone'] as String? ?? '');
+  var neighborhoodId = profile['neighborhood_id'] as String?;
+  var isVerified = profile['is_verified'] == true;
 
   showDialog(
     context: context,
@@ -2699,7 +1449,7 @@ void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           title: Text(
-            isEdit ? 'עריכת משתמש' : 'משתמש חדש',
+            'עריכת משתמש',
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontWeight: FontWeight.w700,
@@ -2726,472 +1476,57 @@ void _showUserDialog(BuildContext context, WidgetRef ref, {UserModel? user}) {
                     decoration: const InputDecoration(labelText: 'טלפון'),
                   ),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: neighborhoodC,
-                    decoration: const InputDecoration(labelText: 'שכונה'),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<UserRole>(
-                    value: role,
-                    decoration: const InputDecoration(labelText: 'תפקיד'),
-                    items: UserRole.values
-                        .map(
-                          (r) => DropdownMenuItem(
-                            value: r,
-                            child: Text(switch (r) {
-                              UserRole.admin => 'מנהל',
-                              UserRole.businessOwner => 'בעל עסק',
-                              UserRole.user => 'תושב',
-                            }),
+                  // The neighbourhood is a foreign key, so this is the list of
+                  // real neighbourhoods rather than a free-text box that could
+                  // not be saved.
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final asyncHoods = ref.watch(neighborhoodsProvider);
+                      return asyncHoods.when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (e, _) => Text(
+                          'לא ניתן לטעון שכונות: $e',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            color: AppColors.error,
                           ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setDState(() => role = v!),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'ביטול',
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  color: AppColors.adminTextMedium,
-                ),
-              ),
-            ),
-            FilledButton(
-              onPressed: () {
-                final notifier = ref.read(adminUsersProvider.notifier);
-                if (isEdit) {
-                  notifier.update(
-                    user!.copyWith(
-                      name: nameC.text,
-                      email: emailC.text,
-                      phone: phoneC.text,
-                      neighborhood: neighborhoodC.text,
-                      role: role,
-                    ),
-                  );
-                } else {
-                  notifier.add(
-                    UserModel(
-                      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-                      name: nameC.text,
-                      email: emailC.text,
-                      phone: phoneC.text,
-                      neighborhood: neighborhoodC.text,
-                      role: role,
-                      createdAt: DateTime.now(),
-                    ),
-                  );
-                }
-                Navigator.pop(ctx);
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.midBlue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                isEdit ? 'שמור' : 'צור',
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-void _showBusinessDialog(
-  BuildContext context,
-  WidgetRef ref, {
-  Business? business,
-}) {
-  final isEdit = business != null;
-  final nameC = TextEditingController(text: business?.name ?? '');
-  final slugC = TextEditingController(text: business?.slug ?? '');
-  final categoryC = TextEditingController(text: business?.category ?? '');
-  final descC = TextEditingController(text: business?.description ?? '');
-  final metaC = TextEditingController(text: business?.metaDescription ?? '');
-  final phoneC = TextEditingController(text: business?.phone ?? '');
-  final emailC = TextEditingController(text: business?.email ?? '');
-  final websiteC = TextEditingController(text: business?.website ?? '');
-  final addressC = TextEditingController(text: business?.address ?? '');
-  final neighborhoodC = TextEditingController(
-    text: business?.neighborhood ?? '',
-  );
-  final tagsC = TextEditingController(text: business?.tags.join(', ') ?? '');
-
-  showDialog(
-    context: context,
-    builder: (ctx) => Directionality(
-      textDirection: TextDirection.rtl,
-      child: AlertDialog(
-        title: Text(
-          isEdit ? 'עריכת עסק' : 'עסק חדש',
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        content: SizedBox(
-          width: 500,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameC,
-                  decoration: const InputDecoration(labelText: 'שם העסק'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: slugC,
-                  decoration: const InputDecoration(
-                    labelText: 'Slug (URL)',
-                    hintText: 'pizza-frago',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: categoryC,
-                  decoration: const InputDecoration(labelText: 'קטגוריה'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: descC,
-                  decoration: const InputDecoration(labelText: 'תיאור'),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: metaC,
-                  decoration: const InputDecoration(
-                    labelText: 'Meta Description',
-                    hintText: 'תיאור ל-SEO (עד 160 תווים)',
-                  ),
-                  maxLength: 160,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: phoneC,
-                        decoration: const InputDecoration(labelText: 'טלפון'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: emailC,
-                        decoration: const InputDecoration(labelText: 'אימייל'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: websiteC,
-                  decoration: const InputDecoration(labelText: 'אתר'),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: addressC,
-                        decoration: const InputDecoration(labelText: 'כתובת'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: neighborhoodC,
-                        decoration: const InputDecoration(labelText: 'שכונה'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: tagsC,
-                  decoration: const InputDecoration(
-                    labelText: 'תגיות (מופרדות בפסיק)',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'ביטול',
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                color: AppColors.adminTextMedium,
-              ),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              final notifier = ref.read(adminBusinessesProvider.notifier);
-              final tags = tagsC.text
-                  .split(',')
-                  .map((t) => t.trim())
-                  .where((t) => t.isNotEmpty)
-                  .toList();
-              if (isEdit) {
-                notifier.update(
-                  business!.copyWith(
-                    name: nameC.text,
-                    slug: slugC.text,
-                    category: categoryC.text,
-                    description: descC.text,
-                    metaDescription: metaC.text,
-                    phone: phoneC.text,
-                    email: emailC.text,
-                    website: websiteC.text,
-                    address: addressC.text,
-                    neighborhood: neighborhoodC.text,
-                    tags: tags,
-                  ),
-                );
-              } else {
-                notifier.add(
-                  Business(
-                    id: 'b_${DateTime.now().millisecondsSinceEpoch}',
-                    name: nameC.text,
-                    slug: slugC.text,
-                    category: categoryC.text,
-                    description: descC.text,
-                    metaDescription: metaC.text,
-                    phone: phoneC.text,
-                    email: emailC.text,
-                    website: websiteC.text,
-                    address: addressC.text,
-                    neighborhood: neighborhoodC.text,
-                    latitude: 31.897,
-                    longitude: 35.010,
-                    tags: tags,
-                    status: BusinessStatus.active,
-                    createdAt: DateTime.now(),
-                  ),
-                );
-              }
-              Navigator.pop(ctx);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.midBlue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              isEdit ? 'שמור' : 'צור',
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-void _showArticleDialog(
-  BuildContext context,
-  WidgetRef ref, {
-  Article? article,
-}) {
-  final isEdit = article != null;
-  final titleC = TextEditingController(text: article?.title ?? '');
-  final subtitleC = TextEditingController(text: article?.subtitle ?? '');
-  final slugC = TextEditingController(text: article?.slug ?? '');
-  final bodyC = TextEditingController(text: article?.body ?? '');
-  final authorC = TextEditingController(text: article?.author ?? '');
-  final metaDescC = TextEditingController(text: article?.metaDescription ?? '');
-  final metaKeywordsC = TextEditingController(
-    text: article?.metaKeywords ?? '',
-  );
-  final tagsC = TextEditingController(text: article?.tags.join(', ') ?? '');
-  var category = article?.category ?? NewsCategory.municipal;
-  var status = article?.status ?? ArticleStatus.draft;
-  var isBreaking = article?.isBreaking ?? false;
-  var isFeatured = article?.isFeatured ?? false;
-
-  showDialog(
-    context: context,
-    builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setDState) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: Text(
-            isEdit ? 'עריכת כתבה' : 'כתבה חדשה',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          content: SizedBox(
-            width: 550,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleC,
-                    decoration: const InputDecoration(labelText: 'כותרת'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: subtitleC,
-                    decoration: const InputDecoration(labelText: 'כותרת משנה'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: slugC,
-                    decoration: const InputDecoration(
-                      labelText: 'Slug (URL)',
-                      hintText: 'my-article-title',
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: authorC,
-                    decoration: const InputDecoration(labelText: 'כותב'),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<NewsCategory>(
-                          value: category,
+                        ),
+                        data: (hoods) => DropdownButtonFormField<String?>(
+                          initialValue: neighborhoodId,
                           decoration: const InputDecoration(
-                            labelText: 'קטגוריה',
+                            labelText: 'שכונה',
                           ),
-                          items: NewsCategory.values
-                              .map(
-                                (c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text(c.label),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) => setDState(() => category = v!),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: DropdownButtonFormField<ArticleStatus>(
-                          value: status,
-                          decoration: const InputDecoration(labelText: 'סטטוס'),
                           items: [
-                            DropdownMenuItem(
-                              value: ArticleStatus.draft,
-                              child: Text(
-                                'טיוטה',
-                                style: TextStyle(fontFamily: AppFonts.rubik),
-                              ),
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('—'),
                             ),
-                            DropdownMenuItem(
-                              value: ArticleStatus.published,
-                              child: Text(
-                                'פורסם',
-                                style: TextStyle(fontFamily: AppFonts.rubik),
+                            for (final h in hoods)
+                              DropdownMenuItem(
+                                value: h['id'] as String,
+                                child: Text(h['name'] as String? ?? ''),
                               ),
-                            ),
-                            DropdownMenuItem(
-                              value: ArticleStatus.archived,
-                              child: Text(
-                                'ארכיון',
-                                style: TextStyle(fontFamily: AppFonts.rubik),
-                              ),
-                            ),
                           ],
-                          onChanged: (v) => setDState(() => status = v!),
+                          onChanged: (v) =>
+                              setDState(() => neighborhoodId = v),
                         ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: isVerified,
+                    onChanged: (v) => setDState(() => isVerified = v ?? false),
+                    title: Text(
+                      'תושב מאומת',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubik,
+                        fontSize: 14,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: bodyC,
-                    decoration: const InputDecoration(
-                      labelText: 'תוכן',
-                      alignLabelWithHint: true,
                     ),
-                    maxLines: 6,
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'SEO',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AppColors.navy,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: metaDescC,
-                    decoration: const InputDecoration(
-                      labelText: 'Meta Description',
-                      hintText: 'תיאור ל-SEO (עד 160 תווים)',
-                    ),
-                    maxLength: 160,
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: metaKeywordsC,
-                    decoration: const InputDecoration(
-                      labelText: 'Meta Keywords',
-                      hintText: 'מופרדות בפסיק',
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: tagsC,
-                    decoration: const InputDecoration(
-                      labelText: 'תגיות (מופרדות בפסיק)',
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: isBreaking,
-                        onChanged: (v) => setDState(() => isBreaking = v!),
-                      ),
-                      Text(
-                        'מבזק',
-                        style: TextStyle(fontFamily: AppFonts.rubik),
-                      ),
-                      const SizedBox(width: 20),
-                      Checkbox(
-                        value: isFeatured,
-                        onChanged: (v) => setDState(() => isFeatured = v!),
-                      ),
-                      Text(
-                        'מומלץ',
-                        style: TextStyle(fontFamily: AppFonts.rubik),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -3209,52 +1544,31 @@ void _showArticleDialog(
               ),
             ),
             FilledButton(
-              onPressed: () {
-                final notifier = ref.read(adminArticlesProvider.notifier);
-                final tags = tagsC.text
-                    .split(',')
-                    .map((t) => t.trim())
-                    .where((t) => t.isNotEmpty)
-                    .toList();
-                if (isEdit) {
-                  notifier.update(
-                    article!.copyWith(
-                      title: titleC.text,
-                      subtitle: subtitleC.text,
-                      slug: slugC.text,
-                      body: bodyC.text,
-                      author: authorC.text,
-                      category: category,
-                      status: status,
-                      metaDescription: metaDescC.text,
-                      metaKeywords: metaKeywordsC.text,
-                      tags: tags,
-                      isBreaking: isBreaking,
-                      isFeatured: isFeatured,
-                      updatedAt: DateTime.now(),
-                    ),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(ctx);
+                final navigator = Navigator.of(ctx);
+                try {
+                  await ref
+                      .read(adminProfilesProvider.notifier)
+                      .updateProfile(id, {
+                        'full_name': nameC.text.trim(),
+                        'email': emailC.text.trim(),
+                        'phone': phoneC.text.trim(),
+                        'neighborhood_id': neighborhoodId,
+                        'is_verified': isVerified,
+                      });
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('המשתמש נשמר')),
                   );
-                } else {
-                  notifier.add(
-                    Article(
-                      id: 'a_${DateTime.now().millisecondsSinceEpoch}',
-                      title: titleC.text,
-                      subtitle: subtitleC.text,
-                      slug: slugC.text,
-                      body: bodyC.text,
-                      author: authorC.text,
-                      category: category,
-                      publishedAt: DateTime.now(),
-                      status: status,
-                      metaDescription: metaDescC.text,
-                      metaKeywords: metaKeywordsC.text,
-                      tags: tags,
-                      isBreaking: isBreaking,
-                      isFeatured: isFeatured,
+                } catch (e) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      backgroundColor: AppColors.error,
+                      content: Text('השמירה נכשלה: $e'),
                     ),
                   );
                 }
-                Navigator.pop(ctx);
               },
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.midBlue,
@@ -3263,7 +1577,7 @@ void _showArticleDialog(
                 ),
               ),
               child: Text(
-                isEdit ? 'שמור' : 'צור',
+                'שמור',
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontWeight: FontWeight.w500,

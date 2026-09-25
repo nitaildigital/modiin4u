@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/web_chrome.dart' show kContactEmail;
 
 /// Help & Support screen – search bar, FAQ accordion list with
 /// expandable items, and a "Contact Us" card at the bottom.
@@ -14,77 +18,37 @@ class HelpSupportScreen extends StatefulWidget {
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
   final _searchController = TextEditingController();
-  int _expandedIndex = 2; // "How do I change the app language?" starts expanded
+  /// Which question is open, held by its text rather than by its position.
+  /// The list is rebuilt in the reader's language on every build, so an index
+  /// into it would point at a different question once the search narrows it.
+  String? _expandedQuestion;
 
-  static const _faqs = <_FaqItem>[
-    _FaqItem(
-      question: 'How do I edit my profile information?',
-      answer:
-          'Go to your Profile and tap "Edit Profile." From there, you can '
-          'update your name, email, phone number, neighborhood, family status, '
-          'and date of birth. Tap "Save Changes" when you\'re done.',
-    ),
-    _FaqItem(
-      question: 'How do I change my password?',
-      answer:
-          'Go to your Profile → Settings → Change Password. Enter your '
-          'current password followed by a new password, then confirm it. '
-          'Tap "Change Password" to save.',
-    ),
-    _FaqItem(
-      question: 'How do I change the app language?',
-      answer:
-          'Go to Settings → Language. Select your preferred language from '
-          'the available options. The app will update to your selected language.',
-    ),
-    _FaqItem(
-      question: 'How do I manage my notification settings?',
-      answer:
-          'Go to Settings → Notifications. You can toggle individual '
-          'notification categories like News, Deals, Neighborhood Updates, '
-          'and Real Estate Alerts on or off.',
-    ),
-    _FaqItem(
-      question: 'How do I add a place, event, or news item to Favorites?',
-      answer:
-          'Tap the heart icon on any business, event, apartment listing, or '
-          'news article to save it to your Favorites. You can find all your '
-          'saved items on the Favorites screen.',
-    ),
-    _FaqItem(
-      question: 'Where can I find my saved Favorites?',
-      answer:
-          'Go to your Profile and tap "Favorites." You can filter by category '
-          '(Restaurants, Events, Bars, Apartments, News) or view all your '
-          'saved items at once.',
-    ),
-    _FaqItem(
-      question: 'How can I find businesses in Modiin?',
-      answer:
-          'Use the Businesses tab on the home screen. You can search by name, '
-          'browse categories, or explore the interactive map to discover '
-          'restaurants, cafés, shops, and services in Modiin.',
-    ),
-    _FaqItem(
-      question: 'How can I find upcoming events in Modiin?',
-      answer:
-          'Tap the Events section on the home screen. Browse upcoming events '
-          'by date or view them on the events map. Tap any event for full '
-          'details including date, location, and description.',
-    ),
-    _FaqItem(
-      question: 'How do I search for apartments in Modiin?',
-      answer:
-          'Go to the Real Estate section from the home screen. Filter '
-          'listings by neighborhood, price range, number of rooms, and size. '
-          'You can also browse the map to find apartments by location.',
-    ),
+  /// The questions, in the reader's language.
+  ///
+  /// Two of the answers described screens that do not exist. One sent people
+  /// to "Settings → Notifications" to toggle News, Deals, Neighbourhood
+  /// Updates and Real Estate Alerts: Settings has no such row, nothing reads
+  /// the `NotificationPreferences` model, and there is no preferences screen
+  /// anywhere. That question is gone rather than answered wrongly. Another
+  /// listed the Favourites filters as Restaurants, Events, Bars, Apartments
+  /// and News; the real ones are businesses, events, news and property.
+  static List<_FaqItem> _faqsFor(L l) => [
+    _FaqItem(question: l.helpQEditProfile, answer: l.helpAEditProfile),
+    _FaqItem(question: l.helpQPassword, answer: l.helpAPassword),
+    _FaqItem(question: l.helpQLanguage, answer: l.helpALanguage),
+    _FaqItem(question: l.helpQFavorites, answer: l.helpAFavorites),
+    _FaqItem(question: l.helpQFindFavorites, answer: l.helpAFindFavorites),
+    _FaqItem(question: l.helpQBusinesses, answer: l.helpABusinesses),
+    _FaqItem(question: l.helpQEvents, answer: l.helpAEvents),
+    _FaqItem(question: l.helpQRealEstate, answer: l.helpARealEstate),
+    _FaqItem(question: l.helpQAccount, answer: l.helpAAccount),
   ];
 
-  List<_FaqItem> get _filtered {
+  List<_FaqItem> _filteredFor(L l) {
     final q = _searchController.text.toLowerCase();
-    if (q.isEmpty) return _faqs;
-    return _faqs
+    final faqs = _faqsFor(l);
+    if (q.isEmpty) return faqs;
+    return faqs
         .where(
           (f) =>
               f.question.toLowerCase().contains(q) ||
@@ -107,7 +71,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
+    final l = L.of(context);
+    final filtered = _filteredFor(l);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -141,7 +106,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Help & Support',
+                            l.helpTitle,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 14,
@@ -188,7 +153,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                               color: const Color(0xFF1F1F1F),
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search for help',
+                              hintText: l.helpSearchHint,
                               hintStyle: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
@@ -216,16 +181,30 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     children: [
+                      // Searching for something with no answer used to leave
+                      // a blank page under the box, which reads as a fault.
+                      if (filtered.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Text(
+                            l.helpNoResults,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              color: const Color(0xFF6D6D6D),
+                            ),
+                          ),
+                        ),
                       ...List.generate(filtered.length, (index) {
                         final faq = filtered[index];
-                        final originalIndex = _faqs.indexOf(faq);
-                        final expanded = originalIndex == _expandedIndex;
+                        final expanded = faq.question == _expandedQuestion;
 
                         return _FaqTile(
                           faq: faq,
                           expanded: expanded,
                           onTap: () => setState(() {
-                            _expandedIndex = expanded ? -1 : originalIndex;
+                            _expandedQuestion = expanded ? null : faq.question;
                           }),
                         );
                       }),
@@ -274,7 +253,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Still need help?',
+                                    l.helpContactTitle,
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 14,
@@ -284,7 +263,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Contact our support team',
+                                    l.helpContactBody,
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 12,
@@ -298,9 +277,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
                             // Contact Us button
                             GestureDetector(
-                              onTap: () {
-                                // TODO: open support email / chat
-                              },
+                              // The address the site footer has always
+                              // published, named in web_chrome.dart. This
+                              // was an empty handler, so the one control on
+                              // the page offering help did nothing.
+                              onTap: () => launchUrl(
+                                Uri(scheme: 'mailto', path: kContactEmail),
+                              ),
                               child: Container(
                                 width: 120,
                                 height: 35,
@@ -310,7 +293,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'Contact Us',
+                                    l.helpContactButton,
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 12,

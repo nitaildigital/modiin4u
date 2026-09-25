@@ -1,67 +1,59 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
-import '../../../core/data/wp_content.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../models/listing.dart';
+import '../providers/listing_providers.dart';
+import 'my_apartments_screen.dart' show formatShekels;
 
 // ═══════════════════════════════════════════════════════════
-// Web Real Estate — full desktop layout from Figma
+// Web Real Estate — desktop layout for /realestate
+//
+// Eight flats were written into this file — ₪3,650,000 at 3 Yona Hanavi
+// Street, ₪7,500 a month on Weizmann Street — with a "New" badge on most of
+// them, a heart that was a drawing, and cards that could not be tapped. Six
+// property types each claimed a count (32, 24, 20, 15, 13, 8 properties) and
+// selecting one filtered nothing. Six neighbourhoods were listed that are not
+// rows in `neighborhoods` at all — HaNahalim, Keremim, The Prophets — each
+// subtitled "Neighborhood, Modiin" and none of them a link. Both "View all
+// properties" buttons had an empty handler.
 // ═══════════════════════════════════════════════════════════
 
-class WebRealEstateContent extends StatefulWidget {
+/// Every active listing, in one query.
+///
+/// This page shows a row for sale and a row to let, counts each property type
+/// and counts each neighbourhood, so a single fetch answers all four.
+/// [listingsProvider] is keyed to the browse filter the mobile tab drives,
+/// which is not this page's filter.
+final _allActiveListingsProvider = FutureProvider<List<Listing>>(
+  (ref) => ref.watch(listingRepositoryProvider).fetchActive(),
+);
+
+class WebRealEstateContent extends ConsumerStatefulWidget {
   const WebRealEstateContent({super.key});
 
   @override
-  State<WebRealEstateContent> createState() => _WebRealEstateContentState();
+  ConsumerState<WebRealEstateContent> createState() =>
+      _WebRealEstateContentState();
 }
 
-class _WebRealEstateContentState extends State<WebRealEstateContent> {
-  /// Listings from the site's apartments directory. Only four are published
-  /// today and all are for sale, so the rent section keeps its demo entries.
-  List<WpApartment> _apartments = const [];
+class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
+  /// Which property type the cards above have narrowed both rows to, or null
+  /// for all of them. It used to be an index that changed a border colour and
+  /// nothing else.
+  PropertyType? _selectedType;
 
-  @override
-  void initState() {
-    super.initState();
-    loadWpApartments().then((items) {
-      if (mounted) setState(() => _apartments = items);
-    });
-  }
+  /// Which kind the neighbourhood counts are for. It used to change nothing.
+  ListingKind _neighborhoodKind = ListingKind.rent;
 
-  static const _listingPalette = [
-    Color(0xFFD4E4F7),
-    Color(0xFFE0D4C8),
-    Color(0xFFC8D8E0),
-    Color(0xFFD8E8D4),
-  ];
-
-  _Listing _toListing(WpApartment a, int i) => _Listing(
-    price: a.priceLabel,
-    saleTag: a.type,
-    address: '${a.shortAddress}, ${a.neighborhood}',
-    area: a.meters.isEmpty ? '' : '${a.meters} מ״ר',
-    rooms: a.rooms,
-    floor: a.floor.isEmpty ? '' : _t('Floor ${a.floor}', 'קומה ${a.floor}'),
-    viaBroker: a.byAgent,
-    brokerBadge: a.byAgent ? _t('Via Broker', 'דרך מתווך') : null,
-    imageBg: _listingPalette[i % _listingPalette.length],
-    imageUrl: a.image,
-  );
-
-  List<_Listing> get _saleListings => _apartments.isEmpty
-      ? _saleListingsDemo
-      : [
-          for (var i = 0; i < _apartments.length; i++)
-            _toListing(_apartments[i], i),
-        ];
-
-  List<_Listing> get _rentListings => _rentListingsDemo;
-
-  int _selectedType = -1;
-  int _neighborhoodTab = 0; // 0 = For Rent, 1 = For Sale
-  int _searchMode = 0; // 0 = Buy, 1 = Rent
+  ListingKind _searchKind = ListingKind.sale;
   bool _isHebrew = false;
   final _locationController = TextEditingController();
   final _locationFocus = FocusNode();
@@ -75,172 +67,26 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  // ── Nav links ──
-  // ── Property types ──
-  List<_PropType> get _propertyTypes => [
-    _PropType(
-      name: _t('Apartment', 'דירה'),
-      count: 32,
-      icon: IconsaxPlusBold.building_4,
-    ),
-    _PropType(
-      name: _t('Penthouse', 'פנטהאוז'),
-      count: 24,
-      icon: IconsaxPlusBold.building_3,
-    ),
-    _PropType(
-      name: _t('Garden Apartment', 'דירת גן'),
-      count: 20,
-      icon: IconsaxPlusBold.house,
-    ),
-    _PropType(
-      name: _t('Duplex', 'דופלקס'),
-      count: 15,
-      icon: IconsaxPlusBold.building,
-    ),
-    _PropType(
-      name: _t('Villa', 'וילה'),
-      count: 13,
-      icon: IconsaxPlusBold.house_2,
-    ),
-    _PropType(
-      name: _t('Studio', 'סטודיו'),
-      count: 8,
-      icon: IconsaxPlusBold.lamp,
-    ),
-  ];
+  String _typeLabel(PropertyType t) => switch (t) {
+    PropertyType.apartment => _t('Apartment', 'דירה'),
+    PropertyType.penthouse => _t('Penthouse', 'פנטהאוז'),
+    PropertyType.garden => _t('Garden Apartment', 'דירת גן'),
+    PropertyType.duplex => _t('Duplex', 'דופלקס'),
+    PropertyType.villa => _t('Villa', 'וילה'),
+    PropertyType.studio => _t('Studio', 'סטודיו'),
+    PropertyType.other => _t('Other', 'אחר'),
+  };
 
-  // ── Sale listings ──
-  List<_Listing> get _saleListingsDemo => [
-    _Listing(
-      price: '₪3,650,000',
-      saleTag: _t('FOR SALE', 'למכירה'),
-      address: _t('3 Yona Hanavi Street, Modiin', 'רח׳ יונה הנביא 3, מודיעין'),
-      area: '140 m²',
-      rooms: _t('6 Rooms', '6 חדרים'),
-      floor: _t('Floor 3', 'קומה 3'),
-      isNew: true,
-      newBadge: _t('New', 'חדש'),
-      viaBroker: true,
-      brokerBadge: _t('Via Broker', 'דרך מתווך'),
-      imageBg: const Color(0xFFD4E4F7),
-    ),
-    _Listing(
-      price: '₪3,790,000',
-      saleTag: _t('FOR SALE', 'למכירה'),
-      address: _t('84 Menachem Begin Road', 'שד׳ מנחם בגין 84'),
-      area: '133 m²',
-      rooms: _t('4 Rooms', '4 חדרים'),
-      floor: _t('Floor 2', 'קומה 2'),
-      isNew: true,
-      newBadge: _t('New', 'חדש'),
-      imageBg: const Color(0xFFE0D4C8),
-    ),
-    _Listing(
-      price: '₪5,690,000',
-      saleTag: _t('FOR SALE', 'למכירה'),
-      address: _t('73 Sarah Amano Street', 'רח׳ שרה אמנו 73'),
-      area: '145 m²',
-      rooms: _t('4 Rooms', '4 חדרים'),
-      floor: _t('Floor 3', 'קומה 3'),
-      viaBroker: true,
-      brokerBadge: _t('Via Broker', 'דרך מתווך'),
-      imageBg: const Color(0xFFC8D8E0),
-    ),
-    _Listing(
-      price: '₪3,050,000',
-      saleTag: _t('FOR SALE', 'למכירה'),
-      address: _t('37 Ella Valley Street, Modiin', 'רח׳ עמק האלה 37, מודיעין'),
-      area: '140 m²',
-      rooms: _t('6 Rooms', '6 חדרים'),
-      floor: _t('Floor 3', 'קומה 3'),
-      isNew: true,
-      newBadge: _t('New', 'חדש'),
-      imageBg: const Color(0xFFD8E8D4),
-    ),
-  ];
-
-  // ── Rent listings ──
-  List<_Listing> get _rentListingsDemo => [
-    _Listing(
-      price: '₪7,500',
-      perMonth: _t('/ In the month', '/ לחודש'),
-      saleTag: _t('FOR RENT', 'להשכרה'),
-      address: _t('Weizmann Street Heritage Modiin', 'רח׳ ויצמן מורשת מודיעין'),
-      area: '140 m²',
-      rooms: _t('6 Rooms', '6 חדרים'),
-      floor: _t('Floor 3', 'קומה 3'),
-      isNew: true,
-      newBadge: _t('New', 'חדש'),
-      imageBg: const Color(0xFFE4D8F0),
-    ),
-    _Listing(
-      price: '₪12,000',
-      perMonth: _t('/ In the month', '/ לחודש'),
-      saleTag: _t('FOR RENT', 'להשכרה'),
-      address: _t(
-        '12 Yitzhak Shamir Street, Modiin (Legacy)',
-        'רח׳ יצחק שמיר 12, מודיעין (מורשת)',
-      ),
-      area: '122 m²',
-      rooms: _t('4 Rooms', '4 חדרים'),
-      floor: _t('Floor 2', 'קומה 2'),
-      isNew: true,
-      newBadge: _t('New', 'חדש'),
-      viaBroker: true,
-      brokerBadge: _t('Via Broker', 'דרך מתווך'),
-      imageBg: const Color(0xFFD4E0F0),
-    ),
-    _Listing(
-      price: '₪6,500',
-      perMonth: _t('/ In the month', '/ לחודש'),
-      saleTag: _t('FOR RENT', 'להשכרה'),
-      address: _t('Yitzhak Rabin Modiin Street', 'רח׳ יצחק רבין מודיעין'),
-      area: '85 m²',
-      rooms: _t('4 Rooms', '4 חדרים'),
-      floor: _t('Floor 3', 'קומה 3'),
-      imageBg: const Color(0xFFF0E4D4),
-    ),
-    _Listing(
-      price: '₪8,500',
-      perMonth: _t('/ In the month', '/ לחודש'),
-      saleTag: _t('FOR RENT', 'להשכרה'),
-      address: _t('37 Ella Valley Street, Modiin', 'רח׳ עמק האלה 37, מודיעין'),
-      area: '140 m²',
-      rooms: _t('6 Rooms', '6 חדרים'),
-      floor: _t('Floor 3', 'קומה 3'),
-      viaBroker: true,
-      brokerBadge: _t('Via Broker', 'דרך מתווך'),
-      imageBg: const Color(0xFFE8E0D8),
-    ),
-  ];
-
-  // ── Neighborhoods ──
-  List<_Neighborhood> get _neighborhoods => [
-    _Neighborhood(
-      name: _t('HaNahalim', 'הנחלים'),
-      imageBg: const Color(0xFFB8D0C8),
-    ),
-    _Neighborhood(
-      name: _t('Avni Chen / Kaiser', 'אבני חן / קייזר'),
-      imageBg: const Color(0xFFD0C8B8),
-    ),
-    _Neighborhood(
-      name: _t('Keremim', 'כרמים'),
-      imageBg: const Color(0xFFC8B8D0),
-    ),
-    _Neighborhood(
-      name: _t('The Birds', 'הציפורים'),
-      imageBg: const Color(0xFFB8C8D0),
-    ),
-    _Neighborhood(
-      name: _t('Haganim', 'הגנים'),
-      imageBg: const Color(0xFFD0D0B8),
-    ),
-    _Neighborhood(
-      name: _t('The Prophets', 'הנביאים'),
-      imageBg: const Color(0xFFC8D0B8),
-    ),
+  /// The six types the browse row offers, with the icon each card carries.
+  /// `other` is left out: it is what the model falls back to, not something a
+  /// reader would pick.
+  static const _browseTypes = [
+    (PropertyType.apartment, IconsaxPlusBold.building_4),
+    (PropertyType.penthouse, IconsaxPlusBold.building_3),
+    (PropertyType.garden, IconsaxPlusBold.house),
+    (PropertyType.duplex, IconsaxPlusBold.building),
+    (PropertyType.villa, IconsaxPlusBold.house_2),
+    (PropertyType.studio, IconsaxPlusBold.lamp),
   ];
 
   @override
@@ -262,28 +108,8 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                   children: [
                     _buildHeroSection(),
                     _buildBrowseTypes(),
-                    _buildListingsSection(
-                      title: _t(
-                        'Apartments for Sale in Modiin',
-                        'דירות למכירה במודיעין',
-                      ),
-                      subtitle: _t(
-                        'Explore the latest apartments and homes available for sale across Modiin.',
-                        'גלו את הדירות והבתים העדכניים ביותר למכירה ברחבי מודיעין.',
-                      ),
-                      listings: _saleListings,
-                    ),
-                    _buildListingsSection(
-                      title: _t(
-                        'Apartments for Rent in Modiin',
-                        'דירות להשכרה במודיעין',
-                      ),
-                      subtitle: _t(
-                        'Discover apartments and homes available for rent in the best neighborhoods across Modiin.',
-                        'גלו דירות ובתים להשכרה בשכונות הטובות ביותר ברחבי מודיעין.',
-                      ),
-                      listings: _rentListings,
-                    ),
+                    _buildListingsSection(ListingKind.sale),
+                    _buildListingsSection(ListingKind.rent),
                     _buildWhatWeProvide(),
                     _buildNeighborhoods(),
                     WebFooter(isHebrew: _isHebrew),
@@ -298,10 +124,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
   }
 
   // ─────────────────────────────────────────────
-  // STICKY NAVBAR — flat with bottom border
-  // ─────────────────────────────────────────────
-  // ─────────────────────────────────────────────
-  // HERO — large image with gradient + search
+  // HERO — gradient panel with the search bar
   // ─────────────────────────────────────────────
   Widget _buildHeroSection() {
     return Container(
@@ -310,7 +133,6 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
       color: Colors.white,
       child: Stack(
         children: [
-          // Hero image card
           Center(
             child: Container(
               constraints: const BoxConstraints(maxWidth: 1200),
@@ -330,7 +152,6 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
               ),
               child: Stack(
                 children: [
-                  // Top gradient overlay
                   Positioned(
                     top: 0,
                     left: 0,
@@ -352,7 +173,6 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                       ),
                     ),
                   ),
-                  // Content
                   Center(
                     child: Column(
                       children: [
@@ -384,7 +204,6 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 48),
-                        // Search bar
                         _buildSearchBar(),
                       ],
                     ),
@@ -400,7 +219,9 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
 
   void _onSearch() {
     final query = _locationController.text.trim();
-    final path = _searchMode == 0 ? '/apartments-sale' : '/apartments-rent';
+    final path = _searchKind == ListingKind.sale
+        ? '/apartments-sale'
+        : '/apartments-rent';
     context.push(
       Uri(
         path: path,
@@ -427,18 +248,18 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
       ),
       child: Row(
         children: [
-          // "I'm looking to" dropdown
           _SearchDropdown(
             label: _t("I'm looking to", 'אני מחפש'),
-            value: searchModes[_searchMode],
+            value: searchModes[_searchKind == ListingKind.sale ? 0 : 1],
             items: searchModes,
-            onChanged: (idx) => setState(() => _searchMode = idx),
+            onChanged: (idx) => setState(
+              () =>
+                  _searchKind = idx == 0 ? ListingKind.sale : ListingKind.rent,
+            ),
           ),
           const SizedBox(width: 47),
-          // Vertical divider
           Container(width: 1, height: 36, color: const Color(0xFFE0E0E0)),
           const SizedBox(width: 24),
-          // Location text field
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,7 +305,6 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
             ),
           ),
           const SizedBox(width: 16),
-          // Search button
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
@@ -527,9 +347,22 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
   }
 
   // ─────────────────────────────────────────────
-  // BROWSE BY TYPE — 6 property type cards
+  // BROWSE BY TYPE
   // ─────────────────────────────────────────────
+  /// The six property types, each with the number of listings filed under it.
+  ///
+  /// The counts were fixed — 32 apartments, 24 penthouses, 8 studios — and
+  /// tapping a card only moved a border. A type with nothing under it says so
+  /// rather than showing a nought that reads as a figure, and stays tappable
+  /// because it is a filter, not a claim.
   Widget _buildBrowseTypes() {
+    final listings =
+        ref.watch(_allActiveListingsProvider).valueOrNull ?? const <Listing>[];
+    final counts = <PropertyType, int>{};
+    for (final l in listings) {
+      counts[l.propertyType] = (counts[l.propertyType] ?? 0) + 1;
+    }
+
     return _Section(
       maxWidth: 1200,
       child: Column(
@@ -548,67 +381,29 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
           LayoutBuilder(
             builder: (context, constraints) {
               final cols = constraints.maxWidth > 900 ? 6 : 3;
-              final gap = 16.0;
+              const gap = 16.0;
               final cardWidth =
                   (constraints.maxWidth - (cols - 1) * gap) / cols;
               return Wrap(
                 spacing: gap,
                 runSpacing: gap,
                 alignment: WrapAlignment.center,
-                children: List.generate(_propertyTypes.length, (i) {
-                  final type = _propertyTypes[i];
-                  final selected = _selectedType == i;
-                  return GestureDetector(
-                    onTap: () =>
-                        setState(() => _selectedType = selected ? -1 : i),
-                    child: Container(
+                children: [
+                  for (final (type, icon) in _browseTypes)
+                    _TypeCard(
                       width: cardWidth,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 20,
-                        horizontal: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(
-                          color: selected
-                              ? AppColors.midBlue
-                              : const Color(0xFFE7E7E7),
-                          width: selected ? 2 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(type.icon, size: 32, color: AppColors.midBlue),
-                          const SizedBox(height: 19),
-                          Text(
-                            type.name,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _t(
-                              '${type.count} Properties',
-                              '${type.count} נכסים',
-                            ),
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 14,
-                              color: const Color(0xFF6D6D6D),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                      icon: icon,
+                      label: _typeLabel(type),
+                      count: counts[type] ?? 0,
+                      noneLabel: _t('None listed yet', 'אין נכסים כרגע'),
+                      countLabel: (n) => _t('$n Properties', '$n נכסים'),
+                      selected: _selectedType == type,
+                      onTap: () => setState(
+                        () =>
+                            _selectedType = _selectedType == type ? null : type,
                       ),
                     ),
-                  );
-                }),
+                ],
               );
             },
           ),
@@ -619,17 +414,15 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
   }
 
   // ─────────────────────────────────────────────
-  // LISTINGS SECTION — sale or rent
+  // LISTINGS — one row for sale, one to let
   // ─────────────────────────────────────────────
-  Widget _buildListingsSection({
-    required String title,
-    required String subtitle,
-    required List<_Listing> listings,
-  }) {
+  Widget _buildListingsSection(ListingKind kind) {
+    final isRent = kind == ListingKind.rent;
+    final async = ref.watch(_allActiveListingsProvider);
+
     return _Section(
       child: Column(
         children: [
-          // Header
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -638,7 +431,15 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      isRent
+                          ? _t(
+                              'Apartments for Rent in Modiin',
+                              'דירות להשכרה במודיעין',
+                            )
+                          : _t(
+                              'Apartments for Sale in Modiin',
+                              'דירות למכירה במודיעין',
+                            ),
                       style: TextStyle(
                         fontFamily: AppFonts.nunito,
                         fontSize: 28,
@@ -648,7 +449,15 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      subtitle,
+                      isRent
+                          ? _t(
+                              'Discover apartments and homes available for rent in the best neighborhoods across Modiin.',
+                              'גלו דירות ובתים להשכרה בשכונות הטובות ביותר ברחבי מודיעין.',
+                            )
+                          : _t(
+                              'Explore the latest apartments and homes available for sale across Modiin.',
+                              'גלו את הדירות והבתים העדכניים ביותר למכירה ברחבי מודיעין.',
+                            ),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
@@ -658,33 +467,87 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                   ],
                 ),
               ),
+              // It had `onTap: () {}`.
               _ViewAllButton(
                 label: _t('View all properties', 'ראה את כל הנכסים'),
-                onTap: () {},
+                onTap: () => context.push(
+                  isRent ? '/apartments-rent' : '/apartments-sale',
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
-          // Cards grid — 4 in a row
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final cols = constraints.maxWidth > 1200
-                  ? 4
-                  : (constraints.maxWidth > 800 ? 2 : 1);
-              final gap = 22.0;
-              final cardWidth =
-                  (constraints.maxWidth - (cols - 1) * gap) / cols;
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: listings
-                    .map(
-                      (l) => SizedBox(
-                        width: cardWidth,
-                        child: _ListingCard(listing: l),
-                      ),
-                    )
-                    .toList(),
+          async.when(
+            loading: () => const SizedBox(
+              height: 380,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, _) => _buildNotice(
+              icon: IconsaxPlusLinear.wifi_square,
+              title: _t(
+                'Properties could not be loaded',
+                'לא ניתן לטעון את הנכסים',
+              ),
+              body: _t(
+                'Check your connection and try again.',
+                'בדקו את החיבור לאינטרנט ונסו שוב.',
+              ),
+              actionLabel: _t('Try again', 'נסו שוב'),
+              onAction: () => ref.invalidate(_allActiveListingsProvider),
+            ),
+            data: (all) {
+              final listings = all
+                  .where((l) => l.kind == kind)
+                  .where(
+                    (l) =>
+                        _selectedType == null ||
+                        l.propertyType == _selectedType,
+                  )
+                  .toList();
+
+              if (listings.isEmpty) {
+                return _buildNotice(
+                  icon: IconsaxPlusLinear.home_2,
+                  title: _selectedType != null
+                      ? _t(
+                          'No ${_typeLabel(_selectedType!)} listed here yet',
+                          'אין כרגע ${_typeLabel(_selectedType!)} בקטגוריה הזו',
+                        )
+                      : isRent
+                      ? _t('Nothing to let yet', 'אין כרגע דירות להשכרה')
+                      : _t('Nothing for sale yet', 'אין כרגע דירות למכירה'),
+                  body: _selectedType != null
+                      ? _t(
+                          'Clear the property type above to see everything on file.',
+                          'הסירו את סוג הנכס שנבחר למעלה כדי לראות את הכל.',
+                        )
+                      : _t(
+                          'Properties will appear here as they are published.',
+                          'נכסים יופיעו כאן עם פרסומם.',
+                        ),
+                );
+              }
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = constraints.maxWidth > 1200
+                      ? 4
+                      : (constraints.maxWidth > 800 ? 2 : 1);
+                  const gap = 22.0;
+                  final cardWidth =
+                      (constraints.maxWidth - (cols - 1) * gap) / cols;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: [
+                      for (final l in listings.take(cols * 2))
+                        SizedBox(
+                          width: cardWidth,
+                          child: _ListingCard(listing: l, isHebrew: _isHebrew),
+                        ),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -695,8 +558,10 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
   }
 
   // ─────────────────────────────────────────────
-  // WHAT WE ARE PROVIDING — 3 service cards
+  // WHAT WE ARE PROVIDING
   // ─────────────────────────────────────────────
+  /// Three cards that read as calls to action and had no handler at all. Each
+  /// now opens the page it names.
   Widget _buildWhatWeProvide() {
     return _Section(
       child: Column(
@@ -715,7 +580,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
           LayoutBuilder(
             builder: (context, constraints) {
               final cols = constraints.maxWidth > 900 ? 3 : 1;
-              final gap = 21.0;
+              const gap = 21.0;
               final cardWidth =
                   (constraints.maxWidth - (cols - 1) * gap) / cols;
               return Wrap(
@@ -731,6 +596,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                       'חפשו דירות ובתים להשכרה ברחבי מודיעין.',
                     ),
                     isHighlighted: true,
+                    onTap: () => context.push('/apartments-rent'),
                   ),
                   _ServiceCard(
                     width: cardWidth,
@@ -740,6 +606,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                       'List your property and connect with people looking to buy in Modiin.',
                       'פרסמו את הנכס שלכם והתחברו עם אנשים שמחפשים לקנות במודיעין.',
                     ),
+                    onTap: () => context.push('/add-apartment'),
                   ),
                   _ServiceCard(
                     width: cardWidth,
@@ -749,6 +616,7 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
                       'Explore apartments and homes for sale in Modiin. Compare properties, neighborhoods, prices.',
                       'גלו דירות ובתים למכירה במודיעין. השוו נכסים, שכונות, מחירים.',
                     ),
+                    onTap: () => context.push('/apartments-sale'),
                   ),
                 ],
               );
@@ -761,9 +629,27 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
   }
 
   // ─────────────────────────────────────────────
-  // NEIGHBORHOODS
+  // APARTMENTS BY NEIGHBOURHOOD
   // ─────────────────────────────────────────────
+  /// The city's neighbourhoods, from `neighborhoods`.
+  ///
+  /// Six were written in that are not rows in that table at all, each one
+  /// subtitled "Neighborhood, Modiin" and located in "Modiin, Israel", and
+  /// none of them opened anything. The For Rent / For Sale toggle above them
+  /// changed nothing; it now chooses which count each card shows.
   Widget _buildNeighborhoods() {
+    final hoods = ref.watch(listingNeighborhoodsProvider);
+    final listings =
+        ref.watch(_allActiveListingsProvider).valueOrNull ?? const <Listing>[];
+
+    final counts = <String, int>{};
+    for (final l in listings) {
+      if (l.kind != _neighborhoodKind) continue;
+      final id = l.neighborhoodId;
+      if (id == null) continue;
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+
     return _Section(
       child: Column(
         children: [
@@ -778,130 +664,75 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          // For Rent / For Sale toggle
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              GestureDetector(
-                onTap: () => setState(() => _neighborhoodTab = 0),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _neighborhoodTab == 0
-                        ? AppColors.midBlue
-                        : Colors.transparent,
-                    border: _neighborhoodTab == 0
-                        ? null
-                        : Border.all(color: AppColors.midBlue, width: 2),
-                    borderRadius: const BorderRadius.horizontal(
-                      left: Radius.circular(60),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        IconsaxPlusLinear.key,
-                        size: 18,
-                        color: _neighborhoodTab == 0
-                            ? Colors.white
-                            : AppColors.midBlue,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _t('For Rent', 'להשכרה'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: _neighborhoodTab == 0
-                              ? Colors.white
-                              : AppColors.midBlue,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              _kindToggle(
+                kind: ListingKind.rent,
+                icon: IconsaxPlusLinear.key,
+                label: _t('For Rent', 'להשכרה'),
+                leading: true,
               ),
-              GestureDetector(
-                onTap: () => setState(() => _neighborhoodTab = 1),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _neighborhoodTab == 1
-                        ? AppColors.midBlue
-                        : Colors.transparent,
-                    border: _neighborhoodTab == 1
-                        ? null
-                        : Border.all(color: AppColors.midBlue, width: 2),
-                    borderRadius: const BorderRadius.horizontal(
-                      right: Radius.circular(60),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        IconsaxPlusLinear.home_hashtag,
-                        size: 18,
-                        color: _neighborhoodTab == 1
-                            ? Colors.white
-                            : AppColors.midBlue,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _t('For Sale', 'למכירה'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: _neighborhoodTab == 1
-                              ? Colors.white
-                              : AppColors.midBlue,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              _kindToggle(
+                kind: ListingKind.sale,
+                icon: IconsaxPlusLinear.home_hashtag,
+                label: _t('For Sale', 'למכירה'),
+                leading: false,
               ),
             ],
           ),
           const SizedBox(height: 40),
-          // Neighborhood cards — scrollable row
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final cols = constraints.maxWidth > 1200
-                  ? 6
-                  : (constraints.maxWidth > 800 ? 4 : 2);
-              final gap = 16.0;
-              final cardWidth =
-                  (constraints.maxWidth - (cols - 1) * gap) / cols;
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: _neighborhoods
-                    .map(
-                      (n) => SizedBox(
+          hoods.when(
+            loading: () => const SizedBox(
+              height: 240,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, _) => _buildNotice(
+              icon: IconsaxPlusLinear.wifi_square,
+              title: _t(
+                'Neighbourhoods could not be loaded',
+                'לא ניתן לטעון את השכונות',
+              ),
+              body: _t(
+                'Check your connection and try again.',
+                'בדקו את החיבור לאינטרנט ונסו שוב.',
+              ),
+              actionLabel: _t('Try again', 'נסו שוב'),
+              onAction: () => ref.invalidate(listingNeighborhoodsProvider),
+            ),
+            data: (rows) => LayoutBuilder(
+              builder: (context, constraints) {
+                final cols = constraints.maxWidth > 1200
+                    ? 6
+                    : (constraints.maxWidth > 800 ? 4 : 2);
+                const gap = 16.0;
+                final cardWidth =
+                    (constraints.maxWidth - (cols - 1) * gap) / cols;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    for (final row in rows)
+                      SizedBox(
                         width: cardWidth,
                         child: _NeighborhoodCard(
-                          data: n,
-                          subtitle: _t(
-                            'Neighborhood, Modiin',
-                            'שכונה, מודיעין',
+                          name: row.name,
+                          city: _t(
+                            'Modiin Maccabim Reut',
+                            'מודיעין מכבים רעות',
                           ),
-                          location: _t('Modiin, Israel', 'מודיעין, ישראל'),
+                          count: counts[row.id] ?? 0,
+                          countLabel: _neighborhoodKind == ListingKind.rent
+                              ? (n) => _t('$n to let', '$n להשכרה')
+                              : (n) => _t('$n for sale', '$n למכירה'),
+                          noneLabel: _t('None listed yet', 'אין נכסים כרגע'),
+                          onTap: () => context.push('/neighborhood/${row.id}'),
                         ),
                       ),
-                    )
-                    .toList(),
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
           const SizedBox(height: 56),
         ],
@@ -909,55 +740,127 @@ class _WebRealEstateContentState extends State<WebRealEstateContent> {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // FOOTER — reuse from homepage pattern
-  // ─────────────────────────────────────────────
-}
+  Widget _kindToggle({
+    required ListingKind kind,
+    required IconData icon,
+    required String label,
+    required bool leading,
+  }) {
+    final selected = _neighborhoodKind == kind;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => setState(() => _neighborhoodKind = kind),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.midBlue : Colors.transparent,
+            border: selected
+                ? null
+                : Border.all(color: AppColors.midBlue, width: 2),
+            borderRadius: BorderRadiusDirectional.horizontal(
+              start: leading ? const Radius.circular(60) : Radius.zero,
+              end: leading ? Radius.zero : const Radius.circular(60),
+            ).resolve(Directionality.of(context)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: selected ? Colors.white : AppColors.midBlue,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: selected ? Colors.white : AppColors.midBlue,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-// ═══════════════════════════════════════════════
-// DATA MODELS
-// ═══════════════════════════════════════════════
-
-class _PropType {
-  final String name;
-  final int count;
-  final IconData icon;
-  const _PropType({
-    required this.name,
-    required this.count,
-    required this.icon,
-  });
-}
-
-class _Listing {
-  final String price, saleTag, address, area, rooms, floor;
-  final String? perMonth, newBadge, brokerBadge;
-  final bool isNew, viaBroker;
-  final Color imageBg;
-
-  /// Remote photo from the WordPress export; empty on demo listings.
-  final String imageUrl;
-  const _Listing({
-    required this.price,
-    required this.saleTag,
-    required this.address,
-    required this.area,
-    required this.rooms,
-    required this.floor,
-    this.perMonth,
-    this.newBadge,
-    this.brokerBadge,
-    this.isNew = false,
-    this.viaBroker = false,
-    this.imageBg = const Color(0xFFE8EEF4),
-    this.imageUrl = '',
-  });
-}
-
-class _Neighborhood {
-  final String name;
-  final Color imageBg;
-  const _Neighborhood({required this.name, required this.imageBg});
+  Widget _buildNotice({
+    required IconData icon,
+    required String title,
+    required String body,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 72, horizontal: 24),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 44,
+            color: const Color(0xFF6D6D6D).withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppColors.navy,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: const Color(0xFF5F5E5A),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 24),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onAction,
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  decoration: BoxDecoration(
+                    color: AppColors.midBlue,
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    actionLabel,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -1156,29 +1059,108 @@ class _ViewAllButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.midBlue,
-          borderRadius: BorderRadius.circular(60),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.midBlue,
+            borderRadius: BorderRadius.circular(60),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.chevron_left
+                    : Icons.chevron_right,
+                size: 16,
                 color: Colors.white,
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeCard extends StatelessWidget {
+  final double width;
+  final IconData icon;
+  final String label;
+  final int count;
+  final String noneLabel;
+  final String Function(int) countLabel;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TypeCard({
+    required this.width,
+    required this.icon,
+    required this.label,
+    required this.count,
+    required this.noneLabel,
+    required this.countLabel,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: width,
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: selected ? AppColors.midBlue : const Color(0xFFE7E7E7),
+              width: selected ? 2 : 1,
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right, size: 16, color: Colors.white),
-          ],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 32, color: AppColors.midBlue),
+              const SizedBox(height: 19),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                count == 0 ? noneLabel : countLabel(count),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  color: const Color(0xFF6D6D6D),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1186,280 +1168,241 @@ class _ViewAllButton extends StatelessWidget {
 }
 
 class _ListingCard extends StatefulWidget {
-  final _Listing listing;
-  const _ListingCard({required this.listing});
+  final Listing listing;
+  final bool isHebrew;
+  const _ListingCard({required this.listing, required this.isHebrew});
 
   @override
   State<_ListingCard> createState() => _ListingCardState();
 }
 
-Widget _listingFallback(Color base) => ColoredBox(
-  color: base,
-  child: Center(
-    child: Icon(
-      IconsaxPlusLinear.image,
-      size: 40,
-      color: Colors.black.withValues(alpha: 0.15),
-    ),
-  ),
-);
-
 class _ListingCardState extends State<_ListingCard> {
   bool _hovered = false;
+
+  String _t(String en, String he) => widget.isHebrew ? he : en;
+
+  /// Half rooms are normal here, so 3.5 must not print as 3.
+  static String _rooms(double rooms) =>
+      rooms == rooms.roundToDouble() ? '${rooms.toInt()}' : '$rooms';
 
   @override
   Widget build(BuildContext context) {
     final l = widget.listing;
+    final isRent = l.kind == ListingKind.rent;
+    final price = l.effectivePrice;
+
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: const Color(0xFFE7E7E7)),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: _hovered
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : [],
-        ),
-        transform: _hovered
-            ? Matrix4.translationValues(0, -2, 0)
-            : Matrix4.identity(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            Stack(
-              children: [
-                // WordPress serves uploads without CORS headers, so CanvasKit
-                // has to hand the URL to a plain <img>.
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                  child: SizedBox(
+      child: GestureDetector(
+        // The cards were not tappable at all.
+        onTap: () => context.push('/listing/${l.id}'),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE7E7E7)),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : [],
+          ),
+          transform: _hovered
+              ? Matrix4.translationValues(0, -2, 0)
+              : Matrix4.identity(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  SizedBox(
                     height: 200,
                     width: double.infinity,
-                    child: l.imageUrl.isEmpty
-                        ? _listingFallback(l.imageBg)
-                        : Image.network(
-                            l.imageUrl,
-                            fit: BoxFit.cover,
-                            webHtmlElementStrategy:
-                                WebHtmlElementStrategy.prefer,
-                            errorBuilder: (_, _, _) =>
-                                _listingFallback(l.imageBg),
-                            loadingBuilder: (context, child, progress) =>
-                                progress == null
-                                ? child
-                                : _listingFallback(l.imageBg),
+                    child: NetworkPhoto(
+                      url: l.coverUrl,
+                      radius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      icon: IconsaxPlusBold.home_2,
+                      iconSize: 48,
+                    ),
+                  ),
+                  // A drawing of a heart with nothing behind it; it saves the
+                  // listing now.
+                  PositionedDirectional(
+                    top: 12,
+                    start: 12,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: FavoriteButton(
+                          kind: FavoriteKind.listing,
+                          id: l.id,
+                          iconSize: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // A "New" badge sat here on six of the eight demo flats.
+                  // `listings` records when a row was created but nothing says
+                  // what counts as new, so the rule would have been invented
+                  // in this widget.
+                  if (l.isBroker)
+                    PositionedDirectional(
+                      bottom: 12,
+                      start: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFCCD6EE),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Text(
+                          _t('Via Broker', 'דרך מתווך'),
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF0033AC),
                           ),
-                  ),
-                ),
-                // Favorite
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        IconsaxPlusLinear.heart,
-                        size: 20,
-                        color: AppColors.midBlue,
-                      ),
-                    ),
-                  ),
-                ),
-                // New badge
-                if (l.isNew)
-                  Positioned(
-                    top: 15,
-                    right: 14,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.turquoise,
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Text(
-                        l.newBadge ?? 'New',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
                         ),
                       ),
                     ),
-                  ),
-                // Via Broker
-                if (l.viaBroker)
-                  Positioned(
-                    bottom: 12,
-                    left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFCCD6EE),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Text(
-                        l.brokerBadge ?? 'Via Broker',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF0033AC),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            // Body
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Price + tag
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            l.price,
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // A listing with no price is not a free one.
+                        Flexible(
+                          child: Text(
+                            price == null
+                                ? _t('Price on request', 'מחיר לפי בקשה')
+                                : isRent
+                                ? _t(
+                                    '${formatShekels(price)} / month',
+                                    '${formatShekels(price)} לחודש',
+                                  )
+                                : formatShekels(price),
                             style: TextStyle(
                               fontFamily: AppFonts.nunito,
-                              fontSize: 20,
+                              fontSize: price == null ? 14 : 20,
                               fontWeight: FontWeight.w600,
                               color: AppColors.navy,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          if (l.perMonth != null) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              l.perMonth!,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 14,
-                                color: const Color(0xFF5F5E5A),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      Text(
-                        l.saleTag,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.turquoise,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Address
-                  Row(
-                    children: [
-                      const Icon(
-                        IconsaxPlusBold.location,
-                        size: 16,
-                        color: AppColors.turquoise,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l.address,
+                        Text(
+                          isRent
+                              ? _t('FOR RENT', 'להשכרה')
+                              : _t('FOR SALE', 'למכירה'),
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            color: const Color(0xFF5F5E5A),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.turquoise,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Details: area, rooms, floor
-                  Row(
-                    children: [
-                      const Icon(
-                        IconsaxPlusLinear.ruler,
-                        size: 14,
-                        color: Color(0xFF6D6D6D),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        l.area,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: const Color(0xFF3D3D3D),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(
+                          IconsaxPlusBold.location,
+                          size: 16,
+                          color: AppColors.turquoise,
                         ),
-                      ),
-                      const SizedBox(width: 31),
-                      const Icon(
-                        IconsaxPlusLinear.house,
-                        size: 14,
-                        color: Color(0xFF6D6D6D),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        l.rooms,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: const Color(0xFF3D3D3D),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l.address ?? l.neighborhoodName ?? l.title,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              color: const Color(0xFF5F5E5A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 31),
-                      const Icon(
-                        IconsaxPlusLinear.building_4,
-                        size: 14,
-                        color: Color(0xFF6D6D6D),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        l.floor,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: const Color(0xFF3D3D3D),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Each figure only where the row carries it. The row used
+                    // to draw all three whatever was known.
+                    Row(
+                      children: [
+                        if (l.sqm != null) ...[
+                          _spec(
+                            IconsaxPlusLinear.ruler,
+                            _t('${l.sqm} m²', '${l.sqm} מ"ר'),
+                          ),
+                          const SizedBox(width: 31),
+                        ],
+                        if (l.rooms != null) ...[
+                          _spec(
+                            IconsaxPlusLinear.house,
+                            _t(
+                              '${_rooms(l.rooms!)} Rooms',
+                              '${_rooms(l.rooms!)} חדרים',
+                            ),
+                          ),
+                          const SizedBox(width: 31),
+                        ],
+                        if (l.floor != null)
+                          _spec(
+                            IconsaxPlusLinear.building_4,
+                            _t('Floor ${l.floor}', 'קומה ${l.floor}'),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _spec(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 12,
+            color: const Color(0xFF3D3D3D),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1469,75 +1412,93 @@ class _ServiceCard extends StatelessWidget {
   final IconData icon;
   final String title, subtitle;
   final bool isHighlighted;
+  final VoidCallback onTap;
   const _ServiceCard({
     required this.width,
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.onTap,
     this.isHighlighted = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(30),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: isHighlighted
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 1),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: width,
+          padding: const EdgeInsets.all(30),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isHighlighted
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 56,
+                color: isHighlighted
+                    ? AppColors.midBlue
+                    : const Color(0xFF6D6D6D),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: isHighlighted ? AppColors.midBlue : Colors.black,
                 ),
-              ]
-            : [],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 56,
-            color: isHighlighted ? AppColors.midBlue : const Color(0xFF6D6D6D),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 16,
+                  color: const Color(0xFF5F5E5A),
+                  height: 1.6,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: isHighlighted ? AppColors.midBlue : Colors.black,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 16,
-              color: const Color(0xFF5F5E5A),
-              height: 1.6,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
 class _NeighborhoodCard extends StatefulWidget {
-  final _Neighborhood data;
-  final String subtitle, location;
+  final String name;
+  final String city;
+  final int count;
+  final String Function(int) countLabel;
+  final String noneLabel;
+  final VoidCallback onTap;
+
   const _NeighborhoodCard({
-    required this.data,
-    required this.subtitle,
-    required this.location,
+    required this.name,
+    required this.city,
+    required this.count,
+    required this.countLabel,
+    required this.noneLabel,
+    required this.onTap,
   });
 
   @override
@@ -1550,93 +1511,102 @@ class _NeighborhoodCardState extends State<_NeighborhoodCard> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFE7E7E7)),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: _hovered
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        transform: _hovered
-            ? Matrix4.translationValues(0, -2, 0)
-            : Matrix4.identity(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image placeholder
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                color: widget.data.imageBg,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
+      child: GestureDetector(
+        // The cards opened nothing, and /neighborhood/:id had nothing in the
+        // app linking to it.
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFE7E7E7)),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          transform: _hovered
+              ? Matrix4.translationValues(0, -2, 0)
+              : Matrix4.identity(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // `neighborhoods` has an `image_url` and none of the ten rows
+              // carries one yet, so every card shows the brand panel — at the
+              // same size, so nothing shifts once the client uploads photos.
+              SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: NetworkPhoto(
+                  url: null,
+                  radius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  icon: IconsaxPlusBold.buildings_2,
+                  iconSize: 36,
                 ),
               ),
-              child: Center(
-                child: Icon(
-                  IconsaxPlusLinear.image,
-                  size: 32,
-                  color: Colors.black.withValues(alpha: 0.15),
-                ),
-              ),
-            ),
-            // Info
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.data.name,
-                    style: TextStyle(
-                      fontFamily: AppFonts.nunito,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.navy,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.subtitle,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      color: const Color(0xFF5F5E5A),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(
-                        IconsaxPlusBold.location,
-                        size: 16,
-                        color: AppColors.turquoise,
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.name,
+                      style: TextStyle(
+                        fontFamily: AppFonts.nunito,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.navy,
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        widget.location,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          color: const Color(0xFF5F5E5A),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.count == 0
+                          ? widget.noneLabel
+                          : widget.countLabel(widget.count),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 14,
+                        color: const Color(0xFF5F5E5A),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(
+                          IconsaxPlusBold.location,
+                          size: 16,
+                          color: AppColors.turquoise,
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            widget.city,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              color: const Color(0xFF5F5E5A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

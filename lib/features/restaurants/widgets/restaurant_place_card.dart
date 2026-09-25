@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 
@@ -21,7 +22,6 @@ class RestaurantPlace {
   final String name, type, address;
   final double rating;
   final int reviews;
-  final int? views;
   final String? deliveryTime;
   final String? category;
   final bool isKosher;
@@ -36,7 +36,6 @@ class RestaurantPlace {
     required this.address,
     required this.rating,
     required this.reviews,
-    this.views,
     this.deliveryTime,
     this.category,
     this.isKosher = false,
@@ -152,7 +151,7 @@ class RestaurantCardState extends State<RestaurantCard> {
                         _buildStatsRow(p),
                         if (!widget.compact) ...[
                           const SizedBox(height: 16),
-                          _buildContactButton(),
+                          if (p.phone.isNotEmpty) _buildContactButton(p),
                         ],
                       ],
                     ),
@@ -326,8 +325,7 @@ class RestaurantCardState extends State<RestaurantCard> {
       children: [
         // Most real listings carry neither a rating nor a review count, and
         // "0 (0)" reads as a score the place earned rather than one nobody
-        // gave it. Show each half only when there is a number behind it, and
-        // fall back to the view count the site does keep.
+        // gave it. Show each half only when there is a number behind it.
         if (p.rating > 0 || p.reviews > 0)
           Flexible(
             child: Row(
@@ -364,18 +362,30 @@ class RestaurantCardState extends State<RestaurantCard> {
                 ],
               ],
             ),
-          )
-        else if (p.views != null)
+          ),
+        // A delivery window where the place has one. There is no view-count
+        // column on `businesses`, so the "N Views" this used to fall back to
+        // had no source at all — and with a null it printed "null Views".
+        if (p.deliveryTime != null && p.deliveryTime!.isNotEmpty) ...[
+          const SizedBox(width: 12),
           Flexible(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(IconsaxPlusLinear.eye, size: 16, color: Color(0xFF6D6D6D)),
+                const Icon(
+                  IconsaxPlusLinear.clock,
+                  size: 16,
+                  color: Color(0xFF5D5D5D),
+                ),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    '${p.views}',
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D)),
+                    p.deliveryTime!,
+                    style: TextStyle(fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -383,64 +393,19 @@ class RestaurantCardState extends State<RestaurantCard> {
               ],
             ),
           ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: p.deliveryTime != null
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      IconsaxPlusLinear.clock,
-                      size: 16,
-                      color: Color(0xFF5D5D5D),
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        p.deliveryTime!,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      IconsaxPlusLinear.eye,
-                      size: 16,
-                      color: AppColors.navy,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        '${p.views} ${_t('Views', 'צפיות')}',
-                        style: TextStyle(fontFamily: AppFonts.inter, 
-                          fontSize: 14,
-                          color: const Color(0xFF6D6D6D),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-        ),
+        ],
       ],
     );
   }
 
-  Widget _buildContactButton() {
+  /// Dials the place. The handler was empty, so a button offering to put
+  /// somebody in touch did nothing, and it was drawn even for a business
+  /// with no number on record.
+  Widget _buildContactButton(RestaurantPlace p) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: () {},
+        onTap: () => launchUrl(Uri(scheme: 'tel', path: p.phone)),
         child: Container(
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 16),

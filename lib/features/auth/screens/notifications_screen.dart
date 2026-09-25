@@ -11,86 +11,64 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  late List<_NotificationItem> _notifications;
+  /// Empty, and it stays empty until there is a table behind it.
+  ///
+  /// This screen opened with six notifications written into the source: a
+  /// 20% offer from פיצה פרגו, a new four-room property "matching your
+  /// search" at ₪2,450,000, a street-food festival tomorrow that told the
+  /// reader **"you confirmed you were coming"**, fifty points awarded for a
+  /// review, and roadworks on a named street. Nobody had offered, listed,
+  /// RSVP'd, earned or announced any of it.
+  ///
+  /// The schema has `admin_notifications` and nothing for residents, so
+  /// there is no source to read. The bell in the header opens this from
+  /// every screen in the app.
+  final List<_NotificationItem> _notifications = const [];
 
-  @override
-  void initState() {
-    super.initState();
-    _notifications = [
-      _NotificationItem(
-        icon: Icons.local_offer,
-        title: 'הטבה חדשה מפיצה פרגו',
-        body: '20% הנחה על כל הפיצות — עד סוף השבוע',
-        time: 'לפני שעה',
-        isNew: true,
-        route: '/deals',
-      ),
-      _NotificationItem(
-        icon: Icons.apartment,
-        title: 'נכס חדש תואם לחיפוש שלך',
-        body: '4 חדרים בהפרחים — 2,450,000 ₪',
-        time: 'לפני 3 שעות',
-        isNew: true,
-        route: '/realestate',
-      ),
-      _NotificationItem(
-        icon: Icons.event,
-        title: 'אירוע מחר — פסטיבל אוכל רחוב',
-        body: 'פארק ענבה, 18:00. אישרתם הגעה!',
-        time: 'אתמול',
-        isNew: false,
-        route: '/events',
-      ),
-      _NotificationItem(
-        icon: Icons.emoji_events,
-        title: 'כל הכבוד! 50 נקודות חדשות',
-        body: 'קיבלתם נקודות על ביקורת שכתבתם',
-        time: 'לפני יומיים',
-        isNew: false,
-        route: '/steps',
-      ),
-      _NotificationItem(
-        icon: Icons.campaign,
-        title: 'עדכון עירוני חדש',
-        body: 'עבודות תשתית ברחוב הפלמ"ח — חסימה חלקית',
-        time: 'לפני 3 ימים',
-        isNew: false,
-        route: '/municipal',
-      ),
-    ];
-  }
-
-  void _markAllRead() {
-    setState(() {
-      _notifications = _notifications
-          .map(
-            (n) => _NotificationItem(
-              icon: n.icon,
-              title: n.title,
-              body: n.body,
-              time: n.time,
-              isNew: false,
-              route: n.route,
+  /// Said plainly. An empty scroll area reads as a screen that failed to
+  /// load, and this one has not failed — there is nothing yet.
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.notifications_none,
+              size: 48,
+              color: AppColors.grayLight,
             ),
-          )
-          .toList();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'כל ההתראות סומנו כנקראו',
-          style: TextStyle(fontFamily: AppFonts.rubik),
+            const SizedBox(height: 16),
+            Text(
+              'אין התראות',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: context.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'כשיהיו עדכונים עבורכם, הם יופיעו כאן.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 14,
+                height: 1.5,
+                color: AppColors.grayText,
+              ),
+            ),
+          ],
         ),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasUnread = _notifications.any((n) => n.isNew);
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -102,22 +80,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          actions: [
-            if (hasUnread)
-              TextButton(
-                onPressed: _markAllRead,
-                child: Text(
-                  'סמן הכל כנקרא',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.turquoise,
-                  ),
-                ),
-              ),
-          ],
         ),
-        body: ListView.separated(
+        body: _notifications.isEmpty
+            ? _buildEmptyState()
+            : ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 8),
           itemCount: _notifications.length,
           separatorBuilder: (_, __) =>

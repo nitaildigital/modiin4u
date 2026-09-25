@@ -1,337 +1,124 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../auth/models/user_model.dart';
-import '../../businesses/models/business.dart';
-import '../../news/models/article.dart';
-import '../../businesses/models/review.dart';
 
-final adminUsersProvider =
-    StateNotifierProvider<AdminUsersNotifier, List<UserModel>>((ref) {
-      return AdminUsersNotifier();
+import '../../../core/supabase/supabase_config.dart';
+import 'admin_table_notifier.dart';
+
+/// Which residents the list is narrowed to.
+///
+/// `profiles` has no `status` column, so the shared status filter does not
+/// apply here; these are the two states the table actually records.
+enum ProfileFilter { all, banned, verified }
+
+/// Residents with an account, on the live table.
+///
+/// This file held six invented people, four invented businesses, four
+/// invented articles and three invented reviews in memory, and the dashboard
+/// edited them: banning someone, approving a business or deleting a review
+/// changed a list and wrote nothing, so the client would have believed he had
+/// acted when he had not. Businesses and articles already have live
+/// providers of their own (`admin_businesses_provider`,
+/// `admin_articles_provider`), which is what the panel's own sections use, so
+/// only these two were missing.
+final adminProfilesProvider =
+    StateNotifierProvider<
+      AdminProfilesNotifier,
+      AsyncValue<List<Map<String, dynamic>>>
+    >((ref) {
+      return AdminProfilesNotifier();
     });
 
-final adminBusinessesProvider =
-    StateNotifierProvider<AdminBusinessesNotifier, List<Business>>((ref) {
-      return AdminBusinessesNotifier();
-    });
+class AdminProfilesNotifier extends AdminTableNotifier {
+  AdminProfilesNotifier()
+    : super(
+        table: 'profiles',
+        searchColumns: const ['full_name', 'email', 'phone'],
+        columns: '*, neighborhoods(id, name)',
+        orderBy: 'created_at',
+        hasStatus: false,
+        // Points and level are moved by the gamification triggers, not by
+        // anyone editing a profile here.
+        readOnlyColumns: const {
+          'id',
+          'created_at',
+          'updated_at',
+          'points',
+          'level',
+        },
+      );
 
-final adminArticlesProvider =
-    StateNotifierProvider<AdminArticlesNotifier, List<Article>>((ref) {
-      return AdminArticlesNotifier();
-    });
+  ProfileFilter _filter = ProfileFilter.all;
 
+  void setFilter(ProfileFilter filter) {
+    _filter = filter;
+    load();
+  }
+
+  @override
+  Future<void> load() async {
+    await super.load();
+    if (_filter == ProfileFilter.all) return;
+
+    state.whenData((rows) {
+      state = AsyncValue.data(
+        rows.where((r) {
+          return switch (_filter) {
+            ProfileFilter.banned => r['is_banned'] == true,
+            ProfileFilter.verified => r['is_verified'] == true,
+            ProfileFilter.all => true,
+          };
+        }).toList(),
+      );
+    });
+  }
+
+  Future<void> updateProfile(String id, Map<String, dynamic> fields) =>
+      update(id, fields);
+
+  /// Bans or reinstates someone.
+  ///
+  /// This is the panel's only way of removing a resident: `profiles.id`
+  /// points at `auth.users`, and deleting the row would take their reviews
+  /// and comments with it while leaving the account able to sign in again.
+  Future<void> setBanned(String id, bool banned) async {
+    await SupabaseConfig.client
+        .from('profiles')
+        .update({
+          'is_banned': banned,
+          if (!banned) 'ban_reason': null,
+        })
+        .eq('id', id);
+    await load();
+  }
+}
+
+/// Reviews awaiting moderation, on the live table.
+///
+/// `reviews` has no rows today, so this list is legitimately empty. Approving
+/// one matters more than it looks: migration 00025 recomputes the business's
+/// rating and review count from approved reviews only, so the status set here
+/// is what moves the stars on the business page.
 final adminReviewsProvider =
-    StateNotifierProvider<AdminReviewsNotifier, List<Review>>((ref) {
+    StateNotifierProvider<
+      AdminReviewsNotifier,
+      AsyncValue<List<Map<String, dynamic>>>
+    >((ref) {
       return AdminReviewsNotifier();
     });
 
-class AdminUsersNotifier extends StateNotifier<List<UserModel>> {
-  AdminUsersNotifier() : super(_mockUsers);
+class AdminReviewsNotifier extends AdminTableNotifier {
+  AdminReviewsNotifier()
+    : super(
+        table: 'reviews',
+        searchColumns: const ['title', 'body'],
+        // `reviews` references `profiles` twice — the author and whoever
+        // answered — so the author join has to name its constraint.
+        columns:
+            '*, profiles!reviews_author_id_fkey(id, full_name), '
+            'businesses!reviews_business_id_fkey(id, name)',
+        orderBy: 'created_at',
+      );
 
-  void add(UserModel user) => state = [...state, user];
+  Future<void> approve(String id) => updateStatus(id, 'approved');
 
-  void update(UserModel user) {
-    state = [for (final u in state) u.id == user.id ? user : u];
-  }
-
-  void remove(String id) => state = state.where((u) => u.id != id).toList();
-
-  void toggleBan(String id) {
-    state = [
-      for (final u in state) u.id == id ? u.copyWith(isBanned: !u.isBanned) : u,
-    ];
-  }
-
-  void setRole(String id, UserRole role) {
-    state = [for (final u in state) u.id == id ? u.copyWith(role: role) : u];
-  }
+  Future<void> reject(String id) => updateStatus(id, 'rejected');
 }
-
-class AdminBusinessesNotifier extends StateNotifier<List<Business>> {
-  AdminBusinessesNotifier() : super(_mockBusinesses);
-
-  void add(Business biz) => state = [...state, biz];
-
-  void update(Business biz) {
-    state = [for (final b in state) b.id == biz.id ? biz : b];
-  }
-
-  void remove(String id) => state = state.where((b) => b.id != id).toList();
-
-  void setStatus(String id, BusinessStatus status) {
-    state = [
-      for (final b in state) b.id == id ? b.copyWith(status: status) : b,
-    ];
-  }
-}
-
-class AdminArticlesNotifier extends StateNotifier<List<Article>> {
-  AdminArticlesNotifier() : super(_mockArticles);
-
-  void add(Article article) => state = [...state, article];
-
-  void update(Article article) {
-    state = [for (final a in state) a.id == article.id ? article : a];
-  }
-
-  void remove(String id) => state = state.where((a) => a.id != id).toList();
-
-  void setStatus(String id, ArticleStatus status) {
-    state = [
-      for (final a in state) a.id == id ? a.copyWith(status: status) : a,
-    ];
-  }
-}
-
-class AdminReviewsNotifier extends StateNotifier<List<Review>> {
-  AdminReviewsNotifier() : super(_mockReviews);
-
-  void remove(String id) => state = state.where((r) => r.id != id).toList();
-}
-
-// ─── Mock Data ───
-
-final _mockUsers = [
-  UserModel(
-    id: 'u1',
-    name: 'ניתאי לוי',
-    email: 'nitaildigital@gmail.com',
-    phone: '050-1234567',
-    neighborhood: 'אבני חן',
-    points: 2400,
-    role: UserRole.admin,
-    isVerifiedResident: true,
-    createdAt: DateTime(2024, 1, 1),
-    lastLoginAt: DateTime(2026, 8, 17),
-  ),
-  UserModel(
-    id: 'u2',
-    name: 'יוסי כהן',
-    email: 'yossi@gmail.com',
-    phone: '052-9876543',
-    neighborhood: 'מורשת',
-    points: 820,
-    role: UserRole.businessOwner,
-    ownedBusinessId: 'b1',
-    isVerifiedResident: true,
-    createdAt: DateTime(2024, 3, 15),
-    lastLoginAt: DateTime(2026, 8, 16),
-  ),
-  UserModel(
-    id: 'u3',
-    name: 'מיכל לוי',
-    email: 'michal@gmail.com',
-    phone: '054-1112222',
-    neighborhood: 'בוכמן',
-    points: 340,
-    role: UserRole.user,
-    isVerifiedResident: true,
-    createdAt: DateTime(2024, 6, 10),
-    lastLoginAt: DateTime(2026, 8, 15),
-  ),
-  UserModel(
-    id: 'u4',
-    name: 'אחמד חליל',
-    email: 'ahmed@gmail.com',
-    phone: '050-3334444',
-    neighborhood: 'רמת מודיעין',
-    points: 150,
-    role: UserRole.user,
-    isVerifiedResident: false,
-    createdAt: DateTime(2025, 1, 20),
-    lastLoginAt: DateTime(2026, 8, 10),
-  ),
-  UserModel(
-    id: 'u5',
-    name: 'שרה אברהם',
-    email: 'sara@gmail.com',
-    phone: '053-5556666',
-    neighborhood: 'אבני חן',
-    points: 1100,
-    role: UserRole.businessOwner,
-    ownedBusinessId: 'b3',
-    isVerifiedResident: true,
-    createdAt: DateTime(2024, 9, 5),
-    lastLoginAt: DateTime(2026, 8, 14),
-  ),
-  UserModel(
-    id: 'u6',
-    name: 'דני פרץ',
-    email: 'dani@gmail.com',
-    phone: '058-7778888',
-    neighborhood: 'כפר הנוער',
-    points: 60,
-    role: UserRole.user,
-    isBanned: true,
-    isVerifiedResident: false,
-    createdAt: DateTime(2025, 5, 12),
-  ),
-];
-
-final _mockBusinesses = [
-  Business(
-    id: 'b1',
-    name: 'פיצה פרגו',
-    slug: 'pizza-frago',
-    category: 'מסעדות',
-    subcategory: 'פיצה',
-    description: 'פיצריה איטלקית אותנטית במרכז מודיעין',
-    metaDescription:
-        'פיצה פרגו — פיצריה איטלקית במודיעין. משלוחים, ישיבה במקום, כשר.',
-    phone: '08-9712345',
-    address: 'רח׳ המעיין 12',
-    neighborhood: 'מרכז העיר',
-    latitude: 31.8975,
-    longitude: 35.0104,
-    rating: 4.5,
-    reviewCount: 87,
-    tags: ['פיצה', 'איטלקי', 'כשר', 'משלוחים'],
-    kosherStatus: 'כשר רבנות',
-    priceLevel: '₪₪',
-    hasDelivery: true,
-    isAccessible: true,
-    status: BusinessStatus.active,
-    ownerId: 'u2',
-    createdAt: DateTime(2024, 3, 15),
-  ),
-  Business(
-    id: 'b2',
-    name: 'סופר פארם מודיעין',
-    slug: 'super-pharm-modiin',
-    category: 'בריאות',
-    description: 'סניף סופר פארם — תרופות, קוסמטיקה ומוצרי טיפוח',
-    metaDescription: 'סופר פארם מודיעין — בית מרקחת, קוסמטיקה ופארם.',
-    phone: '08-9714567',
-    address: 'מרכז עזריאלי מודיעין',
-    neighborhood: 'מרכז העיר',
-    latitude: 31.8960,
-    longitude: 35.0120,
-    rating: 4.1,
-    reviewCount: 42,
-    tags: ['בית מרקחת', 'קוסמטיקה'],
-    status: BusinessStatus.active,
-    createdAt: DateTime(2024, 5, 1),
-  ),
-  Business(
-    id: 'b3',
-    name: 'סטודיו שרה — יוגה ופילאטיס',
-    slug: 'studio-sara-yoga',
-    category: 'ספורט',
-    description: 'שיעורי יוגה ופילאטיס לכל הרמות',
-    metaDescription:
-        'סטודיו שרה — יוגה ופילאטיס במודיעין. שיעורים פרטיים וקבוצתיים.',
-    phone: '053-5556666',
-    address: 'רח׳ האלון 8',
-    neighborhood: 'אבני חן',
-    latitude: 31.9010,
-    longitude: 35.0050,
-    rating: 4.8,
-    reviewCount: 63,
-    tags: ['יוגה', 'פילאטיס', 'כושר'],
-    status: BusinessStatus.active,
-    ownerId: 'u5',
-    createdAt: DateTime(2024, 9, 5),
-  ),
-  Business(
-    id: 'b4',
-    name: 'ביסטרו מודיעין',
-    slug: 'bistro-modiin',
-    category: 'מסעדות',
-    description: 'מסעדת שף חדשה — מטבח ים תיכוני',
-    phone: '08-9719999',
-    address: 'רח׳ הנרקיס 3',
-    neighborhood: 'מורשת',
-    latitude: 31.8990,
-    longitude: 35.0080,
-    status: BusinessStatus.pending,
-    createdAt: DateTime(2026, 8, 10),
-  ),
-];
-
-final _mockArticles = [
-  Article(
-    id: 'a1',
-    title: 'פארק ענבה — שדרוג חדש לתושבים',
-    subtitle: 'פארק ענבה עובר מתיחת פנים',
-    slug: 'anaba-park-upgrade',
-    body:
-        'עיריית מודיעין מכבים רעות השיקה היום את תוכנית השדרוג של פארק ענבה...',
-    author: 'ניתאי לוי',
-    category: NewsCategory.municipal,
-    publishedAt: DateTime(2026, 8, 15),
-    status: ArticleStatus.published,
-    metaDescription:
-        'פארק ענבה במודיעין עובר שדרוג — מגרשי משחקים חדשים, שבילים ותאורה.',
-    tags: ['פארקים', 'עירייה', 'ענבה'],
-    viewCount: 1240,
-    isFeatured: true,
-  ),
-  Article(
-    id: 'a2',
-    title: 'פתיחת מרכז מסחרי חדש במע"ר',
-    slug: 'new-commercial-center-maar',
-    body: 'מרכז מסחרי חדש בן 3 קומות צפוי להיפתח בחודשים הקרובים...',
-    author: 'ניתאי לוי',
-    category: NewsCategory.business,
-    publishedAt: DateTime(2026, 8, 12),
-    status: ArticleStatus.published,
-    metaDescription: 'מרכז מסחרי חדש במע"ר מודיעין — חנויות, מסעדות ובילוי.',
-    tags: ['מסחר', 'מע"ר'],
-    viewCount: 890,
-  ),
-  Article(
-    id: 'a3',
-    title: 'קבוצת הכדורגל העירונית עלתה ליגה',
-    slug: 'modiin-fc-promotion',
-    body: 'הקבוצה העירונית ניצחה אתמול 2-0 ועלתה לליגה הארצית...',
-    author: 'דנה כהן',
-    category: NewsCategory.sports,
-    publishedAt: DateTime(2026, 8, 10),
-    status: ArticleStatus.published,
-    tags: ['ספורט', 'כדורגל'],
-    viewCount: 2100,
-  ),
-  Article(
-    id: 'a4',
-    title: 'טיפים לקיץ בטוח — מדריך הורים',
-    slug: 'summer-safety-tips',
-    body: 'עם הגעת הקיץ חשוב לשמור על כללי בטיחות...',
-    author: 'ניתאי לוי',
-    category: NewsCategory.safety,
-    publishedAt: DateTime(2026, 8, 8),
-    status: ArticleStatus.draft,
-    metaDescription: 'מדריך בטיחות קיץ להורים — טיפים, הנחיות ומידע.',
-    tags: ['בטיחות', 'קיץ', 'הורים'],
-  ),
-];
-
-final _mockReviews = [
-  Review(
-    id: 'r1',
-    businessId: 'b1',
-    userId: 'u3',
-    userName: 'מיכל לוי',
-    isVerifiedResident: true,
-    rating: 5,
-    text: 'פיצה מעולה! הכי טובה במודיעין.',
-    createdAt: DateTime(2026, 8, 14),
-  ),
-  Review(
-    id: 'r2',
-    businessId: 'b1',
-    userId: 'u4',
-    userName: 'אחמד חליל',
-    rating: 3,
-    text: 'בסדר, אבל יקר מדי לטעמי.',
-    createdAt: DateTime(2026, 8, 12),
-  ),
-  Review(
-    id: 'r3',
-    businessId: 'b3',
-    userId: 'u3',
-    userName: 'מיכל לוי',
-    isVerifiedResident: true,
-    rating: 5,
-    text: 'שרה מורה מדהימה! ממליצה בחום.',
-    createdAt: DateTime(2026, 8, 10),
-  ),
-];

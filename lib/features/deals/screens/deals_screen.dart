@@ -61,9 +61,10 @@ class _MobileDealsContent extends ConsumerWidget {
                 children: [
                   _buildHero(context),
                   const SizedBox(height: 20),
+                  // The three page dots that sat here said the banner was
+                  // one of three and could be paged. It is a single box that
+                  // does not scroll.
                   _buildBanner(),
-                  const SizedBox(height: 12),
-                  _buildPageDots(),
                   const SizedBox(height: 16),
 
                   // Categories are only worth a row when something is in
@@ -273,26 +274,6 @@ class _MobileDealsContent extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════
-  // Page dots (3 dots, middle active)
-  // ═══════════════════════════════════════════════
-  Widget _buildPageDots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (i) {
-        return Container(
-          width: 20,
-          height: 4,
-          margin: EdgeInsets.only(right: i < 2 ? 3 : 0),
-          decoration: BoxDecoration(
-            color: i == 1 ? const Color(0xFF123A72) : const Color(0xFFD9D9D9),
-            borderRadius: BorderRadius.circular(50),
-          ),
-        );
-      }),
     );
   }
 

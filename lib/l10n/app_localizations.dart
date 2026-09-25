@@ -2646,6 +2646,186 @@ abstract class L {
   /// In he, this message translates to:
   /// **'נדל\"ן'**
   String get mapLayerRealEstate;
+
+  /// No description provided for @helpTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'עזרה ותמיכה'**
+  String get helpTitle;
+
+  /// No description provided for @helpSearchHint.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש בעזרה'**
+  String get helpSearchHint;
+
+  /// No description provided for @helpNoResults.
+  ///
+  /// In he, this message translates to:
+  /// **'לא נמצאו תוצאות'**
+  String get helpNoResults;
+
+  /// No description provided for @helpContactTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'עדיין צריכים עזרה?'**
+  String get helpContactTitle;
+
+  /// No description provided for @helpContactBody.
+  ///
+  /// In he, this message translates to:
+  /// **'כתבו לנו ונחזור אליכם.'**
+  String get helpContactBody;
+
+  /// No description provided for @helpContactButton.
+  ///
+  /// In he, this message translates to:
+  /// **'צרו קשר'**
+  String get helpContactButton;
+
+  /// No description provided for @helpQEditProfile.
+  ///
+  /// In he, this message translates to:
+  /// **'איך עורכים את פרטי הפרופיל?'**
+  String get helpQEditProfile;
+
+  /// No description provided for @helpAEditProfile.
+  ///
+  /// In he, this message translates to:
+  /// **'פתחו את הפרופיל ולחצו על “עריכת פרופיל”. אפשר לשנות שם, אימייל, טלפון, שכונה, מצב משפחתי ותאריך לידה, ואז ללחוץ על שמירה.'**
+  String get helpAEditProfile;
+
+  /// No description provided for @helpQPassword.
+  ///
+  /// In he, this message translates to:
+  /// **'איך משנים סיסמה?'**
+  String get helpQPassword;
+
+  /// No description provided for @helpAPassword.
+  ///
+  /// In he, this message translates to:
+  /// **'היכנסו להגדרות ← שינוי סיסמה. הזינו את הסיסמה הנוכחית ואז את החדשה פעמיים.'**
+  String get helpAPassword;
+
+  /// No description provided for @helpQLanguage.
+  ///
+  /// In he, this message translates to:
+  /// **'איך משנים את שפת האפליקציה?'**
+  String get helpQLanguage;
+
+  /// No description provided for @helpALanguage.
+  ///
+  /// In he, this message translates to:
+  /// **'היכנסו להגדרות ← שפה ובחרו עברית או אנגלית. האפליקציה מתעדכנת מיד.'**
+  String get helpALanguage;
+
+  /// No description provided for @helpQFavorites.
+  ///
+  /// In he, this message translates to:
+  /// **'איך שומרים פריט במועדפים?'**
+  String get helpQFavorites;
+
+  /// No description provided for @helpAFavorites.
+  ///
+  /// In he, this message translates to:
+  /// **'לחצו על הלב בכל עסק, אירוע, כתבה או נכס. כדי שהשמירה תתבצע צריך להיות מחוברים.'**
+  String get helpAFavorites;
+
+  /// No description provided for @helpQFindFavorites.
+  ///
+  /// In he, this message translates to:
+  /// **'איפה המועדפים שלי?'**
+  String get helpQFindFavorites;
+
+  /// No description provided for @helpAFindFavorites.
+  ///
+  /// In he, this message translates to:
+  /// **'פתחו את הפרופיל ולחצו על מועדפים. אפשר לסנן לפי עסקים, אירועים, חדשות או נכסים, או לראות הכול יחד.'**
+  String get helpAFindFavorites;
+
+  /// No description provided for @helpQBusinesses.
+  ///
+  /// In he, this message translates to:
+  /// **'איך מוצאים עסקים במודיעין?'**
+  String get helpQBusinesses;
+
+  /// No description provided for @helpABusinesses.
+  ///
+  /// In he, this message translates to:
+  /// **'השתמשו בלשונית העסקים. אפשר לחפש לפי שם, לעיין לפי קטגוריה, או לפתוח את לשונית המפה כדי לראות אותם לפי מיקום.'**
+  String get helpABusinesses;
+
+  /// No description provided for @helpQEvents.
+  ///
+  /// In he, this message translates to:
+  /// **'איך מוצאים אירועים?'**
+  String get helpQEvents;
+
+  /// No description provided for @helpAEvents.
+  ///
+  /// In he, this message translates to:
+  /// **'פתחו את מדור האירועים מהמסך הראשי. אפשר לחפש, או לעבור למפה כדי לראות איפה כל אירוע מתקיים.'**
+  String get helpAEvents;
+
+  /// No description provided for @helpQRealEstate.
+  ///
+  /// In he, this message translates to:
+  /// **'איך מחפשים דירות?'**
+  String get helpQRealEstate;
+
+  /// No description provided for @helpARealEstate.
+  ///
+  /// In he, this message translates to:
+  /// **'פתחו את הנדל\"ן מהמסך הראשי. סננו לפי שכונה, מחיר, חדרים וגודל, או עיינו במפה.'**
+  String get helpARealEstate;
+
+  /// No description provided for @helpQAccount.
+  ///
+  /// In he, this message translates to:
+  /// **'איך מוחקים חשבון?'**
+  String get helpQAccount;
+
+  /// No description provided for @helpAAccount.
+  ///
+  /// In he, this message translates to:
+  /// **'היכנסו להגדרות ובחרו מחיקת חשבון. הפעולה מוחקת את הפרופיל ואי אפשר לבטל אותה.'**
+  String get helpAAccount;
+
+  /// No description provided for @onboardingTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'כל מודיעין,\nבמקום אחד.'**
+  String get onboardingTitle;
+
+  /// No description provided for @onboardingSubtitle.
+  ///
+  /// In he, this message translates to:
+  /// **'מסעדות, עסקים, אירועים, מבצעים, נדל\"ן ועוד.'**
+  String get onboardingSubtitle;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In he, this message translates to:
+  /// **'דילוג'**
+  String get onboardingSkip;
+
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In he, this message translates to:
+  /// **'המשך עם Google'**
+  String get continueWithGoogle;
+
+  /// No description provided for @dontHaveAccount.
+  ///
+  /// In he, this message translates to:
+  /// **'אין לכם חשבון?'**
+  String get dontHaveAccount;
+
+  /// No description provided for @onboardingTerms.
+  ///
+  /// In he, this message translates to:
+  /// **'בהרשמה אתם מסכימים ל'**
+  String get onboardingTerms;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

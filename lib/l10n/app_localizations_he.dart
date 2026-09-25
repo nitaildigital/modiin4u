@@ -1333,4 +1333,104 @@ class LHe extends L {
 
   @override
   String get mapLayerRealEstate => 'נדל\"ן';
+
+  @override
+  String get helpTitle => 'עזרה ותמיכה';
+
+  @override
+  String get helpSearchHint => 'חיפוש בעזרה';
+
+  @override
+  String get helpNoResults => 'לא נמצאו תוצאות';
+
+  @override
+  String get helpContactTitle => 'עדיין צריכים עזרה?';
+
+  @override
+  String get helpContactBody => 'כתבו לנו ונחזור אליכם.';
+
+  @override
+  String get helpContactButton => 'צרו קשר';
+
+  @override
+  String get helpQEditProfile => 'איך עורכים את פרטי הפרופיל?';
+
+  @override
+  String get helpAEditProfile =>
+      'פתחו את הפרופיל ולחצו על “עריכת פרופיל”. אפשר לשנות שם, אימייל, טלפון, שכונה, מצב משפחתי ותאריך לידה, ואז ללחוץ על שמירה.';
+
+  @override
+  String get helpQPassword => 'איך משנים סיסמה?';
+
+  @override
+  String get helpAPassword =>
+      'היכנסו להגדרות ← שינוי סיסמה. הזינו את הסיסמה הנוכחית ואז את החדשה פעמיים.';
+
+  @override
+  String get helpQLanguage => 'איך משנים את שפת האפליקציה?';
+
+  @override
+  String get helpALanguage =>
+      'היכנסו להגדרות ← שפה ובחרו עברית או אנגלית. האפליקציה מתעדכנת מיד.';
+
+  @override
+  String get helpQFavorites => 'איך שומרים פריט במועדפים?';
+
+  @override
+  String get helpAFavorites =>
+      'לחצו על הלב בכל עסק, אירוע, כתבה או נכס. כדי שהשמירה תתבצע צריך להיות מחוברים.';
+
+  @override
+  String get helpQFindFavorites => 'איפה המועדפים שלי?';
+
+  @override
+  String get helpAFindFavorites =>
+      'פתחו את הפרופיל ולחצו על מועדפים. אפשר לסנן לפי עסקים, אירועים, חדשות או נכסים, או לראות הכול יחד.';
+
+  @override
+  String get helpQBusinesses => 'איך מוצאים עסקים במודיעין?';
+
+  @override
+  String get helpABusinesses =>
+      'השתמשו בלשונית העסקים. אפשר לחפש לפי שם, לעיין לפי קטגוריה, או לפתוח את לשונית המפה כדי לראות אותם לפי מיקום.';
+
+  @override
+  String get helpQEvents => 'איך מוצאים אירועים?';
+
+  @override
+  String get helpAEvents =>
+      'פתחו את מדור האירועים מהמסך הראשי. אפשר לחפש, או לעבור למפה כדי לראות איפה כל אירוע מתקיים.';
+
+  @override
+  String get helpQRealEstate => 'איך מחפשים דירות?';
+
+  @override
+  String get helpARealEstate =>
+      'פתחו את הנדל\"ן מהמסך הראשי. סננו לפי שכונה, מחיר, חדרים וגודל, או עיינו במפה.';
+
+  @override
+  String get helpQAccount => 'איך מוחקים חשבון?';
+
+  @override
+  String get helpAAccount =>
+      'היכנסו להגדרות ובחרו מחיקת חשבון. הפעולה מוחקת את הפרופיל ואי אפשר לבטל אותה.';
+
+  @override
+  String get onboardingTitle => 'כל מודיעין,\nבמקום אחד.';
+
+  @override
+  String get onboardingSubtitle =>
+      'מסעדות, עסקים, אירועים, מבצעים, נדל\"ן ועוד.';
+
+  @override
+  String get onboardingSkip => 'דילוג';
+
+  @override
+  String get continueWithGoogle => 'המשך עם Google';
+
+  @override
+  String get dontHaveAccount => 'אין לכם חשבון?';
+
+  @override
+  String get onboardingTerms => 'בהרשמה אתם מסכימים ל';
 }

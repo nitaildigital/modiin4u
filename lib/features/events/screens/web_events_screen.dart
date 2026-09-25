@@ -1,9 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../../favorites/widgets/favorite_button.dart';
+import '../models/event.dart';
+import '../providers/event_providers.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Events — full desktop layout from Figma
@@ -12,107 +21,101 @@ import '../../../shared/widgets/web_chrome.dart';
 
 const _kBorder = Color(0xFFE7E7E7);
 const _kGreyText = Color(0xFF5F5E5A);
-const _kHeading = Color(0xFF1C1C1E);
 const _kBodyText = Color(0xFF3D3D3D);
 const _kIconGrey = Color(0xFF6D6D6D);
 const _kPlaceholder = Color(0xFF4F4F4F);
 
-/// Upper bound for the "Load More" pagination stub.
-const _kMaxEvents = 32;
+/// How many cards the grid opens with, and how many each "Load More" adds.
+///
+/// Both used to run against a fixed pool of sixteen hand-written cards, and
+/// the grid repeated that pool with `events[i % events.length]` up to a cap of
+/// 32 — so "Load More" showed the same events again rather than more of them.
+/// They count real rows now, and the button only appears when there are rows
+/// left to show.
+const _kFirstPage = 12;
+const _kPageStep = 8;
 
-class WebEventsContent extends StatefulWidget {
+/// Every event card, every category tile and every count on this page was
+/// written into the source: sixteen invented events with invented venues,
+/// prices and interest figures, and six category circles reading 157, 32, 24,
+/// 45, 15 and 41. Every card opened `/event/demo_$i`, which matches no row.
+///
+/// The grid reads `events` now. The category circles are gone: there is no
+/// category on an event, so the row could only ever have been decoration with
+/// numbers on it.
+class WebEventsContent extends ConsumerStatefulWidget {
   const WebEventsContent({super.key});
 
   @override
-  State<WebEventsContent> createState() => _WebEventsContentState();
+  ConsumerState<WebEventsContent> createState() => _WebEventsContentState();
 }
 
-class _WebEventsContentState extends State<WebEventsContent> {
+class _WebEventsContentState extends ConsumerState<WebEventsContent> {
   bool _isHebrew = false;
-  int _selectedCategory = 0;
-  int _visibleCount = 16;
+  int _visibleCount = _kFirstPage;
   final _searchController = TextEditingController();
-  final Set<int> _saved = {};
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    // The field carries whatever the search already is, so moving between the
+    // mobile and desktop layouts does not silently drop it.
+    _searchController.text = ref.read(eventSearchProvider);
+  }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  // ── Nav links ──
-  // ── Event categories ──
-  List<_Category> get _categories => [
-    _Category(name: _t('All Events', 'כל האירועים'), count: 157, imageBg: const Color(0xFFD8C7B8)),
-    _Category(name: _t('Municipal &\nCommunity', 'עירוני\nוקהילתי'), count: 32, imageBg: const Color(0xFFC6D6E4)),
-    _Category(name: _t('Music', 'מוזיקה'), count: 24, imageBg: const Color(0xFFD9C8DE)),
-    _Category(name: _t('Kids & Family', 'ילדים ומשפחה'), count: 45, imageBg: const Color(0xFFDCE2C6)),
-    _Category(name: _t('Sports', 'ספורט'), count: 15, imageBg: const Color(0xFFC8DDD8)),
-    _Category(name: _t('Free', 'חינם'), count: 41, imageBg: const Color(0xFFE4D6C2)),
-  ];
-
-  // ── Events (16 cards — 4 × 4 grid) ──
-  List<_Event> get _events {
-    final music = _t('Music', 'מוזיקה');
-    final community = _t('Municipal & Community', 'עירוני וקהילתי');
-    final kids = _t('Kids & Family', 'ילדים ומשפחה');
-    final sports = _t('Sports', 'ספורט');
-    final aug = _t('AUG', 'אוג׳');
-    final sep = _t('SEP', 'ספט׳');
-    final free = _t('FREE', 'חינם');
-
-    return [
-      _Event(month: aug, day: '21', category: music, title: _t('Summer Music Night', 'לילה מוזיקלי קיצי'),
-          time: '8:00 PM', venue: _t('Modiin Amphitheater', 'אמפיתאטרון מודיעין'),
-          price: '₪50', interested: 124, imageBg: const Color(0xFFD6C6DE)),
-      _Event(month: aug, day: '22', category: community, title: _t('Modiin Community Festival', 'פסטיבל הקהילה של מודיעין'),
-          time: '10:00 AM', venue: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-          price: free, interested: 86, imageBg: const Color(0xFFC6D6E4)),
-      _Event(month: aug, day: '23', category: kids, title: _t('Family Fun Day', 'יום כיף משפחתי'),
-          time: '11:00 AM', venue: _t('Anava Park', 'פארק ענבה'),
-          price: '₪20', interested: 64, imageBg: const Color(0xFFDCE2C6)),
-      _Event(month: aug, day: '25', category: sports, title: _t('Modiin Night Run', 'מרוץ הלילה של מודיעין'),
-          time: '7:30 PM', venue: _t('Modiin Sports Center', 'מרכז הספורט מודיעין'),
-          price: '₪35', interested: 142, imageBg: const Color(0xFFC8DDD8)),
-      _Event(month: aug, day: '27', category: music, title: _t('Live Jazz Evening', 'ערב ג׳אז חי'),
-          time: '8:30 PM', venue: _t('Local Cultural Center', 'היכל התרבות המקומי'),
-          price: '₪60', interested: 51, imageBg: const Color(0xFFDDD0C2)),
-      _Event(month: aug, day: '28', category: community, title: _t('Open Air Movie Night', 'ערב סרט תחת כיפת השמיים'),
-          time: '8:30 PM', venue: _t('Modiin Park', 'פארק מודיעין'),
-          price: free, interested: 93, imageBg: const Color(0xFFCBD4DE)),
-      _Event(month: aug, day: '29', category: kids, title: _t('Kids Cooking Workshop', 'סדנת בישול לילדים'),
-          time: '10:30 AM', venue: _t('Community Center', 'המרכז הקהילתי'),
-          price: '₪30', interested: 35, imageBg: const Color(0xFFE2D4C4)),
-      _Event(month: aug, day: '29', category: sports, title: _t('Community Football Match', 'משחק כדורגל קהילתי'),
-          time: '10:30 AM', venue: _t('Community Center', 'המרכז הקהילתי'),
-          price: free, interested: 68, imageBg: const Color(0xFFCADEC9)),
-      _Event(month: sep, day: '01', category: music, title: _t('Summer Nights Live – Modiin', 'לילות קיץ לייב – מודיעין'),
-          time: '10:30 AM', venue: _t('Modiin Amphitheater', 'אמפיתאטרון מודיעין'),
-          price: free, interested: 248, imageBg: const Color(0xFFD2C6DE)),
-      _Event(month: sep, day: '03', category: community, title: _t('Modiin Street Food Festival', 'פסטיבל אוכל רחוב מודיעין'),
-          time: '5:00 PM', venue: _t('City Center, Modiin', 'מרכז העיר, מודיעין'),
-          price: free, interested: 326, imageBg: const Color(0xFFE0CDBE)),
-      _Event(month: sep, day: '05', category: kids, title: _t('Family Fun Day at Anava Park', 'יום כיף משפחתי בפארק ענבה'),
-          time: '10:00 AM', venue: _t('Anava Park', 'פארק ענבה'),
-          price: '₪25', interested: 184, imageBg: const Color(0xFFD6E2C6)),
-      _Event(month: sep, day: '06', category: sports, title: _t('Modiin Night Run 2026', 'מרוץ הלילה מודיעין 2026'),
-          time: '7:30 PM', venue: _t('HaShdera Boulevard', 'שדרות השדרה'),
-          price: '₪40', interested: 157, imageBg: const Color(0xFFC6DAD8)),
-      _Event(month: aug, day: '22', category: community, title: _t('Modiin Community Festival', 'פסטיבל הקהילה של מודיעין'),
-          time: '10:00 AM', venue: _t('Modiin City Center', 'מרכז העיר מודיעין'),
-          price: free, interested: 86, imageBg: const Color(0xFFC6D6E4)),
-      _Event(month: aug, day: '21', category: music, title: _t('Summer Music Night', 'לילה מוזיקלי קיצי'),
-          time: '8:00 PM', venue: _t('Modiin Amphitheater', 'אמפיתאטרון מודיעין'),
-          price: '₪50', interested: 124, imageBg: const Color(0xFFD6C6DE)),
-      _Event(month: aug, day: '28', category: community, title: _t('Open Air Movie Night', 'ערב סרט תחת כיפת השמיים'),
-          time: '8:30 PM', venue: _t('Modiin Park', 'פארק מודיעין'),
-          price: free, interested: 93, imageBg: const Color(0xFFCBD4DE)),
-      _Event(month: aug, day: '27', category: music, title: _t('Live Jazz Evening', 'ערב ג׳אז חי'),
-          time: '8:30 PM', venue: _t('Local Cultural Center', 'היכל התרבות המקומי'),
-          price: '₪60', interested: 51, imageBg: const Color(0xFFDDD0C2)),
+  /// The month on a date badge, in the language being shown.
+  String _month(DateTime date) {
+    const en = [
+      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
     ];
+    const he = [
+      'ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יונ׳',
+      'יול׳', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳',
+    ];
+    return (_isHebrew ? he : en)[date.month - 1];
+  }
+
+  /// What the ticket costs, or null when the row does not say.
+  ///
+  /// `Event.displayPrice` answers in Hebrew, so the free case is worded here
+  /// instead — this layout is shown in both languages.
+  String? _price(Event e) {
+    if (e.isFree) return _t('FREE', 'חינם');
+    final p = e.price;
+    if (p == null || p.isEmpty) return null;
+    return p.startsWith('₪') ? p : '₪$p';
+  }
+
+  // ─────────────────────────────────────────────
+  // SEARCH
+  // ─────────────────────────────────────────────
+  /// Narrows the grid rather than leaving the page.
+  ///
+  /// The button used to push `/search?q=…`, which meant the events search
+  /// never reached `eventSearchProvider` and the grid below it never moved.
+  void _applySearch(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      ref.read(eventSearchProvider.notifier).state = value;
+      if (mounted) setState(() => _visibleCount = _kFirstPage);
+    });
+  }
+
+  void _onSearch() {
+    _debounce?.cancel();
+    ref.read(eventSearchProvider.notifier).state = _searchController.text;
+    setState(() => _visibleCount = _kFirstPage);
   }
 
   @override
@@ -133,7 +136,6 @@ class _WebEventsContentState extends State<WebEventsContent> {
                 child: Column(
                   children: [
                     _buildHeroSection(),
-                    _buildCategoriesSection(),
                     _buildEventsSection(),
                     const SizedBox(height: 24),
                     WebFooter(isHebrew: _isHebrew),
@@ -212,7 +214,7 @@ class _WebEventsContentState extends State<WebEventsContent> {
                         const SizedBox(height: 104),
                         Text(
                           _t('Events & Nightlife in Modiin', 'אירועים וחיי לילה במודיעין'),
-                          style: TextStyle(fontFamily: AppFonts.nunito, 
+                          style: TextStyle(fontFamily: AppFonts.nunito,
                               fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23),
                           textAlign: TextAlign.center,
                         ),
@@ -238,12 +240,6 @@ class _WebEventsContentState extends State<WebEventsContent> {
         ],
       ),
     );
-  }
-
-  void _onSearch() {
-    final query = _searchController.text.trim();
-    if (query.isEmpty) return;
-    context.push(Uri(path: '/search', queryParameters: {'q': query}).toString());
   }
 
   Widget _buildSearchBar() {
@@ -276,6 +272,7 @@ class _WebEventsContentState extends State<WebEventsContent> {
                   isDense: true,
                   isCollapsed: true,
                 ),
+                onChanged: _applySearch,
                 onSubmitted: (_) => _onSearch(),
               ),
             ),
@@ -310,59 +307,10 @@ class _WebEventsContentState extends State<WebEventsContent> {
   }
 
   // ─────────────────────────────────────────────
-  // EVENT CATEGORIES — 6 circular tiles
-  // ─────────────────────────────────────────────
-  Widget _buildCategoriesSection() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 59),
-      child: Column(
-        children: [
-          Text(_t('Event Categories', 'קטגוריות אירועים'),
-              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 15),
-          Text(_t('From music to family fun, find your next experience.',
-                  'ממוזיקה ועד כיף משפחתי — מצאו את החוויה הבאה שלכם.'),
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 42),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1248),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Wrap(
-                  spacing: 30,
-                  runSpacing: 30,
-                  alignment: WrapAlignment.spaceBetween,
-                  children: List.generate(_categories.length, (i) {
-                    return SizedBox(
-                      width: 160,
-                      child: _CategoryTile(
-                        category: _categories[i],
-                        isSelected: _selectedCategory == i,
-                        onTap: () => setState(() => _selectedCategory = i),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // EVENTS IN MODIIN — 4 × 4 card grid + fade + Load More
+  // EVENTS IN MODIIN — card grid + fade + Load More
   // ─────────────────────────────────────────────
   Widget _buildEventsSection() {
-    final events = _events;
-    // The export lists 16 cards; "Load More" keeps appending batches of 8
-    // from the same pool until the cap is reached.
-    final visible = List.generate(_visibleCount, (i) => events[i % events.length]);
-    final hasMore = _visibleCount < _kMaxEvents;
+    final events = ref.watch(filteredEventsProvider);
 
     return Padding(
       padding: const EdgeInsets.only(top: 80),
@@ -376,71 +324,11 @@ class _WebEventsContentState extends State<WebEventsContent> {
             Text(_t('Find something happening near you.', 'מצאו משהו שקורה לידכם.'),
                 style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
             const SizedBox(height: 32),
-            Stack(
-              children: [
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    const gap = 24.0;
-                    final cols = constraints.maxWidth > 1400
-                        ? 4
-                        : (constraints.maxWidth > 1000 ? 3 : 2);
-                    final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
-                    return Wrap(
-                      spacing: gap,
-                      runSpacing: gap,
-                      children: List.generate(visible.length, (i) {
-                        return SizedBox(
-                          width: cardWidth,
-                          child: _EventCard(
-                            event: visible[i],
-                            isSaved: _saved.contains(i),
-                            interestedLabel: _t('interested', 'מתעניינים'),
-                            onSave: () => setState(() =>
-                                _saved.contains(i) ? _saved.remove(i) : _saved.add(i)),
-                            onTap: () => context.push('/event/demo_$i'),
-                          ),
-                        );
-                      }),
-                    );
-                  },
-                ),
-                // White fade over the bottom of the grid
-                if (hasMore)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: -1,
-                    height: 389,
-                    child: IgnorePointer(
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0x00FFFFFF), Colors.white],
-                            stops: [0.0168, 0.7564],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (hasMore)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 78,
-                    child: Center(child: _loadMoreButton()),
-                  ),
-              ],
+            events.when(
+              loading: _buildGridSkeleton,
+              error: (_, _) => _buildErrorState(),
+              data: (list) => list.isEmpty ? _buildEmptyState() : _buildGrid(list),
             ),
-            if (!hasMore) ...[
-              const SizedBox(height: 40),
-              Center(
-                child: Text(_t("That's everything happening right now.",
-                        'זה כל מה שקורה כרגע.'),
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
-              ),
-            ],
             const SizedBox(height: 40),
           ],
         ),
@@ -448,11 +336,88 @@ class _WebEventsContentState extends State<WebEventsContent> {
     );
   }
 
-  Widget _loadMoreButton() {
+  Widget _buildGrid(List<Event> events) {
+    final visible = events.take(_visibleCount).toList();
+    final hasMore = visible.length < events.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const gap = 24.0;
+                final cols = constraints.maxWidth > 1400
+                    ? 4
+                    : (constraints.maxWidth > 1000 ? 3 : 2);
+                final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    for (final event in visible)
+                      SizedBox(
+                        width: cardWidth,
+                        child: _EventCard(
+                          event: event,
+                          month: event.startDate == null ? null : _month(event.startDate!),
+                          price: _price(event),
+                          interestedLabel: _t('interested', 'מתעניינים'),
+                          onTap: () => context.push('/event/${event.id}'),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            // White fade over the bottom of the grid
+            if (hasMore)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: -1,
+                height: 389,
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x00FFFFFF), Colors.white],
+                        stops: [0.0168, 0.7564],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (hasMore)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 78,
+                child: Center(child: _loadMoreButton(events.length)),
+              ),
+          ],
+        ),
+        if (!hasMore) ...[
+          const SizedBox(height: 40),
+          Center(
+            child: Text(_t("That's everything happening right now.",
+                    'זה כל מה שקורה כרגע.'),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText)),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _loadMoreButton(int total) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: () => setState(() => _visibleCount = (_visibleCount + 8).clamp(0, _kMaxEvents)),
+        onTap: () => setState(
+            () => _visibleCount = (_visibleCount + _kPageStep).clamp(0, total)),
         child: Container(
           height: 46,
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -474,38 +439,124 @@ class _WebEventsContentState extends State<WebEventsContent> {
   }
 
   // ─────────────────────────────────────────────
+  // LOADING · EMPTY · ERROR
+  // ─────────────────────────────────────────────
+  /// Three rows of card-shaped blocks, so the grid does not jump when the
+  /// rows land.
+  Widget _buildGridSkeleton() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 24.0;
+        final cols = constraints.maxWidth > 1400
+            ? 4
+            : (constraints.maxWidth > 1000 ? 3 : 2);
+        final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+        return Skeleton(
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: List.generate(cols * 2, (_) {
+              return SizedBox(
+                width: cardWidth,
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(height: 200, radius: 12),
+                    SizedBox(height: 16),
+                    SkeletonLine(width: 220, fontSize: 20),
+                    SizedBox(height: 14),
+                    SkeletonLine(width: 140),
+                    SizedBox(height: 8),
+                    SkeletonLine(width: 180),
+                  ],
+                ),
+              );
+            }),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final searching = ref.watch(eventSearchProvider).trim().isNotEmpty;
+    return _buildNoticeBox(
+      icon: searching ? IconsaxPlusLinear.search_status : IconsaxPlusLinear.calendar_1,
+      title: searching
+          ? _t('No events match your search', 'אין אירועים שתואמים לחיפוש')
+          : _t('No events listed yet', 'עדיין לא פורסמו אירועים'),
+      body: searching
+          ? _t('Try a different word, or clear the search.',
+              'נסו מילה אחרת, או נקו את החיפוש.')
+          : _t('New events will appear here as they are published.',
+              'אירועים חדשים יופיעו כאן עם פרסומם.'),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return _buildNoticeBox(
+      icon: IconsaxPlusLinear.wifi_square,
+      title: _t('Events could not be loaded', 'לא ניתן לטעון את האירועים'),
+      body: _t('Check your connection and try again.',
+          'בדקו את החיבור לאינטרנט ונסו שוב.'),
+      actionLabel: _t('Try again', 'נסו שוב'),
+      onAction: () => ref.invalidate(eventsProvider),
+    );
+  }
+
+  Widget _buildNoticeBox({
+    required IconData icon,
+    required String title,
+    required String body,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 72, horizontal: 24),
+      decoration: BoxDecoration(
+        border: Border.all(color: _kBorder),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 44, color: _kGreyText.withValues(alpha: 0.5)),
+          const SizedBox(height: 16),
+          Text(title,
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy),
+              textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          Text(body,
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText),
+              textAlign: TextAlign.center),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 24),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onAction,
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  decoration: BoxDecoration(
+                    color: AppColors.midBlue,
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(actionLabel,
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
   // FOOTER
   // ─────────────────────────────────────────────
-}
-
-// ═══════════════════════════════════════════════
-// DATA MODELS
-// ═══════════════════════════════════════════════
-
-class _Category {
-  final String name;
-  final int count;
-  final Color imageBg;
-  const _Category({required this.name, required this.count, required this.imageBg});
-}
-
-class _Event {
-  final String month, day, category, title, time, venue, price;
-  final int interested;
-  final Color imageBg;
-  const _Event({
-    required this.month,
-    required this.day,
-    required this.category,
-    required this.title,
-    required this.time,
-    required this.venue,
-    required this.price,
-    required this.interested,
-    required this.imageBg,
-  });
-
-  bool get isFree => !price.contains('₪');
 }
 
 // ═══════════════════════════════════════════════
@@ -530,106 +581,26 @@ class _Section extends StatelessWidget {
   }
 }
 
-/// Gradient stand-in for a photo that has no asset yet.
-Widget _imagePlaceholder(Color base, {double? width, double? height, BorderRadius? radius, double glyph = 28}) {
-  return Container(
-    width: width,
-    height: height,
-    decoration: BoxDecoration(
-      borderRadius: radius,
-      shape: radius == null ? BoxShape.circle : BoxShape.rectangle,
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [base, Color.lerp(base, Colors.black, 0.22)!],
-      ),
-    ),
-    child: Center(
-      child: Icon(IconsaxPlusLinear.image, size: glyph, color: Colors.white.withValues(alpha: 0.35)),
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────
-// CATEGORY TILE — 116px circle + name + count
-// ─────────────────────────────────────────────
-class _CategoryTile extends StatefulWidget {
-  final _Category category;
-  final bool isSelected;
-  final VoidCallback onTap;
-  const _CategoryTile({required this.category, required this.isSelected, required this.onTap});
-
-  @override
-  State<_CategoryTile> createState() => _CategoryTileState();
-}
-
-class _CategoryTileState extends State<_CategoryTile> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = widget.category;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Column(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 116,
-              height: 116,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: widget.isSelected
-                      ? AppColors.midBlue
-                      : (_hovered ? AppColors.turquoise : Colors.transparent),
-                  width: 2,
-                ),
-              ),
-              child: _imagePlaceholder(c.imageBg, glyph: 30),
-            ),
-            const SizedBox(height: 20),
-            // Fixed two-line box so every count in the row sits on one baseline.
-            SizedBox(
-              height: 44,
-              child: Text(
-                c.name,
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: _kHeading, height: 1.22),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${c.count}',
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ─────────────────────────────────────────────
 // EVENT CARD — 382 × 364
 // ─────────────────────────────────────────────
 class _EventCard extends StatefulWidget {
-  final _Event event;
-  final bool isSaved;
+  final Event event;
+
+  /// The month on the date badge, or null when the row has no start date.
+  final String? month;
+
+  /// What it costs, or null when the row does not say — in which case the
+  /// slot is left empty rather than filled with a zero.
+  final String? price;
   final String interestedLabel;
-  final VoidCallback onSave, onTap;
+  final VoidCallback onTap;
+
   const _EventCard({
     required this.event,
-    required this.isSaved,
+    required this.month,
+    required this.price,
     required this.interestedLabel,
-    required this.onSave,
     required this.onTap,
   });
 
@@ -643,6 +614,11 @@ class _EventCardState extends State<_EventCard> {
   @override
   Widget build(BuildContext context) {
     final e = widget.event;
+    final month = widget.month;
+    final price = widget.price;
+    final time = e.displayTime;
+    final place = e.venueName ?? (e.address.isEmpty ? null : e.address);
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
@@ -669,75 +645,54 @@ class _EventCardState extends State<_EventCard> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
-                        child: _imagePlaceholder(e.imageBg,
-                            radius: BorderRadius.zero, glyph: 34),
+                      child: NetworkPhoto(
+                        url: e.imageUrl,
+                        radius: const BorderRadius.vertical(top: Radius.circular(11)),
+                        icon: IconsaxPlusBold.calendar_1,
+                        iconSize: 34,
                       ),
                     ),
-                    // Save / bookmark
+                    // Save — writes to `favorites`. It used to hold a set of
+                    // grid indexes in the page's own state, so it forgot
+                    // everything on reload and told nobody.
                     PositionedDirectional(
                       start: 12,
                       top: 12,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: widget.onSave,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: Icon(
-                              widget.isSaved ? IconsaxPlusBold.archive_1 : IconsaxPlusLinear.archive_1,
-                              size: 20,
-                              color: AppColors.midBlue,
-                            ),
+                      child: FavoriteButton(
+                        kind: FavoriteKind.event,
+                        id: e.id,
+                        size: 40,
+                        iconSize: 20,
+                      ),
+                    ),
+                    // A turquoise category pill sat here. Events carry no
+                    // category, so it named one of five invented ones.
+                    // Date badge
+                    if (month != null)
+                      PositionedDirectional(
+                        start: 12,
+                        bottom: 12,
+                        child: Container(
+                          width: 57,
+                          height: 57,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(month,
+                                  style: TextStyle(fontFamily: AppFonts.inter,
+                                      fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 1.25)),
+                              const SizedBox(height: 4),
+                              Text('${e.startDate!.day}',
+                                  style: TextStyle(fontFamily: AppFonts.inter,
+                                      fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black, height: 1.22)),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                    // Category pill
-                    PositionedDirectional(
-                      end: 14,
-                      top: 15,
-                      child: Container(
-                        height: 27,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.turquoise,
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: Text(e.category,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                                fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white, height: 1.25)),
-                      ),
-                    ),
-                    // Date badge
-                    PositionedDirectional(
-                      start: 12,
-                      bottom: 12,
-                      child: Container(
-                        width: 57,
-                        height: 57,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(e.month,
-                                style: TextStyle(fontFamily: AppFonts.inter, 
-                                    fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 1.25)),
-                            const SizedBox(height: 4),
-                            Text(e.day,
-                                style: TextStyle(fontFamily: AppFonts.inter, 
-                                    fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black, height: 1.22)),
-                          ],
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -750,43 +705,51 @@ class _EventCardState extends State<_EventCard> {
                     children: [
                       Text(
                         e.title,
-                        style: TextStyle(fontFamily: AppFonts.nunito, 
+                        style: TextStyle(fontFamily: AppFonts.nunito,
                             fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy, height: 1.25),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 14),
-                      _metaRow(IconsaxPlusBold.clock, e.time),
-                      const SizedBox(height: 8),
-                      _metaRow(IconsaxPlusBold.location, e.venue),
+                      if (time != null) _metaRow(IconsaxPlusBold.clock, time),
+                      if (time != null) const SizedBox(height: 8),
+                      if (e.isOnline)
+                        _metaRow(IconsaxPlusBold.global, _onlineLabel(context))
+                      else if (place != null)
+                        _metaRow(IconsaxPlusBold.location, place),
                       const Spacer(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Flexible(
-                            child: Text(
-                              e.price,
-                              style: TextStyle(fontFamily: AppFonts.nunito, 
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: e.isFree ? AppColors.midBlue : AppColors.navy,
-                                height: 1.25,
+                          if (price != null)
+                            Flexible(
+                              child: Text(
+                                price,
+                                style: TextStyle(fontFamily: AppFonts.nunito,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: e.isFree ? AppColors.midBlue : AppColors.navy,
+                                  height: 1.25,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(IconsaxPlusBold.star_1, size: 18, color: AppColors.turquoise),
-                              const SizedBox(width: 4),
-                              Text('${e.interested} ${widget.interestedLabel}',
-                                  style: TextStyle(fontFamily: AppFonts.inter, 
-                                      fontSize: 14, fontWeight: FontWeight.w500, color: _kBodyText, height: 1.21)),
-                            ],
-                          ),
+                          // The interest count only appears once somebody has
+                          // RSVP'd. It used to be an invented figure on every
+                          // card, and a live `rsvp_count` of nought would read
+                          // as one.
+                          if (e.rsvpCount > 0)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(IconsaxPlusBold.star_1, size: 18, color: AppColors.turquoise),
+                                const SizedBox(width: 4),
+                                Text('${e.rsvpCount} ${widget.interestedLabel}',
+                                    style: TextStyle(fontFamily: AppFonts.inter,
+                                        fontSize: 14, fontWeight: FontWeight.w500, color: _kBodyText, height: 1.21)),
+                              ],
+                            ),
                         ],
                       ),
                     ],
@@ -799,6 +762,11 @@ class _EventCardState extends State<_EventCard> {
       ),
     );
   }
+
+  /// "Online" reads off the surrounding layout's direction, because the card
+  /// does not carry the page's language flag.
+  String _onlineLabel(BuildContext context) =>
+      Directionality.of(context) == TextDirection.rtl ? 'אונליין' : 'Online';
 
   Widget _metaRow(IconData icon, String text) {
     return Row(

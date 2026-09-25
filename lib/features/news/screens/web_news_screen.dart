@@ -1,381 +1,93 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_chrome.dart';
-import '../../../core/data/wp_content.dart';
+import '../models/article.dart';
+import '../providers/news_providers.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Modiin News — full desktop layout from Figma
 // (Modiin News — 1920 × 4341)
+//
+// The page read a frozen WordPress export from `assets/data/`, and fell back
+// to nineteen articles written into the source — invented headlines, invented
+// excerpts and August 2026 datelines — whenever the export had not loaded.
+// The export's ids are WordPress integers, so every card on it opened
+// `/article/<integer>`, which matches no row in a table keyed by uuid.
+//
+// It reads `articles` now, through the news providers.
 // ═══════════════════════════════════════════════════════════
 
 const _kLime = Color(0xFFC9F31D);
 const _kBodyGrey = Color(0xFF5F5E5A);
 const _kIconGrey = Color(0xFF6D6D6D);
+const _kBorder = Color(0xFFE7E7E7);
 
-class WebNewsContent extends StatefulWidget {
+/// How many cards the grid opens with, and how many each "Load more" adds.
+/// There are 667 published articles and this is the only index of them, so
+/// the grid has to be able to walk past its first screenful.
+const _kFirstPage = 12;
+const _kPageStep = 9;
+
+class WebNewsContent extends ConsumerStatefulWidget {
   const WebNewsContent({super.key});
 
   @override
-  State<WebNewsContent> createState() => _WebNewsContentState();
+  ConsumerState<WebNewsContent> createState() => _WebNewsContentState();
 }
 
-class _WebNewsContentState extends State<WebNewsContent> {
+class _WebNewsContentState extends ConsumerState<WebNewsContent> {
   bool _isHebrew = false;
-
-  /// Real articles exported from the WordPress site. Empty until the asset
-  /// loads, and empty forever if it fails — both cases fall through to the
-  /// demo content below, so the page always renders.
-  List<WpItem> _wp = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadWpItems('wp_news').then((items) {
-      if (mounted) setState(() => _wp = items);
-    });
-  }
+  int _visibleCount = _kFirstPage;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  /// Every category the site publishes under, in the order it uses most.
-  /// The page used to hard-code the first three and drop the other six.
-  static const _sections = [
-    ('עדכוני עירייה', 'Municipality Updates'),
-    ('עירוני', 'Urban'),
-    ('עסקים', 'Business'),
-    ('אנשים', 'People'),
-    ('קולינריה', 'Food & Drink'),
-    ('אטרקציות וטיולים במודיעין', 'Attractions & Trips'),
-    ('ספורט וכושר', 'Sport & Fitness'),
-    ('נדל״ן', 'Real Estate'),
-    ('חדשות מודיעין', 'Modiin News'),
+  // The page used to carry nine category headings — Municipality Updates,
+  // Urban, Business, People, Food & Drink and four more — each filled by
+  // matching the export's WordPress terms. The `articles` table has no
+  // category column, and `entity_categories` holds business links only: not
+  // one of the 669 articles is filed under a category. So a per-category
+  // section, tab or count has nothing behind it and none is drawn. When the
+  // article links are loaded, the headings can come back.
+
+  // ─────────────────────────────────────────────
+  // DATES
+  // ─────────────────────────────────────────────
+  static const _enMonths = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  static const _heMonths = [
+    'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
+    'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
   ];
 
-  /// Content is published in Hebrew only, so both languages show the
-  /// original title; only the date format follows the toggle.
-  _Article _toArticle(WpItem item, List<Color> colors) => _Article(
-    id: item.id.toString(),
-    title: item.title,
-    excerpt: item.excerpt,
-    date: item.formatDate(isHebrew: _isHebrew),
-    imageUrl: item.image,
-    rtlText: true,
-    colors: colors,
-  );
-
-  /// The [count] most recent real articles in [term], or null when the
-  /// export hasn't loaded or doesn't cover that section.
-  List<_Article>? _wpSection(String term, int count, List<List<Color>> palette) {
-    final matches = _wp.where((i) => i.hasTerm(term)).take(count).toList();
-    if (matches.isEmpty) return null;
-    return [
-      for (var i = 0; i < matches.length; i++)
-        _toArticle(matches[i], palette[i % palette.length]),
-    ];
+  /// "August 5, 2026 | 16:36", or "5 באוגוסט 2026 | 16:36".
+  ///
+  /// `published_at` comes back as UTC, so it is moved to the reader's zone
+  /// before the hour is printed.
+  String _dateLine(DateTime value) {
+    final d = value.toLocal();
+    final time =
+        '${d.hour.toString().padLeft(2, '0')}:'
+        '${d.minute.toString().padLeft(2, '0')}';
+    return _isHebrew
+        ? '${d.day} ב${_heMonths[d.month - 1]} ${d.year} | $time'
+        : '${_enMonths[d.month - 1]} ${d.day}, ${d.year} | $time';
   }
 
-  // ── Nav links ──
-  // ═══════════════════════════════════════════════
-  // DEMO CONTENT
-  // ═══════════════════════════════════════════════
-
-  _Article get _featuredDemo => _Article(
-    id: 'featured',
-    title: _t(
-      "From now on, we can breathe a sigh of relief: The new municipal initiative that will give women in Modi'in complete confidence and tools for success",
-      'מעכשיו אפשר לנשום לרווחה: היוזמה העירונית החדשה שתעניק לנשים במודיעין ביטחון מלא וכלים להצלחה',
-    ),
-    date: _t('August 5, 2026 | 4:36 p.m.', '5 באוגוסט 2026 | 16:36'),
-    colors: const [Color(0xFF1A4E8A), Color(0xFF07112E)],
-  );
-
-  List<_Article> get _heroSideDemo => [
-    _Article(
-      id: 'hero_1',
-      title: _t(
-        "An engineering degree close to home: The Multidisciplinary Center in Modi'in and ORT College Jerusalem open new tracks",
-        'תואר בהנדסה קרוב לבית: המרכז הרב תחומי במודיעין ומכללת אורט ירושלים פותחים מסלולים חדשים',
-      ),
-      date: _t('August 4, 2026 | 2:25 p.m.', '4 באוגוסט 2026 | 14:25'),
-      colors: const [Color(0xFF26607F), Color(0xFF081428)],
-    ),
-    _Article(
-      id: 'hero_2',
-      title: _t(
-        'Parashat Raeh: The Environment as the Basis for the Purpose of Life',
-        'פרשת ראה: הסביבה כבסיס לתכלית החיים',
-      ),
-      date: _t('August 7, 2026 | 9:36 am', '7 באוגוסט 2026 | 09:36'),
-      colors: const [Color(0xFF3B5B3A), Color(0xFF0B1A16)],
-    ),
-  ];
-
-  List<_Article> get _municipalityDemo => [
-    _Article(
-      id: 'muni_0',
-      title: _t(
-        'An end to cycle worries: Modiin is moving to a new and efficient model that will put your mind at ease',
-        'סוף לדאגות המחזור: מודיעין עוברת למודל חדש ויעיל שירגיע אתכם',
-      ),
-      excerpt: _t(
-        'Our city became a pilgrimage center for fans of Brazilian rhythm and energy this weekend. The 2026 Israel Capoeira Championship was held in',
-        'העיר שלנו הפכה בסוף השבוע למרכז עלייה לרגל עבור חובבי הקצב והאנרגיה הברזילאית. אליפות ישראל בקפוארה 2026 נערכה ב',
-      ),
-      date: _t('August 5, 2026 | 4:36 p.m.', '5 באוגוסט 2026 | 16:36'),
-      colors: const [Color(0xFF2C6E8F), Color(0xFF0A1A2E)],
-    ),
-    _Article(
-      id: 'muni_1',
-      title: _t(
-        'An end to cycle worries: Modiin is moving to a new and efficient model that will put your mind at ease',
-        'סוף לדאגות המחזור: מודיעין עוברת למודל חדש ויעיל שירגיע אתכם',
-      ),
-      excerpt: _t(
-        "The Municipality of Modi'in Maccabim Re'ut is taking a new step and upgrading the city's paper recycling system, in order to adapt the service to",
-        'עיריית מודיעין מכבים רעות עושה צעד חדש ומשדרגת את מערך מיחזור הנייר בעיר, כדי להתאים את השירות ל',
-      ),
-      date: _t('August 5, 2026 | 4:30 p.m.', '5 באוגוסט 2026 | 16:30'),
-      colors: const [Color(0xFF4A7A52), Color(0xFF0E1C1A)],
-    ),
-    _Article(
-      id: 'muni_2',
-      title: _t(
-        "No more heart palpitations: The new tool that will help parents in Modi'in register for after-school",
-        'לא עוד דפיקות לב: הכלי החדש שיעזור להורים במודיעין להירשם לצהרונים',
-      ),
-      excerpt: _t(
-        "Parents in Modi'in can breathe a sigh of relief ahead of the start of the 2017 school year. The Orchids Association is launching a revolutionary",
-        'הורים במודיעין יכולים לנשום לרווחה לקראת פתיחת שנת הלימודים. עמותת הסחלבים משיקה מהלך מהפכני',
-      ),
-      date: _t('August 5, 2026 | 4:34 p.m.', '5 באוגוסט 2026 | 16:34'),
-      colors: const [Color(0xFF8A5A3B), Color(0xFF241209)],
-    ),
-    _Article(
-      id: 'muni_3',
-      title: _t(
-        'From now on, we can breathe a sigh of relief: The new municipal initiative that will give women i',
-        'מעכשיו אפשר לנשום לרווחה: היוזמה העירונית החדשה שתעניק לנשים',
-      ),
-      excerpt: _t(
-        "The women in Modi'in are receiving a new and powerful envelope that will change everything they knew about personal resilience, security and",
-        'הנשים במודיעין מקבלות מעטפת חדשה ועוצמתית שתשנה כל מה שידעו על חוסן אישי, ביטחון ו',
-      ),
-      date: _t('August 5, 2026 | 4:34 p.m.', '5 באוגוסט 2026 | 16:34'),
-      colors: const [Color(0xFF6C4F8A), Color(0xFF150E24)],
-    ),
-    _Article(
-      id: 'muni_4',
-      title: _t(
-        "An engineering degree close to home: The Multidisciplinary Center in Modi'in and ORT College",
-        'תואר בהנדסה קרוב לבית: המרכז הרב תחומי במודיעין ומכללת אורט',
-      ),
-      excerpt: _t(
-        "Residents of Modi'in can now breathe a sigh of relief and study a sought-after profession without wasting time on long trips to distant educational",
-        'תושבי מודיעין יכולים סוף סוף ללמוד מקצוע מבוקש בלי לבזבז זמן על נסיעות ארוכות למוסדות לימוד רחוקים',
-      ),
-      date: _t('August 5, 2026 | 4:34 p.m.', '5 באוגוסט 2026 | 16:34'),
-      colors: const [Color(0xFF26607F), Color(0xFF081428)],
-    ),
-    _Article(
-      id: 'muni_5',
-      title: _t(
-        'Good news for Modiin residents: A thorough cleaning of the city center is beginning',
-        'בשורה לתושבי מודיעין: מתחיל ניקיון יסודי של מרכז העיר',
-      ),
-      excerpt: _t(
-        'The municipality is launching a large-scale campaign to upgrade the cleanliness of the city center. The new move will restore the shine to the boulevard and significantly improve the entertainment experience',
-        'העירייה יוצאת במבצע רחב היקף לשדרוג הניקיון במרכז העיר. המהלך החדש יחזיר את הברק לשדרה וישפר משמעותית את חוויית הבילוי',
-      ),
-      date: _t('August 5, 2026 | 4:34 p.m.', '5 באוגוסט 2026 | 16:34'),
-      colors: const [Color(0xFF3F7D6E), Color(0xFF0B1D1A)],
-    ),
-  ];
-
-  List<_Article> get _urbanDemo => [
-    _Article(
-      id: 'urban_0',
-      title: _t(
-        'Parashat Raeh: The Environment as the Basis for the Purpose of Life',
-        'פרשת ראה: הסביבה כבסיס לתכלית החיים',
-      ),
-      excerpt: _t(
-        'In this week\'s Torah, there are several verses that command us to care for and be attentive to our surroundings. "And the Levite who is within you',
-        'בפרשת השבוע מופיעים כמה פסוקים המצווים אותנו לדאוג ולהיות קשובים לסביבה שלנו. "והלוי אשר בשעריך',
-      ),
-      date: _t('August 4, 2026 | 4:36 p.m.', '4 באוגוסט 2026 | 16:36'),
-      colors: const [Color(0xFF3B5B3A), Color(0xFF0B1A16)],
-    ),
-    _Article(
-      id: 'urban_1',
-      title: _t(
-        "20 years later: The evening in Modi'in that left an entire hall speechless",
-        '20 שנה אחרי: הערב במודיעין שהשאיר אולם שלם ללא מילים',
-      ),
-      excerpt: _t(
-        'It was one evening when time seemed to stand still. Bereaved families, senior commanders and residents of the city gathered at the Yad Labanim',
-        'זה היה ערב אחד שבו נדמה היה שהזמן עוצר מלכת. משפחות שכולות, מפקדים בכירים ותושבי העיר נאספו ביד לבנים',
-      ),
-      date: _t('August 3, 2026 | 1:30 p.m.', '3 באוגוסט 2026 | 13:30'),
-      colors: const [Color(0xFF2B3A55), Color(0xFF070C18)],
-    ),
-    _Article(
-      id: 'urban_2',
-      title: _t(
-        'Why must procurement people in large organizations know negotiation tactics?',
-        'למה אנשי רכש בארגונים גדולים חייבים להכיר טקטיקות משא ומתן?',
-      ),
-      excerpt: _t(
-        'In the world of corporate procurement, negotiation is not just a moment when you try to lower the price. It is one of the most sensitive, complex and influential business arenas',
-        'בעולם הרכש הארגוני, משא ומתן הוא לא רק רגע שבו מנסים להוריד מחיר. זו אחת הזירות העסקיות הרגישות, המורכבות והמשפיעות ביותר',
-      ),
-      date: _t('August 3, 2026 | 4:34 p.m.', '3 באוגוסט 2026 | 16:34'),
-      colors: const [Color(0xFF7A5C2E), Color(0xFF1D1206)],
-    ),
-    _Article(
-      id: 'urban_3',
-      title: _t(
-        'Yaakov Aviv reveals what makes the final stage the most critical phase of the project',
-        'יעקב אביב חושף מה הופך את השלב האחרון לקריטי ביותר בפרויקט',
-      ),
-      excerpt: _t(
-        "The women in Modi'in are receiving a new and powerful envelope that will change everything they knew about personal resilience, security and",
-        'הנשים במודיעין מקבלות מעטפת חדשה ועוצמתית שתשנה כל מה שידעו על חוסן אישי, ביטחון ו',
-      ),
-      date: _t('August 3, 2026 | 4:32 p.m.', '3 באוגוסט 2026 | 16:32'),
-      colors: const [Color(0xFF55606E), Color(0xFF10151C)],
-    ),
-  ];
-
-  List<_Article> get _businessDemo => [
-    _Article(
-      id: 'biz_0',
-      title: _t(
-        "The agent who succeeded in conquering Modi'in: This is how a local empire was built",
-        'המתווך שהצליח לכבוש את מודיעין: כך נבנתה אימפריה מקומית',
-      ),
-      excerpt: _t(
-        'Over the past decade, the world of online poker in Israel has undergone a quiet revolution. International brands, new platforms, and young players',
-        'בעשור האחרון עבר עולם הפוקר המקוון בישראל מהפכה שקטה. מותגים בינלאומיים, פלטפורמות חדשות ושחקנים צעירים',
-      ),
-      date: _t('August 4, 2026 | 4:36 p.m.', '4 באוגוסט 2026 | 16:36'),
-      colors: const [Color(0xFF1F5E6E), Color(0xFF06161C)],
-    ),
-    _Article(
-      id: 'biz_1',
-      title: _t(
-        'Special vacation ideas for families looking for a real change from routine',
-        'רעיונות חופשה מיוחדים למשפחות שמחפשות שינוי אמיתי מהשגרה',
-      ),
-      excerpt: _t(
-        'More and more families are looking for a vacation that is much more than "just another" week at a hotel with a pool. The desire to combine a deep',
-        'יותר ויותר משפחות מחפשות חופשה שהיא הרבה מעבר לעוד שבוע במלון עם בריכה. הרצון לשלב חוויה עמוקה',
-      ),
-      date: _t('August 3, 2026 | 1:30 p.m.', '3 באוגוסט 2026 | 13:30'),
-      colors: const [Color(0xFF8A6A3B), Color(0xFF221709)],
-    ),
-    _Article(
-      id: 'biz_2',
-      title: _t(
-        'Recommended lawyer in Modiin – Yedidia Bleugrund who will fight for you',
-        'עורך דין מומלץ במודיעין – ידידיה בלוגרונד שילחם עבורכם',
-      ),
-      excerpt: _t(
-        "We all know the sense of local pride that accompanies us as residents of Modi'in Maccabim Re'ut. Our city is clean, well-kept, the community here i",
-        'כולנו מכירים את תחושת הגאווה המקומית שמלווה אותנו כתושבי מודיעין מכבים רעות. העיר שלנו נקייה, מטופחת, הקהילה כאן',
-      ),
-      date: _t('August 3, 2026 | 4:34 p.m.', '3 באוגוסט 2026 | 16:34'),
-      colors: const [Color(0xFF334E7A), Color(0xFF090F22)],
-    ),
-    _Article(
-      id: 'biz_3',
-      title: _t(
-        'Fingerprint Time Clocks and Attendance Apps: The Complete Guide to Smart Employee Control',
-        'שעוני נוכחות טביעת אצבע ואפליקציות נוכחות: המדריך המלא לבקרת עובדים חכמה',
-      ),
-      excerpt: _t(
-        'Employee attendance management has transformed in recent years from a manual and cumbersome process to a smart digital system, based on',
-        'ניהול נוכחות עובדים הפך בשנים האחרונות מתהליך ידני ומסורבל למערכת דיגיטלית חכמה, המבוססת על',
-      ),
-      date: _t('August 3, 2026 | 4:32 p.m.', '3 באוגוסט 2026 | 16:32'),
-      colors: const [Color(0xFF4C4F63), Color(0xFF101120)],
-    ),
-    _Article(
-      id: 'biz_4',
-      title: _t(
-        'The Complete Guide to Choosing Tefillin for a Bar Mitzvah: Everything You Need to Know',
-        'המדריך המלא לבחירת תפילין לבר מצווה: כל מה שצריך לדעת',
-      ),
-      excerpt: _t(
-        'The Complete Guide to Choosing Tefillin for a Bar Mitzvah: Everything You Need to Know Reaching the age of mitzvah is a significant milestone in',
-        'הגעה לגיל מצוות היא ציון דרך משמעותי בחיי הנער ובני המשפחה, והבחירה בתפילין היא חלק מרכזי ממנו',
-      ),
-      date: _t('August 3, 2026 | 4:32 p.m.', '3 באוגוסט 2026 | 16:32'),
-      colors: const [Color(0xFF6B4A2E), Color(0xFF1A0F07)],
-    ),
-    _Article(
-      id: 'biz_5',
-      title: _t(
-        'The complete and updated guide: Recommended restaurants in central Israel for 2026',
-        'המדריך המלא והמעודכן: מסעדות מומלצות במרכז הארץ לשנת 2026',
-      ),
-      excerpt: _t(
-        'The Israeli culinary world has come a long way, but the year 2026 marks a new peak in which the center becomes the beating heart of innovation',
-        'עולם הקולינריה הישראלי עשה כברת דרך, אך שנת 2026 מסמנת שיא חדש שבו המרכז הופך ללב הפועם של החדשנות',
-      ),
-      date: _t('August 3, 2026 | 4:32 p.m.', '3 באוגוסט 2026 | 16:32'),
-      colors: const [Color(0xFF7A3B4A), Color(0xFF1E0A10)],
-    ),
-  ];
-
-  // ═══════════════════════════════════════════════
-  // LIVE CONTENT — WordPress export first, demo as the fallback
-  // ═══════════════════════════════════════════════
-
-  static const _heroPalette = [
-    [Color(0xFF1A4E8A), Color(0xFF07112E)],
-    [Color(0xFF26607F), Color(0xFF081428)],
-    [Color(0xFF3B5A7A), Color(0xFF0A1428)],
-  ];
-  static const _cardPalette = [
-    [Color(0xFF2E5C8A), Color(0xFF0C1A33)],
-    [Color(0xFF7A3B4A), Color(0xFF1E0A10)],
-    [Color(0xFF3F6B4F), Color(0xFF0E1C14)],
-    [Color(0xFF6B5A3B), Color(0xFF1C160C)],
-    [Color(0xFF4A3B7A), Color(0xFF120E22)],
-    [Color(0xFF2F6B6B), Color(0xFF0B1C1C)],
-  ];
-
-  _Article get _featured =>
-      _wp.isEmpty ? _featuredDemo : _toArticle(_wp.first, _heroPalette[0]);
-
-  List<_Article> get _heroSide {
-    if (_wp.length < 3) return _heroSideDemo;
-    return [
-      _toArticle(_wp[1], _heroPalette[1]),
-      _toArticle(_wp[2], _heroPalette[2]),
-    ];
-  }
-
-  /// Sections that actually have articles behind them, so a category the
-  /// site has not published to lately leaves no empty heading on the page.
-  List<(String, List<_Article>)> get _liveSections {
-    if (_wp.isEmpty) {
-      return [
-        (_t('Municipality Updates', 'עדכוני עירייה'), _municipalityDemo),
-        (_t('Urban', 'עירוני'), _urbanDemo),
-        (_t('Business', 'עסקים'), _businessDemo),
-      ];
-    }
-    final out = <(String, List<_Article>)>[];
-    for (final (he, en) in _sections) {
-      final articles = _wpSection(he, 6, _cardPalette);
-      if (articles != null) out.add((_t(en, he), articles));
-    }
-    return out;
-  }
+  /// Newest first.
+  ///
+  /// The provider orders by `created_at`, and all 669 rows were imported in
+  /// one batch within the same second, so that order says nothing about when
+  /// a story ran.
+  List<Article> _byDate(List<Article> articles) =>
+      [...articles]..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
 
   // ═══════════════════════════════════════════════
   // BUILD
@@ -383,6 +95,37 @@ class _WebNewsContentState extends State<WebNewsContent> {
 
   @override
   Widget build(BuildContext context) {
+    // Both derive from the same fetch, so they resolve together.
+    final featured = ref.watch(featuredArticleProvider);
+    final rest = ref.watch(restOfArticlesProvider);
+
+    final Widget content;
+    if (featured.hasError || rest.hasError) {
+      content = _buildNotice(
+        icon: IconsaxPlusLinear.wifi_square,
+        title: _t('News could not be loaded', 'לא ניתן לטעון את החדשות'),
+        body: _t(
+          'Check your connection and try again.',
+          'בדקו את החיבור לאינטרנט ונסו שוב.',
+        ),
+        actionLabel: _t('Try again', 'נסו שוב'),
+        onAction: () => ref.invalidate(publishedArticlesProvider),
+      );
+    } else if (!featured.hasValue || !rest.hasValue) {
+      content = _buildSkeleton();
+    } else if (featured.value == null) {
+      content = _buildNotice(
+        icon: IconsaxPlusLinear.note,
+        title: _t('No articles published yet', 'עדיין לא פורסמו כתבות'),
+        body: _t(
+          'Stories will appear here as the newsroom publishes them.',
+          'כתבות יופיעו כאן עם פרסומן.',
+        ),
+      );
+    } else {
+      content = _buildContent(featured.value!, _byDate(rest.value!));
+    }
+
     return Directionality(
       textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
@@ -399,9 +142,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
                 child: Column(
                   children: [
                     const SizedBox(height: 48),
-                    _centered(child: _buildHero()),
-                    const SizedBox(height: 64),
-                    _centered(child: _buildMainRow()),
+                    _centered(child: content),
                     const SizedBox(height: 103),
                     WebFooter(isHebrew: _isHebrew),
                   ],
@@ -411,6 +152,19 @@ class _WebNewsContentState extends State<WebNewsContent> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildContent(Article featured, List<Article> rest) {
+    // Two stories sit beside the lead; the grid below starts after them.
+    final side = rest.take(2).toList();
+    final grid = rest.skip(side.length).toList();
+    return Column(
+      children: [
+        _buildHero(featured, side),
+        const SizedBox(height: 64),
+        _buildGrid(grid),
+      ],
     );
   }
 
@@ -426,46 +180,38 @@ class _WebNewsContentState extends State<WebNewsContent> {
   }
 
   // ─────────────────────────────────────────────
-  // STICKY NAVBAR
-  // ─────────────────────────────────────────────
-  // ─────────────────────────────────────────────
   // HERO — 1014 featured card + two 576 stacked cards
   // ─────────────────────────────────────────────
-  Widget _buildHero() {
+  Widget _buildHero(Article featured, List<Article> side) {
     return SizedBox(
       height: 552,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 1014, child: _buildFeaturedCard()),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 576,
-            child: Column(
-              children: [
-                Expanded(
-                  child: _buildHeroSideCard(
-                    _heroSide[0],
-                    badge: _t('Municipality', 'עירייה'),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: _buildHeroSideCard(
-                    _heroSide[1],
-                    badge: _t('Urban', 'עירוני'),
-                  ),
-                ),
-              ],
+          Expanded(flex: 1014, child: _buildFeaturedCard(featured)),
+          // With one story published there is nothing to stack beside it, and
+          // the lead takes the full width rather than sitting next to a pair
+          // of empty rectangles.
+          if (side.isNotEmpty) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 576,
+              child: Column(
+                children: [
+                  for (var i = 0; i < side.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 10),
+                    Expanded(child: _buildHeroSideCard(side[i])),
+                  ],
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildFeaturedCard() {
-    final article = _featured;
+  Widget _buildFeaturedCard(Article article) {
     return _HoverCard(
       onTap: () => context.push('/article/${article.id}'),
       child: ClipRRect(
@@ -473,7 +219,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _articleImage(article, radius: 0, glyphSize: 72),
+            _articlePhoto(article, glyphSize: 72),
             // Bottom scrim — starts 39px below the top of the card
             Positioned(
               left: 0,
@@ -491,24 +237,30 @@ class _WebNewsContentState extends State<WebNewsContent> {
                 ),
               ),
             ),
-            // Badges
+            // Badges. Two used to sit here reading "Now in Modiin" and
+            // "Municipality" — the second a category the article does not
+            // have. These are the flags the row actually carries.
             PositionedDirectional(
               start: 16,
               top: 16,
               child: Row(
                 children: [
-                  _badge(
-                    label: _t('Now in Modiin', 'עכשיו במודיעין'),
-                    background: _kLime,
-                    foreground: AppColors.navy,
-                    icon: IconsaxPlusLinear.location,
-                  ),
-                  const SizedBox(width: 12),
-                  _badge(
-                    label: _t('Municipality', 'עירייה'),
-                    background: AppColors.turquoise,
-                    foreground: Colors.white,
-                  ),
+                  if (article.isBreaking)
+                    _badge(
+                      label: _t('Breaking', 'מבזק'),
+                      background: AppColors.error,
+                      foreground: Colors.white,
+                      icon: IconsaxPlusLinear.danger,
+                    ),
+                  if (article.isBreaking && article.isFeatured)
+                    const SizedBox(width: 12),
+                  if (article.isFeatured)
+                    _badge(
+                      label: _t('Featured', 'כתבה נבחרת'),
+                      background: _kLime,
+                      foreground: AppColors.navy,
+                      icon: IconsaxPlusLinear.star,
+                    ),
                 ],
               ),
             ),
@@ -521,21 +273,18 @@ class _WebNewsContentState extends State<WebNewsContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  _articleText(
                     article.title,
-                    style: TextStyle(fontFamily: AppFonts.nunito, 
+                    maxLines: 3,
+                    style: TextStyle(fontFamily: AppFonts.nunito,
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       height: 34 / 28,
                       color: Colors.white,
                     ),
-                    textDirection: article.textDirection,
-                    textAlign: article.textAlign,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 11),
-                  _dateRow(article.date, color: Colors.white, iconColor: Colors.white),
+                  _dateRow(_dateLine(article.publishedAt), color: Colors.white, iconColor: Colors.white),
                 ],
               ),
             ),
@@ -545,7 +294,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
     );
   }
 
-  Widget _buildHeroSideCard(_Article article, {required String badge}) {
+  Widget _buildHeroSideCard(Article article) {
     return _HoverCard(
       onTap: () => context.push('/article/${article.id}'),
       child: ClipRRect(
@@ -553,7 +302,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _articleImage(article, radius: 0, glyphSize: 48),
+            _articlePhoto(article, glyphSize: 48),
             Positioned.fill(
               child: DecoratedBox(
                 decoration: const BoxDecoration(
@@ -566,15 +315,17 @@ class _WebNewsContentState extends State<WebNewsContent> {
                 ),
               ),
             ),
-            PositionedDirectional(
-              start: 16,
-              top: 16,
-              child: _badge(
-                label: badge,
-                background: AppColors.turquoise,
-                foreground: Colors.white,
+            if (article.isBreaking)
+              PositionedDirectional(
+                start: 16,
+                top: 16,
+                child: _badge(
+                  label: _t('Breaking', 'מבזק'),
+                  background: AppColors.error,
+                  foreground: Colors.white,
+                  icon: IconsaxPlusLinear.danger,
+                ),
               ),
-            ),
             PositionedDirectional(
               start: 18,
               bottom: 27,
@@ -583,21 +334,17 @@ class _WebNewsContentState extends State<WebNewsContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  _articleText(
                     article.title,
-                    style: TextStyle(fontFamily: AppFonts.nunito, 
+                    style: TextStyle(fontFamily: AppFonts.nunito,
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
                       height: 30 / 24,
                       color: Colors.white,
                     ),
-                    textDirection: article.textDirection,
-                    textAlign: article.textAlign,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 11),
-                  _dateRow(article.date, color: Colors.white, iconColor: Colors.white),
+                  _dateRow(_dateLine(article.publishedAt), color: Colors.white, iconColor: Colors.white),
                 ],
               ),
             ),
@@ -629,7 +376,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
           ],
           Text(
             label,
-            style: TextStyle(fontFamily: AppFonts.inter, 
+            style: TextStyle(fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w500,
               height: 24 / 14,
@@ -649,7 +396,7 @@ class _WebNewsContentState extends State<WebNewsContent> {
         const SizedBox(width: 9),
         Text(
           date,
-          style: TextStyle(fontFamily: AppFonts.inter, 
+          style: TextStyle(fontFamily: AppFonts.inter,
             fontSize: 14,
             fontWeight: FontWeight.w400,
             height: 17 / 14,
@@ -661,72 +408,21 @@ class _WebNewsContentState extends State<WebNewsContent> {
   }
 
   // ─────────────────────────────────────────────
-  // MAIN ROW — ad column + article sections
+  // GRID — every other published article, newest first
   // ─────────────────────────────────────────────
-  Widget _buildMainRow() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(width: 370, child: _buildAdColumn()),
-        const SizedBox(width: 48),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final (title, articles) in _liveSections) ...[
-                _buildSection(title: title, articles: articles),
-                const SizedBox(height: 72),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  /// A 370px column of four gradient rectangles used to run down the left of
+  /// this grid as advertising slots. Nothing fills them — there is no ad
+  /// table and no campaign behind them — so the grid has the full width.
+  Widget _buildGrid(List<Article> articles) {
+    if (articles.isEmpty) return const SizedBox.shrink();
+    final shown = articles.take(_visibleCount).toList();
 
-  Widget _buildAdColumn() {
-    return Column(
-      children: [
-        _adSlot(630, const [Color(0xFFD4E4F7), Color(0xFF9FC0E2)]),
-        const SizedBox(height: 365),
-        _adSlot(225, const [Color(0xFFE0D4C8), Color(0xFFC0A891)]),
-        const SizedBox(height: 32),
-        _adSlot(370, const [Color(0xFFD8E8D4), Color(0xFFA8C9A2)]),
-        const SizedBox(height: 32),
-        _adSlot(630, const [Color(0xFFE4D8F0), Color(0xFFBCA6D6)]),
-      ],
-    );
-  }
-
-  Widget _adSlot(double height, List<Color> colors) {
-    return Container(
-      width: 370,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          IconsaxPlusLinear.image,
-          size: 40,
-          color: Colors.white.withValues(alpha: 0.5),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSection({required String title, required List<_Article> articles}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: TextStyle(fontFamily: AppFonts.nunito, 
+          _t('Latest Stories', 'הכתבות האחרונות'),
+          style: TextStyle(fontFamily: AppFonts.nunito,
             fontSize: 28,
             fontWeight: FontWeight.w600,
             height: 34 / 28,
@@ -736,122 +432,230 @@ class _WebNewsContentState extends State<WebNewsContent> {
         const SizedBox(height: 24),
         LayoutBuilder(
           builder: (context, constraints) {
-            final cardWidth = (constraints.maxWidth - 64) / 3;
-            return Column(
-              children: [
-                _cardRow(articles, 0, cardWidth),
-                const SizedBox(height: 40),
-                _cardRow(articles, 3, cardWidth),
-              ],
+            const gap = 32.0;
+            final cols = constraints.maxWidth > 1200
+                ? 3
+                : (constraints.maxWidth > 800 ? 2 : 1);
+            final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+            return Wrap(
+              spacing: gap,
+              runSpacing: 40,
+              children: shown
+                  .map((article) => _ArticleCard(
+                        article: article,
+                        width: cardWidth,
+                        date: _dateLine(article.publishedAt),
+                        onTap: () => context.push('/article/${article.id}'),
+                      ))
+                  .toList(),
             );
           },
         ),
+        if (shown.length < articles.length) ...[
+          const SizedBox(height: 48),
+          Center(
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => setState(() => _visibleCount += _kPageStep),
+                child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.midBlue),
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Text(
+                    _t('Load more', 'טען עוד'),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  Widget _cardRow(List<_Article> articles, int start, double cardWidth) {
-    final children = <Widget>[];
-    for (var i = 0; i < 3; i++) {
-      if (i > 0) children.add(const SizedBox(width: 32));
-      final index = start + i;
-      if (index < articles.length) {
-        children.add(_ArticleCard(
-          article: articles[index],
-          width: cardWidth,
-          onTap: () => context.push('/article/${articles[index].id}'),
-        ));
-      } else {
-        // Figma keeps the empty slots in place (opacity 0)
-        children.add(SizedBox(width: cardWidth, height: 404));
-      }
-    }
-    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+  // ─────────────────────────────────────────────
+  // LOADING · EMPTY · ERROR
+  // ─────────────────────────────────────────────
+  /// The hero and the first row of cards as blocks, at the geometry of the
+  /// real thing, so nothing jumps when the articles land.
+  Widget _buildSkeleton() {
+    return Skeleton(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(
+            height: 552,
+            // Stretch, so the blocks take the hero's full height rather than
+            // collapsing to nothing under loose constraints.
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 1014, child: SkeletonBox(radius: 12)),
+                SizedBox(width: 10),
+                Expanded(
+                  flex: 576,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: SkeletonBox(radius: 12)),
+                      SizedBox(height: 10),
+                      Expanded(child: SkeletonBox(radius: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 64),
+          const SkeletonLine(width: 260, fontSize: 28),
+          const SizedBox(height: 24),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = 32.0;
+              final cols = constraints.maxWidth > 1200
+                  ? 3
+                  : (constraints.maxWidth > 800 ? 2 : 1);
+              final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+              return Wrap(
+                spacing: gap,
+                runSpacing: 40,
+                children: List.generate(cols, (_) {
+                  return SizedBox(
+                    width: cardWidth,
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(height: 270, radius: 12),
+                        SizedBox(height: 16),
+                        SkeletonLine(width: 260, fontSize: 20),
+                        SizedBox(height: 12),
+                        SkeletonLine(width: 200),
+                        SizedBox(height: 14),
+                        SkeletonLine(width: 140),
+                      ],
+                    ),
+                  );
+                }),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
-  // ─────────────────────────────────────────────
-  // FOOTER
-  // ─────────────────────────────────────────────
+  Widget _buildNotice({
+    required IconData icon,
+    required String title,
+    required String body,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 96, horizontal: 24),
+      decoration: BoxDecoration(
+        border: Border.all(color: _kBorder),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 44, color: _kBodyGrey.withValues(alpha: 0.5)),
+          const SizedBox(height: 16),
+          Text(title, textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy)),
+          const SizedBox(height: 8),
+          Text(body, textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBodyGrey)),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 24),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onAction,
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.midBlue,
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Text(actionLabel,
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════
 // SHARED PIECES
 // ═══════════════════════════════════════════════
 
-/// Article photo, falling back to the gradient stand-in while it loads,
-/// when it fails, or on demo articles that have no photo at all.
-///
-/// `webHtmlElementStrategy` matters here: the WordPress uploads are served
-/// without CORS headers, so CanvasKit cannot decode them itself and has to
-/// hand the URL to a plain <img> element.
-Widget _articleImage(_Article article, {double radius = 12, double glyphSize = 40}) {
-  final fallback = _imagePlaceholder(article.colors, radius: radius, glyphSize: glyphSize);
-  if (article.imageUrl.isEmpty) return fallback;
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(radius),
-    child: Image.network(
-      article.imageUrl,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: double.infinity,
-      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-      errorBuilder: (_, _, _) => fallback,
-      loadingBuilder: (context, child, progress) =>
-          progress == null ? child : fallback,
-    ),
+/// Articles are published in Hebrew whichever way the page toggle is set, so
+/// their text lays out RTL even while the chrome is in English.
+Widget _articleText(String value, {required TextStyle style, int maxLines = 2}) {
+  return Text(
+    value,
+    style: style,
+    textDirection: TextDirection.rtl,
+    textAlign: TextAlign.right,
+    maxLines: maxLines,
+    overflow: TextOverflow.ellipsis,
   );
 }
 
-/// Gradient stand-in until real article photography is wired up.
-Widget _imagePlaceholder(List<Color> colors, {double radius = 12, double glyphSize = 40}) {
-  return Container(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(radius),
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: colors,
-      ),
-    ),
-    child: Center(
-      child: Icon(
-        IconsaxPlusLinear.image,
-        size: glyphSize,
-        color: Colors.white.withValues(alpha: 0.12),
-      ),
-    ),
+/// The stand-in behind an article that carries no photograph. Taken from the
+/// id, so the same article always looks the same.
+const _photoGradients = <List<Color>>[
+  [Color(0xFF2E5C8A), Color(0xFF0C1A33)],
+  [Color(0xFF7A3B4A), Color(0xFF1E0A10)],
+  [Color(0xFF3F6B4F), Color(0xFF0E1C14)],
+  [Color(0xFF6B5A3B), Color(0xFF1C160C)],
+  [Color(0xFF4A3B7A), Color(0xFF120E22)],
+  [Color(0xFF2F6B6B), Color(0xFF0B1C1C)],
+];
+
+/// The article's own photograph — 642 of the 669 rows carry one.
+Widget _articlePhoto(
+  Article article, {
+  double radius = 12,
+  double glyphSize = 40,
+}) {
+  return NetworkPhoto(
+    url: article.imageUrl,
+    width: double.infinity,
+    height: double.infinity,
+    radius: radius == 0 ? null : BorderRadius.circular(radius),
+    gradient: _photoGradients[article.id.hashCode.abs() % _photoGradients.length],
+    icon: IconsaxPlusLinear.image,
+    iconSize: glyphSize,
   );
-}
-
-class _Article {
-  final String id, title, date, excerpt;
-  /// Remote photo from the WordPress export; empty on demo articles, which
-  /// keep falling back to the [colors] gradient.
-  final String imageUrl;
-  /// Real articles are published in Hebrew whichever way the page toggle is
-  /// set, so their text lays out RTL even while the chrome is in English.
-  final bool rtlText;
-  final List<Color> colors;
-  const _Article({
-    required this.id,
-    required this.title,
-    required this.date,
-    required this.colors,
-    this.excerpt = '',
-    this.imageUrl = '',
-    this.rtlText = false,
-  });
-
-  TextDirection? get textDirection => rtlText ? TextDirection.rtl : null;
-  TextAlign? get textAlign => rtlText ? TextAlign.right : null;
 }
 
 /// 372.67 × 404 article card — image, 2-line title, 1-line excerpt, date.
 class _ArticleCard extends StatefulWidget {
-  final _Article article;
+  final Article article;
   final double width;
+  final String date;
   final VoidCallback onTap;
-  const _ArticleCard({required this.article, required this.width, required this.onTap});
+  const _ArticleCard({
+    required this.article,
+    required this.width,
+    required this.date,
+    required this.onTap,
+  });
 
   @override
   State<_ArticleCard> createState() => _ArticleCardState();
@@ -863,6 +667,7 @@ class _ArticleCardState extends State<_ArticleCard> {
   @override
   Widget build(BuildContext context) {
     final a = widget.article;
+    final excerpt = a.excerpt ?? '';
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
@@ -881,51 +686,47 @@ class _ArticleCardState extends State<_ArticleCard> {
                 child: SizedBox(
                   width: widget.width,
                   height: 270,
-                  child: _articleImage(a, glyphSize: 40),
+                  child: _articlePhoto(a),
                 ),
               ),
               const SizedBox(height: 16),
               SizedBox(
                 height: 50,
-                child: Text(
+                child: _articleText(
                   a.title,
-                  style: TextStyle(fontFamily: AppFonts.nunito, 
+                  style: TextStyle(fontFamily: AppFonts.nunito,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     height: 25 / 20,
                     color: _hovered ? AppColors.midBlue : Colors.black,
                   ),
-                  textDirection: a.textDirection,
-                  textAlign: a.textAlign,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                height: 21,
-                child: Text(
-                  a.excerpt,
-                  style: TextStyle(fontFamily: AppFonts.inter, 
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    height: 1.4,
-                    color: _kBodyGrey,
+              // Nothing stands in for an excerpt the row does not have; the
+              // line simply is not drawn.
+              if (excerpt.isNotEmpty)
+                SizedBox(
+                  height: 21,
+                  child: _articleText(
+                    excerpt,
+                    maxLines: 1,
+                    style: TextStyle(fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      height: 1.4,
+                      color: _kBodyGrey,
+                    ),
                   ),
-                  textDirection: a.textDirection,
-                  textAlign: a.textAlign,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
               const SizedBox(height: 14),
               Row(
                 children: [
                   const Icon(IconsaxPlusLinear.calendar_1, size: 16, color: _kIconGrey),
                   const SizedBox(width: 9),
                   Text(
-                    a.date,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    widget.date,
+                    style: TextStyle(fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       height: 17 / 14,

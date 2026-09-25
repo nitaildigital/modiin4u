@@ -26,7 +26,6 @@ import '../../features/auth/screens/terms_conditions_screen.dart';
 import '../../features/events/screens/events_screen.dart';
 import '../../features/events/screens/events_map_screen.dart';
 import '../../features/events/screens/event_detail_screen.dart';
-import '../../features/professionals/screens/professional_detail_screen.dart';
 import '../../features/realestate/screens/realestate_screen.dart';
 import '../../features/realestate/screens/listing_detail_screen.dart';
 import '../../features/realestate/screens/new_listing_screen.dart';
@@ -219,13 +218,6 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
         EventDetailScreen(eventId: state.pathParameters['id']!), state,
-      ),
-    ),
-    GoRoute(
-      path: '/professional/:id',
-      parentNavigatorKey: _rootNavigatorKey,
-      pageBuilder: (context, state) => _slideTransition(
-        ProfessionalDetailScreen(professionalId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(

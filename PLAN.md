@@ -112,6 +112,10 @@ These were never converted. Each shows the same fiction to every user.
 | **Admin dashboard** | It read four lists written into the source — six invented people, four businesses, four articles, three reviews — as `StateNotifier`s. So banning someone, approving a business or deleting a review **changed a list in memory and wrote nothing**. The client would have believed he had acted | On the live tables. `setBanned` writes `profiles.is_banned`; review moderation writes `reviews.status`, which migration 00025 then rolls into the business's rating. Businesses and articles use the live providers the panel's own sections already had. ~2,000 lines of dead widgets removed with it |
 | **"Contact Us", everywhere on the web** | The header CTA on every web page had `onContactTap ?? () {}` — drawn on all of them, doing nothing. The footer published a phone, an e-mail and a WhatsApp number as plain text nobody could tap | The details are named once in `web_chrome.dart` and the header opens the e-mail. All three footer rows act. The address is `modiin4uoffice@gmail.com`, corroborated as the client's — it is the same account that owns the Kamatera server |
 | **Two zero-counts on mobile** | Events printed "0 מתעניינים" on every row; the Deals banner sat under three page dots claiming it was one of three and could be paged, when it is a single box that does not scroll | Both gone |
+| **Notifications** | The bell in the header opens this from every screen. It listed six notifications written into the source: a 20% offer from פיצה פרגו, a four-room property "matching your search" at ₪2,450,000 — with `listings` empty — fifty points awarded for a review nobody had written, roadworks on a named street, and a street-food festival tomorrow that told the reader **"you confirmed you were coming"**. The schema has `admin_notifications` and nothing for residents | Empty, and it says so. "Mark all as read" went with the list it was marking |
+| **Help & Support** | Entirely hardcoded English, and two answers described screens that do not exist. One sent people to "Settings → Notifications" to toggle News, Deals, Neighbourhood Updates and Real Estate Alerts: Settings has no such row, nothing reads the `NotificationPreferences` model, and there is no preferences screen anywhere. Another listed the Favourites filters as Restaurants, Events, Bars, Apartments and News. "Contact Us" was an empty TODO | Translated, both languages. The notifications question is gone rather than answered wrongly; the Favourites answer names the real filters. Each remaining answer was checked against the screen it describes. Contact Us opens the address the footer publishes. A search with no match says so instead of leaving the page blank |
+| **Professionals** | `/professional/:id` rendered the same invented person whatever id it carried: "יוסי רביבו", a plumber, 4.8 from 43 reviews, "available now", "replies within ~15 min", a 15 km service radius, six specialisms and two named reviews with quoted text. The feature was one orphan file — no list, no provider, no model, no table — and its only caller pushed `/professional/demo_$i` from a web screen | Screen and route deleted. A professional here is a business in a service category, which is what the web navbar's own "Professionals" link already pointed at |
+| **Restaurant card "Contact"** | Empty handler, and drawn even for a business with no number on record | Dials the number, and is not drawn without one |
 | **Events map** | 14 invented events; details push `/event/map_<hashCode>` | `events/screens/events_map_screen.dart:45` |
 | **Home — "Deal Near You" / "Apartment Near You"** | Hardcoded tiles routing to `/deal/demo_0`, `/listing/demo_N` | `home/screens/home_screen.dart:390,455` |
 
@@ -207,11 +211,10 @@ count trigger, review rating rollup. All applied.
 
 - **Neighbourhood detail** — every neighbourhood renders as "Moriah";
   unreachable on mobile.
-- **Help & Support** — entirely hardcoded English. Its "Contact Us" is no
-  longer blocked on a product decision: the contact details were found
-  published in the web footer and are now named in `web_chrome.dart`. The
-  screen still needs translating and its FAQ answers checked against what the
-  app actually does — several describe flows that may not exist.
+- **Notification preferences** — `lib/features/settings/models/notification_preferences.dart`
+  exists with flags for news, deals, neighbourhood and real estate, and
+  **nothing reads it**. There is no preferences screen. Either build one or
+  delete the model; leaving it invites another wrong FAQ answer.
 - **`web_events_category_screen.dart`** — converted to live data, but nothing
   in `lib` constructs `WebEventsCategoryContent`. `/events` resolves to
   `EventsScreen`, so the three-panel category layout is unreachable. Route it
@@ -367,6 +370,41 @@ sign up  →  confirm the address  →  signed in
 Every step after "signed in" needs the session to be real. That is why the
 authentication work below is first: nothing downstream of it can be finished,
 or even tested, until it holds.
+
+---
+
+## 1g. The web build, looked at — 25 September
+
+Built it, served it and opened it in a browser at 1440, 1600 and 1920. Until
+now the desktop layouts had only been checked by the analyser.
+
+**What holds.** The home page and the businesses page render real data:
+genuine Hebrew headlines with their own photographs and real datelines, and
+category tiles reading 54 / 37 / 19 / 18 businesses, which match the database
+exactly. The eight desktop screens converted on 24 September work.
+
+**The navbar did not.** The design is drawn at 1920 with a 160px gutter, and
+that gutter was fixed. On a 1440 laptop it took a fifth of the window, the
+seven links were each given an equal share, and every one ellipsised at
+once — the bar read `Profess…  Modiin …  Real Estat…  Restauran…  Busine…`.
+Three fixes, all in `web_chrome.dart`, so they land on every page:
+
+- the gutter shrinks with the window, 160 down to 24
+- each link takes the width its own label needs instead of an equal share,
+  and the row scrolls if they genuinely do not fit
+- below 1700 the three "… in Modiin" labels drop those two words. The whole
+  site is Modiin; the long forms stay where there is room for them
+
+Most laptops are 1440 or 1536, so this was the common case, not the edge.
+
+**Onboarding.** Every word on the first screen anyone sees was hardcoded
+English while the app opens in Hebrew, so English sat inside a right-to-left
+layout and the punctuation landed on the wrong side: `,Everything in Modiin`,
+`.in one place`, `?Don't have an account`. Translated.
+
+**Still true of the desktop layouts:** they are laid out for 1920 and only
+the navbar was hardened. Content columns are capped at 1600 and centre, which
+holds down to about 1100, but nothing below that has been looked at.
 
 ---
 
