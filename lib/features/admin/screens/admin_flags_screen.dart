@@ -80,6 +80,49 @@ class _AdminFlagsScreenState extends ConsumerState<AdminFlagsScreen>
 // Tab 1: Feature Flags
 // ══════════════════════════════════════════════════════════════
 
+/// What a flag does today, said out loud.
+class _NotYetWiredNote extends StatelessWidget {
+  const _NotYetWiredNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.adminContentBg,
+        border: Border.all(color: AppColors.adminCardBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 18,
+            color: AppColors.adminTextLight,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'השינויים כאן נשמרים בבסיס הנתונים, אך האפליקציה עדיין אינה '
+              'קוראת את הדגלים — כיבוי מודול יירשם ולא ישנה את מה שהמשתמשים '
+              'רואים. חיבור האפליקציה לדגלים הוא פיתוח נפרד.',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 12,
+                height: 1.5,
+                color: AppColors.adminTextLight,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FeatureFlagsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -87,6 +130,11 @@ class _FeatureFlagsTab extends ConsumerWidget {
 
     return Column(
       children: [
+        // Saying it plainly beats a switch that looks like it does
+        // something. Nothing outside this panel reads `feature_flags` yet,
+        // so a flag records the decision and the app carries on as before.
+        const _NotYetWiredNote(),
+
         // ─── Stats ───
         asyncData.whenData((list) {
               final enabled = list.where((f) => f['is_enabled'] == true).length;
@@ -374,7 +422,10 @@ class _FeatureFlagsTab extends ConsumerWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'by ${f['updated_by'] ?? ''}',
+                                // `updated_by` is an admin_users id; the
+                                // provider resolves it to a name. Null until
+                                // somebody edits the flag here.
+                                'by ${f['updated_by_name'] ?? '—'}',
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 10,
@@ -582,7 +633,7 @@ class _RemoteConfigTab extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'by ${c['updated_by'] ?? ''}',
+                            'by ${c['updated_by_name'] ?? '—'}',
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 10,
@@ -902,7 +953,9 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
       'rollout_pct': _rolloutPct,
       'platforms': ['ios', 'android', 'web'],
       'config': {},
-      'updated_by': 'ניתאי לוי',
+      // Who made the change is the signed-in administrator, which the
+      // provider fills in. This wrote the client's name into a uuid column
+      // whatever anyone did.
     });
     if (mounted) Navigator.pop(context);
   }

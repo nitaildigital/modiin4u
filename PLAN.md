@@ -936,6 +936,42 @@ link is refused whatever the build says; and Brevo has to be set as the custom
 SMTP server, or reset mail goes through Supabase's own mailer, which is for
 testing and rate-limited to a handful an hour.
 
+### Feature flags were a switch wired to a list in memory — 25 September
+
+`admin_flags_provider` held both its tabs in Dart lists. A toggle flipped the
+copy in the list, the row lit up, and the next reload put it back. The client
+could turn the community module off, watch it turn off, and find it on again
+the next morning with nothing to explain why.
+
+What the invented rows claimed:
+
+- **Eight flags that do not exist** — DARK_MODE, PUSH_NOTIFICATIONS,
+  STEPS_TRACKER among them — while hiding the eight the table does hold:
+  AI_SEARCH, COMMUNITY, EVENTS, GAMES, MARKETPLACE, OFFERS, REAL_ESTATE,
+  STEPS.
+- **Every change credited to "ניתאי לוי"** on dates he never touched
+  anything. The create dialog wrote that name into `updated_by`, which is a
+  uuid column keyed to `admin_users` — so the insert could only ever have
+  failed, had it reached the database at all.
+- **Eight remote-config entries**, including an About text and
+  `TERMS_URL: https://modiin4u.co.il/terms`. The table has none.
+
+Both notifiers now read and write their tables. `updated_by` is the signed-in
+administrator's `admin_users` row, resolved two joins deep to a name for
+display and shown as "—" where nobody has edited the flag — which is every
+row today. Verified in the browser: eight flags, the real keys, COMMUNITY off
+as the table says, counters matching (5 enabled of 8), and Remote Config
+reading "0 הגדרות · אין הגדרות".
+
+**A flag still does nothing.** Nothing outside this panel reads
+`feature_flags`, so switching one off records the decision and changes
+nothing users see. The panel now says that in a note above the list rather
+than implying otherwise. Wiring the app to honour flags is a separate piece
+of work and wants the client's go-ahead, since it decides how modules get
+turned on and off after launch.
+
+---
+
 ### The web screens carry their own copy, and it drifts — 25 September
 
 The auth flow was walked end to end against the live server and checked
