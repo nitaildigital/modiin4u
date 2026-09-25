@@ -317,7 +317,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
                   onSubmitted: (_) => _onSearch(),
                   style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF1F1F1F)),
                   decoration: InputDecoration(
-                    hintText: _t('What are you looking for?', 'מה אתה מחפש?'),
+                    hintText: _t('What are you looking for today?', 'מה אתה מחפש?'),
                     hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF4F4F4F)),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,

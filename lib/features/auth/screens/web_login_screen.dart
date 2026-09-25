@@ -60,7 +60,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
 
   Future<void> _signIn() async {
     if (!_looksLikeEmail) {
-      _showError(_t('Enter your email address.', 'הזינו כתובת אימייל.'));
+      _showError(_t('Enter your email address first', 'הזינו כתובת אימייל.'));
       return;
     }
     if (_passwordController.text.isEmpty) {
@@ -91,7 +91,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
   Future<void> _forgotPassword() async {
     if (!_looksLikeEmail) {
       _showError(
-        _t('Enter your email address first.', 'הזינו קודם כתובת אימייל.'),
+        _t('Enter your email address first', 'הזינו קודם כתובת אימייל.'),
       );
       return;
     }

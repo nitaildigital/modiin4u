@@ -515,7 +515,7 @@ class _WebEventDetailContentState
 
   // ─────────────────────────────────────────────
   // RSVP CARD — "Event Card" component, 463 wide.
-  // Stage 1: "I'm Going".  Stage 2: "Going" + green banner.
+  // Stage 1: "I'm going".  Stage 2: "Going" + green banner.
   // ─────────────────────────────────────────────
   Widget _buildRsvpCard(Event event) {
     final time = _timeRange(event);
@@ -616,7 +616,7 @@ class _WebEventDetailContentState
                                 ? _t('Sold Out', 'אזל')
                                 : attending
                                     ? _t('Going', 'מגיע/ה')
-                                    : _t("I'm Going", 'אני מגיע/ה'),
+                                    : _t("I'm going", 'אני מגיע/ה'),
                             style: TextStyle(fontFamily: AppFonts.inter,
                                 fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5),
                           ),

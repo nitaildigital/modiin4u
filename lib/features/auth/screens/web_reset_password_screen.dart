@@ -59,7 +59,7 @@ class _WebResetPasswordContentState
     if (_password.text.length < 8) {
       _toast(
         _t(
-          'The password must be at least 8 characters.',
+          'Password must be at least 8 characters',
           'הסיסמה חייבת להיות באורך 8 תווים לפחות.',
         ),
         error: true,
@@ -68,7 +68,7 @@ class _WebResetPasswordContentState
     }
     if (_password.text != _confirm.text) {
       _toast(
-        _t('The passwords do not match.', 'הסיסמאות אינן תואמות.'),
+        _t('Passwords do not match', 'הסיסמאות אינן תואמות.'),
         error: true,
       );
       return;
@@ -87,7 +87,7 @@ class _WebResetPasswordContentState
       if (!mounted) return;
       setState(() => _saving = false);
       _toast(
-        _t('Could not save. Try again.', 'לא ניתן היה לשמור. נסו שוב.'),
+        _t('Could not save. Please try again.', 'לא ניתן היה לשמור. נסו שוב.'),
         error: true,
       );
     }
@@ -237,7 +237,7 @@ class _WebResetPasswordContentState
                       ),
                     )
                   : Text(
-                      _t('Change Password', 'שינוי סיסמה'),
+                      _t('Change password', 'שינוי סיסמה'),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 16,

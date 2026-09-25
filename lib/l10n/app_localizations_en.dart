@@ -78,10 +78,10 @@ class LEn extends L {
   String get deals => 'Deals';
 
   @override
-  String get signIn => 'Sign in';
+  String get signIn => 'Sign In';
 
   @override
-  String get signUp => 'Sign up';
+  String get signUp => 'Sign Up';
 
   @override
   String get signOut => 'Sign out';
@@ -203,7 +203,7 @@ class LEn extends L {
   String get delete => 'Delete';
 
   @override
-  String get favorites => 'Favourites';
+  String get favorites => 'Favorites';
 
   @override
   String get signInToSave => 'Sign in to save';
@@ -386,10 +386,10 @@ class LEn extends L {
   String get kosher => 'Kosher';
 
   @override
-  String get forSale => 'For sale';
+  String get forSale => 'For Sale';
 
   @override
-  String get forRent => 'For rent';
+  String get forRent => 'For Rent';
 
   @override
   String rooms(int count) {
@@ -1301,7 +1301,7 @@ class LEn extends L {
   String get reenterPassword => 'Confirm your password';
 
   @override
-  String get confirmPassword => 'Confirm password';
+  String get confirmPassword => 'Confirm Password';
 
   @override
   String get andConjunction => ' and ';

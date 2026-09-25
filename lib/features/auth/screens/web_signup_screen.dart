@@ -83,7 +83,7 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
       return;
     }
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showError(_t('The passwords do not match.', 'הסיסמאות אינן תואמות.'));
+      _showError(_t('Passwords do not match', 'הסיסמאות אינן תואמות.'));
       return;
     }
     if (!_agreedToTerms) {

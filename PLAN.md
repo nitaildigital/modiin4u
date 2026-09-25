@@ -613,8 +613,18 @@ way. There is no real event in the table.
 
 Separately, **25 published articles have no `featured_image`**, and 17 of them
 are genuine WordPress imports (`water-park-ligad`, `ben-shemen-forest`,
-`mitzpe-natan` and so on) whose pictures did not come across in the import.
-That is a migration gap to close, not seed data to delete.
+`mitzpe-natan` and so on).
+
+It was assumed on 25 September that their pictures had been lost in the
+import. They had not. Asked the source site directly — `/wp-json/wp/v2/news`
+for each slug — and every one comes back `featured_media: 0` with no `<img>`
+anywhere in the body either. **The client's own site has never had a picture
+on these articles.** So there is nothing to migrate and no tool to write: the
+pictures do not exist, and only the client can supply them.
+
+Until he does, those articles are text with a gradient where the photograph
+would go, which is what the card already draws. Worth raising with him as
+content to fill rather than a bug to fix.
 
 `businesses` holds two populations, and they are easy to tell apart:
 
@@ -1025,8 +1035,35 @@ and on the web, and were sentence case in the ARB, so the phone was the one
 that had drifted. Both sides are now on Figma's wording.
 
 **This will keep happening** while the web screens hold their own strings.
-Moving them onto the ARB files is the fix; it was not done here because it
-touches every `web_*` screen and none of them were otherwise being changed.
+Moving them onto the ARB files is the fix, and it is not small: 1,204 `_t()`
+calls across 42 screens, 40 of which have a phone twin. Doing it blind would
+change wording by accident, which is the thing being fixed.
+
+So the drift was hunted instead of the duplication. `tool/copy_drift.py`
+takes the English half of every `_t()` on a web screen, the ARB values behind
+every `l.something` its phone twin uses, and reports pairs that are close but
+not equal. It found **36**. Each was settled against the Figma frames, which
+are the authority, and where Figma is silent the web was moved onto the ARB
+value, since that is where both sides are meant to end up.
+
+Figma disagreed with the phone more often than with the web:
+
+| | Figma | the phone said |
+|---|---|---|
+| favourites | `Favorites` | Favou**r**ites |
+| listings | `For Sale` · `For Rent` | For sale · For rent |
+| a field label | `Confirm Password` | Confirm password |
+| the buttons | `Sign In` · `Sign Up` | Sign in · Sign up |
+
+and once with the web: the home search hint is `What are you looking for
+today?`, which the web had shortened.
+
+**Six near-matches are left and all six are correct**: a heading the phone
+wraps with `\n` and the web does not, a unit prefixed on one side
+("km · Estimated distance"), a map pin labelled in the singular against a
+plural layer name, and one string interpolating `$wait` where the ARB uses
+`{seconds}`. The script's own docstring lists these shapes so nobody settles
+them by mistake.
 
 Two other things worth knowing: `confirmNewPassword` exists twice in the ARB
 under `chooseStrongPassword` and `chooseStrongNewPassword` with identical

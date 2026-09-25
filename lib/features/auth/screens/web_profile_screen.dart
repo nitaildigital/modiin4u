@@ -57,7 +57,7 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent> {
     _MenuItem(
       IconsaxPlusLinear.heart,
       _t('Favorites', 'מועדפים'),
-      _t('Saved places and listings', 'מקומות ומודעות ששמרתם'),
+      _t('Saved places & listings', 'מקומות ומודעות ששמרתם'),
       '/favorites',
     ),
     _MenuItem(
@@ -69,7 +69,7 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent> {
     _MenuItem(
       IconsaxPlusLinear.activity,
       _t('My Activity', 'הפעילות שלי'),
-      _t('Steps, reviews and rewards', 'צעדים, ביקורות ופרסים'),
+      _t('Steps, reviews & rewards', 'צעדים, ביקורות ופרסים'),
       '/steps',
     ),
     _MenuItem(
@@ -81,7 +81,7 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent> {
     _MenuItem(
       IconsaxPlusLinear.info_circle,
       _t('Help & Support', 'עזרה ותמיכה'),
-      _t('FAQs and contact us', 'שאלות נפוצות ויצירת קשר'),
+      _t('FAQs & contact us', 'שאלות נפוצות ויצירת קשר'),
       '/help-support',
     ),
   ];

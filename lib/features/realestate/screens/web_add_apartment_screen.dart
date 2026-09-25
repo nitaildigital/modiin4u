@@ -482,7 +482,7 @@ class _WebAddApartmentContentState
             children: [
               Expanded(
                 child: _ToggleButton(
-                  label: _t('For sale', 'למכירה'),
+                  label: _t('For Sale', 'למכירה'),
                   icon: IconsaxPlusLinear.tag,
                   selected: _kind == ListingKind.sale,
                   onTap: () => setState(() => _kind = ListingKind.sale),
@@ -491,7 +491,7 @@ class _WebAddApartmentContentState
               const SizedBox(width: 12),
               Expanded(
                 child: _ToggleButton(
-                  label: _t('For rent', 'להשכרה'),
+                  label: _t('For Rent', 'להשכרה'),
                   icon: IconsaxPlusLinear.key,
                   selected: _kind == ListingKind.rent,
                   onTap: () => setState(() => _kind = ListingKind.rent),

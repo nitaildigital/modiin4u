@@ -434,7 +434,7 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent> {
                 child: _buildTextField(
                   _t('Phone', 'טלפון'),
                   _phoneController,
-                  placeholder: _t('Enter your phone', 'הזינו טלפון'),
+                  placeholder: _t('Enter your phone number', 'הזינו טלפון'),
                   keyboardType: TextInputType.phone,
                 ),
               ),

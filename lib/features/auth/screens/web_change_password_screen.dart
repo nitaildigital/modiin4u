@@ -69,7 +69,7 @@ class _WebChangePasswordContentState
     if (_newController.text.length < 8) {
       _toast(
         _t(
-          'The password must be at least 8 characters.',
+          'Password must be at least 8 characters',
           'הסיסמה חייבת להיות באורך 8 תווים לפחות.',
         ),
         error: true,
@@ -78,7 +78,7 @@ class _WebChangePasswordContentState
     }
     if (_newController.text != _confirmController.text) {
       _toast(
-        _t('The passwords do not match.', 'הסיסמאות אינן תואמות.'),
+        _t('Passwords do not match', 'הסיסמאות אינן תואמות.'),
         error: true,
       );
       return;
@@ -106,7 +106,7 @@ class _WebChangePasswordContentState
                 'That is not your current password.',
                 'זו אינה הסיסמה הנוכחית שלכם.',
               )
-            : _t('Could not save. Try again.', 'לא ניתן היה לשמור. נסו שוב.'),
+            : _t('Could not save. Please try again.', 'לא ניתן היה לשמור. נסו שוב.'),
         error: true,
       );
     }
@@ -236,7 +236,7 @@ class _WebChangePasswordContentState
           ),
           const SizedBox(height: 24),
           Text(
-            _t('Change Password', 'שינוי סיסמה'),
+            _t('Change password', 'שינוי סיסמה'),
             style: TextStyle(
               fontFamily: AppFonts.nunito,
               fontSize: 32,
@@ -261,7 +261,7 @@ class _WebChangePasswordContentState
           const SizedBox(height: 32),
           _buildPasswordField(
             label: _t('Current Password', 'סיסמה נוכחית'),
-            hint: _t('Enter your current password', 'הזינו את הסיסמה הנוכחית'),
+            hint: _t('Enter current password', 'הזינו את הסיסמה הנוכחית'),
             controller: _currentController,
             obscure: _obscureCurrent,
             onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
@@ -269,7 +269,7 @@ class _WebChangePasswordContentState
           const SizedBox(height: 20),
           _buildPasswordField(
             label: _t('New Password', 'סיסמה חדשה'),
-            hint: _t('Enter a new password', 'הזינו סיסמה חדשה'),
+            hint: _t('Enter new password', 'הזינו סיסמה חדשה'),
             controller: _newController,
             obscure: _obscureNew,
             onToggle: () => setState(() => _obscureNew = !_obscureNew),
@@ -277,7 +277,7 @@ class _WebChangePasswordContentState
           const SizedBox(height: 20),
           _buildPasswordField(
             label: _t('Confirm New Password', 'אימות סיסמה חדשה'),
-            hint: _t('Re-enter the new password', 'הזינו שוב את הסיסמה החדשה'),
+            hint: _t('Re-enter new password', 'הזינו שוב את הסיסמה החדשה'),
             controller: _confirmController,
             obscure: _obscureConfirm,
             onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
@@ -310,7 +310,7 @@ class _WebChangePasswordContentState
                       ),
                     )
                   : Text(
-                      _t('Change Password', 'שינוי סיסמה'),
+                      _t('Change password', 'שינוי סיסמה'),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 16,
