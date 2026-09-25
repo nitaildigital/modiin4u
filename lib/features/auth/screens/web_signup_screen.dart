@@ -336,8 +336,11 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
                   type: AccountType.resident,
                   icon: Icons.person_outline,
                   iconColor: AppColors.turquoise,
-                  title: _t('Resident', 'תושב'),
-                  subtitle: _t('I live in Modiin.', 'אני גר במודיעין.'),
+                  title: _t('Regular User', 'תושב/ת'),
+                  subtitle: _t(
+                    'For residents and community members.',
+                    'לתושבי מודיעין ולחברי הקהילה.',
+                  ),
                 ),
               ),
               const SizedBox(width: _kFieldGap),
@@ -387,7 +390,7 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
                 child: _buildTextField(
                   label: _t('Phone', 'טלפון'),
                   controller: _phoneController,
-                  hint: _t('Enter your phone', 'הזינו טלפון'),
+                  hint: _t('Enter your phone number', 'הזינו מספר טלפון'),
                   keyboardType: TextInputType.phone,
                 ),
               ),
@@ -395,7 +398,7 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
               Expanded(
                 child: _buildDropdownField<String>(
                   label: _t('Neighborhood', 'שכונה'),
-                  hint: _t('Select a neighborhood', 'בחרו שכונה'),
+                  hint: _t('Select your neighborhood', 'בחרו שכונה'),
                   value: _selectedNeighborhood,
                   items: neighborhoods
                       .map(
@@ -499,7 +502,7 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
                 child: _buildTextField(
                   label: _t('Confirm Password', 'אימות סיסמה'),
                   controller: _confirmPasswordController,
-                  hint: _t('Re-enter your password', 'הזינו את הסיסמה שוב'),
+                  hint: _t('Confirm your password', 'אשרו את הסיסמה'),
                   isPassword: true,
                   obscure: _obscureConfirm,
                   onToggleObscure: () =>
@@ -900,7 +903,7 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
                     child: Text(
                       value != null
                           ? '${value.day}/${value.month}/${value.year}'
-                          : _t('Select a date', 'בחרו תאריך'),
+                          : _t('Select your date of birth', 'בחרו תאריך לידה'),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,

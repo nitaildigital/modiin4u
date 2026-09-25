@@ -324,13 +324,13 @@ class LEn extends L {
       'Account created. Confirm your email address to sign in.';
 
   @override
-  String get currentPassword => 'Current password';
+  String get currentPassword => 'Current Password';
 
   @override
-  String get newPassword => 'New password';
+  String get newPassword => 'New Password';
 
   @override
-  String get confirmNewPassword => 'Confirm new password';
+  String get confirmNewPassword => 'Confirm New Password';
 
   @override
   String get changePassword => 'Change password';
@@ -1298,7 +1298,7 @@ class LEn extends L {
   String get choosePassword => 'Choose a password';
 
   @override
-  String get reenterPassword => 'Re-enter your password';
+  String get reenterPassword => 'Confirm your password';
 
   @override
   String get confirmPassword => 'Confirm password';

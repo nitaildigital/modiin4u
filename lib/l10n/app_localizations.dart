@@ -2548,7 +2548,7 @@ abstract class L {
   /// No description provided for @reenterPassword.
   ///
   /// In he, this message translates to:
-  /// **'הזינו שוב את הסיסמה'**
+  /// **'אשרו את הסיסמה'**
   String get reenterPassword;
 
   /// No description provided for @confirmPassword.

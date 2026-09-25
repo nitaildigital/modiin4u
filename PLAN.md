@@ -936,6 +936,43 @@ link is refused whatever the build says; and Brevo has to be set as the custom
 SMTP server, or reset mail goes through Supabase's own mailer, which is for
 testing and rate-limited to a handful an hour.
 
+### The web screens carry their own copy, and it drifts — 25 September
+
+The auth flow was walked end to end against the live server and checked
+against the Figma frames. The flow itself matches: one form with e-mail,
+password and confirm password, then a confirmation link. Figma has no
+"e-mail first, password after" step and no code screen, so neither does this.
+
+What did not match was the words, and always in the same way. Every `web_*`
+screen writes its copy inline through `_t(en, he)` rather than reading the ARB
+files the phone reads. So each one is a second copy of the same strings, and
+a second copy drifts:
+
+| | Figma and the phone | the web screen said |
+|---|---|---|
+| account type | Regular User — For residents and community members. | Resident — I live in Modiin. |
+| phone | Enter your phone number | Enter your phone |
+| neighbourhood | Select your neighborhood | Select a neighborhood |
+| date of birth | Select your date of birth | Select a date |
+| sign-in title | Hi, welcome back! 👋 | Welcome Back |
+| sign-in subtitle | Hello again, you've been missed! | Sign in to save places, follow the city… |
+| password hint | Please enter password | Enter your password |
+| | Remember Me · Forgot Password? | Remember me · Forgot password? |
+
+Two went the other way — the change-password labels are Title Case in Figma
+and on the web, and were sentence case in the ARB, so the phone was the one
+that had drifted. Both sides are now on Figma's wording.
+
+**This will keep happening** while the web screens hold their own strings.
+Moving them onto the ARB files is the fix; it was not done here because it
+touches every `web_*` screen and none of them were otherwise being changed.
+
+Two other things worth knowing: `confirmNewPassword` exists twice in the ARB
+under `chooseStrongPassword` and `chooseStrongNewPassword` with identical
+text; and the "Check your email" dialog after sign-up has no Figma frame —
+Supabase requires the step and the design does not cover that state, so the
+dialog is ours.
+
 ### The deploy key
 
 `tool/deploy_web.sh` now passes an identity. The server takes a key of its own

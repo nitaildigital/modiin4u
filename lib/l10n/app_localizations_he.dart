@@ -1284,7 +1284,7 @@ class LHe extends L {
   String get choosePassword => 'בחרו סיסמה';
 
   @override
-  String get reenterPassword => 'הזינו שוב את הסיסמה';
+  String get reenterPassword => 'אשרו את הסיסמה';
 
   @override
   String get confirmPassword => 'אימות סיסמה';

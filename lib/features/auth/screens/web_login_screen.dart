@@ -245,7 +245,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t('Welcome Back', 'ברוכים הבאים בחזרה'),
+            _t('Hi, welcome back! 👋', 'ברוכים השבים! 👋'),
             style: TextStyle(
               fontFamily: AppFonts.nunito,
               fontSize: 32,
@@ -257,8 +257,8 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
           const SizedBox(height: 8),
           Text(
             _t(
-              'Sign in to save places, follow the city and manage your listings.',
-              'התחברו כדי לשמור מקומות, לעקוב אחרי העיר ולנהל את המודעות שלכם.',
+              "Hello again, you've been missed!",
+              'שמחים לראות אתכם שוב!',
             ),
             style: TextStyle(
               fontFamily: AppFonts.inter,
@@ -278,7 +278,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
           _buildTextField(
             label: _t('Password', 'סיסמה'),
             controller: _passwordController,
-            hint: _t('Enter your password', 'הזינו סיסמה'),
+            hint: _t('Please enter password', 'הזינו סיסמה'),
             isPassword: true,
           ),
           const SizedBox(height: 20),
@@ -314,7 +314,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
                       ),
                       const SizedBox(width: 9),
                       Text(
-                        _t('Remember me', 'זכרו אותי'),
+                        _t('Remember Me', 'זכור אותי'),
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 14,
@@ -330,7 +330,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
                 child: GestureDetector(
                   onTap: _isLoading ? null : _forgotPassword,
                   child: Text(
-                    _t('Forgot password?', 'שכחתם סיסמה?'),
+                    _t('Forgot Password?', 'שכחתם סיסמה?'),
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
