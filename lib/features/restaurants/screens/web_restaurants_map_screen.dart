@@ -96,7 +96,7 @@ class _WebRestaurantsMapContentState
     _NavItem(label: _t('Events', 'אירועים'), route: '/events'),
     _NavItem(label: _t('Deals', 'מבצעים'), route: '/deals'),
     _NavItem(
-      label: _t('Real Estate in Modiin', 'נדל"ן במודיעין'),
+      label: _t('Real Estate in Modiin', 'נדל״ן במודיעין'),
       route: '/realestate',
     ),
     _NavItem(

@@ -219,7 +219,7 @@ class Business {
   String? get kosherLabel => switch (kosherStatus) {
     'rabbanut' => 'רבנות',
     'mehadrin' => 'מהדרין',
-    'badatz' => 'בד"ץ',
+    'badatz' => 'בד״ץ',
     'other' => 'כשר',
     _ => null,
   };

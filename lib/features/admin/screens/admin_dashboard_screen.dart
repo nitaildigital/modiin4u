@@ -51,7 +51,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     ('עסקים', IconsaxPlusLinear.shop),
     ('כתבות', IconsaxPlusLinear.document_text),
     ('אירועים', IconsaxPlusLinear.calendar),
-    ('נדל"ן', IconsaxPlusLinear.building_3),
+    ('נדל״ן', IconsaxPlusLinear.building_3),
     ('מתווכים', IconsaxPlusLinear.profile_circle),
     // ── טקסונומיה ──
     ('קטגוריות', IconsaxPlusLinear.category_2),

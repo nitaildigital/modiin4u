@@ -58,14 +58,14 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                     _StatChip('מבצעים פעילים', '$active', AppColors.success),
                     const SizedBox(width: 16),
                     _StatChip(
-                      'סה"כ מימושים',
+                      'סה״כ מימושים',
                       '$totalClaims',
                       AppColors.turquoise,
                     ),
                     const SizedBox(width: 16),
                     _StatChip('מומלצים', '$featured', AppColors.gold),
                     const SizedBox(width: 16),
-                    _StatChip('סה"כ מבצעים', '${list.length}', AppColors.navy),
+                    _StatChip('סה״כ מבצעים', '${list.length}', AppColors.navy),
                   ],
                 ),
               );

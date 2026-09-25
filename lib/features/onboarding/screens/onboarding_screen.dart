@@ -158,43 +158,16 @@ class OnboardingScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // Continue with Google button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Google sign-in
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            elevation: 0,
-                          ),
-                          icon: Image.network(
-                            'https://www.google.com/favicon.ico',
-                            width: 24,
-                            height: 24,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.g_mobiledata,
-                              size: 24,
-                              color: Color(0xFF4285F4),
-                            ),
-                          ),
-                          label: Text(
-                            l.continueWithGoogle,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
+                      // A "Continue with Google" button stood here. Its
+                      // handler was `// TODO: Google sign-in` — pressing it
+                      // did nothing. The provider is off in Supabase
+                      // (`/auth/v1/settings` reports `google: false`), so it
+                      // could not have worked, and there is no such button
+                      // anywhere in the Figma file.
+                      //
+                      // Wiring it up is real work — credentials in Google
+                      // Cloud, the provider enabled, the redirect listed —
+                      // and it should be designed before it is built.
                       const SizedBox(height: 21),
                       // Don't have an account? Sign Up
                       GestureDetector(

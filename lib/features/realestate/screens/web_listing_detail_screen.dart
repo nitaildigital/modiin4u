@@ -106,7 +106,7 @@ class _WebListingDetailContentState
                             'This listing is no longer published, or the address is wrong.',
                             'הנכס הזה אינו מפורסם עוד, או שהכתובת שגויה.',
                           ),
-                          actionLabel: _t('Back to Real Estate', 'חזרה לנדל"ן'),
+                          actionLabel: _t('Back to Real Estate', 'חזרה לנדל״ן'),
                           onAction: () => context.go('/realestate'),
                         )
                       : _buildBody(listing),
@@ -444,7 +444,7 @@ class _WebListingDetailContentState
       if (l.sqm != null)
         (
           label: _t('Built-up Area', 'שטח בנוי'),
-          value: _t('${l.sqm} m²', '${l.sqm} מ"ר'),
+          value: _t('${l.sqm} m²', '${l.sqm} מ״ר'),
           icon: IconsaxPlusLinear.maximize_3,
         ),
       if (l.floor != null)
@@ -568,7 +568,7 @@ class _WebListingDetailContentState
       (label: _t('Storage', 'מחסן'), icon: IconsaxPlusLinear.box_1),
     if (l.hasMamad)
       (
-        label: _t('Protected Space', 'ממ"ד'),
+        label: _t('Protected Space', 'ממ״ד'),
         icon: IconsaxPlusLinear.shield_tick,
       ),
     if (l.isFurnished)
@@ -864,7 +864,7 @@ class _WebListingDetailContentState
                       child: Text(
                         _aboutExpanded
                             ? _t('Show Less', 'הצג פחות')
-                            : _t('Read More', 'קרא עוד'),
+                            : _t('Read More', 'קראו עוד'),
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 16,
@@ -1395,7 +1395,7 @@ class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
                         if (l.sqm != null) ...[
                           _miniStat(
                             IconsaxPlusLinear.maximize_3,
-                            _t('${l.sqm} m²', '${l.sqm} מ"ר'),
+                            _t('${l.sqm} m²', '${l.sqm} מ״ר'),
                           ),
                           const SizedBox(width: 24),
                         ],

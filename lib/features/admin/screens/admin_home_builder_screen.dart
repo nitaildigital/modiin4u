@@ -43,7 +43,7 @@ class _AdminHomeBuilderScreenState
                 ),
                 child: Row(
                   children: [
-                    _StatChip('סה"כ בלוקים', '${list.length}', AppColors.navy),
+                    _StatChip('סה״כ בלוקים', '${list.length}', AppColors.navy),
                     const SizedBox(width: 16),
                     _StatChip('פעילים', '$active', AppColors.success),
                     const SizedBox(width: 16),

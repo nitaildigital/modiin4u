@@ -60,11 +60,11 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
 
   Future<void> _signIn() async {
     if (!_looksLikeEmail) {
-      _showError(_t('Enter your email address first', 'הזינו כתובת אימייל.'));
+      _showError(_t('Enter your email address first', 'הזינו כתובת אימייל'));
       return;
     }
     if (_passwordController.text.isEmpty) {
-      _showError(_t('Enter your password.', 'הזינו סיסמה.'));
+      _showError(_t('Enter your password.', 'הזינו סיסמה'));
       return;
     }
 
@@ -91,7 +91,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
   Future<void> _forgotPassword() async {
     if (!_looksLikeEmail) {
       _showError(
-        _t('Enter your email address first', 'הזינו קודם כתובת אימייל.'),
+        _t('Enter your email address first', 'הזינו קודם את כתובת האימייל'),
       );
       return;
     }
@@ -106,7 +106,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
     _showInfo(
       _t(
         'If that address has an account, a reset link is on its way.',
-        'אם קיים חשבון לכתובת הזו, נשלח אליה קישור לאיפוס.',
+        'אם קיים חשבון עם הכתובת הזו, נשלח אליה קישור לאיפוס.',
       ),
     );
   }

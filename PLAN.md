@@ -1058,7 +1058,58 @@ Figma disagreed with the phone more often than with the web:
 and once with the web: the home search hint is `What are you looking for
 today?`, which the web had shortened.
 
-**Six near-matches are left and all six are correct**: a heading the phone
+### A "Continue with Google" button that did nothing — 25 September
+
+Found by reading the browser console on the deployed site rather than the
+code: every visit logged a failed request to `https://www.google.com/favicon.ico`.
+
+It was the icon on a "Continue with Google" button on both onboarding
+screens, and following it turned up three things at once:
+
+- **The handler was `// TODO: Google sign-in`.** Pressing it did nothing.
+- **The provider is off.** `/auth/v1/settings` reports `google: false`, so it
+  could not have worked even if wired.
+- **There is no such button in Figma** — no Google, Apple or Facebook sign-in
+  anywhere in the file. It was never designed; it was assumed.
+
+The icon itself was the giveaway: fetched from google.com, which a browser
+refuses on CORS, so it fell back to a generic glyph and logged an error each
+time. A resident would have pressed a button that looked like the fastest way
+in and had nothing happen.
+
+Removed from both screens. Google sign-in is real work if the client wants it
+— credentials in Google Cloud, the provider enabled in Supabase, the redirect
+listed — and it wants a design first. The `continueWithGoogle` string is left
+in the ARB files against that day.
+
+---
+
+### The Hebrew half had drifted too
+
+The first pass compared only English, which was half the job and the less
+important half — the residents read Hebrew. Running the same check on the
+second argument of every `_t()` found **24 more**, and two kinds that the
+English pass could not have shown:
+
+- **`מתווך נדל"ן` with an ASCII double quote** where Hebrew takes a gershayim
+  (`״`, U+05F4). Sweeping for it found 58 across 32 files — `סה"כ`, `מע"מ`,
+  `מ"ר`, `ממ"ד`, `בד"ץ`, `ע"י` — against 28 already correct. The ARB file was
+  right in all 11 of its cases, so the convention was settled and only the
+  Dart had fallen behind. All 58 fixed.
+- **`קרא עוד` addressing one man** where the app speaks to people in the
+  plural everywhere else — `גלו`, `הזינו`, `לחצו`. Now `קראו עוד`.
+
+Also caught one of my own: the home search hint was changed to match Figma in
+English and the Hebrew was left behind, so for one deploy the two halves said
+different things.
+
+**Seven Hebrew near-matches remain and all seven are correct.** Beyond the
+shapes above: `הרשאות` (permissions) and `התראות` (notifications) are one
+letter apart and label genuinely different cards — it looked like a bug until
+the card was read — and three web pages open with an inviting heading
+(`גלו מבצעים לפי קטגוריה`) where the phone has a compact section header.
+
+**Six English near-matches are left and all six are correct**: a heading the phone
 wraps with `\n` and the web does not, a unit prefixed on one side
 ("km · Estimated distance"), a map pin labelled in the singular against a
 plural layer name, and one string interpolating `$wait` where the ARB uses

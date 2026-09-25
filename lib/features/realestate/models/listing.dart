@@ -58,7 +58,7 @@ class Listing {
   final bool hasStorage;
   final bool hasBalcony;
 
-  /// ממ"ד — the protected room. The local word, as a listing here writes it.
+  /// ממ״ד — the protected room. The local word, as a listing here writes it.
   final bool hasMamad;
   final bool isFurnished;
   final bool isAccessible;

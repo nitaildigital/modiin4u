@@ -359,7 +359,7 @@ class _WebFavoritesContentState extends ConsumerState<WebFavoritesContent> {
     return _buildStateBox(
       title: _t(
         'Sign in to see your favourites',
-        'התחברו כדי לראות את המועדפים',
+        'התחברו כדי לראות את המועדפים שלכם',
       ),
       blurb: _t(
         'Saved places and articles follow your account.',

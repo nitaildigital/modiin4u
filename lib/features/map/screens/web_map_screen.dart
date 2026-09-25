@@ -60,7 +60,7 @@ class _WebMapContentState extends ConsumerState<WebMapContent> {
   String _layerLabel(String layer) => switch (layer) {
     'Businesses' => _t('Businesses', 'עסקים'),
     'Events' => _t('Events', 'אירועים'),
-    _ => _t('Real Estate', 'נדל"ן'),
+    _ => _t('Real Estate', 'נדל״ן'),
   };
 
   List<MapPoi> get _visiblePois {

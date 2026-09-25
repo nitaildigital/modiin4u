@@ -1,7 +1,7 @@
 enum NewsCategory {
   municipal('עירייה'),
   business('עסקים'),
-  realEstate('נדל"ן'),
+  realEstate('נדל״ן'),
   sports('ספורט'),
   people('אנשים'),
   food('קולינריה'),

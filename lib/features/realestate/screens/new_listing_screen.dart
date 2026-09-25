@@ -53,7 +53,7 @@ class _MobileNewListingContentState
     'הנחלים',
     'אבני חן',
     'נופים',
-    'המע"ר',
+    'המע״ר',
     'הכרמים',
     'מוריה',
     'הפרחים',
@@ -159,10 +159,10 @@ class _MobileNewListingContentState
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildLabel('שטח (מ"ר)'),
+                              _buildLabel('שטח (מ״ר)'),
                               _buildTextField(
                                 _sqmController,
-                                'מ"ר',
+                                'מ״ר',
                                 TextInputType.number,
                               ),
                             ],
@@ -202,7 +202,7 @@ class _MobileNewListingContentState
                           (v) => setState(() => _hasElevator = v),
                         ),
                         _buildFeatureChip(
-                          'ממ"ד',
+                          'ממ״ד',
                           _hasMamad,
                           (v) => setState(() => _hasMamad = v),
                         ),

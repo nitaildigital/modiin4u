@@ -1314,7 +1314,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
             DropdownMenuItem(
               value: 'badatz',
               child: Text(
-                'בד"ץ',
+                'בד״ץ',
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),

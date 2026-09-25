@@ -51,7 +51,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                     const SizedBox(width: 12),
                     _StatChip('נפתרו', '$resolved', AppColors.success),
                     const SizedBox(width: 12),
-                    _StatChip('סה"כ', '${list.length}', AppColors.turquoise),
+                    _StatChip('סה״כ', '${list.length}', AppColors.turquoise),
                   ],
                 ),
               );

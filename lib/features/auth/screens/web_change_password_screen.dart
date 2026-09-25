@@ -63,7 +63,7 @@ class _WebChangePasswordContentState
   /// signing in with it first.
   Future<void> _submit() async {
     if (_currentController.text.isEmpty) {
-      _toast(_t('Enter your password.', 'הזינו סיסמה.'), error: true);
+      _toast(_t('Enter your password.', 'הזינו סיסמה'), error: true);
       return;
     }
     if (_newController.text.length < 8) {
@@ -78,7 +78,7 @@ class _WebChangePasswordContentState
     }
     if (_newController.text != _confirmController.text) {
       _toast(
-        _t('Passwords do not match', 'הסיסמאות אינן תואמות.'),
+        _t('Passwords do not match', 'הסיסמאות אינן תואמות'),
         error: true,
       );
       return;
@@ -261,7 +261,7 @@ class _WebChangePasswordContentState
           const SizedBox(height: 32),
           _buildPasswordField(
             label: _t('Current Password', 'סיסמה נוכחית'),
-            hint: _t('Enter current password', 'הזינו את הסיסמה הנוכחית'),
+            hint: _t('Enter current password', 'הזינו סיסמה נוכחית'),
             controller: _currentController,
             obscure: _obscureCurrent,
             onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),

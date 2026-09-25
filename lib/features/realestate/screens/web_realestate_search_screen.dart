@@ -948,7 +948,7 @@ class _WebRealEstateSearchContentState
                           if (l.sqm != null)
                             _specItem(
                               IconsaxPlusLinear.ruler,
-                              _t('${l.sqm} m²', '${l.sqm} מ"ר'),
+                              _t('${l.sqm} m²', '${l.sqm} מ״ר'),
                             ),
                           if (l.rooms != null)
                             _specItem(

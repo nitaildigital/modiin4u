@@ -75,7 +75,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                       AppColors.success,
                     ),
                     const SizedBox(width: 16),
-                    _StatChip('סה"כ הסכמים', '${list.length}', AppColors.navy),
+                    _StatChip('סה״כ הסכמים', '${list.length}', AppColors.navy),
                   ],
                 ),
               );
@@ -734,7 +734,7 @@ class _AgreementEditorDialogState
                         children: [
                           FilterChip(
                             label: Text(
-                              'כולל מע"מ',
+                              'כולל מע״מ',
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 12,

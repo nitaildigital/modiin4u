@@ -97,7 +97,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                     ),
                     const SizedBox(width: 14),
                     _StatChip(
-                      'סה"כ שנתי',
+                      'סה״כ שנתי',
                       '₪${yearTotal.toStringAsFixed(0)}',
                       AppColors.success,
                     ),

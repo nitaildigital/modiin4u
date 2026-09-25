@@ -161,7 +161,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    _StatChip('סה"כ Flags', '${list.length}', AppColors.navy),
+                    _StatChip('סה״כ Flags', '${list.length}', AppColors.navy),
                     const SizedBox(width: 16),
                     _StatChip('מופעלים', '$enabled', AppColors.success),
                     const SizedBox(width: 16),

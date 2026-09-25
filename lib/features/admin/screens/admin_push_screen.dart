@@ -89,7 +89,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                       ),
                       const SizedBox(width: 16),
                       _StatChip(
-                        'סה"כ נמסרו',
+                        'סה״כ נמסרו',
                         _formatNumber(totalDelivered),
                         Icons.check_circle,
                         AppColors.gold,

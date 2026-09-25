@@ -123,7 +123,7 @@ class _WebNeighborhoodDetailContentState
                             'This address does not match a neighbourhood in the directory.',
                             'הכתובת הזו לא תואמת שכונה במדריך.',
                           ),
-                          actionLabel: _t('Back to Real Estate', 'חזרה לנדל"ן'),
+                          actionLabel: _t('Back to Real Estate', 'חזרה לנדל״ן'),
                           onAction: () => context.go('/realestate'),
                         )
                       : _buildBody(n),
@@ -1047,7 +1047,7 @@ class _PropertyCardWidgetState extends State<_PropertyCardWidget> {
                           if (l.sqm != null) ...[
                             _miniStat(
                               IconsaxPlusLinear.maximize_3,
-                              _t('${l.sqm} m²', '${l.sqm} מ"ר'),
+                              _t('${l.sqm} m²', '${l.sqm} מ״ר'),
                             ),
                             const SizedBox(width: 24),
                           ],

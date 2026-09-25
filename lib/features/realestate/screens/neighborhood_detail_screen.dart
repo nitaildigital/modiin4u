@@ -596,7 +596,7 @@ class _ListingCard extends StatelessWidget {
                     if (listing.sqm != null) ...[
                       _chip(
                         IconsaxPlusLinear.maximize_3,
-                        '${listing.sqm} מ"ר',
+                        '${listing.sqm} מ״ר',
                       ),
                       const SizedBox(width: 31),
                     ],

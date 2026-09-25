@@ -64,7 +64,7 @@ class _WebNewListingContentState extends ConsumerState<WebNewListingContent> {
     ('Hanhalim', 'הנחלים'),
     ('Avnei Chen', 'אבני חן'),
     ('Nofim', 'נופים'),
-    ('HaMaar', 'המע"ר'),
+    ('HaMaar', 'המע״ר'),
     ('HaKramim', 'הכרמים'),
     ('Moriah', 'מוריה'),
     ('HaPrachim', 'הפרחים'),
@@ -187,7 +187,7 @@ class _WebNewListingContentState extends ConsumerState<WebNewListingContent> {
             ),
             const SizedBox(width: 8),
             Text(
-              _t('Real Estate', 'נדל"ן'),
+              _t('Real Estate', 'נדל״ן'),
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 15,
@@ -271,10 +271,10 @@ class _WebNewListingContentState extends ConsumerState<WebNewListingContent> {
         const SizedBox(height: 20),
         _fieldRow([
           _FieldCard(
-            label: _t('Area (m²)', 'שטח (מ"ר)'),
+            label: _t('Area (m²)', 'שטח (מ״ר)'),
             child: _TextRow(
               controller: _sqmController,
-              placeholder: _t('m²', 'מ"ר'),
+              placeholder: _t('m²', 'מ״ר'),
               keyboardType: TextInputType.number,
             ),
           ),
@@ -305,7 +305,7 @@ class _WebNewListingContentState extends ConsumerState<WebNewListingContent> {
                 (v) => setState(() => _hasElevator = v),
               ),
               _buildFeatureChip(
-                _t('Protected room', 'ממ"ד'),
+                _t('Protected room', 'ממ״ד'),
                 _hasMamad,
                 (v) => setState(() => _hasMamad = v),
               ),

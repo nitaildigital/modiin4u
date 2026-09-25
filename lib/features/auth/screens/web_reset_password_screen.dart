@@ -68,7 +68,7 @@ class _WebResetPasswordContentState
     }
     if (_password.text != _confirm.text) {
       _toast(
-        _t('Passwords do not match', 'הסיסמאות אינן תואמות.'),
+        _t('Passwords do not match', 'הסיסמאות אינן תואמות'),
         error: true,
       );
       return;

@@ -59,7 +59,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                     const SizedBox(width: 12),
                     _StatChip('מסומנות', '$flagged', AppColors.error),
                     const SizedBox(width: 12),
-                    _StatChip('סה"כ', '${list.length}', AppColors.turquoise),
+                    _StatChip('סה״כ', '${list.length}', AppColors.turquoise),
                   ],
                 ),
               );

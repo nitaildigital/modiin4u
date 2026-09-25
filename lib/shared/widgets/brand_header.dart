@@ -213,7 +213,7 @@ class _BrandHeaderState extends ConsumerState<BrandHeader> {
                   const SizedBox(width: 8),
                   _HeroChip(Icons.map_outlined, 'מפה', () => context.go('/map')),
                   const SizedBox(width: 8),
-                  _HeroChip(Icons.apartment_outlined, 'נדל"ן', () => context.go('/realestate')),
+                  _HeroChip(Icons.apartment_outlined, 'נדל״ן', () => context.go('/realestate')),
                   const SizedBox(width: 8),
                   _HeroChip(Icons.engineering_outlined, 'מקצוענים', () => context.go('/businesses')),
                   const SizedBox(width: 8),

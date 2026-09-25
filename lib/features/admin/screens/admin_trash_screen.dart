@@ -287,7 +287,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                       children: [
                         _Col('פריט', flex: 3),
                         _Col('סוג', flex: 1),
-                        if (isWide) _Col('נמחק ע"י', flex: 2),
+                        if (isWide) _Col('נמחק ע״י', flex: 2),
                         if (isWide) _Col('תאריך מחיקה', flex: 2),
                         _Col('נמחק בעוד', flex: 1),
                         const SizedBox(width: 80),

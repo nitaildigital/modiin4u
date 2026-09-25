@@ -251,7 +251,7 @@ class _WebEventDetailContentState
         onAction: () => context.push('/login'),
       );
     } catch (_) {
-      if (mounted) _toast(_t('Could not save. Try again.', 'לא ניתן היה לשמור. נסו שוב.'));
+      if (mounted) _toast(_t('Could not save. Try again.', 'לא ניתן היה לעדכן. נסו שוב.'));
     }
   }
 

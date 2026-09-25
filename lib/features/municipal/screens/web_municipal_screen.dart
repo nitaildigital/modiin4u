@@ -57,7 +57,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
     ),
     _Service(
       label: _t('Public Institutions', 'מוסדות ציבור'),
-      blurb: _t('City hall, libraries, centres', 'עירייה, ספריות ומתנ"סים'),
+      blurb: _t('City hall, libraries, centres', 'עירייה, ספריות ומתנ״סים'),
       icon: IconsaxPlusLinear.bank,
     ),
     _Service(
@@ -276,7 +276,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
                 border: InputBorder.none,
                 hintText: _t(
                   'Search municipal services...',
-                  'חפשו שירותים עירוניים...',
+                  'חיפוש שירותי עירייה...',
                 ),
                 hintStyle: TextStyle(
                   fontFamily: AppFonts.inter,
@@ -484,7 +484,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
       title: _t('Upcoming Shabbat', 'שבת הקרובה'),
       body: [
         Text(
-          _t('Sep 18–19, 2026', 'י"ח–י"ט אלול, 18–19 בספטמבר'),
+          _t('Sep 18–19, 2026', 'י״ח–י״ט אלול, 18–19 בספטמבר'),
           style: TextStyle(
             fontFamily: AppFonts.inter,
             fontSize: 14,
@@ -610,7 +610,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _t('Municipal Services', 'שירותי העירייה'),
+              _t('Municipal Services', 'שירותי עירייה'),
               style: TextStyle(
                 fontFamily: AppFonts.nunito,
                 fontSize: 28,

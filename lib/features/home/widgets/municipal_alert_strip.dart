@@ -41,7 +41,7 @@ class _MunicipalAlertStripState extends State<MunicipalAlertStrip> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'עבודות תשתית ברחוב הפלמ"ח — חסימה חלקית עד 15.8',
+                  'עבודות תשתית ברחוב הפלמ״ח — חסימה חלקית עד 15.8',
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: const Color(0xFF5C4A1E), height: 1.3),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

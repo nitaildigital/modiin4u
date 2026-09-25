@@ -51,19 +51,19 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent> {
     _MenuItem(
       IconsaxPlusLinear.notification,
       _t('Notifications', 'התראות'),
-      _t('Manage your alerts', 'ניהול ההתראות שלכם'),
+      _t('Manage your alerts', 'ניהול ההתראות שלך'),
       '/notifications',
     ),
     _MenuItem(
       IconsaxPlusLinear.heart,
       _t('Favorites', 'מועדפים'),
-      _t('Saved places & listings', 'מקומות ומודעות ששמרתם'),
+      _t('Saved places & listings', 'מקומות ומודעות שנשמרו'),
       '/favorites',
     ),
     _MenuItem(
       IconsaxPlusLinear.setting_2,
       _t('Settings', 'הגדרות'),
-      _t('App preferences', 'העדפות האפליקציה'),
+      _t('App preferences', 'העדפות אפליקציה'),
       '/settings',
     ),
     _MenuItem(
@@ -75,7 +75,7 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent> {
     _MenuItem(
       IconsaxPlusLinear.building_3,
       _t('My Apartments', 'הדירות שלי'),
-      _t('Properties you posted', 'נכסים שפרסמתם'),
+      _t('Properties you posted', 'הנכסים שפרסמתם'),
       '/my-apartments',
     ),
     _MenuItem(
@@ -247,7 +247,7 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent> {
           const SizedBox(width: 6),
           Text(
             isBroker
-                ? _t('Real Estate Broker', 'מתווך נדל"ן')
+                ? _t('Real Estate Broker', 'מתווך נדל״ן')
                 : _t('Resident', 'תושב'),
             style: TextStyle(
               fontFamily: AppFonts.inter,
@@ -306,7 +306,7 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _t('Account', 'החשבון'),
+          _t('Account', 'חשבון'),
           style: TextStyle(
             fontFamily: AppFonts.nunito,
             fontSize: 28,

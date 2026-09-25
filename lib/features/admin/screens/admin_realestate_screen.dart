@@ -364,7 +364,7 @@ class _ListingTable extends StatelessWidget {
               _Col('שכונה', flex: 2),
               _Col('סוג', flex: 1),
               _Col('חדרים', flex: 1),
-              if (isWide) _Col('מ"ר', flex: 1),
+              if (isWide) _Col('מ״ר', flex: 1),
               _Col('מחיר', flex: 2),
               _Col('סטטוס', flex: 1),
               if (isWide) _Col('צפיות', flex: 1),
@@ -933,7 +933,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                         children: [
                           Expanded(child: _field('חדרים', _rooms, hint: '4')),
                           const SizedBox(width: 12),
-                          Expanded(child: _field('מ"ר', _sqm, hint: '110')),
+                          Expanded(child: _field('מ״ר', _sqm, hint: '110')),
                         ],
                       ),
                       Row(
@@ -942,7 +942,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              'סה"כ קומות',
+                              'סה״כ קומות',
                               _totalFloors,
                               hint: '6',
                             ),
@@ -1004,7 +1004,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                             (v) => setState(() => _hasStorage = v),
                           ),
                           _toggle(
-                            'ממ"ד',
+                            'ממ״ד',
                             _hasMamad,
                             (v) => setState(() => _hasMamad = v),
                           ),

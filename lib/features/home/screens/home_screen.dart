@@ -332,7 +332,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
     final categories = [
       ('מסעדות', IconsaxPlusLinear.reserve, '/restaurants'),
       ('אירועים', IconsaxPlusLinear.calendar, '/events'),
-      ('נדל"ן', IconsaxPlusLinear.house_2, '/realestate'),
+      ('נדל״ן', IconsaxPlusLinear.house_2, '/realestate'),
       ('חדשות', IconsaxPlusLinear.note, '/news'),
       ('מבצעים', IconsaxPlusLinear.discount_shape, '/deals'),
     ];

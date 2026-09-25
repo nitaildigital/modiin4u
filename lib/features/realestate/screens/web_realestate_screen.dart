@@ -369,7 +369,7 @@ class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
         children: [
           const SizedBox(height: 48),
           Text(
-            _t('Browse Real Estate', 'חפשו נדל"ן'),
+            _t('Browse Real Estate', 'חפשו נדל״ן'),
             style: TextStyle(
               fontFamily: AppFonts.nunito,
               fontSize: 28,
@@ -1357,7 +1357,7 @@ class _ListingCardState extends State<_ListingCard> {
                         if (l.sqm != null) ...[
                           _spec(
                             IconsaxPlusLinear.ruler,
-                            _t('${l.sqm} m²', '${l.sqm} מ"ר'),
+                            _t('${l.sqm} m²', '${l.sqm} מ״ר'),
                           ),
                           const SizedBox(width: 31),
                         ],

@@ -390,7 +390,7 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent> {
 
   Widget _buildAccountCard() {
     return _buildCard(
-      title: _t('Account', 'החשבון'),
+      title: _t('Account', 'חשבון'),
       children: [
         _ActionRow(
           icon: Icons.lock_outline,

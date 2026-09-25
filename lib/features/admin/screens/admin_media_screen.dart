@@ -62,7 +62,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                 child: Row(
                   children: [
                     _StatChip(
-                      'סה"כ קבצים',
+                      'סה״כ קבצים',
                       '${list.length}',
                       AppColors.turquoise,
                     ),
@@ -603,7 +603,7 @@ class _MediaTable extends StatelessWidget {
               _Col('סוג', flex: 1),
               if (isWide) _Col('גודל', flex: 1),
               if (isWide) _Col('ממדים', flex: 1),
-              _Col('הועלה ע"י', flex: 1),
+              _Col('הועלה ע״י', flex: 1),
               const SizedBox(width: 40),
             ],
           ),

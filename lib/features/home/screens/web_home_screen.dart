@@ -233,7 +233,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
   List<(String, String)> get _navLinksLocalized => [
     (_t('Businesses', 'עסקים'), '/businesses'),
     (_t('Restaurants', 'מסעדות'), '/restaurants'),
-    (_t('Real Estate', 'נדל"ן'), '/realestate'),
+    (_t('Real Estate', 'נדל״ן'), '/realestate'),
     (_t('Events', 'אירועים'), '/events'),
     (_t('Deals', 'מבצעים'), '/deals'),
     (_t('News', 'חדשות'), '/news'),
@@ -275,7 +275,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              _t('Businesses, news, events, real estate and more — all in one smart city platform.', 'עסקים, חדשות, אירועים, נדל"ן ועוד — הכל בפלטפורמה עירונית חכמה אחת.'),
+              _t('Businesses, news, events, real estate and more — all in one smart city platform.', 'עסקים, חדשות, אירועים, נדל״ן ועוד — הכל בפלטפורמה עירונית חכמה אחת.'),
               textAlign: TextAlign.center,
               style: TextStyle(fontFamily: AppFonts.inter, 
                 fontSize: 16,
@@ -317,7 +317,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
                   onSubmitted: (_) => _onSearch(),
                   style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF1F1F1F)),
                   decoration: InputDecoration(
-                    hintText: _t('What are you looking for today?', 'מה אתה מחפש?'),
+                    hintText: _t('What are you looking for today?', 'מה אתה מחפש היום?'),
                     hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF4F4F4F)),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
@@ -362,7 +362,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
       (_t('Businesses', 'עסקים'), IconsaxPlusLinear.shop),
       (_t('News', 'חדשות'), IconsaxPlusLinear.note),
       (_t('Map', 'מפה'), IconsaxPlusLinear.map),
-      (_t('Real Estate', 'נדל"ן'), IconsaxPlusLinear.house_2),
+      (_t('Real Estate', 'נדל״ן'), IconsaxPlusLinear.house_2),
       (_t('Professionals', 'בעלי מקצוע'), IconsaxPlusLinear.people),
       (_t('Deals', 'מבצעים'), IconsaxPlusLinear.discount_shape),
     ];
@@ -414,7 +414,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
       (_t('Professionals', 'בעלי מקצוע'), IconsaxPlusLinear.user, _t('Experts & Services', 'מומחים ושירותים'), '/businesses'),
       (_t('Maps', 'מפות'), IconsaxPlusLinear.map, _t('Explore Modiin', 'גלו את מודיעין'), '/map'),
       (_t('Businesses', 'עסקים'), IconsaxPlusLinear.shop, _t('All Businesses in Modiin', 'כל העסקים במודיעין'), '/businesses'),
-      (_t('Real Estate', 'נדל"ן'), IconsaxPlusLinear.house_2, _t('Apartments & Projects', 'דירות ופרויקטים'), '/realestate'),
+      (_t('Real Estate', 'נדל״ן'), IconsaxPlusLinear.house_2, _t('Apartments & Projects', 'דירות ופרויקטים'), '/realestate'),
     ];
 
     return _SectionWrapper(
@@ -877,7 +877,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
   String _layerLabel(String layer) => switch (layer) {
     'Businesses' => _t('Businesses', 'עסקים'),
     'Events' => _t('Events', 'אירועים'),
-    _ => _t('Real Estate', 'נדל"ן'),
+    _ => _t('Real Estate', 'נדל״ן'),
   };
 
   /// The map, at the pins the map page shows.

@@ -83,7 +83,7 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
       return;
     }
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showError(_t('Passwords do not match', 'הסיסמאות אינן תואמות.'));
+      _showError(_t('Passwords do not match', 'הסיסמאות אינן תואמות'));
       return;
     }
     if (!_agreedToTerms) {
@@ -361,10 +361,10 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
                   type: AccountType.broker,
                   icon: Icons.business_outlined,
                   iconColor: const Color(0xFFB0B0B0),
-                  title: _t('Real Estate Broker', 'מתווך נדל"ן'),
+                  title: _t('Real Estate Broker', 'מתווך נדל״ן'),
                   subtitle: _t(
                     'I am a licensed real estate broker.',
-                    'אני מתווך נדל"ן מוסמך.',
+                    'אני מתווך נדל״ן מוסמך.',
                   ),
                 ),
               ),
