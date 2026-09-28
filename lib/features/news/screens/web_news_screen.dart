@@ -35,7 +35,10 @@ const _kFirstPage = 12;
 const _kPageStep = 9;
 
 class WebNewsContent extends ConsumerStatefulWidget {
-  const WebNewsContent({super.key});
+  /// Set when the page was reached through a category in the navbar menu.
+  final String? categoryId;
+
+  const WebNewsContent({super.key, this.categoryId});
 
   @override
   ConsumerState<WebNewsContent> createState() => _WebNewsContentState();
@@ -95,9 +98,26 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
 
   @override
   Widget build(BuildContext context) {
-    // Both derive from the same fetch, so they resolve together.
-    final featured = ref.watch(featuredArticleProvider);
-    final rest = ref.watch(restOfArticlesProvider);
+    // Both derive from the same fetch, so they resolve together. Narrowed
+    // to one category when the navbar menu sent us here, in which case the
+    // hero is that category's own lead rather than the site's.
+    final catId = widget.categoryId;
+    final AsyncValue<Article?> featured;
+    final AsyncValue<List<Article>> rest;
+    if (catId == null) {
+      featured = ref.watch(featuredArticleProvider);
+      rest = ref.watch(restOfArticlesProvider);
+    } else {
+      final all = ref.watch(articlesByCategoryProvider(catId));
+      featured = all.whenData(
+        (list) => list.isEmpty ? null : pickHeroArticle(list),
+      );
+      rest = all.whenData((list) {
+        if (list.isEmpty) return const <Article>[];
+        final hero = pickHeroArticle(list);
+        return list.where((a) => a.id != hero.id).toList();
+      });
+    }
 
     final Widget content;
     if (featured.hasError || rest.hasError) {
@@ -109,14 +129,18 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
           'בדקו את החיבור לאינטרנט ונסו שוב.',
         ),
         actionLabel: _t('Try again', 'נסו שוב'),
-        onAction: () => ref.invalidate(publishedArticlesProvider),
+        onAction: () => catId == null
+            ? ref.invalidate(publishedArticlesProvider)
+            : ref.invalidate(articlesByCategoryProvider(catId)),
       );
     } else if (!featured.hasValue || !rest.hasValue) {
       content = _buildSkeleton();
     } else if (featured.value == null) {
       content = _buildNotice(
         icon: IconsaxPlusLinear.note,
-        title: _t('No articles published yet', 'עדיין לא פורסמו כתבות'),
+        title: catId == null
+            ? _t('No articles published yet', 'עדיין לא פורסמו כתבות')
+            : _t('Nothing in this category yet', 'אין עדיין כתבות בקטגוריה הזו'),
         body: _t(
           'Stories will appear here as the newsroom publishes them.',
           'כתבות יופיעו כאן עם פרסומן.',

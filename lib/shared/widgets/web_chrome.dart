@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
+import '../providers/nav_categories_provider.dart';
 
 /// How the city office is reached. These were already published in the
 /// footer as plain text; they are named here so the header's "Contact Us"
@@ -30,12 +33,22 @@ const _kBorder = Color(0xFFE7E7E7);
 /// backs two different links.
 class WebNavItem {
   final String id, label, route;
-  final bool hasDropdown;
+
+  /// The category scope this link's menu lists — 'article' or 'business'.
+  /// Null for a link that simply goes somewhere.
+  final String? menuScope;
+
+  /// Where a menu entry leads, given a category id.
+  final String Function(String categoryId)? menuRoute;
+
+  bool get hasDropdown => menuScope != null;
+
   const WebNavItem({
     required this.id,
     required this.label,
     required this.route,
-    this.hasDropdown = false,
+    this.menuScope,
+    this.menuRoute,
   });
 }
 
@@ -53,13 +66,31 @@ List<WebNavItem> webNavItems(bool isHebrew, {bool short = false}) {
       short ? t(en, he) : t('$en in Modiin', '$he במודיעין');
 
   return [
-    WebNavItem(id: 'professionals', label: t('Professionals', 'בעלי מקצוע'), route: '/businesses', hasDropdown: true),
-    WebNavItem(id: 'news', label: t('Modiin News', 'חדשות מודיעין'), route: '/news', hasDropdown: true),
+    WebNavItem(
+      id: 'professionals',
+      label: t('Professionals', 'בעלי מקצוע'),
+      route: '/businesses',
+      menuScope: 'business',
+      menuRoute: (id) => '/businesses/category/$id',
+    ),
+    WebNavItem(
+      id: 'news',
+      label: t('Modiin News', 'חדשות מודיעין'),
+      route: '/news',
+      menuScope: 'article',
+      menuRoute: (id) => '/news/category/$id',
+    ),
     WebNavItem(id: 'events', label: t('Events', 'אירועים'), route: '/events'),
     WebNavItem(id: 'deals', label: t('Deals', 'מבצעים'), route: '/deals'),
     WebNavItem(id: 'realestate', label: place('Real Estate', 'נדל״ן'), route: '/realestate'),
     WebNavItem(id: 'restaurants', label: place('Restaurants', 'מסעדות'), route: '/restaurants'),
-    WebNavItem(id: 'businesses', label: place('Businesses', 'עסקים'), route: '/businesses', hasDropdown: true),
+    WebNavItem(
+      id: 'businesses',
+      label: place('Businesses', 'עסקים'),
+      route: '/businesses',
+      menuScope: 'business',
+      menuRoute: (id) => '/businesses/category/$id',
+    ),
   ];
 }
 
@@ -92,9 +123,105 @@ class WebSection extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
+/// The header an auth page wears instead of the site's navigation.
+///
+/// Sign-in, sign-up and "choose a new password" each carried the full navbar
+/// — seven links, three category menus and a "Contact Us" button — above a
+/// single card asking for an e-mail address. On the way to the control centre
+/// it read as the wrong screen entirely: a person who asked for the admin
+/// panel was handed what looked like the front page of the public site.
+///
+/// The logo stays, and leads back to the site, so there is a way out and the
+/// page still says whose it is.
+class WebAuthHeader extends StatelessWidget {
+  final bool isHebrew;
+  final VoidCallback onToggleLanguage;
+
+  const WebAuthHeader({
+    super.key,
+    required this.isHebrew,
+    required this.onToggleLanguage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 80,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: _kBorder)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final gutter = ((c.maxWidth - 1600) / 2).clamp(24.0, 160.0);
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: gutter),
+            child: Row(
+              children: [
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => context.go('/'),
+                    child: SvgPicture.asset(
+                      'assets/images/logo_white.svg',
+                      width: 90,
+                      height: 48,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.midBlue,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: onToggleLanguage,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: _kBorder),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            IconsaxPlusLinear.global,
+                            size: 16,
+                            color: Color(0xFF0F161E),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            isHebrew ? 'עב | EN' : 'EN | עב',
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 13,
+                              color: const Color(0xFF0F161E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
 // STICKY NAVBAR — 1920 × 80
 // ─────────────────────────────────────────────
-class WebNavbar extends StatelessWidget {
+class WebNavbar extends StatefulWidget {
   /// Which [WebNavItem.id] to underline, or null on pages that aren't in the nav.
   final String? activeId;
   final bool isHebrew;
@@ -110,9 +237,97 @@ class WebNavbar extends StatelessWidget {
   });
 
   @override
+  State<WebNavbar> createState() => _WebNavbarState();
+}
+
+class _WebNavbarState extends State<WebNavbar> {
+  /// The one menu that is open, and where on screen to draw it.
+  ///
+  /// The bar owns this rather than each link owning its own. When every link
+  /// had its own menu, running the pointer along the row opened all three and
+  /// left them stacked on top of one another. One panel, one owner.
+  ///
+  /// It is drawn through an [OverlayPortal] because the bar is the first
+  /// child of the page's Column: anything it paints itself is painted over by
+  /// the content below it, so the menu came out sliced off at the bar's edge.
+  final _portal = OverlayPortalController();
+  WebNavItem? _open;
+  Offset _menuAt = Offset.zero;
+
+  /// Leaving the bar should close the menu, but moving *into* the menu leaves
+  /// the bar too. So a close is scheduled and cancelled if the pointer turns
+  /// up in either place a moment later.
+  Timer? _closing;
+
+  @override
+  void dispose() {
+    _closing?.cancel();
+    super.dispose();
+  }
+
+  void _openFor(WebNavItem item, BuildContext itemContext) {
+    final box = itemContext.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    _closing?.cancel();
+    setState(() {
+      _open = item;
+      _menuAt = box.localToGlobal(Offset(0, box.size.height));
+    });
+    if (!_portal.isShowing) _portal.show();
+  }
+
+  void _scheduleClose() {
+    _closing?.cancel();
+    _closing = Timer(const Duration(milliseconds: 120), () {
+      if (!mounted) return;
+      setState(() => _open = null);
+      _portal.hide();
+    });
+  }
+
+  void _closeNow() {
+    _closing?.cancel();
+    if (_open != null || _portal.isShowing) {
+      setState(() => _open = null);
+      _portal.hide();
+    }
+  }
+
+  bool get isHebrew => widget.isHebrew;
+  String? get activeId => widget.activeId;
+  VoidCallback get onToggleLanguage => widget.onToggleLanguage;
+  VoidCallback? get onContactTap => widget.onContactTap;
+
+  @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) => _bar(context, constraints.maxWidth),
+    return OverlayPortal(
+      controller: _portal,
+      overlayChildBuilder: (overlayContext) {
+        final item = _open;
+        if (item == null) return const SizedBox.shrink();
+        return Positioned(
+          left: _menuAt.dx,
+          top: _menuAt.dy,
+          child: MouseRegion(
+            onEnter: (_) => _closing?.cancel(),
+            onExit: (_) => _scheduleClose(),
+            child: _NavMenuPanel(
+              item: item,
+              isHebrew: isHebrew,
+              onPick: (route) {
+                _closeNow();
+                context.go(route);
+              },
+            ),
+          ),
+        );
+      },
+      child: MouseRegion(
+        onExit: (_) => _scheduleClose(),
+        child: LayoutBuilder(
+          builder: (context, constraints) => _bar(context, constraints.maxWidth),
+        ),
+      ),
     );
   }
 
@@ -153,11 +368,19 @@ class WebNavbar extends StatelessWidget {
               child: Row(
                 children: webNavItems(isHebrew, short: width < 1700)
                     .map(
-                      (item) => _NavLinkButton(
-                        label: item.label,
-                        isActive: item.id == activeId,
-                        hasDropdown: item.hasDropdown,
-                        onTap: () => context.go(item.route),
+                      (item) => Builder(
+                        builder: (itemContext) => _NavLinkButton(
+                          label: item.label,
+                          isActive: item.id == activeId,
+                          item: item,
+                          onHover: item.hasDropdown
+                              ? () => _openFor(item, itemContext)
+                              : _closeNow,
+                          onTap: () {
+                            _closeNow();
+                            context.go(item.route);
+                          },
+                        ),
                       ),
                     )
                     .toList(),
@@ -216,9 +439,18 @@ class WebNavbar extends StatelessWidget {
 
 class _NavLinkButton extends StatefulWidget {
   final String label;
-  final bool isActive, hasDropdown;
+  final bool isActive;
+  final WebNavItem item;
+  final VoidCallback onHover;
   final VoidCallback onTap;
-  const _NavLinkButton({required this.label, this.isActive = false, this.hasDropdown = false, required this.onTap});
+
+  const _NavLinkButton({
+    required this.label,
+    this.isActive = false,
+    required this.item,
+    required this.onHover,
+    required this.onTap,
+  });
 
   @override
   State<_NavLinkButton> createState() => _NavLinkButtonState();
@@ -231,23 +463,30 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
+      onEnter: (_) {
+        setState(() => _hovered = true);
+        widget.onHover();
+      },
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
           height: 80,
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(
-              color: widget.isActive ? AppColors.midBlue : Colors.transparent,
-              width: 3,
-            )),
+            border: Border(
+              bottom: BorderSide(
+                color: widget.isActive ? AppColors.midBlue : Colors.transparent,
+                width: 3,
+              ),
+            ),
           ),
           child: Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
               decoration: BoxDecoration(
-                color: _hovered && !widget.isActive ? Colors.black.withValues(alpha: 0.04) : Colors.transparent,
+                color: _hovered && !widget.isActive
+                    ? Colors.black.withValues(alpha: 0.04)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(40),
               ),
               child: Row(
@@ -256,22 +495,119 @@ class _NavLinkButtonState extends State<_NavLinkButton> {
                   Flexible(
                     child: Text(
                       widget.label,
-                      style: TextStyle(fontFamily: AppFonts.inter, 
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
                         fontSize: 15,
-                        fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w500,
-                        color: widget.isActive ? AppColors.midBlue : const Color(0xFF0F161E),
+                        fontWeight:
+                            widget.isActive ? FontWeight.w600 : FontWeight.w500,
+                        color: widget.isActive
+                            ? AppColors.midBlue
+                            : const Color(0xFF0F161E),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (widget.hasDropdown) ...[
+                  if (widget.item.hasDropdown) ...[
                     const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF21272A)),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: Color(0xFF21272A),
+                    ),
                   ],
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The panel under a nav link, listing that link's categories.
+///
+/// Shaped after the site this replaces: names only, no counts, generous rows,
+/// and nothing above them. Counts were an early flourish of mine — the real
+/// menu does not carry them and they made a plain list look like a report.
+class _NavMenuPanel extends ConsumerWidget {
+  final WebNavItem item;
+  final bool isHebrew;
+  final void Function(String route) onPick;
+
+  const _NavMenuPanel({
+    required this.item,
+    required this.isHebrew,
+    required this.onPick,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cats = ref.watch(navCategoriesProvider(item.menuScope!));
+    final list = cats.valueOrNull ?? const <NavCategory>[];
+    if (list.isEmpty) return const SizedBox.shrink();
+
+    return Material(
+      color: Colors.white,
+      elevation: 8,
+      shadowColor: Colors.black.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 260,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _kBorder),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final c in list)
+              _NavMenuRow(
+                label: c.name,
+                onTap: () => onPick(item.menuRoute!(c.id)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavMenuRow extends StatefulWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _NavMenuRow({required this.label, required this.onTap});
+
+  @override
+  State<_NavMenuRow> createState() => _NavMenuRowState();
+}
+
+class _NavMenuRowState extends State<_NavMenuRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          color: _hovered ? const Color(0xFFF3F5F8) : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: const Color(0xFF0F161E),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ),

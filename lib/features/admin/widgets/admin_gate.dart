@@ -35,8 +35,14 @@ class AdminGate extends ConsumerWidget {
     }
 
     if (user == null) {
+      // Carry the destination through the sign-in. Without it, somebody who
+      // opens /admin is sent to the resident login, signs in, and lands on
+      // the resident home page — having to know to type /admin a second
+      // time. There is one account system and administration is a role on
+      // the account, so the login screen is the right one; forgetting the
+      // errand is not.
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => context.pushReplacement('/login'),
+        (_) => context.pushReplacement('/login?next=/admin'),
       );
       return const SizedBox.shrink();
     }

@@ -9,6 +9,7 @@ import '../models/business.dart';
 import '../providers/business_providers.dart';
 import '../widgets/business_card.dart';
 import 'web_business_list_screen.dart';
+import '../../../shared/providers/nav_categories_provider.dart';
 
 /// Businesses in one category, or all of them when [categoryId] is null.
 class BusinessListScreen extends ConsumerWidget {
@@ -17,12 +18,23 @@ class BusinessListScreen extends ConsumerWidget {
 
   const BusinessListScreen({super.key, this.categoryId, required this.title});
 
+  /// The category's own name, or whatever the caller passed if the row
+  /// cannot be read. The name lives on the row; the link only carries an id.
+  String _title(WidgetRef ref) {
+    final id = categoryId;
+    if (id == null) return title;
+    return ref.watch(categoryNameProvider(id)).valueOrNull ?? title;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) {
-          return WebBusinessListContent(categoryId: categoryId, title: title);
+          return WebBusinessListContent(
+            categoryId: categoryId,
+            title: _title(ref),
+          );
         }
         return _buildMobile(context, ref);
       },
@@ -47,7 +59,7 @@ class BusinessListScreen extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          title,
+          _title(ref),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 18,

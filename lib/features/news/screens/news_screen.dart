@@ -14,14 +14,17 @@ import 'web_news_screen.dart';
 /// News feed – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News web layout; mobile keeps the app UI.
 class NewsScreen extends StatelessWidget {
-  const NewsScreen({super.key});
+  /// Set when the navbar's news menu named a category.
+  final String? categoryId;
+
+  const NewsScreen({super.key, this.categoryId});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) {
-          return const WebNewsContent();
+          return WebNewsContent(categoryId: categoryId);
         }
         return const _MobileNewsContent();
       },

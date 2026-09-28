@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/supabase/supabase_config.dart';
+
 import '../models/article.dart';
 import '../repositories/article_repository.dart';
 
@@ -12,6 +14,41 @@ final publishedArticlesProvider = FutureProvider<List<Article>>((ref) async {
       await ref.watch(articleRepositoryProvider).fetchAll(status: 'published');
   return rows.map(Article.fromJson).toList();
 });
+
+/// The articles filed under one category.
+///
+/// `entity_categories` is a polymorphic link table: `entity_id` carries an
+/// article, a business or an event depending on `entity_type`, so there is no
+/// foreign key to `articles` and PostgREST cannot join the two. It answers
+/// PGRST200 if asked. So the ids are fetched on their own and matched against
+/// the articles the page has already loaded — which costs one small query
+/// rather than a second copy of 667 rows.
+final _articleIdsInCategoryProvider =
+    FutureProvider.family<Set<String>, String>((ref, categoryId) async {
+      final rows = await SupabaseConfig.client
+          .from('entity_categories')
+          .select('entity_id')
+          .eq('entity_type', 'article')
+          .eq('category_id', categoryId);
+      return {
+        for (final r in List<Map<String, dynamic>>.from(rows))
+          r['entity_id'] as String,
+      };
+    });
+
+/// Published articles in one category, newest first.
+///
+/// The import carried the articles and left their filing behind, so this had
+/// nothing to read until the categories were brought across from the client's
+/// site. See `tool/import_article_categories.py`.
+final articlesByCategoryProvider =
+    FutureProvider.family<List<Article>, String>((ref, categoryId) async {
+      final ids = await ref.watch(
+        _articleIdsInCategoryProvider(categoryId).future,
+      );
+      final all = await ref.watch(publishedArticlesProvider.future);
+      return all.where((a) => ids.contains(a.id)).toList();
+    });
 
 /// The article shown in the hero slot.
 ///
