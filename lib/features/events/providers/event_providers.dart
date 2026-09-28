@@ -14,12 +14,18 @@ final eventsProvider = FutureProvider<List<Event>>((ref) async {
   return rows.map(Event.fromJson).toList();
 });
 
-/// Events still to come, earliest first. Falls back to everything when the
-/// whole set is in the past, so the screen is never blank without reason.
+/// Events still to come, earliest first — and only those.
+///
+/// This used to fall back to every event when all of them had passed, "so the
+/// screen is never blank without reason". But the home page draws this under
+/// the heading "Upcoming Events", so when the last event went by in early
+/// September the page began presenting past events as upcoming ones. An
+/// empty section says something true; a full one with the wrong heading
+/// does not. The home page hides the section when this is empty, the way it
+/// already does for deals and apartments.
 final upcomingEventsProvider = FutureProvider<List<Event>>((ref) async {
   final events = await ref.watch(eventsProvider.future);
-  final upcoming = events.where((e) => !e.hasPassed).toList();
-  return upcoming.isEmpty ? events : upcoming;
+  return events.where((e) => !e.hasPassed).toList();
 });
 
 final eventByIdProvider = FutureProvider.family<Event, String>((ref, id) async {

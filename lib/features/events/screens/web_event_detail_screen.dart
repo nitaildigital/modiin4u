@@ -10,8 +10,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_chrome.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../../favorites/providers/favorite_providers.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/event.dart';
@@ -29,8 +27,6 @@ const _kBorder = Color(0xFFE7E7E7);
 const _kGreyText = Color(0xFF5F5E5A);
 const _kBodyText = Color(0xFF3D3D3D);
 const _kIconGrey = Color(0xFF6D6D6D);
-const _kGoingBg = Color(0xFFE6F6E9);
-const _kGoingFg = Color(0xFF31AC4E);
 const _kPinPurple = Color(0xFF9032E1);
 
 /// The desktop event page.
@@ -55,7 +51,6 @@ class WebEventDetailContent extends ConsumerStatefulWidget {
 class _WebEventDetailContentState
     extends ConsumerState<WebEventDetailContent> {
   bool _isHebrew = false;
-  bool _rsvpBusy = false;
   final _carousel = ScrollController();
 
   String _t(String en, String he) => _isHebrew ? he : en;
@@ -238,24 +233,6 @@ class _WebEventDetailContentState
   // ─────────────────────────────────────────────
   // SAVE · SHARE
   // ─────────────────────────────────────────────
-  /// Saving needs an account, so a signed-out tap offers one rather than
-  /// quietly doing nothing. Both Save controls on the page go through here.
-  Future<void> _toggleSave(Event event) async {
-    try {
-      final signedIn = await ref
-          .read(favoritesProvider.notifier)
-          .toggle(FavoriteKind.event, event.id);
-      if (signedIn || !mounted) return;
-      _toast(
-        _t('Sign in to save this event', 'התחברו כדי לשמור את האירוע'),
-        actionLabel: _t('Sign in', 'התחברות'),
-        onAction: () => context.push('/login'),
-      );
-    } catch (_) {
-      if (mounted) _toast(_t('Could not save. Try again.', 'לא ניתן היה לעדכן. נסו שוב.'));
-    }
-  }
-
   /// Share sent nothing at all — the button was `onTap: () {}`.
   void _share(Event event) {
     final place = _place(event);
@@ -268,21 +245,6 @@ class _WebEventDetailContentState
         event.shortDescription,
       ].whereType<String>().where((s) => s.isNotEmpty).join('\n'),
       subject: event.title,
-    );
-  }
-
-  void _toast(String message, {String? actionLabel, VoidCallback? onAction}) {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        action: actionLabel == null || onAction == null
-            ? null
-            : SnackBarAction(label: actionLabel, onPressed: onAction),
-      ),
     );
   }
 
@@ -381,8 +343,7 @@ class _WebEventDetailContentState
               children: [
                 _heroPillButton(IconsaxPlusLinear.share, _t('Share', 'שיתוף'),
                     () => _share(event)),
-                const SizedBox(width: 12),
-                _heroSaveButton(event),
+                // Save sat beside it; it needs an account, which is the app's.
               ],
             ),
           ),
@@ -468,19 +429,6 @@ class _WebEventDetailContentState
     );
   }
 
-  /// The hero's Save pill. It held a local `bool`, so it forgot the event on
-  /// the next load; it reads and writes `favorites` now.
-  Widget _heroSaveButton(Event event) {
-    final saved = ref.watch(
-      isFavoriteProvider((kind: FavoriteKind.event, id: event.id)),
-    );
-    return _heroPillButton(
-      saved ? IconsaxPlusBold.heart : IconsaxPlusLinear.heart,
-      saved ? _t('Saved', 'נשמר') : _t('Save', 'שמירה'),
-      () => _toggleSave(event),
-    );
-  }
-
   // ─────────────────────────────────────────────
   // BODY — 1011 content column + 463 RSVP card
   // ─────────────────────────────────────────────
@@ -521,12 +469,6 @@ class _WebEventDetailContentState
   Widget _buildRsvpCard(Event event) {
     final time = _timeRange(event);
     final place = _place(event);
-    final attending =
-        ref.watch(isAttendingProvider(event.id)).valueOrNull ?? false;
-    // A full event cannot take another name, so the button says so rather than
-    // accepting a tap that would mean nothing.
-    final soldOut = event.isSoldOut && !attending;
-    final enabled = !soldOut && !_rsvpBusy;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -577,89 +519,15 @@ class _WebEventDetailContentState
                     '${event.rsvpCount} מתעניינים')),
           ],
           const SizedBox(height: 24),
-          // ── Primary RSVP button ──
-          //
-          // It was `setState(() => _isGoing = !_isGoing)`: it changed a word on
-          // screen, wrote nothing to `event_attendees`, and reset to "not
-          // going" on every open, so someone who had already signed up was
-          // told they had not.
-          MouseRegion(
-            cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-            child: GestureDetector(
-              onTap: enabled ? () => _toggleRsvp(event, attending) : null,
-              child: Container(
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: enabled ? AppColors.midBlue : const Color(0xFFB9C0CE),
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: _rsvpBusy
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5),
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            attending
-                                ? IconsaxPlusBold.tick_circle
-                                : IconsaxPlusLinear.tick_circle,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            soldOut
-                                ? _t('Sold Out', 'אזל')
-                                : attending
-                                    ? _t('Going', 'מגיע/ה')
-                                    : _t("I'm going", 'אני מגיע/ה'),
-                            style: TextStyle(fontFamily: AppFonts.inter,
-                                fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-          ),
-          // ── Stage 2 confirmation banner ──
-          if (attending) ...[
-            const SizedBox(height: 20),
-            Container(
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _kGoingBg,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(IconsaxPlusLinear.tick_circle, size: 24, color: _kGoingFg),
-                  const SizedBox(width: 12),
-                  Text(_t("You're going to this event!", 'אתם מגיעים לאירוע הזה!'),
-                      style: TextStyle(fontFamily: AppFonts.inter,
-                          fontSize: 16, fontWeight: FontWeight.w500, color: _kGoingFg, height: 19 / 16)),
-                ],
-              ),
-            ),
-          ],
+          // An "I'm going" button and its "You're going!" banner sat here.
+          // Saying you are coming needs an account, and accounts belong to
+          // the app — the client's decision, 28 September — so on the
+          // website this card tells you what, when and where, and the RSVP is
+          // made from the phone.
           const SizedBox(height: 20),
-          // ── Save / Share ──
-          Row(
-            children: [
-              Expanded(child: _cardSaveButton(event)),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _cardOutlineButton(IconsaxPlusLinear.share,
-                    _t('Share', 'שיתוף'), () => _share(event)),
-              ),
-            ],
-          ),
+          // ── Share ── (Save needs an account; see above.)
+          _cardOutlineButton(IconsaxPlusLinear.share,
+              _t('Share', 'שיתוף'), () => _share(event)),
           // A row of four attendee faces sat below, with "124 people
           // interested" beside it. Nothing names who is coming — the owner
           // policy on `event_attendees` lets a reader see only their own row —
@@ -672,37 +540,6 @@ class _WebEventDetailContentState
         ],
       ),
     );
-  }
-
-  Future<void> _toggleRsvp(Event event, bool attending) async {
-    if (ref.read(authProvider) == null) {
-      _toast(
-        _t('Sign in to RSVP', 'התחברו כדי לאשר הגעה'),
-        actionLabel: _t('Sign in', 'התחברות'),
-        onAction: () => context.push('/login'),
-      );
-      return;
-    }
-
-    setState(() => _rsvpBusy = true);
-    try {
-      final repo = ref.read(eventRepositoryProvider);
-      attending
-          ? await repo.cancelAttendance(event.id)
-          : await repo.attend(event.id);
-
-      // The trigger from migration 00024 recounts `rsvp_count`, so the count
-      // beside the button has to be re-read as well as the button's own state.
-      ref.invalidate(isAttendingProvider(event.id));
-      ref.invalidate(eventByIdProvider(event.id));
-    } catch (_) {
-      if (mounted) {
-        _toast(_t('Your RSVP could not be saved.',
-            'לא ניתן היה לשמור את אישור ההגעה.'));
-      }
-    } finally {
-      if (mounted) setState(() => _rsvpBusy = false);
-    }
   }
 
   Widget _cardMetaRow(IconData icon, String text, {bool forceLtr = false}) {
@@ -719,17 +556,6 @@ class _WebEventDetailContentState
           ),
         ),
       ],
-    );
-  }
-
-  Widget _cardSaveButton(Event event) {
-    final saved = ref.watch(
-      isFavoriteProvider((kind: FavoriteKind.event, id: event.id)),
-    );
-    return _cardOutlineButton(
-      saved ? IconsaxPlusBold.heart : IconsaxPlusLinear.heart,
-      saved ? _t('Saved', 'נשמר') : _t('Save', 'שמירה'),
-      () => _toggleSave(event),
     );
   }
 

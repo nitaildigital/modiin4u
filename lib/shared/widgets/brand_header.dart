@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../core/theme/app_fonts.dart';
 import '../../core/router/app_router.dart';
@@ -50,7 +51,10 @@ class _BrandHeaderState extends ConsumerState<BrandHeader> {
         bottom: false,
         child: Column(
           children: [
-            // Top bar: avatar + logo
+            // Top bar: notifications and the resident's avatar — both an
+            // account's, and accounts belong to the app, so a browser does
+            // not draw them.
+            if (!kIsWeb)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Row(

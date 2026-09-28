@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../shared/widgets/web_mobile_menu.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -106,11 +108,49 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
         const SizedBox(height: 24),
 
-        // ── Popular Near You ──
+        // ── Near you, when we know where "you" is ──
+        // The heading used to say "Popular near you" over a list that read
+        // neither popularity nor location. It says "near you" now only when
+        // the row really is in order of distance.
         _SectionHeader(
-          title: l.popularNearYou,
+          title: (ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ??
+                  false)
+              ? 'קרוב אליך'
+              : 'עסקים במודיעין',
           onSeeAll: () => context.go('/businesses'),
         ),
+        if (locationIsAskable &&
+            !(ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ??
+                true))
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: GestureDetector(
+                onTap: () => askForNearby(ref),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      IconsaxPlusLinear.location,
+                      size: 16,
+                      color: AppColors.midBlue,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'הצג מה קרוב אליי',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.midBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         const SizedBox(height: 12),
         _buildPopularCards(),
 
@@ -127,15 +167,17 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
           const SizedBox(height: 24),
         ],
 
-        // ── Upcoming Events ──
-        _SectionHeader(
-          title: l.upcomingEvents,
-          onSeeAll: () => context.goOrPush('/events'),
-        ),
-        const SizedBox(height: 12),
-        _buildEventCards(l),
-
-        const SizedBox(height: 24),
+        // ── Upcoming Events ── only when there is one to come.
+        if ((ref.watch(upcomingEventsProvider).valueOrNull ?? const [])
+            .isNotEmpty) ...[
+          _SectionHeader(
+            title: l.upcomingEvents,
+            onSeeAll: () => context.goOrPush('/events'),
+          ),
+          const SizedBox(height: 12),
+          _buildEventCards(l),
+          const SizedBox(height: 24),
+        ],
 
         // ── Apartment Near You ──
         if ((ref.watch(listingsProvider).valueOrNull ?? const [])
@@ -188,7 +230,12 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 GestureDetector(
-                  onTap: () => context.push('/profile'),
+                  // In the app this is the resident's profile. In a browser
+                  // nobody signs in — that belongs to the app — so it is
+                  // the site's menu, which is what a ☰ on a website is.
+                  onTap: () => kIsWeb
+                      ? showWebMobileMenu(context)
+                      : context.push('/profile'),
                   child: const Icon(
                     IconsaxPlusLinear.menu,
                     color: Colors.white,
@@ -385,7 +432,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // ─────────────────────────────────────────────
 
   Widget _buildPopularCards() => _ProviderRow<Business>(
-    provider: businessesProvider,
+    provider: nearbyBusinessListProvider,
     height: 282,
     gap: 12,
     card: _businessCard,

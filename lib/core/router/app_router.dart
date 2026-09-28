@@ -92,6 +92,21 @@ CustomTransitionPage<void> _slideTransition(Widget child, GoRouterState state) {
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+/// The resident's own pages — an account, or something posted from one.
+const _appOnlyPaths = {
+  '/onboarding',
+  '/signup',
+  '/profile',
+  '/edit-profile',
+  '/change-password',
+  '/favorites',
+  '/settings',
+  '/notifications',
+  '/my-apartments',
+  '/add-apartment',
+  '/new-listing',
+};
+
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
 
@@ -102,8 +117,18 @@ final appRouter = GoRouter(
   // instead of the site. Nobody arrives at a city's website expecting to be
   // asked who they are before they can read the news.
   //
-  // Onboarding stays reachable at /onboarding for anyone who wants it.
   initialLocation: kIsWeb ? '/' : '/splash',
+
+  // Signing in and posting a property belong to the app. The client decided
+  // it on 28 September: the website is for reading the city, the app is for
+  // an account. So in a browser the resident's pages lead home — the buttons
+  // that opened them are hidden too, but a remembered link or a typed address
+  // should not reach a sign-up form either.
+  //
+  // `/login`, `/reset-password` and `/auth/*` are not on the list: they are
+  // how an administrator gets into the control centre, which is web-only.
+  redirect: (context, state) =>
+      kIsWeb && _appOnlyPaths.contains(state.uri.path) ? '/' : null,
   routes: [
     GoRoute(
       path: '/splash',

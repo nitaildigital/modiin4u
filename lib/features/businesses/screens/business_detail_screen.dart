@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ import '../providers/business_providers.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../shared/widgets/network_photo.dart';
 
 class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
@@ -143,26 +145,42 @@ class _BusinessDetailContentState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          business.name,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 34,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        if ((business.description ?? '').isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            business.description!,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 16,
-              color: const Color(0xFF6D6D6D),
+        Row(
+          children: [
+            // The desktop page never showed the logo at all — only the
+            // phone's profile circle had a place for it, and that drew the
+            // same gold circle for every business.
+            _BusinessLogo(url: business.logoUrl, size: 84),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    business.name,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  if ((business.description ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      business.description!,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 16,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
         const SizedBox(height: 20),
         _buildTabBar(business),
         _buildTabContent(),
@@ -315,14 +333,17 @@ class _BusinessDetailContentState
                     ),
                   ),
                 ),
-                // Placeholder icon
-                Center(
-                  child: Icon(
-                    IconsaxPlusLinear.reserve,
-                    size: 60,
-                    color: Colors.white.withValues(alpha: 0.25),
+                // Stands in for a missing photograph — and only then. It was
+                // drawn unconditionally, so a restaurant bell sat in the
+                // middle of every business's cover photo.
+                if (business.imageUrl == null || business.imageUrl!.isEmpty)
+                  Center(
+                    child: Icon(
+                      IconsaxPlusLinear.reserve,
+                      size: 60,
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -380,26 +401,7 @@ class _BusinessDetailContentState
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             // Profile circle (100x100, 3px white border)
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B6914), Color(0xFFC49B2C)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  IconsaxPlusLinear.reserve,
-                  size: 36,
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-              ),
-            ),
+            _BusinessLogo(url: business.logoUrl, size: 100),
 
             const Spacer(),
 
@@ -796,7 +798,9 @@ class _BusinessDetailContentState
         return Column(
           children: [
             _buildOverviewSection(),
-            _buildGallerySection(),
+            // "Did you visit?" asks for a review, and a review needs an
+            // account — the app's, since 28 September. Not drawn in a browser.
+            if (!kIsWeb) _buildGallerySection(),
             _buildReviewsSection(),
           ],
         );
@@ -918,8 +922,9 @@ class _BusinessDetailContentState
 
           // A gallery and a user-photo grid used to sit here, both drawn as
           // coloured squares — ten of them, the same ten for every business.
-          // Photos come from `media`, which has no rows yet (A5b).
-          const _NoPhotosYet(),
+          // The real photographs are in `media` now; see
+          // businessGalleryProvider.
+          _GalleryGrid(businessId: business.id),
         ],
       ),
     );
@@ -933,8 +938,8 @@ class _BusinessDetailContentState
       children: [
         const SizedBox(height: 24),
 
-        // ── Write a Review prompt (Google-style) ──
-        _buildWriteReviewPrompt(),
+        // ── Write a Review prompt (Google-style) ── the app's; see above.
+        if (!kIsWeb) _buildWriteReviewPrompt(),
 
         const SizedBox(height: 16),
 
@@ -1251,7 +1256,8 @@ class _BusinessDetailContentState
             ),
           ),
           const SizedBox(height: 12),
-          _ExpandableText(text: business.description ?? ''),
+          // The full About text where there is one; the one-liner otherwise.
+          _ExpandableText(text: business.about ?? business.description ?? ''),
 
           // Opening hours, only when this business has them. The section
           // used to state Mon-Sat 12:00-9:30 and closed Sunday for every
@@ -2019,6 +2025,214 @@ class _ExpandableTextState extends State<_ExpandableText> {
 }
 
 /// Shown where the photographs would be, until `media` has rows.
+/// A business's logo, in a white circle.
+///
+/// This circle drew a gold gradient with a restaurant bell in it — the same
+/// for every business, whether it was a pizzeria or a lawyer — though 137 of
+/// the 200 carry a logo. The logo is fitted, not cropped: logos have their own
+/// margins and transparent corners, and cropping cuts the name off the edge.
+class _BusinessLogo extends StatelessWidget {
+  final String? url;
+  final double size;
+  const _BusinessLogo({required this.url, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final has = url != null && url!.isNotEmpty;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        border: Border.all(color: Colors.white, width: 3),
+        gradient: has
+            ? null
+            : const LinearGradient(
+                colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+          ),
+        ],
+      ),
+      child: has
+          ? ClipOval(
+              child: Padding(
+                padding: EdgeInsets.all(size * 0.12),
+                child: NetworkPhoto(
+                  url: url,
+                  fit: BoxFit.contain,
+                  gradient: const [Colors.white, Colors.white],
+                  icon: IconsaxPlusLinear.shop,
+                  iconColor: const Color(0xFFB0B0B0),
+                ),
+              ),
+            )
+          : Center(
+              child: Icon(
+                IconsaxPlusLinear.shop,
+                size: size * 0.36,
+                color: Colors.white.withValues(alpha: 0.6),
+              ),
+            ),
+    );
+  }
+}
+
+/// A business's photographs, from the WordPress gallery.
+class _GalleryGrid extends ConsumerWidget {
+  final String businessId;
+  const _GalleryGrid({required this.businessId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final photos = ref.watch(businessGalleryProvider(businessId));
+    return photos.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (_, _) => const _NoPhotosYet(),
+      data: (urls) {
+        if (urls.isEmpty) return const _NoPhotosYet();
+        return LayoutBuilder(
+          builder: (context, c) {
+            // Three across on a phone, four on anything wider.
+            final perRow = c.maxWidth > 700 ? 4 : 3;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: urls.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: perRow,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+              ),
+              itemBuilder: (context, i) => GestureDetector(
+                onTap: () => _openViewer(context, urls, i),
+                child: NetworkPhoto(
+                  url: urls[i],
+                  radius: BorderRadius.circular(10),
+                  icon: IconsaxPlusLinear.gallery,
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openViewer(BuildContext context, List<String> urls, int start) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (_) => _PhotoViewer(urls: urls, start: start),
+    );
+  }
+}
+
+/// Full-size photographs, swiped through.
+class _PhotoViewer extends StatefulWidget {
+  final List<String> urls;
+  final int start;
+  const _PhotoViewer({required this.urls, required this.start});
+
+  @override
+  State<_PhotoViewer> createState() => _PhotoViewerState();
+}
+
+class _PhotoViewerState extends State<_PhotoViewer> {
+  late final PageController _pages = PageController(initialPage: widget.start);
+  late int _at = widget.start;
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _go(int delta) {
+    final next = (_at + delta).clamp(0, widget.urls.length - 1);
+    _pages.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _pages,
+          itemCount: widget.urls.length,
+          onPageChanged: (i) => setState(() => _at = i),
+          itemBuilder: (_, i) => InteractiveViewer(
+            child: Center(
+              child: NetworkPhoto(
+                url: widget.urls[i],
+                fit: BoxFit.contain,
+                icon: IconsaxPlusLinear.gallery,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 16,
+          right: 16,
+          child: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close, color: Colors.white, size: 28),
+          ),
+        ),
+        Positioned(
+          bottom: 24,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Text(
+              '${_at + 1} / ${widget.urls.length}',
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+          ),
+        ),
+        // Arrows, for a mouse — a swipe is not something a desktop offers.
+        if (_at > 0)
+          Positioned(
+            left: 12,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: IconButton(
+                onPressed: () => _go(-1),
+                icon: const Icon(Icons.chevron_left, color: Colors.white, size: 40),
+              ),
+            ),
+          ),
+        if (_at < widget.urls.length - 1)
+          Positioned(
+            right: 12,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: IconButton(
+                onPressed: () => _go(1),
+                icon: const Icon(Icons.chevron_right, color: Colors.white, size: 40),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _NoPhotosYet extends StatelessWidget {
   const _NoPhotosYet();
 

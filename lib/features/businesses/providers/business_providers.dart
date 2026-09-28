@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -18,6 +20,77 @@ final businessesProvider = FutureProvider<List<Business>>((ref) async {
       .fetchAll(status: 'active');
   return rows.map(Business.fromJson).toList();
 });
+
+/// Whether this device can be asked where it is at all.
+///
+/// A browser only answers on a secure page. The site is on plain
+/// `http://45.93.94.49` until the domain and its certificate arrive, and on
+/// such a page the browser refuses without asking — so offering "show what
+/// is near me" there would be a button that does nothing. It appears by
+/// itself once the site is on https.
+bool get locationIsAskable =>
+    !kIsWeb || Uri.base.scheme == 'https' || Uri.base.host == 'localhost';
+
+/// Businesses for the home page's first row, and whether they are in order of
+/// distance.
+///
+/// The row was headed "Popular near you" and drew every business in whatever
+/// order the table returned them — no location read, no popularity measured.
+/// The client opened it and saw businesses nowhere near him. Now: if this
+/// device has already allowed location, the businesses that carry
+/// coordinates are sorted by how far they are. If not, the list comes back as
+/// it was and the heading stops claiming anything about distance.
+///
+/// Permission is checked, never requested, here — nobody should get a
+/// location prompt for opening the home page. Asking is a separate tap.
+final nearbyBusinessesProvider =
+    FutureProvider<({List<Business> businesses, bool byDistance})>((ref) async {
+      final all = await ref.watch(businessesProvider.future);
+      if (!locationIsAskable) return (businesses: all, byDistance: false);
+
+      Position? here;
+      try {
+        final allowed = await Geolocator.checkPermission();
+        if (allowed == LocationPermission.always ||
+            allowed == LocationPermission.whileInUse) {
+          here = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+              timeLimit: Duration(seconds: 8),
+            ),
+          );
+        }
+      } catch (_) {
+        // No fix in time, or services off. Fall through to the plain list.
+      }
+      final origin = here;
+      if (origin == null) return (businesses: all, byDistance: false);
+
+      double away(Business b) => Geolocator.distanceBetween(
+        origin.latitude,
+        origin.longitude,
+        b.latitude,
+        b.longitude,
+      );
+      // A business with no coordinates has no distance; it cannot be "near".
+      final placed =
+          all.where((b) => b.latitude != 0 && b.longitude != 0).toList()
+            ..sort((a, b) => away(a).compareTo(away(b)));
+      return (businesses: placed, byDistance: true);
+    });
+
+/// The same list, in the shape the home page's rows take.
+final nearbyBusinessListProvider = FutureProvider<List<Business>>(
+  (ref) async => (await ref.watch(nearbyBusinessesProvider.future)).businesses,
+);
+
+/// Asks for location, then works the row out again.
+Future<void> askForNearby(WidgetRef ref) async {
+  try {
+    await Geolocator.requestPermission();
+  } catch (_) {}
+  ref.invalidate(nearbyBusinessesProvider);
+}
 
 /// Top-level business categories, in the order the admin set.
 final businessCategoriesProvider = FutureProvider<List<BusinessCategory>>((
@@ -148,3 +221,27 @@ final hasReviewedProvider = FutureProvider.family<bool, String>((
   if (user == null) return false;
   return ref.watch(businessRepositoryProvider).hasReviewed(businessId);
 });
+
+/// A business's photographs, in the order WordPress had them.
+///
+/// These were in the export all along — 513 photographs across 108
+/// businesses — and nothing loaded them, so every business page showed its
+/// cover and the Photos tab said there was nothing to see. They are in the
+/// `media` bucket now, not on modiin4u.co.il, because that site sends no CORS
+/// header and a browser will not draw its images. See
+/// `tool/import_business_galleries.py`.
+final businessGalleryProvider =
+    FutureProvider.family<List<String>, String>((ref, businessId) async {
+      final rows = await SupabaseConfig.client
+          .from('entity_media')
+          .select('sort_order, media(url)')
+          .eq('entity_type', 'business')
+          .eq('entity_id', businessId)
+          .eq('role', 'gallery')
+          .order('sort_order', ascending: true);
+      return [
+        for (final r in List<Map<String, dynamic>>.from(rows))
+          if ((r['media'] as Map?)?['url'] is String)
+            (r['media'] as Map)['url'] as String,
+      ];
+    });

@@ -1202,6 +1202,87 @@ Verified on the live site, in both languages: sweeping across the bar leaves
 one menu open, moving into it keeps it open, choosing a category narrows the
 page, and moving away closes it.
 
+### The client's first look — 28 September
+
+Nitai went through the live site and sent six points, plus a decision: **login
+and apartment creation belong to the app**. The website is for reading; the
+admin panel keeps its sign-in there.
+
+**The website now has no resident accounts.** The app-only routes — sign-up,
+profile, favourites, settings, notifications, my apartments, add apartment,
+new listing, onboarding — redirect to `/` on web. `/login`, `/reset-password`
+and `/auth/*` stay, because that is how an admin gets into `/admin`. Everything
+that could only have said "sign in first" is gone from the web build: the
+hearts on every card, RSVP and Save on an event, "Sell a Property" on real
+estate, and the bell and avatar that sat on top of the home header.
+
+**"The side menu opens a login."** On a phone-width browser, ☰ pushed
+`/profile`, which for a stranger is the sign-in screen. On web it now slides in
+the site's own sections — the same list as the desktop bar — and Contact.
+
+**"Businesses on the home page aren't near me."** They were never meant to be:
+the row was the table in whatever order it came back, under a heading that
+implied more. It now sorts by distance when the phone has already allowed
+location, and the heading says which it is — קרוב אליך when sorted, עסקים
+במודיעין when not. A chip asks for the permission; nothing asks on load.
+
+The website cannot do this yet, and no code will change that: a browser only
+gives out a position on a secure page, and `http://45.93.94.49` is not one. The
+chip is not drawn there. It comes with the domain and its certificate. The
+unsorted fallback is verified on the live site; **the sorted order has not yet
+been seen on a phone.**
+
+**"Where are the events from?"** Nowhere real. The client's WordPress has no
+events post type; all ten events in the database come from `seed_remote.sql`
+(nine published and one pending — 1f counted the published nine), and every
+one is in the past. The home page's "Upcoming Events"
+fell back to showing past events when there were no upcoming ones — so it was
+showing samples, under a heading that was false. It now shows upcoming events
+only, and the section is not drawn when there are none.
+
+**"The latest articles are from 2024."** All 669 imported articles carry the
+same `created_at` — the day of the import — and the list sorted on it, so
+"latest" was whatever order Postgres returned. It sorts on `published_at` now,
+newest first, with `created_at` only to break ties.
+
+**"The business page doesn't pull About Us, images or the logo."** Three
+separate faults, and all three were real:
+
+- *Images.* The client's site keeps each business's gallery in a JetEngine
+  field (`photos-gallery`) that the business import never read. Nothing in the
+  app asked for gallery rows either — the Photos tab showed the cover and
+  nothing else. `tool/import_business_galleries.py` matches all 108 businesses
+  by their permalink slug and brings over **513 photos** into `entity_media`
+  (role `gallery`). Four were HEIC, which the bucket refused; they are
+  converted to JPEG with `sips` first. It has an `--undo`. The tab is a grid
+  now, and a tap opens a full-screen viewer.
+- *About.* Two faults stacked. The business import cut `full_description` at
+  400 characters, and the model never read that column anyway —
+  `description` is `short_description ?? full_description`, so the About
+  section printed the one-line summary ("עיצוב פנים"). The model has an
+  `about` field now, and `tool/restore_business_about.py` put back the full
+  text from the site's WordPress export for **63 businesses**, paragraphs kept.
+  It only replaces a row that is still exactly the truncated first 400
+  characters, so nothing edited since is touched. Nineteen were missed on the
+  first pass because the export percent-encodes Hebrew slugs.
+- *Logo.* `logo_url` was loaded and never drawn. It sits in a white circle on
+  the cover (phone) and beside the name (desktop), with the shop icon when
+  there is none.
+
+Also on that page: the "ביקרתם?" card and the "write a review" prompt are gone
+from the web build. The card's 👍 and 👎 are plain icons with nothing behind
+them — **still true in the app**, and still to be wired or removed there.
+
+Verified on the live site at 390 and 1600 wide: הדס וייצמן shows its logo,
+its full About (1,129 characters, "הצג עוד" opens all of it), and its gallery
+opens in the viewer.
+
+**"The hero's palm tree icon isn't showing."** Not found. The web hero in the
+Figma file has none, the search button's icon is the sparkle it draws, the
+Figma logo is plain, and the logo on the site being replaced carries a small
+yellow ribbon, not a palm. Asked the client for a screenshot of where he sees
+it rather than guess.
+
 ---
 
 ### Delete, in the admin panel, does not delete — 25 September

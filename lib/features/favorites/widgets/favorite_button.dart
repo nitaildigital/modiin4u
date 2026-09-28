@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -77,6 +78,11 @@ class FavoriteButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Saving needs an account, and accounts belong to the app. In a browser
+    // the heart could only ever say "sign in to save" and send the reader to
+    // a sign-in page the website no longer has, so it is not drawn.
+    if (kIsWeb) return const SizedBox.shrink();
+
     final saved = ref.watch(isFavoriteProvider((kind: kind, id: id)));
 
     return GestureDetector(

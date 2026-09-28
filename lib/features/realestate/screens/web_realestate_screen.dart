@@ -598,16 +598,10 @@ class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
                     isHighlighted: true,
                     onTap: () => context.push('/apartments-rent'),
                   ),
-                  _ServiceCard(
-                    width: cardWidth,
-                    icon: IconsaxPlusLinear.document_upload,
-                    title: _t('Sell a Property', 'מכרו נכס'),
-                    subtitle: _t(
-                      'List your property and connect with people looking to buy in Modiin.',
-                      'פרסמו את הנכס שלכם והתחברו עם אנשים שמחפשים לקנות במודיעין.',
-                    ),
-                    onTap: () => context.push('/add-apartment'),
-                  ),
+                  // A "Sell a Property" card stood here, opening the form to
+                  // post a listing. Posting belongs to the app — the client
+                  // decided the website is for reading — so the card led to
+                  // a page a browser can no longer reach.
                   _ServiceCard(
                     width: cardWidth,
                     icon: IconsaxPlusLinear.chart_2,

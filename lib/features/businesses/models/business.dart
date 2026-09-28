@@ -39,6 +39,13 @@ class Business {
   final String category;
   final String? subcategory;
   final String? description;
+
+  /// The business's own "About" text — `full_description`, often several
+  /// paragraphs. [description] is the one-line `short_description` a card
+  /// shows. There used to be only [description], filled from the short one
+  /// first, so the long one was never read and every About section on the
+  /// site said something like "עיצוב פנים" and stopped.
+  final String? about;
   final String? metaDescription;
   final String? phone;
   final String? website;
@@ -78,6 +85,7 @@ class Business {
     required this.category,
     this.subcategory,
     this.description,
+    this.about,
     this.metaDescription,
     this.phone,
     this.website,
@@ -114,6 +122,7 @@ class Business {
     String? category,
     String? subcategory,
     String? description,
+    String? about,
     String? metaDescription,
     String? phone,
     String? website,
@@ -148,6 +157,7 @@ class Business {
       category: category ?? this.category,
       subcategory: subcategory ?? this.subcategory,
       description: description ?? this.description,
+      about: about ?? this.about,
       metaDescription: metaDescription ?? this.metaDescription,
       phone: phone ?? this.phone,
       website: website ?? this.website,
@@ -243,6 +253,9 @@ class Business {
       subcategory: json['subcategory'] as String?,
       description:
           (json['short_description'] ?? json['full_description']) as String?,
+      about: (json['full_description'] as String?)?.trim().isNotEmpty ?? false
+          ? (json['full_description'] as String).trim()
+          : null,
       metaDescription: json['meta_description'] as String?,
       phone: json['phone'] as String?,
       website: json['website'] as String?,

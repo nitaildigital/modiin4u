@@ -17,7 +17,13 @@ class ArticleRepository {
       query = query.or('title.ilike.%$search%,slug.ilike.%$search%');
     }
 
-    final data = await query.order('created_at', ascending: false);
+    // `published_at`, not `created_at`. Every one of the 669 imported
+    // articles carries the same `created_at` — 23 September 2026, the day
+    // of the import — so ordering by it put the feed in no order at all,
+    // and the "latest" articles on the home page came out from 2024.
+    final data = await query
+        .order('published_at', ascending: false, nullsFirst: false)
+        .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(data);
   }
 
