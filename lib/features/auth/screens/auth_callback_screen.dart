@@ -109,10 +109,13 @@ class _AuthCallbackScreenState extends ConsumerState<AuthCallbackScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // On the web the journey ends here, so there is nothing
-                // useful to press; in the app there is.
-                if (!kIsWeb)
-                  SizedBox(
+                // There is always somewhere to go from here. This was drawn
+                // only on the phone, on the reasoning that a browser has
+                // nowhere to send anybody — but a browser is exactly where a
+                // dead link lands, and "the link has expired" with no way to
+                // ask for another is a dead end. A reader who gets here on
+                // the web needs the way back more than one in the app does.
+                SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(

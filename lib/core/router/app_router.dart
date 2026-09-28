@@ -19,6 +19,7 @@ import '../../features/auth/screens/notifications_screen.dart';
 import '../../features/auth/screens/settings_screen.dart';
 import '../../features/auth/screens/change_password_screen.dart';
 import '../../features/auth/screens/auth_callback_screen.dart';
+import '../../features/auth/screens/auth_confirm_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/auth/screens/change_language_screen.dart';
 import '../../features/auth/screens/help_support_screen.dart';
@@ -93,7 +94,16 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/splash',
+
+  // A phone opens on the splash, which decides between the first-run
+  // onboarding and the app. A website must not: go_router treats an incoming
+  // location of "/" as no location at all and falls back to this, so someone
+  // typing the address got a 2.2-second splash and then a sign-in wall
+  // instead of the site. Nobody arrives at a city's website expecting to be
+  // asked who they are before they can read the news.
+  //
+  // Onboarding stays reachable at /onboarding for anyone who wants it.
+  initialLocation: kIsWeb ? '/' : '/splash',
   routes: [
     GoRoute(
       path: '/splash',
@@ -125,6 +135,13 @@ final appRouter = GoRouter(
           path: '/news',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: NewsScreen(),
+          ),
+        ),
+        GoRoute(
+          // Where the navbar's news menu leads.
+          path: '/news/category/:id',
+          pageBuilder: (context, state) => NoTransitionPage(
+            child: NewsScreen(categoryId: state.pathParameters['id']),
           ),
         ),
         GoRoute(
@@ -364,6 +381,18 @@ final appRouter = GoRouter(
       path: '/auth/callback',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AuthCallbackScreen(),
+    ),
+    // Where the e-mail links land. The token arrives as `token_hash` and is
+    // only spent when this screen's code runs — a mail provider's link
+    // scanner fetches the page without running it, so it can no longer use
+    // the token up before the person clicks. See AuthConfirmScreen.
+    GoRoute(
+      path: '/auth/confirm',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => AuthConfirmScreen(
+        tokenHash: state.uri.queryParameters['token_hash'],
+        type: state.uri.queryParameters['type'],
+      ),
     ),
     // A reset link needs its own screen: the session it creates has to be
     // spent on setting a new password.

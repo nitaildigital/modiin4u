@@ -1058,6 +1058,152 @@ Figma disagreed with the phone more often than with the web:
 and once with the web: the home search hint is `What are you looking for
 today?`, which the web had shortened.
 
+### A button that said nothing, and the expired link it caused — 28 September
+
+The sign-in page reported everything through a `SnackBar`, and on this page a
+SnackBar never appeared. So:
+
+- **A wrong password failed in silence.** Nothing on screen at all.
+- **"Forgot Password?" looked like pressing nothing.** With the field empty
+  it silently refused; with an address in it the mail went out with no sign
+  that it had.
+
+The second one caused a worse thing downstream. Supabase invalidates a reset
+token the moment a newer one is issued, so pressing a button that appears not
+to work — several times, as anybody would — quietly kills each link in turn.
+Opening any but the last then lands on
+`/auth/callback?error=access_denied&error_code=otp_expired`.
+
+And that screen was a dead end: the action button was drawn `if (!kIsWeb)`, on
+the reasoning that a browser has nowhere to send anybody. But a browser is
+exactly where a dead link lands. "The link has expired" with no way to ask for
+another is the worst version of that page. It has the button now, everywhere.
+
+Fixed:
+
+- Messages are drawn **inside the card** instead of thrown at a messenger
+  that was not listening.
+- "Forgot Password?" opens a window of its own with its own address field.
+  Borrowing the sign-in field was wrong twice over: somebody resetting a
+  password usually has not typed anything, and somebody who mistyped their
+  address would have sent the mail to the mistake. On send it names the
+  address back and says the link is **good for one use** — which is the
+  sentence that would have prevented the whole thing.
+
+**That was not the whole story, and the rest was worse.** After the button
+was fixed the links still arrived dead. Timing was tested and ruled out — an
+untouched link still worked after three minutes.
+
+What was spending them was **the mail provider's link scanner**. The templates
+used `{{ .ConfirmationURL }}`, which points straight at Supabase's
+`/auth/v1/verify` — and that endpoint spends the one-time token on any request
+at all. Gmail, Outlook and most security filters fetch every link in an
+incoming message to check it is safe. The scanner used the token; the person
+clicking a minute later found it gone. Every reset, for everybody on Gmail,
+which is the client.
+
+The fix is the one Supabase built `{{ .TokenHash }}` for. The mail now links
+to a page in the app, `/auth/confirm?token_hash=…&type=recovery`, and nothing
+is spent until that page's code calls `verifyOTP` in a real browser. A scanner
+fetches the page and does not run it.
+
+Tested the way it fails: fetched the new link twice as a scanner would, then
+opened it in a browser — reset went through, new password signs in, old one
+refused. Opening it a third time, once genuinely spent, shows a page that says
+so and offers a new link.
+
+**Live mail is not fixed until the new templates are pasted into Supabase.**
+The app side is deployed; the templates in `supabase/email_templates/` carry
+the new link and have to replace what is in the dashboard.
+
+---
+
+### The auth pages wore the whole site — 28 September
+
+Sign-in, sign-up and "choose a new password" each carried the full navbar —
+seven links, three category menus and a Contact Us button — above one card
+asking for an e-mail address. On the way to the control centre it read as the
+wrong screen: somebody who asked for the admin panel was handed what looked
+like the front page of the public site. `WebAuthHeader` replaces it: the logo,
+which leads back to the site, and the language toggle. The nine screens a
+signed-in resident browses — profile, settings, favourites and the rest —
+keep the navbar, because there it belongs.
+
+**And a category page could not say its own name.** `/businesses/category/:id`
+took its heading from a `?title=` on the URL and fell back to the word
+"עסקים", so every category read "Businesses" — and a link shared without the
+query string lost the name altogether. The name is on the row; the page reads
+it by id now.
+
+---
+
+### The website opened on a sign-in wall, and the menus were arrows — 28 September
+
+Three things, from one screenshot.
+
+**The site opened on onboarding.** `initialLocation` was `/splash`, and
+go_router treats an incoming location of `/` as no location at all and falls
+back to it — so somebody typing the address got a 2.2-second splash and then
+a sign-in screen instead of the city's website. A phone should open that way;
+a website must not. `kIsWeb ? '/' : '/splash'`. Onboarding stays reachable at
+`/onboarding`.
+
+**The navbar chevrons were decoration.** "Professionals", "Modiin News" and
+"Businesses" each drew a `keyboard_arrow_down` and had nothing behind it —
+the whole item just navigated. The design has the menu: a frame named "News
+Menu" listing Municipality Updates, Urban, Business, Real Estate, Sports and
+Fitness, People, Culinary, Attractions and Trips.
+
+Which led to the real find. **The article import carried the articles and
+left their filing behind.** `entity_categories` held business links only, not
+one of the 669 articles was in a category, and that is why the news page's
+category headings had been removed as unbacked. But the categories were never
+missing — they are on the client's site in a taxonomy called `new`, and they
+are exactly the nine the Figma menu shows. `tool/import_article_categories.py`
+brings them over: 6 categories created (three matched rows already there),
+**718 links written**, and it has an `--undo`.
+
+Two things that would have gone wrong quietly, both caught by the dry run:
+
+- Matching on the name alone would have made a second נדל״ן, because the site
+  writes it with a gershayim and the database with an ASCII quote — the same
+  spelling split fixed in the app's own strings three days ago. It normalises
+  both before comparing.
+- `עירוני` slugs to `municipal`, which was already taken by the older
+  `עירייה`. Slugs are unique across the whole table, so the insert would have
+  failed. It checks and suffixes.
+
+Five of the older article categories — חינוך, תרבות, ביטחון, ספורט, עירייה —
+hold no articles at all; they look like an early guess at the taxonomy. Rather
+than delete somebody's rows, **the menu lists only categories with something
+in them**, which is the honest rule anyway.
+
+**PostgREST cannot join a polymorphic link table.** The obvious filter —
+`articles?select=*,entity_categories!inner(...)` — answers PGRST200: there is
+no foreign key from `entity_categories` to `articles`, because `entity_id`
+holds an article, a business or an event depending on `entity_type`. So the
+ids are fetched on their own and matched against the articles the page has
+already loaded.
+
+**The first menu I built was wrong**, and the live site showed it plainly:
+each link owned its own menu, so running the pointer along the bar opened all
+three and left them stacked on top of one another. It also drew a count beside
+every name and an "All" row above them, neither of which the site being
+replaced has.
+
+Rebuilt against that site. The bar owns one panel and one open item, so there
+can only ever be one. It is drawn through an `OverlayPortal`, because the bar
+is the first child of the page's Column and anything it paints itself is
+painted over by the content below — the panel came out sliced off at the bar's
+edge. Leaving closes it after 120ms, which is long enough to move down into
+the panel without it vanishing. Names only.
+
+Verified on the live site, in both languages: sweeping across the bar leaves
+one menu open, moving into it keeps it open, choosing a category narrows the
+page, and moving away closes it.
+
+---
+
 ### Delete, in the admin panel, does not delete — 25 September
 
 Tested the panel properly for the first time, signed in as a temporary

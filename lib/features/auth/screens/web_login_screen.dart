@@ -77,7 +77,9 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      context.go('/');
+      // Back to whatever sent us here, or home.
+      final next = GoRouterState.of(context).uri.queryParameters['next'];
+      context.go(next != null && next.startsWith('/') ? next : '/');
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -88,25 +90,21 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
   /// Sends the reset email, and says so whether or not the address has an
   /// account — telling a stranger which addresses are registered is a way of
   /// finding out who uses the app.
+  /// Asks for the address in a window of its own.
+  ///
+  /// It used to reuse whatever was in the sign-in field and report back
+  /// through a SnackBar that never appeared on this page — so with the field
+  /// empty, pressing it did nothing visible at all, and with an address in it
+  /// the mail went out with no sign that it had. A person cannot be expected
+  /// to guess either way.
   Future<void> _forgotPassword() async {
-    if (!_looksLikeEmail) {
-      _showError(
-        _t('Enter your email address first', 'הזינו קודם את כתובת האימייל'),
-      );
-      return;
-    }
-    try {
-      await ref
-          .read(authProvider.notifier)
-          .sendPasswordReset(_emailController.text);
-    } catch (_) {
-      // Reported the same either way, for the reason above.
-    }
-    if (!mounted) return;
-    _showInfo(
-      _t(
-        'If that address has an account, a reset link is on its way.',
-        'אם קיים חשבון עם הכתובת הזו, נשלח אליה קישור לאיפוס.',
+    await showDialog<void>(
+      context: context,
+      builder: (_) => _ForgotPasswordDialog(
+        isHebrew: _isHebrew,
+        initialEmail: _emailController.text.trim(),
+        onSend: (email) =>
+            ref.read(authProvider.notifier).sendPasswordReset(email),
       ),
     );
   }
@@ -137,23 +135,51 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
     return raw;
   }
 
-  void _showInfo(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
+  /// What went wrong, shown inside the card.
+  ///
+  /// This was a SnackBar, and on this page it never appeared: a wrong password
+  /// failed in silence. A line in the card cannot be missed, does not time
+  /// out, and sits where the person is already looking.
+  String? _notice;
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    if (!mounted) return;
+    setState(() => _notice = message);
+  }
+
+  /// The line the above writes to.
+  Widget _buildNotice() {
+    final text = _notice;
+    if (text == null) return const SizedBox.shrink();
+    const colour = AppColors.error;
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          color: colour.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colour.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.error_outline, size: 18, color: colour),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 13,
+                  height: 1.45,
+                  color: colour,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -166,9 +192,10 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            WebNavbar(
+            // The site's navigation belongs on the site, not over a single
+            // card asking for an e-mail address. See WebAuthHeader.
+            WebAuthHeader(
               isHebrew: _isHebrew,
-              activeId: null,
               onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
@@ -244,6 +271,35 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Somebody who came here from /admin asked for the control centre
+          // and was handed the resident sign-in. It is the right screen —
+          // there is one account system — but without a word saying so it
+          // reads as the wrong one.
+          if (GoRouterState.of(context).uri.queryParameters['next'] == '/admin')
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.adminActiveBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _t(
+                    'Sign in to open the management panel.',
+                    'התחברו כדי להיכנס לממשק הניהול.',
+                  ),
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 13,
+                    color: AppColors.midBlue,
+                  ),
+                ),
+              ),
+            ),
           Text(
             _t('Hi, welcome back! 👋', 'ברוכים השבים! 👋'),
             style: TextStyle(
@@ -342,6 +398,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
               ),
             ],
           ),
+          _buildNotice(),
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
@@ -491,6 +548,316 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
                         setState(() => _obscurePassword = !_obscurePassword),
                   )
                 : null,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// "Forgot Password?" — its own field, and a plain answer when it is sent.
+///
+/// The address is asked for here rather than borrowed from the sign-in field,
+/// because the two are not always the same thing: somebody resetting a
+/// password often has not typed anything yet, and somebody who mistyped their
+/// address in the field above would otherwise send the mail to the mistake.
+class _ForgotPasswordDialog extends StatefulWidget {
+  final bool isHebrew;
+  final String initialEmail;
+  final Future<void> Function(String email) onSend;
+
+  const _ForgotPasswordDialog({
+    required this.isHebrew,
+    required this.initialEmail,
+    required this.onSend,
+  });
+
+  @override
+  State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
+}
+
+class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
+  late final TextEditingController _email = TextEditingController(
+    text: widget.initialEmail,
+  );
+  bool _sending = false;
+  String? _sentTo;
+  String? _error;
+
+  String _t(String en, String he) => widget.isHebrew ? he : en;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    super.dispose();
+  }
+
+  bool get _valid {
+    final v = _email.text.trim();
+    return v.contains('@') && v.contains('.') && v.length > 5;
+  }
+
+  Future<void> _send() async {
+    final address = _email.text.trim();
+    if (!_valid) {
+      setState(() => _error = _t(
+            'Enter a valid email address.',
+            'הזינו כתובת אימייל תקינה.',
+          ));
+      return;
+    }
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
+    try {
+      await widget.onSend(address);
+    } catch (_) {
+      // Whether the address has an account is not said either way, so that
+      // this cannot be used to find out who is registered.
+    }
+    if (!mounted) return;
+    setState(() {
+      _sending = false;
+      _sentTo = address;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: widget.isHebrew ? TextDirection.rtl : TextDirection.ltr,
+      child: Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: _sentTo == null ? _buildForm() : _buildSent(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _t('Reset your password', 'איפוס סיסמה'),
+          style: TextStyle(
+            fontFamily: AppFonts.nunito,
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            color: _kHeading,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _t(
+            'Enter the address you signed up with and we will send a link to '
+                'choose a new password.',
+            'הזינו את הכתובת שאיתה נרשמתם ונשלח אליה קישור לבחירת סיסמה חדשה.',
+          ),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            height: 1.5,
+            color: _kGreyText,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          _t('Email', 'אימייל'),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: _kHeading,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _email,
+          autofocus: true,
+          keyboardType: TextInputType.emailAddress,
+          onChanged: (_) => setState(() => _error = null),
+          onSubmitted: (_) => _sending ? null : _send(),
+          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: _t('you@example.com', 'you@example.com'),
+            filled: false,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            _error!,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 13,
+              color: AppColors.error,
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: _sending ? null : () => Navigator.pop(context),
+              child: Text(
+                _t('Cancel', 'ביטול'),
+                style: TextStyle(fontFamily: AppFonts.inter),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 44,
+              child: ElevatedButton(
+                onPressed: _sending ? null : _send,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.midBlue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  elevation: 0,
+                ),
+                child: _sending
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        _t('Send link', 'שליחת קישור'),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.midBlue.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.email_outlined,
+                size: 20,
+                color: AppColors.midBlue,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _t('Check your email', 'בדקו את תיבת האימייל'),
+                style: TextStyle(
+                  fontFamily: AppFonts.nunito,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: _kHeading,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // The address is repeated back, because a typo in it is the usual
+        // reason the mail never turns up.
+        Text.rich(
+          TextSpan(
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              height: 1.55,
+              color: _kGreyText,
+            ),
+            children: [
+              TextSpan(
+                text: _t(
+                  'If an account exists for ',
+                  'אם קיים חשבון עבור ',
+                ),
+              ),
+              TextSpan(
+                text: _sentTo,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: _kHeading,
+                ),
+              ),
+              TextSpan(
+                text: _t(
+                  ', a link to choose a new password is on its way. It is '
+                      'good for one use. If it has not arrived in a few '
+                      'minutes, check your spam folder.',
+                  ', נשלח אליה קישור לבחירת סיסמה חדשה. הקישור תקף לשימוש אחד. '
+                      'אם ההודעה לא הגיעה תוך כמה דקות, בדקו בתיקיית הספאם.',
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: SizedBox(
+            height: 44,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.midBlue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                elevation: 0,
+              ),
+              child: Text(
+                _t('Done', 'סגירה'),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
         ),
       ],

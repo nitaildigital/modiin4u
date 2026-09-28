@@ -55,7 +55,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      context.go('/');
+      // Back to whatever sent us here, or home.
+      final next = GoRouterState.of(context).uri.queryParameters['next'];
+      context.go(next != null && next.startsWith('/') ? next : '/');
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);

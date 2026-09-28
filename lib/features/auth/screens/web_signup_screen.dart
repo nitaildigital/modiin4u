@@ -261,9 +261,10 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent> {
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            WebNavbar(
+            // The site's navigation belongs on the site, not over a single
+            // card asking for an e-mail address. See WebAuthHeader.
+            WebAuthHeader(
               isHebrew: _isHebrew,
-              activeId: null,
               onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(

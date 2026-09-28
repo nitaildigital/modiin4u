@@ -40,12 +40,33 @@ The dashboard offers seven: `{{ .ConfirmationURL }}`, `{{ .Token }}`,
 `{{ .TokenHash }}`, `{{ .SiteURL }}`, `{{ .Email }}`, `{{ .Data }}` and
 `{{ .RedirectTo }}`.
 
-These templates use two:
+These templates use three:
 
-- `{{ .ConfirmationURL }}` — the link, already carrying the token and the
-  redirect it should return to. Nothing is appended to it; it arrives whole.
+- `{{ .SiteURL }}` and `{{ .TokenHash }}` — the link, built as
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`
+  (or `type=email` for the sign-up confirmation).
 - `{{ .Email }}` — printed in the footer beside the "if this was not you"
   line, so a reader can check at a glance that the address is theirs.
+
+### Why not `{{ .ConfirmationURL }}`
+
+It was, and every reset link arrived already spent.
+
+`{{ .ConfirmationURL }}` points straight at Supabase's `/auth/v1/verify`,
+which uses up the one-time token the moment anything requests the address.
+Gmail, Outlook and most security filters request every link in an incoming
+message to check it is safe — so the scanner spent the token, and the person
+who clicked a minute later landed on `otp_expired`. Timing was ruled out by
+test: an untouched link still worked after three minutes.
+
+`/auth/confirm` is a page in the app. A scanner fetches the page and does not
+run it; the token is only spent when the page's own code calls `verifyOTP` in
+a real browser. Tested by fetching the link twice as a scanner would and then
+opening it: the reset went through.
+
+`{{ .SiteURL }}` is whatever Site URL is set under Authentication → URL
+Configuration — `http://45.93.94.49` today. When the domain arrives, change it
+there and these keep working.
 
 `{{ .Token }}` is the six-digit code, for a flow that asks the person to type
 one instead of following a link. The app does not do that, so it is not used.
