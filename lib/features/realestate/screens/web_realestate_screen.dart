@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -7,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../shared/widgets/web_dotted_band.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/listing.dart';
@@ -54,7 +56,7 @@ class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
   ListingKind _neighborhoodKind = ListingKind.rent;
 
   ListingKind _searchKind = ListingKind.sale;
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   final _locationController = TextEditingController();
   final _locationFocus = FocusNode();
 
@@ -80,13 +82,14 @@ class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
   /// The six types the browse row offers, with the icon each card carries.
   /// `other` is left out: it is what the model falls back to, not something a
   /// reader would pick.
+  /// The design's six line drawings, one per property type.
   static const _browseTypes = [
-    (PropertyType.apartment, IconsaxPlusBold.building_4),
-    (PropertyType.penthouse, IconsaxPlusBold.building_3),
-    (PropertyType.garden, IconsaxPlusBold.house),
-    (PropertyType.duplex, IconsaxPlusBold.building),
-    (PropertyType.villa, IconsaxPlusBold.house_2),
-    (PropertyType.studio, IconsaxPlusBold.lamp),
+    (PropertyType.apartment, 'type_apartment.svg'),
+    (PropertyType.penthouse, 'type_penthouse.svg'),
+    (PropertyType.garden, 'type_garden.svg'),
+    (PropertyType.duplex, 'type_duplex.svg'),
+    (PropertyType.villa, 'type_villa.svg'),
+    (PropertyType.studio, 'type_studio.svg'),
   ];
 
   @override
@@ -124,91 +127,77 @@ class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
   }
 
   // ─────────────────────────────────────────────
-  // HERO — gradient panel with the search bar
+  // HERO — the design's band and photograph, with the search across it
   // ─────────────────────────────────────────────
   Widget _buildHeroSection() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: 662,
-      color: Colors.white,
       child: Stack(
         children: [
-          Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              margin: const EdgeInsets.only(top: 48),
-              height: 551,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF80B2DF),
-                    Color(0xFF4A8BC4),
-                    Color(0xFF2D6A9F),
-                  ],
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 428,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(24),
+          const Positioned.fill(child: WebDottedBand()),
+          Positioned(
+            top: 48,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                height: 551,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.asset('assets/web/realestate/hero.jpg', fit: BoxFit.cover),
+                      ),
+                      // A fifth of black over the whole photograph, and the
+                      // sky washed blue from the top, as drawn.
+                      Positioned.fill(child: ColoredBox(color: Colors.black.withValues(alpha: 0.2))),
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 428,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                const Color(0xFF80B2DF).withValues(alpha: 0.55),
+                                const Color(0xFF80B2DF).withValues(alpha: 0),
+                              ],
+                            ),
+                          ),
                         ),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            const Color(0xFF80B2DF).withValues(alpha: 0.6),
-                            Colors.transparent,
+                      ),
+                      Positioned(
+                        top: 112,
+                        left: 0,
+                        right: 0,
+                        child: Column(
+                          children: [
+                            Text(
+                              _t('Find Your Perfect Home in Modiin', 'מצאו את הבית המושלם במודיעין'),
+                              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _t('Discover apartments and homes available for sale and rent.', 'גלו דירות ובתים למכירה ולהשכרה.'),
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 48),
+                            _buildSearchBar(),
                           ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  Center(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 112),
-                        Text(
-                          _t(
-                            'Find Your Perfect Home in Modiin',
-                            'מצאו את הבית המושלם במודיעין',
-                          ),
-                          style: TextStyle(
-                            fontFamily: AppFonts.nunito,
-                            fontSize: 44,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          _t(
-                            'Discover apartments and homes available for sale and rent.',
-                            'גלו דירות ובתים למכירה ולהשכרה.',
-                          ),
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 48),
-                        _buildSearchBar(),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -235,14 +224,15 @@ class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 848),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(50),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 16,
+            blurRadius: 8,
           ),
         ],
       ),
@@ -296,7 +286,8 @@ class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
-                    isDense: true,
+                    filled: false,
+                      isDense: true,
                     isCollapsed: true,
                   ),
                   onSubmitted: (_) => _onSearch(),
@@ -321,11 +312,7 @@ class _WebRealEstateContentState extends ConsumerState<WebRealEstateContent> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      IconsaxPlusLinear.search_normal_1,
-                      size: 18,
-                      color: Colors.white,
-                    ),
+                    SvgPicture.asset('assets/web/common/search_white.svg', width: 18, height: 18),
                     const SizedBox(width: 8),
                     Text(
                       _t('Search', 'חיפוש'),
@@ -1093,7 +1080,7 @@ class _ViewAllButton extends StatelessWidget {
 
 class _TypeCard extends StatelessWidget {
   final double width;
-  final IconData icon;
+  final String icon;
   final String label;
   final int count;
   final String noneLabel;
@@ -1131,7 +1118,7 @@ class _TypeCard extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, size: 32, color: AppColors.midBlue),
+              SvgPicture.asset('assets/web/realestate/$icon', width: 32, height: 32),
               const SizedBox(height: 19),
               Text(
                 label,

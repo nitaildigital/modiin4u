@@ -17,8 +17,8 @@ import '../models/business.dart';
 import '../providers/business_providers.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
-import '../../../shared/widgets/web_chrome.dart';
 import '../../../shared/widgets/network_photo.dart';
+import 'web_business_detail_screen.dart';
 
 class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
@@ -88,8 +88,6 @@ class _BusinessDetailContentState
   /// The language the desktop chrome is in. The mobile layout follows the
   /// app locale; the web pages each carry their own toggle, as the rest of
   /// the `web_*` screens do.
-  bool _isHebrew = false;
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -99,118 +97,10 @@ class _BusinessDetailContentState
     );
   }
 
-  /// Every business card on every desktop page opens this screen, and until
-  /// now it had no wide layout — it drew the mobile column at 430px in the
-  /// middle of the window. Same content, same providers, arranged for the
-  /// room: the photograph across the top, the page in the left column, and
-  /// the things you act on kept beside it rather than scrolled past.
-  Widget _buildDesktop(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          WebNavbar(
-            isHebrew: _isHebrew,
-            activeId: 'businesses',
-            onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHero(0),
-                  const SizedBox(height: 24),
-                  WebSection(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: _buildDesktopMain()),
-                        const SizedBox(width: 48),
-                        SizedBox(width: 440, child: _buildDesktopAside()),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 80),
-                  WebFooter(isHebrew: _isHebrew),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopMain() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            // The desktop page never showed the logo at all — only the
-            // phone's profile circle had a place for it, and that drew the
-            // same gold circle for every business.
-            _BusinessLogo(url: business.logoUrl, size: 84),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    business.name,
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  if ((business.description ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      business.description!,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 16,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        _buildTabBar(business),
-        _buildTabContent(),
-      ],
-    );
-  }
-
-  /// The column that stays beside the page: what the business is, and what a
-  /// reader can do about it. On mobile these sit in a row under the name and
-  /// are easy to scroll past.
-  Widget _buildDesktopAside() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE7E7E7)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildRatingRow(),
-          const SizedBox(height: 16),
-          _buildAddressRow(),
-          _buildNeighborhoodLink(),
-          const SizedBox(height: 20),
-          _buildActionButtons(stacked: true),
-        ],
-      ),
-    );
-  }
+  /// Every business card on every desktop page opens this screen. Wide, it
+  /// is the design's business page (web_business_detail_screen.dart).
+  Widget _buildDesktop(BuildContext context) =>
+      WebBusinessDetailContent(business: business);
 
   Widget _buildMobile(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;

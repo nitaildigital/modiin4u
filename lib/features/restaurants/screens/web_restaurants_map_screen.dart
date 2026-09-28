@@ -7,7 +7,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../shared/widgets/web_chrome.dart' show kContactEmail;
+import '../../../shared/widgets/web_chrome.dart' show kContactEmail, webGutter, webIsHebrew;
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -41,7 +41,7 @@ class WebRestaurantsMapContent extends ConsumerStatefulWidget {
 
 class _WebRestaurantsMapContentState
     extends ConsumerState<WebRestaurantsMapContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   final _searchController = TextEditingController();
   final _listController = ScrollController();
   final _mapController = MapController();
@@ -215,7 +215,7 @@ class _WebRestaurantsMapContentState
         color: Colors.white,
         border: Border(bottom: BorderSide(color: _kBorder)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 160),
+      padding: EdgeInsets.symmetric(horizontal: webGutter(MediaQuery.sizeOf(context).width)),
       child: Row(
         children: [
           GestureDetector(
@@ -254,7 +254,7 @@ class _WebRestaurantsMapContentState
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
-              onTap: () => setState(() => _isHebrew = !_isHebrew),
+              onTap: () => setState(() => webIsHebrew.value = _isHebrew = !_isHebrew),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,

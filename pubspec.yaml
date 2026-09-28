@@ -108,6 +108,16 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    # Asset folders are not recursive: each one the web design draws from is
+    # listed on its own.
+    - assets/icons/footer/
+    - assets/web/home/
+    - assets/web/business/
+    - assets/web/restaurants/
+    - assets/web/common/
+    - assets/web/news/
+    - assets/web/events/
+    - assets/web/realestate/
     - assets/data/
 
   # Declared here so `TextStyle(fontFamily: ...)` resolves them directly, and

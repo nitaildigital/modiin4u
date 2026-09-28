@@ -50,6 +50,28 @@ final articlesByCategoryProvider =
       return all.where((a) => ids.contains(a.id)).toList();
     });
 
+/// The category each article is filed under, by article id — the name the
+/// design prints in a turquoise chip on the front of the news page.
+///
+/// One read of the links with the category's name joined on; the link table
+/// has a real foreign key to `categories`, so this embed works where the one
+/// to `articles` could not. An article filed twice keeps the link marked
+/// primary, or the first.
+final articleCategoryNamesProvider = FutureProvider<Map<String, String>>((ref) async {
+  final rows = await SupabaseConfig.client
+      .from('entity_categories')
+      .select('entity_id, is_primary, categories(name)')
+      .eq('entity_type', 'article');
+  final names = <String, String>{};
+  for (final r in List<Map<String, dynamic>>.from(rows)) {
+    final name = (r['categories'] as Map?)?['name'] as String?;
+    if (name == null || name.isEmpty) continue;
+    final id = r['entity_id'] as String;
+    if (!names.containsKey(id) || r['is_primary'] == true) names[id] = name;
+  }
+  return names;
+});
+
 /// The article shown in the hero slot.
 ///
 /// The hero is a large picture with the headline across it, so an article

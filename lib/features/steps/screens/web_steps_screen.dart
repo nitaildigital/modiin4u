@@ -36,7 +36,7 @@ class WebStepsContent extends ConsumerStatefulWidget {
 }
 
 class _WebStepsContentState extends ConsumerState<WebStepsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   /// The daily target the ring fills against — the same figure the mobile
   /// screen uses.

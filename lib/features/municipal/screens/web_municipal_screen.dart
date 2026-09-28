@@ -29,7 +29,7 @@ class WebMunicipalContent extends StatefulWidget {
 }
 
 class _WebMunicipalContentState extends State<WebMunicipalContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   String _query = '';
   final _searchCtrl = TextEditingController();
   final _servicesKey = GlobalKey();

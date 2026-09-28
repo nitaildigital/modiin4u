@@ -31,7 +31,7 @@ class WebSettingsContent extends ConsumerStatefulWidget {
 }
 
 class _WebSettingsContentState extends ConsumerState<WebSettingsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   /// The switches write to the profile, so leaving the page puts the pending
   /// change through rather than dropping it.

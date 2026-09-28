@@ -38,7 +38,7 @@ class WebNewListingContent extends ConsumerStatefulWidget {
 }
 
 class _WebNewListingContentState extends ConsumerState<WebNewListingContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   int _listingType = 0;
   String? _propertyType;

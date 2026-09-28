@@ -36,7 +36,7 @@ class WebArticleContent extends ConsumerStatefulWidget {
 }
 
 class _WebArticleContentState extends ConsumerState<WebArticleContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
@@ -134,16 +134,9 @@ class _WebArticleContentState extends ConsumerState<WebArticleContent> {
     );
   }
 
-  /// 1600px content column (160px page padding at 1920).
-  Widget _centered({required Widget child}) {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: child,
-      ),
-    );
-  }
+  /// The page's content column. It was 1600 including its own 24 of
+  /// padding, so this page sat 24 inside the navbar and every other page.
+  Widget _centered({required Widget child}) => WebSection(child: child);
 
   // ─────────────────────────────────────────────
   // STICKY NAVBAR

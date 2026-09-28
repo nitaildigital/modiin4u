@@ -28,7 +28,7 @@ class WebMapContent extends ConsumerStatefulWidget {
 }
 
 class _WebMapContentState extends ConsumerState<WebMapContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   final _mapController = MapController();
   final _searchController = TextEditingController();
 

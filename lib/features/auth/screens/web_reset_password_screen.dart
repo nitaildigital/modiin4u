@@ -39,7 +39,7 @@ class WebResetPasswordContent extends ConsumerStatefulWidget {
 
 class _WebResetPasswordContentState
     extends ConsumerState<WebResetPasswordContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   final _password = TextEditingController();
   final _confirm = TextEditingController();

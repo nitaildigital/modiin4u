@@ -35,7 +35,7 @@ class WebSearchResultsContent extends ConsumerStatefulWidget {
 
 class _WebSearchResultsContentState
     extends ConsumerState<WebSearchResultsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   /// The term the page is showing. It starts as the one the route carried and
   /// changes when the bar below is submitted, so a second search does not have

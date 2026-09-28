@@ -50,7 +50,7 @@ class WebNeighborhoodDetailContent extends ConsumerStatefulWidget {
 
 class _WebNeighborhoodDetailContentState
     extends ConsumerState<WebNeighborhoodDetailContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   bool _aboutExpanded = false;
   final _scrollController = ScrollController();
 
@@ -766,15 +766,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: child,
-        ),
-      ),
-    );
+    return WebSection(child: child);
   }
 }
 

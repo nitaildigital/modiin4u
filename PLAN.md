@@ -1277,11 +1277,147 @@ Verified on the live site at 390 and 1600 wide: הדס וייצמן shows its lo
 its full About (1,129 characters, "הצג עוד" opens all of it), and its gallery
 opens in the viewer.
 
-**"The hero's palm tree icon isn't showing."** Not found. The web hero in the
-Figma file has none, the search button's icon is the sparkle it draws, the
-Figma logo is plain, and the logo on the site being replaced carries a small
-yellow ribbon, not a palm. Asked the client for a screenshot of where he sees
-it rather than guess.
+**"The hero's palm tree icon isn't showing."** ~~Not found~~ — **found, and I
+was wrong.** I looked at the hero's frames and the logo and missed five loose
+image layers on the Homepage frame itself: `01 1` (the palms), `image 23`
+(the torch), `image 24` (reeds on water), `image 25` (the stadium) and `02 1`
+(a cloud), each at 50%. The city's skyline in line drawing along the foot of
+the hero. They are in now; see the next section.
+
+### The web, rebuilt against the Figma file — 28 September
+
+The client: "the web is way different than figma … icons are different,
+screens and everything." He was right. Pulled every web frame through the
+Figma MCP and compared each against the live site at 1920.
+
+**What was wrong, page by page, and what it is now.**
+
+- *Navbar.* The home page had a navbar of its own — seven short labels in a
+  different order, no menus — and every other page had a third arrangement.
+  The design has one bar ("Header/07") in two forms: 1600 pill floating over
+  the home hero, 1920 bar with a hairline elsewhere. Logo right, Businesses in
+  Modiin beside it, Contact Us far left, in both languages. One widget draws
+  both now, with the design's chevron SVG.
+- *Menus.* News is the design's "News Menu" card (264 wide, 16 in, 20
+  between names). Businesses and Professionals are shaped after the client's
+  WordPress mega menu, which the design does not draw: three (two) columns of
+  names in a wide card centred on the page, and photographs fading beside them
+  — which on the client's site are paid placements. Here they come from
+  campaigns booked for `MENU_BUSINESSES` / `MENU_PROFESSIONALS`, and the
+  column is not there until one is. Professionals lists the businesses filed
+  under Services (the client's `professionals` post type — 6 posts — was never
+  imported). All three read right to left: the names are Hebrew.
+- *Home.* Hero line art (above), the design's 14px pill icons, search and
+  sparkle SVGs, 32px category icons, Avenir-style headings (Nunito — the
+  design's Avenir Next Rounded is licensed and not bundled), news cards at
+  286×181 and 207×131, the map card at 518 with the design's switch and
+  layer icons, business cards at 404 with the category pill, the kosher pill
+  and the round café/restaurant badge on the photo's edge, a third row faded
+  under an outlined "View all", the "Join the community" banner, professional
+  cards at 302. Businesses with a photograph come first.
+- *Footer.* The design's icons (phone, e-mail and WhatsApp circles, social
+  rings), white 120×40 store badges, "Read more", fixed column positions. The
+  links were plain Text — fourteen of them, none clickable; all lead
+  somewhere now. Social buttons are the client's real Facebook, Instagram and
+  TikTok (from his site); YouTube and LinkedIn, which he does not have, are
+  not drawn.
+- *Business page.* It drew the phone layout's pieces on a wide screen. It is
+  the design's "Restaurant Detail" now (`web_business_detail_screen.dart`):
+  the cover full width with the name on a dark half, the logo in a 140
+  circle, category · kosher, open now / closes / "See all hours", Show all
+  photos, About with the full text, Highlights from the row's true flags
+  (kosher, delivery, parking…), the gallery carousel, reviews with the
+  average, the bars and "Load more", Location & Hours with a map and the week,
+  More Info (website, phone), and five more businesses from the same
+  neighbourhood or category. `/restaurant/:id` — a page built around one
+  invented grill restaurant whatever id it was given — now opens the real
+  business, and both of its files are deleted.
+- *Restaurants.* The hero is the design's photograph with the blue sky wash,
+  the white quick-pick chips (three of the design's five have a category —
+  Bars and Takeaway do not), the dotted band behind it. Category tiles show a
+  photograph from a place in that category (no category has an image set).
+  Section headers use the design's round icons; each "View all" opens its
+  category. The card is the design's: no heart, badges, 404/348 heights.
+- *News.* Front page is the design's: the lead and two beside it, badges
+  ("Now in Modiin" for featured, the article's own category in turquoise),
+  then a section per category — its six newest — each heading leading to that
+  category. A category's own page keeps the paged grid.
+- *Events, Real Estate.* The design's hero photographs (concert crowd; the
+  city from above) in the dotted band; the design's six property-type icons.
+- *Deals.* Promotion row from `DEALS_TOP` bookings.
+
+**Also:** the language switch lasted one page — every screen started at
+English. It is held in one place now and survives a reload. The theme's grey
+input fill showed through every hero search field; turned off there.
+
+**Deliberately not copied from the design,** because it has no source or
+belongs to the app: view counts, "AI Picks", favourites hearts, the traffic
+alert, TikTok LIVE strip, "Have you visited?", Upload, Write a Review, Save,
+"Lunch Nearby" addresses, invented reviews and hours.
+
+**Needs a step I could not take: migration `00028_public_banners.sql`.**
+Writes `active_banners(code)` (a security-definer read of running campaigns —
+`campaigns` itself stays admin-only because a row carries clicks, salesperson
+and agreement) and five new slots. Until it runs, every banner slot simply
+draws nothing; the one console 404 on each page is that call. The auto-mode
+guard stopped me applying it; `python3 tool/run_migrations.py --apply 00028`.
+
+Verified on the live site at 1920: home, restaurants, news, events, deals,
+real estate and a business page, all three menus, the language persisting
+across a reload.
+
+**"The UI is cut off on the right."** Two things, one of them mine.
+
+- The screenshots were of the Chrome window Playwright drives. I had set its
+  page to 1920 (and later 1440) for testing, and that setting does not follow
+  the window, so a 1600 window showed a 1920 page with the right side cut, and
+  later a 1440 page with grey beside it. In an ordinary browser the site
+  follows the window — checked fresh at 1600 and 1440, and after a resize.
+- But the complaint underneath was right: below 1648 the side gap fell
+  straight from 160 to 24, so on a laptop the navbar, cards and footer ran
+  nearly to the edge. And each page had its own copy of the column — the news
+  and article pages' copy sat 24 inside the navbar on every width. One rule
+  now, `webGutter()` in web_chrome.dart: the design's 160 at 1920, never below
+  ~4.5% of the window (65 at 1440, 58 at 1280). Navbar, footer, `WebSection`
+  and all ten private wrappers use it, so everything lines up. The nav links
+  shrink slightly to fit a narrow window instead of scrolling out of sight,
+  and the business page keeps two columns down to 1000 wide.
+
+**"The palm tree loads slowly — are these local assets?"** They are — our own
+files in `assets/web`, served from our server, never Figma links. But
+Flutter web fetches an asset the first time a widget draws it, so the page
+appeared bare and the pictures arrived one by one. Now
+`precacheWebAssets()` (lib/shared/web_asset_precache.dart) starts fetching
+every web picture and icon when the app starts, alongside the Supabase
+connection, and the first page waits for the home set (up to 3s) so it opens
+whole. Files were also far heavier than they need be: the hero line art went
+from 344 KB to 50 KB (256-colour PNG; the worst pixel differs by 12/255 once
+drawn at half strength on the blue), the dot grid 410 → 14 KB, the community
+banner 366 → 58 KB (JPEG). nginx already caches them for a week.
+
+The first version waited on all 111 web assets before the first frame; they
+queued behind each other and on a slow line cost three seconds. It waits now
+for the ~20 files the home page's first screen shows (70 KB), at most 1.5s,
+and fetches the rest after.
+
+**The fonts were the bigger cost, and were never compressed.** Flutter
+downloads every font in the manifest before it draws anything — 3.5 MB of
+Inter, Rubik, Nunito and Iconsax. Ubuntu's mime.types has no `.ttf`, so nginx
+sent them as `application/octet-stream`, which `gzip_types` does not list.
+`font/ttf` and `font/otf` are named in the site config now, and gzipped: 1.6
+MB. Applied to the server (old config backed up in /root), `nginx -t` clean,
+other types unchanged. Worth doing next: subset Inter and Rubik to the scripts
+the site uses, and find out why Iconsax's tree-shaking keeps 554 of 557 KB.
+
+**Pages slid in from the side in the browser.** 26 routes used a hand-made
+slide, and the rest took Flutter's platform default — which in a browser on a
+Mac is the iPhone's slide. A website swaps pages in place. On the web every
+page now fades in over 150ms (`appPageTransitions` in app_theme.dart, and
+`_slideTransition` in the router); the phone keeps its slide. Checked on the
+live site: 60ms after a click the new page is in place with no sideways
+movement. Not yet looked at: widths below 1250, and the inner pages
+not listed here (listing detail, neighbourhood, article, event detail, map,
+municipal) — those were not in this pass.
 
 ---
 

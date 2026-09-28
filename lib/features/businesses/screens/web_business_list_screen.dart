@@ -53,7 +53,7 @@ class WebBusinessListContent extends ConsumerStatefulWidget {
 
 class _WebBusinessListContentState
     extends ConsumerState<WebBusinessListContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   /// -1 = no pill selected.
   int _selectedFilter = -1;

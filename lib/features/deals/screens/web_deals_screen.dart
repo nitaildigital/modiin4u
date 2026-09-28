@@ -6,6 +6,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
+import '../../../shared/widgets/web_banner_row.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../../businesses/providers/business_providers.dart';
 import '../models/offer.dart';
@@ -57,7 +58,7 @@ class WebDealsContent extends ConsumerStatefulWidget {
 }
 
 class _WebDealsContentState extends ConsumerState<WebDealsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   _Order? _order;
   final _dealsCarousel = ScrollController();
 
@@ -119,6 +120,9 @@ class _WebDealsContentState extends ConsumerState<WebDealsContent> {
                 child: Column(
                   children: [
                     _buildHeroSection(),
+                    // The design's three promotion banners, from the
+                    // campaigns booked for this page.
+                    const WebBannerRow(code: 'DEALS_TOP', top: 48),
                     _buildCategoriesSection(),
                     _buildPopularDealsSection(),
                     // Ten "Most Popular Brands" tiles stood below the pills,
@@ -143,9 +147,9 @@ class _WebDealsContentState extends ConsumerState<WebDealsContent> {
   // ─────────────────────────────────────────────
   // HERO — title and subtitle
   //
-  // A carousel of three 520 × 300 promo banners sat underneath, with arrows
-  // that scrolled it. There is no table of banners, so the three were empty
-  // rectangles and the arrows moved nothing that meant anything.
+  // A carousel of three 520 × 300 promo banners sat underneath as empty
+  // rectangles. They are drawn now from the campaigns booked for DEALS_TOP,
+  // and not at all while there are none.
   // ─────────────────────────────────────────────
   Widget _buildHeroSection() {
     return Padding(
@@ -549,17 +553,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 1648,
-        ), // 1600 content + 24 padding each side
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: child,
-        ),
-      ),
-    );
+    return WebSection(child: child);
   }
 }
 

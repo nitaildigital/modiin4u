@@ -38,7 +38,7 @@ class WebEventsMapContent extends ConsumerStatefulWidget {
 }
 
 class _WebEventsMapContentState extends ConsumerState<WebEventsMapContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   String? _selectedId;
 
   final _searchController = TextEditingController();

@@ -132,6 +132,53 @@ final businessByIdProvider = FutureProvider.family<Business, String>((
   return Business.fromJson(row);
 });
 
+/// The category a card names for each business, keyed by business id, with
+/// the slug of the top of its branch.
+///
+/// `businesses` has no category column — `Business.category` is always empty
+/// — so a card that wants to say "פיצה" beside a pizzeria has to read the
+/// links. The most specific one wins: a pizzeria is filed under both מסעדות
+/// and its child פיצה, and "פיצה" is the one that says something. The root
+/// slug is what decides the badge: `restaurants` or `cafe-bakery`.
+final businessPrimaryCategoryProvider =
+    FutureProvider<Map<String, ({BusinessCategory category, String rootSlug})>>(
+      (ref) async {
+        final repo = ref.watch(businessRepositoryProvider);
+        final rows = await repo.fetchCategories();
+        final byId = {
+          for (final r in rows)
+            r['id'] as String: BusinessCategory.fromJson(r),
+        };
+        final links = await repo.fetchCategoryLinks();
+
+        final chosen = <String, BusinessCategory>{};
+        for (final link in links) {
+          final category = byId[link['category_id']];
+          if (category == null) continue;
+          final id = link['entity_id'] as String;
+          final have = chosen[id];
+          if (have == null || (have.parentId == null && category.parentId != null)) {
+            chosen[id] = category;
+          }
+        }
+
+        String rootOf(BusinessCategory c) {
+          var at = c;
+          for (var depth = 0; depth < 5 && at.parentId != null; depth++) {
+            final parent = byId[at.parentId];
+            if (parent == null) break;
+            at = parent;
+          }
+          return at.slug;
+        }
+
+        return {
+          for (final e in chosen.entries)
+            e.key: (category: e.value, rootSlug: rootOf(e.value)),
+        };
+      },
+    );
+
 /// A category row from the `categories` table.
 class BusinessCategory {
   final String id;

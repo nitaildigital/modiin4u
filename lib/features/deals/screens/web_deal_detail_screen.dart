@@ -40,7 +40,7 @@ class WebDealDetailContent extends ConsumerStatefulWidget {
 }
 
 class _WebDealDetailContentState extends ConsumerState<WebDealDetailContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 

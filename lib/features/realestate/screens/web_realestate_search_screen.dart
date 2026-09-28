@@ -82,7 +82,7 @@ class WebRealEstateSearchContent extends ConsumerStatefulWidget {
 
 class _WebRealEstateSearchContentState
     extends ConsumerState<WebRealEstateSearchContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   final _scrollController = ScrollController();
   late final TextEditingController _searchController;
 

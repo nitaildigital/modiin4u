@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,8 @@ import 'core/theme/app_theme.dart';
 import 'core/providers/locale_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'l10n/app_localizations.dart';
+import 'shared/web_asset_precache.dart';
+import 'shared/widgets/web_chrome.dart' show restoreWebLanguage;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,10 +29,20 @@ void main() async {
   // see deploy/nginx/app.modiin4u.co.il.conf.
   usePathUrlStrategy();
 
+  // The website's pictures start downloading now, alongside the database
+  // connection, and the first page waits a moment for the few it shows — so
+  // it opens whole rather than filling in. Never more than a second and a
+  // half: a slow picture must not hold the site back.
+  final pictures = precacheWebAssets();
+
   try {
     await SupabaseConfig.init().timeout(const Duration(seconds: 5));
   } catch (e) {
     debugPrint('⚠️ Supabase init failed/timed out: $e');
+  }
+  if (kIsWeb) {
+    await restoreWebLanguage();
+    await pictures.timeout(const Duration(milliseconds: 1500), onTimeout: () {});
   }
   runApp(const ProviderScope(child: Modiin4uApp()));
 }

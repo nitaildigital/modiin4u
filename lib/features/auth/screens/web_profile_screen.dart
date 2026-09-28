@@ -37,7 +37,7 @@ class WebProfileContent extends ConsumerStatefulWidget {
 }
 
 class _WebProfileContentState extends ConsumerState<WebProfileContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 

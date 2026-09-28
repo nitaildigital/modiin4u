@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/web_banner_row.dart';
+import '../../../shared/widgets/web_dotted_band.dart';
 import '../../businesses/models/business.dart';
 import '../../businesses/providers/business_providers.dart';
 import '../providers/restaurant_providers.dart';
@@ -24,7 +28,7 @@ class WebRestaurantsContent extends ConsumerStatefulWidget {
 }
 
 class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   int _categoryPage = 0;
   final _searchController = TextEditingController();
 
@@ -76,9 +80,16 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
       for (final (i, c) in food.indexed)
         _Category(
           id: c.id,
+          slug: c.slug,
           name: c.name,
           count: counts[c.id] ?? 0,
           imageBg: _categoryPalette[i % _categoryPalette.length],
+          // The category's own picture where the admin has set one — none
+          // has yet — and otherwise a photograph from a place inside it, so
+          // the tile shows the food rather than a colour.
+          imageUrl: (c.imageUrl ?? '').isNotEmpty
+              ? c.imageUrl
+              : _inCategory(c.slug).map((b) => b.imageUrl).whereType<String>().where((u) => u.isNotEmpty).firstOrNull,
         ),
     ];
   }
@@ -184,33 +195,35 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildHeroSection(),
+                    _buildHeroSection(categories),
+                    const WebBannerRow(code: 'RESTAURANTS_TOP'),
                     // Each section is left out until its rows arrive: a heading
                     // over an empty row reads as a section that lost its
                     // contents.
                     if (categories.isNotEmpty) _buildCategoriesSection(categories),
                     if (restaurants.isNotEmpty)
                       _buildPlacesSection(
-                        icon: IconsaxPlusLinear.reserve,
-                        accent: kRestaurantGreen,
+                        icon: 'section_restaurants.svg',
                         title: _t('Restaurants in Modiin', 'מסעדות במודיעין'),
                         subtitle: _t('The newest additions to the restaurants category.',
                             'התוספות החדשות לקטגוריית המסעדות.'),
+                        viewAll: _t('View all restaurants', 'כל המסעדות'),
+                        categorySlug: 'restaurants',
                         places: restaurants,
                       ),
                     if (cafes.isNotEmpty)
                       _buildPlacesSection(
-                        icon: IconsaxPlusLinear.coffee,
-                        accent: kCafeBlue,
+                        icon: 'section_coffee.svg',
                         title: _t('Cafes & Bakeries in Modiin', 'קפה ומאפה במודיעין'),
                         subtitle: _t('Places for coffee, breakfast and something baked.',
                             'מקומות לקפה, ארוחת בוקר ומשהו מהתנור.'),
+                        viewAll: _t('View all cafes', 'כל בתי הקפה'),
+                        categorySlug: 'cafe-bakery',
                         places: cafes,
                       ),
                     if (mostLoved.isNotEmpty)
                       _buildPlacesSection(
-                        icon: IconsaxPlusLinear.heart,
-                        accent: kHeartRed,
+                        icon: 'section_loved.svg',
                         title: _t('Most Loved in Modiin', 'האהובים ביותר במודיעין'),
                         subtitle: _t('The best rated places in the directory.',
                             'המקומות המדורגים ביותר במדריך.'),
@@ -219,15 +232,14 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
                       ),
                     if (delivery.isNotEmpty)
                       _buildPlacesSection(
-                        icon: IconsaxPlusLinear.truck_fast,
-                        accent: AppColors.turquoise,
+                        icon: 'section_nearby.svg',
                         title: _t('Delivery in Modiin', 'משלוחים במודיעין'),
                         subtitle: _t('Places that deliver around Modiin.',
                             'מקומות שמציעים משלוחים במודיעין.'),
                         places: delivery,
                         compact: true,
                       ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 120),
                     WebFooter(isHebrew: _isHebrew),
                   ],
                 ),
@@ -242,81 +254,126 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
   // ─────────────────────────────────────────────
   // HERO
   // ─────────────────────────────────────────────
-  Widget _buildHeroSection() {
+  /// The design's band: a white field with a faint grid of dots, and in it
+  /// the photograph card with the title, the search and the quick picks.
+  Widget _buildHeroSection(List<_Category> categories) {
     return SizedBox(
       width: double.infinity,
-      height: 560,
+      height: 662,
       child: Stack(
         children: [
-          // Soft background wash behind the hero card
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Color(0x14BFE7F6), Color(0x00C4C4C4)],
-                ),
-              ),
-            ),
-          ),
-          Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              margin: const EdgeInsets.symmetric(horizontal: 40).copyWith(top: 48),
-              height: 450,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF80B2DF), Color(0xFF4A8BC4), Color(0xFF2D6A9F)],
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 0, left: 0, right: 0, height: 350,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [const Color(0xFF80B2DF).withValues(alpha: 0.6), Colors.transparent],
+          const Positioned.fill(child: WebDottedBand()),
+          Positioned(
+            top: 48,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                height: 551,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.asset('assets/web/restaurants/hero.jpg', fit: BoxFit.cover),
+                      ),
+                      // The sky is washed blue from the top, fading out by
+                      // two thirds of the way down, as drawn.
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 428,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                const Color(0xFF80B2DF).withValues(alpha: 0.55),
+                                const Color(0xFF80B2DF).withValues(alpha: 0),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 96),
-                        Text(
-                          _t('Restaurants in Modiin', 'מסעדות במודיעין'),
-                          style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23),
-                          textAlign: TextAlign.center,
+                      Positioned(
+                        top: 112,
+                        left: 0,
+                        right: 0,
+                        child: Column(
+                          children: [
+                            Text(
+                              _t('Restaurants in Modiin', 'מסעדות במודיעין'),
+                              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              // The design's line names bars too. There is no
+                              // bar category in the directory, so the page has
+                              // none to show.
+                              _t('Discover the restaurants, cafes and bakeries of Modiin',
+                                  'גלו את המסעדות, בתי הקפה והמאפיות של מודיעין'),
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 48),
+                            _buildSearchBar(),
+                            const SizedBox(height: 31),
+                            _buildQuickPicks(categories),
+                          ],
                         ),
-                        const SizedBox(height: 14),
-                        Text(
-                          // The line named bars too. There is no bar category
-                          // in the directory, so the page has none to show.
-                          _t('Discover the restaurants, cafes and bakeries of Modiin',
-                              'גלו את המסעדות, בתי הקפה והמאפיות של מודיעין'),
-                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 43),
-                        _buildSearchBar(),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// The white chips under the search. The design offers Restaurants, Coffee
+  /// Shops, Bars, Takeaway and Pizza; the directory has categories for three
+  /// of them, and a chip that led nowhere would be worse than none.
+  Widget _buildQuickPicks(List<_Category> categories) {
+    final bySlug = {for (final c in categories) c.slug: c};
+    final picks = [
+      ('restaurants', 'chip_restaurants.svg', _t('Restaurants', 'מסעדות')),
+      ('cafe-bakery', 'chip_coffee.svg', _t('Coffee Shops', 'בתי קפה')),
+      ('pizza', 'chip_pizza.svg', _t('Pizza', 'פיצה')),
+    ].where((p) => bySlug.containsKey(p.$1)).toList();
+    if (picks.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 8,
+      alignment: WrapAlignment.center,
+      children: [
+        for (final (slug, icon, label) in picks)
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => context.push('/businesses/category/${bySlug[slug]!.id}'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset('assets/web/restaurants/$icon', width: 14, height: 14),
+                    const SizedBox(width: 8),
+                    Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.midBlue)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -335,7 +392,7 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(50),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 16)],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 8)],
         ),
         child: Row(
           children: [
@@ -353,11 +410,12 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
                     style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.black),
                     decoration: InputDecoration(
                       hintText: _t('Restaurants, cuisines, dish or name...', 'מסעדות, מטבחים, מנה או שם...'),
-                      hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: kRGreyText),
+                      hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF5F5E5A)),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
                       contentPadding: EdgeInsets.zero,
+                      filled: false,
                       isDense: true,
                       isCollapsed: true,
                     ),
@@ -381,7 +439,7 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(IconsaxPlusLinear.search_normal_1, size: 18, color: Colors.white),
+                      SvgPicture.asset('assets/web/common/search_white.svg', width: 18, height: 18),
                       const SizedBox(width: 8),
                       Text(_t('Search', 'חיפוש'),
                           style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
@@ -477,29 +535,33 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
   // PLACES SECTION — header + card row
   // ─────────────────────────────────────────────
   Widget _buildPlacesSection({
-    required IconData icon,
-    required Color accent,
+    required String icon,
     required String title,
     required String subtitle,
     required List<_Entry> places,
+    String? viewAll,
+    String? categorySlug,
     bool compact = false,
   }) {
+    final category = categorySlug == null
+        ? null
+        : ref.watch(categoriesBySlugProvider).valueOrNull?[categorySlug];
     return Padding(
-      padding: const EdgeInsets.only(top: 64),
+      padding: const EdgeInsets.only(top: 72),
       child: _Section(
         child: Column(
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  width: 48, height: 48,
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2.4),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: OverflowBox(
+                    maxWidth: 52.8,
+                    maxHeight: 52.8,
+                    child: SvgPicture.asset('assets/web/restaurants/$icon', width: 52.8, height: 52.8),
                   ),
-                  child: Center(child: Icon(icon, size: 26, color: accent)),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -514,16 +576,18 @@ class _WebRestaurantsContentState extends ConsumerState<WebRestaurantsContent> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Every section's button read "View all …" and did nothing.
-                // The search page beside the map is where all of the places
-                // are, cuisine by cuisine.
+                // "View all restaurants" opens that category's listing; a
+                // row with no category of its own opens the search beside
+                // the map, where all of the places are.
                 _ViewAllButton(
-                  label: _t('Search all places', 'חיפוש כל המקומות'),
-                  onTap: () => context.push('/restaurants-map'),
+                  label: viewAll ?? _t('View all', 'הצג הכל'),
+                  onTap: () => category != null
+                      ? context.push('/businesses/category/${category.id}')
+                      : context.push('/restaurants-map'),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             LayoutBuilder(
               builder: (context, constraints) {
                 const gap = 24.0;
@@ -576,10 +640,19 @@ class _Entry {
 class _Category {
   /// The `categories` row id, so a card can open that category's listing.
   final String id;
+  final String slug;
   final String name;
   final int count;
   final Color imageBg;
-  const _Category({required this.id, required this.name, required this.count, required this.imageBg});
+  final String? imageUrl;
+  const _Category({
+    required this.id,
+    required this.slug,
+    required this.name,
+    required this.count,
+    required this.imageBg,
+    this.imageUrl,
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -592,15 +665,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1648), // 1600 content + 24 padding each side
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: child,
-        ),
-      ),
-    );
+    return WebSection(child: child);
   }
 }
 
@@ -697,16 +762,12 @@ class _CategoryCardState extends State<_CategoryCard> {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
-                child: Container(
+                child: NetworkPhoto(
+                  url: c.imageUrl,
                   height: 150,
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [c.imageBg, Color.lerp(c.imageBg, Colors.black, 0.18)!],
-                    ),
-                  ),
+                  gradient: [c.imageBg, Color.lerp(c.imageBg, Colors.black, 0.18)!],
+                  icon: null,
                 ),
               ),
               Padding(
@@ -717,8 +778,8 @@ class _CategoryCardState extends State<_CategoryCard> {
                     Text(c.name,
                         style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 8),
-                    Text('${c.count} ${_placesLabel(context)}',
+                    const SizedBox(height: 4),
+                    Text('${c.count} ${_placesLabel(context, c.count)}',
                         style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: kRGreyText),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
@@ -731,6 +792,9 @@ class _CategoryCardState extends State<_CategoryCard> {
     );
   }
 
-  String _placesLabel(BuildContext context) =>
-      Directionality.of(context) == TextDirection.rtl ? 'מקומות' : 'places';
+  String _placesLabel(BuildContext context, int count) {
+    final hebrew = Directionality.of(context) == TextDirection.rtl;
+    if (count == 1) return hebrew ? 'מקום' : 'place';
+    return hebrew ? 'מקומות' : 'places';
+  }
 }

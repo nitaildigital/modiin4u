@@ -44,7 +44,7 @@ class WebRealEstateMapContent extends ConsumerStatefulWidget {
 
 class _WebRealEstateMapContentState
     extends ConsumerState<WebRealEstateMapContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   String? _selectedId;
 
   final _searchController = TextEditingController();

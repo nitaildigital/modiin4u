@@ -41,7 +41,7 @@ class _WebNotificationsContentState extends State<WebNotificationsContent> {
   /// The phone screen is written in Hebrew only. Here the one sentence it
   /// says exists in both, so the page follows the navbar's toggle like every
   /// other web screen rather than opening in its own language.
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 

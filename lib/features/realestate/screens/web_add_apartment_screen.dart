@@ -60,7 +60,7 @@ class WebAddApartmentContent extends ConsumerStatefulWidget {
 
 class _WebAddApartmentContentState
     extends ConsumerState<WebAddApartmentContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   /// 0 = Basics, 1 = Details, 2 = Photos, 3 = Submitted.
   int _currentStep = 0;

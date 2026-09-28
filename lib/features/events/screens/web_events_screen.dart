@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../shared/widgets/web_dotted_band.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/event.dart';
@@ -22,7 +24,6 @@ import '../providers/event_providers.dart';
 const _kBorder = Color(0xFFE7E7E7);
 const _kGreyText = Color(0xFF5F5E5A);
 const _kBodyText = Color(0xFF3D3D3D);
-const _kIconGrey = Color(0xFF6D6D6D);
 const _kPlaceholder = Color(0xFF4F4F4F);
 
 /// How many cards the grid opens with, and how many each "Load More" adds.
@@ -51,7 +52,7 @@ class WebEventsContent extends ConsumerStatefulWidget {
 }
 
 class _WebEventsContentState extends ConsumerState<WebEventsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   int _visibleCount = _kFirstPage;
   final _searchController = TextEditingController();
   Timer? _debounce;
@@ -155,85 +156,83 @@ class _WebEventsContentState extends ConsumerState<WebEventsContent> {
   // ─────────────────────────────────────────────
   // HERO — 1920 × 662
   // ─────────────────────────────────────────────
+  /// The design's band and photograph: a crowd at a concert, darkened
+  /// softly behind the title so it reads, and the search across it.
   Widget _buildHeroSection() {
     return SizedBox(
       width: double.infinity,
       height: 662,
       child: Stack(
         children: [
-          // Soft background wash behind the hero card
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Color(0x14BFE7F6), Color(0x00C4C4C4)],
-                ),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              margin: const EdgeInsets.symmetric(horizontal: 40).copyWith(top: 48),
-              height: 550,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF3B2B63), Color(0xFF2E4E8C), Color(0xFF123A72)],
-                ),
-              ),
-              child: Stack(
-                children: [
-                  // Ellipse 530 — soft-light darkening blob
-                  Positioned(
-                    left: -80,
-                    bottom: -120,
-                    child: Container(
-                      width: 646,
-                      height: 567,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            Colors.black.withValues(alpha: 0.22),
-                            Colors.black.withValues(alpha: 0.0),
-                          ],
-                          stops: const [0.4, 1.0],
-                        ),
+          const Positioned.fill(child: WebDottedBand()),
+          Positioned(
+            top: 48,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                height: 551,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.asset('assets/web/events/hero.jpg', fit: BoxFit.cover),
                       ),
-                    ),
-                  ),
-                  SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 104),
-                        Text(
-                          _t('Events & Nightlife in Modiin', 'אירועים וחיי לילה במודיעין'),
-                          style: TextStyle(fontFamily: AppFonts.nunito,
-                              fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white, height: 1.23),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 14),
-                        SizedBox(
-                          width: 584,
-                          child: Text(
-                            _t('Discover concerts, community events, nightlife, family activities and more happening around Modiin.',
-                                'גלו הופעות, אירועי קהילה, חיי לילה, פעילויות למשפחה ועוד — הכל סביב מודיעין.'),
-                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white, height: 1.19),
-                            textAlign: TextAlign.center,
+                      // Ellipse 530: a blurred shadow, half strength, under
+                      // the title.
+                      Positioned(
+                        top: -154,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            width: 846,
+                            height: 767,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.35),
+                                  Colors.black.withValues(alpha: 0.0),
+                                ],
+                                stops: const [0.45, 1.0],
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 23),
-                        _buildSearchBar(),
-                      ],
-                    ),
+                      ),
+                      Positioned(
+                        top: 152,
+                        left: 0,
+                        right: 0,
+                        child: Column(
+                          children: [
+                            Text(
+                              _t('Events & Nightlife in Modiin', 'אירועים וחיי לילה במודיעין'),
+                              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 44, fontWeight: FontWeight.w600, color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: 584,
+                              child: Text(
+                                _t('Discover concerts, community events, nightlife, family activities and more happening around Modiin.',
+                                    'גלו הופעות, אירועי קהילה, חיי לילה, פעילויות למשפחה ועוד — הכל סביב מודיעין.'),
+                                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 23),
+                            _buildSearchBar(),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -252,11 +251,10 @@ class _WebEventsContentState extends ConsumerState<WebEventsContent> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(50),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16)],
         ),
         child: Row(
           children: [
-            const Icon(IconsaxPlusLinear.search_normal_1, size: 24, color: _kIconGrey),
+            SvgPicture.asset('assets/web/common/search24.svg', width: 24, height: 24),
             const SizedBox(width: 16),
             Expanded(
               child: TextField(
@@ -269,7 +267,8 @@ class _WebEventsContentState extends ConsumerState<WebEventsContent> {
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
-                  isDense: true,
+                  filled: false,
+                      isDense: true,
                   isCollapsed: true,
                 ),
                 onChanged: _applySearch,
@@ -291,7 +290,7 @@ class _WebEventsContentState extends ConsumerState<WebEventsContent> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(IconsaxPlusLinear.search_normal_1, size: 18, color: Colors.white),
+                      SvgPicture.asset('assets/web/common/search_white.svg', width: 18, height: 18),
                       const SizedBox(width: 8),
                       Text(_t('Search', 'חיפוש'),
                           style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
@@ -569,15 +568,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1648), // 1600 content + 24 padding each side
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: child,
-        ),
-      ),
-    );
+    return WebSection(child: child);
   }
 }
 

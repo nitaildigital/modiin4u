@@ -36,7 +36,7 @@ class WebTermsConditionsContent extends StatefulWidget {
 }
 
 class _WebTermsConditionsContentState extends State<WebTermsConditionsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 

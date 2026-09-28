@@ -38,7 +38,7 @@ class WebMyApartmentsContent extends ConsumerStatefulWidget {
 
 class _WebMyApartmentsContentState
     extends ConsumerState<WebMyApartmentsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   final _searchController = TextEditingController();
 
   @override

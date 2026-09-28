@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/providers/banners_provider.dart';
+import '../../../shared/providers/nav_categories_provider.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_chrome.dart';
@@ -25,7 +29,6 @@ import '../providers/news_providers.dart';
 
 const _kLime = Color(0xFFC9F31D);
 const _kBodyGrey = Color(0xFF5F5E5A);
-const _kIconGrey = Color(0xFF6D6D6D);
 const _kBorder = Color(0xFFE7E7E7);
 
 /// How many cards the grid opens with, and how many each "Load more" adds.
@@ -45,18 +48,15 @@ class WebNewsContent extends ConsumerStatefulWidget {
 }
 
 class _WebNewsContentState extends ConsumerState<WebNewsContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   int _visibleCount = _kFirstPage;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  // The page used to carry nine category headings — Municipality Updates,
-  // Urban, Business, People, Food & Drink and four more — each filled by
-  // matching the export's WordPress terms. The `articles` table has no
-  // category column, and `entity_categories` holds business links only: not
-  // one of the 669 articles is filed under a category. So a per-category
-  // section, tab or count has nothing behind it and none is drawn. When the
-  // article links are loaded, the headings can come back.
+  // The page used to carry nine category headings filled by matching a frozen
+  // export's WordPress terms. The categories are real rows now — brought over
+  // from the client's site with their 718 links — so the design's sections
+  // are drawn from them: one per category that has something in it.
 
   // ─────────────────────────────────────────────
   // DATES
@@ -180,28 +180,93 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
   }
 
   Widget _buildContent(Article featured, List<Article> rest) {
-    // Two stories sit beside the lead; the grid below starts after them.
+    // Two stories sit beside the lead.
     final side = rest.take(2).toList();
-    final grid = rest.skip(side.length).toList();
+    final catId = widget.categoryId;
     return Column(
       children: [
         _buildHero(featured, side),
         const SizedBox(height: 64),
-        _buildGrid(grid),
+        if (catId == null)
+          _buildSections({featured.id, for (final a in side) a.id})
+        else
+          _buildGrid(
+            rest.skip(side.length).toList(),
+            title: ref.watch(categoryNameProvider(catId)).valueOrNull ?? _t('Latest Stories', 'הכתבות האחרונות'),
+          ),
       ],
     );
   }
 
-  /// 1600px content column (160px page padding at 1920).
-  Widget _centered({required Widget child}) {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 1600),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: child,
-      ),
+  // ─────────────────────────────────────────────
+  // SECTIONS — the design's front page: a heading per category and its six
+  // newest stories, beside a column of the banners booked for this page
+  // ─────────────────────────────────────────────
+  Widget _buildSections(Set<String> alreadyShown) {
+    final categories = ref.watch(navCategoriesProvider('article')).valueOrNull ?? const <NavCategory>[];
+    final banners = ref.watch(activeBannersProvider('NEWS_SIDEBAR')).valueOrNull ?? const <SiteBanner>[];
+
+    final sections = <Widget>[];
+    for (final c in categories) {
+      final list = ref.watch(articlesByCategoryProvider(c.id)).valueOrNull;
+      if (list == null) continue;
+      final newest = _byDate(list).where((a) => !alreadyShown.contains(a.id)).take(6).toList();
+      if (newest.isEmpty) continue;
+      sections.add(_buildGrid(
+        newest,
+        title: c.name,
+        onTitleTap: () => context.go('/news/category/${c.id}'),
+        paged: false,
+      ));
+    }
+    if (sections.isEmpty) return _buildSkeleton();
+
+    final column = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < sections.length; i++) ...[
+          if (i > 0) const SizedBox(height: 72),
+          sections[i],
+        ],
+      ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, c) {
+        if (banners.isEmpty || c.maxWidth < 1200) return column;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 370,
+              child: Column(
+                children: [
+                  for (var i = 0; i < banners.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 32),
+                    MouseRegion(
+                      cursor: banners[i].destinationUrl == null ? MouseCursor.defer : SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: banners[i].destinationUrl == null
+                            ? null
+                            : () => launchUrl(Uri.parse(banners[i].destinationUrl!)),
+                        child: Image.network(banners[i].imageUrl, width: 370, fit: BoxFit.fitWidth),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 48),
+            Expanded(child: column),
+          ],
+        );
+      },
     );
   }
+
+  /// The page's content column. It was 1600 including its own 24 of
+  /// padding, so this page sat 24 inside the navbar and every other page.
+  Widget _centered({required Widget child}) => WebSection(child: child);
 
   // ─────────────────────────────────────────────
   // HERO — 1014 featured card + two 576 stacked cards
@@ -261,32 +326,14 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
                 ),
               ),
             ),
-            // Badges. Two used to sit here reading "Now in Modiin" and
-            // "Municipality" — the second a category the article does not
-            // have. These are the flags the row actually carries.
+            // Badges: the design's "Now in Modiin" for a story the newsroom
+            // has featured, and the category the story is filed under. The
+            // chip used to read "Municipality" on every card, a category the
+            // article did not have; it names the article's own now.
             PositionedDirectional(
               start: 16,
               top: 16,
-              child: Row(
-                children: [
-                  if (article.isBreaking)
-                    _badge(
-                      label: _t('Breaking', 'מבזק'),
-                      background: AppColors.error,
-                      foreground: Colors.white,
-                      icon: IconsaxPlusLinear.danger,
-                    ),
-                  if (article.isBreaking && article.isFeatured)
-                    const SizedBox(width: 12),
-                  if (article.isFeatured)
-                    _badge(
-                      label: _t('Featured', 'כתבה נבחרת'),
-                      background: _kLime,
-                      foreground: AppColors.navy,
-                      icon: IconsaxPlusLinear.star,
-                    ),
-                ],
-              ),
+              child: _badgeRow(article, featuredBadge: true),
             ),
             // Headline
             PositionedDirectional(
@@ -339,17 +386,11 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
                 ),
               ),
             ),
-            if (article.isBreaking)
-              PositionedDirectional(
-                start: 16,
-                top: 16,
-                child: _badge(
-                  label: _t('Breaking', 'מבזק'),
-                  background: AppColors.error,
-                  foreground: Colors.white,
-                  icon: IconsaxPlusLinear.danger,
-                ),
-              ),
+            PositionedDirectional(
+              start: 16,
+              top: 16,
+              child: _badgeRow(article, featuredBadge: false),
+            ),
             PositionedDirectional(
               start: 18,
               bottom: 27,
@@ -378,11 +419,42 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
     );
   }
 
+  Widget _badgeRow(Article article, {required bool featuredBadge}) {
+    final category = (ref.watch(articleCategoryNamesProvider).valueOrNull ?? const {})[article.id];
+    final badges = <Widget>[
+      if (article.isBreaking)
+        _badge(
+          label: _t('Breaking', 'מבזק'),
+          background: AppColors.error,
+          foreground: Colors.white,
+          icon: const Icon(IconsaxPlusLinear.danger, size: 20, color: Colors.white),
+        ),
+      if (featuredBadge && article.isFeatured)
+        _badge(
+          label: _t('Now in Modiin', 'עכשיו במודיעין'),
+          background: _kLime,
+          foreground: AppColors.navy,
+          icon: SvgPicture.asset('assets/web/news/now_in_modiin.svg', width: 20, height: 20),
+        ),
+      if (category != null)
+        _badge(label: category, background: AppColors.turquoise, foreground: Colors.white),
+    ];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < badges.length; i++) ...[
+          if (i > 0) const SizedBox(width: 12),
+          badges[i],
+        ],
+      ],
+    );
+  }
+
   Widget _badge({
     required String label,
     required Color background,
     required Color foreground,
-    IconData? icon,
+    Widget? icon,
   }) {
     return Container(
       height: 36,
@@ -395,7 +467,7 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 20, color: foreground),
+            icon,
             const SizedBox(width: 6),
           ],
           Text(
@@ -416,7 +488,12 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(IconsaxPlusLinear.calendar_1, size: 16, color: iconColor),
+        SvgPicture.asset(
+          'assets/web/home/date.svg',
+          width: 16,
+          height: 16,
+          colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        ),
         const SizedBox(width: 9),
         Text(
           date,
@@ -434,25 +511,39 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
   // ─────────────────────────────────────────────
   // GRID — every other published article, newest first
   // ─────────────────────────────────────────────
-  /// A 370px column of four gradient rectangles used to run down the left of
-  /// this grid as advertising slots. Nothing fills them — there is no ad
-  /// table and no campaign behind them — so the grid has the full width.
-  Widget _buildGrid(List<Article> articles) {
+  /// A category's stories, three across. On the front page each section
+  /// shows its newest six; on a category's own page the grid pages through
+  /// all of them.
+  Widget _buildGrid(
+    List<Article> articles, {
+    required String title,
+    VoidCallback? onTitleTap,
+    bool paged = true,
+  }) {
     if (articles.isEmpty) return const SizedBox.shrink();
-    final shown = articles.take(_visibleCount).toList();
+    final shown = paged ? articles.take(_visibleCount).toList() : articles;
+
+    final heading = Text(
+      title,
+      style: TextStyle(fontFamily: AppFonts.nunito,
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
+        height: 34 / 28,
+        color: AppColors.midBlue,
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _t('Latest Stories', 'הכתבות האחרונות'),
-          style: TextStyle(fontFamily: AppFonts.nunito,
-            fontSize: 28,
-            fontWeight: FontWeight.w600,
-            height: 34 / 28,
-            color: AppColors.midBlue,
-          ),
-        ),
+        // A category's heading leads to its own page, where all of its
+        // stories are.
+        onTitleTap == null
+            ? heading
+            : MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(onTap: onTitleTap, child: heading),
+              ),
         const SizedBox(height: 24),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -475,7 +566,7 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent> {
             );
           },
         ),
-        if (shown.length < articles.length) ...[
+        if (paged && shown.length < articles.length) ...[
           const SizedBox(height: 48),
           Center(
             child: MouseRegion(
@@ -747,7 +838,7 @@ class _ArticleCardState extends State<_ArticleCard> {
               const SizedBox(height: 14),
               Row(
                 children: [
-                  const Icon(IconsaxPlusLinear.calendar_1, size: 16, color: _kIconGrey),
+                  SvgPicture.asset('assets/web/home/date.svg', width: 16, height: 16),
                   const SizedBox(width: 9),
                   Text(
                     widget.date,

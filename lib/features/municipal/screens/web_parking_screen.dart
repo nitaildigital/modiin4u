@@ -31,7 +31,7 @@ class WebParkingContent extends StatefulWidget {
 }
 
 class _WebParkingContentState extends State<WebParkingContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 

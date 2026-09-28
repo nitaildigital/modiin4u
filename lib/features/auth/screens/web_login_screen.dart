@@ -35,7 +35,7 @@ class WebLoginContent extends ConsumerStatefulWidget {
 }
 
 class _WebLoginContentState extends ConsumerState<WebLoginContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();

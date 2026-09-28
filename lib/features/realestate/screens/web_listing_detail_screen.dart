@@ -40,7 +40,7 @@ class WebListingDetailContent extends ConsumerStatefulWidget {
 
 class _WebListingDetailContentState
     extends ConsumerState<WebListingDetailContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   bool _aboutExpanded = false;
   final _scrollController = ScrollController();
   final _nearbyController = ScrollController();

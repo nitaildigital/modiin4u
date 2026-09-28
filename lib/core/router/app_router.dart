@@ -47,7 +47,6 @@ import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/home/screens/search_results_screen.dart';
 import '../../features/restaurants/screens/restaurants_screen.dart';
 import '../../features/restaurants/screens/restaurants_map_screen.dart';
-import '../../features/restaurants/screens/restaurant_detail_screen.dart';
 import '../../shared/widgets/shell_scaffold.dart';
 
 
@@ -77,7 +76,22 @@ extension AppNavigation on BuildContext {
   }
 }
 
+/// The phone's slide in from the side; in a browser, a quick fade instead —
+/// a website swaps its pages in place (see `appPageTransitions`).
 CustomTransitionPage<void> _slideTransition(Widget child, GoRouterState state) {
+  if (kIsWeb) {
+    return CustomTransitionPage(
+      key: state.pageKey,
+      child: child,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+          FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          ),
+      transitionDuration: const Duration(milliseconds: 150),
+      reverseTransitionDuration: const Duration(milliseconds: 150),
+    );
+  }
   return CustomTransitionPage(
     key: state.pageKey,
     child: child,
@@ -207,7 +221,9 @@ final appRouter = GoRouter(
       path: '/restaurant/:id',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
-        RestaurantDetailScreen(restaurantId: state.pathParameters['id']!), state,
+        // A restaurant is a business. This route drew one invented grill
+        // restaurant whatever id it was given; it opens the real one now.
+        BusinessDetailScreen(businessId: state.pathParameters['id']!), state,
       ),
     ),
     GoRoute(

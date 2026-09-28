@@ -50,7 +50,7 @@ class WebEventDetailContent extends ConsumerStatefulWidget {
 
 class _WebEventDetailContentState
     extends ConsumerState<WebEventDetailContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   final _carousel = ScrollController();
 
   String _t(String en, String he) => _isHebrew ? he : en;
@@ -199,7 +199,7 @@ class _WebEventDetailContentState
 
   Widget _buildError(VoidCallback onRetry) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 160, vertical: 120),
+      padding: EdgeInsets.symmetric(horizontal: webGutter(MediaQuery.sizeOf(context).width), vertical: 120),
       child: Column(
         children: [
           Icon(IconsaxPlusLinear.calendar_remove,
@@ -763,8 +763,7 @@ class _WebEventDetailContentState
     final related = all.where((e) => e.id != event.id).take(4).toList();
     if (related.isEmpty) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 160),
+    return WebSection(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

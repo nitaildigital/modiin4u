@@ -1,11 +1,55 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../core/theme/app_fonts.dart';
 import 'app_colors.dart';
+
+/// How one page gives way to the next.
+///
+/// Flutter picks the platform's own page animation, and in a browser the
+/// platform is the visitor's computer: on a Mac that is the iPhone's slide in
+/// from the side. On a website that reads as an app pretending to be one —
+/// the client pressed a menu link and watched the page slide across. A
+/// website swaps pages in place, so in a browser every page fades in quickly
+/// instead. The phone keeps its platform's slide.
+final PageTransitionsTheme appPageTransitions = kIsWeb
+    ? PageTransitionsTheme(
+        builders: {
+          for (final platform in TargetPlatform.values)
+            platform: const WebFadePageTransitionsBuilder(),
+        },
+      )
+    : const PageTransitionsTheme();
+
+/// A 150ms fade, for pages in a browser.
+class WebFadePageTransitionsBuilder extends PageTransitionsBuilder {
+  const WebFadePageTransitionsBuilder();
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 150);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 150);
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      child: child,
+    );
+  }
+}
 
 class AppTheme {
   static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,
+      pageTransitionsTheme: appPageTransitions,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF121212),
       colorScheme: const ColorScheme.dark(
@@ -87,6 +131,7 @@ class AppTheme {
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
+      pageTransitionsTheme: appPageTransitions,
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.white,
       colorScheme: const ColorScheme.light(

@@ -35,7 +35,7 @@ class WebHelpSupportContent extends StatefulWidget {
 }
 
 class _WebHelpSupportContentState extends State<WebHelpSupportContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   final _searchController = TextEditingController();
 
   /// Which question is open, held by its text rather than by its position:

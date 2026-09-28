@@ -50,7 +50,7 @@ class WebBusinessesContent extends ConsumerStatefulWidget {
 }
 
 class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   String? _selectedCategory; // null = all categories
   int _selectedFilter = -1; // -1 = no pill selected
   String _query = '';
@@ -1041,17 +1041,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 1648,
-        ), // 1600 content + 24 padding each side
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: child,
-        ),
-      ),
-    );
+    return WebSection(child: child);
   }
 }
 

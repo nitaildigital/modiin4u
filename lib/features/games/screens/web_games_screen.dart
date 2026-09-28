@@ -28,7 +28,7 @@ class WebGamesContent extends StatefulWidget {
 }
 
 class _WebGamesContentState extends State<WebGamesContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 

@@ -55,7 +55,7 @@ class WebEventsCategoryContent extends ConsumerStatefulWidget {
 
 class _WebEventsCategoryContentState
     extends ConsumerState<WebEventsCategoryContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   final _searchController = TextEditingController();
   final _listController = ScrollController();
   final _mapController = MapController();

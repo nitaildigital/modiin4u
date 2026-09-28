@@ -42,7 +42,7 @@ class WebCommunityContent extends StatefulWidget {
 }
 
 class _WebCommunityContentState extends State<WebCommunityContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   /// Held as the Hebrew label, which is what a `category` column would carry.
   String _selectedCategory = 'הכל';

@@ -37,7 +37,7 @@ class WebSignupContent extends ConsumerStatefulWidget {
 }
 
 class _WebSignupContentState extends ConsumerState<WebSignupContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();

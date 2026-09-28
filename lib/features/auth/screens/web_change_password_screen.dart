@@ -37,7 +37,7 @@ class WebChangePasswordContent extends ConsumerStatefulWidget {
 
 class _WebChangePasswordContentState
     extends ConsumerState<WebChangePasswordContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   final _currentController = TextEditingController();
   final _newController = TextEditingController();

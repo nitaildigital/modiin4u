@@ -40,7 +40,7 @@ class WebFavoritesContent extends ConsumerStatefulWidget {
 }
 
 class _WebFavoritesContentState extends ConsumerState<WebFavoritesContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   int _activeFilter = 0;
 
   String _t(String en, String he) => _isHebrew ? he : en;

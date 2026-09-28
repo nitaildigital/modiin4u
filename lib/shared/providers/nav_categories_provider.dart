@@ -49,6 +49,51 @@ final navCategoriesProvider =
       return out;
     });
 
+/// The people the Professionals menu lists.
+///
+/// The client's own site keeps professionals as a post type of their own,
+/// with trades as its taxonomy — plumber, electrician, refrigerator
+/// technician. None of that was imported: here a professional is a business
+/// filed under Services, the same rule the home page's "Find a Professional"
+/// row uses. So the menu names those businesses, and each leads to its page,
+/// rather than listing trades that have nobody in them.
+final navProfessionalsProvider = FutureProvider<List<NavCategory>>((ref) async {
+  final client = SupabaseConfig.client;
+  final category = await client
+      .from('categories')
+      .select('id')
+      .eq('scope', 'business')
+      .eq('slug', 'services')
+      .maybeSingle();
+  if (category == null) return const [];
+
+  final links = await client
+      .from('entity_categories')
+      .select('entity_id')
+      .eq('entity_type', 'business')
+      .eq('category_id', category['id'] as String);
+  final ids = [
+    for (final l in List<Map<String, dynamic>>.from(links))
+      l['entity_id'] as String,
+  ];
+  if (ids.isEmpty) return const [];
+
+  final rows = await client
+      .from('businesses')
+      .select('id, name')
+      .inFilter('id', ids)
+      .eq('status', 'active')
+      .order('name', ascending: true);
+  return [
+    for (final r in List<Map<String, dynamic>>.from(rows))
+      NavCategory(
+        id: r['id'] as String,
+        name: (r['name'] as String?) ?? '',
+        count: 1,
+      ),
+  ];
+});
+
 /// One category's name, by id.
 ///
 /// The business category page took its heading from a `?title=` on the URL

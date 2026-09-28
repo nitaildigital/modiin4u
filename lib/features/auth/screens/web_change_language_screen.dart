@@ -39,7 +39,7 @@ class WebChangeLanguageContent extends ConsumerStatefulWidget {
 
 class _WebChangeLanguageContentState
     extends ConsumerState<WebChangeLanguageContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
   int _selectedIndex = 0;
 
   @override

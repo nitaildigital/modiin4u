@@ -46,7 +46,7 @@ class WebEditProfileContent extends ConsumerStatefulWidget {
 }
 
 class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent> {
-  bool _isHebrew = false;
+  bool _isHebrew = webIsHebrew.value;
 
   late TextEditingController _nameController;
   late TextEditingController _emailController;
