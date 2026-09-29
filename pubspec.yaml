@@ -42,6 +42,9 @@ dependencies:
   geolocator: ^13.0.2
 
   # Utils
+  # Asks Google for a map session on the website (web_map_tiles.dart).
+  # Already in the build through supabase; named here because it is used.
+  http: ^1.6.0
   intl: ^0.20.2
   url_launcher: ^6.3.1
   share_plus: ^10.1.4
@@ -118,6 +121,8 @@ flutter:
     - assets/web/news/
     - assets/web/events/
     - assets/web/realestate/
+    - assets/web/deals/
+    - assets/web/map/
     - assets/data/
 
   # Declared here so `TextStyle(fontFamily: ...)` resolves them directly, and

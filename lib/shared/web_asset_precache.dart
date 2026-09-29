@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -40,53 +40,85 @@ Future<void> precacheWebAssets() async {
   // Every web SVG, with room to spare; the default holds a hundred.
   svg.cache.maximumSize = 300;
 
-  // What the home page shows before anyone scrolls: the navbar's logo and
-  // chevron, the hero's line art, search and pills, and the seven category
-  // icons — about twenty files, 70 KB. Everything else waits until these are
-  // in: asking for all 111 at once had them queue behind one another, and on
+  // What the first screen shows, so it opens whole: the navbar's logo and
+  // chevron everywhere; on the home page the hero's line art, search, pills
+  // and the seven category icons (about twenty files, 70 KB); on Restaurants,
+  // Real Estate or Events that page's photograph and the dotted field behind
+  // it. Asking for all 111 at once had them queue behind one another, and on
   // a slow line the first screen came up three seconds later for it.
   const home = 'assets/web/home/';
   const firstCards = {'news', 'events', 'community', 'professionals', 'maps', 'businesses', 'realestate'};
-  bool firstScreen(String a) =>
-      a == 'assets/images/logo_white.svg' ||
-      a == 'assets/icons/chevron_down.svg' ||
-      a.startsWith('${home}hero_') ||
-      a.startsWith('${home}pill_') ||
-      a == '${home}search.svg' ||
-      a == '${home}ai.svg' ||
-      firstCards.any((c) => a == '${home}card_$c.svg');
+  final page = Uri.base.path;
+  final pageFolder = const {
+    '/restaurants': 'assets/web/restaurants/',
+    '/realestate': 'assets/web/realestate/',
+    '/events': 'assets/web/events/',
+  }[page];
 
-  final now = assets.where(firstScreen);
-  final later = assets.where((a) => !firstScreen(a));
+  bool firstScreen(String a) {
+    if (a == 'assets/images/logo_white.svg' || a == 'assets/icons/chevron_down.svg') return true;
+    if (page == '/' || page.isEmpty) {
+      return a.startsWith('${home}hero_') ||
+          a.startsWith('${home}pill_') ||
+          a == '${home}search.svg' ||
+          a == '${home}ai.svg' ||
+          firstCards.any((c) => a == '${home}card_$c.svg');
+    }
+    if (pageFolder != null) {
+      return a.startsWith(pageFolder) ||
+          a == 'assets/web/common/dots_tile.png' ||
+          a.startsWith('assets/web/common/search');
+    }
+    return false;
+  }
+
+  bool photo(String a) => a.endsWith('.webp') || a.endsWith('.png') || a.endsWith('.jpg');
+
+  final now = assets.where(firstScreen).toList();
+  final rest = assets.where((a) => !firstScreen(a)).toList();
 
   await Future.wait(now.map(_load));
-  unawaited(Future.wait(later.map(_load)));
+  // Then the other pages' photographs, which are what a visitor waits on
+  // when they click through; the small icons after them.
+  unawaited(() async {
+    await Future.wait(rest.where(photo).map(_load));
+    await Future.wait(rest.where((a) => !photo(a)).map(_load));
+  }());
 }
 
-Future<void> _load(String asset) {
-  if (asset.endsWith('.svg')) {
-    return SvgAssetLoader(asset).loadBytes(null).then((_) {}, onError: (_) {});
+/// Loads one asset into its cache. A preload is only ever a head start, so
+/// nothing here may fail the app: an asset that will not load is named in the
+/// console and left for the page to fetch itself.
+Future<void> _load(String asset) async {
+  try {
+    if (asset.endsWith('.svg')) {
+      await SvgAssetLoader(asset).loadBytes(null);
+    } else if (asset.endsWith('.png') || asset.endsWith('.jpg') || asset.endsWith('.jpeg') || asset.endsWith('.webp')) {
+      await _image(asset);
+    }
+  } catch (e) {
+    debugPrint('Preload skipped $asset: $e');
   }
-  if (asset.endsWith('.png') || asset.endsWith('.jpg') || asset.endsWith('.jpeg')) {
-    return _image(asset);
-  }
-  return Future.value();
 }
 
 /// Resolves an asset image into the image cache and waits for it to decode.
+///
+/// The listener is never removed, so the image stays live. Flutter's image
+/// cache holds 100 MB and drops the least recently used; the businesses and
+/// restaurants pages fill it with directory photos, and the heroes preloaded
+/// at start were being pushed out — the Restaurants hero came up blank on the
+/// way back from Events. A live image is kept however full the cache gets.
+/// The site's own photographs come to about 18 MB decoded.
 Future<void> _image(String asset) {
   final done = Completer<void>();
   final stream = AssetImage(asset).resolve(ImageConfiguration.empty);
-  late final ImageStreamListener listener;
-  void finish() {
-    if (!done.isCompleted) done.complete();
-    stream.removeListener(listener);
-  }
-
-  listener = ImageStreamListener(
-    (_, _) => finish(),
-    onError: (_, _) => finish(),
-  );
-  stream.addListener(listener);
+  stream.addListener(ImageStreamListener(
+    (_, _) {
+      if (!done.isCompleted) done.complete();
+    },
+    onError: (_, _) {
+      if (!done.isCompleted) done.complete();
+    },
+  ));
   return done.future;
 }
