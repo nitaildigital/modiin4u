@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:go_router/go_router.dart' show GoRouter;
 
 import 'core/providers/theme_provider.dart';
 import 'core/router/app_router.dart';
@@ -28,6 +29,12 @@ void main() async {
   // It also means the server must serve index.html for any unknown path;
   // see deploy/nginx/app.modiin4u.co.il.conf.
   usePathUrlStrategy();
+
+  // The screens open one another with `push`, which go_router by default
+  // keeps out of the address bar: a visitor on a deal still saw /deals, and
+  // a refresh or a copied link took them back to the list. With this the
+  // address follows the page, as a website's should.
+  GoRouter.optionURLReflectsImperativeAPIs = true;
 
   // The website's pictures start downloading now, alongside the database
   // connection, and the first page waits a moment for the few it shows — so

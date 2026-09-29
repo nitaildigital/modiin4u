@@ -45,6 +45,52 @@ class WebFadePageTransitionsBuilder extends PageTransitionsBuilder {
   }
 }
 
+/// The text theme, as the web design sets type.
+///
+/// Material 3 gives every text style its own line height and tracking — body
+/// text at 1.43 with 0.25 of extra letter spacing — and any `Text` that does
+/// not set them itself inherits both. The design sets type at the font's own
+/// line height with no tracking. So in a browser every line on the site came
+/// out wider and taller than drawn: the home search placeholder measured 202
+/// wide against the design's 191, each category card 6 too tall, and the
+/// navbar's links spread wider than the bar allows. In a browser the styles
+/// keep their size, weight and colour and drop the rest; the phone keeps
+/// Material's.
+TextTheme _asDesigned(TextTheme t) {
+  if (!kIsWeb) return t;
+  TextStyle? plain(TextStyle? s) => s == null
+      ? null
+      : TextStyle(
+          inherit: s.inherit,
+          color: s.color,
+          fontSize: s.fontSize,
+          fontWeight: s.fontWeight,
+          fontStyle: s.fontStyle,
+          fontFamily: s.fontFamily,
+          fontFamilyFallback: s.fontFamilyFallback,
+          textBaseline: s.textBaseline,
+          decoration: s.decoration,
+          letterSpacing: 0,
+        );
+  return TextTheme(
+    displayLarge: plain(t.displayLarge),
+    displayMedium: plain(t.displayMedium),
+    displaySmall: plain(t.displaySmall),
+    headlineLarge: plain(t.headlineLarge),
+    headlineMedium: plain(t.headlineMedium),
+    headlineSmall: plain(t.headlineSmall),
+    titleLarge: plain(t.titleLarge),
+    titleMedium: plain(t.titleMedium),
+    titleSmall: plain(t.titleSmall),
+    bodyLarge: plain(t.bodyLarge),
+    bodyMedium: plain(t.bodyMedium),
+    bodySmall: plain(t.bodySmall),
+    labelLarge: plain(t.labelLarge),
+    labelMedium: plain(t.labelMedium),
+    labelSmall: plain(t.labelSmall),
+  );
+}
+
 class AppTheme {
   static ThemeData get dark {
     return ThemeData(
@@ -61,10 +107,10 @@ class AppTheme {
         onSurface: Color(0xFFE0E0E0),
         error: AppColors.error,
       ),
-      textTheme: ThemeData.dark().textTheme.apply(fontFamily: AppFonts.rubik).apply(
+      textTheme: _asDesigned(ThemeData.dark().textTheme.apply(fontFamily: AppFonts.rubik).apply(
         bodyColor: const Color(0xFFE0E0E0),
         displayColor: const Color(0xFFE0E0E0),
-      ),
+      )),
       appBarTheme: AppBarTheme(
         backgroundColor: const Color(0xFF1E1E1E),
         foregroundColor: const Color(0xFFE0E0E0),
@@ -143,10 +189,10 @@ class AppTheme {
         onSurface: AppColors.navy,
         error: AppColors.error,
       ),
-      textTheme: ThemeData.light().textTheme.apply(fontFamily: AppFonts.rubik).apply(
+      textTheme: _asDesigned(ThemeData.light().textTheme.apply(fontFamily: AppFonts.rubik).apply(
         bodyColor: AppColors.navy,
         displayColor: AppColors.navy,
-      ),
+      )),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.white,
         foregroundColor: AppColors.navy,
