@@ -98,11 +98,7 @@ class _NotYetWiredNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline,
-            size: 18,
-            color: AppColors.adminTextLight,
-          ),
+          Icon(Icons.info_outline, size: 18, color: AppColors.adminTextLight),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

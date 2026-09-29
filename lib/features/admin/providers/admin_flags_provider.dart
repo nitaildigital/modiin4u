@@ -35,7 +35,8 @@ Future<String?> _currentAdminId() async {
 
 /// Two joins deep: the flag names an `admin_users` row, which names the
 /// profile that carries the person's name.
-const _flagColumns = '*, admin_users:updated_by(profiles:profile_id(full_name))';
+const _flagColumns =
+    '*, admin_users:updated_by(profiles:profile_id(full_name))';
 
 /// Lifts the joined name to `updated_by_name`, leaving `updated_by` as the id
 /// it is. Null where the row has never been edited through the panel, which

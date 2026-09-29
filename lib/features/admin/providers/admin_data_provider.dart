@@ -82,10 +82,7 @@ class AdminProfilesNotifier extends AdminTableNotifier {
   Future<void> setBanned(String id, bool banned) async {
     await SupabaseConfig.client
         .from('profiles')
-        .update({
-          'is_banned': banned,
-          if (!banned) 'ban_reason': null,
-        })
+        .update({'is_banned': banned, if (!banned) 'ban_reason': null})
         .eq('id', id);
     await load();
   }

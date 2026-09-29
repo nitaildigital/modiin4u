@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_ad_placements_provider.dart';
 
@@ -26,7 +27,7 @@ class _AdminAdPlacementsScreenState
               final active = list.where((p) => p['is_active'] == true).length;
               final totalCampaigns = list.fold<int>(
                 0,
-                (s, p) => s + ((p['active_campaigns_count'] as int?) ?? 0),
+                (s, p) => s + _liveCampaigns(p),
               );
               return Container(
                 padding: const EdgeInsets.symmetric(
@@ -48,7 +49,7 @@ class _AdminAdPlacementsScreenState
                     _StatChip('פעילים', '$active', AppColors.success),
                     const SizedBox(width: 16),
                     _StatChip(
-                      'קמפיינים פעילים',
+                      'באנרים באתר עכשיו',
                       '$totalCampaigns',
                       AppColors.turquoise,
                     ),
@@ -171,9 +172,9 @@ class _AdminAdPlacementsScreenState
                       children: [
                         _Col('קוד', flex: 2),
                         _Col('תיאור', flex: 3),
-                        if (isWide) _Col('גדלים', flex: 2),
+                        if (isWide) _Col('גודל באתר', flex: 2),
                         _Col('באנרים', flex: 1),
-                        _Col('קמפיינים', flex: 1),
+                        _Col('באתר / סה״כ', flex: 1),
                         _Col('סטטוס', flex: 1),
                         const SizedBox(width: 40),
                       ],
@@ -182,15 +183,15 @@ class _AdminAdPlacementsScreenState
                   Expanded(
                     child: ListView.separated(
                       itemCount: list.length,
-                      separatorBuilder: (_, __) => Divider(
+                      separatorBuilder: (_, _) => Divider(
                         height: 1,
                         color: AppColors.border.withValues(alpha: 0.3),
                       ),
                       itemBuilder: (_, i) {
                         final p = list[i];
                         final isActive = p['is_active'] as bool? ?? false;
-                        final campaigns =
-                            p['active_campaigns_count'] as int? ?? 0;
+                        final campaigns = _liveCampaigns(p);
+                        final booked = (p['campaigns'] as List?)?.length ?? 0;
 
                         return InkWell(
                           onTap: () => _showEditor(context, ref, placement: p),
@@ -242,11 +243,19 @@ class _AdminAdPlacementsScreenState
                                   Expanded(
                                     flex: 2,
                                     child: Text(
-                                      p['allowed_sizes'] as String? ?? '',
+                                      placementSizeText(p),
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 11,
-                                        color: AppColors.grayLight,
+                                        color:
+                                            placementIsDrawn(
+                                                  p['code'] as String?,
+                                                ) ||
+                                                formatAllowedSizes(
+                                                  p['allowed_sizes'],
+                                                ).isNotEmpty
+                                            ? AppColors.grayText
+                                            : AppColors.error,
                                       ),
                                     ),
                                   ),
@@ -280,7 +289,7 @@ class _AdminAdPlacementsScreenState
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      '$campaigns',
+                                      '$campaigns / $booked',
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 13,
@@ -357,16 +366,40 @@ class _AdminAdPlacementsScreenState
     );
   }
 
-  void _handleAction(String action, Map<String, dynamic> p) {
+  /// Campaigns in [p] that the website is drawing now — the same test the
+  /// site's `active_banners()` applies.
+  int _liveCampaigns(Map<String, dynamic> p) {
+    final active = p['is_active'] as bool? ?? false;
+    final list = (p['campaigns'] as List?) ?? const [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .where((c) => campaignIsLive(c, placementActive: active))
+        .length;
+  }
+
+  Future<void> _handleAction(String action, Map<String, dynamic> p) async {
     final notifier = ref.read(adminAdPlacementListProvider.notifier);
     final id = p['id'] as String;
-    switch (action) {
-      case 'edit':
-        _showEditor(context, ref, placement: p);
-      case 'toggle':
-        notifier.toggleActive(id);
-      case 'delete':
-        notifier.deletePlacement(id);
+    try {
+      switch (action) {
+        case 'edit':
+          _showEditor(context, ref, placement: p);
+        case 'toggle':
+          await notifier.toggleActive(id);
+        case 'delete':
+          await notifier.deletePlacement(id);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'הפעולה נכשלה: ${_why(e)}',
+            style: TextStyle(fontFamily: AppFonts.rubik),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -398,6 +431,7 @@ class _PlacementEditorDialogState
     extends ConsumerState<_PlacementEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  String? _error;
 
   late final TextEditingController _code;
   late final TextEditingController _label;
@@ -421,7 +455,7 @@ class _PlacementEditorDialogState
       text: (p?['max_banners'] as int?)?.toString() ?? '1',
     );
     _allowedSizes = TextEditingController(
-      text: p?['allowed_sizes'] as String? ?? '',
+      text: formatAllowedSizes(p?['allowed_sizes']),
     );
     _isActive = p?['is_active'] as bool? ?? true;
   }
@@ -489,10 +523,16 @@ class _PlacementEditorDialogState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // The website finds a slot by its code, so renaming
+                        // one would quietly empty it on the site.
                         _buildField(
                           'קוד מיקום',
                           _code,
                           hint: 'HOME_TOP',
+                          readOnly: _isEditing,
+                          helper: _isEditing
+                              ? 'האתר מזהה את המיקום לפי הקוד, ולכן אי אפשר לשנות אותו'
+                              : null,
                           validator: (v) =>
                               v == null || v.isEmpty ? 'שדה חובה' : null,
                         ),
@@ -523,6 +563,17 @@ class _PlacementEditorDialogState
                           'גדלים מותרים',
                           _allowedSizes,
                           hint: '728x90, 320x100',
+                          helper: _isEditing
+                              ? 'מה שהאתר מציג כאן: ${placementSiteSizes[widget.placement!['code']] ?? 'המיקום לא מוצג באתר כרגע'}'
+                              : null,
+                          validator: (v) {
+                            try {
+                              parseAllowedSizes(v ?? '');
+                              return null;
+                            } on FormatException catch (e) {
+                              return 'לא ברור: "${e.message}" — רוחב x גובה, מופרדים בפסיק';
+                            }
+                          },
                         ),
                         const SizedBox(height: 14),
                         SwitchListTile(
@@ -534,7 +585,7 @@ class _PlacementEditorDialogState
                             ),
                           ),
                           value: _isActive,
-                          activeColor: AppColors.turquoise,
+                          activeThumbColor: AppColors.turquoise,
                           onChanged: (v) => setState(() => _isActive = v),
                         ),
                       ],
@@ -558,7 +609,7 @@ class _PlacementEditorDialogState
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          'סגירה',
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -566,7 +617,20 @@ class _PlacementEditorDialogState
                           ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _error == null
+                            ? const SizedBox.shrink()
+                            : Text(
+                                _error!,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 12,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 12),
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
@@ -612,6 +676,8 @@ class _PlacementEditorDialogState
     String? Function(String?)? validator,
     int maxLines = 1,
     TextInputType? keyboardType,
+    bool readOnly = false,
+    String? helper,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,9 +697,21 @@ class _PlacementEditorDialogState
           validator: validator,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+          readOnly: readOnly,
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 14,
+            color: readOnly ? AppColors.grayText : null,
+          ),
           decoration: InputDecoration(
             hintText: hint,
+            helperText: helper,
+            helperMaxLines: 3,
+            helperStyle: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 11,
+              color: AppColors.grayText,
+            ),
             hintStyle: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 13,
@@ -663,23 +741,43 @@ class _PlacementEditorDialogState
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     final notifier = ref.read(adminAdPlacementListProvider.notifier);
-    final data = {
-      'code': _code.text.trim(),
+    final description = _description.text.trim();
+    final data = <String, dynamic>{
       'label': _label.text.trim(),
-      'description': _description.text.trim(),
+      'description': description.isEmpty ? null : description,
       'max_banners': int.tryParse(_maxBanners.text) ?? 1,
-      'allowed_sizes': _allowedSizes.text.trim(),
+      // A list of {w, h}, which is what the jsonb column holds; the form
+      // used to store the typed text as a JSON string.
+      'allowed_sizes': parseAllowedSizes(_allowedSizes.text),
       'is_active': _isActive,
-      'sort_order': 99,
     };
-    if (_isEditing) {
-      await notifier.updatePlacement(widget.placement!['id'] as String, data);
-    } else {
-      await notifier.createPlacement(data);
+    try {
+      if (_isEditing) {
+        // The code and the place in the list are left as they are: the code
+        // is what the site looks the slot up by, and every edit used to push
+        // the slot to position 99.
+        await notifier.updatePlacement(widget.placement!['id'] as String, data);
+      } else {
+        await notifier.createPlacement({
+          ...data,
+          'code': _code.text.trim().toUpperCase(),
+          'sort_order': 99,
+        });
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = 'השמירה נכשלה: ${_why(e)}';
+        });
+      }
     }
-    if (mounted) Navigator.pop(context);
   }
 }
 
@@ -778,3 +876,7 @@ class _StatusPill extends StatelessWidget {
     );
   }
 }
+
+/// What went wrong, in the database's own words rather than the exception's
+/// wrapper — "value … is out of range", not "PostgrestException(message: …".
+String _why(Object e) => e is PostgrestException ? e.message : '$e';
