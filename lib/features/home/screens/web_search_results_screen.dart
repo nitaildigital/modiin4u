@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../providers/search_providers.dart';
+import '../../../shared/widgets/network_photo.dart' show sizedPhotoUrl;
 
 // ═══════════════════════════════════════════════════════════
 // Web Search Results — desktop results page
@@ -33,9 +34,9 @@ class WebSearchResultsContent extends ConsumerStatefulWidget {
       _WebSearchResultsContentState();
 }
 
-class _WebSearchResultsContentState
-    extends ConsumerState<WebSearchResultsContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebSearchResultsContentState extends ConsumerState<WebSearchResultsContent>
+    with WebLanguageState<WebSearchResultsContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   /// The term the page is showing. It starts as the one the route carried and
   /// changes when the bar below is submitted, so a second search does not have
@@ -95,7 +96,6 @@ class _WebSearchResultsContentState
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -606,7 +606,7 @@ Widget _hitImage(SearchHit hit) {
   return ClipRRect(
     borderRadius: BorderRadius.circular(10),
     child: Image.network(
-      url,
+      sizedPhotoUrl(url, 96, 2),
       width: 96,
       height: 96,
       fit: BoxFit.cover,

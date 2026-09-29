@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -17,7 +19,10 @@ import '../../map/data/map_pois.dart';
 import '../../map/providers/map_providers.dart';
 import '../../news/models/article.dart';
 import '../../news/providers/news_providers.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/web_map_tiles.dart';
+import '../../../shared/widgets/web_hero_photo.dart';
+import '../providers/home_web_providers.dart';
+import '../../../shared/widgets/web_contact_menu.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Homepage — Figma "Homepage", 1920 wide
@@ -29,13 +34,14 @@ import '../../../shared/widgets/osm_attribution.dart';
 // six invented tradesmen with telephone buttons that did nothing. All of it
 // is read from the database now, or gone.
 //
-// Where the design draws something with no source behind it, it is left out
-// rather than filled in: the traffic alert, the view counts on the cards,
-// the "AI Picks" badge (nothing recommends anything), the favourites heart
-// (accounts belong to the app), and the TikTok strip (a picture of five
-// videos, with no feed to keep it current). The banner slots — above the
-// news, beside the map — draw what the control centre has booked for them,
-// and nothing when that is nothing.
+// Every section the design draws is here, each fed by a table: the notice
+// under the hero is a `home_blocks` alert the control centre publishes (and
+// absent when none is running); "AI Picks" are the businesses marked
+// recommended or featured; the banner slots — above the news, beside the
+// map — draw what the control centre has booked for them. Two things the
+// design draws have no source and stay off: the view counts on the cards
+// (`businesses` has no such column) and the favourites heart (saving belongs
+// to an account, and accounts to the app).
 // ═══════════════════════════════════════════════════════════
 
 const _kInk = Color(0xFF0A1230);
@@ -44,14 +50,36 @@ const _kMuted = Color(0xFF6D6D6D);
 const _kLine = Color(0xFFE7E7E7);
 const _kAsset = 'assets/web/home';
 
+/// The city's TikTok, which the design's "Modiin on TikTok LIVE" strip opens.
+const _kTikTokUrl = 'https://www.tiktok.com/@modiin4u';
+
 /// The design's heading face is Avenir Next Rounded Demi, which is licensed
 /// and not bundled; Nunito is the rounded face the project carries, at the
 /// same weight.
-TextStyle _display(double size, {Color color = _kInk, double? height}) =>
-    TextStyle(fontFamily: AppFonts.nunito, fontSize: size, fontWeight: FontWeight.w600, color: color, height: height);
+///
+/// Both helpers set the spacing and the line height outright. Left unset,
+/// a Text takes them from the theme's body style — Material 3's 0.25 of
+/// tracking and 1.43 lines — which drew every line on this page wider and
+/// taller than the design's, whose text is set solid at the face's own
+/// ("normal") leading: 1.21 for Inter, about 1.22 for the Avenir headings.
+TextStyle _display(double size, {Color color = _kInk, double? height}) => TextStyle(
+  fontFamily: AppFonts.nunito,
+  fontSize: size,
+  fontWeight: FontWeight.w600,
+  color: color,
+  height: height ?? 1.22,
+  letterSpacing: 0,
+);
 
 TextStyle _inter(double size, {FontWeight weight = FontWeight.w400, Color color = Colors.black, double? height}) =>
-    TextStyle(fontFamily: AppFonts.inter, fontSize: size, fontWeight: weight, color: color, height: height);
+    TextStyle(
+      fontFamily: AppFonts.inter,
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+      height: height ?? 1.21,
+      letterSpacing: 0,
+    );
 
 /// A line of the directory's own text — a name, an address — which is Hebrew
 /// whatever language the page is in.
@@ -87,14 +115,21 @@ class WebHomeContent extends ConsumerStatefulWidget {
   ConsumerState<WebHomeContent> createState() => _WebHomeContentState();
 }
 
-class _WebHomeContentState extends ConsumerState<WebHomeContent> {
+class _WebHomeContentState extends ConsumerState<WebHomeContent> with WebLanguageState<WebHomeContent> {
   final _searchController = TextEditingController();
-  bool _isHebrew = webIsHebrew.value;
+  bool get _isHebrew => webIsHebrew.value;
 
   /// Which map layers the preview draws. The three rows in the map sidebar
   /// were switches drawn permanently on with no handler behind them; they
   /// filter the pins now, the way the map page's own rows do.
   final _activeLayers = <String>{for (final layer in mapLayers) layer.$1};
+
+  /// The notice the visitor closed with its ×, by id — so a different notice
+  /// published later still shows.
+  String? _dismissedNotice;
+
+  /// The trade pill chosen in the professionals row; null is "All".
+  String? _trade;
 
   // ── Localization helper ──
   String _t(String en, String he) => _isHebrew ? he : en;
@@ -125,18 +160,21 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
     'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
   ];
 
-  /// "August 5, 2026 | 16:36", or "5 באוגוסט 2026 | 16:36".
+  /// "August 5, 2026 | 4:36 p.m." as the design writes it, or
+  /// "5 באוגוסט 2026 | 16:36" — Hebrew keeps the 24-hour clock.
   ///
   /// `published_at` comes back as UTC, so it is moved to the reader's zone
   /// before the hour is printed.
   String _dateLine(DateTime value) {
     final d = value.toLocal();
-    final time =
-        '${d.hour.toString().padLeft(2, '0')}:'
-        '${d.minute.toString().padLeft(2, '0')}';
-    return _isHebrew
-        ? '${d.day} ב${_heMonths[d.month - 1]} ${d.year} | $time'
-        : '${_enMonths[d.month - 1]} ${d.day}, ${d.year} | $time';
+    final minutes = d.minute.toString().padLeft(2, '0');
+    if (_isHebrew) {
+      return '${d.day} ב${_heMonths[d.month - 1]} ${d.year} | '
+          '${d.hour.toString().padLeft(2, '0')}:$minutes';
+    }
+    final hour = d.hour % 12 == 0 ? 12 : d.hour % 12;
+    return '${_enMonths[d.month - 1]} ${d.day}, ${d.year} | '
+        '$hour:$minutes ${d.hour < 12 ? 'a.m.' : 'p.m.'}';
   }
 
   /// The [count] most recently published articles.
@@ -157,8 +195,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
             SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildHeroSection(),
-                  const SizedBox(height: 79),
+                  _buildHeroWithNotice(),
                   _buildCategoryCards(),
                   _buildTopBanner(),
                   _buildNewsSection(),
@@ -168,6 +205,8 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
                   _buildBusinessesSection(),
                   const SizedBox(height: 67),
                   _buildJoinBanner(),
+                  const SizedBox(height: 80),
+                  _buildTikTokSection(),
                   const SizedBox(height: 80),
                   _buildProfessionalsSection(),
                   const SizedBox(height: 128),
@@ -183,7 +222,6 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
               child: WebNavbar(
                 floating: true,
                 isHebrew: _isHebrew,
-                onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
               ),
             ),
           ],
@@ -302,6 +340,9 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
                 fillColor: Colors.transparent,
                 filled: false,
                 isDense: true,
+                // The theme pads every field 20 in from its edge; here the
+                // words start 16 after the glass, as drawn.
+                contentPadding: EdgeInsets.zero,
               ),
             ),
           ),
@@ -348,7 +389,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
       (_t('News', 'חדשות'), 'news', '/news'),
       (_t('Map', 'מפה'), 'map', '/map'),
       (_t('Real Estate', 'נדל״ן'), 'realestate', '/realestate'),
-      (_t('Professionals', 'בעלי מקצוע'), 'professionals', '/businesses'),
+      (_t('Professionals', 'בעלי מקצוע'), 'professionals', '/businesses/category/services'),
       (_t('Deals', 'מבצעים'), 'deals', '/deals'),
     ];
 
@@ -383,11 +424,113 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
     );
   }
 
-  // A road-works banner used to sit under the hero, under a 🚧, reading "Road
-  // work on Begin St. – expect delays in the area", with an underlined "View
-  // details" that was a plain Text with no handler. There is no traffic source
-  // behind the app, so the alert was an invented fact about the city and is
-  // gone.
+  // ─────────────────────────────────────────────
+  // NOTICE — the bar across the foot of the hero
+  // ─────────────────────────────────────────────
+  /// The hero, and the notice the control centre has running, laid across its
+  /// lower edge: 950 wide, its top 23 above the end of the blue.
+  ///
+  /// This used to be a road-works alert written into the file ("Road work on
+  /// Begin St."), with a "View details" that did nothing. It is the published
+  /// `alert` row of `home_blocks` now, through [homeNoticeProvider].
+  ///
+  /// The block is 779 tall whether or not a notice is running, so the cards
+  /// under it sit where the design puts them either way. The bar lives inside
+  /// the block rather than hanging off the hero, so its lower half (and the ×)
+  /// still takes a click.
+  Widget _buildHeroWithNotice() {
+    final notice = ref.watch(homeNoticeProvider).valueOrNull;
+    final show = notice != null && notice.id != _dismissedNotice;
+    return SizedBox(
+      height: 779,
+      child: Stack(
+        children: [
+          Positioned(left: 0, right: 0, top: 0, child: _buildHeroSection()),
+          if (show)
+            Positioned(
+              left: 24,
+              right: 24,
+              top: 677,
+              child: Center(child: _buildSiteNotice(notice)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSiteNotice(HomeNotice notice) {
+    final label = notice.label(_isHebrew);
+    final message = notice.message(_isHebrew);
+    final link = notice.link;
+    final text = _inter(12, color: Colors.black);
+    final medium = _inter(12, weight: FontWeight.w500, color: Colors.black);
+
+    return Container(
+      width: 950,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF5E1),
+        border: Border.all(color: const Color(0xFFFFD89A)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          SvgPicture.asset('$_kAsset/notice_bell.svg', width: 20, height: 20),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Row(
+              children: [
+                if (label != null) ...[
+                  Text(label.endsWith(':') ? label : '$label:', style: medium),
+                  const SizedBox(width: 12),
+                ],
+                if (message != null)
+                  Flexible(
+                    child: Text(message, style: text, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                if (link != null) ...[
+                  const SizedBox(width: 12),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => _openLink(link),
+                      child: Text(
+                        notice.linkLabel(_isHebrew) ?? _t('View details', 'לפרטים'),
+                        style: _inter(12, weight: FontWeight.w500, color: AppColors.midBlue).copyWith(
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppColors.midBlue,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => setState(() => _dismissedNotice = notice.id),
+              child: Tooltip(
+                message: _t('Close', 'סגירה'),
+                child: SvgPicture.asset('$_kAsset/notice_close.svg', width: 16, height: 16),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A page on this site by its path, anything else in a new tab.
+  void _openLink(String link) {
+    if (link.startsWith('/')) {
+      context.push(link);
+    } else {
+      launchUrl(Uri.parse(link));
+    }
+  }
 
   // ─────────────────────────────────────────────
   // CATEGORY CARDS — seven across the 1600 column
@@ -397,7 +540,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
       (_t('News', 'חדשות'), 'news', _t('What’s happening in Modiin', 'מה קורה במודיעין'), '/news'),
       (_t('Events', 'אירועים'), 'events', _t('What’s on in Modiin', 'מה יש במודיעין'), '/events'),
       (_t('Community', 'קהילה'), 'community', _t('Groups & Initiatives', 'קבוצות ויוזמות'), '/community'),
-      (_t('Professionals', 'בעלי מקצוע'), 'professionals', _t('Experts & Services', 'מומחים ושירותים'), '/businesses'),
+      (_t('Professionals', 'בעלי מקצוע'), 'professionals', _t('Experts & Services', 'מומחים ושירותים'), '/businesses/category/services'),
       (_t('Maps', 'מפות'), 'maps', _t('Explore Modiin', 'גלו את מודיעין'), '/map'),
       (_t('Businesses', 'עסקים'), 'businesses', _t('All Businesses in Modiin', 'כל העסקים במודיעין'), '/businesses'),
       (_t('Real Estate', 'נדל״ן'), 'realestate', _t('Apartments & Projects', 'דירות ופרויקטים'), '/realestate'),
@@ -466,7 +609,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
     if (banners.isEmpty) return const SizedBox(height: 64);
     return Padding(
       padding: const EdgeInsets.only(top: 56, bottom: 64),
-      child: Center(child: _Banner(banner: banners.first, width: 728, height: 90)),
+      child: Center(child: _Banner(banner: banners.first, width: 728, height: 90, bordered: true)),
     );
   }
 
@@ -609,8 +752,11 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
   }
 
   Widget _buildNewsRightColumn(List<Article> articles) {
+    // 15 below the last rule, not 20: the design draws this list the same
+    // 709 tall as the three cards beside it, which its four rows of 172
+    // fill to within 15 of the edge.
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 15),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: _kLine),
@@ -942,41 +1088,30 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
               onTap: (_, _) => context.go('/map'),
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.modiin4u.app',
-                maxZoom: 19,
-              ),
+              const WebMapTiles(),
               MarkerLayer(
                 markers: [
                   for (final poi in visible)
                     Marker(
                       point: poi.position,
-                      width: 32,
-                      height: 32,
+                      width: 40,
+                      height: 43.24,
+                      // The pin's point, not its middle, sits on the place.
+                      alignment: const Alignment(0, -0.77),
                       child: MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
                           onTap: () => context.push(poi.route ?? '/map'),
                           child: Tooltip(
                             message: poi.name,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))],
-                              ),
-                              child: Center(
-                                child: Container(width: 16, height: 16, decoration: BoxDecoration(color: poi.color, shape: BoxShape.circle)),
-                              ),
-                            ),
+                            child: _MapPin(layer: poi.layer),
                           ),
                         ),
                       ),
                     ),
                 ],
               ),
-              const OsmAttribution(),
+              const WebMapCredit(),
             ],
           );
         },
@@ -985,27 +1120,48 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
   }
 
   // ─────────────────────────────────────────────
-  // BUSINESSES — two rows of four, a third fading out under "View all"
+  // AI PICKS — two rows of four, a third fading out under "View all"
   // ─────────────────────────────────────────────
-  /// This section was headed "AI Picks · Recommended for You" over four
-  /// invented cafés, each opening `/business/demo`, an id that matches no row.
+  /// "AI Picks · Recommended for You", as the design heads it.
   ///
-  /// Nothing here recommends anything — there is no recommender, and not one
-  /// business in the table is flagged featured — so the badge is left off and
-  /// the heading says what the row is: businesses from the directory. The
-  /// cards are the design's; the ones with a photograph come first, so the
-  /// row reads as a row of places rather than of placeholders.
+  /// This section once drew four invented cafés, each opening
+  /// `/business/demo`, an id that matches no row. It reads the directory now:
+  /// first the businesses the control centre has marked recommended or
+  /// featured ([homeRecommendedBusinessesProvider]), then, to fill the rows,
+  /// other businesses with a photograph — so the grid is never a row of
+  /// placeholders, and never pads itself with invented places.
   Widget _buildBusinessesSection() {
     final businesses = ref.watch(businessesProvider);
+    final picks = ref.watch(homeRecommendedBusinessesProvider).valueOrNull ?? const <Business>[];
     final kinds = ref.watch(businessPrimaryCategoryProvider).valueOrNull ?? const {};
+    // The client opened the site and saw businesses nowhere near him. When
+    // the browser has already given this site a location, the row is the
+    // nearest businesses, headed so; until then it is the recommended row,
+    // with a button that asks. A browser answers only on a secure page, so
+    // on the plain-http address the button is not drawn at all.
+    final near = ref.watch(nearbyBusinessesProvider).valueOrNull;
+    final byDistance = near?.byDistance ?? false;
 
     return _SectionWrapper(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!byDistance) ...[
+            _AiPicksBadge(label: _t('AI Picks', 'בחירות AI')),
+            const SizedBox(height: 16),
+          ],
           _SectionHeading(
-            title: _t('Businesses in Modiin', 'עסקים במודיעין'),
-            subtitle: _t('Places, services and shops listed across the city.', 'מקומות, שירותים וחנויות מכל רחבי העיר.'),
+            title: byDistance ? _t('Near You', 'קרוב אליך') : _t('Recommended for You', 'מומלצים בשבילך'),
+            subtitle: byDistance
+                ? _t('The places closest to where you are right now.', 'המקומות הקרובים ביותר למקום שבו אתם נמצאים.')
+                : _t('Discover places, services and activities based on what matters to you.',
+                    'גלו מקומות, שירותים ופעילויות לפי מה שחשוב לכם.'),
+            action: !byDistance && locationIsAskable
+                ? _NearMeButton(
+                    label: _t('Show what\'s near me', 'הצג מה קרוב אליי'),
+                    onTap: () => askForNearby(ref),
+                  )
+                : null,
           ),
           const SizedBox(height: 32),
           businesses.when(
@@ -1018,17 +1174,27 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
               onAction: () => ref.invalidate(businessesProvider),
             ),
             data: (list) {
-              if (list.isEmpty) {
+              if (list.isEmpty && picks.isEmpty) {
                 return _buildNotice(
                   icon: IconsaxPlusLinear.shop,
                   title: _t('No businesses listed yet', 'עדיין לא נרשמו עסקים'),
                   body: _t('Businesses will appear here as they are approved.', 'עסקים יופיעו כאן עם אישורם.'),
                 );
               }
-              final ordered = [
-                ...list.where((b) => (b.imageUrl ?? '').isNotEmpty),
-                ...list.where((b) => (b.imageUrl ?? '').isEmpty),
-              ];
+              final pickedIds = {for (final b in picks) b.id};
+              // Nearest first; among them, those with a photograph ahead of
+              // those without, each still in order of distance — or the
+              // nearest four can be four blue panels.
+              final ordered = byDistance
+                  ? [
+                      ...near!.businesses.where((b) => (b.imageUrl ?? '').isNotEmpty),
+                      ...near.businesses.where((b) => (b.imageUrl ?? '').isEmpty),
+                    ]
+                  : [
+                      ...picks,
+                      ...list.where((b) => !pickedIds.contains(b.id) && (b.imageUrl ?? '').isNotEmpty),
+                      ...list.where((b) => !pickedIds.contains(b.id) && (b.imageUrl ?? '').isEmpty),
+                    ];
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final cols = constraints.maxWidth > 1200 ? 4 : (constraints.maxWidth > 800 ? 2 : 1);
@@ -1066,7 +1232,13 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
                           children: [
                             if (faded.isNotEmpty)
                               Positioned(left: 0, right: 0, top: 0, child: IgnorePointer(child: rowOf(faded))),
-                            Positioned.fill(
+                            // The fade is drawn 200 tall and cut at 133, as in
+                            // the design: white from a little past halfway.
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              top: 0,
+                              height: 200,
                               child: IgnorePointer(
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
@@ -1149,13 +1321,15 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           onTap: () => context.go('/community'),
+          // 1024 of picture, with 24 either side kept clear on a narrow
+          // window.
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1024),
+            constraints: const BoxConstraints(maxWidth: 1024 + 48),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: AspectRatio(
                 aspectRatio: 1024 / 222,
-                child: Image.asset('$_kAsset/join_community.jpg', fit: BoxFit.cover),
+                child: const WebHeroPhoto(asset: '$_kAsset/join_community.webp', placeholder: Color(0xFF4A91B5)),
               ),
             ),
           ),
@@ -1165,71 +1339,168 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> {
   }
 
   // ─────────────────────────────────────────────
-  // PROFESSIONALS
+  // TIKTOK LIVE
   // ─────────────────────────────────────────────
-  /// Six people were written into this section — Eldad Nona the refrigerator
-  /// technician, Omer Levi the electrician and four more — with emoji for
-  /// faces and "Call Now" buttons that were plain Containers. Above them sat
-  /// six filter pills naming trades that are not categories in the database.
-  ///
-  /// What the site calls a professional is a business filed under Services,
-  /// so the row shows those, with the business's own number on the button.
-  /// The trade pills are left off until there are trades to filter by. The
-  /// section hides itself, heading and all, when that category is empty.
-  Widget _buildProfessionalsSection() {
-    final categories = ref.watch(businessCategoriesProvider);
-    if (categories.isLoading) {
-      return _buildProfessionalsFrame(child: _buildProfessionalsSkeleton());
-    }
-    final services =
-        (categories.valueOrNull ?? const []).where((c) => c.slug == 'services').toList();
-    if (services.isEmpty) return const SizedBox.shrink();
-
-    final businesses = ref.watch(businessesByCategoryProvider(services.first.id));
-    return businesses.when(
-      loading: () => _buildProfessionalsFrame(child: _buildProfessionalsSkeleton()),
-      error: (_, _) => _buildProfessionalsFrame(
-        child: _buildNotice(
-          icon: IconsaxPlusLinear.wifi_square,
-          title: _t('This list could not be loaded', 'לא ניתן לטעון את הרשימה'),
-          body: _t('Check your connection and try again.', 'בדקו את החיבור לאינטרנט ונסו שוב.'),
-          actionLabel: _t('Try again', 'נסו שוב'),
-          onAction: () => ref.invalidate(businessesByCategoryProvider(services.first.id)),
-        ),
-      ),
-      data: (list) {
-        if (list.isEmpty) return const SizedBox.shrink();
-        final shown = list.take(6).toList();
-        return _buildProfessionalsFrame(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final cols = constraints.maxWidth > 1200 ? 6 : (constraints.maxWidth > 800 ? 3 : 2);
-              const gap = 16.0;
-              final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: shown.map((b) => SizedBox(
-                  width: cardWidth,
-                  child: _ProfessionalCard(business: b, isHebrew: _isHebrew),
-                )).toList(),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildProfessionalsFrame({required Widget child}) {
+  /// "Modiin on TikTok LIVE": the design's strip of five of the city's
+  /// videos, 1600 × 514, opening the city's TikTok. It is the design's own
+  /// picture — there is no feed behind it — so it points at the account
+  /// rather than at any one video.
+  Widget _buildTikTokSection() {
     return _SectionWrapper(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeading(
-            title: _t('Find a Professional in Modiin', 'מצאו בעל מקצוע במודיעין'),
-            subtitle: _t('Connect with trusted local professionals for your home, business and everyday needs.',
-                'התחברו עם בעלי מקצוע מקומיים לבית, לעסק ולצרכים היומיומיים.'),
+            title: _t('Modiin on TikTok LIVE', 'מודיעין בטיקטוק LIVE'),
+            subtitle: _t('See what’s happening around the city, straight from the local community.',
+                'ראו מה קורה ברחבי העיר, ישירות מהקהילה המקומית.'),
+          ),
+          const SizedBox(height: 38.5),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => launchUrl(Uri.parse(_kTikTokUrl)),
+              child: Semantics(
+                link: true,
+                label: _t('Modiin on TikTok', 'מודיעין בטיקטוק'),
+                child: AspectRatio(
+                  aspectRatio: 1600 / 514,
+                  // The strip is a picture of the city, not of the text, so
+                  // it does not mirror with the language.
+                  child: Image.asset(
+                    '$_kAsset/tiktok_live.webp',
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // PROFESSIONALS
+  // ─────────────────────────────────────────────
+  /// Six people were written into this section — Eldad Nona the refrigerator
+  /// technician, Omer Levi the electrician and four more — with emoji for
+  /// faces and "Call Now" buttons that were plain Containers.
+  ///
+  /// What the site calls a professional is a business filed under Services,
+  /// or under a trade beneath it, so the row shows those, with the business's
+  /// own number on the button. The pills beside the heading are those trades
+  /// ([professionalTradesProvider]) and filter the row; "All" is everybody.
+  /// The section hides itself, heading and all, when there is nobody to show.
+  Widget _buildProfessionalsSection() {
+    final tradesAsync = ref.watch(professionalTradesProvider);
+    final businessesAsync = ref.watch(businessesProvider);
+    if (tradesAsync.isLoading || businessesAsync.isLoading) {
+      return _buildProfessionalsFrame(trades: const [], child: _buildProfessionalsSkeleton());
+    }
+    if (tradesAsync.hasError || businessesAsync.hasError) {
+      return _buildProfessionalsFrame(
+        trades: const [],
+        child: _buildNotice(
+          icon: IconsaxPlusLinear.wifi_square,
+          title: _t('This list could not be loaded', 'לא ניתן לטעון את הרשימה'),
+          body: _t('Check your connection and try again.', 'בדקו את החיבור לאינטרנט ונסו שוב.'),
+          actionLabel: _t('Try again', 'נסו שוב'),
+          onAction: () {
+            ref.invalidate(professionalTradesProvider);
+            ref.invalidate(businessesProvider);
+          },
+        ),
+      );
+    }
+
+    final (:everyone, :trades) = tradesAsync.requireValue;
+    final all = businessesAsync.requireValue.where((b) => everyone.contains(b.id)).toList();
+    if (all.isEmpty) return const SizedBox.shrink();
+
+    // A pill chosen before the trades were re-read may have gone.
+    final chosen = trades.where((t) => t.category.id == _trade).firstOrNull;
+    final pool = chosen == null ? all : all.where((b) => chosen.businessIds.contains(b.id)).toList();
+    // Faces first: the card is built round the photograph.
+    final ordered = [
+      ...pool.where((b) => (b.logoUrl ?? b.imageUrl ?? '').isNotEmpty),
+      ...pool.where((b) => (b.logoUrl ?? b.imageUrl ?? '').isEmpty),
+    ];
+    final shown = ordered.take(6).toList();
+
+    String? tradeOf(Business b) =>
+        trades.where((t) => t.businessIds.contains(b.id)).firstOrNull?.category.name;
+
+    return _buildProfessionalsFrame(
+      trades: trades,
+      chosen: chosen?.category.id,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cols = constraints.maxWidth > 1200 ? 6 : (constraints.maxWidth > 800 ? 3 : 2);
+          const gap = 16.0;
+          final cardWidth = (constraints.maxWidth - (cols - 1) * gap) / cols;
+          return Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              for (final b in shown)
+                SizedBox(
+                  width: cardWidth,
+                  child: _ProfessionalCard(business: b, trade: tradeOf(b), isHebrew: _isHebrew),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProfessionalsFrame({
+    required List<ProfessionalTrade> trades,
+    String? chosen,
+    required Widget child,
+  }) {
+    final pills = trades.isEmpty
+        ? null
+        : Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.end,
+            children: [
+              _TradePill(
+                label: _t('All', 'הכל'),
+                selected: chosen == null,
+                showIcon: true,
+                onTap: () => setState(() => _trade = null),
+              ),
+              for (final t in trades)
+                _TradePill(
+                  label: t.category.name,
+                  selected: chosen == t.category.id,
+                  onTap: () => setState(() => _trade = t.category.id),
+                ),
+            ],
+          );
+    return _SectionWrapper(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _SectionHeading(
+                  title: _t('Find a Professional in Modiin', 'מצאו בעל מקצוע במודיעין'),
+                  subtitle: _t('Connect with trusted local professionals for your home, business and everyday needs.',
+                      'התחברו עם בעלי מקצוע מקומיים לבית, לעסק ולצרכים היומיומיים.'),
+                ),
+              ),
+              // The pills keep to the far end, on the heading's middle line.
+              if (pills != null) ...[
+                const SizedBox(width: 24),
+                Expanded(child: Align(alignment: AlignmentDirectional.centerEnd, child: pills)),
+              ],
+            ],
           ),
           const SizedBox(height: 33),
           child,
@@ -1314,6 +1585,72 @@ class _SectionHeading extends StatelessWidget {
   }
 }
 
+/// "Show what's near me": an outlined pill with the location mark, beside
+/// the recommended row's heading. A tap asks the browser for a location.
+class _NearMeButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _NearMeButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: AppColors.midBlue),
+            borderRadius: BorderRadius.circular(60),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(IconsaxPlusLinear.location, size: 18, color: AppColors.midBlue),
+              const SizedBox(width: 8),
+              Text(label, style: _inter(14, weight: FontWeight.w500, color: AppColors.midBlue)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The "✦ AI Picks" tag above the recommended row: Turquoise at a tenth,
+/// 36 high, the sparkle in Mid blue.
+class _AiPicksBadge extends StatelessWidget {
+  final String label;
+  const _AiPicksBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF17A9D0).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: Center(child: SvgPicture.asset('$_kAsset/ai_small.svg', width: 14.55, height: 17.5)),
+          ),
+          const SizedBox(width: 8),
+          Text(label, style: _inter(14, weight: FontWeight.w500, color: AppColors.midBlue)),
+        ],
+      ),
+    );
+  }
+}
+
 /// "View all ›" — filled Mid blue, 36 high.
 class _ViewAllButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -1386,26 +1723,75 @@ class _OutlineButton extends StatelessWidget {
 }
 
 /// A booked banner, at the size its slot is drawn. A tap follows its link.
+///
+/// [bordered] draws the hairline the design puts round the 728 × 90 slot,
+/// over the picture rather than inside it, so the creative keeps its size.
 class _Banner extends StatelessWidget {
   final SiteBanner banner;
   final double width, height;
-  const _Banner({required this.banner, required this.width, required this.height});
+  final bool bordered;
+  const _Banner({required this.banner, required this.width, required this.height, this.bordered = false});
 
   @override
   Widget build(BuildContext context) {
     final link = banner.destinationUrl;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
     return MouseRegion(
       cursor: link == null ? MouseCursor.defer : SystemMouseCursors.click,
       child: GestureDetector(
         onTap: link == null ? null : () => launchUrl(Uri.parse(link)),
-        child: Image.network(
-          banner.imageUrl,
+        child: Container(
           width: width,
           height: height,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => SizedBox(width: width, height: height),
+          foregroundDecoration: bordered ? BoxDecoration(border: Border.all(color: _kLine)) : null,
+          child: Image.network(
+            sizedPhotoUrl(banner.imageUrl, width, dpr),
+            width: width,
+            height: height,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => SizedBox(width: width, height: height),
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// The design's map pin: a white drop with the layer's colour and glyph in
+/// its head — blue for a business, purple for an event, green for a home.
+///
+/// The drawing's drop shadow is an SVG filter, which the SVG renderer skips,
+/// so it is drawn here from the pin itself: the same shape in black at a
+/// quarter, 2.3 lower and softened, as the file specifies.
+class _MapPin extends StatelessWidget {
+  final String layer;
+  const _MapPin({required this.layer});
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = '$_kAsset/map_pin_${switch (layer) {
+      'Businesses' => 'businesses',
+      'Events' => 'events',
+      _ => 'realestate',
+    }}.svg';
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 2.29,
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 1.14, sigmaY: 1.14),
+            child: SvgPicture.asset(
+              asset,
+              width: 40,
+              colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.25), BlendMode.srcIn),
+            ),
+          ),
+        ),
+        SvgPicture.asset(asset, width: 40),
+      ],
     );
   }
 }
@@ -1583,8 +1969,10 @@ class _BusinessCardState extends State<_BusinessCard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _DataText(b.name, style: _display(20)),
-                                if (subtitle.isNotEmpty)
+                                if (subtitle.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
                                   _DataText(subtitle, style: _inter(14, color: _kGrey)),
+                                ],
                               ],
                             ),
                           ),
@@ -1621,8 +2009,8 @@ class _BusinessCardState extends State<_BusinessCard> {
                           // pointer, as the design draws both.
                           if (phone != null && phone.isNotEmpty) ...[
                             const SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: () => launchUrl(Uri(scheme: 'tel', path: phone)),
+                            Builder(builder: (anchor) => GestureDetector(
+                              onTap: () => showWebContactMenu(anchor, isHebrew: widget.isHebrew, phone: phone, whatsapp: b.whatsapp, email: b.email),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
@@ -1644,7 +2032,7 @@ class _BusinessCardState extends State<_BusinessCard> {
                                   ],
                                 ),
                               ),
-                            ),
+                            )),
                           ],
                         ],
                       ),
@@ -1700,13 +2088,67 @@ class _Pill extends StatelessWidget {
   }
 }
 
+/// One trade in the professionals filter: outlined in Grey, or filled Mid
+/// blue when chosen. "All" carries the grid glyph.
+class _TradePill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final bool showIcon;
+  final VoidCallback onTap;
+  const _TradePill({required this.label, required this.selected, required this.onTap, this.showIcon = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.midBlue : Colors.transparent,
+            border: Border.all(color: selected ? AppColors.midBlue : _kGrey),
+            borderRadius: BorderRadius.circular(60),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (showIcon) ...[
+                SvgPicture.asset(
+                  '$_kAsset/pro_all.svg',
+                  width: 16,
+                  height: 16,
+                  colorFilter: selected ? null : const ColorFilter.mode(_kGrey, BlendMode.srcIn),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: selected
+                    ? _inter(14, weight: FontWeight.w500, color: Colors.white, height: 24 / 14)
+                    : _inter(14, color: _kGrey, height: 24 / 14),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Professional card ──
 /// One business filed under Services: its own photograph in the circle, its
 /// own description, and its own number behind Call Now.
 class _ProfessionalCard extends StatefulWidget {
   final Business business;
+
+  /// The trade the business is filed under, which the card names under the
+  /// name as the design does ("Refrigerator Technician"); its own one-line
+  /// description where it is filed under none.
+  final String? trade;
   final bool isHebrew;
-  const _ProfessionalCard({required this.business, this.isHebrew = false});
+  const _ProfessionalCard({required this.business, this.trade, this.isHebrew = false});
 
   @override
   State<_ProfessionalCard> createState() => _ProfessionalCardState();
@@ -1720,7 +2162,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
   @override
   Widget build(BuildContext context) {
     final b = widget.business;
-    final trade = (b.description ?? '').trim();
+    final trade = (widget.trade ?? b.description ?? '').trim();
     final phone = b.phone;
 
     return MouseRegion(
@@ -1755,8 +2197,8 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
               const Spacer(),
               // Call Now, or nothing where the business published no number.
               if (phone != null && phone.isNotEmpty)
-                GestureDetector(
-                  onTap: () => launchUrl(Uri(scheme: 'tel', path: phone)),
+                Builder(builder: (anchor) => GestureDetector(
+                  onTap: () => showWebContactMenu(anchor, isHebrew: widget.isHebrew, phone: phone, whatsapp: b.whatsapp, email: b.email),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1779,7 +2221,7 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                       ],
                     ),
                   ),
-                ),
+                )),
             ],
           ),
         ),
