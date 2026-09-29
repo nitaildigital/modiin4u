@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,15 +7,16 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../../shared/widgets/web_chrome.dart' show kContactEmail, webGutter, webIsHebrew;
+import '../../../shared/widgets/web_chrome.dart' show WebLanguageState, WebNavbar, webIsHebrew;
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/restaurant_providers.dart';
-import '../../../shared/widgets/osm_attribution.dart';
-import '../widgets/restaurant_place_card.dart' show kHeartRed;
+import '../../../shared/widgets/web_map_tiles.dart';
+import '../widgets/restaurant_place_card.dart';
+import '../../../shared/widgets/network_photo.dart' show sizedPhotoUrl;
+import '../../../shared/widgets/web_contact_menu.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Restaurants Search — three-panel layout from Figma
@@ -27,9 +30,10 @@ const _kTextDark = Color(0xFF3D3D3D);
 const _kTextGrey = Color(0xFF6D6D6D);
 const _kSubtitle = Color(0xFF5F5E5A);
 const _kBadgeBlue = Color(0xFF0033AC);
-const _kGold = Color(0xFFFFC107);
 const _kCheckBorder = Color(0xFF7B899A);
-const _kPinBlue = Color(0xFF006BF6);
+
+const _kAsset = 'assets/web/restaurants';
+const _kCardAsset = 'assets/web/home';
 
 class WebRestaurantsMapContent extends ConsumerStatefulWidget {
   const WebRestaurantsMapContent({super.key});
@@ -39,9 +43,9 @@ class WebRestaurantsMapContent extends ConsumerStatefulWidget {
       _WebRestaurantsMapContentState();
 }
 
-class _WebRestaurantsMapContentState
-    extends ConsumerState<WebRestaurantsMapContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebRestaurantsMapContentState extends ConsumerState<WebRestaurantsMapContent>
+    with WebLanguageState<WebRestaurantsMapContent> {
+  bool get _isHebrew => webIsHebrew.value;
   final _searchController = TextEditingController();
   final _listController = ScrollController();
   final _mapController = MapController();
@@ -58,10 +62,15 @@ class _WebRestaurantsMapContentState
 
   _Sort _sort = _Sort.newest;
 
-  /// The hovered or selected place, by id rather than by index: the map draws
-  /// only the places that have coordinates, so an index into the pins is not
-  /// an index into the list.
+  /// The place under the pointer, in the list or on the map, by id rather
+  /// than by index: the map draws only the places that have coordinates, so
+  /// an index into the pins is not an index into the list.
+  String? _hoveredId;
+
+  /// The pin that was clicked, whose card sits over the map.
   String? _selectedId;
+
+  bool _readLink = false;
 
   static const _center = LatLng(31.8928, 35.0104);
 
@@ -73,6 +82,30 @@ class _WebRestaurantsMapContentState
     );
   }
 
+  /// The Restaurants page opens this list already narrowed: its search,
+  /// quick picks, category cards and "View all" buttons say how in the link
+  /// (`?q=`, `?cuisine=pizza`, `?dining=delivery`, `?sort=rating`).
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_readLink) return;
+    _readLink = true;
+    final Map<String, String> params;
+    try {
+      params = GoRouterState.of(context).uri.queryParameters;
+    } catch (_) {
+      return;
+    }
+    final q = params['q']?.trim() ?? '';
+    if (q.isNotEmpty) {
+      _searchController.text = q;
+      _query = q;
+    }
+    _cuisines.addAll((params['cuisine'] ?? '').split(',').where((s) => s.isNotEmpty));
+    _dining.addAll((params['dining'] ?? '').split(',').where((s) => s.isNotEmpty));
+    if (params['sort'] == 'rating') _sort = _Sort.rating;
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -82,52 +115,34 @@ class _WebRestaurantsMapContentState
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  // ── Nav links ──
-  List<_NavItem> get _navItems => [
-    _NavItem(
-      label: _t('Professionals', 'בעלי מקצוע'),
-      route: '/businesses',
-      hasDropdown: true,
-    ),
-    _NavItem(
-      label: _t('Modiin News', 'חדשות מודיעין'),
-      route: '/news',
-      hasDropdown: true,
-    ),
-    _NavItem(label: _t('Events', 'אירועים'), route: '/events'),
-    _NavItem(label: _t('Deals', 'מבצעים'), route: '/deals'),
-    _NavItem(
-      label: _t('Real Estate in Modiin', 'נדל״ן במודיעין'),
-      route: '/realestate',
-    ),
-    _NavItem(
-      label: _t('Restaurants in Modiin', 'מסעדות במודיעין'),
-      route: '/restaurants',
-      isActive: true,
-    ),
-    _NavItem(
-      label: _t('Businesses in Modiin', 'עסקים במודיעין'),
-      route: '/businesses',
-      hasDropdown: true,
-    ),
-  ];
-
   // ── Filter definitions ──
   //
-  // The cuisines are the sub-categories of "restaurants" as the admin panel
-  // holds them, so adding one there adds it here. They used to be five keys
-  // written into this screen — italian, seafood and steak among them — none of
-  // which is a category in the database, so three of the five could never
-  // match anything.
-  List<_Option> get _cuisineOptions =>
-      (ref.watch(cuisineCategoriesProvider).valueOrNull ?? const [])
-          .map((c) => _Option(c.slug, c.name))
-          .toList();
+  // The cuisines are the food categories as the admin panel holds them —
+  // "מסעדות", its sub-categories and "קפה ומאפה" — so adding one there adds it
+  // here. They used to be five keys written into this screen, italian,
+  // seafood and steak among them, none of which is a category in the
+  // database, so three of the five could never match anything. Bars have no
+  // category; they are the places whose own description says bar or pub
+  // (see `describesABar`), under the one label written here.
+  List<_Option> get _cuisineOptions {
+    final all = ref.watch(categoriesBySlugProvider).valueOrNull ?? const {};
+    final parent = all['restaurants'];
+    final cafe = all['cafe-bakery'];
+    final hasBars = _places.any((p) => p.kind == FoodKind.bar);
+    return [
+      if (parent != null) _Option(parent.slug, parent.name),
+      for (final c in ref.watch(cuisineCategoriesProvider).valueOrNull ?? const [])
+        _Option(c.slug, c.name),
+      if (cafe != null) _Option(cafe.slug, cafe.name),
+      if (hasBars) _Option(kBarsKey, _t('Bars', 'ברים')),
+    ];
+  }
 
-  /// Only delivery. `has_takeaway` is false on every row, and there is no
-  /// column at all for dine-in, so those two checkboxes could only ever
-  /// mislead: one would empty the list, the other would narrow nothing.
+  /// Take Away and Delivery, each only while some place offers it. There is
+  /// no column at all for the design's "Dine In", so that box could only
+  /// mislead: checked, it would narrow nothing.
   List<_Option> get _diningOptions => [
+    if (_takeaway.isNotEmpty) _Option('takeaway', _t('Take Away', 'טייק אווי')),
     _Option('delivery', _t('Delivery', 'משלוחים')),
   ];
 
@@ -136,15 +151,20 @@ class _WebRestaurantsMapContentState
   // Eight places written into this screen before, with ratings and review
   // counts nobody had earned, and every row and pin pushing `/restaurant/1`,
   // which matches no row.
+  List<FoodPlace> get _places =>
+      ref.watch(webFoodPlacesProvider).valueOrNull ?? const <FoodPlace>[];
+
+  Set<String> get _takeaway =>
+      ref.watch(takeawayBusinessIdsProvider).valueOrNull ?? const {};
+
   List<_Listing> get _allListings {
-    final places =
-        ref.watch(foodMapPlacesProvider).valueOrNull ?? const <FoodPlace>[];
+    final takeaway = _takeaway;
     return [
-      for (final (i, place) in places.indexed)
+      for (final (i, place) in _places.indexed)
         _Listing.of(
           place,
-          _isHebrew,
           _kPlaceholders[i % _kPlaceholders.length],
+          takeaway: takeaway.contains(place.business.id),
         ),
     ];
   }
@@ -155,10 +175,11 @@ class _WebRestaurantsMapContentState
       if (q.isNotEmpty &&
           !l.name.toLowerCase().contains(q) &&
           !l.subtitle.toLowerCase().contains(q) &&
-          !l.address.toLowerCase().contains(q)) {
+          !l.address.toLowerCase().contains(q) &&
+          !l.tags.any((t) => t.toLowerCase().contains(q))) {
         return false;
       }
-      if (_cuisines.isNotEmpty && !_cuisines.contains(l.cuisine)) return false;
+      if (_cuisines.isNotEmpty && !_cuisines.any(l.slugs.contains)) return false;
       if (_kosher == 'kosher' && !l.isKosher) return false;
       if (_kosher == 'not' && l.isKosher) return false;
       if (_minRating > 0 && l.rating < _minRating) return false;
@@ -166,12 +187,18 @@ class _WebRestaurantsMapContentState
       return true;
     }).toList();
 
-    // `_allListings` already arrives newest first, and `List.sort` is not
-    // stable — a comparator returning 0 would be free to shuffle the rows.
+    // `_allListings` already arrives newest first. `List.sort` is not stable,
+    // so ties keep that order through the original position.
+    int keep(_Listing a, _Listing b) => rows.indexOf(a).compareTo(rows.indexOf(b));
     return switch (_sort) {
       _Sort.newest => rows,
-      _Sort.rating => rows..sort((a, b) => b.rating.compareTo(a.rating)),
-      _Sort.name => rows..sort((a, b) => a.name.compareTo(b.name)),
+      _Sort.rating => [...rows]..sort((a, b) {
+        final byRating = b.rating.compareTo(a.rating);
+        if (byRating != 0) return byRating;
+        final byCount = b.reviews.compareTo(a.reviews);
+        return byCount != 0 ? byCount : keep(a, b);
+      }),
+      _Sort.name => [...rows]..sort((a, b) => a.name.compareTo(b.name)),
     };
   }
 
@@ -183,141 +210,31 @@ class _WebRestaurantsMapContentState
 
   @override
   Widget build(BuildContext context) {
+    final listings = _listings;
     return Directionality(
       textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            _buildNavbar(),
+            // The site's own bar, with its menus and the language switch. This
+            // page used to carry a copy of it whose links opened no menus.
+            WebNavbar(
+              isHebrew: _isHebrew,
+              activeId: 'restaurants',
+            ),
             Expanded(
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildFilterSidebar(),
-                  Expanded(flex: 900, child: _buildListingsPanel()),
-                  Expanded(flex: 726, child: _buildMapPanel()),
+                  Expanded(flex: 900, child: _buildListingsPanel(listings)),
+                  Expanded(flex: 726, child: _buildMapPanel(listings)),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // NAVBAR
-  // ─────────────────────────────────────────────
-  Widget _buildNavbar() {
-    return Container(
-      height: 80,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _kBorder)),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: webGutter(MediaQuery.sizeOf(context).width)),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.go('/'),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: SvgPicture.asset(
-                'assets/images/logo_white.svg',
-                width: 90,
-                height: 48,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.midBlue,
-                  BlendMode.srcIn,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Row(
-              children: _navItems
-                  .map(
-                    (item) => Expanded(
-                      child: _NavLinkButton(
-                        label: item.label,
-                        isActive: item.isActive,
-                        hasDropdown: item.hasDropdown,
-                        onTap: () => context.go(item.route),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          const SizedBox(width: 20),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => setState(() => webIsHebrew.value = _isHebrew = !_isHebrew),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                margin: const EdgeInsetsDirectional.only(end: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      IconsaxPlusLinear.global,
-                      size: 18,
-                      color: AppColors.midBlue,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _isHebrew ? 'עב | EN' : 'EN | עב',
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.midBlue,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              // This page carries its own copy of the navbar, and its
-              // Contact Us had an empty handler. The address is the one the
-              // footer publishes.
-              onTap: () =>
-                  launchUrl(Uri(scheme: 'mailto', path: kContactEmail)),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 11,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.midBlue,
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Text(
-                  _t('Contact Us', 'צור קשר'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -398,29 +315,11 @@ class _WebRestaurantsMapContentState
                     labelWidget: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          '$stars',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 13,
-                            color: _kTextDark,
-                          ),
-                        ),
+                        Text('$stars', style: _checkLabelStyle),
                         const SizedBox(width: 4),
-                        const Icon(
-                          IconsaxPlusBold.star_1,
-                          size: 14,
-                          color: _kGold,
-                        ),
+                        SvgPicture.asset('$_kAsset/star14.svg', width: 14, height: 14),
                         const SizedBox(width: 4),
-                        Text(
-                          _t('& up', 'ומעלה'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 13,
-                            color: _kTextDark,
-                          ),
-                        ),
+                        Text(_t('& up', 'ומעלה'), style: _checkLabelStyle),
                       ],
                     ),
                   ),
@@ -448,6 +347,13 @@ class _WebRestaurantsMapContentState
     );
   }
 
+  TextStyle get _checkLabelStyle => TextStyle(
+    fontFamily: AppFonts.inter,
+    fontSize: 13,
+    height: 16 / 13,
+    color: _kTextDark,
+  );
+
   Widget _buildSearchBox() {
     return Container(
       height: 42,
@@ -459,11 +365,7 @@ class _WebRestaurantsMapContentState
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          const Icon(
-            IconsaxPlusLinear.search_normal_1,
-            size: 16,
-            color: AppColors.midBlue,
-          ),
+          SvgPicture.asset('$_kAsset/search16.svg', width: 16, height: 16),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -487,6 +389,8 @@ class _WebRestaurantsMapContentState
                   color: _kTextGrey,
                 ),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -509,6 +413,7 @@ class _WebRestaurantsMapContentState
           style: TextStyle(
             fontFamily: AppFonts.inter,
             fontSize: 14,
+            height: 17 / 14,
             fontWeight: FontWeight.w600,
             color: AppColors.navy,
           ),
@@ -535,31 +440,21 @@ class _WebRestaurantsMapContentState
         behavior: HitTestBehavior.opaque,
         child: Row(
           children: [
-            Container(
+            SvgPicture.asset(
+              checked ? '$_kAsset/check_on.svg' : '$_kAsset/check_off.svg',
               width: 16,
               height: 16,
-              decoration: BoxDecoration(
-                color: checked ? AppColors.midBlue : Colors.white,
-                border: Border.all(
-                  color: checked ? AppColors.midBlue : _kCheckBorder,
-                  width: checked ? 1 : 0.89,
-                ),
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: checked
-                  ? const Icon(Icons.check, size: 12, color: Colors.white)
-                  : null,
             ),
             const SizedBox(width: 8),
-            labelWidget ??
-                Text(
-                  label ?? '',
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 13,
-                    color: _kTextDark,
+            Flexible(
+              child: labelWidget ??
+                  Text(
+                    label ?? '',
+                    style: _checkLabelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+            ),
           ],
         ),
       ),
@@ -569,36 +464,32 @@ class _WebRestaurantsMapContentState
   // ─────────────────────────────────────────────
   // LISTINGS PANEL — 900px
   // ─────────────────────────────────────────────
-  Widget _buildListingsPanel() {
-    final listings = _listings;
-    return Container(
-      decoration: const BoxDecoration(
-        border: BorderDirectional(end: BorderSide(color: _kBorder)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-            child: _buildListingsHeader(listings.length),
-          ),
-          const SizedBox(height: 26),
-          Expanded(
-            child: listings.isEmpty
-                ? _buildEmptyState()
-                : Scrollbar(
+  Widget _buildListingsPanel(List<_Listing> listings) {
+    final loading = ref.watch(webFoodPlacesProvider).isLoading;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          child: _buildListingsHeader(listings.length),
+        ),
+        const SizedBox(height: 26),
+        Expanded(
+          child: loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.midBlue, strokeWidth: 2))
+              : listings.isEmpty
+              ? _buildEmptyState()
+              : Scrollbar(
+                  controller: _listController,
+                  child: ListView.builder(
                     controller: _listController,
-                    child: ListView.builder(
-                      controller: _listController,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: listings.length,
-                      itemBuilder: (context, i) =>
-                          _buildListingRow(listings[i], i),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: listings.length,
+                    itemBuilder: (context, i) => _buildListingRow(listings[i]),
                   ),
-          ),
-        ],
-      ),
+                ),
+        ),
+      ],
     );
   }
 
@@ -626,6 +517,7 @@ class _WebRestaurantsMapContentState
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 14,
+                  height: 17 / 14,
                   color: _kSubtitle,
                 ),
               ),
@@ -633,7 +525,10 @@ class _WebRestaurantsMapContentState
           ),
         ),
         const SizedBox(width: 16),
-        _buildSortBox(),
+        Padding(
+          padding: const EdgeInsets.only(top: 8.5),
+          child: _buildSortBox(),
+        ),
       ],
     );
   }
@@ -656,7 +551,7 @@ class _WebRestaurantsMapContentState
           ),
       ],
       child: Container(
-        width: 166,
+        constraints: const BoxConstraints(minWidth: 166),
         height: 42,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
@@ -665,23 +560,18 @@ class _WebRestaurantsMapContentState
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Text(
-                _t('Sort by: ', 'מיון: ') + _sortLabel(_sort),
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  color: Colors.black,
-                ),
-                overflow: TextOverflow.ellipsis,
+            Text(
+              _t('Sort by: ', 'מיון: ') + _sortLabel(_sort),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                color: Colors.black,
               ),
             ),
-            const Icon(
-              Icons.keyboard_arrow_down,
-              size: 20,
-              color: Color(0xFF4F4F4F),
-            ),
+            const SizedBox(width: 13),
+            SvgPicture.asset('$_kAsset/chevron_down20.svg', width: 20, height: 20),
           ],
         ),
       ),
@@ -733,17 +623,17 @@ class _WebRestaurantsMapContentState
     );
   }
 
-  Widget _buildListingRow(_Listing l, int index) {
+  Widget _buildListingRow(_Listing l) {
     return _ListingRow(
       listing: l,
       isHebrew: _isHebrew,
-      selected: _selectedId == l.id,
+      highlighted: _hoveredId == l.id || _selectedId == l.id,
       onTap: () => context.push('/business/${l.id}'),
       onHover: (hovering) => setState(() {
         if (hovering) {
-          _selectedId = l.id;
-        } else if (_selectedId == l.id) {
-          _selectedId = null;
+          _hoveredId = l.id;
+        } else if (_hoveredId == l.id) {
+          _hoveredId = null;
         }
       }),
     );
@@ -752,88 +642,131 @@ class _WebRestaurantsMapContentState
   // ─────────────────────────────────────────────
   // MAP PANEL — 726px
   // ─────────────────────────────────────────────
-  Widget _buildMapPanel() {
+  Widget _buildMapPanel(List<_Listing> listings) {
+    // The map waits for the places, so that it can open framed on them.
+    if (ref.watch(webFoodPlacesProvider).isLoading) {
+      return const ColoredBox(color: Color(0xFFF2EFE9));
+    }
     // Only the places that have coordinates; the rest stay in the list.
-    final pinned = _listings.where((l) => l.position != null).toList();
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: _center,
-        initialZoom: 14.2,
-        onTap: (_, _) => setState(() => _selectedId = null),
-      ),
+    final pinned = listings.where((l) => l.position != null).toList();
+    final selected = pinned.where((l) => l.id == _selectedId).firstOrNull;
+    return Stack(
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.modiin4u.app',
-        ),
-        MarkerLayer(
-          markers: [
-            for (final l in pinned)
-              Marker(
-                point: l.position!,
-                width: 40,
-                height: 44,
-                alignment: Alignment.topCenter,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  onEnter: (_) => setState(() => _selectedId = l.id),
-                  onExit: (_) => setState(() {
-                    if (_selectedId == l.id) _selectedId = null;
-                  }),
-                  child: GestureDetector(
-                    onTap: () => context.push('/business/${l.id}'),
-                    child: _MapPin(selected: _selectedId == l.id),
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: _center,
+            initialZoom: 14.2,
+            // Framed on the places the list opened with — all of them, or
+            // the bars, or the pizzerias. Changing a filter afterwards leaves
+            // the map where the visitor has put it.
+            initialCameraFit: _fitOf(pinned),
+            onTap: (_, _) => setState(() => _selectedId = null),
+          ),
+          children: [
+            const WebMapTiles(),
+            MarkerLayer(
+              markers: [
+                for (final l in pinned)
+                  Marker(
+                    point: l.position!,
+                    width: 40,
+                    height: 43.24,
+                    // The point of the pin, not its middle, sits on the place.
+                    alignment: const Alignment(0, -0.79),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      onEnter: (_) => setState(() => _hoveredId = l.id),
+                      onExit: (_) => setState(() {
+                        if (_hoveredId == l.id) _hoveredId = null;
+                      }),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedId = l.id),
+                        child: _MapPin(
+                          active: _hoveredId == l.id || _selectedId == l.id,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+              ],
+            ),
+            const WebMapCredit(),
           ],
         ),
-        const OsmAttribution(),
+        // The clicked pin's place, as the page's compact card, over the map.
+        if (selected != null)
+          PositionedDirectional(
+            start: 24,
+            bottom: 32,
+            child: _MapCard(
+              listing: selected,
+              isHebrew: _isHebrew,
+              onOpen: () => context.push('/business/${selected.id}'),
+              onClose: () => setState(() => _selectedId = null),
+            ),
+          ),
       ],
     );
   }
 }
 
+/// The camera framing [pinned], leaving out any place far from the rest.
+///
+/// One bar is recorded at Merkaz Tarsa, 12 km north-west of the city, and
+/// framing it with the others shrank Modiin to a corner of the map. It keeps
+/// its pin; the map simply does not open on it.
+CameraFit? _fitOf(List<_Listing> pinned) {
+  if (pinned.length < 2) return null;
+  double median(List<double> xs) => (xs..sort())[xs.length ~/ 2];
+  final middle = LatLng(
+    median([for (final l in pinned) l.position!.latitude]),
+    median([for (final l in pinned) l.position!.longitude]),
+  );
+  const distance = Distance();
+  final near = [
+    for (final l in pinned)
+      if (distance.as(LengthUnit.Kilometer, middle, l.position!) <= 6) l.position!,
+  ];
+  if (near.length < 2) return null;
+  return CameraFit.coordinates(
+    coordinates: near,
+    padding: const EdgeInsets.all(56),
+    maxZoom: 16,
+  );
+}
+
 // ═══════════════════════════════════════════════
 // LISTING ROW
 // ═══════════════════════════════════════════════
-class _ListingRow extends StatefulWidget {
+class _ListingRow extends StatelessWidget {
   final _Listing listing;
-  final bool isHebrew, selected;
+  final bool isHebrew, highlighted;
   final VoidCallback onTap;
   final ValueChanged<bool> onHover;
   const _ListingRow({
     required this.listing,
     required this.isHebrew,
-    required this.selected,
+    required this.highlighted,
     required this.onTap,
     required this.onHover,
   });
 
-  @override
-  State<_ListingRow> createState() => _ListingRowState();
-}
-
-class _ListingRowState extends State<_ListingRow> {
-  bool _saved = false;
-
-  String _t(String en, String he) => widget.isHebrew ? he : en;
+  String _t(String en, String he) => isHebrew ? he : en;
 
   @override
   Widget build(BuildContext context) {
-    final l = widget.listing;
+    final l = listing;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) => widget.onHover(true),
-      onExit: (_) => widget.onHover(false),
+      onEnter: (_) => onHover(true),
+      onExit: (_) => onHover(false),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            color: widget.selected
+            color: highlighted
                 ? AppColors.midBlue.withValues(alpha: 0.03)
                 : Colors.transparent,
             border: const BorderDirectional(
@@ -853,7 +786,9 @@ class _ListingRowState extends State<_ListingRow> {
                 ),
               ),
               const SizedBox(width: 24),
-              // Content
+              // Content. The design's heart in the top corner is left off:
+              // saving a place belongs to an account, and accounts are the
+              // app's.
               Expanded(
                 child: SizedBox(
                   height: 162,
@@ -861,122 +796,65 @@ class _ListingRowState extends State<_ListingRow> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Title + rating + save
-                      Row(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l.name,
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.nunito,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    height: 22 / 18,
-                                    color: AppColors.navy,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  l.subtitle,
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.inter,
-                                    fontSize: 14,
-                                    color: _kSubtitle,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                // Only where reviews have earned one. Every
-                                // row carried a score before, copied between
-                                // them.
-                                if (l.rating > 0) ...[
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        IconsaxPlusBold.star_1,
-                                        size: 16,
-                                        color: _kGold,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        l.rating.toStringAsFixed(1),
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.inter,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '(${l.reviews})',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.inter,
-                                          fontSize: 14,
-                                          color: _kTextGrey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 22),
-                          // Save circle
-                          MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: GestureDetector(
-                              onTap: () => setState(() => _saved = !_saved),
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFF2F3F8),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Icon(
-                                    _saved
-                                        ? IconsaxPlusBold.heart
-                                        : IconsaxPlusLinear.heart,
-                                    size: 20,
-                                    color: _saved
-                                        ? kHeartRed
-                                        : AppColors.midBlue,
-                                  ),
-                                ),
+                          SizedBox(
+                            width: double.infinity,
+                            child: placeText(
+                              context,
+                              l.name,
+                              TextStyle(
+                                fontFamily: AppFonts.nunito,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                height: 22 / 18,
+                                color: AppColors.navy,
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: placeText(
+                              context,
+                              l.subtitle,
+                              TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 14,
+                                height: 17 / 14,
+                                color: _kSubtitle,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 17,
+                            child: _rating(l),
                           ),
                         ],
                       ),
                       // Address
                       Row(
                         children: [
-                          const Icon(
-                            IconsaxPlusLinear.location,
-                            size: 16,
-                            color: AppColors.turquoise,
+                          SizedBox(
+                            width: 16,
+                            height: 17,
+                            child: Center(
+                              child: SvgPicture.asset('$_kCardAsset/card_pin.svg', width: 12, height: 16),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
+                            child: placeText(
+                              context,
                               l.address,
-                              style: TextStyle(
+                              TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
+                                height: 17 / 14,
                                 color: _kSubtitle,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -986,16 +864,19 @@ class _ListingRowState extends State<_ListingRow> {
                         height: 40,
                         child: Row(
                           children: [
-                            if (l.isKosher) ...[
-                              _badge(_t('Kosher', 'כשר'), withIcon: true),
-                              const SizedBox(width: 8),
-                            ],
-                            ...l.tags.expand(
-                              (tag) => [_badge(tag), const SizedBox(width: 8)],
+                            Expanded(
+                              child: Wrap(
+                                spacing: 8,
+                                clipBehavior: Clip.hardEdge,
+                                children: [
+                                  if (l.isKosher)
+                                    _badge(_t('Kosher', 'כשר'), withIcon: true),
+                                  for (final tag in l.tags) _badge(tag),
+                                ],
+                              ),
                             ),
-                            const Spacer(),
                             if (l.phone != null && l.phone!.isNotEmpty)
-                              _contactButton(l.phone!),
+                              _ContactButton(phone: l.phone!, whatsapp: l.whatsapp, isHebrew: isHebrew),
                           ],
                         ),
                       ),
@@ -1010,79 +891,130 @@ class _ListingRowState extends State<_ListingRow> {
     );
   }
 
-  Widget _badge(String label, {bool withIcon = false}) {
-    return Container(
-      height: 27,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: _kBadgeBlue,
-        borderRadius: BorderRadius.circular(50),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (withIcon) ...[
-            const Icon(IconsaxPlusLinear.verify, size: 14, color: Colors.white),
-            const SizedBox(width: 6),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              height: 15 / 12,
-              color: Colors.white,
-            ),
+  /// Only where reviews have earned one. Every row carried a score before,
+  /// copied between them.
+  Widget _rating(_Listing l) {
+    if (l.rating <= 0 && l.reviews <= 0) {
+      return Text(
+        _t('Not rated yet', 'אין דירוג עדיין'),
+        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextGrey),
+      );
+    }
+    return Row(
+      children: [
+        SvgPicture.asset('$_kCardAsset/card_star.svg', width: 16, height: 16),
+        const SizedBox(width: 8),
+        Text(
+          l.rating.toStringAsFixed(1),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '(${l.reviews})',
+          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextGrey),
+        ),
+      ],
     );
   }
 
-  /// Dials the business. The button had an empty handler before, so it looked
-  /// like a way to reach the place and was not one.
-  Widget _contactButton(String phone) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => launchUrl(Uri(scheme: 'tel', path: phone)),
-        child: Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.midBlue),
-            borderRadius: BorderRadius.circular(60),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                IconsaxPlusLinear.call,
-                size: 16,
-                color: AppColors.midBlue,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _t('Contact', 'צור קשר'),
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.midBlue,
-                ),
-              ),
+  Widget _badge(String label, {bool withIcon = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.5),
+      child: Container(
+        height: 27,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: _kBadgeBlue,
+          borderRadius: BorderRadius.circular(50),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (withIcon) ...[
+              SvgPicture.asset('$_kCardAsset/card_kosher.svg', width: 14, height: 14),
+              const SizedBox(width: 6),
             ],
-          ),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                height: 15 / 12,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// The cover photo, or a flat placeholder where the business has none — which
-/// is most of them.
+/// Dials the business — outlined, and filled under the pointer. The button
+/// had an empty handler before, so it looked like a way to reach the place
+/// and was not one.
+class _ContactButton extends StatefulWidget {
+  final String phone;
+  final String? whatsapp;
+  final bool isHebrew;
+  const _ContactButton({required this.phone, this.whatsapp, required this.isHebrew});
+
+  @override
+  State<_ContactButton> createState() => _ContactButtonState();
+}
+
+class _ContactButtonState extends State<_ContactButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Builder(builder: (anchor) => GestureDetector(
+        onTap: () => showWebContactMenu(anchor, isHebrew: widget.isHebrew, phone: widget.phone, whatsapp: widget.whatsapp),
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: _hovered ? AppColors.midBlue : Colors.white,
+            border: Border.all(color: AppColors.midBlue),
+            borderRadius: BorderRadius.circular(60),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(
+                _hovered ? '$_kCardAsset/card_phone_white.svg' : '$_kCardAsset/card_phone.svg',
+                width: 16,
+                height: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                widget.isHebrew ? 'צור קשר' : 'Contact',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: _hovered ? Colors.white : AppColors.midBlue,
+                ),
+              ),
+            ],
+          ),
+        ),
+      )),
+    );
+  }
+}
+
+/// The cover photo, or a flat placeholder where the business has none.
 class _Thumbnail extends StatelessWidget {
   final String? url;
   final Color background;
@@ -1112,7 +1044,7 @@ class _Thumbnail extends StatelessWidget {
     if (src == null || src.isEmpty) return _fallback;
     // A broken link should look like a place with no photo, not like an error.
     return Image.network(
-      src,
+      sizedPhotoUrl(src, 400, 2),
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => _fallback,
     );
@@ -1120,55 +1052,115 @@ class _Thumbnail extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════
-// MAP PIN — white teardrop with blue disc
+// MAP PIN — the design's white drop with the blue disc and the chef's hat
 // ═══════════════════════════════════════════════
 class _MapPin extends StatelessWidget {
-  final bool selected;
-  const _MapPin({required this.selected});
+  final bool active;
+  const _MapPin({required this.active});
 
   @override
   Widget build(BuildContext context) {
+    // flutter_svg ignores the drop's shadow filter, so the shadow is drawn
+    // here: the same drop, black at a quarter, 2.3 lower and softened.
     return AnimatedScale(
       duration: const Duration(milliseconds: 150),
-      scale: selected ? 1.15 : 1.0,
+      scale: active ? 1.15 : 1.0,
+      alignment: Alignment.bottomCenter,
       child: SizedBox(
         width: 40,
-        height: 44,
+        height: 43.24,
         child: Stack(
-          alignment: Alignment.topCenter,
           children: [
-            const Icon(
-              IconsaxPlusBold.location,
-              size: 40,
-              color: Colors.white,
-              shadows: [
-                Shadow(
-                  color: Color(0x40000000),
-                  blurRadius: 2.29,
-                  offset: Offset(0, 2.29),
-                ),
-              ],
-            ),
-            Positioned(
-              top: 5.8,
-              child: Container(
-                width: 21.4,
-                height: 21.4,
-                decoration: const BoxDecoration(
-                  color: _kPinBlue,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    IconsaxPlusLinear.reserve,
-                    size: 12,
-                    color: Colors.white,
-                  ),
+            Positioned.fill(
+              top: 2.29,
+              child: ImageFiltered(
+                imageFilter: _kPinShadowBlur,
+                child: SvgPicture.asset(
+                  '$_kAsset/map_pin.svg',
+                  colorFilter: const ColorFilter.mode(Color(0x40000000), BlendMode.srcIn),
                 ),
               ),
             ),
+            Positioned.fill(child: SvgPicture.asset('$_kAsset/map_pin.svg')),
           ],
         ),
+      ),
+    );
+  }
+}
+
+final _kPinShadowBlur = ImageFilter.blur(sigmaX: 1.14, sigmaY: 1.14);
+
+// ═══════════════════════════════════════════════
+// MAP CARD — the clicked pin's place, over the map
+// ═══════════════════════════════════════════════
+class _MapCard extends StatelessWidget {
+  final _Listing listing;
+  final bool isHebrew;
+  final VoidCallback onOpen, onClose;
+  const _MapCard({
+    required this.listing,
+    required this.isHebrew,
+    required this.onOpen,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = listing;
+    final kind = switch (l.kind) {
+      FoodKind.restaurant => isHebrew ? 'מסעדה' : 'Restaurant',
+      FoodKind.cafe => isHebrew ? 'בית קפה' : 'Cafe',
+      FoodKind.bar => isHebrew ? 'בר' : 'Bar',
+    };
+    return SizedBox(
+      width: 301,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 4))],
+            ),
+            child: RestaurantCard(
+              compact: true,
+              isHebrew: isHebrew,
+              onTap: onOpen,
+              place: RestaurantPlace(
+                name: l.name,
+                type: l.cuisine == null ? kind : '$kind · ${l.cuisine}',
+                address: l.address,
+                rating: l.rating,
+                reviews: l.reviews,
+                kind: l.kind,
+                isKosher: l.isKosher,
+                imageBg: l.imageBg,
+                imageUrl: l.imageUrl ?? '',
+              ),
+            ),
+          ),
+          PositionedDirectional(
+            top: 12,
+            end: 12,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onClose,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5, offset: const Offset(0, 1))],
+                  ),
+                  child: const Icon(Icons.close, size: 18, color: AppColors.midBlue),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1178,17 +1170,6 @@ class _MapPin extends StatelessWidget {
 // DATA MODELS
 // ═══════════════════════════════════════════════
 
-class _NavItem {
-  final String label, route;
-  final bool hasDropdown, isActive;
-  const _NavItem({
-    required this.label,
-    required this.route,
-    this.hasDropdown = false,
-    this.isActive = false,
-  });
-}
-
 class _Option {
   final String key, label;
   const _Option(this.key, this.label);
@@ -1197,7 +1178,15 @@ class _Option {
 class _Listing {
   /// The business row's id, so a click opens the place it names.
   final String id;
-  final String name, subtitle, address, cuisine;
+  final String name, subtitle, address;
+  final FoodKind kind;
+
+  /// The food categories it is filed under, plus `bars` for a bar — what the
+  /// Cuisine boxes match on.
+  final Set<String> slugs;
+
+  /// Its sub-category of מסעדות, if any.
+  final String? cuisine;
   final double rating;
   final int reviews;
   final bool isKosher;
@@ -1209,6 +1198,7 @@ class _Listing {
   final LatLng? position;
   final String? imageUrl;
   final String? phone;
+  final String? whatsapp;
 
   /// Behind the thumbnail. Not a photo and not claiming to be one; it varies
   /// down the list so the rows stay tellable apart.
@@ -1219,9 +1209,11 @@ class _Listing {
     required this.name,
     required this.subtitle,
     required this.address,
+    required this.kind,
+    required this.slugs,
+    required this.cuisine,
     required this.rating,
     required this.reviews,
-    required this.cuisine,
     required this.isKosher,
     required this.tags,
     required this.dining,
@@ -1229,30 +1221,39 @@ class _Listing {
     required this.imageBg,
     this.imageUrl,
     this.phone,
+    this.whatsapp,
   });
 
-  factory _Listing.of(FoodPlace place, bool isHebrew, Color placeholder) {
+  factory _Listing.of(FoodPlace place, Color placeholder, {required bool takeaway}) {
     final b = place.business;
     return _Listing(
       id: b.id,
       name: b.name,
-      // Its own description where it has one, otherwise the category it sits
-      // in. Nothing is composed out of the two.
+      // Its own description where it has one ("Wok and Sushi | Asian
+      // Restaurant", as drawn), otherwise the category it sits in.
       subtitle: (b.description?.trim().isNotEmpty ?? false)
           ? b.description!.trim()
           : place.categoryName,
       address: b.address,
+      kind: place.kind,
+      slugs: place.slugs,
+      cuisine: place.cuisineName,
       rating: b.rating,
       reviews: b.reviewCount,
-      cuisine: place.categorySlug,
       // `kosher_level` is 'none' for a place with no certification, and the
       // model already maps that to null.
       isKosher: b.kosherStatus != null,
-      tags: [place.categoryName],
-      dining: {if (b.hasDelivery) 'delivery'},
+      // The pill beside "Kosher" is the cuisine ("Asian"); a place with none
+      // shows the category it is filed under.
+      tags: [
+        if ((place.cuisineName ?? place.categoryName).isNotEmpty)
+          place.cuisineName ?? place.categoryName,
+      ],
+      dining: {if (b.hasDelivery) 'delivery', if (takeaway) 'takeaway'},
       position: place.hasLocation ? LatLng(b.latitude, b.longitude) : null,
       imageUrl: b.imageUrl,
       phone: b.phone,
+      whatsapp: b.whatsapp,
       imageBg: placeholder,
     );
   }
@@ -1268,90 +1269,3 @@ const _kPlaceholders = [
   Color(0xFFE0D3C4),
   Color(0xFFCFD9C4),
 ];
-
-// ═══════════════════════════════════════════════
-// REUSABLE WIDGETS
-// ═══════════════════════════════════════════════
-
-class _NavLinkButton extends StatefulWidget {
-  final String label;
-  final bool isActive, hasDropdown;
-  final VoidCallback onTap;
-  const _NavLinkButton({
-    required this.label,
-    this.isActive = false,
-    this.hasDropdown = false,
-    required this.onTap,
-  });
-
-  @override
-  State<_NavLinkButton> createState() => _NavLinkButtonState();
-}
-
-class _NavLinkButtonState extends State<_NavLinkButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          height: 80,
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: widget.isActive ? AppColors.midBlue : Colors.transparent,
-                width: 3,
-              ),
-            ),
-          ),
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-              decoration: BoxDecoration(
-                color: _hovered && !widget.isActive
-                    ? Colors.black.withValues(alpha: 0.04)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(40),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      widget.label,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 15,
-                        fontWeight: widget.isActive
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        color: widget.isActive
-                            ? AppColors.midBlue
-                            : const Color(0xFF0F161E),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (widget.hasDropdown) ...[
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.keyboard_arrow_down,
-                      size: 18,
-                      color: Color(0xFF21272A),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

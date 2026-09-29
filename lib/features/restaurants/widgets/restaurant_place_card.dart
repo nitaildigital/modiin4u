@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart' show sizedPhotoUrl;
+import '../providers/restaurant_providers.dart' show FoodKind;
+import '../../../shared/widgets/web_contact_menu.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Shared restaurant place card (web) — the design's place card, as
@@ -19,43 +22,70 @@ const kBarRed = Color(0xFFCC0001);
 const kHeartRed = Color(0xFFF92851);
 
 class RestaurantPlace {
-  final String name, type, address;
+  final String name;
+
+  /// The line under the name: "Restaurant", "Cafe", or "Restaurant · אסייתי"
+  /// on the compact card, as drawn.
+  final String type;
+  final String address;
   final double rating;
   final int reviews;
-  final String? deliveryTime;
-  final String? category;
+
+  /// Decides the round badge on the photograph's edge.
+  final FoodKind kind;
+
+  /// The pill in the photograph's top corner — the cuisine the place is filed
+  /// under. Null where it has none.
+  final String? pill;
   final bool isKosher;
-  final Color marker, imageBg;
-  /// Remote photo from the WordPress export; empty on demo places, which
-  /// keep falling back to the [imageBg] gradient.
+
+  /// Whether the directory records a delivery service. The design's second
+  /// figure is a view count on the large card and a "30–40 min" wait on the
+  /// small one; `businesses` holds neither, and this is what it does hold.
+  final bool delivers;
+  final Color imageBg;
+
+  /// Remote photo; empty on places that have none, which keep the [imageBg]
+  /// gradient.
   final String imageUrl;
   final String phone;
+
+  /// The place's WhatsApp number, when it has one.
+  final String? whatsapp;
   const RestaurantPlace({
     required this.name,
     required this.type,
     required this.address,
     required this.rating,
     required this.reviews,
-    this.deliveryTime,
-    this.category,
+    required this.kind,
+    this.pill,
     this.isKosher = false,
-    required this.marker,
+    this.delivers = false,
     required this.imageBg,
     this.imageUrl = '',
     this.phone = '',
+    this.whatsapp,
   });
 }
 
 class RestaurantCard extends StatefulWidget {
   final RestaurantPlace place;
+
+  /// The 348-high card without the Contact button ("Most Loved", "Lunch
+  /// Nearby"), rather than the 404-high one with it.
   final bool compact;
   final bool isHebrew;
+
+  /// Show "Delivery" as the card's second figure where the place delivers.
+  final bool showDelivery;
   final VoidCallback? onTap;
   const RestaurantCard({
     super.key,
     required this.place,
     required this.compact,
     required this.isHebrew,
+    this.showDelivery = false,
     this.onTap,
   });
 
@@ -66,8 +96,10 @@ class RestaurantCard extends StatefulWidget {
 const _kCardAsset = 'assets/web/home';
 final _hebrew = RegExp(r'[֐-׿]');
 
-/// Directory text, in its own direction, lined up with the card.
-Widget _dataText(BuildContext context, String text, TextStyle style) {
+/// Directory text, in its own direction, lined up with the page: a Hebrew
+/// address on the English page reads right to left and still starts at the
+/// left edge.
+Widget placeText(BuildContext context, String text, TextStyle style) {
   final pageIsRtl = Directionality.of(context) == TextDirection.rtl;
   return Text(
     text,
@@ -85,13 +117,11 @@ class RestaurantCardState extends State<RestaurantCard> {
   String _t(String en, String he) => widget.isHebrew ? he : en;
 
   /// The design's round badge for the kind of place: green for a
-  /// restaurant, blue for a café, red for a bar. A section drawn in another
-  /// colour has no badge of its own in the design, so it gets none.
-  (String, String)? get _badge => switch (widget.place.marker) {
-    kRestaurantGreen => ('card_badge_ring_green.svg', 'card_badge_restaurant.svg'),
-    kCafeBlue => ('card_badge_ring.svg', 'card_badge_cafe.svg'),
-    kBarRed => ('card_badge_ring_red.svg', 'card_badge_bar.svg'),
-    _ => null,
+  /// restaurant, blue for a café, red for a bar.
+  (String, String) get _badge => switch (widget.place.kind) {
+    FoodKind.restaurant => ('card_badge_ring_green.svg', 'card_badge_restaurant.svg'),
+    FoodKind.cafe => ('card_badge_ring.svg', 'card_badge_cafe.svg'),
+    FoodKind.bar => ('card_badge_ring_red.svg', 'card_badge_bar.svg'),
   };
 
   @override
@@ -127,13 +157,18 @@ class RestaurantCardState extends State<RestaurantCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Name 25 high, 8 apart, type 17: the design's 50.
                           SizedBox(
                             height: 50,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _dataText(context, p.name, TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy)),
-                                _dataText(context, p.type, TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: kRGreyText)),
+                                placeText(context, p.name, TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, height: 1.25, fontWeight: FontWeight.w600, color: AppColors.navy)),
+                                const SizedBox(height: 8),
+                                // The page's own words ("Restaurant") with the
+                                // cuisine's name after them, so it reads in
+                                // the page's direction.
+                                Text(p.type, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: kRGreyText)),
                               ],
                             ),
                           ),
@@ -143,11 +178,11 @@ class RestaurantCardState extends State<RestaurantCard> {
                               children: [
                                 SizedBox(
                                   width: 16,
-                                  height: 16,
+                                  height: 17,
                                   child: Center(child: SvgPicture.asset('$_kCardAsset/card_pin.svg', width: 12, height: 16)),
                                 ),
                                 const SizedBox(width: 8),
-                                Expanded(child: _dataText(context, p.address, TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: kRGreyText))),
+                                Expanded(child: placeText(context, p.address, TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: kRGreyText))),
                               ],
                             ),
                           ],
@@ -161,22 +196,21 @@ class RestaurantCardState extends State<RestaurantCard> {
                       ),
                     ),
                     // Straddles the photograph's edge: 44 across, half over it.
-                    if (badge != null)
-                      PositionedDirectional(
-                        top: -22,
-                        end: 15,
-                        child: SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SvgPicture.asset('$_kCardAsset/${badge.$1}', width: 44, height: 44),
-                              SvgPicture.asset('$_kCardAsset/${badge.$2}', width: 20, height: 20),
-                            ],
-                          ),
+                    PositionedDirectional(
+                      top: -22,
+                      end: 15,
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SvgPicture.asset('$_kCardAsset/${badge.$1}', width: 44, height: 44),
+                            SvgPicture.asset('$_kCardAsset/${badge.$2}', width: 20, height: 20),
+                          ],
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -203,8 +237,9 @@ class RestaurantCardState extends State<RestaurantCard> {
       ),
     );
     if (p.imageUrl.isEmpty) return fallback;
+    // The card is about 380 wide; a sharp screen wants twice that.
     return Image.network(
-      p.imageUrl,
+      sizedPhotoUrl(p.imageUrl, 400, 2),
       fit: BoxFit.cover,
       webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
       errorBuilder: (_, _, _) => fallback,
@@ -212,10 +247,9 @@ class RestaurantCardState extends State<RestaurantCard> {
     );
   }
 
-  /// The photograph, the category in a pill at the top and the kosher
+  /// The photograph, the cuisine in a pill at the top and the kosher
   /// certificate at the bottom. The heart the design draws in the corner is
-  /// left off: it saved nothing — a local switch that reset on the next
-  /// page — and saving belongs to an account, which is the app's.
+  /// left off: saving belongs to an account, and accounts are the app's.
   Widget _buildImageBand(RestaurantPlace p) {
     return SizedBox(
       height: 200,
@@ -223,11 +257,11 @@ class RestaurantCardState extends State<RestaurantCard> {
       child: Stack(
         children: [
           Positioned.fill(child: _photo(p)),
-          if (p.category != null)
+          if (p.pill != null && p.pill!.isNotEmpty)
             PositionedDirectional(
               top: 15,
               end: 14,
-              child: _pill(p.category!),
+              child: _pill(p.pill!),
             ),
           if (p.isKosher)
             PositionedDirectional(
@@ -251,48 +285,61 @@ class RestaurantCardState extends State<RestaurantCard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[icon, const SizedBox(width: 6)],
-          Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white)),
+          Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, height: 15 / 12, fontWeight: FontWeight.w500, color: Colors.white)),
         ],
       ),
     );
   }
 
   Widget _buildStatsRow(RestaurantPlace p) {
-    return Row(
-      children: [
-        // Most real listings carry neither a rating nor a review count, and
-        // "0 (0)" reads as a score the place earned rather than one nobody
-        // gave it.
-        if (p.rating > 0 || p.reviews > 0) ...[
-          SvgPicture.asset('$_kCardAsset/card_star.svg', width: 16, height: 16),
-          const SizedBox(width: 8),
-          Text(p.rating.toStringAsFixed(1), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black)),
-          const SizedBox(width: 8),
-          Text('(${p.reviews})', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
-        ] else
-          Text(_t('Not rated yet', 'אין דירוג עדיין'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D))),
-        // Delivery where the directory records it. There is no view-count
-        // column on `businesses`, so the design's "N Views" has no source.
-        if (p.deliveryTime != null && p.deliveryTime!.isNotEmpty) ...[
-          const SizedBox(width: 24),
-          Flexible(
-            child: Text(
-              p.deliveryTime!,
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    const grey = Color(0xFF6D6D6D);
+    return SizedBox(
+      height: 17,
+      child: Row(
+        children: [
+          // Most listings carry neither a rating nor a review count, and
+          // "0 (0)" reads as a score the place earned rather than one nobody
+          // gave it.
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 100),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: p.rating > 0 || p.reviews > 0
+                  ? [
+                      SvgPicture.asset('$_kCardAsset/card_star.svg', width: 16, height: 16),
+                      const SizedBox(width: 8),
+                      Text(p.rating.toStringAsFixed(1), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black)),
+                      const SizedBox(width: 8),
+                      Text('(${p.reviews})', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: grey)),
+                    ]
+                  : [
+                      Text(_t('Not rated yet', 'אין דירוג עדיין'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: grey)),
+                    ],
             ),
           ),
+          if (widget.showDelivery && p.delivers) ...[
+            const SizedBox(width: 40),
+            const Icon(IconsaxPlusLinear.truck_fast, size: 16, color: Color(0xFF5D5D5D)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                _t('Delivery', 'משלוחים'),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
-  /// Dials the place — outlined, and filled under the pointer, as the design
+  /// Opens the contact menu — the number, Call, WhatsApp — outlined, and filled under the pointer, as the design
   /// draws both. Absent for a business with no number on record.
   Widget _buildContactButton(RestaurantPlace p) {
-    return GestureDetector(
-      onTap: () => launchUrl(Uri(scheme: 'tel', path: p.phone)),
+    return Builder(builder: (anchor) => GestureDetector(
+      onTap: () => showWebContactMenu(anchor, isHebrew: widget.isHebrew, phone: p.phone, whatsapp: p.whatsapp),
       child: Container(
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -317,6 +364,6 @@ class RestaurantCardState extends State<RestaurantCard> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
