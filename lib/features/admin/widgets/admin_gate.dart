@@ -5,6 +5,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
 
 /// Stands in front of the admin area.
@@ -27,7 +28,15 @@ class AdminGate extends ConsumerWidget {
 
     // The stored session takes a moment to read back, so a null here does not
     // yet mean signed out.
-    if (user == null && ref.watch(authRestoringProvider)) {
+    //
+    // Nor does it straight after signing in. That is two steps — the session
+    // arrives, then the profile and the admin check load — and the sign-in
+    // page comes here as soon as the first is done. On a slow line the second
+    // had not, so the gate saw nobody, sent the administrator back to sign in,
+    // and the fields came up empty as if the password had been wrong. A
+    // session with no user yet is a load in progress, not a stranger.
+    final signingIn = SupabaseConfig.client.auth.currentSession != null;
+    if (user == null && (ref.watch(authRestoringProvider) || signingIn)) {
       return const Scaffold(
         backgroundColor: Colors.white,
         body: Center(child: CircularProgressIndicator()),
