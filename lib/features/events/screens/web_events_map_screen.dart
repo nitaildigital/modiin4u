@@ -13,7 +13,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/event.dart';
 import '../providers/event_providers.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/web_map_tiles.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Events Map — desktop layout for /events-map
@@ -37,8 +37,9 @@ class WebEventsMapContent extends ConsumerStatefulWidget {
       _WebEventsMapContentState();
 }
 
-class _WebEventsMapContentState extends ConsumerState<WebEventsMapContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebEventsMapContentState extends ConsumerState<WebEventsMapContent>
+    with WebLanguageState<WebEventsMapContent> {
+  bool get _isHebrew => webIsHebrew.value;
   String? _selectedId;
 
   final _searchController = TextEditingController();
@@ -113,7 +114,6 @@ class _WebEventsMapContentState extends ConsumerState<WebEventsMapContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'events',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             // A share of the window rather than a fixed width, so a 1101px
             // laptop does not end up with a map no wider than the list.
@@ -426,10 +426,7 @@ class _WebEventsMapContentState extends ConsumerState<WebEventsMapContent> {
             onTap: (_, _) => setState(() => _selectedId = null),
           ),
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.modiin4u.app',
-            ),
+            const WebMapTiles(),
             MarkerLayer(
               markers: [
                 for (final e in pinned)
@@ -451,7 +448,7 @@ class _WebEventsMapContentState extends ConsumerState<WebEventsMapContent> {
                   ),
               ],
             ),
-            const OsmAttribution(),
+            const WebMapCredit(),
           ],
         ),
 

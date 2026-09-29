@@ -1,44 +1,51 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_chrome.dart';
-import '../../favorites/repositories/favorite_repository.dart';
-import '../../favorites/widgets/favorite_button.dart';
+import '../../../shared/widgets/web_share_menu.dart';
 import '../models/event.dart';
+import '../models/event_category.dart';
+import '../models/event_labels.dart';
 import '../providers/event_providers.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/web_map_tiles.dart';
+import 'web_events_screen.dart'
+    show WebEventCard, WebEventCategoryPill, kWebEventGridGap, webEventCardWidth, webEventGridColumns;
 
 // ═══════════════════════════════════════════════════════════
-// Web Event Detail — from the Figma export "Event Detail"
+// Web Event Detail — from the Figma frame "Event Detail"
 // (1920 × 3065).  Hero 1920×550 · left content column 1011 ·
-// RSVP card 463 (Event Card / Stage 1 + Stage 2) · You May
-// Also Like carousel 1600 · footer 1920×632.
+// invitation card 463 ("Event Card") · You May Also Like
+// carousel 1600 · footer.
 // ═══════════════════════════════════════════════════════════
 
 const _kBorder = Color(0xFFE7E7E7);
 const _kGreyText = Color(0xFF5F5E5A);
 const _kBodyText = Color(0xFF3D3D3D);
-const _kIconGrey = Color(0xFF6D6D6D);
-const _kPinPurple = Color(0xFF9032E1);
+const _kGrey500 = Color(0xFF6D6D6D);
 
 /// The desktop event page.
 ///
-/// It took an `eventId` and read nothing with it: every word on screen was the
-/// mockup's "Summer Music Night" — its date, its 8:00 PM start, its address on
-/// Sderot El Melachot, "124 people interested", a five-line "What's Included"
-/// list, an "Organized by" card naming "Modiin Community Events", four
-/// attendee faces, a map pinned to a fixed coordinate, and four related events
-/// linking to `/event/demo_$i`. All of it showed the same for every id.
+/// It took an `eventId` and once read nothing with it: every word on screen
+/// was the mockup's "Summer Music Night" — its date, its 8:00 PM start, its
+/// address on Sderot El Melachot, "124 people interested", a five-line
+/// "What's Included" list, an "Organized by" card naming "Modiin Community
+/// Events", four attendee faces, a map pinned to a fixed coordinate, and four
+/// related events linking to `/event/demo_$i`. All of it showed the same for
+/// every id.
 ///
-/// It reads `events` now, and the RSVP writes to `event_attendees`.
+/// It reads the event's own row now, its category from `entity_categories`,
+/// its organiser from `business_id`, and its neighbours from `events`.
 class WebEventDetailContent extends ConsumerStatefulWidget {
   final String eventId;
   const WebEventDetailContent({super.key, required this.eventId});
@@ -48,12 +55,13 @@ class WebEventDetailContent extends ConsumerStatefulWidget {
       _WebEventDetailContentState();
 }
 
-class _WebEventDetailContentState
-    extends ConsumerState<WebEventDetailContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebEventDetailContentState extends ConsumerState<WebEventDetailContent>
+    with WebLanguageState<WebEventDetailContent> {
+  bool get _isHebrew => webIsHebrew.value;
   final _carousel = ScrollController();
 
   String _t(String en, String he) => _isHebrew ? he : en;
+  EventLabels get _labels => EventLabels(_isHebrew);
 
   @override
   void dispose() {
@@ -61,65 +69,13 @@ class _WebEventDetailContentState
     super.dispose();
   }
 
-  // ── Dates and times, in whichever language is showing ──
-
-  static const _monthsEn = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
-  static const _monthsHe = [
-    'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
-    'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
-  ];
-  static const _weekdaysEn = [
-    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
-  ];
-  static const _weekdaysHe = [
-    'יום שני', 'יום שלישי', 'יום רביעי', 'יום חמישי',
-    'יום שישי', 'שבת', 'יום ראשון',
-  ];
-
-  String _shortMonth(DateTime date) =>
-      _isHebrew ? _monthsHe[date.month - 1] : _monthsEn[date.month - 1].substring(0, 3).toUpperCase();
-
-  String _longDate(DateTime date) {
-    final weekday = (_isHebrew ? _weekdaysHe : _weekdaysEn)[date.weekday - 1];
-    final month = (_isHebrew ? _monthsHe : _monthsEn)[date.month - 1];
-    return _isHebrew
-        ? '$weekday, ${date.day} ב$month ${date.year}'
-        : '$weekday, $month ${date.day}, ${date.year}';
-  }
-
-  /// "20:00 – 22:30", or just the start when the row has no end time, or null
-  /// when it has no time at all. The mockup's fixed "8:00 PM – 11:00 PM" stood
-  /// here whatever the row said.
-  String? _timeRange(Event e) {
-    if (e.isAllDay) return _t('All day', 'כל היום');
-    final start = e.displayTime;
-    if (start == null) return null;
-    final endParts = (e.endTime ?? '').split(':');
-    if (endParts.length < 2) return start;
-    return '$start – ${endParts[0]}:${endParts[1]}';
-  }
-
-  /// What the ticket costs, or null when the row does not say.
-  ///
-  /// `Event.displayPrice` answers in Hebrew only, and this page is shown in
-  /// both languages.
-  String? _price(Event e) {
-    if (e.isFree) return _t('Free', 'חינם');
-    final p = e.price;
-    if (p == null || p.isEmpty) return null;
-    return p.startsWith('₪') ? p : '₪$p';
-  }
-
-  String? _place(Event e) {
-    if (e.isOnline) return _t('Online', 'אונליין');
-    return e.venueName ?? (e.address.isEmpty ? null : e.address);
-  }
-
   bool _hasCoordinates(Event e) =>
       !e.isOnline && e.latitude != 0 && e.longitude != 0;
+
+  EventCategory? _categoryOf(Event e) {
+    final byEvent = ref.watch(eventCategoriesByEventProvider).valueOrNull;
+    return (byEvent?[e.id] ?? const []).firstOrNull;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +91,6 @@ class _WebEventDetailContentState
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'events',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -150,9 +105,8 @@ class _WebEventDetailContentState
                         children: [
                           _buildHero(e),
                           _buildBody(e),
-                          const SizedBox(height: 56),
                           _buildRelatedSection(e),
-                          const SizedBox(height: 80),
+                          const SizedBox(height: 159),
                         ],
                       ),
                     ),
@@ -171,16 +125,17 @@ class _WebEventDetailContentState
   // LOADING · ERROR
   // ─────────────────────────────────────────────
   Widget _buildLoading() {
+    final gutter = webGutter(MediaQuery.sizeOf(context).width);
     return Skeleton(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SkeletonBox(height: 550, radius: 0),
           Padding(
-            padding: const EdgeInsets.fromLTRB(160, 56, 160, 0),
-            child: Column(
+            padding: EdgeInsets.fromLTRB(gutter, 56, gutter, 0),
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 SkeletonLine(width: 260, fontSize: 24),
                 SizedBox(height: 24),
                 SkeletonLine(width: 760),
@@ -218,11 +173,9 @@ class _WebEventDetailContentState
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _cardOutlineButton(IconsaxPlusLinear.refresh,
-                  _t('Try again', 'נסו שוב'), onRetry),
+              _outlineButton(null, _t('Try again', 'נסו שוב'), onRetry),
               const SizedBox(width: 16),
-              _cardOutlineButton(IconsaxPlusLinear.calendar,
-                  _t('All events', 'כל האירועים'), () => context.go('/events')),
+              _outlineButton(null, _t('All events', 'כל האירועים'), () => context.go('/events')),
             ],
           ),
         ],
@@ -231,21 +184,41 @@ class _WebEventDetailContentState
   }
 
   // ─────────────────────────────────────────────
-  // SAVE · SHARE
+  // SHARE · DIRECTIONS
   // ─────────────────────────────────────────────
-  /// Share sent nothing at all — the button was `onTap: () {}`.
-  void _share(Event event) {
-    final place = _place(event);
+  /// Share sent nothing at all once — the button was `onTap: () {}`, and
+  /// then it only copied the address.
+  ///
+  /// In a browser it opens the site's share menu under the button —
+  /// WhatsApp, Facebook, X, e-mail, Copy link — which works on any page,
+  /// secure or not. On a device the system sheet opens. [anchor] is the
+  /// button's context, so the menu sits beneath it.
+  Future<void> _share(Event event, BuildContext anchor) async {
+    final link = Uri.base.toString();
     final date = event.startDate;
-    Share.share(
-      [
-        event.title,
-        if (date != null) _longDate(date),
-        ?place,
-        event.shortDescription,
-      ].whereType<String>().where((s) => s.isNotEmpty).join('\n'),
-      subject: event.title,
-    );
+    final message = [
+      event.title,
+      if (date != null) _labels.longDate(date),
+      _labels.venue(event),
+    ].whereType<String>().where((s) => s.isNotEmpty).join('\n');
+    if (!kIsWeb) {
+      await Share.share('$message\n$link', subject: event.title);
+      return;
+    }
+    await showWebShareMenu(anchor, title: event.title, link: link, message: message, isHebrew: _isHebrew);
+  }
+
+  /// Directions to the venue, in a new tab: the editor's Waze link when the
+  /// row has one, Google Maps to the coordinates otherwise.
+  void _directions(Event event) {
+    final waze = event.wazeUrl?.trim() ?? '';
+    final uri = waze.isNotEmpty
+        ? Uri.parse(waze)
+        : Uri.https('www.google.com', '/maps/dir/', {
+            'api': '1',
+            'destination': '${event.latitude},${event.longitude}',
+          });
+    launchUrl(uri, webOnlyWindowName: '_blank');
   }
 
   // ─────────────────────────────────────────────
@@ -253,8 +226,10 @@ class _WebEventDetailContentState
   // ─────────────────────────────────────────────
   Widget _buildHero(Event event) {
     final date = event.startDate;
-    final time = _timeRange(event);
-    final place = _place(event);
+    final time = _labels.timeRange(event);
+    final place = _labels.address(event);
+    final category = _categoryOf(event);
+    final gutter = webGutter(MediaQuery.sizeOf(context).width);
 
     return SizedBox(
       width: double.infinity,
@@ -264,23 +239,23 @@ class _WebEventDetailContentState
           Positioned.fill(
             child: NetworkPhoto(
               url: event.imageUrl,
-              icon: IconsaxPlusBold.calendar_1,
-              iconSize: 56,
+              icon: null,
             ),
           ),
-          // Rectangle 14510 — 50%-wide black wash so the copy stays readable
+          // Rectangle 14510 — the start half darkened, at 80% of a 0.8 black,
+          // so the copy stays readable over any photograph.
           Positioned.fill(
             child: FractionallySizedBox(
               alignment: AlignmentDirectional.centerStart,
               widthFactor: 0.5,
-              child: Container(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: AlignmentDirectional.centerStart,
                     end: AlignmentDirectional.centerEnd,
                     colors: [
-                      Colors.black.withValues(alpha: 0.8),
-                      Colors.black.withValues(alpha: 0.8),
+                      Colors.black.withValues(alpha: 0.64),
+                      Colors.black.withValues(alpha: 0.64),
                       Colors.black.withValues(alpha: 0.0),
                     ],
                     stops: const [0.012, 0.523, 1.0],
@@ -289,9 +264,9 @@ class _WebEventDetailContentState
               ),
             ),
           ),
-          // Frame 2071857379 — date badge + title block
+          // Frame 2071857379 — date badge, title, category, meta
           PositionedDirectional(
-            start: 160,
+            start: gutter,
             top: 106,
             child: SizedBox(
               width: 528,
@@ -305,47 +280,42 @@ class _WebEventDetailContentState
                   ],
                   Text(
                     event.title,
-                    style: TextStyle(fontFamily: AppFonts.nunito,
-                        fontSize: 48, fontWeight: FontWeight.w600, color: Colors.white, height: 59 / 48),
+                    style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 48, fontWeight: FontWeight.w600, color: Colors.white, height: 59 / 48),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  // A turquoise "Music" pill sat under the title. Events carry
-                  // no category, so it said Music whatever the event was.
-                  const SizedBox(height: 24),
-                  if (time != null) ...[
-                    _heroMetaRow(IconsaxPlusLinear.clock, time, forceLtr: true),
-                    const SizedBox(height: 24),
-                  ],
-                  if (place != null)
-                    _heroMetaRow(
-                      event.isOnline
-                          ? IconsaxPlusLinear.global
-                          : IconsaxPlusLinear.location,
-                      place,
+                  if (category != null) ...[
+                    const SizedBox(height: 12),
+                    WebEventCategoryPill(
+                      label: _labels.category(category),
+                      fontSize: 14,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     ),
-                  // "124 people interested" used to sit here on every event.
+                  ],
+                  if (time != null) ...[
+                    const SizedBox(height: 24),
+                    _heroMetaRow('assets/web/events/clock16.svg', time, ltr: true),
+                  ],
+                  if (place != null) ...[
+                    const SizedBox(height: 24),
+                    _heroMetaRow('assets/web/events/pin16.svg', place),
+                  ],
+                  // "124 people interested" once stood here on every event.
                   // The real count only appears once there is one.
                   if (event.rsvpCount > 0) ...[
                     const SizedBox(height: 24),
-                    _heroMetaRow(IconsaxPlusLinear.star_1,
-                        _t('${event.rsvpCount} people interested',
-                            '${event.rsvpCount} מתעניינים')),
+                    _heroMetaRow('assets/web/events/people16.svg', _labels.peopleInterested(event.rsvpCount)),
                   ],
                 ],
               ),
             ),
           ),
-          // Frame 2071857321 — Share / Save
+          // Frame 2071857321 — Share. Save sat beside it; it needs an
+          // account, which is the app's.
           PositionedDirectional(
-            end: 160,
-            top: 486,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _heroPillButton(IconsaxPlusLinear.share, _t('Share', 'שיתוף'),
-                    () => _share(event)),
-                // Save sat beside it; it needs an account, which is the app's.
-              ],
-            ),
+            end: gutter,
+            bottom: 28,
+            child: Builder(builder: (b) => _heroPillButton(_t('Share', 'שיתוף'), () => _share(event, b))),
           ),
         ],
       ),
@@ -355,54 +325,50 @@ class _WebEventDetailContentState
   Widget _heroDateBadge(DateTime date) {
     return Container(
       width: 81,
-      padding: const EdgeInsets.all(11.37),
+      padding: const EdgeInsets.all(11.368),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(11.37),
+        borderRadius: BorderRadius.circular(11.368),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_shortMonth(date),
-              style: TextStyle(fontFamily: AppFonts.inter,
-                  fontSize: 18, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 22 / 18)),
-          const SizedBox(height: 5.68),
-          Text('${date.day}',
-              style: TextStyle(fontFamily: AppFonts.inter,
-                  fontSize: 32, fontWeight: FontWeight.w600, color: Colors.black, height: 39 / 32)),
+          Text(_labels.shortMonth(date),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 22 / 18),
+              maxLines: 1),
+          const SizedBox(height: 5.684),
+          Text(date.day.toString().padLeft(2, '0'),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 32, fontWeight: FontWeight.w600, color: Colors.black, height: 39 / 32)),
         ],
       ),
     );
   }
 
-  Widget _heroMetaRow(IconData icon, String text, {bool forceLtr = false}) {
+  Widget _heroMetaRow(String icon, String text, {bool ltr = false}) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: AppColors.turquoise),
+        SvgPicture.asset(icon, width: 16, height: 16),
         const SizedBox(width: 8),
-        Expanded(
+        Flexible(
           child: _maybeLtr(
-            forceLtr,
+            ltr,
             Text(text,
-                style: TextStyle(fontFamily: AppFonts.inter,
-                    fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white, height: 17 / 14)),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white, height: 17 / 14),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ),
         ),
       ],
     );
   }
 
-  /// Clock ranges stay left-to-right even inside the Hebrew layout.
-  Widget _maybeLtr(bool forceLtr, Widget child) {
-    if (!forceLtr) return child;
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: Directionality(textDirection: TextDirection.ltr, child: child),
-    );
+  /// Clock ranges stay left to right even inside the Hebrew layout.
+  Widget _maybeLtr(bool ltr, Widget child) {
+    if (!ltr) return child;
+    return Directionality(textDirection: TextDirection.ltr, child: child);
   }
 
-  Widget _heroPillButton(IconData icon, String label, VoidCallback onTap) {
+  Widget _heroPillButton(String label, VoidCallback onTap) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
@@ -417,11 +383,10 @@ class _WebEventDetailContentState
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: AppColors.midBlue),
+              SvgPicture.asset('assets/web/events/share16.svg', width: 16, height: 16),
               const SizedBox(width: 8),
               Text(label,
-                  style: TextStyle(fontFamily: AppFonts.inter,
-                      fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy)),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.navy, height: 24 / 14)),
             ],
           ),
         ),
@@ -430,159 +395,29 @@ class _WebEventDetailContentState
   }
 
   // ─────────────────────────────────────────────
-  // BODY — 1011 content column + 463 RSVP card
+  // BODY — 1011 content column + 463 invitation card
   // ─────────────────────────────────────────────
   Widget _buildBody(Event event) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1920),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(160, 56, 160, 0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // 1011 + 126 + 463 = 1600 at the 1920 reference width.
-              const cardWidth = 463.0;
-              const gap = 126.0;
-              final columnWidth =
-                  (constraints.maxWidth - gap - cardWidth).clamp(420.0, 1011.0);
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                      width: columnWidth,
-                      child: _buildContentColumn(event, columnWidth)),
-                  const Spacer(),
-                  SizedBox(width: cardWidth, child: _buildRsvpCard(event)),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // RSVP CARD — "Event Card" component, 463 wide.
-  // Stage 1: "I'm going".  Stage 2: "Going" + green banner.
-  // ─────────────────────────────────────────────
-  Widget _buildRsvpCard(Event event) {
-    final time = _timeRange(event);
-    final place = _place(event);
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kBorder),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 16),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(_t("You're Invited!", 'אתם מוזמנים!'),
-              style: TextStyle(fontFamily: AppFonts.nunito,
-                  fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 30 / 24)),
-          const SizedBox(height: 15),
-          // Cover + title + meta
-          NetworkPhoto(
-            url: event.imageUrl,
-            height: 180,
-            radius: BorderRadius.circular(12),
-            icon: IconsaxPlusBold.calendar_1,
-            iconSize: 34,
-          ),
-          const SizedBox(height: 16),
-          Text(event.title,
-              style: TextStyle(fontFamily: AppFonts.inter,
-                  fontSize: 22, fontWeight: FontWeight.w600, color: Colors.black, height: 27 / 22)),
-          if (time != null) ...[
-            const SizedBox(height: 16),
-            _cardMetaRow(IconsaxPlusLinear.clock, time, forceLtr: true),
-          ],
-          if (place != null) ...[
-            const SizedBox(height: 16),
-            _cardMetaRow(
-              event.isOnline
-                  ? IconsaxPlusLinear.global
-                  : IconsaxPlusLinear.location,
-              place,
-            ),
-          ],
-          if (event.rsvpCount > 0) ...[
-            const SizedBox(height: 16),
-            _cardMetaRow(IconsaxPlusLinear.star_1,
-                _t('${event.rsvpCount} people interested',
-                    '${event.rsvpCount} מתעניינים')),
-          ],
-          const SizedBox(height: 24),
-          // An "I'm going" button and its "You're going!" banner sat here.
-          // Saying you are coming needs an account, and accounts belong to
-          // the app — the client's decision, 28 September — so on the
-          // website this card tells you what, when and where, and the RSVP is
-          // made from the phone.
-          const SizedBox(height: 20),
-          // ── Share ── (Save needs an account; see above.)
-          _cardOutlineButton(IconsaxPlusLinear.share,
-              _t('Share', 'שיתוף'), () => _share(event)),
-          // A row of four attendee faces sat below, with "124 people
-          // interested" beside it. Nothing names who is coming — the owner
-          // policy on `event_attendees` lets a reader see only their own row —
-          // so the faces were four coloured circles and the count was fixed.
-          //
-          // An "Organized by" card followed, naming "Modiin Community Events"
-          // under the strapline "Community & Municipal Events" on every event.
-          // `events` has `organizer_id` and `business_id`; neither is filled on
-          // any row yet, so the card is gone until one of them is.
-        ],
-      ),
-    );
-  }
-
-  Widget _cardMetaRow(IconData icon, String text, {bool forceLtr = false}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: AppColors.turquoise),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _maybeLtr(
-            forceLtr,
-            Text(text,
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBodyText, height: 17 / 14)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _cardOutlineButton(IconData icon, String label, VoidCallback onTap) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 44,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.midBlue),
-            borderRadius: BorderRadius.circular(60),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 20, color: AppColors.midBlue),
-              const SizedBox(width: 8),
-              Text(label,
-                  style: TextStyle(fontFamily: AppFonts.inter,
-                      fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 1.5)),
-            ],
-          ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 56),
+      child: WebSection(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // 1011 + 126 + 463 = 1600 at the 1920 reference width. On a
+            // narrower window the gap gives way first, and the card narrows a
+            // little so the details box keeps room for its four cells.
+            final cardWidth = (constraints.maxWidth * 463 / 1600).clamp(380.0, 463.0);
+            final gap = (constraints.maxWidth - 1011 - cardWidth).clamp(40.0, 126.0);
+            final columnWidth = (constraints.maxWidth - gap - cardWidth).clamp(420.0, 1011.0);
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: columnWidth, child: _buildContentColumn(event, columnWidth)),
+                const Spacer(),
+                SizedBox(width: cardWidth, child: _buildInviteCard(event)),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -590,36 +425,63 @@ class _WebEventDetailContentState
 
   Widget _buildContentColumn(Event event, double columnWidth) {
     // The mockup's two paragraphs about "Summer Music Night" were printed
-    // under every event, whatever its own description said.
-    final about = event.fullDescription ?? event.shortDescription;
-    final textWidth = columnWidth.clamp(0.0, 896.0);
+    // under every event once, whatever its own description said.
+    final about = EventDescription.parse(
+      (event.fullDescription?.trim().isNotEmpty ?? false)
+          ? event.fullDescription
+          : event.shortDescription,
+    );
+    final paragraphs = about.paragraphs;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (about != null && about.isNotEmpty) ...[
+        if (paragraphs.isNotEmpty) ...[
           _sectionTitle(_t('About This Event', 'על האירוע')),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: textWidth,
-            child: Text(
-              about,
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kBodyText, height: 1.6),
+          for (final p in paragraphs) ...[
+            const SizedBox(height: 24),
+            SizedBox(
+              width: columnWidth.clamp(0.0, 896.0),
+              child: Text(p,
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kBodyText, height: 1.6)),
             ),
-          ),
+          ],
           const SizedBox(height: 56),
         ],
         _sectionTitle(_t('Event Details', 'פרטי האירוע')),
         const SizedBox(height: 24),
         _buildDetailsBox(event),
-        // A "What's Included" list stood here — live music, food and
-        // refreshments, outdoor seating — on every event alike. No column
-        // holds it, so the section is gone rather than invented per event.
+        // "What's Included" once listed live music, food and refreshments
+        // and outdoor seating under every event alike. It lists what the
+        // event's own description does now — see [EventDescription] — and is
+        // left out when the description has no such list.
+        if (about.included.isNotEmpty) ...[
+          const SizedBox(height: 56),
+          _sectionTitle(_t("What's Included", 'מה כלול')),
+          const SizedBox(height: 24),
+          for (var i = 0; i < about.included.length; i++) ...[
+            if (i > 0) const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 1.5),
+                  child: SvgPicture.asset('assets/web/events/included_check.svg', width: 16, height: 16),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(about.included[i],
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: _kBodyText, height: 19 / 16)),
+                ),
+              ],
+            ),
+          ],
+        ],
         if (_hasCoordinates(event)) ...[
           const SizedBox(height: 56),
           _sectionTitle(_t('Where Is It?', 'איפה זה?')),
           const SizedBox(height: 24),
-          _buildMiniMap(event),
+          _buildMiniMap(event, columnWidth),
         ],
       ],
     );
@@ -627,36 +489,36 @@ class _WebEventDetailContentState
 
   Widget _sectionTitle(String text) {
     return Text(text,
-        style: TextStyle(fontFamily: AppFonts.nunito,
-            fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 30 / 24));
+        style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 30 / 24));
   }
 
-  /// Frame 2071857385 — bordered box of divided cells.
+  /// Frame 2071857385 — a bordered box of four divided cells.
   ///
-  /// The four cells were fixed text: a Thursday in August, an 8:00 PM start,
-  /// the amphitheatre, ₪50. A cell is only drawn now when the row carries what
+  /// The cells were fixed text once: a Thursday in August, an 8:00 PM start,
+  /// the amphitheatre, ₪50. A cell is drawn only when the row carries what
   /// goes in it, so an event with no price shows three cells rather than a
-  /// made-up fourth.
+  /// made-up fourth. The location cell opens directions.
   Widget _buildDetailsBox(Event event) {
     final date = event.startDate;
-    final time = _timeRange(event);
-    final place = _place(event);
-    final price = _price(event);
+    final time = _labels.timeRange(event);
+    final place = _labels.venue(event);
+    final price = _labels.price(event, upper: false);
 
-    final cells = <(IconData, String, String, bool)>[
+    final cells = <({String icon, String label, String value, bool ltr, VoidCallback? onTap})>[
       if (date != null)
-        (IconsaxPlusLinear.calendar, _t('Date', 'תאריך'), _longDate(date), false),
+        (icon: 'assets/web/events/det_date.svg', label: _t('Date', 'תאריך'), value: _labels.longDate(date), ltr: false, onTap: null),
       if (time != null)
-        (IconsaxPlusLinear.clock, _t('Time', 'שעה'), time, true),
+        (icon: 'assets/web/events/det_time.svg', label: _t('Time', 'שעה'), value: time, ltr: true, onTap: null),
       if (place != null)
         (
-          event.isOnline ? IconsaxPlusLinear.global : IconsaxPlusLinear.location,
-          _t('Location', 'מיקום'),
-          place,
-          false,
+          icon: 'assets/web/events/det_location.svg',
+          label: _t('Location', 'מיקום'),
+          value: place,
+          ltr: false,
+          onTap: _hasCoordinates(event) || (event.wazeUrl?.isNotEmpty ?? false) ? () => _directions(event) : null,
         ),
       if (price != null)
-        (IconsaxPlusLinear.ticket, _t('Price', 'מחיר'), price, false),
+        (icon: 'assets/web/events/det_price.svg', label: _t('Price', 'מחיר'), value: price, ltr: false, onTap: null),
     ];
     if (cells.isEmpty) return const SizedBox.shrink();
 
@@ -670,40 +532,47 @@ class _WebEventDetailContentState
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: List.generate(cells.length, (i) {
+            final cell = cells[i];
             final isFirst = i == 0;
             final isLast = i == cells.length - 1;
+            Widget body = Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(cell.icon, width: 24, height: 24),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(cell.label,
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black, height: 19 / 16)),
+                      const SizedBox(height: 4),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: _maybeLtr(
+                          cell.ltr,
+                          Text(cell.value,
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGrey500, height: 17 / 14)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+            if (cell.onTap != null) {
+              body = MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(onTap: cell.onTap, behavior: HitTestBehavior.opaque, child: body),
+              );
+            }
             return Expanded(
               child: Container(
-                padding: EdgeInsetsDirectional.fromSTEB(
-                    isFirst ? 0 : 16, 16, isLast ? 0 : 16, 16),
+                padding: EdgeInsetsDirectional.fromSTEB(isFirst ? 0 : 16, 16, isLast ? 0 : 16, 16),
                 decoration: isLast
                     ? null
-                    : const BoxDecoration(
-                        border: BorderDirectional(end: BorderSide(color: _kBorder))),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(cells[i].$1, size: 24, color: AppColors.midBlue),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(cells[i].$2,
-                              style: TextStyle(fontFamily: AppFonts.inter,
-                                  fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
-                          const SizedBox(height: 4),
-                          _maybeLtr(
-                            cells[i].$4, // the time range stays LTR
-                            Text(cells[i].$3,
-                                style: TextStyle(fontFamily: AppFonts.inter,
-                                    fontSize: 14, color: _kIconGrey, height: 17 / 14)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                    : const BoxDecoration(border: BorderDirectional(end: BorderSide(color: _kBorder))),
+                child: body,
               ),
             );
           }),
@@ -712,115 +581,318 @@ class _WebEventDetailContentState
     );
   }
 
-  /// Frame 2071857240 — 720 × 320 map with a single purple venue pin.
+  /// Frame 2071857240 — 720 × 320 map with the venue's purple pin.
   ///
-  /// The pin was a constant, so every event was at 31.8932, 35.0145. It sits
-  /// on the row's own coordinates now, and the section is hidden altogether
-  /// for an online event or one that has none.
-  Widget _buildMiniMap(Event event) {
+  /// The pin was a constant once, so every event was at 31.8932, 35.0145. It
+  /// sits on the row's own coordinates, and a click opens directions there.
+  Widget _buildMiniMap(Event event, double columnWidth) {
     final venue = LatLng(event.latitude, event.longitude);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        width: 720,
-        height: 320,
-        child: FlutterMap(
-          options: MapOptions(
-            initialCenter: venue,
-            initialZoom: 15,
-            interactionOptions:
-                const InteractionOptions(flags: InteractiveFlag.none),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          width: columnWidth.clamp(0.0, 720.0),
+          height: 320,
+          child: FlutterMap(
+            options: MapOptions(
+              initialCenter: venue,
+              initialZoom: 15,
+              interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+              onTap: (_, _) => _directions(event),
+            ),
+            children: [
+              const WebMapTiles(),
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: venue,
+                    width: 48,
+                    height: 52,
+                    alignment: Alignment.topCenter,
+                    child: SvgPicture.asset('assets/web/events/map_pin.svg', width: 48, height: 52),
+                  ),
+                ],
+              ),
+              const WebMapCredit(),
+            ],
           ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.modiin4u.app',
-            ),
-            MarkerLayer(
-              markers: [
-                Marker(
-                  point: venue,
-                  width: 48,
-                  height: 48,
-                  alignment: Alignment.topCenter,
-                  child: const _EventMapPin(size: 48),
-                ),
-              ],
-            ),
-            const OsmAttribution(),
-          ],
         ),
       ),
     );
   }
 
   // ─────────────────────────────────────────────
-  // YOU MAY ALSO LIKE — 1600-wide carousel of 382 cards
+  // INVITATION CARD — "Event Card", 463 wide
   // ─────────────────────────────────────────────
-  Widget _buildRelatedSection(Event event) {
-    // Four invented events sat here, each linking to `/event/demo_$i`.
-    final all = ref.watch(eventsProvider).valueOrNull ?? const <Event>[];
-    final related = all.where((e) => e.id != event.id).take(4).toList();
-    if (related.isEmpty) return const SizedBox.shrink();
+  Widget _buildInviteCard(Event event) {
+    final time = _labels.timeRange(event);
+    final place = _labels.address(event);
+    final organizer = ref.watch(eventOrganizerProvider(event.businessId)).valueOrNull;
 
-    return WebSection(
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _kBorder),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionTitle(_t('You May Also Like', 'אולי יעניין אתכם גם')),
-          const SizedBox(height: 62),
-          SizedBox(
-            height: 364,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ListView.separated(
-                  controller: _carousel,
-                  scrollDirection: Axis.horizontal,
-                  itemCount: related.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 24),
-                  itemBuilder: (context, i) => SizedBox(
-                    width: 382,
-                    child: _RelatedCard(
-                      event: related[i],
-                      month: related[i].startDate == null
-                          ? null
-                          : _shortMonth(related[i].startDate!),
-                      time: _timeRange(related[i]),
-                      place: _place(related[i]),
-                      price: _price(related[i]),
-                      interestedLabel: _t('interested', 'מתעניינים'),
-                      onTap: () => context.push('/event/${related[i].id}'),
-                    ),
-                  ),
-                ),
-                PositionedDirectional(
-                  start: -19,
-                  top: 162,
-                  child: _carouselArrow(isNext: false),
-                ),
-                PositionedDirectional(
-                  end: -19,
-                  top: 162,
-                  child: _carouselArrow(isNext: true),
-                ),
-              ],
-            ),
+          Text(_t("You're Invited!", 'אתם מוזמנים!'),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 30 / 24)),
+          const SizedBox(height: 15),
+          NetworkPhoto(
+            url: event.imageUrl,
+            height: 180,
+            width: double.infinity,
+            radius: BorderRadius.circular(12),
+            icon: IconsaxPlusBold.calendar_1,
+            iconSize: 34,
           ),
+          const SizedBox(height: 16),
+          Text(event.title,
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.black, height: 27 / 22)),
+          if (time != null) ...[
+            const SizedBox(height: 16),
+            _cardMetaRow('assets/web/events/clock16.svg', time, ltr: true),
+          ],
+          if (place != null) ...[
+            const SizedBox(height: 16),
+            _cardMetaRow('assets/web/events/pin16.svg', place),
+          ],
+          if (event.rsvpCount > 0) ...[
+            const SizedBox(height: 16),
+            _cardMetaRow('assets/web/events/people16.svg', _labels.peopleInterested(event.rsvpCount)),
+          ],
+          const SizedBox(height: 24),
+          // "I'm Going" and "Save" sat above this, and a green "You're going
+          // to this event!" banner after the tap. Both need an account, and
+          // accounts belong to the app — the client's decision — so on the
+          // website the card says what, when and where, and Share stands in
+          // the row alone.
+          SizedBox(
+            width: double.infinity,
+            child: Builder(builder: (b) => _outlineButton('assets/web/events/share20.svg', _t('Share', 'שיתוף'), () => _share(event, b))),
+          ),
+          // A row of four attendee faces sat below, with "124 people
+          // interested" beside it. Nothing names who is coming — the owner
+          // policy on `event_attendees` lets a reader see only their own row —
+          // so the faces were stock photographs and the count was fixed.
+          if (organizer != null) ...[
+            const SizedBox(height: 23),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.only(top: 24),
+              decoration: const BoxDecoration(border: Border(top: BorderSide(color: _kBorder))),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_t('Organized by', 'מארגנים'),
+                      style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.midBlue, height: 20 / 16)),
+                  const SizedBox(height: 16),
+                  _organizerRow(organizer),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _carouselArrow({required bool isNext}) {
+  /// The business putting the event on, opening its page.
+  Widget _organizerRow(EventOrganizer organizer) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => context.push('/business/${organizer.id}'),
+        child: Row(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: _kBorder),
+              ),
+              child: ClipOval(
+                child: NetworkPhoto(
+                  url: organizer.logoUrl,
+                  width: 64,
+                  height: 64,
+                  fit: BoxFit.cover,
+                  icon: IconsaxPlusBold.shop,
+                  iconSize: 24,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(organizer.name,
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w600, color: _kBodyText, height: 19 / 16),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+                  if (organizer.subtitle != null) ...[
+                    const SizedBox(height: 6),
+                    Text(organizer.subtitle!,
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGrey500, height: 15 / 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cardMetaRow(String icon, String text, {bool ltr = false}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 0.5),
+          child: SvgPicture.asset(icon, width: 16, height: 16),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: _maybeLtr(
+              ltr,
+              Text(text,
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBodyText, height: 17 / 14)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _outlineButton(String? icon, String label, VoidCallback onTap) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: AppColors.midBlue),
+            borderRadius: BorderRadius.circular(60),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                SvgPicture.asset(icon, width: 20, height: 20),
+                const SizedBox(width: 8),
+              ],
+              Text(label,
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 24 / 16)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // YOU MAY ALSO LIKE — carousel of the events page's cards
+  // ─────────────────────────────────────────────
+  /// Other upcoming events, those in the same category first. Four invented
+  /// events once sat here, each linking to `/event/demo_$i`.
+  Widget _buildRelatedSection(Event event) {
+    final all = ref.watch(upcomingEventsProvider).valueOrNull ?? const <Event>[];
+    final byEvent = ref.watch(eventCategoriesByEventProvider).valueOrNull ?? const {};
+    final mine = {for (final c in byEvent[event.id] ?? const <EventCategory>[]) c.id};
+
+    final others = all.where((e) => e.id != event.id).toList();
+    bool shares(Event e) => (byEvent[e.id] ?? const []).any((c) => mine.contains(c.id));
+    final related = [
+      ...others.where(shares),
+      ...others.where((e) => !shares(e)),
+    ].take(8).toList();
+    if (related.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 56),
+      child: WebSection(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _sectionTitle(_t('You May Also Like', 'אולי יעניין אתכם גם')),
+            const SizedBox(height: 32),
+            LayoutBuilder(builder: (context, constraints) {
+              final cols = webEventGridColumns(constraints.maxWidth);
+              final cardWidth = webEventCardWidth(constraints.maxWidth, cols);
+              final scrolls = related.length > cols;
+              return SizedBox(
+                height: 364,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    ListView.separated(
+                      controller: _carousel,
+                      scrollDirection: Axis.horizontal,
+                      physics: const ClampingScrollPhysics(),
+                      itemCount: related.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: kWebEventGridGap),
+                      itemBuilder: (context, i) => SizedBox(
+                        width: cardWidth,
+                        child: WebEventCard(
+                          event: related[i],
+                          labels: _labels,
+                          category: (byEvent[related[i].id] ?? const []).firstOrNull,
+                          onTap: () => context.push('/event/${related[i].id}'),
+                        ),
+                      ),
+                    ),
+                    if (scrolls) ...[
+                      PositionedDirectional(
+                        start: -19,
+                        top: 162,
+                        child: _carouselArrow(isNext: false, step: cardWidth + kWebEventGridGap),
+                      ),
+                      PositionedDirectional(
+                        end: -19,
+                        top: 162,
+                        child: _carouselArrow(isNext: true, step: cardWidth + kWebEventGridGap),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _carouselArrow({required bool isNext, required double step}) {
+    // The arrows point along the reading direction: in Hebrew "next" is to
+    // the left.
+    final pointsRight = isNext != _isHebrew;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
           if (!_carousel.hasClients) return;
-          final delta = (382.0 + 24.0) * (isNext ? 1 : -1);
           _carousel.animateTo(
-            (_carousel.offset + delta)
+            (_carousel.offset + step * (isNext ? 1 : -1))
                 .clamp(0.0, _carousel.position.maxScrollExtent),
             duration: const Duration(milliseconds: 280),
             curve: Curves.easeOut,
@@ -829,250 +901,23 @@ class _WebEventDetailContentState
         child: Container(
           width: 40,
           height: 40,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: const Color(0xFFF6F6F6)),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 1)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5, offset: const Offset(0, 1)),
             ],
           ),
-          child: Icon(
-            isNext ? IconsaxPlusLinear.arrow_right_3 : IconsaxPlusLinear.arrow_left_2,
-            size: 20,
-            color: AppColors.midBlue,
+          // The design draws one right-pointing arrow and turns it round for
+          // the other side.
+          child: Transform.flip(
+            flipX: !pointsRight,
+            child: SvgPicture.asset('assets/web/events/carousel_arrow.svg', width: 20, height: 20),
           ),
         ),
       ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // FOOTER
-  // ─────────────────────────────────────────────
-}
-
-// ═══════════════════════════════════════════════
-// SHARED WIDGETS
-// ═══════════════════════════════════════════════
-
-/// Purple teardrop pin used on the "Where Is It?" map (Ellipse 521 · #9032E1).
-class _EventMapPin extends StatelessWidget {
-  final double size;
-  const _EventMapPin({this.size = 48});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Icon(
-            IconsaxPlusBold.location,
-            size: size,
-            color: Colors.white,
-            shadows: const [
-              Shadow(color: Color(0x40000000), blurRadius: 2.74, offset: Offset(0, 2.74)),
-            ],
-          ),
-          Positioned(
-            top: size * 0.1449,
-            child: Container(
-              width: size * 0.5362,
-              height: size * 0.5362,
-              decoration: const BoxDecoration(color: _kPinPurple, shape: BoxShape.circle),
-              child: Center(
-                child: Icon(IconsaxPlusLinear.calendar, size: size * 0.29, color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// RELATED EVENT CARD — 382 × 364
-// ─────────────────────────────────────────────
-class _RelatedCard extends StatefulWidget {
-  final Event event;
-  final String? month, time, place, price;
-  final String interestedLabel;
-  final VoidCallback onTap;
-  const _RelatedCard({
-    required this.event,
-    required this.month,
-    required this.time,
-    required this.place,
-    required this.price,
-    required this.interestedLabel,
-    required this.onTap,
-  });
-
-  @override
-  State<_RelatedCard> createState() => _RelatedCardState();
-}
-
-class _RelatedCardState extends State<_RelatedCard> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final e = widget.event;
-    final month = widget.month;
-    final price = widget.price;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          height: 364,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _hovered ? AppColors.midBlue : _kBorder),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: _hovered
-                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 4))]
-                : null,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 200,
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: NetworkPhoto(
-                        url: e.imageUrl,
-                        radius: const BorderRadius.vertical(top: Radius.circular(11)),
-                        icon: IconsaxPlusBold.calendar_1,
-                        iconSize: 34,
-                      ),
-                    ),
-                    PositionedDirectional(
-                      start: 12,
-                      top: 12,
-                      child: FavoriteButton(
-                        kind: FavoriteKind.event,
-                        id: e.id,
-                        size: 40,
-                        iconSize: 20,
-                      ),
-                    ),
-                    if (month != null)
-                      PositionedDirectional(
-                        start: 12,
-                        bottom: 12,
-                        child: Container(
-                          width: 57,
-                          height: 57,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(month,
-                                  style: TextStyle(fontFamily: AppFonts.inter,
-                                      fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 1.25)),
-                              const SizedBox(height: 4),
-                              Text('${e.startDate!.day}',
-                                  style: TextStyle(fontFamily: AppFonts.inter,
-                                      fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black, height: 1.22)),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        e.title,
-                        style: TextStyle(fontFamily: AppFonts.nunito,
-                            fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy, height: 1.25),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 14),
-                      if (widget.time != null) ...[
-                        _metaRow(IconsaxPlusBold.clock, widget.time!),
-                        const SizedBox(height: 8),
-                      ],
-                      if (widget.place != null)
-                        _metaRow(
-                          e.isOnline ? IconsaxPlusBold.global : IconsaxPlusBold.location,
-                          widget.place!,
-                        ),
-                      const Spacer(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (price != null)
-                            Flexible(
-                              child: Text(
-                                price,
-                                style: TextStyle(fontFamily: AppFonts.nunito,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: e.isFree ? AppColors.midBlue : AppColors.navy,
-                                  height: 1.25,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          if (e.rsvpCount > 0)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(IconsaxPlusBold.star_1, size: 18, color: AppColors.turquoise),
-                                const SizedBox(width: 4),
-                                Text('${e.rsvpCount} ${widget.interestedLabel}',
-                                    style: TextStyle(fontFamily: AppFonts.inter,
-                                        fontSize: 14, fontWeight: FontWeight.w500, color: _kBodyText, height: 1.21)),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _metaRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: AppColors.turquoise),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kGreyText, height: 1.21),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
     );
   }
 }

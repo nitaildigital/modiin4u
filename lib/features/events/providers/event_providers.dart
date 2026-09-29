@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../businesses/providers/business_providers.dart';
 import '../models/event.dart';
+import '../models/event_category.dart';
 import '../repositories/event_repository.dart';
 
 final eventRepositoryProvider = Provider<EventRepository>(
@@ -73,3 +76,89 @@ final filteredEventsProvider = FutureProvider<List<Event>>((ref) async {
       )
       .toList();
 });
+
+// ── Categories ──
+//
+// Read here rather than through `EventRepository`: they are two plain
+// selects, and the repository is shared with the phone screens, which do not
+// use them.
+
+/// The event categories, in the editor's order.
+final eventCategoriesProvider = FutureProvider<List<EventCategory>>((ref) async {
+  final rows = await SupabaseConfig.client
+      .from('categories')
+      .select('id, name, slug, image_url, sort_order')
+      .eq('scope', 'event')
+      .eq('is_active', true)
+      .order('sort_order', ascending: true);
+  return List<Map<String, dynamic>>.from(rows)
+      .map(EventCategory.fromJson)
+      .toList();
+});
+
+/// Each event's categories, keyed by event id, the primary one first.
+///
+/// Empty for an event nobody has filed. The card then shows no pill, rather
+/// than a category chosen for it.
+final eventCategoriesByEventProvider =
+    FutureProvider<Map<String, List<EventCategory>>>((ref) async {
+      final categories = await ref.watch(eventCategoriesProvider.future);
+      final byId = {for (final c in categories) c.id: c};
+
+      final rows = await SupabaseConfig.client
+          .from('entity_categories')
+          .select('entity_id, category_id, is_primary')
+          .eq('entity_type', 'event');
+
+      final links = List<Map<String, dynamic>>.from(rows)
+        ..sort((a, b) {
+          final pa = a['is_primary'] == true ? 0 : 1;
+          final pb = b['is_primary'] == true ? 0 : 1;
+          return pa.compareTo(pb);
+        });
+
+      final result = <String, List<EventCategory>>{};
+      for (final link in links) {
+        final category = byId[link['category_id']];
+        if (category == null) continue;
+        result.putIfAbsent(link['entity_id'] as String, () => []).add(category);
+      }
+      return result;
+    });
+
+// ── Organizer ──
+
+/// Who is putting the event on, for the "Organized by" card.
+///
+/// The business named by `business_id`, with the category it is filed under
+/// as the line beneath its name — the design's "Community & Municipal
+/// Events". Null when the event names no business.
+final eventOrganizerProvider =
+    FutureProvider.family<EventOrganizer?, String?>((ref, businessId) async {
+      if (businessId == null || businessId.isEmpty) return null;
+      final business = await ref.watch(businessByIdProvider(businessId).future);
+      final kinds = await ref.watch(businessPrimaryCategoryProvider.future);
+      final kind = kinds[businessId]?.category.name;
+      final about = business.description?.trim();
+      return EventOrganizer(
+        id: business.id,
+        name: business.name,
+        logoUrl: business.logoUrl ?? business.imageUrl,
+        subtitle: (kind != null && kind.isNotEmpty)
+            ? kind
+            : (about != null && about.isNotEmpty ? about : null),
+      );
+    });
+
+class EventOrganizer {
+  final String id;
+  final String name;
+  final String? logoUrl;
+  final String? subtitle;
+  const EventOrganizer({
+    required this.id,
+    required this.name,
+    this.logoUrl,
+    this.subtitle,
+  });
+}

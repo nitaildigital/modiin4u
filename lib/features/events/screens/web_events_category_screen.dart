@@ -1,9 +1,10 @@
-import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
@@ -14,12 +15,14 @@ import '../../../shared/widgets/web_chrome.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/event.dart';
+import '../models/event_category.dart';
+import '../models/event_labels.dart';
 import '../providers/event_providers.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/web_map_tiles.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Events Category — three-panel layout from the Figma
-// export "Event Category" (1920 × 960).
+// frame "Event Category" (1920 × 960).
 // Left: filter sidebar 294 | Center: results 900 | Right: map 726
 // ═══════════════════════════════════════════════════════════
 
@@ -28,45 +31,52 @@ const _kSidebarBg = Color(0xFFF7F8FA);
 const _kTextDark = Color(0xFF3D3D3D);
 const _kTextGrey = Color(0xFF6D6D6D);
 const _kSubtitle = Color(0xFF5F5E5A);
-const _kCheckBorder = Color(0xFF7B899A);
-const _kPinPurple = Color(0xFF9032E1);
+const _kRowHover = Color(0xFFF7F8FA);
 
-/// How the list is ordered. Both options read `start_date`, which is the only
-/// thing on an event that can be ordered.
-enum _Sort { soonest, latest }
+/// How the list is ordered. The design's box reads "Sort by: Newest": the
+/// most recently published first. Soonest orders by when the event is.
+enum _Sort { newest, soonest }
 
-/// The three-panel events browser.
+/// The events browser a category circle opens: every upcoming event, narrowed
+/// by category, price and place, with each one pinned on the map beside it.
 ///
-/// The list, the map pins and the sidebar counts were all written into the
-/// source: twelve invented events at invented coordinates, a category filter
-/// offering five categories that no column holds, counts of 157/32/24/45/15 and
-/// 157/117/40, a sort box that was a `Text` with a chevron beside it, and rows
-/// and pins that both opened `/event/demo_$i`.
+/// Its list, pins and sidebar counts were all written into the source once:
+/// twelve invented events at invented coordinates, counts of 157/32/24/45/15
+/// and 157/117/40, a sort box that was a `Text` with a chevron beside it, and
+/// rows and pins that both opened `/event/demo_$i`.
 ///
-/// It reads `events` now. The category filter is gone — an event has no
-/// category — and the price filter counts the rows it is looking at.
+/// It reads `events`, `categories` and `entity_categories` now, and each count
+/// is of the upcoming events that option would show.
 class WebEventsCategoryContent extends ConsumerStatefulWidget {
-  const WebEventsCategoryContent({super.key});
+  /// Where the page opens: `all`, `free`, or a category's slug — whatever
+  /// followed `?category=` in the address.
+  final String initialFilter;
+  const WebEventsCategoryContent({super.key, this.initialFilter = 'all'});
 
   @override
   ConsumerState<WebEventsCategoryContent> createState() =>
       _WebEventsCategoryContentState();
 }
 
-class _WebEventsCategoryContentState
-    extends ConsumerState<WebEventsCategoryContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebEventsCategoryContentState extends ConsumerState<WebEventsCategoryContent>
+    with WebLanguageState<WebEventsCategoryContent> {
+  bool get _isHebrew => webIsHebrew.value;
   final _searchController = TextEditingController();
   final _listController = ScrollController();
   final _mapController = MapController();
-  Timer? _debounce;
 
+  /// The categories ticked, by slug. Empty means "All Events".
+  final Set<String> _categories = {};
   String _price = 'all'; // all | free | paid
-  _Sort _sort = _Sort.soonest;
+  _Sort _sort = _Sort.newest;
+  String _place = '';
 
   /// The event the cursor is over, in the list or on the map, so the two
-  /// panels highlight together. It was an index into the invented list.
+  /// panels highlight together.
   String? _hoveredId;
+
+  bool _mapReady = false;
+  String _fittedTo = '';
 
   /// Modiin city centre — where the map opens before it knows better.
   static const _center = LatLng(31.8928, 35.0104);
@@ -74,91 +84,84 @@ class _WebEventsCategoryContentState
   @override
   void initState() {
     super.initState();
-    _searchController.text = ref.read(eventSearchProvider);
+    switch (widget.initialFilter) {
+      case 'all':
+        break;
+      case 'free':
+        _price = 'free';
+      default:
+        _categories.add(widget.initialFilter);
+    }
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _searchController.dispose();
     _listController.dispose();
     super.dispose();
   }
 
   String _t(String en, String he) => _isHebrew ? he : en;
-
-  void _onSearchChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 250), () {
-      ref.read(eventSearchProvider.notifier).state = value;
-    });
-  }
-
-  // ── Reading a row ──
-
-  String _shortMonth(DateTime date) {
-    const en = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-    ];
-    const he = [
-      'ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יונ׳',
-      'יול׳', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳',
-    ];
-    return (_isHebrew ? he : en)[date.month - 1];
-  }
-
-  String? _timeRange(Event e) {
-    if (e.isAllDay) return _t('All day', 'כל היום');
-    final start = e.displayTime;
-    if (start == null) return null;
-    final endParts = (e.endTime ?? '').split(':');
-    if (endParts.length < 2) return start;
-    return '$start – ${endParts[0]}:${endParts[1]}';
-  }
-
-  /// `Event.displayPrice` answers in Hebrew only, and this layout is shown in
-  /// both languages.
-  String? _priceOf(Event e) {
-    if (e.isFree) return _t('FREE', 'חינם');
-    final p = e.price;
-    if (p == null || p.isEmpty) return null;
-    return p.startsWith('₪') ? p : '₪$p';
-  }
-
-  String? _place(Event e) {
-    if (e.isOnline) return _t('Online', 'אונליין');
-    final address = e.address;
-    if (address.isNotEmpty) return address;
-    return e.venueName;
-  }
+  EventLabels get _labels => EventLabels(_isHebrew);
 
   bool _hasCoordinates(Event e) =>
       !e.isOnline && e.latitude != 0 && e.longitude != 0;
 
-  /// The rows the panels are showing: the searched set, narrowed by price and
-  /// put in the chosen order.
-  List<Event> _visible(List<Event> events) {
-    final filtered = events.where((e) {
-      if (_price == 'free') return e.isFree;
-      if (_price == 'paid') return !e.isFree;
-      return true;
-    }).toList();
+  bool _inCategories(Event e, Map<String, List<EventCategory>> byEvent) {
+    if (_categories.isEmpty) return true;
+    return (byEvent[e.id] ?? const []).any((c) => _categories.contains(c.slug));
+  }
 
-    filtered.sort((a, b) {
+  bool _atPrice(Event e) => switch (_price) {
+    'free' => e.isFree,
+    'paid' => !e.isFree,
+    _ => true,
+  };
+
+  /// "Search by location…" looks at where the event is — the venue and the
+  /// address — and nothing else.
+  bool _atPlace(Event e) {
+    final q = _place.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return (e.venueName ?? '').toLowerCase().contains(q) ||
+        e.address.toLowerCase().contains(q);
+  }
+
+  /// The rows the panels are showing, in the chosen order.
+  List<Event> _visible(List<Event> events, Map<String, List<EventCategory>> byEvent) {
+    final rows = events
+        .where((e) => _inCategories(e, byEvent) && _atPrice(e) && _atPlace(e))
+        .toList();
+
+    int bySoonest(Event a, Event b) {
       final x = a.startsAt;
       final y = b.startsAt;
-      // Rows without a date sort last either way, rather than jumping to the
-      // top as an epoch-zero date would.
-      if (x == null || y == null) return x == null ? 1 : -1;
-      return _sort == _Sort.soonest ? x.compareTo(y) : y.compareTo(x);
+      // Rows without a date sort last, rather than jumping to the top as an
+      // epoch-zero date would.
+      if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
+      return x.compareTo(y);
+    }
+
+    rows.sort((a, b) {
+      if (_sort == _Sort.soonest) return bySoonest(a, b);
+      final x = a.publishedAt;
+      final y = b.publishedAt;
+      if (x == null || y == null) {
+        return x == null ? (y == null ? bySoonest(a, b) : 1) : -1;
+      }
+      final c = y.compareTo(x);
+      return c != 0 ? c : bySoonest(a, b);
     });
-    return filtered;
+    return rows;
   }
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(filteredEventsProvider);
+    final events = ref.watch(upcomingEventsProvider);
+    final categories = ref.watch(eventCategoriesProvider).valueOrNull ?? const [];
+    final byEvent =
+        ref.watch(eventCategoriesByEventProvider).valueOrNull ?? const {};
+    final all = events.valueOrNull ?? const <Event>[];
 
     return Directionality(
       textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
@@ -166,26 +169,31 @@ class _WebEventsCategoryContentState
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            // The page carried its own copy of the navbar, including a
-            // "Contact Us" button whose handler was empty. It uses the shared
-            // chrome now, like the rest of the desktop pages.
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'events',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildFilterSidebar(events.valueOrNull ?? const []),
-                  Expanded(flex: 900, child: _buildResultsPanel(events)),
-                  Expanded(
-                    flex: 726,
-                    child: _buildMapPanel(events.valueOrNull ?? const []),
-                  ),
-                ],
-              ),
+              child: LayoutBuilder(builder: (context, constraints) {
+                // 900 : 726 at 1920, as drawn. On a narrower window the map
+                // gives way first, so a result row keeps the 720 it needs for
+                // its price, interest count and button side by side.
+                final rest = constraints.maxWidth - 294;
+                final results = (rest * 900 / 1626)
+                    .clamp(math.min(720.0, rest - 360), rest - 360)
+                    .toDouble();
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildFilterSidebar(all, categories, byEvent),
+                    SizedBox(
+                      width: results,
+                      child: _buildResultsPanel(events, categories, byEvent),
+                    ),
+                    Expanded(child: _buildMapPanel(_visible(all, byEvent))),
+                  ],
+                );
+              }),
             ),
           ],
         ),
@@ -196,14 +204,23 @@ class _WebEventsCategoryContentState
   // ─────────────────────────────────────────────
   // FILTER SIDEBAR — 294px
   // ─────────────────────────────────────────────
-  Widget _buildFilterSidebar(List<Event> events) {
-    // The counts beside each option are of the rows in hand. They were fixed
-    // numbers that no query produced.
+  Widget _buildFilterSidebar(
+    List<Event> events,
+    List<EventCategory> categories,
+    Map<String, List<EventCategory>> byEvent,
+  ) {
+    // Each count is of all the upcoming events under that option, as drawn:
+    // the design's price counts do not move when Music is ticked.
+    int inCategory(EventCategory c) => events
+        .where((e) => (byEvent[e.id] ?? const []).any((x) => x.id == c.id))
+        .length;
     final free = events.where((e) => e.isFree).length;
-    final options = [
-      _Option('all', _t('All', 'הכל'), events.length),
-      _Option('free', _t('Free', 'חינם'), free),
-      _Option('paid', _t('Paid', 'בתשלום'), events.length - free),
+
+    // A category with nothing coming is left off the list, unless it is the
+    // one the page was opened on.
+    final shown = [
+      for (final c in categories)
+        if (inCategory(c) > 0 || _categories.contains(c.slug)) c,
     ];
 
     return Container(
@@ -218,21 +235,57 @@ class _WebEventsCategoryContentState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSearchBox(),
+            const SizedBox(height: 16),
+            _groupTitle(_t('Event Category', 'קטגוריית אירוע')),
+            const SizedBox(height: 17),
+            _checkboxRow(
+              label: _t('All Events', 'כל האירועים'),
+              count: events.length,
+              checked: _categories.isEmpty,
+              onTap: () => setState(_categories.clear),
+            ),
+            for (final c in shown) ...[
+              const SizedBox(height: 14),
+              _checkboxRow(
+                label: _labels.category(c),
+                count: inCategory(c),
+                checked: _categories.contains(c.slug),
+                onTap: () => setState(() {
+                  if (!_categories.remove(c.slug)) _categories.add(c.slug);
+                }),
+              ),
+            ],
             const SizedBox(height: 24),
-            // An "Event Category" group sat above this one, offering Music,
-            // Kids & Family, Sports and the rest. `events` has no category
-            // column, so nothing could have answered it.
-            _buildFilterGroup(
-              title: _t('Price', 'מחיר'),
-              options: options,
-              isChecked: (o) => _price == o.key,
-              onTap: (o) => setState(() => _price = o.key),
+            _groupTitle(_t('Price', 'מחיר')),
+            const SizedBox(height: 17),
+            _checkboxRow(
+              label: _t('All', 'הכל'),
+              count: events.length,
+              checked: _price == 'all',
+              onTap: () => setState(() => _price = 'all'),
+            ),
+            const SizedBox(height: 14),
+            _checkboxRow(
+              label: _t('Free', 'חינם'),
+              count: free,
+              checked: _price == 'free',
+              onTap: () => setState(() => _price = _price == 'free' ? 'all' : 'free'),
+            ),
+            const SizedBox(height: 14),
+            _checkboxRow(
+              label: _t('Paid', 'בתשלום'),
+              count: events.length - free,
+              checked: _price == 'paid',
+              onTap: () => setState(() => _price = _price == 'paid' ? 'all' : 'paid'),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _groupTitle(String text) => Text(text,
+      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy, height: 17 / 14));
 
   Widget _buildSearchBox() {
     return Container(
@@ -245,17 +298,20 @@ class _WebEventsCategoryContentState
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          const Icon(IconsaxPlusLinear.search_normal_1, size: 16, color: AppColors.midBlue),
+          SvgPicture.asset('assets/web/events/search_location.svg', width: 16, height: 16),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: _searchController,
-              onChanged: _onSearchChanged,
+              onChanged: (v) => setState(() => _place = v),
               style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.navy),
               decoration: InputDecoration(
-                hintText: _t('Search events or places...', 'חיפוש אירועים או מקומות...'),
+                hintText: _t('Search by location...', 'חיפוש לפי מיקום...'),
                 hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kTextGrey),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -266,33 +322,9 @@ class _WebEventsCategoryContentState
     );
   }
 
-  Widget _buildFilterGroup({
-    required String title,
-    required List<_Option> options,
-    required bool Function(_Option) isChecked,
-    required void Function(_Option) onTap,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title,
-            style: TextStyle(fontFamily: AppFonts.inter,
-                fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.navy)),
-        const SizedBox(height: 17),
-        for (var i = 0; i < options.length; i++) ...[
-          if (i > 0) const SizedBox(height: 14),
-          _checkboxRow(
-            option: options[i],
-            checked: isChecked(options[i]),
-            onTap: () => onTap(options[i]),
-          ),
-        ],
-      ],
-    );
-  }
-
   Widget _checkboxRow({
-    required _Option option,
+    required String label,
+    required int count,
     required bool checked,
     required VoidCallback onTap,
   }) {
@@ -303,31 +335,25 @@ class _WebEventsCategoryContentState
         behavior: HitTestBehavior.opaque,
         child: Row(
           children: [
-            Container(
+            SvgPicture.asset(
+              checked ? 'assets/web/events/check_on.svg' : 'assets/web/events/check_off.svg',
               width: 16,
               height: 16,
-              decoration: BoxDecoration(
-                color: checked ? AppColors.midBlue : Colors.white,
-                border: Border.all(
-                  color: checked ? AppColors.midBlue : _kCheckBorder,
-                  width: checked ? 1 : 0.89,
-                ),
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: checked
-                  ? const Icon(Icons.check, size: 12, color: Colors.white)
-                  : null,
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(option.label,
+              child: Text(label,
                   style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kTextDark, height: 16 / 13),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(width: 8),
-            Text('${option.count}',
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kTextDark, height: 16 / 13)),
+            SizedBox(
+              width: 68,
+              child: Text('$count',
+                  textAlign: TextAlign.end,
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _kTextDark, height: 16 / 13)),
+            ),
           ],
         ),
       ),
@@ -337,7 +363,11 @@ class _WebEventsCategoryContentState
   // ─────────────────────────────────────────────
   // RESULTS PANEL — 900px
   // ─────────────────────────────────────────────
-  Widget _buildResultsPanel(AsyncValue<List<Event>> events) {
+  Widget _buildResultsPanel(
+    AsyncValue<List<Event>> events,
+    List<EventCategory> categories,
+    Map<String, List<EventCategory>> byEvent,
+  ) {
     return Container(
       decoration: const BoxDecoration(
         border: BorderDirectional(end: BorderSide(color: _kBorder)),
@@ -348,7 +378,7 @@ class _WebEventsCategoryContentState
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              child: _buildResultsHeader(null),
+              child: _buildResultsHeader(null, categories),
             ),
             const SizedBox(height: 26),
             const Expanded(child: _ResultsSkeleton()),
@@ -363,13 +393,13 @@ class _WebEventsCategoryContentState
           onAction: () => ref.invalidate(eventsProvider),
         ),
         data: (all) {
-          final visible = _visible(all);
+          final visible = _visible(all, byEvent);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: _buildResultsHeader(visible.length),
+                padding: const EdgeInsetsDirectional.fromSTEB(24, 24, 25, 0),
+                child: _buildResultsHeader(visible.length, categories),
               ),
               const SizedBox(height: 26),
               Expanded(
@@ -379,19 +409,13 @@ class _WebEventsCategoryContentState
                         controller: _listController,
                         child: ListView.builder(
                           controller: _listController,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsetsDirectional.fromSTEB(24, 0, 25, 24),
                           itemCount: visible.length,
                           itemBuilder: (context, i) {
                             final event = visible[i];
                             return _EventListRow(
                               event: event,
-                              isHebrew: _isHebrew,
-                              month: event.startDate == null
-                                  ? null
-                                  : _shortMonth(event.startDate!),
-                              time: _timeRange(event),
-                              place: _place(event),
-                              price: _priceOf(event),
+                              labels: _labels,
                               selected: _hoveredId == event.id,
                               onTap: () => context.push('/event/${event.id}'),
                               onHover: (hovering) => setState(() {
@@ -413,28 +437,39 @@ class _WebEventsCategoryContentState
     );
   }
 
-  Widget _buildResultsHeader(int? count) {
-    // The headline named a category — "24 Music Events found" — from a filter
-    // with nothing behind it.
-    final headline = count == null
-        ? _t('Events in Modiin', 'אירועים במודיעין')
-        : _t('$count Events found', '$count אירועים נמצאו');
+  /// "24 Music Events found" when one category is ticked, "24 Events found"
+  /// otherwise.
+  Widget _buildResultsHeader(int? count, List<EventCategory> categories) {
+    EventCategory? only;
+    if (_categories.length == 1) {
+      for (final c in categories) {
+        if (c.slug == _categories.first) only = c;
+      }
+    }
+    final name = only == null ? null : _labels.category(only);
+    final String headline;
+    if (count == null) {
+      headline = _t('Events in Modiin', 'אירועים במודיעין');
+    } else if (name != null) {
+      headline = _t('$count $name Events found', 'נמצאו $count אירועים בקטגוריית $name');
+    } else {
+      headline = _t('$count Events found', 'נמצאו $count אירועים');
+    }
+
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(headline,
-                  style: TextStyle(fontFamily: AppFonts.nunito,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      height: 34 / 28,
-                      color: AppColors.midBlue)),
+                  style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, height: 34 / 28, color: AppColors.midBlue),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
               const SizedBox(height: 8),
               Text(_t('in Modiin Maccabim Reut', 'במודיעין מכבים רעות'),
-                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kSubtitle)),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kSubtitle, height: 17 / 14)),
             ],
           ),
         ),
@@ -451,22 +486,23 @@ class _WebEventsCategoryContentState
       initialValue: _sort,
       tooltip: '',
       position: PopupMenuPosition.under,
+      color: Colors.white,
       onSelected: (value) => setState(() => _sort = value),
       itemBuilder: (context) => [
         PopupMenuItem(
-          value: _Sort.soonest,
-          child: Text(_t('Soonest first', 'הקרוב ביותר'),
+          value: _Sort.newest,
+          child: Text(_t('Newest', 'החדשים ביותר'),
               style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14)),
         ),
         PopupMenuItem(
-          value: _Sort.latest,
-          child: Text(_t('Latest first', 'המרוחק ביותר'),
+          value: _Sort.soonest,
+          child: Text(_t('Soonest', 'הקרובים ביותר'),
               style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14)),
         ),
       ],
       child: Container(
-        width: 190,
         height: 42,
+        constraints: const BoxConstraints(minWidth: 166),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -474,17 +510,16 @@ class _WebEventsCategoryContentState
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Text(
-                _sort == _Sort.soonest
-                    ? _t('Sort by: Soonest', 'מיון: הקרוב ביותר')
-                    : _t('Sort by: Latest', 'מיון: המרוחק ביותר'),
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black),
-                overflow: TextOverflow.ellipsis,
-              ),
+            Text(
+              _sort == _Sort.newest
+                  ? _t('Sort by: Newest', 'מיון: החדשים ביותר')
+                  : _t('Sort by: Soonest', 'מיון: הקרובים ביותר'),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: Colors.black, height: 17 / 14),
             ),
-            const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF4F4F4F)),
+            const SizedBox(width: 13),
+            SvgPicture.asset('assets/web/events/chevron_down.svg', width: 20, height: 20),
           ],
         ),
       ),
@@ -492,18 +527,15 @@ class _WebEventsCategoryContentState
   }
 
   Widget _buildEmptyState() {
-    final searching = ref.watch(eventSearchProvider).trim().isNotEmpty;
-    final filtering = _price != 'all';
+    final filtering = _place.trim().isNotEmpty || _price != 'all' || _categories.isNotEmpty;
     return _buildNotice(
-      icon: searching || filtering
-          ? IconsaxPlusLinear.search_status
-          : IconsaxPlusLinear.calendar_1,
-      title: searching || filtering
+      icon: filtering ? IconsaxPlusLinear.search_status : IconsaxPlusLinear.calendar_1,
+      title: filtering
           ? _t('No events match your filters', 'אין אירועים שתואמים את הסינון')
           : _t('No events listed yet', 'עדיין לא פורסמו אירועים'),
-      body: searching || filtering
-          ? _t('Try clearing a filter or searching for something else.',
-              'נסו להסיר סינון או לחפש משהו אחר.')
+      body: filtering
+          ? _t('Try clearing a filter or searching for somewhere else.',
+              'נסו להסיר סינון או לחפש מקום אחר.')
           : _t('New events will appear here as they are published.',
               'אירועים חדשים יופיעו כאן עם פרסומם.'),
     );
@@ -522,12 +554,11 @@ class _WebEventsCategoryContentState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: _kCheckBorder.withValues(alpha: 0.6)),
+            Icon(icon, size: 48, color: _kTextGrey.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
               title,
-              style: TextStyle(fontFamily: AppFonts.nunito,
-                  fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy),
+              style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.navy),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -551,8 +582,7 @@ class _WebEventsCategoryContentState
                       borderRadius: BorderRadius.circular(60),
                     ),
                     child: Text(actionLabel,
-                        style: TextStyle(fontFamily: AppFonts.inter,
-                            fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
                   ),
                 ),
               ),
@@ -566,30 +596,50 @@ class _WebEventsCategoryContentState
   // ─────────────────────────────────────────────
   // MAP PANEL — 726px, purple event pins
   // ─────────────────────────────────────────────
-  Widget _buildMapPanel(List<Event> events) {
+  /// Brings every pin into view whenever the set of pins changes — a filter
+  /// ticked, a place typed — rather than leaving the map where it opened.
+  void _fitTo(List<Event> pinned) {
+    final key = pinned.map((e) => e.id).join(',');
+    if (!_mapReady || pinned.isEmpty || key == _fittedTo) return;
+    _fittedTo = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final points = [for (final e in pinned) LatLng(e.latitude, e.longitude)];
+      if (points.length == 1) {
+        _mapController.move(points.first, 15);
+      } else {
+        _mapController.fitCamera(CameraFit.coordinates(
+          coordinates: points,
+          padding: const EdgeInsets.all(64),
+          maxZoom: 16,
+        ));
+      }
+    });
+  }
+
+  Widget _buildMapPanel(List<Event> visible) {
     // An online event, or one whose row has no coordinates, gets no pin
     // rather than a pin somewhere plausible.
-    final pinned = _visible(events).where(_hasCoordinates).toList();
+    final pinned = visible.where(_hasCoordinates).toList();
+    _fitTo(pinned);
 
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
         initialCenter: _center,
         initialZoom: 14.2,
+        onMapReady: () => setState(() => _mapReady = true),
         onTap: (_, _) => setState(() => _hoveredId = null),
       ),
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.modiin4u.app',
-        ),
+        const WebMapTiles(),
         MarkerLayer(
           markers: [
             for (final event in pinned)
               Marker(
                 point: LatLng(event.latitude, event.longitude),
                 width: 40,
-                height: 44,
+                height: 43,
                 alignment: Alignment.topCenter,
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
@@ -599,13 +649,16 @@ class _WebEventsCategoryContentState
                   }),
                   child: GestureDetector(
                     onTap: () => context.push('/event/${event.id}'),
-                    child: _MapPin(selected: _hoveredId == event.id),
+                    child: Tooltip(
+                      message: event.title,
+                      child: _MapPin(selected: _hoveredId == event.id),
+                    ),
                   ),
                 ),
               ),
           ],
         ),
-        const OsmAttribution(),
+        const WebMapCredit(),
       ],
     );
   }
@@ -616,21 +669,14 @@ class _WebEventsCategoryContentState
 // ═══════════════════════════════════════════════
 class _EventListRow extends StatelessWidget {
   final Event event;
-  final bool isHebrew, selected;
-
-  /// Null where the row does not carry the value, in which case the line is
-  /// left out rather than filled in.
-  final String? month, time, place, price;
+  final EventLabels labels;
+  final bool selected;
   final VoidCallback onTap;
   final ValueChanged<bool> onHover;
 
   const _EventListRow({
     required this.event,
-    required this.isHebrew,
-    required this.month,
-    required this.time,
-    required this.place,
-    required this.price,
+    required this.labels,
     required this.selected,
     required this.onTap,
     required this.onHover,
@@ -639,6 +685,12 @@ class _EventListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final e = event;
+    final l = labels;
+    final date = e.startDate;
+    final time = l.timeRange(e);
+    final place = l.address(e);
+    final price = l.price(e);
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => onHover(true),
@@ -649,13 +701,13 @@ class _EventListRow extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            color: selected ? _kSidebarBg : Colors.transparent,
+            color: selected ? _kRowHover : Colors.white,
             border: const Border(bottom: BorderSide(color: _kBorder)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Thumbnail 261 × 162 with date badge ──
+              // ── Photo 261 × 162 with the date badge ──
               SizedBox(
                 width: 261,
                 height: 162,
@@ -664,38 +716,33 @@ class _EventListRow extends StatelessWidget {
                     Positioned.fill(
                       child: NetworkPhoto(
                         url: e.imageUrl,
+                        width: 261,
+                        height: 162,
                         radius: BorderRadius.circular(12),
                         icon: IconsaxPlusBold.calendar_1,
                         iconSize: 30,
                       ),
                     ),
-                    if (month != null)
+                    if (date != null)
                       PositionedDirectional(
                         start: 8,
                         top: 8,
                         child: Container(
                           width: 52,
-                          height: 57,
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(month!,
-                                  style: TextStyle(fontFamily: AppFonts.inter,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.midBlue,
-                                      height: 15 / 12)),
+                              Text(l.shortMonth(date),
+                                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 15 / 12),
+                                  maxLines: 1),
                               const SizedBox(height: 4),
-                              Text('${e.startDate!.day}',
-                                  style: TextStyle(fontFamily: AppFonts.inter,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
-                                      height: 22 / 18)),
+                              Text(date.day.toString().padLeft(2, '0'),
+                                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black, height: 22 / 18)),
                             ],
                           ),
                         ),
@@ -720,85 +767,65 @@ class _EventListRow extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(e.title,
-                                    style: TextStyle(fontFamily: AppFonts.nunito,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.navy,
-                                        height: 22 / 18),
+                                    style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy, height: 22 / 18),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis),
-                                const SizedBox(height: 12),
                                 if (time != null) ...[
-                                  _metaRow(IconsaxPlusLinear.clock, time!,
-                                      forceLtr: true),
                                   const SizedBox(height: 12),
+                                  _metaRow('assets/web/events/row_clock.svg', time, ltr: true),
                                 ],
-                                if (place != null)
-                                  _metaRow(
-                                    e.isOnline
-                                        ? IconsaxPlusLinear.global
-                                        : IconsaxPlusLinear.location,
-                                    place!,
-                                  ),
+                                if (place != null) ...[
+                                  const SizedBox(height: 12),
+                                  _metaRow('assets/web/events/row_pin.svg', place),
+                                ],
                               ],
                             ),
                           ),
                           const SizedBox(width: 22),
-                          // Saving held a set of row indexes in the page's
-                          // own state, so it was forgotten on reload.
-                          FavoriteButton(
-                            kind: FavoriteKind.event,
-                            id: e.id,
-                            size: 40,
-                            iconSize: 20,
-                          ),
+                          // Saving needs an account, which is the app's; on the
+                          // website the heart draws nothing.
+                          FavoriteButton(kind: FavoriteKind.event, id: e.id, size: 40, iconSize: 20),
                         ],
                       ),
+                      // Price at the start; the interest count sits against
+                      // the button, 20 before it, as drawn — and gives way
+                      // first when the row is narrow.
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Expanded(
-                            flex: 100,
-                            child: price == null
-                                ? const SizedBox.shrink()
-                                : Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(isHebrew ? 'מחיר' : 'Price',
-                                          style: TextStyle(fontFamily: AppFonts.inter,
-                                              fontSize: 14, color: _kSubtitle, height: 17 / 14)),
-                                      const SizedBox(height: 4),
-                                      Text(price!,
-                                          style: TextStyle(fontFamily: AppFonts.nunito,
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w600,
-                                              color: e.isFree ? AppColors.midBlue : AppColors.navy,
-                                              height: 27 / 22)),
-                                    ],
-                                  ),
-                          ),
+                          if (price != null)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(l.t('Price', 'מחיר'),
+                                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kSubtitle, height: 17 / 14)),
+                                const SizedBox(height: 4),
+                                Text(price,
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 22, fontWeight: FontWeight.w600,
+                                        color: e.isFree ? AppColors.midBlue : AppColors.navy, height: 27 / 22)),
+                              ],
+                            ),
                           const SizedBox(width: 20),
-                          // The interest count appears once somebody has
-                          // RSVP'd. It was an invented figure on every row.
                           Expanded(
-                            flex: 146,
+                            // The interest count appears once somebody has
+                            // RSVP'd. It was an invented figure on every row.
                             child: e.rsvpCount == 0
                                 ? const SizedBox.shrink()
                                 : Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      const Icon(IconsaxPlusLinear.star_1,
-                                          size: 14, color: AppColors.turquoise),
+                                      SvgPicture.asset('assets/web/events/row_people.svg', width: 14, height: 14),
                                       const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          isHebrew
-                                              ? '${e.rsvpCount} מתעניינים'
-                                              : '${e.rsvpCount} people interested',
-                                          style: TextStyle(fontFamily: AppFonts.inter,
-                                              fontSize: 12,
-                                              color: Colors.black,
-                                              height: 15 / 12),
+                                      Flexible(
+                                        child: Text.rich(
+                                          TextSpan(children: [
+                                            TextSpan(text: '${e.rsvpCount} ', style: const TextStyle(color: Colors.black)),
+                                            TextSpan(text: l.t('people interested', 'מתעניינים')),
+                                          ]),
+                                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kTextDark, height: 15 / 12),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -821,23 +848,18 @@ class _EventListRow extends StatelessWidget {
     );
   }
 
-  Widget _metaRow(IconData icon, String text, {bool forceLtr = false}) {
+  Widget _metaRow(String icon, String text, {bool ltr = false}) {
     Widget label = Text(text,
         style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kTextDark, height: 15 / 12),
         maxLines: 1,
         overflow: TextOverflow.ellipsis);
-    // Clock ranges stay left-to-right even in the Hebrew layout.
-    if (forceLtr) {
-      label = Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: Directionality(textDirection: TextDirection.ltr, child: label),
-      );
-    }
+    // Clock ranges stay left to right even in the Hebrew layout.
+    if (ltr) label = Directionality(textDirection: TextDirection.ltr, child: label);
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppColors.turquoise),
+        SvgPicture.asset(icon, width: 14, height: 14),
         const SizedBox(width: 8),
-        Expanded(child: label),
+        Flexible(child: label),
       ],
     );
   }
@@ -851,17 +873,17 @@ class _EventListRow extends StatelessWidget {
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
+            color: Colors.white,
             border: Border.all(color: AppColors.midBlue),
             borderRadius: BorderRadius.circular(60),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(IconsaxPlusLinear.export_3, size: 16, color: AppColors.midBlue),
+              SvgPicture.asset('assets/web/events/row_eye.svg', width: 16, height: 16),
               const SizedBox(width: 8),
-              Text(isHebrew ? 'לפרטים' : 'View Detail',
-                  style: TextStyle(fontFamily: AppFonts.inter,
-                      fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue)),
+              Text(labels.t('View Detail', 'לפרטים'),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.midBlue, height: 24 / 14)),
             ],
           ),
         ),
@@ -882,7 +904,7 @@ class _ResultsSkeleton extends StatelessWidget {
         children: List.generate(
           3,
           (_) => const Padding(
-            padding: EdgeInsets.only(bottom: 20),
+            padding: EdgeInsets.symmetric(vertical: 20),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -897,7 +919,7 @@ class _ResultsSkeleton extends StatelessWidget {
                       SkeletonLine(width: 160, fontSize: 12),
                       SizedBox(height: 12),
                       SkeletonLine(width: 220, fontSize: 12),
-                      SizedBox(height: 28),
+                      SizedBox(height: 40),
                       SkeletonLine(width: 120, fontSize: 22),
                     ],
                   ),
@@ -912,7 +934,7 @@ class _ResultsSkeleton extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════
-// MAP PIN — Ellipse 521 · #9032E1
+// MAP PIN — the design's white teardrop, purple disc, calendar
 // ═══════════════════════════════════════════════
 class _MapPin extends StatelessWidget {
   final bool selected;
@@ -920,47 +942,33 @@ class _MapPin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // flutter_svg does not draw the SVG's drop-shadow filter; a soft shadow
+    // is painted under it instead.
     return AnimatedScale(
       duration: const Duration(milliseconds: 150),
       scale: selected ? 1.15 : 1.0,
+      alignment: Alignment.bottomCenter,
       child: SizedBox(
         width: 40,
-        height: 44,
+        height: 43,
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
-            const Icon(
-              IconsaxPlusBold.location,
-              size: 40,
-              color: Colors.white,
-              shadows: [
-                Shadow(color: Color(0x40000000), blurRadius: 2.29, offset: Offset(0, 2.29)),
-              ],
-            ),
             Positioned(
-              top: 5.8,
+              top: 6,
               child: Container(
-                width: 21.4,
-                height: 21.4,
-                decoration: const BoxDecoration(color: _kPinPurple, shape: BoxShape.circle),
-                child: const Center(
-                  child: Icon(IconsaxPlusLinear.calendar, size: 12, color: Colors.white),
+                width: 26,
+                height: 26,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Color(0x40000000), blurRadius: 4, offset: Offset(0, 2.3))],
                 ),
               ),
             ),
+            SvgPicture.asset('assets/web/events/map_pin.svg', width: 40, height: 43),
           ],
         ),
       ),
     );
   }
-}
-
-// ═══════════════════════════════════════════════
-// DATA MODELS
-// ═══════════════════════════════════════════════
-
-class _Option {
-  final String key, label;
-  final int count;
-  const _Option(this.key, this.label, this.count);
 }

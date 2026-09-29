@@ -25,6 +25,18 @@ class Event {
   final int viewCount;
   final int rsvpCount;
 
+  /// The business putting the event on, when one is named. The event page's
+  /// "Organized by" card reads it; `organizer_id` points at a profile, which
+  /// only its owner may read, so it cannot name anyone on a public page.
+  final String? businessId;
+
+  /// When the event went up. "Sort by: Newest" on the website orders by it.
+  final DateTime? publishedAt;
+
+  /// A Waze link the editor pasted, preferred over a computed one for
+  /// directions.
+  final String? wazeUrl;
+
   const Event({
     required this.id,
     required this.title,
@@ -50,6 +62,9 @@ class Event {
     this.isFeatured = false,
     this.viewCount = 0,
     this.rsvpCount = 0,
+    this.businessId,
+    this.publishedAt,
+    this.wazeUrl,
   });
 
   /// The start date and time as one value, where both are known.
@@ -88,6 +103,16 @@ class Event {
     return p.startsWith('₪') ? p : '₪$p';
   }
 
+  /// `price` is `numeric(10,2)`, which can arrive as `50.0` — and printed
+  /// as "₪50.0". A whole number is written without the decimals.
+  static String? _price(Object? v) {
+    if (v == null) return null;
+    if (v is num) return v == v.truncate() ? '${v.toInt()}' : '$v';
+    final parsed = num.tryParse('$v');
+    if (parsed != null) return _price(parsed);
+    return '$v';
+  }
+
   factory Event.fromJson(Map<String, dynamic> json) {
     DateTime? date(Object? v) =>
         v is String ? DateTime.tryParse(v) : null;
@@ -111,12 +136,15 @@ class Event {
       isOnline: json['is_online'] as bool? ?? false,
       onlineUrl: json['online_url'] as String?,
       isFree: json['is_free'] as bool? ?? false,
-      price: json['price']?.toString(),
+      price: _price(json['price']),
       ticketUrl: json['ticket_url'] as String?,
       isSoldOut: json['is_sold_out'] as bool? ?? false,
       isFeatured: json['is_featured'] as bool? ?? false,
       viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
       rsvpCount: (json['rsvp_count'] as num?)?.toInt() ?? 0,
+      businessId: json['business_id'] as String?,
+      publishedAt: date(json['published_at']),
+      wazeUrl: json['waze_url'] as String?,
     );
   }
 }
