@@ -58,19 +58,61 @@ final articlesByCategoryProvider =
 /// to `articles` could not. An article filed twice keeps the link marked
 /// primary, or the first.
 final articleCategoryNamesProvider = FutureProvider<Map<String, String>>((ref) async {
-  final rows = await SupabaseConfig.client
-      .from('entity_categories')
-      .select('entity_id, is_primary, categories(name)')
-      .eq('entity_type', 'article');
-  final names = <String, String>{};
-  for (final r in List<Map<String, dynamic>>.from(rows)) {
-    final name = (r['categories'] as Map?)?['name'] as String?;
-    if (name == null || name.isEmpty) continue;
-    final id = r['entity_id'] as String;
-    if (!names.containsKey(id) || r['is_primary'] == true) names[id] = name;
-  }
-  return names;
+  final filed = await ref.watch(articleFilingProvider.future);
+  return {for (final e in filed.entries) e.key: e.value.name};
 });
+
+/// The category each article is filed under — its id and its name — by
+/// article id. The article page's chip leads to the category, and its "More
+/// Related News" are the category's other stories, so both need the id.
+final articleFilingProvider =
+    FutureProvider<Map<String, ({String id, String name})>>((ref) async {
+      final rows = await SupabaseConfig.client
+          .from('entity_categories')
+          .select('entity_id, category_id, is_primary, categories(name)')
+          .eq('entity_type', 'article');
+      final filed = <String, ({String id, String name})>{};
+      for (final r in List<Map<String, dynamic>>.from(rows)) {
+        final name = (r['categories'] as Map?)?['name'] as String?;
+        if (name == null || name.isEmpty) continue;
+        final id = r['entity_id'] as String;
+        if (!filed.containsKey(id) || r['is_primary'] == true) {
+          filed[id] = (id: r['category_id'] as String, name: name);
+        }
+      }
+      return filed;
+    });
+
+/// "More Related News" beside an article: the newest stories filed under
+/// the same category, topped up with the newest of all when the category has
+/// fewer than four others. The article itself is never among them.
+///
+/// Newest by `published_at`: every imported row carries the same
+/// `created_at`, so the order the rows come back in says nothing.
+final relatedArticlesProvider =
+    FutureProvider.family<List<Article>, String>((ref, articleId) async {
+      const count = 4;
+      final all = [...await ref.watch(publishedArticlesProvider.future)]
+        ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+      final category =
+          (await ref.watch(articleFilingProvider.future))[articleId];
+
+      final picked = <Article>[];
+      if (category != null) {
+        final same = await ref.watch(
+          articlesByCategoryProvider(category.id).future,
+        );
+        final ids = {for (final a in same) a.id};
+        picked.addAll(
+          all.where((a) => a.id != articleId && ids.contains(a.id)).take(count),
+        );
+      }
+      final shown = {articleId, for (final a in picked) a.id};
+      picked.addAll(
+        all.where((a) => !shown.contains(a.id)).take(count - picked.length),
+      );
+      return picked;
+    });
 
 /// The article shown in the hero slot.
 ///

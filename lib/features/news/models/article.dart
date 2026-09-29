@@ -39,6 +39,10 @@ class Article {
   final ArticleStatus status;
   final int viewCount;
 
+  /// `articles.share_count`. Nothing records a share yet, so it is 0 on every
+  /// row; the article page prints it only once it is not.
+  final int shareCount;
+
   const Article({
     required this.id,
     required this.title,
@@ -60,6 +64,7 @@ class Article {
     this.metaKeywords,
     this.status = ArticleStatus.published,
     this.viewCount = 0,
+    this.shareCount = 0,
   });
 
   Article copyWith({
@@ -81,6 +86,7 @@ class Article {
     String? metaKeywords,
     ArticleStatus? status,
     int? viewCount,
+    int? shareCount,
   }) {
     return Article(
       id: id,
@@ -102,6 +108,7 @@ class Article {
       metaKeywords: metaKeywords ?? this.metaKeywords,
       status: status ?? this.status,
       viewCount: viewCount ?? this.viewCount,
+      shareCount: shareCount ?? this.shareCount,
     );
   }
 
@@ -124,7 +131,11 @@ class Article {
       imageUrl: (json['featured_image'] ??
               json['mobile_image'] ??
               json['og_image']) as String?,
-      author: (json['author_name'] as String?) ?? '',
+      // The table has no author name; `credit` is the byline the newsroom
+      // types in the admin panel. Neither is set on the imported rows.
+      author: (json['author_name'] as String?) ??
+          (json['credit'] as String?) ??
+          '',
       category: NewsCategory.values.firstWhere(
         (c) => c.name == json['category'],
         orElse: () => NewsCategory.municipal,
@@ -142,6 +153,7 @@ class Article {
         orElse: () => ArticleStatus.published,
       ),
       viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
+      shareCount: (json['share_count'] as num?)?.toInt() ?? 0,
     );
   }
 }
