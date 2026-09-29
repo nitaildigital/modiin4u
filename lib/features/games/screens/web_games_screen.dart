@@ -27,8 +27,9 @@ class WebGamesContent extends StatefulWidget {
   State<WebGamesContent> createState() => _WebGamesContentState();
 }
 
-class _WebGamesContentState extends State<WebGamesContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebGamesContentState extends State<WebGamesContent>
+    with WebLanguageState<WebGamesContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
@@ -42,7 +43,6 @@ class _WebGamesContentState extends State<WebGamesContent> {
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

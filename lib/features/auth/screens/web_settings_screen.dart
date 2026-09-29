@@ -30,8 +30,9 @@ class WebSettingsContent extends ConsumerStatefulWidget {
   ConsumerState<WebSettingsContent> createState() => _WebSettingsContentState();
 }
 
-class _WebSettingsContentState extends ConsumerState<WebSettingsContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
+    with WebLanguageState<WebSettingsContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   /// The switches write to the profile, so leaving the page puts the pending
   /// change through rather than dropping it.
@@ -149,7 +150,6 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: null,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

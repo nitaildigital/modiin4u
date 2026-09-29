@@ -34,8 +34,9 @@ class WebLoginContent extends ConsumerStatefulWidget {
   ConsumerState<WebLoginContent> createState() => _WebLoginContentState();
 }
 
-class _WebLoginContentState extends ConsumerState<WebLoginContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebLoginContentState extends ConsumerState<WebLoginContent>
+    with WebLanguageState<WebLoginContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -196,7 +197,6 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent> {
             // card asking for an e-mail address. See WebAuthHeader.
             WebAuthHeader(
               isHebrew: _isHebrew,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

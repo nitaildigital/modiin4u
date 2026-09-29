@@ -36,8 +36,9 @@ class WebProfileContent extends ConsumerStatefulWidget {
   ConsumerState<WebProfileContent> createState() => _WebProfileContentState();
 }
 
-class _WebProfileContentState extends ConsumerState<WebProfileContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebProfileContentState extends ConsumerState<WebProfileContent>
+    with WebLanguageState<WebProfileContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
@@ -120,7 +121,6 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: null,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

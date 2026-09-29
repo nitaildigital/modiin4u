@@ -45,8 +45,9 @@ class WebEditProfileContent extends ConsumerStatefulWidget {
       _WebEditProfileContentState();
 }
 
-class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
+    with WebLanguageState<WebEditProfileContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   late TextEditingController _nameController;
   late TextEditingController _emailController;
@@ -255,7 +256,6 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: null,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

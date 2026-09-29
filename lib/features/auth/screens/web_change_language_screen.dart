@@ -37,9 +37,9 @@ class WebChangeLanguageContent extends ConsumerStatefulWidget {
       _WebChangeLanguageContentState();
 }
 
-class _WebChangeLanguageContentState
-    extends ConsumerState<WebChangeLanguageContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebChangeLanguageContentState extends ConsumerState<WebChangeLanguageContent>
+    with WebLanguageState<WebChangeLanguageContent> {
+  bool get _isHebrew => webIsHebrew.value;
   int _selectedIndex = 0;
 
   @override
@@ -75,7 +75,6 @@ class _WebChangeLanguageContentState
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: null,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

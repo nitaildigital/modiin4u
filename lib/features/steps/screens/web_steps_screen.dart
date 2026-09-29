@@ -35,8 +35,9 @@ class WebStepsContent extends ConsumerStatefulWidget {
   ConsumerState<WebStepsContent> createState() => _WebStepsContentState();
 }
 
-class _WebStepsContentState extends ConsumerState<WebStepsContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebStepsContentState extends ConsumerState<WebStepsContent>
+    with WebLanguageState<WebStepsContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   /// The daily target the ring fills against — the same figure the mobile
   /// screen uses.
@@ -127,7 +128,6 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent> {
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

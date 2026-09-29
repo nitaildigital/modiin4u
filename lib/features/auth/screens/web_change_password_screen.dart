@@ -35,9 +35,9 @@ class WebChangePasswordContent extends ConsumerStatefulWidget {
       _WebChangePasswordContentState();
 }
 
-class _WebChangePasswordContentState
-    extends ConsumerState<WebChangePasswordContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebChangePasswordContentState extends ConsumerState<WebChangePasswordContent>
+    with WebLanguageState<WebChangePasswordContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   final _currentController = TextEditingController();
   final _newController = TextEditingController();
@@ -138,7 +138,6 @@ class _WebChangePasswordContentState
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: null,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

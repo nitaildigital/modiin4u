@@ -39,8 +39,9 @@ class WebFavoritesContent extends ConsumerStatefulWidget {
       _WebFavoritesContentState();
 }
 
-class _WebFavoritesContentState extends ConsumerState<WebFavoritesContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebFavoritesContentState extends ConsumerState<WebFavoritesContent>
+    with WebLanguageState<WebFavoritesContent> {
+  bool get _isHebrew => webIsHebrew.value;
   int _activeFilter = 0;
 
   String _t(String en, String he) => _isHebrew ? he : en;
@@ -84,7 +85,6 @@ class _WebFavoritesContentState extends ConsumerState<WebFavoritesContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: null,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

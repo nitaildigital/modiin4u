@@ -34,8 +34,9 @@ class WebHelpSupportContent extends StatefulWidget {
   State<WebHelpSupportContent> createState() => _WebHelpSupportContentState();
 }
 
-class _WebHelpSupportContentState extends State<WebHelpSupportContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebHelpSupportContentState extends State<WebHelpSupportContent>
+    with WebLanguageState<WebHelpSupportContent> {
+  bool get _isHebrew => webIsHebrew.value;
   final _searchController = TextEditingController();
 
   /// Which question is open, held by its text rather than by its position:
@@ -92,7 +93,9 @@ class _WebHelpSupportContentState extends State<WebHelpSupportContent> {
         .toList();
   }
 
-  void _back() => context.canPop() ? context.pop() : context.go('/settings');
+  // The website has no Settings page (accounts are the app's), so with no
+  // page to go back to this goes home rather than to a redirect.
+  void _back() => context.canPop() ? context.pop() : context.go('/');
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +111,6 @@ class _WebHelpSupportContentState extends State<WebHelpSupportContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: null,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -179,7 +181,7 @@ class _WebHelpSupportContentState extends State<WebHelpSupportContent> {
             ),
             const SizedBox(width: 8),
             Text(
-              _t('Back to Settings', 'חזרה להגדרות'),
+              _t('Back', 'חזרה'),
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 15,

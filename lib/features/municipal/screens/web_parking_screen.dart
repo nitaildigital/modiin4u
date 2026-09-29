@@ -30,8 +30,9 @@ class WebParkingContent extends StatefulWidget {
   State<WebParkingContent> createState() => _WebParkingContentState();
 }
 
-class _WebParkingContentState extends State<WebParkingContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebParkingContentState extends State<WebParkingContent>
+    with WebLanguageState<WebParkingContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
@@ -99,7 +100,6 @@ class _WebParkingContentState extends State<WebParkingContent> {
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

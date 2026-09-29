@@ -22,18 +22,6 @@ import '../../../shared/widgets/web_chrome.dart';
 const _kBorder = Color(0xFFE7E7E7);
 const _kGreyText = Color(0xFF5F5E5A);
 
-/// The filter the mobile screen offers, in the same order. The Hebrew labels
-/// are the ones a post's `category` will be matched against, so they are what
-/// travels; the English is for display only.
-const _kCategories = <(String, String)>[
-  ('All', 'הכל'),
-  ('General', 'כללי'),
-  ('Question', 'שאלה'),
-  ('Recommendation', 'המלצה'),
-  ('Report', 'דיווח'),
-  ('Neighbours', 'שכנים'),
-];
-
 class WebCommunityContent extends StatefulWidget {
   const WebCommunityContent({super.key});
 
@@ -41,11 +29,9 @@ class WebCommunityContent extends StatefulWidget {
   State<WebCommunityContent> createState() => _WebCommunityContentState();
 }
 
-class _WebCommunityContentState extends State<WebCommunityContent> {
-  bool _isHebrew = webIsHebrew.value;
-
-  /// Held as the Hebrew label, which is what a `category` column would carry.
-  String _selectedCategory = 'הכל';
+class _WebCommunityContentState extends State<WebCommunityContent>
+    with WebLanguageState<WebCommunityContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
@@ -59,7 +45,6 @@ class _WebCommunityContentState extends State<WebCommunityContent> {
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -170,21 +155,9 @@ class _WebCommunityContentState extends State<WebCommunityContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // All six fit across 720, so they wrap rather than scroll
-              // sideways the way they have to on a phone.
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final (en, he) in _kCategories)
-                    _CategoryChip(
-                      label: _t(en, he),
-                      selected: he == _selectedCategory,
-                      onTap: () => setState(() => _selectedCategory = he),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 32),
+              // The mobile screen's six filter chips sat here and filtered
+              // nothing: there are no posts to filter yet. They come back
+              // with the feed.
               _buildEmptyState(),
             ],
           ),
@@ -243,44 +216,3 @@ class _WebCommunityContentState extends State<WebCommunityContent> {
   }
 }
 
-class _CategoryChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _CategoryChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        // No fixed height and no alignment: a Container that aligns its child
-        // takes all the width the Wrap offers it, and all six chips came out
-        // 720 wide, one under the other.
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.turquoise : AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(50),
-            border: selected ? null : Border.all(color: _kBorder),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 14,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? Colors.white : AppColors.grayMeta,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

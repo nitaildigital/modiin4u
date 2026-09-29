@@ -37,9 +37,9 @@ class WebResetPasswordContent extends ConsumerStatefulWidget {
       _WebResetPasswordContentState();
 }
 
-class _WebResetPasswordContentState
-    extends ConsumerState<WebResetPasswordContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebResetPasswordContentState extends ConsumerState<WebResetPasswordContent>
+    with WebLanguageState<WebResetPasswordContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   final _password = TextEditingController();
   final _confirm = TextEditingController();
@@ -116,7 +116,6 @@ class _WebResetPasswordContentState
             // card asking for an e-mail address. See WebAuthHeader.
             WebAuthHeader(
               isHebrew: _isHebrew,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

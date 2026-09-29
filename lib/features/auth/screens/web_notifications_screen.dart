@@ -37,11 +37,12 @@ class WebNotificationsContent extends StatefulWidget {
       _WebNotificationsContentState();
 }
 
-class _WebNotificationsContentState extends State<WebNotificationsContent> {
+class _WebNotificationsContentState extends State<WebNotificationsContent>
+    with WebLanguageState<WebNotificationsContent> {
   /// The phone screen is written in Hebrew only. Here the one sentence it
   /// says exists in both, so the page follows the navbar's toggle like every
   /// other web screen rather than opening in its own language.
-  bool _isHebrew = webIsHebrew.value;
+  bool get _isHebrew => webIsHebrew.value;
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
@@ -56,7 +57,6 @@ class _WebNotificationsContentState extends State<WebNotificationsContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: null,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

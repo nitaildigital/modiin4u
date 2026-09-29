@@ -28,8 +28,9 @@ class WebMunicipalContent extends StatefulWidget {
   State<WebMunicipalContent> createState() => _WebMunicipalContentState();
 }
 
-class _WebMunicipalContentState extends State<WebMunicipalContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebMunicipalContentState extends State<WebMunicipalContent>
+    with WebLanguageState<WebMunicipalContent> {
+  bool get _isHebrew => webIsHebrew.value;
   String _query = '';
   final _searchCtrl = TextEditingController();
   final _servicesKey = GlobalKey();
@@ -162,7 +163,6 @@ class _WebMunicipalContentState extends State<WebMunicipalContent> {
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
