@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
+import '../../../core/supabase/supabase_config.dart';
 import '../../businesses/providers/business_providers.dart';
 import '../../events/providers/event_providers.dart';
 import '../../realestate/models/listing.dart';
@@ -12,10 +15,32 @@ final _businessColor = mapLayers[0].$3;
 final _eventColor = mapLayers[1].$3;
 final _listingColor = mapLayers[2].$3;
 
+/// The parking lots the client has entered and not hidden.
+///
+/// A lot the database refuses to return — the table not yet created where
+/// migration 00030 has not run, say — leaves the Parkings layer empty rather
+/// than taking the other three layers down with it.
+final parkingLotsProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  try {
+    final rows = await SupabaseConfig.client
+        .from('parking_lots')
+        .select('id, name, name_en, address, notes, latitude, longitude, image_url')
+        .eq('is_active', true)
+        .order('sort_order')
+        .order('name');
+    return List<Map<String, dynamic>>.from(rows);
+  } on PostgrestException catch (e) {
+    debugPrint('parking_lots: ${e.message}');
+    return const [];
+  }
+});
+
 /// Every pin on the map, built from the database.
 ///
-/// Three layers, all live. The fourth in the design — parking — has no table
-/// behind it and is not drawn; see `mapLayers`.
+/// Four layers, all live. The website draws the first three; parking is the
+/// phone map's for now — see `parkingLayer`.
 final mapPoisProvider = FutureProvider<List<MapPoi>>((ref) async {
   final businesses = await ref.watch(businessesProvider.future);
   final events = await ref.watch(eventsProvider.future);
@@ -23,6 +48,7 @@ final mapPoisProvider = FutureProvider<List<MapPoi>>((ref) async {
   // The layer is wired anyway, so it fills the moment a listing exists rather
   // than needing this file changed again.
   final listings = await ref.watch(listingsProvider.future);
+  final parkingLots = await ref.watch(parkingLotsProvider.future);
 
   return [
     for (final b in businesses)
@@ -80,10 +106,36 @@ final mapPoisProvider = FutureProvider<List<MapPoi>>((ref) async {
           rooms: l.rooms == null ? null : _roomsLabel(l.rooms!),
           floor: l.floor == null ? null : 'Floor ${l.floor}',
           saleTag: l.kind == ListingKind.rent ? 'FOR RENT' : 'FOR SALE',
+          sqm: l.sqm?.toInt(),
+          roomCount: l.rooms,
+          floorNumber: l.floor,
           photos: [if (l.coverUrl != null) l.coverUrl!, ...l.gallery],
         ),
+    for (final p in parkingLots)
+      MapPoi(
+        name: p['name'] as String,
+        nameEn: _nonEmpty(p['name_en']),
+        category: '',
+        position: LatLng(
+          (p['latitude'] as num).toDouble(),
+          (p['longitude'] as num).toDouble(),
+        ),
+        icon: parkingLayer.$2,
+        color: parkingLayer.$3,
+        // No route: a lot has no page of its own, so its card is all there
+        // is to it.
+        layer: parkingLayer.$1,
+        address: _nonEmpty(p['address']),
+        description: _nonEmpty(p['notes']),
+        photos: [?_nonEmpty(p['image_url'])],
+      ),
   ];
 });
+
+String? _nonEmpty(Object? value) {
+  final s = (value as String?)?.trim();
+  return s == null || s.isEmpty ? null : s;
+}
 
 /// "₪3,650,000", or null where the listing carries no price — which is not
 /// the same as free, and must not be shown as ₪0.

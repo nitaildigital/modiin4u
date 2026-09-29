@@ -16,6 +16,7 @@ import 'admin_categories_screen.dart';
 import 'admin_challenges_screen.dart';
 import 'admin_tags_screen.dart';
 import 'admin_neighborhoods_screen.dart';
+import 'admin_parking_screen.dart';
 import 'admin_media_screen.dart';
 import 'admin_offers_screen.dart';
 import 'admin_agreements_screen.dart';
@@ -53,6 +54,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     ('כתבות', IconsaxPlusLinear.document_text),
     ('אירועים', IconsaxPlusLinear.calendar),
     ('נדל״ן', IconsaxPlusLinear.building_3),
+    ('חניונים', IconsaxPlusLinear.car),
     ('מתווכים', IconsaxPlusLinear.profile_circle),
     // ── טקסונומיה ──
     ('קטגוריות', IconsaxPlusLinear.category_2),
@@ -82,15 +84,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   /// Where the settings pane sits in [_sections] — the top bar's gear jumps
   /// here rather than doing nothing, which is what it used to do.
-  static const _settingsSection = 26;
+  static const _settingsSection = 27;
 
   static const _sectionGroups = {
     0: 'ראשי',
     2: 'תוכן',
-    6: 'טקסונומיה',
-    10: 'מסחר ופרסום',
-    15: 'אינטראקציה',
-    19: 'מערכת',
+    7: 'טקסונומיה',
+    11: 'מסחר ופרסום',
+    16: 'אינטראקציה',
+    20: 'מערכת',
   };
 
   @override
@@ -228,27 +230,28 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       3 => const AdminArticlesScreen(),
       4 => const AdminEventsScreen(),
       5 => const AdminRealEstateScreen(),
-      6 => const AdminAgentsScreen(),
-      7 => const AdminCategoriesScreen(),
-      8 => const AdminTagsScreen(),
-      9 => const AdminNeighborhoodsScreen(),
-      10 => const AdminMediaScreen(),
-      11 => const AdminOffersScreen(),
-      12 => const AdminAgreementsScreen(),
-      13 => const AdminRevenueScreen(),
-      14 => const AdminAdPlacementsScreen(),
-      15 => const AdminCampaignsScreen(),
-      16 => const AdminReviewsScreen(),
-      17 => const AdminCommentsScreen(),
-      18 => const AdminReportsScreen(),
-      19 => const AdminPushScreen(),
-      20 => const AdminChallengesScreen(),
-      21 => const AdminTeamScreen(),
-      22 => const AdminAuditScreen(),
-      23 => const AdminTrashScreen(),
-      24 => const AdminHomeBuilderScreen(),
-      25 => const AdminFlagsScreen(),
-      26 => const _SettingsSection(),
+      6 => const AdminParkingScreen(),
+      7 => const AdminAgentsScreen(),
+      8 => const AdminCategoriesScreen(),
+      9 => const AdminTagsScreen(),
+      10 => const AdminNeighborhoodsScreen(),
+      11 => const AdminMediaScreen(),
+      12 => const AdminOffersScreen(),
+      13 => const AdminAgreementsScreen(),
+      14 => const AdminRevenueScreen(),
+      15 => const AdminAdPlacementsScreen(),
+      16 => const AdminCampaignsScreen(),
+      17 => const AdminReviewsScreen(),
+      18 => const AdminCommentsScreen(),
+      19 => const AdminReportsScreen(),
+      20 => const AdminPushScreen(),
+      21 => const AdminChallengesScreen(),
+      22 => const AdminTeamScreen(),
+      23 => const AdminAuditScreen(),
+      24 => const AdminTrashScreen(),
+      25 => const AdminHomeBuilderScreen(),
+      26 => const AdminFlagsScreen(),
+      27 => const _SettingsSection(),
       _ => const SizedBox(),
     };
   }

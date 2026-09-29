@@ -595,7 +595,7 @@ class LHe extends L {
   String get addApartment => 'הוספת דירה';
 
   @override
-  String get stepBasics => 'בסיס';
+  String get stepBasics => 'מידע בסיסי';
 
   @override
   String get stepDetails => 'פרטים';
@@ -613,7 +613,7 @@ class LHe extends L {
   String get basicInformation => 'פרטים בסיסיים';
 
   @override
-  String get fillInPropertyDetails => 'מלאו את פרטי הנכס';
+  String get fillInPropertyDetails => 'מלאו את הפרטים הבסיסיים על הדירה.';
 
   @override
   String get listingType => 'סוג המודעה';
@@ -679,7 +679,7 @@ class LHe extends L {
   String get apartmentDetails => 'פרטי הדירה';
 
   @override
-  String get addMoreDetails => 'הוסיפו פרטים נוספים על הנכס';
+  String get addMoreDetails => 'הוסיפו פרטים נוספים על הדירה.';
 
   @override
   String get description => 'תיאור';
@@ -721,10 +721,11 @@ class LHe extends L {
   String get addPhotos => 'הוספת תמונות';
 
   @override
-  String get uploadApartmentPhotos => 'העלו תמונות של הדירה';
+  String get uploadApartmentPhotos =>
+      'הוסיפו תמונות ברורות ומושכות שיציגו את הדירה.';
 
   @override
-  String get mainImage => 'תמונה ראשית';
+  String get mainImage => 'תמונת שער';
 
   @override
   String get firstPhotoIsCover => 'התמונה הראשונה תשמש כתמונת השער';
@@ -736,7 +737,7 @@ class LHe extends L {
   String get submittedForApproval => 'הדירה שלכם נשלחה לאישור.';
 
   @override
-  String get listingBeingReviewed => 'המודעה שלכם בבדיקה';
+  String get listingBeingReviewed => 'המודעה שלכם נמצאת כעת בבדיקה.';
 
   @override
   String get checkStatusAnytime => 'תוכלו לבדוק את סטטוס המודעה בכל עת';
@@ -774,6 +775,21 @@ class LHe extends L {
 
   @override
   String get errCouldNotSubmit => 'לא ניתן היה לשלוח. נסו שוב.';
+
+  @override
+  String get saveDraft => 'שמירת טיוטה';
+
+  @override
+  String get draftSaved => 'הטיוטה נשמרה. אפשר להשלים אותה מ״הדירות שלי״.';
+
+  @override
+  String get errCouldNotSaveDraft => 'לא ניתן היה לשמור את הטיוטה. נסו שוב.';
+
+  @override
+  String get statusDraft => 'טיוטה';
+
+  @override
+  String get continueEditing => 'המשך עריכה';
 
   @override
   String get signInToPostListing => 'התחברו כדי לפרסם מודעה';
@@ -1239,6 +1255,21 @@ class LHe extends L {
   String get noListingsOnMap => 'אין מודעות עם מיקום על המפה';
 
   @override
+  String get listingFilters => 'סינון';
+
+  @override
+  String get filterPriceMin => 'מינימום';
+
+  @override
+  String get filterPriceMax => 'מקסימום';
+
+  @override
+  String get filterReset => 'איפוס';
+
+  @override
+  String get filterShowResults => 'הצגת תוצאות';
+
+  @override
   String get createYourAccount => 'יצירת חשבון';
 
   @override
@@ -1299,10 +1330,15 @@ class LHe extends L {
   String get changePasswordRow => 'שינוי סיסמה';
 
   @override
-  String get searchEvents => 'חיפוש אירועים, הופעות ופעילויות';
+  String get searchEvents => 'חפשו אירועים, הופעות, פעילויות...';
 
   @override
   String get noEventsMatch => 'לא נמצאו אירועים מתאימים';
+
+  @override
+  String eventInterestedCount(int count) {
+    return '$count מתעניינים';
+  }
 
   @override
   String get noEventsOnMap => 'אין אירועים עם מיקום על המפה';
@@ -1333,6 +1369,12 @@ class LHe extends L {
 
   @override
   String get mapLayerRealEstate => 'נדל\"ן';
+
+  @override
+  String get mapLayerParkings => 'חניונים';
+
+  @override
+  String get mapSearchHint => 'חיפוש מקומות, עסקים ואירועים';
 
   @override
   String get helpTitle => 'עזרה ותמיכה';
@@ -1445,4 +1487,93 @@ class LHe extends L {
 
   @override
   String get resendAgainSoon => 'אפשר לשלוח שוב בעוד רגע.';
+
+  @override
+  String get filter => 'סינון';
+
+  @override
+  String get delivery => 'משלוחים';
+
+  @override
+  String get clearFilter => 'נקו סינון';
+
+  @override
+  String get inModiinSuffix => ' במודיעין';
+
+  @override
+  String get openNowBadge => 'פתוח עכשיו';
+
+  @override
+  String get openNow => 'פתוח עכשיו';
+
+  @override
+  String get showAllPhotos => 'הצג את כל התמונות';
+
+  @override
+  String get businessGallery => 'גלריית העסק';
+
+  @override
+  String get eventCategories => 'קטגוריות אירועים';
+
+  @override
+  String get eventsInModiin => 'אירועים במודיעין';
+
+  @override
+  String get noUpcomingEvents => 'אין אירועים קרובים';
+
+  @override
+  String get newEventsAppearHere => 'אירועים חדשים יופיעו כאן';
+
+  @override
+  String get peopleInterestedSuffix => ' מתעניינים';
+
+  @override
+  String get organizedBy => 'מארגנים';
+
+  @override
+  String get aboutThisEvent => 'על האירוע';
+
+  @override
+  String get whereIsIt => 'איפה זה?';
+
+  @override
+  String get youMayAlsoLike => 'אולי יעניין אתכם גם';
+
+  @override
+  String get allEvents => 'כל האירועים';
+
+  @override
+  String get free => 'חינם';
+
+  @override
+  String get noStoriesYet => 'אין כתבות להצגה';
+
+  @override
+  String get newStoriesAppearHere => 'כתבות חדשות יופיעו כאן';
+
+  @override
+  String get latestStories => 'הכתבות האחרונות';
+
+  @override
+  String get newsSeeAll => 'הצג הכל';
+
+  @override
+  String get nowInModiin => 'עכשיו במודיעין';
+
+  @override
+  String get moreRelatedNews => 'עוד חדשות קשורות';
+
+  @override
+  String get share => 'שיתוף';
+
+  @override
+  String get edit => 'עריכה';
+
+  @override
+  String get nothingMatchesFilter => 'אין תוצאות לסינון הזה';
+
+  @override
+  String searchInPlace(String place) {
+    return 'חיפוש ב$place...';
+  }
 }

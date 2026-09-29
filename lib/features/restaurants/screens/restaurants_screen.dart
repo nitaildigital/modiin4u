@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../core/theme/app_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../l10n/app_localizations.dart';
@@ -216,7 +217,7 @@ class _MobileRestaurantsContentState
                   GestureDetector(
                     onTap: () => context.pop(),
                     child: const Icon(
-                      IconsaxPlusLinear.arrow_left,
+                      AppIcons.back,
                       size: 24,
                       color: Color(0xFF3D3D3D),
                     ),

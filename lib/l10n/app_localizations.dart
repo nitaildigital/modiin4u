@@ -1234,7 +1234,7 @@ abstract class L {
   /// No description provided for @stepBasics.
   ///
   /// In he, this message translates to:
-  /// **'בסיס'**
+  /// **'מידע בסיסי'**
   String get stepBasics;
 
   /// No description provided for @stepDetails.
@@ -1270,7 +1270,7 @@ abstract class L {
   /// No description provided for @fillInPropertyDetails.
   ///
   /// In he, this message translates to:
-  /// **'מלאו את פרטי הנכס'**
+  /// **'מלאו את הפרטים הבסיסיים על הדירה.'**
   String get fillInPropertyDetails;
 
   /// No description provided for @listingType.
@@ -1402,7 +1402,7 @@ abstract class L {
   /// No description provided for @addMoreDetails.
   ///
   /// In he, this message translates to:
-  /// **'הוסיפו פרטים נוספים על הנכס'**
+  /// **'הוסיפו פרטים נוספים על הדירה.'**
   String get addMoreDetails;
 
   /// No description provided for @description.
@@ -1486,13 +1486,13 @@ abstract class L {
   /// No description provided for @uploadApartmentPhotos.
   ///
   /// In he, this message translates to:
-  /// **'העלו תמונות של הדירה'**
+  /// **'הוסיפו תמונות ברורות ומושכות שיציגו את הדירה.'**
   String get uploadApartmentPhotos;
 
   /// No description provided for @mainImage.
   ///
   /// In he, this message translates to:
-  /// **'תמונה ראשית'**
+  /// **'תמונת שער'**
   String get mainImage;
 
   /// No description provided for @firstPhotoIsCover.
@@ -1516,7 +1516,7 @@ abstract class L {
   /// No description provided for @listingBeingReviewed.
   ///
   /// In he, this message translates to:
-  /// **'המודעה שלכם בבדיקה'**
+  /// **'המודעה שלכם נמצאת כעת בבדיקה.'**
   String get listingBeingReviewed;
 
   /// No description provided for @checkStatusAnytime.
@@ -1590,6 +1590,36 @@ abstract class L {
   /// In he, this message translates to:
   /// **'לא ניתן היה לשלוח. נסו שוב.'**
   String get errCouldNotSubmit;
+
+  /// No description provided for @saveDraft.
+  ///
+  /// In he, this message translates to:
+  /// **'שמירת טיוטה'**
+  String get saveDraft;
+
+  /// No description provided for @draftSaved.
+  ///
+  /// In he, this message translates to:
+  /// **'הטיוטה נשמרה. אפשר להשלים אותה מ״הדירות שלי״.'**
+  String get draftSaved;
+
+  /// No description provided for @errCouldNotSaveDraft.
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לשמור את הטיוטה. נסו שוב.'**
+  String get errCouldNotSaveDraft;
+
+  /// No description provided for @statusDraft.
+  ///
+  /// In he, this message translates to:
+  /// **'טיוטה'**
+  String get statusDraft;
+
+  /// No description provided for @continueEditing.
+  ///
+  /// In he, this message translates to:
+  /// **'המשך עריכה'**
+  String get continueEditing;
 
   /// No description provided for @signInToPostListing.
   ///
@@ -2455,6 +2485,36 @@ abstract class L {
   /// **'אין מודעות עם מיקום על המפה'**
   String get noListingsOnMap;
 
+  /// No description provided for @listingFilters.
+  ///
+  /// In he, this message translates to:
+  /// **'סינון'**
+  String get listingFilters;
+
+  /// No description provided for @filterPriceMin.
+  ///
+  /// In he, this message translates to:
+  /// **'מינימום'**
+  String get filterPriceMin;
+
+  /// No description provided for @filterPriceMax.
+  ///
+  /// In he, this message translates to:
+  /// **'מקסימום'**
+  String get filterPriceMax;
+
+  /// No description provided for @filterReset.
+  ///
+  /// In he, this message translates to:
+  /// **'איפוס'**
+  String get filterReset;
+
+  /// No description provided for @filterShowResults.
+  ///
+  /// In he, this message translates to:
+  /// **'הצגת תוצאות'**
+  String get filterShowResults;
+
   /// No description provided for @createYourAccount.
   ///
   /// In he, this message translates to:
@@ -2578,7 +2638,7 @@ abstract class L {
   /// No description provided for @searchEvents.
   ///
   /// In he, this message translates to:
-  /// **'חיפוש אירועים, הופעות ופעילויות'**
+  /// **'חפשו אירועים, הופעות, פעילויות...'**
   String get searchEvents;
 
   /// No description provided for @noEventsMatch.
@@ -2586,6 +2646,12 @@ abstract class L {
   /// In he, this message translates to:
   /// **'לא נמצאו אירועים מתאימים'**
   String get noEventsMatch;
+
+  /// No description provided for @eventInterestedCount.
+  ///
+  /// In he, this message translates to:
+  /// **'{count} מתעניינים'**
+  String eventInterestedCount(int count);
 
   /// No description provided for @noEventsOnMap.
   ///
@@ -2646,6 +2712,18 @@ abstract class L {
   /// In he, this message translates to:
   /// **'נדל\"ן'**
   String get mapLayerRealEstate;
+
+  /// No description provided for @mapLayerParkings.
+  ///
+  /// In he, this message translates to:
+  /// **'חניונים'**
+  String get mapLayerParkings;
+
+  /// No description provided for @mapSearchHint.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש מקומות, עסקים ואירועים'**
+  String get mapSearchHint;
 
   /// No description provided for @helpTitle.
   ///
@@ -2844,6 +2922,180 @@ abstract class L {
   /// In he, this message translates to:
   /// **'אפשר לשלוח שוב בעוד רגע.'**
   String get resendAgainSoon;
+
+  /// No description provided for @filter.
+  ///
+  /// In he, this message translates to:
+  /// **'סינון'**
+  String get filter;
+
+  /// No description provided for @delivery.
+  ///
+  /// In he, this message translates to:
+  /// **'משלוחים'**
+  String get delivery;
+
+  /// No description provided for @clearFilter.
+  ///
+  /// In he, this message translates to:
+  /// **'נקו סינון'**
+  String get clearFilter;
+
+  /// No description provided for @inModiinSuffix.
+  ///
+  /// In he, this message translates to:
+  /// **' במודיעין'**
+  String get inModiinSuffix;
+
+  /// No description provided for @openNowBadge.
+  ///
+  /// In he, this message translates to:
+  /// **'פתוח עכשיו'**
+  String get openNowBadge;
+
+  /// No description provided for @openNow.
+  ///
+  /// In he, this message translates to:
+  /// **'פתוח עכשיו'**
+  String get openNow;
+
+  /// No description provided for @showAllPhotos.
+  ///
+  /// In he, this message translates to:
+  /// **'הצג את כל התמונות'**
+  String get showAllPhotos;
+
+  /// No description provided for @businessGallery.
+  ///
+  /// In he, this message translates to:
+  /// **'גלריית העסק'**
+  String get businessGallery;
+
+  /// No description provided for @eventCategories.
+  ///
+  /// In he, this message translates to:
+  /// **'קטגוריות אירועים'**
+  String get eventCategories;
+
+  /// No description provided for @eventsInModiin.
+  ///
+  /// In he, this message translates to:
+  /// **'אירועים במודיעין'**
+  String get eventsInModiin;
+
+  /// No description provided for @noUpcomingEvents.
+  ///
+  /// In he, this message translates to:
+  /// **'אין אירועים קרובים'**
+  String get noUpcomingEvents;
+
+  /// No description provided for @newEventsAppearHere.
+  ///
+  /// In he, this message translates to:
+  /// **'אירועים חדשים יופיעו כאן'**
+  String get newEventsAppearHere;
+
+  /// No description provided for @peopleInterestedSuffix.
+  ///
+  /// In he, this message translates to:
+  /// **' מתעניינים'**
+  String get peopleInterestedSuffix;
+
+  /// No description provided for @organizedBy.
+  ///
+  /// In he, this message translates to:
+  /// **'מארגנים'**
+  String get organizedBy;
+
+  /// No description provided for @aboutThisEvent.
+  ///
+  /// In he, this message translates to:
+  /// **'על האירוע'**
+  String get aboutThisEvent;
+
+  /// No description provided for @whereIsIt.
+  ///
+  /// In he, this message translates to:
+  /// **'איפה זה?'**
+  String get whereIsIt;
+
+  /// No description provided for @youMayAlsoLike.
+  ///
+  /// In he, this message translates to:
+  /// **'אולי יעניין אתכם גם'**
+  String get youMayAlsoLike;
+
+  /// No description provided for @allEvents.
+  ///
+  /// In he, this message translates to:
+  /// **'כל האירועים'**
+  String get allEvents;
+
+  /// No description provided for @free.
+  ///
+  /// In he, this message translates to:
+  /// **'חינם'**
+  String get free;
+
+  /// No description provided for @noStoriesYet.
+  ///
+  /// In he, this message translates to:
+  /// **'אין כתבות להצגה'**
+  String get noStoriesYet;
+
+  /// No description provided for @newStoriesAppearHere.
+  ///
+  /// In he, this message translates to:
+  /// **'כתבות חדשות יופיעו כאן'**
+  String get newStoriesAppearHere;
+
+  /// No description provided for @latestStories.
+  ///
+  /// In he, this message translates to:
+  /// **'הכתבות האחרונות'**
+  String get latestStories;
+
+  /// No description provided for @newsSeeAll.
+  ///
+  /// In he, this message translates to:
+  /// **'הצג הכל'**
+  String get newsSeeAll;
+
+  /// No description provided for @nowInModiin.
+  ///
+  /// In he, this message translates to:
+  /// **'עכשיו במודיעין'**
+  String get nowInModiin;
+
+  /// No description provided for @moreRelatedNews.
+  ///
+  /// In he, this message translates to:
+  /// **'עוד חדשות קשורות'**
+  String get moreRelatedNews;
+
+  /// No description provided for @share.
+  ///
+  /// In he, this message translates to:
+  /// **'שיתוף'**
+  String get share;
+
+  /// No description provided for @edit.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכה'**
+  String get edit;
+
+  /// No description provided for @nothingMatchesFilter.
+  ///
+  /// In he, this message translates to:
+  /// **'אין תוצאות לסינון הזה'**
+  String get nothingMatchesFilter;
+
+  /// No description provided for @searchInPlace.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש ב{place}...'**
+  String searchInPlace(String place);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

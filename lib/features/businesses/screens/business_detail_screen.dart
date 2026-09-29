@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../core/theme/app_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -269,19 +270,20 @@ class _BusinessDetailContentState
             ),
           ),
 
-          // Back button
-          Positioned(
-            left: 12,
+          // Back button, share and heart sit by reading direction, so in
+          // Hebrew the whole row mirrors and the arrow points right.
+          PositionedDirectional(
+            start: 12,
             top: topPadding + 7,
             child: _CircleButton(
-              icon: IconsaxPlusLinear.arrow_left,
+              icon: AppIcons.back,
               onTap: () => context.pop(),
             ),
           ),
 
           // Share button
-          Positioned(
-            right: 56 + 12,
+          PositionedDirectional(
+            end: 56 + 12,
             top: topPadding + 7,
             child: _CircleButton(
               icon: IconsaxPlusLinear.export_1,
@@ -290,8 +292,8 @@ class _BusinessDetailContentState
           ),
 
           // Favorite button
-          Positioned(
-            right: 12,
+          PositionedDirectional(
+            end: 12,
             top: topPadding + 7,
             child: FavoriteButton(
               kind: FavoriteKind.business,
@@ -335,7 +337,7 @@ class _BusinessDetailContentState
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _isHe ? 'הצג את כל התמונות' : 'Show all photos',
+                        L.of(context).showAllPhotos,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 12,
@@ -459,7 +461,7 @@ class _BusinessDetailContentState
             const SizedBox(width: 8),
             Text(
               business.isOpenNow
-                  ? (_isHe ? 'פתוח עכשיו' : 'Open now')
+                  ? L.of(context).openNow
                   : L.of(context).closed,
               style: TextStyle(
                 fontFamily: AppFonts.inter,
@@ -1311,7 +1313,7 @@ class _BusinessDetailContentState
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                _isHe ? 'גלריית העסק' : 'Business Gallery',
+                L.of(context).businessGallery,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 16,
@@ -2331,7 +2333,11 @@ class _BusinessNotFound extends StatelessWidget {
     return ValueListenableBuilder<bool>(
       valueListenable: webIsHebrew,
       builder: (context, hebrewOnWeb, _) {
-        final hebrew = kIsWeb ? hebrewOnWeb : true;
+        // The website follows its own switch; the app follows the language
+        // chosen in Settings, where this used to stay Hebrew regardless.
+        final hebrew = kIsWeb
+            ? hebrewOnWeb
+            : Localizations.localeOf(context).languageCode == 'he';
         String t(String en, String he) => hebrew ? he : en;
         final message = Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 96),

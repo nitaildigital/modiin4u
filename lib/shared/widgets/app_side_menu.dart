@@ -177,7 +177,6 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final isHe = Localizations.localeOf(context).languageCode == 'he';
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -212,7 +211,7 @@ class _ProfileHeader extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isHe ? 'עריכה' : 'Edit',
+                        L.of(context).edit,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 12,

@@ -602,7 +602,7 @@ class LEn extends L {
   String get addApartment => 'Add Apartment';
 
   @override
-  String get stepBasics => 'Basics';
+  String get stepBasics => 'Basic Info';
 
   @override
   String get stepDetails => 'Details';
@@ -620,7 +620,8 @@ class LEn extends L {
   String get basicInformation => 'Basic Information';
 
   @override
-  String get fillInPropertyDetails => 'Fill in the details about your property';
+  String get fillInPropertyDetails =>
+      'Provide the basic details about your apartment.';
 
   @override
   String get listingType => 'Listing Type';
@@ -686,7 +687,7 @@ class LEn extends L {
   String get apartmentDetails => 'Apartment Details';
 
   @override
-  String get addMoreDetails => 'Add more details about your property';
+  String get addMoreDetails => 'Provide more details about your apartment.';
 
   @override
   String get description => 'Description';
@@ -729,10 +730,11 @@ class LEn extends L {
   String get addPhotos => 'Add Photos';
 
   @override
-  String get uploadApartmentPhotos => 'Upload photos of your apartment';
+  String get uploadApartmentPhotos =>
+      'Add clear and attractive photos to showcase your apartment.';
 
   @override
-  String get mainImage => 'Main Image';
+  String get mainImage => 'Cover Image';
 
   @override
   String get firstPhotoIsCover => 'First photo will be used as the cover image';
@@ -745,7 +747,7 @@ class LEn extends L {
       'Your apartment has been submitted for approval.';
 
   @override
-  String get listingBeingReviewed => 'Your listing is being reviewed';
+  String get listingBeingReviewed => 'Your listing is currently under review.';
 
   @override
   String get checkStatusAnytime =>
@@ -784,6 +786,22 @@ class LEn extends L {
 
   @override
   String get errCouldNotSubmit => 'Could not submit. Please try again.';
+
+  @override
+  String get saveDraft => 'Save Draft';
+
+  @override
+  String get draftSaved => 'Draft saved. You can finish it from My Apartments.';
+
+  @override
+  String get errCouldNotSaveDraft =>
+      'Could not save the draft. Please try again.';
+
+  @override
+  String get statusDraft => 'Draft';
+
+  @override
+  String get continueEditing => 'Continue editing';
 
   @override
   String get signInToPostListing => 'Sign in to post a listing';
@@ -1253,6 +1271,21 @@ class LEn extends L {
   String get noListingsOnMap => 'No listings have a location on the map yet';
 
   @override
+  String get listingFilters => 'Filters';
+
+  @override
+  String get filterPriceMin => 'Min';
+
+  @override
+  String get filterPriceMax => 'Max';
+
+  @override
+  String get filterReset => 'Reset';
+
+  @override
+  String get filterShowResults => 'Show results';
+
+  @override
   String get createYourAccount => 'Create Your Account';
 
   @override
@@ -1313,10 +1346,15 @@ class LEn extends L {
   String get changePasswordRow => 'Change password';
 
   @override
-  String get searchEvents => 'Search events, shows and activities';
+  String get searchEvents => 'Search events, concerts, activities...';
 
   @override
   String get noEventsMatch => 'No events match your search';
+
+  @override
+  String eventInterestedCount(int count) {
+    return '$count interested';
+  }
 
   @override
   String get noEventsOnMap => 'No events have a location on the map yet';
@@ -1348,6 +1386,12 @@ class LEn extends L {
 
   @override
   String get mapLayerRealEstate => 'Real Estate';
+
+  @override
+  String get mapLayerParkings => 'Parkings';
+
+  @override
+  String get mapSearchHint => 'Search for places, businesses, or events';
 
   @override
   String get helpTitle => 'Help & Support';
@@ -1460,4 +1504,93 @@ class LEn extends L {
 
   @override
   String get resendAgainSoon => 'You can send it again in a moment.';
+
+  @override
+  String get filter => 'Filter';
+
+  @override
+  String get delivery => 'Delivery';
+
+  @override
+  String get clearFilter => 'Clear filter';
+
+  @override
+  String get inModiinSuffix => ' in Modiin';
+
+  @override
+  String get openNowBadge => 'Open Now';
+
+  @override
+  String get openNow => 'Open now';
+
+  @override
+  String get showAllPhotos => 'Show all photos';
+
+  @override
+  String get businessGallery => 'Business Gallery';
+
+  @override
+  String get eventCategories => 'Event Categories';
+
+  @override
+  String get eventsInModiin => 'Events in Modiin';
+
+  @override
+  String get noUpcomingEvents => 'No upcoming events';
+
+  @override
+  String get newEventsAppearHere => 'New events will appear here';
+
+  @override
+  String get peopleInterestedSuffix => ' people interested';
+
+  @override
+  String get organizedBy => 'Organized by';
+
+  @override
+  String get aboutThisEvent => 'About This Event';
+
+  @override
+  String get whereIsIt => 'Where Is It?';
+
+  @override
+  String get youMayAlsoLike => 'You May Also Like';
+
+  @override
+  String get allEvents => 'All Events';
+
+  @override
+  String get free => 'Free';
+
+  @override
+  String get noStoriesYet => 'No stories yet';
+
+  @override
+  String get newStoriesAppearHere => 'New stories will appear here';
+
+  @override
+  String get latestStories => 'Latest Stories';
+
+  @override
+  String get newsSeeAll => 'See All';
+
+  @override
+  String get nowInModiin => 'Now in Modiin';
+
+  @override
+  String get moreRelatedNews => 'More Related News';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get nothingMatchesFilter => 'Nothing here matches that filter';
+
+  @override
+  String searchInPlace(String place) {
+    return 'Search $place...';
+  }
 }

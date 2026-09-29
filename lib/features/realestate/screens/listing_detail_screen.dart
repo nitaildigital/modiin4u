@@ -9,6 +9,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_fonts.dart';
+import '../../../core/theme/app_icons.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../favorites/widgets/favorite_button.dart';
@@ -98,11 +99,11 @@ class _MobileListingDetailContentState
           ),
         ),
       ),
-      Positioned(
-        left: 12,
+      PositionedDirectional(
+        start: 12,
         top: 51,
         child: _CircleButton(
-          icon: IconsaxPlusLinear.arrow_left,
+          icon: AppIcons.back,
           onTap: () => context.pop(),
         ),
       ),
@@ -297,12 +298,13 @@ class _MobileListingDetailContentState
             ],
           ),
 
-          // Back button (top-left)
-          Positioned(
-            left: 12,
+          // Back button at the reading start, heart at the end: in Hebrew
+          // the two swap sides and the arrow points right.
+          PositionedDirectional(
+            start: 12,
             top: 51,
             child: _CircleButton(
-              icon: IconsaxPlusLinear.arrow_left,
+              icon: AppIcons.back,
               onTap: () => context.pop(),
             ),
           ),
@@ -313,8 +315,8 @@ class _MobileListingDetailContentState
           // website, where saving is not offered — the empty circle that
           // stood there on a phone-width browser is gone with it.
           if (!kIsWeb)
-            Positioned(
-              right: 12,
+            PositionedDirectional(
+              end: 12,
               top: 51,
               child: FavoriteButton(
                 kind: FavoriteKind.listing,

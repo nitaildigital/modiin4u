@@ -10,6 +10,7 @@ import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/event.dart';
 import '../models/event_labels.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Whether the app is showing Hebrew, from the l10n locale.
 bool mEventsIsHebrew(BuildContext context) =>
@@ -184,10 +185,7 @@ class MEventCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          labels.t(
-                            '${event.rsvpCount} interested',
-                            '${event.rsvpCount} מתעניינים',
-                          ),
+                          L.of(context).eventInterestedCount(event.rsvpCount),
                           style: const TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,

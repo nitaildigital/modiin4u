@@ -298,7 +298,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/add-apartment',
       parentNavigatorKey: _rootNavigatorKey,
-      pageBuilder: (context, state) => _slideTransition(const AddApartmentScreen(), state),
+      // `?draft=<id>` reopens a draft saved from the phone form.
+      pageBuilder: (context, state) => _slideTransition(
+        AddApartmentScreen(draftId: state.uri.queryParameters['draft']),
+        state,
+      ),
     ),
     GoRoute(
       path: '/realestate-map',

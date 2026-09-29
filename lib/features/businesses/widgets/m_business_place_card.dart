@@ -25,7 +25,6 @@ class MBusinessPlaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isHe = Localizations.localeOf(context).languageCode == 'he';
     final kind = business.category.isNotEmpty
         ? business.category
         : (business.description ?? '');
@@ -73,7 +72,7 @@ class MBusinessPlaceCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Text(
-                        isHe ? 'פתוח עכשיו' : 'Open Now',
+                        L.of(context).openNowBadge,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 12,

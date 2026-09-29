@@ -1457,6 +1457,72 @@ movement. Not yet looked at: widths below 1250, and the inner pages
 not listed here (listing detail, neighbourhood, article, event detail, map,
 municipal) — those were not in this pass.
 
+### The phone's real-estate map, and a filter the design never drew — 29 September
+
+`/realestate-map` on a phone now follows "Real Estate in Modiin Map View" and
+its tapped-pin card "Map Card Overlay 2": the design's teardrop pins (the same
+drawing as the map page's business pin), a photo card with the kind, the
+price, the address and the figures two to a row. The card is headed by the
+title when a listing has no price. The chosen pin is lifted 1.2×, as the
+website lifts a hovered one, because the frame draws every pin alike.
+
+The frame's search bar ends in a filter icon, and there is no filter screen in
+Figma. It opens a bottom sheet (`widgets/m_listing_filter_sheet.dart`) made of
+pieces the design does have — the Bars sheet's frame, the Add Apartment
+form's cards, toggles, dropdowns and chips, the listing page's outlined pill.
+It offers exactly what `ListingFilter` can ask the database: sale / rent /
+all, property type, neighbourhood (from `neighborhoods`), a price range, and
+at least N rooms. The price range shows only once sale or rent is chosen,
+because the query has no one column that holds both a sale price and a rent.
+The choices are a draft until "Show results"; the icon carries the Bars
+page's turquoise dot while any filter is set. `copyWith` gained
+`clearNeighborhoodId`, `clearMinPrice`, `clearMaxPrice` and `clearMinRooms`
+so a field can go back to "any".
+
+### The phone's city map, a Parkings layer, and the events map — 29 September
+
+**The city map** (`/map`, "Map" 521:4754) had three layer chips where the
+frame has four, locate and zoom buttons the frame does not have, and round
+pins. It now has the frame's search pill, the four checkbox chips in its
+order — Businesses, Events, Parkings, Real Estate, all on — the frame's
+teardrop pins and its card, laid out per layer after "Map Card Overlay"
+(property), the restaurant card (business) and "Map Card Overlay 3 Event".
+The pins are the SVGs the website's map already draws, turned into marker
+bitmaps with the shadow painted by hand, since flutter_svg drops SVG filters.
+The colours follow the frame, which the website already did: blue
+businesses, purple events, turquoise parking, green property. The phone had
+drawn businesses turquoise and property blue from `mapLayers`, which would
+have made a business and a car park look alike. The property card's figures
+were English strings ("7 Rooms") that read back to front in Hebrew; the pin
+now carries the numbers and the card words them.
+
+**Parking** is the client's point 4: every lot in the city with its
+location, managed by him. Migration **00030** adds `parking_lots` — a name
+(Hebrew, optional English), address, coordinates, a free-text note (hours,
+price, residents' permit), a photo, `is_active`, sort order. Public reads
+see only shown lots; writes are admin-only. No capacity or live occupancy:
+there is no feed for either. The panel has a new section, חניונים, after
+נדל״ן: list, search, shown/hidden filter, and an editor whose single
+coordinates field takes what Google Maps copies on a right-click. Hiding a
+lot takes it off the map and keeps the row. A lot's card on the map has its
+name, address and note, and a Navigate button that opens Waze, as the
+business page does — a lot has no page of its own.
+
+The layer is the phone's only. `parkingLayer` is kept out of `mapLayers`,
+which the website's map and home page list as toggles; their frames have
+Parkings too, but that is its own piece of work. If the table is missing or
+refuses the read, the layer is empty and the other three still load.
+
+**Not yet applied:** 00030 needs `tool/run_migrations.py --apply 00030`,
+which needs `.env.local`. Until then the layer is empty and the panel
+section says the table cannot be read.
+
+**The events map** (`/events-map`, 604:5832 and its card 604:6148): the
+frame's teardrop pins, search pill, List View pill and card, 220 px as
+drawn. Category from the event's primary category, the interested count from
+RSVPs and only above zero, price or "free". The frame's filter icon is left
+out — there is nothing on this screen for it to open.
+
 ### Every web page against its frame, with sample content — 28 September
 
 "Put lots of sample data in the DB for every section, and match every screen
@@ -1643,6 +1709,41 @@ afterwards:
 article `light-rail-update`, `published_at` 2026-08-17 06:27:19.667537+00 →
 2026-09-28 18:09:09+00, so it leads the news. Restoring it waits for the
 user's go-ahead.
+
+---
+
+### My Apartments and Add Apartment on the phone, and a draft — 29 September
+
+Both phone screens brought to their mobile frames (My Apartments, empty and
+listed; Add Apartment steps 1–3 and "Listing Submitted!"). The desktop
+`web_*` versions were not touched.
+
+**Save Draft is real.** `listing_status` already has `draft`, the owner may
+insert and update their own row, and the panel already names a draft
+("טיוטה"). So "Save Draft" writes the form as a `draft` row (a title is the
+one thing it asks for — the column is not null), later saves and the final
+submit write over that same row, and only while it is still a draft. My
+Apartments shows it with a grey "Draft" badge and no date, and tapping it or
+its ⋮ ("Continue editing") reopens it in the form at
+`/add-apartment?draft=<id>`. The wide (`web_*`) form does not read `?draft=`,
+and the wide list shows a draft as "Pending"; both are left for that layout.
+
+**Left out for want of data.**
+- *"Approved on" / "Rejected on".* Nothing records when a listing was
+  approved or rejected (`published_at` exists and nothing writes it), so every
+  card says "Submitted on" with `created_at`.
+- *Air Conditioning, Security, and a parking drop-down.* No columns; parking
+  is a yes/no. The chips are the five booleans the table has.
+- *"Required (Min. 3 photos)".* Nothing on the site or in the panel requires
+  photographs, and imposing a minimum is the client's call — the red line
+  still says the first photo is the cover.
+- *"Location" as one field, "Bedrooms".* The table keeps the address and the
+  neighbourhood apart, and counts rooms (half rooms included), so the form
+  keeps those.
+
+The filter icon in the search pill is drawn as designed and does nothing yet —
+one person's list is short; a status filter is the obvious meaning if the
+client wants one.
 
 ---
 

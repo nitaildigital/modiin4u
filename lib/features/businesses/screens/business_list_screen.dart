@@ -12,6 +12,7 @@ import '../widgets/m_business_place_card.dart';
 import '../../../core/theme/app_colors.dart';
 import 'web_business_list_screen.dart';
 import '../../../shared/providers/nav_categories_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Businesses in one category, or all of them when [categoryId] is null.
 class BusinessListScreen extends ConsumerWidget {
@@ -72,7 +73,6 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
   bool _delivery = false;
 
   bool get _isHe => Localizations.localeOf(context).languageCode == 'he';
-  String _t(String en, String he) => _isHe ? he : en;
 
   @override
   void dispose() {
@@ -143,7 +143,7 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _t('Filter', 'סינון'),
+                    L.of(context).filter,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 16,
@@ -157,12 +157,12 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                     runSpacing: 12,
                     children: [
                       chip(
-                        _t('Kosher', 'כשר'),
+                        L.of(context).kosher,
                         _kosher,
                         () => _kosher = !_kosher,
                       ),
                       chip(
-                        _t('Delivery', 'משלוחים'),
+                        L.of(context).delivery,
                         _delivery,
                         () => _delivery = !_delivery,
                       ),
@@ -264,10 +264,7 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
                               isCollapsed: true,
-                              hintText: _t(
-                                'Search ${widget.title}...',
-                                'חיפוש ב${widget.title}...',
-                              ),
+                              hintText: L.of(context).searchInPlace(widget.title),
                               hintStyle: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
@@ -277,7 +274,7 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                           ),
                         ),
                         IconButton(
-                          tooltip: _t('Filter', 'סינון'),
+                          tooltip: L.of(context).filter,
                           onPressed: _openFilters,
                           icon: Badge(
                             isLabelVisible: filtering,
@@ -328,11 +325,8 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                             if (list.isEmpty)
                               EmptyState(
                                 icon: IconsaxPlusLinear.filter_remove,
-                                title: _t(
-                                  'Nothing here matches that filter',
-                                  'אין תוצאות לסינון הזה',
-                                ),
-                                actionLabel: _t('Clear filter', 'נקו סינון'),
+                                title: L.of(context).nothingMatchesFilter,
+                                actionLabel: L.of(context).clearFilter,
                                 onAction: () => setState(() {
                                   _kosher = false;
                                   _delivery = false;
@@ -369,7 +363,6 @@ class _CountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isHe = Localizations.localeOf(context).languageCode == 'he';
     return Row(
       children: [
         Container(
@@ -400,7 +393,7 @@ class _CountRow extends StatelessWidget {
                   ),
                 ),
                 TextSpan(
-                  text: isHe ? ' במודיעין' : ' in Modiin',
+                  text: L.of(context).inModiinSuffix,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 14,

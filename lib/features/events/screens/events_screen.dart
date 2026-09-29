@@ -87,6 +87,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
             categories: categories,
             byEvent: byEvent,
             labels: labels,
+            l: l,
           );
     final active = circles.where((c) => c.filter == _filter).firstOrNull;
 
@@ -112,7 +113,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 16),
                                 child: Text(
-                                  labels.t('Event Categories', 'קטגוריות אירועים'),
+                                  L.of(context).eventCategories,
                                   style: _sectionTitle,
                                 ),
                               ),
@@ -129,7 +130,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                                   const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
                                 active == null || active.filter == 'all'
-                                    ? labels.t('Events in Modiin', 'אירועים במודיעין')
+                                    ? L.of(context).eventsInModiin
                                     : active.label,
                                 style: _sectionTitle,
                               ),
@@ -158,8 +159,8 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                                           )
                                         : EmptyState(
                                             icon: Icons.event_busy_outlined,
-                                            title: labels.t('No upcoming events', 'אין אירועים קרובים'),
-                                            subtitle: labels.t('New events will appear here', 'אירועים חדשים יופיעו כאן'),
+                                            title: L.of(context).noUpcomingEvents,
+                                            subtitle: L.of(context).newEventsAppearHere,
                                           );
                                   }
                                   return Column(
@@ -274,7 +275,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                 ),
                 Expanded(
                   child: Text(
-                    labels.t('Events in Modiin', 'אירועים במודיעין'),
+                    L.of(context).eventsInModiin,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: AppFonts.inter,
@@ -315,7 +316,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                         fontSize: 14,
                       ),
                       decoration: InputDecoration(
-                        hintText: labels.t('Search events, concerts, activities...', 'חפשו אירועים, הופעות, פעילויות...'),
+                        hintText: L.of(context).searchEvents,
                         hintStyle: const TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 14,

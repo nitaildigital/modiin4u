@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../../auth/widgets/m_account_widgets.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 import 'web_my_apartments_screen.dart';
@@ -29,6 +30,11 @@ class MyApartmentsScreen extends StatelessWidget {
     );
   }
 }
+
+const _mid = Color(0xFF123A72);
+const _navy = Color(0xFF0A1230);
+const _grey = Color(0xFF6D6D6D);
+const _hairline = Color(0xFFE7E7E7);
 
 class _MobileMyApartmentsContent extends ConsumerStatefulWidget {
   const _MobileMyApartmentsContent();
@@ -70,6 +76,16 @@ class _MobileMyApartmentsContentState
     super.dispose();
   }
 
+  /// A draft goes back into the form to be finished; anything sent already
+  /// opens as the listing.
+  void _open(Listing listing) {
+    if (listing.status == ListingStatus.draft) {
+      context.push('/add-apartment?draft=${listing.id}');
+    } else {
+      context.push('/listing/${listing.id}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
@@ -85,44 +101,7 @@ class _MobileMyApartmentsContentState
           child: SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 10),
-
-                // ═══════════════════════════════════
-                // Back button + title
-                // ═══════════════════════════════════
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            IconsaxPlusLinear.arrow_left,
-                            size: 24,
-                            color: Color(0xFF3D3D3D),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            l.myApartments,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                    ],
-                  ),
-                ),
+                MAccountTopBar(title: l.myApartments),
 
                 // ═══════════════════════════════════
                 // Content: empty or populated
@@ -144,15 +123,15 @@ class _MobileMyApartmentsContentState
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        border: Border.all(color: const Color(0xFFE7E7E7)),
+                        border: Border.all(color: _hairline),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            IconsaxPlusLinear.search_normal_1,
-                            size: 18,
-                            color: Color(0xFF6D6D6D),
+                          SvgPicture.asset(
+                            'assets/icons/m_account_search.svg',
+                            width: 18,
+                            height: 18,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -170,25 +149,29 @@ class _MobileMyApartmentsContentState
                                   fontFamily: AppFonts.inter,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,
-                                  color: const Color(0xFF6D6D6D),
+                                  color: _grey,
                                 ),
+                                // The theme fills inputs grey; this one sits
+                                // inside the white pill.
+                                filled: false,
                                 border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 13,
-                                ),
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
                               ),
                             ),
                           ),
-                          const Icon(
-                            IconsaxPlusLinear.setting_4,
-                            size: 20,
-                            color: Color(0xFF123A72),
+                          SvgPicture.asset(
+                            'assets/icons/m_realestate_filter.svg',
+                            width: 20,
+                            height: 20,
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 18),
 
                   // Listings
                   Expanded(
@@ -199,58 +182,24 @@ class _MobileMyApartmentsContentState
                               style: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
-                                color: const Color(0xFF6D6D6D),
+                                color: _grey,
                               ),
                             ),
                           )
                         : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                             itemCount: listings.length,
                             itemBuilder: (_, i) => _ListingCard(
                               listing: listings[i],
-                              onTap: () =>
-                                  context.push('/listing/${listings[i].id}'),
+                              onOpen: () => _open(listings[i]),
                             ),
                           ),
                   ),
 
                   // Add Apartment button
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: GestureDetector(
-                      onTap: () => context.push('/add-apartment'),
-                      child: Container(
-                        width: double.infinity,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF123A72),
-                          borderRadius: BorderRadius.circular(60),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              IconsaxPlusLinear.add,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              l.addApartment,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 11),
+                    child: _AddApartmentButton(label: l.addApartment),
                   ),
                 ],
               ],
@@ -277,69 +226,89 @@ class _MobileMyApartmentsContentState
           fit: BoxFit.contain,
         ),
         const SizedBox(height: 24),
-        Text(
-          l.noApartmentsYet,
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1F1F1F),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          l.addYourFirstApartment,
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF6D6D6D),
+        SizedBox(
+          width: 327,
+          child: Column(
+            children: [
+              Text(
+                l.noApartmentsYet,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1F1F1F),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l.addYourFirstApartment,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: _grey,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 40),
-
-        // Add Apartment button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 53),
-          child: GestureDetector(
-            onTap: () => context.push('/add-apartment'),
-            child: Container(
-              width: 287,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFF123A72),
-                borderRadius: BorderRadius.circular(60),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    IconsaxPlusLinear.add,
-                    size: 20,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l.addApartment,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        SizedBox(width: 287, child: _AddApartmentButton(label: l.addApartment)),
+        // As tall as the top bar, so the block is centred on the whole
+        // screen as drawn rather than on the space under the bar.
+        const SizedBox(height: 34),
       ],
     );
   }
 }
 
+/// The 48px mid-blue pill with the circled plus that opens the form.
+class _AddApartmentButton extends StatelessWidget {
+  final String label;
+  const _AddApartmentButton({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/add-apartment'),
+      child: Container(
+        width: double.infinity,
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        decoration: BoxDecoration(
+          color: _mid,
+          borderRadius: BorderRadius.circular(60),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/m_realestate_add_circle.svg',
+              width: 20,
+              height: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 24 / 14,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ═══════════════════════════════════════════════════
-// Data model
+// Listing card
 // ═══════════════════════════════════════════════════
 
 /// Listing card.
@@ -348,12 +317,13 @@ class _MobileMyApartmentsContentState
 /// a blue gradient rectangle for every listing.
 class _ListingCard extends StatelessWidget {
   final Listing listing;
-  final VoidCallback? onTap;
-  const _ListingCard({required this.listing, this.onTap});
+  final VoidCallback onOpen;
+  const _ListingCard({required this.listing, required this.onOpen});
 
   /// Only three of the seven statuses can appear on a listing someone has
-  /// posted, and the rest are treated as still being looked at rather than
-  /// given a colour that would claim something untrue.
+  /// posted, plus a draft kept to finish later; the rest are treated as
+  /// still being looked at rather than given a colour that would claim
+  /// something untrue.
   ({String text, Color fg, Color bg}) _status(L l) => switch (listing.status) {
     ListingStatus.active => (
       text: l.statusApproved,
@@ -364,6 +334,13 @@ class _ListingCard extends StatelessWidget {
       text: l.statusRejected,
       fg: const Color(0xFFCB3E3C),
       bg: const Color(0xFFFCE9E9),
+    ),
+    // Not in the design, which has no drafts; grey, as nothing has been
+    // sent yet.
+    ListingStatus.draft => (
+      text: l.statusDraft,
+      fg: _grey,
+      bg: const Color(0xFFF1F1F1),
     ),
     _ => (
       text: l.statusPending,
@@ -377,14 +354,16 @@ class _ListingCard extends StatelessWidget {
     final l = L.of(context);
     final status = _status(l);
     final price = listing.effectivePrice;
+    final place = listing.address ?? listing.neighborhoodName;
+    final isDraft = listing.status == ListingStatus.draft;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: onOpen,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+          border: Border(bottom: BorderSide(color: _hairline)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,8 +380,8 @@ class _ListingCard extends StatelessWidget {
                     height: 100,
                     radius: BorderRadius.circular(8),
                   ),
-                  Positioned(
-                    left: 6,
+                  PositionedDirectional(
+                    start: 6,
                     top: 6,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -436,42 +415,45 @@ class _ListingCard extends StatelessWidget {
                 children: [
                   Text(
                     listing.title,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF0A1230),
+                      color: _navy,
                     ),
                   ),
 
                   // A listing entered without an address has nothing to show
                   // here, so the row is left out rather than shown empty.
-                  if ((listing.address ?? listing.neighborhoodName) !=
-                      null) ...[
+                  if (place != null) ...[
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(
-                          IconsaxPlusLinear.location,
-                          size: 14,
-                          color: Color(0xFF6D6D6D),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            listing.address ?? listing.neighborhoodName!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 12,
-                              color: const Color(0xFF6D6D6D),
+                    SizedBox(
+                      height: 15,
+                      child: Row(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/m_realestate_pin14.svg',
+                            width: 14,
+                            height: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              place,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: _grey,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
 
@@ -481,37 +463,72 @@ class _ListingCard extends StatelessWidget {
                       listing.kind == ListingKind.rent
                           ? l.pricePerMonthValue(formatShekels(price))
                           : formatShekels(price),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontFamily: AppFonts.nunito,
+                        fontFamily: AppFonts.inter,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF0A1230),
+                        color: _navy,
                       ),
                     ),
                   ],
 
-                  const SizedBox(height: 8),
-                  Text(
-                    l.submittedOn(
-                      '${listing.createdAt.day} '
-                      '${l.monthShort(listing.createdAt.month)} '
-                      '${listing.createdAt.year}',
+                  // The design dates each card by its status ("Approved on",
+                  // "Rejected on"). `listings` keeps no time of approval or
+                  // rejection — `published_at` exists but nothing writes it —
+                  // so every card gives the day it was sent, which is known.
+                  // A draft has not been sent, so it has no such line.
+                  if (!isDraft) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      l.submittedOn(
+                        '${listing.createdAt.day} '
+                        '${l.monthShort(listing.createdAt.month)} '
+                        '${listing.createdAt.year}',
+                      ),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: _grey,
+                      ),
                     ),
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF6D6D6D),
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
 
-            const Icon(
-              IconsaxPlusLinear.more,
-              size: 20,
-              color: Color(0xFF6D6D6D),
+            // ── Kebab: the one thing to do with this listing ──
+            PopupMenuButton<bool>(
+              padding: EdgeInsets.zero,
+              tooltip: '',
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(color: _hairline),
+              ),
+              onSelected: (_) => onOpen(),
+              itemBuilder: (_) => [
+                PopupMenuItem<bool>(
+                  value: true,
+                  height: 40,
+                  child: Text(
+                    isDraft ? l.continueEditing : l.viewFullDetails,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: _navy,
+                    ),
+                  ),
+                ),
+              ],
+              child: SvgPicture.asset(
+                'assets/icons/m_realestate_kebab.svg',
+                width: 20,
+                height: 20,
+              ),
             ),
           ],
         ),

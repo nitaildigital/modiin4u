@@ -30,6 +30,9 @@ class ListingFilter {
     this.minRooms,
   });
 
+  /// A null argument keeps the current value, so taking a field back to "any"
+  /// needs its `clear…` flag. The map's filter sheet is what needs the last
+  /// four: before it, nothing could set them, let alone unset them.
   ListingFilter copyWith({
     ListingKind? kind,
     PropertyType? propertyType,
@@ -40,17 +43,33 @@ class ListingFilter {
     double? minRooms,
     bool clearKind = false,
     bool clearPropertyType = false,
+    bool clearNeighborhoodId = false,
+    bool clearMinPrice = false,
+    bool clearMaxPrice = false,
+    bool clearMinRooms = false,
   }) => ListingFilter(
     kind: clearKind ? null : (kind ?? this.kind),
     propertyType: clearPropertyType
         ? null
         : (propertyType ?? this.propertyType),
-    neighborhoodId: neighborhoodId ?? this.neighborhoodId,
+    neighborhoodId: clearNeighborhoodId
+        ? null
+        : (neighborhoodId ?? this.neighborhoodId),
     search: search ?? this.search,
-    minPrice: minPrice ?? this.minPrice,
-    maxPrice: maxPrice ?? this.maxPrice,
-    minRooms: minRooms ?? this.minRooms,
+    minPrice: clearMinPrice ? null : (minPrice ?? this.minPrice),
+    maxPrice: clearMaxPrice ? null : (maxPrice ?? this.maxPrice),
+    minRooms: clearMinRooms ? null : (minRooms ?? this.minRooms),
   );
+
+  /// Whether anything beyond the typed search narrows the list — what the
+  /// map's filter control marks with a dot.
+  bool get hasFilters =>
+      kind != null ||
+      propertyType != null ||
+      neighborhoodId != null ||
+      minPrice != null ||
+      maxPrice != null ||
+      minRooms != null;
 
   @override
   bool operator ==(Object other) =>

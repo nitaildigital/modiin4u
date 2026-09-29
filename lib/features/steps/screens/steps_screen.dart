@@ -4,7 +4,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../auth/widgets/m_account_widgets.dart' show MBackArrow;
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
@@ -70,24 +70,15 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                 const SizedBox(height: 10),
 
                 // ═══════════════════════════════════
-                // Back button (left-aligned)
+                // Back button, at the reading start
                 // ═══════════════════════════════════
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                // The shared arrow turns to face the right way in Hebrew;
+                // the icon here pointed left in both languages.
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
                   child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => context.pop(),
-                      child: const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Icon(
-                          IconsaxPlusLinear.arrow_left,
-                          size: 24,
-                          color: Color(0xFF3D3D3D),
-                        ),
-                      ),
-                    ),
+                    alignment: AlignmentDirectional.centerStart,
+                    child: MBackArrow(color: Color(0xFF3D3D3D)),
                   ),
                 ),
 

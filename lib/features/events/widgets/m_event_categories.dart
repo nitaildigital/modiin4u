@@ -7,6 +7,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../models/event.dart';
 import '../models/event_category.dart';
 import '../models/event_labels.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// One circle in the phone's "Event Categories" row.
 ///
@@ -48,11 +49,12 @@ class MEventCircle {
     required List<EventCategory> categories,
     required Map<String, List<EventCategory>> byEvent,
     required EventLabels labels,
+    required L l,
   }) {
     if (upcoming.isEmpty) return const [];
     final circles = <MEventCircle>[
       MEventCircle(
-        label: labels.t('All Events', 'כל האירועים'),
+        label: l.allEvents,
         count: upcoming.length,
         filter: 'all',
         asset: _all,
@@ -81,7 +83,7 @@ class MEventCircle {
     final free = upcoming.where((e) => e.isFree).length;
     if (free > 0) {
       circles.add(MEventCircle(
-        label: labels.t('Free', 'חינם'),
+        label: l.free,
         count: free,
         filter: 'free',
         asset: _free,

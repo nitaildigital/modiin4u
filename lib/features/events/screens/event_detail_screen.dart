@@ -411,7 +411,7 @@ class _MobileEventDetailContentState
                       style: const TextStyle(color: Colors.black),
                     ),
                     TextSpan(
-                      text: _labels.t(' people interested', ' מתעניינים'),
+                      text: L.of(context).peopleInterestedSuffix,
                     ),
                   ],
                 ),
@@ -435,7 +435,7 @@ class _MobileEventDetailContentState
                   ),
                 ),
                 const SizedBox(width: 4),
-                Text(_labels.t('Price', 'מחיר'), style: meta),
+                Text(L.of(context).price, style: meta),
               ],
             ),
           ],
@@ -453,7 +453,7 @@ class _MobileEventDetailContentState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_labels.t('Organized by', 'מארגנים'), style: _heading),
+          Text(L.of(context).organizedBy, style: _heading),
           const SizedBox(height: 12),
           GestureDetector(
             onTap: () => context.push('/business/${organizer.id}'),
@@ -525,7 +525,7 @@ class _MobileEventDetailContentState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_labels.t('About This Event', 'על האירוע'), style: _heading),
+          Text(L.of(context).aboutThisEvent, style: _heading),
           for (final p in paragraphs) ...[
             const SizedBox(height: 12),
             Text(
@@ -594,7 +594,7 @@ class _MobileEventDetailContentState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_labels.t('Where Is It?', 'איפה זה?'), style: _heading),
+          Text(L.of(context).whereIsIt, style: _heading),
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -711,7 +711,7 @@ class _MobileEventDetailContentState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_labels.t('You May Also Like', 'אולי יעניין אתכם גם'), style: _heading),
+          Text(L.of(context).youMayAlsoLike, style: _heading),
           const SizedBox(height: 16),
           for (var i = 0; i < related.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),

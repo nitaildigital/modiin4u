@@ -7,6 +7,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../core/theme/app_icons.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
@@ -156,9 +157,10 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
               ),
             ),
           ),
-          // Back button
-          Positioned(
-            left: 12,
+          // Back button, at the reading start; the arrow points right in
+          // Hebrew.
+          PositionedDirectional(
+            start: 12,
             top: 51,
             child: GestureDetector(
               onTap: () => context.pop(),
@@ -170,7 +172,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  IconsaxPlusLinear.arrow_left,
+                  AppIcons.back,
                   size: 20,
                   color: Color(0xFF3D3D3D),
                 ),

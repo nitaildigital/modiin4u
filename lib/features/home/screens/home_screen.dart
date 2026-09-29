@@ -17,6 +17,8 @@ import '../../../shared/widgets/skeleton.dart';
 import '../../businesses/models/business.dart';
 import '../../businesses/providers/business_providers.dart';
 import '../../events/models/event.dart';
+import '../../events/models/event_labels.dart';
+import '../../events/widgets/m_event_card.dart' show mEventsIsHebrew;
 import '../../deals/models/offer.dart';
 import '../../deals/providers/offer_providers.dart';
 import '../../events/providers/event_providers.dart';
@@ -115,15 +117,12 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         // neither popularity nor location. It says "near you" now only when
         // the row really is in order of distance.
         _SectionHeader(
-          title: (ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ??
-                  false)
+          title: (ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ?? false)
               ? 'קרוב אליך'
               : 'עסקים במודיעין',
           onSeeAll: () => context.go('/businesses'),
         ),
-        if (locationIsAskable &&
-            !(ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ??
-                true))
+        if (locationIsAskable && !(ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ?? true))
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
             child: Align(
@@ -133,11 +132,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      IconsaxPlusLinear.location,
-                      size: 16,
-                      color: AppColors.midBlue,
-                    ),
+                    const Icon(IconsaxPlusLinear.location, size: 16, color: AppColors.midBlue),
                     const SizedBox(width: 6),
                     Text(
                       'הצג מה קרוב אליי',
@@ -160,44 +155,30 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
         // ── Deal Near You ──
         if ((ref.watch(offersProvider).valueOrNull ?? const []).isNotEmpty) ...[
-          _SectionHeader(
-            title: l.dealsNearYou,
-            onSeeAll: () => context.goOrPush('/deals'),
-          ),
+          _SectionHeader(title: l.dealsNearYou, onSeeAll: () => context.goOrPush('/deals')),
           const SizedBox(height: 12),
           _buildDealImages(),
           const SizedBox(height: 32),
         ],
 
         // ── Upcoming Events ── only when there is one to come.
-        if ((ref.watch(upcomingEventsProvider).valueOrNull ?? const [])
-            .isNotEmpty) ...[
-          _SectionHeader(
-            title: l.upcomingEvents,
-            onSeeAll: () => context.goOrPush('/events'),
-          ),
+        if ((ref.watch(upcomingEventsProvider).valueOrNull ?? const []).isNotEmpty) ...[
+          _SectionHeader(title: l.upcomingEvents, onSeeAll: () => context.goOrPush('/events')),
           const SizedBox(height: 12),
           _buildEventCards(l),
           const SizedBox(height: 32),
         ],
 
         // ── Apartment Near You ──
-        if ((ref.watch(listingsProvider).valueOrNull ?? const [])
-            .isNotEmpty) ...[
-          _SectionHeader(
-            title: l.apartmentsNearYou,
-            onSeeAll: () => context.go('/realestate'),
-          ),
+        if ((ref.watch(listingsProvider).valueOrNull ?? const []).isNotEmpty) ...[
+          _SectionHeader(title: l.apartmentsNearYou, onSeeAll: () => context.go('/realestate')),
           const SizedBox(height: 12),
           _buildApartmentList(),
           const SizedBox(height: 32),
         ],
 
         // ── Latest News ──
-        _SectionHeader(
-          title: l.latestNews,
-          onSeeAll: () => context.go('/news'),
-        ),
+        _SectionHeader(title: l.latestNews, onSeeAll: () => context.go('/news')),
         const SizedBox(height: 12),
         _buildNewsCards(l),
 
@@ -292,28 +273,17 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
                   height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(50),
-                  ),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(50)),
                   child: Row(
                     children: [
                       const SizedBox(width: 16),
-                      const Icon(
-                        IconsaxPlusLinear.search_normal_1,
-                        color: Color(0xFF6D6D6D),
-                        size: 18,
-                      ),
+                      const Icon(IconsaxPlusLinear.search_normal_1, color: Color(0xFF6D6D6D), size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
                           onSubmitted: (_) => _onSearch(),
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            color: const Color(0xFF1F1F1F),
-                          ),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF1F1F1F)),
                           decoration: InputDecoration(
                             hintText: l.searchPlaceholder,
                             // White on white, as drawn — not the theme's
@@ -326,9 +296,8 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                               color: const Color(0xFF6D6D6D),
                             ),
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 13,
-                            ),
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 13),
                           ),
                         ),
                       ),
@@ -337,10 +306,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                         onTap: _onSearch,
                         child: Container(
                           margin: const EdgeInsets.all(5),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 7,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               begin: Alignment(-0.5, -0.5),
@@ -357,11 +323,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                                 width: 24,
                                 height: 24,
                                 child: Center(
-                                  child: SvgPicture.asset(
-                                    'assets/web/home/ai.svg',
-                                    width: 17.5,
-                                    height: 21,
-                                  ),
+                                  child: SvgPicture.asset('assets/web/home/ai.svg', width: 17.5, height: 21),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -395,16 +357,10 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
             end: 7,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => kIsWeb
-                  ? showWebMobileMenu(context)
-                  : showAppSideMenu(context),
+              onTap: () => kIsWeb ? showWebMobileMenu(context) : showAppSideMenu(context),
               child: Padding(
                 padding: const EdgeInsets.all(8),
-                child: SvgPicture.asset(
-                  'assets/icons/m_home_menu.svg',
-                  width: 24,
-                  height: 24,
-                ),
+                child: SvgPicture.asset('assets/icons/m_home_menu.svg', width: 24, height: 24),
               ),
             ),
           ),
@@ -517,10 +473,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.55),
-                        ],
+                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.55)],
                       ),
                     ),
                   ),
@@ -570,8 +523,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   /// ₪3,650,000 and three more, all 140 m² and 6 rooms — tapping through to
   /// `/listing/demo_0..3`, which cannot resolve.
   Widget _buildApartmentList() {
-    final listings =
-        ref.watch(listingsProvider).valueOrNull ?? const <Listing>[];
+    final listings = ref.watch(listingsProvider).valueOrNull ?? const <Listing>[];
     if (listings.isEmpty) return const SizedBox.shrink();
 
     // The home screen shows a handful; the Real Estate tab shows them all.
@@ -619,13 +571,7 @@ Widget _businessCardSkeleton() => const _CardFrame(
       SizedBox(height: 8),
       SkeletonLine(width: 210, fontSize: 12),
       SizedBox(height: 8),
-      Row(
-        children: [
-          SkeletonBox(width: 54, height: 18, radius: 50),
-          Spacer(),
-          SkeletonLine(width: 64, fontSize: 12),
-        ],
-      ),
+      Row(children: [SkeletonBox(width: 54, height: 18, radius: 50), Spacer(), SkeletonLine(width: 64, fontSize: 12)]),
     ],
   ),
 );
@@ -691,7 +637,19 @@ Widget _businessCard(Business b) => _BusinessCard(data: _BusinessData.from(b));
 // Dates are formatted here rather than inside the data classes: a factory
 // has no BuildContext, so a month name written there would stay Hebrew with
 // the app set to English.
-Widget _eventCard(Event e, L l) => _EventCard(data: _EventData.from(e, l));
+// The category comes from its own provider, as on the Events list, so the
+// card watches it here; an event nobody has filed keeps the line empty.
+Widget _eventCard(Event e, L l) => Consumer(
+  builder: (context, ref, _) {
+    final labels = EventLabels(mEventsIsHebrew(context));
+    final category =
+        (ref.watch(eventCategoriesByEventProvider).valueOrNull?[e.id] ??
+                const [])
+            .map(labels.category)
+            .firstOrNull;
+    return _EventCard(data: _EventData.from(e, l, category: category ?? ''));
+  },
+);
 Widget _newsCard(Article a, L l) => _NewsCard(data: _NewsData.from(a, l));
 
 /// One horizontal row driven by a single provider.
@@ -731,9 +689,7 @@ class _ProviderRow<T> extends ConsumerWidget {
               separatorBuilder: (_, _) => SizedBox(width: gap),
               itemBuilder: (_, _) => skeleton(),
             ),
-            error: (_, _) => ErrorRetry(
-              onRetry: () => ref.invalidate(provider as ProviderOrFamily),
-            ),
+            error: (_, _) => ErrorRetry(onRetry: () => ref.invalidate(provider as ProviderOrFamily)),
             data: (items) => items.isEmpty
                 ? const SizedBox.shrink()
                 : ListView.separated(
@@ -743,10 +699,7 @@ class _ProviderRow<T> extends ConsumerWidget {
                     separatorBuilder: (_, _) => SizedBox(width: gap),
                     // Top-aligned, so a card is as tall as what it holds
                     // rather than stretched to the row.
-                    itemBuilder: (_, i) => Align(
-                      alignment: Alignment.topCenter,
-                      child: card(items[i]),
-                    ),
+                    itemBuilder: (_, i) => Align(alignment: Alignment.topCenter, child: card(items[i])),
                   ),
           ),
     );
@@ -809,8 +762,7 @@ const _cardGradients = <List<Color>>[
   [Color(0xFF0F5257), Color(0xFF17A9D0)],
 ];
 
-List<Color> _gradientFor(String id) =>
-    _cardGradients[id.hashCode.abs() % _cardGradients.length];
+List<Color> _gradientFor(String id) => _cardGradients[id.hashCode.abs() % _cardGradients.length];
 
 class _BusinessData {
   final String id;
@@ -888,10 +840,7 @@ class _BusinessCard extends StatelessWidget {
                 Positioned(
                   right: 8,
                   top: 8,
-                  child: FavoriteButton(
-                    kind: FavoriteKind.business,
-                    id: data.id,
-                  ),
+                  child: FavoriteButton(kind: FavoriteKind.business, id: data.id),
                 ),
                 // Kosher badge
                 if (data.isKosher)
@@ -899,10 +848,7 @@ class _BusinessCard extends StatelessWidget {
                     left: 8,
                     bottom: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0033AC),
                         borderRadius: BorderRadius.circular(50),
@@ -910,11 +856,7 @@ class _BusinessCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            IconsaxPlusBold.verify,
-                            size: 12,
-                            color: Colors.white,
-                          ),
+                          const Icon(IconsaxPlusBold.verify, size: 12, color: Colors.white),
                           const SizedBox(width: 4),
                           Text(
                             'Kosher',
@@ -952,20 +894,12 @@ class _BusinessCard extends StatelessWidget {
             // Address
             Row(
               children: [
-                const Icon(
-                  IconsaxPlusLinear.location,
-                  size: 14,
-                  color: Color(0xFF6D6D6D),
-                ),
+                const Icon(IconsaxPlusLinear.location, size: 14, color: Color(0xFF6D6D6D)),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     data.address,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      color: const Color(0xFF6D6D6D),
-                    ),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -985,20 +919,12 @@ class _BusinessCard extends StatelessWidget {
                 if (data.reviews == 0)
                   Text(
                     L.of(context).notRatedYet,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      color: const Color(0xFF6D6D6D),
-                    ),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D)),
                   )
                 else
                   Row(
                     children: [
-                      const Icon(
-                        IconsaxPlusBold.star_1,
-                        size: 14,
-                        color: Color(0xFFFFC107),
-                      ),
+                      const Icon(IconsaxPlusBold.star_1, size: 14, color: Color(0xFFFFC107)),
                       const SizedBox(width: 6),
                       Text(
                         data.rating.toStringAsFixed(1),
@@ -1012,11 +938,7 @@ class _BusinessCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '(${data.reviews})',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: const Color(0xFF6D6D6D),
-                        ),
+                        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D)),
                       ),
                     ],
                   ),
@@ -1025,14 +947,8 @@ class _BusinessCard extends StatelessWidget {
                 // it takes what room is left rather than pushing the card.
                 Flexible(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: data.typeColor,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(color: data.typeColor, borderRadius: BorderRadius.circular(4)),
                     child: Text(
                       data.type,
                       maxLines: 1,
@@ -1085,13 +1001,13 @@ class _EventData {
     required this.gradientColors,
   });
 
-  factory _EventData.from(Event e, L l) {
+  factory _EventData.from(Event e, L l, {String category = ''}) {
     final start = e.startDate;
     return _EventData(
       id: e.id,
       imageUrl: e.imageUrl,
       name: e.title,
-      category: '',
+      category: category,
       location: e.venueName ?? e.address,
       time: e.displayTime ?? '',
       price: e.displayPrice ?? '',
@@ -1143,10 +1059,7 @@ class _EventCard extends StatelessWidget {
                   child: Container(
                     width: 57,
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
                     child: Column(
                       children: [
                         Text(
@@ -1203,11 +1116,7 @@ class _EventCard extends StatelessWidget {
             // Category
             Text(
               data.category,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 12,
-                color: const Color(0xFF6D6D6D),
-              ),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D)),
             ),
 
             const SizedBox(height: 8),
@@ -1222,11 +1131,7 @@ class _EventCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 14,
-                            color: Color(0xFF6D6D6D),
-                          ),
+                          const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF6D6D6D)),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -1245,19 +1150,11 @@ class _EventCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(
-                            IconsaxPlusLinear.clock,
-                            size: 14,
-                            color: Color(0xFF6D6D6D),
-                          ),
+                          const Icon(IconsaxPlusLinear.clock, size: 14, color: Color(0xFF6D6D6D)),
                           const SizedBox(width: 6),
                           Text(
                             data.time,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 12,
-                              color: const Color(0xFF6D6D6D),
-                            ),
+                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D)),
                           ),
                         ],
                       ),
@@ -1342,9 +1239,7 @@ class _ApartmentRow extends StatelessWidget {
                     // The badge said FOR SALE on every row, rentals
                     // included.
                     Text(
-                      listing.kind == ListingKind.rent
-                          ? l.forRentBadge
-                          : l.forSaleBadge,
+                      listing.kind == ListingKind.rent ? l.forRentBadge : l.forSaleBadge,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 10,
@@ -1359,20 +1254,12 @@ class _ApartmentRow extends StatelessWidget {
                   const SizedBox(height: 9),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: Color(0xFF6D6D6D),
-                      ),
+                      const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF6D6D6D)),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           address,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            color: const Color(0xFF6D6D6D),
-                          ),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D)),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1388,36 +1275,20 @@ class _ApartmentRow extends StatelessWidget {
                   Row(
                     children: [
                       if (listing.sqm != null) ...[
-                        const Icon(
-                          IconsaxPlusLinear.maximize_4,
-                          size: 14,
-                          color: Color(0xFF6D6D6D),
-                        ),
+                        const Icon(IconsaxPlusLinear.maximize_4, size: 14, color: Color(0xFF6D6D6D)),
                         const SizedBox(width: 8),
                         Text(
                           '${listing.sqm} ${l.sqmUnit}',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            color: const Color(0xFF6D6D6D),
-                          ),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D)),
                         ),
                         const SizedBox(width: 31),
                       ],
                       if (listing.rooms != null) ...[
-                        const Icon(
-                          IconsaxPlusLinear.house_2,
-                          size: 14,
-                          color: Color(0xFF6D6D6D),
-                        ),
+                        const Icon(IconsaxPlusLinear.house_2, size: 14, color: Color(0xFF6D6D6D)),
                         const SizedBox(width: 8),
                         Text(
                           '${_rooms(listing.rooms!)} ${l.roomsLabel}',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            color: const Color(0xFF6D6D6D),
-                          ),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6D6D6D)),
                         ),
                       ],
                     ],
@@ -1432,8 +1303,7 @@ class _ApartmentRow extends StatelessWidget {
   }
 
   /// 3.5 reads as "3.5"; 4.0 reads as "4".
-  static String _rooms(double v) =>
-      v == v.roundToDouble() ? '${v.toInt()}' : '$v';
+  static String _rooms(double v) => v == v.roundToDouble() ? '${v.toInt()}' : '$v';
 }
 
 // ═══════════════════════════════════════════════
@@ -1515,19 +1385,11 @@ class _NewsCard extends StatelessWidget {
             // Date
             Row(
               children: [
-                const Icon(
-                  IconsaxPlusLinear.calendar_1,
-                  size: 16,
-                  color: Color(0xFF888888),
-                ),
+                const Icon(IconsaxPlusLinear.calendar_1, size: 16, color: Color(0xFF888888)),
                 const SizedBox(width: 8),
                 Text(
                   data.date,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    color: const Color(0xFF6D6D6D),
-                  ),
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D)),
                 ),
               ],
             ),

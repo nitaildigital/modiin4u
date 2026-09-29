@@ -16,6 +16,15 @@ const mapLayers = [
   ('Real Estate', IconsaxPlusBold.house_2, Color(0xFF006BF6)),
 ];
 
+/// The phone map's fourth layer, from the `parking_lots` table the client
+/// fills in the panel (migration 00030).
+///
+/// Kept out of [mapLayers] on purpose: the website's map and home page list
+/// every entry there as a toggle, and their designs are a separate job. Its
+/// pins carry this layer name, which neither website page switches on, so
+/// they stay off the website until it is given the layer too.
+const parkingLayer = ('Parkings', IconsaxPlusBold.car, Color(0xFF17A9D0));
+
 // ═══════════════════════════════════════════════
 // POI data model
 // ═══════════════════════════════════════════════
@@ -27,6 +36,9 @@ class MapPoi {
   final Color color;
   final String layer;
   final String? route;
+
+  /// The English name where the row has one; only parking lots carry it.
+  final String? nameEn;
   // Shared
   final String? address;
   final String? imageAsset; // placeholder image path
@@ -45,6 +57,12 @@ class MapPoi {
   final String? rooms;
   final String? floor;
   final String? saleTag; // "FOR SALE" / "FOR RENT"
+
+  /// The figures behind [area], [rooms] and [floor], for a screen that
+  /// words them in its own language; those three are English.
+  final int? sqm;
+  final double? roomCount;
+  final int? floorNumber;
   // Events
   final String? time;
   final String? venue;
@@ -59,6 +77,7 @@ class MapPoi {
     required this.color,
     required this.layer,
     this.route,
+    this.nameEn,
     this.address,
     this.imageAsset,
     this.photos = const [],
@@ -71,6 +90,9 @@ class MapPoi {
     this.rooms,
     this.floor,
     this.saleTag,
+    this.sqm,
+    this.roomCount,
+    this.floorNumber,
     this.time,
     this.venue,
     this.interestedCount,

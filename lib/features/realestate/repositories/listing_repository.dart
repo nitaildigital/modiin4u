@@ -109,13 +109,20 @@ class ListingRepository {
     return List<Map<String, dynamic>>.from(rows).map(Listing.fromJson).toList();
   }
 
-  /// Posts a listing for review.
+  /// Posts a listing for review, or keeps it as a draft to finish later.
   ///
-  /// Status is fixed at `pending` here rather than taken from the caller: a
-  /// resident must not be able to publish straight to the directory. The
-  /// insert policy requires `owner_id` to be the signed-in account, so it is
-  /// read from the session rather than passed in.
+  /// Status is `pending`, or `draft` when [asDraft] is set — never taken
+  /// from the caller as a value: a resident must not be able to publish
+  /// straight to the directory. The insert policy requires `owner_id` to be
+  /// the signed-in account, so it is read from the session rather than
+  /// passed in.
+  ///
+  /// With [draftId] the draft already saved is written over rather than a
+  /// second row added, and only while it is still a draft, so a listing that
+  /// has gone for review cannot be pulled back by an old form.
   Future<Listing> create({
+    String? draftId,
+    bool asDraft = false,
     required String title,
     String? description,
     required ListingKind kind,
@@ -145,14 +152,14 @@ class ListingRepository {
       throw StateError('A listing can only be posted by a signed-in account.');
     }
 
-    final row = await _client
-        .from('listings')
-        .insert({
+    final values = {
           'title': title,
           'description': description,
           'kind': kind.name,
           'property_type': propertyType.name,
-          'status': ListingStatus.pending.name,
+          'status': asDraft
+              ? ListingStatus.draft.name
+              : ListingStatus.pending.name,
           'rooms': rooms,
           'bathrooms': bathrooms,
           'floor': floor,
@@ -173,9 +180,22 @@ class ListingRepository {
           'is_broker': isBroker,
           'contact_name': contactName,
           'contact_phone': contactPhone,
-        })
-        .select(_select)
-        .single();
+        };
+
+    final row = draftId == null
+        ? await _client
+              .from('listings')
+              .insert(values)
+              .select(_select)
+              .single()
+        : await _client
+              .from('listings')
+              .update(values)
+              .eq('id', draftId)
+              .eq('owner_id', uid)
+              .eq('status', ListingStatus.draft.name)
+              .select(_select)
+              .single();
 
     return Listing.fromJson(row);
   }

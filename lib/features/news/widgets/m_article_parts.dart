@@ -10,6 +10,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../models/article.dart';
 import '../models/article_body.dart';
+import '../../../l10n/app_localizations.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Pieces of the phone's news pages, from the mobile Figma frames "News" and
@@ -304,7 +305,6 @@ class MRelatedNews extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (articles.isEmpty) return const SizedBox.shrink();
-    final he = mIsHebrew(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -314,7 +314,7 @@ class MRelatedNews extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  he ? 'עוד חדשות קשורות' : 'More Related News',
+                  L.of(context).moreRelatedNews,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 16,
@@ -327,7 +327,7 @@ class MRelatedNews extends StatelessWidget {
               GestureDetector(
                 onTap: onSeeAll,
                 child: Text(
-                  he ? 'הצג הכל' : 'See All',
+                  L.of(context).newsSeeAll,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 12,
@@ -436,7 +436,6 @@ class MArticleBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final he = mIsHebrew(context);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -458,7 +457,7 @@ class MArticleBottomBar extends StatelessWidget {
                       SvgPicture.asset('assets/web/news/stat_share.svg', width: 20, height: 20),
                       const SizedBox(width: 12),
                       Text(
-                        article.shareCount > 0 ? '${article.shareCount}' : (he ? 'שיתוף' : 'Share'),
+                        article.shareCount > 0 ? '${article.shareCount}' : L.of(context).share,
                         style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: Colors.black),
                       ),
                     ],

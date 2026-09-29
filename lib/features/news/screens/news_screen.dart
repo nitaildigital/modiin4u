@@ -15,6 +15,7 @@ import '../models/article.dart';
 import '../providers/news_providers.dart';
 import '../widgets/m_article_parts.dart';
 import 'web_news_screen.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// News feed – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News web layout; narrower windows
@@ -53,10 +54,9 @@ class _MobileNewsContent extends ConsumerWidget {
     final articles = catId == null
         ? ref.watch(publishedArticlesProvider)
         : ref.watch(articlesByCategoryProvider(catId));
-    final he = mIsHebrew(context);
     final title = catId == null
-        ? (he ? 'חדשות' : 'News')
-        : (ref.watch(categoryNameProvider(catId)).valueOrNull ?? (he ? 'חדשות' : 'News'));
+        ? L.of(context).news
+        : (ref.watch(categoryNameProvider(catId)).valueOrNull ?? L.of(context).news);
 
     Future<void> refresh() async {
       if (catId == null) {
@@ -111,8 +111,8 @@ class _MobileNewsContent extends ConsumerWidget {
                     data: (list) => list.isEmpty
                         ? EmptyState(
                             icon: IconsaxPlusLinear.document_text,
-                            title: he ? 'אין כתבות להצגה' : 'No stories yet',
-                            subtitle: he ? 'כתבות חדשות יופיעו כאן' : 'New stories will appear here',
+                            title: L.of(context).noStoriesYet,
+                            subtitle: L.of(context).newStoriesAppearHere,
                           )
                         : RefreshIndicator(
                             onRefresh: refresh,
@@ -139,7 +139,6 @@ class _NewsFront extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final he = mIsHebrew(context);
     final hero = pickHeroArticle(articles);
     final categories =
         ref.watch(navCategoriesProvider('article')).valueOrNull ?? const <NavCategory>[];
@@ -178,7 +177,7 @@ class _NewsFront extends ConsumerWidget {
             ),
           ]
         else if (rest.isNotEmpty)
-          _Section(title: he ? 'הכתבות האחרונות' : 'Latest Stories', articles: rest),
+          _Section(title: L.of(context).latestStories, articles: rest),
       ],
     );
   }
@@ -194,7 +193,6 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final he = mIsHebrew(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -220,7 +218,7 @@ class _Section extends StatelessWidget {
                 GestureDetector(
                   onTap: onSeeAll,
                   child: Text(
-                    he ? 'הצג הכל' : 'See All',
+                    L.of(context).newsSeeAll,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 12,
@@ -288,7 +286,6 @@ class _FeaturedArticle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final he = mIsHebrew(context);
     return GestureDetector(
       onTap: () => context.push('/article/${article.id}'),
       behavior: HitTestBehavior.opaque,
@@ -329,7 +326,7 @@ class _FeaturedArticle extends StatelessWidget {
                             SvgPicture.asset('assets/web/news/now_in_modiin.svg', width: 16, height: 16),
                             const SizedBox(width: 4),
                             Text(
-                              he ? 'עכשיו במודיעין' : 'Now in Modiin',
+                              L.of(context).nowInModiin,
                               style: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 12,
