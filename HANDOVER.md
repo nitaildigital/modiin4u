@@ -4,6 +4,22 @@ For Harshit, taking over from Arvindra. PLAN.md is the long record of every
 decision and why; this is the short map of where things stand and what is
 next. Client: Nitai Levy.
 
+## The main goal, and the order
+
+**Finish the app, the website and the panel — first what already exists, then
+the new features.** In this order:
+
+1. **Panel:** the sections still broken (listed under Status) and the
+   `home_blocks` security fix. The client runs everything from the panel.
+2. **Mobile:** compare each screen with its Figma frame on a device and fix
+   the differences; check the signed-in screens (Profile, Settings, Edit
+   Profile) and an iPhone.
+3. **Loose ends** listed under Status and Mobile.
+4. **New features the client asked for:** Shabbat times (smallest), the
+   pedometer groups, parking lots, parks — see "The client's handover points".
+5. **Launch:** the domain and https, removing the sample content, release
+   signing, rotating the keys that were pasted in chat.
+
 ## Where to look
 
 | What | Where |
@@ -69,12 +85,20 @@ it is in git:
 
 ## The client's handover points (29 Sep)
 
-1. **Step counter** — "as I showed you a few days ago". Not specified in
-   writing; ask him for the behaviour he showed. `lib/features/steps/`,
-   challenges are managed in the panel (אתגרים, works).
-2. **Category pages: the filter isn't working.** Not reproduced yet — ask which
-   page (web or app, which category, which filter). Being looked at in today's
-   mobile pass (businesses list).
+1. **Step counter — groups.** His words: "there should be an option to create
+   a group with people who have the app and invite them to it — for example,
+   by sending them an invitation — and then view group stats/activity
+   together. Quite similar to StepsApp." Not built. How to build it is under
+   "Guide: pedometer groups" below.
+2. **Category pages: the filter isn't working — found and fixed (29 Sep).**
+   Checked in a browser: the website's filters work (restaurants category
+   page 54 → Kosher 46 → Delivery 35, matching the database; the restaurants
+   listing's cuisine, kosher and delivery filters too). The failure was the
+   **phone layout**, which he was using (the same visit reported the ☰ opening
+   a sign-in, which only happened on a phone): its category page had no
+   filter at all, and the Restaurants search and filter icons did nothing. The
+   phone category page now has search and a Kosher/Delivery sheet; checked on
+   the deployed site at phone width (54 → 46).
 3. **Mobile hamburger menu missing My Profile, Support, Step Counter.** In the
    app the ☰ on home went straight to /profile. The Figma "Side Menu" is being
    built today (see "Mobile" below).
@@ -87,6 +111,81 @@ it is in git:
      reviews, like a business page. Could reuse the business model (a "parks"
      category) or a new table; decide with him.
    All three need a table (or category) + panel screens + the app/web screens.
+   How to build them is under "Guide: municipality" below.
+
+## Guide: pedometer groups (client's point 1)
+
+**What exists.** Steps come from the phone's sensor (`pedometer` package) and
+are stored per person per day in `daily_steps (profile_id, date, steps)`
+(migration 00011). Leaderboards read them through two SECURITY DEFINER
+functions in 00022 (`steps_leaderboard_people`, `…_neighborhoods`), because
+profiles are private — one resident may not read another's row. City
+challenges are `challenges` / `challenge_participants`, managed in the panel.
+The Step Counter screen is `lib/features/steps/` (app only; the website has
+no accounts).
+
+**What to build** (StepsApp-like groups):
+- Tables: `step_groups (id, name, owner_id, invite_code unique, created_at)`
+  and `step_group_members (group_id, profile_id, role, joined_at, unique)`.
+  RLS: a member reads their groups and fellow members' names; only the owner
+  renames, removes members or deletes; anyone may leave.
+- **Inviting:** a link, not a people search — profiles are private, and a
+  search would expose who uses the app. "Invite" opens the share sheet
+  (WhatsApp etc.) with `https://app.modiin4u.co.il/join/<code>`; the app opens
+  that link (Android App Links / iOS Universal Links, or a custom scheme first)
+  and shows "Join <group>?". Someone without the app lands on the website,
+  which can point to the stores. Push invitations would need Firebase (not set
+  up).
+- **Stats and activity:** a SECURITY DEFINER function
+  `step_group_stats(group_id, from, to)` that first checks the caller is a
+  member, then returns per member name, avatar, steps per day and totals —
+  never raw profile rows. From it: the group's total, a ranking, a week chart,
+  and an activity line ("Dana walked 12,400 today") derived from
+  `daily_steps`, not stored separately.
+- **Screens:** a Groups tab on Step Counter (my groups, create), a group page
+  (ranking, chart, activity, invite, leave), and the join screen.
+- **Check first** that steps are uploaded reliably: the sensor counts since
+  boot, so the daily figure and a regular upload to `daily_steps` decide
+  whether a group's numbers are right. The Access switch `health_enabled` on
+  the profile is the resident's consent.
+- Ask the client for the screens he showed from StepsApp; the Figma file has
+  no group frames.
+
+## Guide: municipality (client's point 4)
+
+**What exists.** `lib/features/municipal/` — the Municipal page (restyled to
+Figma 643:5751 on 29 Sep) with a Shabbat card, a Parking card and eight
+service tiles, of which only Parking leads anywhere; a parking screen with no
+managed data. Nothing in the panel manages any of it.
+
+**Shabbat and holiday times — do first, no table needed.** Hebcal's API,
+by coordinates so the city is exact:
+`https://www.hebcal.com/shabbat?cfg=json&latitude=31.8969&longitude=35.0095&tzid=Asia/Jerusalem&M=on&lg=he`
+(candle lighting, Havdalah, the parasha; `lg=s` for English). Holidays:
+`https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&mod=on&...` with the
+same location. Fetch in a provider, cache for the week, show on the Shabbat
+card and the "Shabbat & Holidays" tile; credit Hebcal as its licence asks.
+Never write a time into code — an invented "starts 18:42" was removed once.
+
+**Parking lots — a table and a panel screen.** `parking_lots (name, name_en,
+address, latitude, longitude, capacity, is_free, price_note, hours, notes,
+image_url, is_active, sort_order)`, RLS: public reads active rows, admins
+write. Panel: a "Municipality" section with the list and an editor (pick the
+point on a map, as the events editor fills coordinates). App and website: the
+parking screen lists them with a map. The design's "high availability" needs a
+live source the city does not provide — leave it out.
+
+**Parks — like a business page.** Photos, description and resident reviews
+already exist for businesses (gallery in `entity_media`, reviews, map, panel
+editor). The least work: file parks as businesses under a "Parks" category and
+keep that category out of the business directory lists, or add a `kind` column
+on businesses. A separate table would mean rebuilding the gallery, reviews and
+editor. Decide with the client; reviews are written in the app (accounts).
+
+**Service tiles.** A small `municipal_services (title_he, title_en, icon,
+link or phone, sort_order, is_active)` table with a panel editor, so the
+client decides which tiles appear and where they lead, instead of eight fixed
+"coming soon" tiles.
 
 ## Status
 
