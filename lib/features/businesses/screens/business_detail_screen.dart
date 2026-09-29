@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:share_plus/share_plus.dart';
@@ -66,8 +67,7 @@ class _BusinessDetailContentState
     extends ConsumerState<_BusinessDetailContent> {
   Business get business => widget.business;
 
-  /// The page has two share controls — one on the photograph, one in the
-  /// action row — and they now send the same thing.
+  /// Share, from the control on the photograph.
   void _shareBusiness() {
     Share.share(
       [
@@ -80,6 +80,10 @@ class _BusinessDetailContentState
   }
 
   int _selectedTab = 0;
+
+  /// The app is Hebrew-first; labels the shared ARB files do not carry yet
+  /// are written in both languages here.
+  bool get _isHe => Localizations.localeOf(context).languageCode == 'he';
 
   // Review creation state
   int _userRating = 0;
@@ -119,11 +123,29 @@ class _BusinessDetailContentState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Hero image area ──
-            _buildHero(topPadding),
-
-            // ── Profile circle + Kosher badge overlap area ──
-            _buildProfileAndKosher(),
+            // ── Hero image, with the logo half over its lower edge ──
+            // The frame: a 260 photo, the 100 logo from y 210 to 310 and the
+            // kosher chip 16 under the photo. The logo used to be pulled up
+            // with a transform, which left its 50px of layout space behind as
+            // a gap above the name.
+            SizedBox(
+              height: 310,
+              child: Stack(
+                children: [
+                  _buildHero(topPadding),
+                  PositionedDirectional(
+                    start: 16,
+                    top: 210,
+                    child: _BusinessLogo(url: business.logoUrl, size: 100),
+                  ),
+                  PositionedDirectional(
+                    end: 15,
+                    top: 276,
+                    child: _buildKosherChip(),
+                  ),
+                ],
+              ),
+            ),
 
             const SizedBox(height: 12),
 
@@ -136,7 +158,8 @@ class _BusinessDetailContentState
                   Text(
                     business.name,
                     style: TextStyle(
-                      fontFamily: AppFonts.rubik,
+                      // "Avenir Next Rounded Pro Demi" in the frame.
+                      fontFamily: AppFonts.nunito,
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -167,12 +190,12 @@ class _BusinessDetailContentState
             _buildAddressRow(),
             _buildNeighborhoodLink(),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 28),
 
             // ── Action buttons ──
             _buildActionButtons(),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // ── Tab bar ──
             _buildTabBar(business),
@@ -279,62 +302,90 @@ class _BusinessDetailContentState
             ),
           ),
 
-          // The "Show all photos" control used to sit here doing nothing.
-          // A business carries a single cover image; a gallery needs the
-          // `media` table, which is empty (A5b). Restore it with the gallery.
+          // "Show all photos" opens the Photos tab — and is drawn only for a
+          // business whose gallery (entity_media, role 'gallery') has photos.
+          if ((ref.watch(businessGalleryProvider(business.id)).valueOrNull ??
+                  const <String>[])
+              .isNotEmpty)
+            PositionedDirectional(
+              end: 13,
+              bottom: 14,
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedTab = 2),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/web/business/gallery.svg',
+                        width: 14,
+                        height: 14,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isHe ? 'הצג את כל התמונות' : 'Show all photos',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
   // ─────────────────────────────────────────────
-  // Profile circle + Kosher badge
+  // Kosher badge (the logo is placed in the hero's stack)
   // ─────────────────────────────────────────────
-  Widget _buildProfileAndKosher() {
-    return Transform.translate(
-      offset: const Offset(0, -50),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            // Profile circle (100x100, 3px white border)
-            _BusinessLogo(url: business.logoUrl, size: 100),
-
-            const Spacer(),
-
-            // Kosher badge — only shown when the business is certified
-            if (business.kosherLabel != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE7E7E7)),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      IconsaxPlusLinear.verify,
-                      size: 14,
-                      color: AppColors.midBlue,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      business.kosherLabel!,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.midBlue,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+  /// Only when the business is certified; nothing otherwise.
+  Widget _buildKosherChip() {
+    final label = business.kosherLabel;
+    if (label == null) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            IconsaxPlusLinear.verify,
+            size: 14,
+            color: AppColors.midBlue,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.midBlue,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -407,9 +458,11 @@ class _BusinessDetailContentState
             ),
             const SizedBox(width: 8),
             Text(
-              business.isOpenNow ? 'פתוח עכשיו' : 'סגור',
+              business.isOpenNow
+                  ? (_isHe ? 'פתוח עכשיו' : 'Open now')
+                  : L.of(context).closed,
               style: TextStyle(
-                fontFamily: AppFonts.rubik,
+                fontFamily: AppFonts.inter,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: business.isOpenNow
@@ -517,47 +570,50 @@ class _BusinessDetailContentState
   }
 
   // ─────────────────────────────────────────────
-  // Action buttons: Call, Website, Instagram, Navigate, Share
+  // Action buttons: Direction, then Call and Website
   // ─────────────────────────────────────────────
-  /// [stacked] puts the call button on its own line above the four icons.
-  ///
-  /// The row is laid out for a phone's full width. Beside the page on a
-  /// desktop it sits in a 440px column, where five controls on one line push
-  /// the call button's label past the card's edge.
-  /// [stacked] puts the call button on its own line above the four icons.
-  ///
-  /// The row is laid out for a phone's full width. Beside the page on a
-  /// desktop it sits in a 440px column, where five controls on one line push
-  /// the call button's label past the card's edge.
-  Widget _buildActionButtons({bool stacked = false}) {
+  /// The frame's row: a "Direction" pill at the start, the phone and web
+  /// circles at the end. Share lives on the photograph (as in the frame);
+  /// Instagram is not in the frame and is kept only for a business that has
+  /// one, so its link is not lost.
+  Widget _buildActionButtons() {
     final l = L.of(context);
 
-    final call = GestureDetector(
-      onTap: business.phone == null
-          ? null
-          : () => launchUrl(Uri.parse('tel:${business.phone}')),
+    final direction = GestureDetector(
+      onTap: () => launchUrl(
+        Uri.parse(
+          'https://waze.com/ul?ll=${business.latitude},'
+          '${business.longitude}&navigate=yes',
+        ),
+      ),
       child: Container(
         height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
           color: AppColors.midBlue,
           borderRadius: BorderRadius.circular(50),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(IconsaxPlusLinear.call, size: 16, color: Colors.white),
+            SvgPicture.asset(
+              'assets/icons/m_food_direction.svg',
+              width: 16,
+              height: 16,
+              colorFilter: const ColorFilter.mode(
+                Colors.white,
+                BlendMode.srcIn,
+              ),
+            ),
             const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                l.callNow,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
+            Text(
+              l.getDirections,
+              maxLines: 1,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
           ],
@@ -565,59 +621,37 @@ class _BusinessDetailContentState
       ),
     );
 
-    final icons = <Widget>[
-      _OutlineCircleButton(
-        icon: IconsaxPlusLinear.global,
-        color: AppColors.turquoise,
-        onTap: business.website == null
-            ? null
-            : () => launchUrl(Uri.parse(business.website!)),
-      ),
-      const SizedBox(width: 8),
-      _OutlineCircleButton(
-        icon: IconsaxPlusLinear.instagram,
-        color: AppColors.turquoise,
-        onTap: business.instagram == null
-            ? null
-            : () => launchUrl(Uri.parse(business.instagram!)),
-      ),
-      const SizedBox(width: 8),
-      _OutlineCircleButton(
-        icon: IconsaxPlusLinear.routing,
-        color: AppColors.turquoise,
-        onTap: () => launchUrl(
-          Uri.parse(
-            'https://waze.com/ul?ll=${business.latitude},'
-            '${business.longitude}&navigate=yes',
-          ),
-        ),
-      ),
-      const SizedBox(width: 8),
-      _OutlineCircleButton(
-        icon: IconsaxPlusLinear.export_1,
-        color: AppColors.turquoise,
-        onTap: _shareBusiness,
-      ),
-    ];
-
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: stacked ? 0 : 16),
-      child: stacked
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                call,
-                const SizedBox(height: 12),
-                Row(children: icons),
-              ],
-            )
-          : Row(
-              children: [
-                Expanded(child: call),
-                const SizedBox(width: 12),
-                ...icons,
-              ],
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          direction,
+          const Spacer(),
+          _OutlineCircleButton(
+            icon: IconsaxPlusLinear.call,
+            color: AppColors.turquoise,
+            onTap: business.phone == null
+                ? null
+                : () => launchUrl(Uri.parse('tel:${business.phone}')),
+          ),
+          const SizedBox(width: 12),
+          _OutlineCircleButton(
+            icon: IconsaxPlusLinear.global,
+            color: AppColors.turquoise,
+            onTap: business.website == null
+                ? null
+                : () => launchUrl(Uri.parse(business.website!)),
+          ),
+          if (business.instagram != null) ...[
+            const SizedBox(width: 12),
+            _OutlineCircleButton(
+              icon: IconsaxPlusLinear.instagram,
+              color: AppColors.turquoise,
+              onTap: () => launchUrl(Uri.parse(business.instagram!)),
             ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -694,11 +728,15 @@ class _BusinessDetailContentState
     switch (_selectedTab) {
       case 0:
         return Column(
+          // Stretched, so a section narrower than the screen (a heading over
+          // an empty state) still starts at the page's edge, not centred.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildOverviewSection(),
-            // "Did you visit?" asks for a review, and a review needs an
-            // account — the app's, since 28 September. Not drawn in a browser.
-            if (!kIsWeb) _buildGallerySection(),
+            // The gallery strip, then "Did you visit?" — which asks for a
+            // review, and a review needs an account: the app's, since 28
+            // September, so the card is not drawn in a browser.
+            _buildGallerySection(),
             _buildReviewsSection(),
           ],
         );
@@ -1133,19 +1171,19 @@ class _BusinessDetailContentState
   // ─────────────────────────────────────────────
   Widget _buildOverviewSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(left: 16, right: 16),
+      // The frame's content sits 16 from the edge. A margin and a padding of
+      // 16 each put it at 32.
+      padding: const EdgeInsets.fromLTRB(0, 24, 0, 24),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-
           // About section
           Text(
-            'אודות ${business.name}',
+            L.of(context).about(business.name),
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 16,
@@ -1164,7 +1202,7 @@ class _BusinessDetailContentState
           if (business.hours.isNotEmpty) ...[
             const SizedBox(height: 24),
             Text(
-              'שעות פתיחה',
+              _isHe ? L.of(context).openingHours : 'Working Hours',
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 16,
@@ -1193,14 +1231,26 @@ class _BusinessDetailContentState
   };
 
   List<Widget> _buildHoursRows() {
+    final l = L.of(context);
     final byDay = {for (final h in business.hours) h.dayOfWeek: h};
+    final dayNames = _isHe
+        ? _dayNames
+        : {
+            DateTime.monday: l.weekdayMon,
+            DateTime.tuesday: l.weekdayTue,
+            DateTime.wednesday: l.weekdayWed,
+            DateTime.thursday: l.weekdayThu,
+            DateTime.friday: l.weekdayFri,
+            DateTime.saturday: l.weekdaySat,
+            DateTime.sunday: l.weekdaySun,
+          };
 
     final hours = [
       for (var day = DateTime.monday; day <= DateTime.sunday; day++)
         (
-          _dayNames[day]!,
+          dayNames[day]!,
           byDay[day] == null || byDay[day]!.isClosed
-              ? 'סגור'
+              ? l.closed
               : '${byDay[day]!.openTime} - ${byDay[day]!.closeTime}',
           byDay[day] == null || byDay[day]!.isClosed,
         ),
@@ -1243,6 +1293,11 @@ class _BusinessDetailContentState
   // Gallery section
   // ─────────────────────────────────────────────
   Widget _buildGallerySection() {
+    final photos =
+        ref.watch(businessGalleryProvider(business.id)).valueOrNull ??
+        const <String>[];
+    if (photos.isEmpty && kIsWeb) return const SizedBox.shrink();
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: const BoxDecoration(
@@ -1251,65 +1306,105 @@ class _BusinessDetailContentState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Review prompt card
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEF4FD),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'ביקרתם ב${business.name}?',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          L.of(context).shareRecommendation,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF6D6D6D),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        // Thumbs up/down
-                        Row(
-                          children: [
-                            const Icon(
-                              IconsaxPlusLinear.like_1,
-                              size: 20,
-                              color: AppColors.midBlue,
-                            ),
-                            const SizedBox(width: 22),
-                            Icon(
-                              IconsaxPlusLinear.dislike,
-                              size: 20,
-                              color: const Color(0xFF888888),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          // "Business Gallery": the frame's strip of 100px squares, 10 apart.
+          if (photos.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                _isHe ? 'גלריית העסק' : 'Business Gallery',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1F1F1F),
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 100,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: photos.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, i) => GestureDetector(
+                  onTap: () => showDialog<void>(
+                    context: context,
+                    barrierColor: Colors.black.withValues(alpha: 0.92),
+                    builder: (_) => _PhotoViewer(urls: photos, start: i),
+                  ),
+                  child: SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: NetworkPhoto(
+                      url: photos[i],
+                      radius: BorderRadius.circular(8),
+                      icon: IconsaxPlusLinear.gallery,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (!kIsWeb) const SizedBox(height: 24),
+          ],
+          // Review prompt card — the thumbs lead to the Reviews tab, where
+          // the review is written (it was two icons that did nothing).
+          if (!kIsWeb)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedTab = 3),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF4FD),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        L.of(context).haveYouVisited(business.name),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        L.of(context).shareRecommendation,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Row(
+                        children: [
+                          Icon(
+                            IconsaxPlusLinear.like_1,
+                            size: 20,
+                            color: AppColors.midBlue,
+                          ),
+                          SizedBox(width: 22),
+                          Icon(
+                            IconsaxPlusLinear.dislike,
+                            size: 20,
+                            color: Color(0xFF888888),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -1331,7 +1426,7 @@ class _BusinessDetailContentState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'ביקורות על ${business.name}',
+              L.of(context).reviewsFor(business.name),
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 16,
@@ -1444,9 +1539,17 @@ class _BusinessDetailContentState
           // Left panel: overall score
           Container(
             width: 153,
-            padding: const EdgeInsets.only(right: 16, top: 16, bottom: 16),
+            // Directional, so the rule stays between the score and the bars
+            // in Hebrew too (it sat on the outer edge there).
+            padding: const EdgeInsetsDirectional.only(
+              end: 16,
+              top: 16,
+              bottom: 16,
+            ),
             decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: Color(0xFFE7E7E7))),
+              border: BorderDirectional(
+                end: BorderSide(color: Color(0xFFE7E7E7)),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1477,7 +1580,7 @@ class _BusinessDetailContentState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'מבוסס על ${summary.total} ביקורות',
+                  L.of(context).basedOnReviews(summary.total),
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 12,

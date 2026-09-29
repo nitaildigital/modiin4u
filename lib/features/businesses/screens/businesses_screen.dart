@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../shared/widgets/error_retry.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../providers/business_providers.dart';
 import '../widgets/business_card.dart';
@@ -70,18 +71,17 @@ class _MobileBusinessesContentState
                   child: Text(
                     'עסקים',
                     style: TextStyle(
-                      fontFamily: AppFonts.rubik,
+                      fontFamily: AppFonts.inter,
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 _SearchField(controller: _searchController, onSubmit: _search),
-                const SizedBox(height: 24),
-                _SectionTitle('קטגוריות'),
-                const SizedBox(height: 12),
+                // The frame goes straight from the search field to the tiles.
+                const SizedBox(height: 20),
                 categories.when(
                   loading: () => const _CategoryGridSkeleton(),
                   error: (_, _) => ErrorRetry(
@@ -191,13 +191,18 @@ class _SearchField extends StatelessWidget {
               controller: controller,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => onSubmit(),
-              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
               decoration: InputDecoration(
+                // The app theme fills inputs grey, which drew a second pill
+                // inside this one. The frame has the outline only.
+                filled: false,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
                 isCollapsed: true,
                 hintText: 'חיפוש עסקים במודיעין',
                 hintStyle: TextStyle(
-                  fontFamily: AppFonts.rubik,
+                  fontFamily: AppFonts.inter,
                   fontSize: 14,
                   color: const Color(0xFF6D6D6D),
                 ),
@@ -234,7 +239,7 @@ class _CategoryGrid extends ConsumerWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 13,
         mainAxisSpacing: 13,
-        childAspectRatio: 174 / 120,
+        childAspectRatio: 174 / 170,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
@@ -292,53 +297,83 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _colors[category.sortOrder.abs() % _colors.length];
+    final image = category.imageUrl;
+    final hasImage = image != null && image.isNotEmpty;
 
+    // The frame: the category's photograph under a gradient that runs from
+    // clear at the middle to black at the foot, the name and the count in
+    // white at the bottom. A category with no photograph on its row keeps
+    // the coloured tile and its icon.
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color, Color.lerp(color, Colors.black, 0.55)!],
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Align(
-              alignment: AlignmentDirectional.topEnd,
-              child: Icon(
-                _icons[category.slug] ?? IconsaxPlusBold.shop,
-                size: 26,
-                color: Colors.white.withValues(alpha: 0.35),
-              ),
-            ),
-            const Spacer(),
-            Text(
-              category.name,
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (count != null && count! > 0) ...[
-              const SizedBox(height: 4),
-              Text(
-                '$count עסקים',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 13,
-                  color: Colors.white.withValues(alpha: 0.8),
+            if (hasImage)
+              NetworkPhoto(url: image, icon: IconsaxPlusBold.shop)
+            else
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [color, Color.lerp(color, Colors.black, 0.55)!],
+                  ),
                 ),
               ),
-            ],
+            if (hasImage)
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0.52, 1],
+                    colors: [Color(0x00000000), Colors.black],
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!hasImage)
+                    Align(
+                      alignment: AlignmentDirectional.topEnd,
+                      child: Icon(
+                        _icons[category.slug] ?? IconsaxPlusBold.shop,
+                        size: 26,
+                        color: Colors.white.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  const Spacer(),
+                  Text(
+                    category.name,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (count != null && count! > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '$count עסקים',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -361,7 +396,7 @@ class _CategoryGridSkeleton extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 13,
           mainAxisSpacing: 13,
-          childAspectRatio: 174 / 120,
+          childAspectRatio: 174 / 170,
         ),
         itemCount: 6,
         itemBuilder: (_, _) => const SkeletonBox(radius: 12),

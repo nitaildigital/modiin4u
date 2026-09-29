@@ -237,42 +237,49 @@ class _MobileRestaurantsContentState
               ),
             ),
 
-            // Search bar
+            // Search bar. It was a picture of one — neither the field nor
+            // the filter control did anything. It opens the restaurants list,
+            // whose search narrows as you type and whose filter control has
+            // the Kosher and Delivery filters.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE7E7E7)),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      IconsaxPlusLinear.search_normal_1,
-                      size: 18,
-                      color: Color(0xFF6D6D6D),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'חיפוש מסעדה, מטבח או מיקום',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6D6D6D),
+              child: GestureDetector(
+                onTap: () => _openCategory('restaurants', 'מסעדות'),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFFE7E7E7)),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        IconsaxPlusLinear.search_normal_1,
+                        size: 18,
+                        color: Color(0xFF6D6D6D),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'חיפוש מסעדה, מטבח או מיקום',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF6D6D6D),
+                          ),
                         ),
                       ),
-                    ),
-                    const Icon(
-                      IconsaxPlusLinear.setting_4,
-                      size: 20,
-                      color: Color(0xFF123A72),
-                    ),
-                  ],
+                      const Icon(
+                        IconsaxPlusLinear.setting_4,
+                        size: 20,
+                        color: Color(0xFF123A72),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -701,6 +708,9 @@ class _PlaceCard extends StatelessWidget {
           SizedBox(
             height: 200,
             child: Stack(
+              // The badge hangs half below the photograph, as in the frame;
+              // clipped, only its top half showed.
+              clipBehavior: Clip.none,
               children: [
                 Positioned.fill(
                   child: NetworkPhoto(
@@ -713,8 +723,8 @@ class _PlaceCard extends StatelessWidget {
 
                 // Kosher badge
                 if (place.isKosher)
-                  Positioned(
-                    left: 12,
+                  PositionedDirectional(
+                    start: 12,
                     bottom: 12,
                     child: Container(
                       height: 27,
@@ -747,8 +757,8 @@ class _PlaceCard extends StatelessWidget {
                   ),
 
                 // Heart button
-                Positioned(
-                  right: 12,
+                PositionedDirectional(
+                  end: 12,
                   top: 12,
                   child: FavoriteButton(
                     kind: FavoriteKind.business,
@@ -760,8 +770,10 @@ class _PlaceCard extends StatelessWidget {
                 ),
 
                 // Places badge (colored circle)
-                Positioned(
-                  right: 12,
+                // Mirrored in Hebrew with the rest of the card, so it sits
+                // clear of the name, which starts at the other edge.
+                PositionedDirectional(
+                  end: 12,
                   bottom: -20,
                   child: Container(
                     width: 40,
@@ -790,7 +802,8 @@ class _PlaceCard extends StatelessWidget {
                 Text(
                   place.name,
                   style: TextStyle(
-                    fontFamily: AppFonts.rubik,
+                    // "Avenir Next Rounded Pro Demi" in the frame.
+                    fontFamily: AppFonts.nunito,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0A1230),
@@ -934,7 +947,7 @@ class _HPlaceCard extends StatelessWidget {
             Text(
               place.name,
               style: TextStyle(
-                fontFamily: AppFonts.rubik,
+                fontFamily: AppFonts.nunito,
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF0A1230),

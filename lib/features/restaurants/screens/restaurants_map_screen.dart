@@ -170,7 +170,12 @@ class _MobileRestaurantsMapContentState
                               fontSize: 14,
                               color: const Color(0xFF6D6D6D),
                             ),
+                            // The theme fills inputs grey, drawing a second
+                            // pill inside this one; the frame has one.
+                            filled: false,
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
                             isDense: true,
                           ),
                         ),
@@ -417,7 +422,8 @@ class _PlaceCard extends StatelessWidget {
                       Text(
                         business.name,
                         style: TextStyle(
-                          fontFamily: AppFonts.rubik,
+                          // "Avenir Next Rounded Pro Demi" in the frame.
+                          fontFamily: AppFonts.nunito,
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           height: 25 / 20,
@@ -532,8 +538,11 @@ class _PlaceCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(
-                      IconsaxPlusLinear.arrow_right_3,
+                    // Forward: → in English, ← in Hebrew.
+                    Icon(
+                      Directionality.of(context) == TextDirection.rtl
+                          ? IconsaxPlusLinear.arrow_left_3
+                          : IconsaxPlusLinear.arrow_right_3,
                       size: 16,
                       color: Colors.white,
                     ),
