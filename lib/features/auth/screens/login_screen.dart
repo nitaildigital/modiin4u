@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/m_account_widgets.dart';
 import 'web_login_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -137,10 +138,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildMobile(BuildContext context) {
-    // The photograph at the foot of the screen is 200px of decoration. With
-    // the keyboard up that is exactly the room the button needs, so it stands
-    // down while someone is typing.
-    final keyboardUp = MediaQuery.of(context).viewInsets.bottom > 0;
+    // The mobile "Sign In" frame has no photograph at the foot of the
+    // screen (that space is the keyboard's), so none is drawn.
     final l = L.of(context);
 
     return Scaffold(
@@ -155,22 +154,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 // Top bar with back button
                 Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 10),
+                  padding: const EdgeInsetsDirectional.only(start: 12, top: 10),
                   child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            Icons.arrow_back_ios_new,
-                            size: 16,
-                            color: Color(0xFF333333),
-                          ),
-                        ),
-                      ),
-                    ],
+                    children: [const MBackArrow(color: Color(0xFF3D3D3D))],
                   ),
                 ),
                 Expanded(
@@ -178,14 +164,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 34),
+                        const SizedBox(height: 20),
                         // Title
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
                             l.welcomeBack,
                             style: TextStyle(
-                              fontFamily: AppFonts.rubik,
+                              fontFamily: AppFonts.nunito,
                               fontSize: 28,
                               fontWeight: FontWeight.w600,
                               color: Colors.black,
@@ -367,17 +353,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                // Bottom decorative image
-                if (!keyboardUp)
-                  ClipRRect(
-                    child: Image.asset(
-                      'assets/images/hero_anaba.jpg',
-                      width: double.infinity,
-                      height: 200,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox(height: 200),
-                    ),
-                  ),
               ],
             ),
           ),

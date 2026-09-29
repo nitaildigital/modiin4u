@@ -5,7 +5,8 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
@@ -14,6 +15,7 @@ import '../../../core/constants/neighborhoods.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/m_account_widgets.dart';
 import 'web_edit_profile_screen.dart';
 
 /// Edit Profile screen – avatar with camera overlay, form fields
@@ -212,18 +214,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            IconsaxPlusLinear.arrow_left,
-                            size: 24,
-                            color: Color(0xFF3D3D3D),
-                          ),
-                        ),
-                      ),
+                      const MBackArrow(color: Color(0xFF3D3D3D)),
                       Expanded(
                         child: Center(
                           child: Text(
@@ -241,7 +232,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
 
                 // ═══════════════════════════════════
                 // Avatar with camera overlay
@@ -257,6 +248,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         Container(
                           width: 120,
                           height: 120,
+                          clipBehavior: Clip.antiAlias,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
@@ -274,6 +266,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     height: 120,
                                   ),
                                 )
+                              : (user.avatarUrl ?? '').isNotEmpty
+                              // The photo already on the profile, until a
+                              // new one is picked.
+                              ? CachedNetworkImage(
+                                  imageUrl: user.avatarUrl!,
+                                  fit: BoxFit.cover,
+                                  width: 120,
+                                  height: 120,
+                                )
                               : Center(
                                   child: Text(
                                     user.initials,
@@ -286,31 +287,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   ),
                                 ),
                         ),
-                        // Edit icon – bottom-right
+                        // Camera badge – bottom-right
                         Positioned(
-                          right: 0,
+                          right: 9,
                           bottom: 0,
-                          child: Container(
+                          child: SvgPicture.asset(
+                            'assets/icons/m_account_camera_badge.svg',
                             width: 28,
                             height: 28,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF123A72),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                IconsaxPlusLinear.edit_2,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
 
                 // ═══════════════════════════════════
                 // Form fields
@@ -478,7 +469,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF6D6D6D),
               ),
+              // The app theme fills fields grey and rings them on focus;
+              // this one sits inside its own bordered box.
+              filled: false,
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 13,
@@ -532,10 +528,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   color: const Color(0xFF9E9E9E),
                 ),
               ),
-              icon: const Icon(
-                IconsaxPlusLinear.arrow_down_1,
-                size: 20,
-                color: Color(0xFF6D6D6D),
+              icon: SvgPicture.asset(
+                'assets/icons/m_account_chevron.svg',
+                width: 20,
+                height: 20,
               ),
               style: TextStyle(
                 fontFamily: AppFonts.inter,
@@ -606,10 +602,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
                   ),
                 ),
-                const Icon(
-                  IconsaxPlusLinear.calendar_1,
-                  size: 20,
-                  color: Color(0xFF6D6D6D),
+                SvgPicture.asset(
+                  'assets/icons/m_account_calendar_grey.svg',
+                  width: 20,
+                  height: 20,
                 ),
               ],
             ),

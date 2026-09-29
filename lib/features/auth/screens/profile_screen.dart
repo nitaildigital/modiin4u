@@ -1,16 +1,23 @@
+import 'dart:ui' show ImageFilter;
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/month_names.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/m_account_widgets.dart';
 import 'web_profile_screen.dart';
 
-/// Profile screen – dark rounded header with avatar, name & badge,
-/// "Edit Profile" CTA, and a scrollable ACCOUNT menu card.
+/// Profile screen – blurred-photo header with avatar, name & badge, the
+/// person's details, the "Edit Profile" CTA and the ACCOUNT menu card.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -102,9 +109,71 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// The phone layout, which a laptop was also given — capped at 430px and
-  /// centred in white.
+  /// The phone layout, to the mobile "Profile" frame: the header is the
+  /// person's own photo, blurred and darkened, under a wide round bottom; the
+  /// avatar, name and role badge; their details from the profile row; the
+  /// "Edit Profile" button; and the account menu, which is the phone's only
+  /// way to Favorites, Settings, My Apartments and the rest.
   Widget _buildMobile(BuildContext context, L l, UserModel user) {
+    final topInset = MediaQuery.paddingOf(context).top;
+    // The frame is drawn under a 44px status bar; follow the real one.
+    final shift = topInset - 44;
+    final hasPhoto = (user.avatarUrl ?? '').isNotEmpty;
+    final dob = user.dateOfBirth;
+    String orDash(String? v) => (v == null || v.trim().isEmpty) ? '-' : v;
+
+    final details = <Widget>[
+      MInfoRow(
+        leading: const MIconTile(svg: 'assets/icons/m_account_user.svg'),
+        label: l.fullName,
+        value: orDash(user.name),
+      ),
+      MInfoRow(
+        leading: const MIconTile(svg: 'assets/icons/m_account_mail.svg'),
+        label: l.email,
+        value: orDash(user.email),
+      ),
+      MInfoRow(
+        leading: const MIconTile(svg: 'assets/icons/m_account_rings.svg'),
+        label: l.familyStatus,
+        value: switch (user.familyStatus) {
+          'single' => l.single,
+          'married' => l.married,
+          'divorced' => l.divorced,
+          'widowed' => l.widowed,
+          _ => '-',
+        },
+      ),
+      MInfoRow(
+        leading: const MIconTile(svg: 'assets/icons/m_account_phone.svg'),
+        label: l.phone,
+        value: orDash(user.phone),
+      ),
+      MInfoRow(
+        leading: const MIconTile(svg: 'assets/icons/m_account_pet.svg'),
+        label: l.doYouHaveAPet,
+        value: user.hasPet == null ? '-' : (user.hasPet! ? l.yes : l.no),
+      ),
+      MInfoRow(
+        leading: const MIconTile(svg: 'assets/icons/m_account_calendar.svg'),
+        label: l.dateOfBirth,
+        value: dob == null
+            ? '-'
+            : '${dob.day} ${l.monthShort(dob.month)} ${dob.year}',
+      ),
+      MInfoRow(
+        leading: const MIconTile(svg: 'assets/icons/m_account_location.svg'),
+        label: l.neighborhood,
+        value: orDash(user.neighborhood),
+      ),
+    ];
+
+    final menu = [
+      ..._menuItems(l),
+      // Web only: the panel is not in the mobile build at all.
+      if (kIsWeb && user.isAdmin) _adminItem(l),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -112,72 +181,57 @@ class ProfileScreen extends ConsumerWidget {
           constraints: const BoxConstraints(maxWidth: 430),
           child: Stack(
             children: [
-              // ═══════════════════════════════════
-              // Dark rounded header background
-              // ═══════════════════════════════════
-              Container(
-                height: 172,
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+              // ── Header: blurred photo under a 50% black veil ──
+              Positioned(
+                top: -225 + shift,
+                left: -28,
+                right: -28,
+                height: 397,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(168.5),
                   ),
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(60),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (hasPhoto)
+                        ImageFiltered(
+                          imageFilter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                          child: CachedNetworkImage(
+                            imageUrl: user.avatarUrl!,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, _, _) =>
+                                const ColoredBox(color: AppColors.midBlue),
+                          ),
+                        )
+                      else
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [AppColors.midBlue, AppColors.navy],
+                            ),
+                          ),
+                        ),
+                      const ColoredBox(color: Color(0x80000000)),
+                    ],
                   ),
                 ),
               ),
 
-              // ═══════════════════════════════════
-              // Content
-              // ═══════════════════════════════════
               SafeArea(
+                bottom: false,
                 child: Column(
                   children: [
-                    const SizedBox(height: 10),
+                    MAccountTopBar(title: l.profile, color: Colors.white),
+                    const SizedBox(height: 28),
 
-                    // ── Back button + title ──
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => context.pop(),
-                            child: const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Icon(
-                                IconsaxPlusLinear.arrow_left,
-                                size: 24,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: Text(
-                                l.profile,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-
-                    // ── Avatar circle ──
+                    // ── Avatar ──
                     Container(
                       width: 120,
                       height: 120,
+                      clipBehavior: Clip.antiAlias,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
@@ -186,52 +240,56 @@ class ProfileScreen extends ConsumerWidget {
                           colors: [Color(0xFF0058B5), Color(0xFF010A36)],
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          user.initials,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 42,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                      child: hasPhoto
+                          ? CachedNetworkImage(
+                              imageUrl: user.avatarUrl!,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, _, _) => _Initials(user),
+                            )
+                          : _Initials(user),
                     ),
                     const SizedBox(height: 16),
 
                     // ── Name ──
-                    Text(
-                      user.name,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        user.name,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
 
-                    // ── Badge pill ──
+                    // ── Role badge ──
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD47D00).withValues(alpha: 0.1),
+                        color: const Color(0xFFD67E00).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            user.isBroker
-                                ? IconsaxPlusLinear.crown_1
-                                : IconsaxPlusLinear.user,
-                            size: 14,
-                            color: const Color(0xFFD47D00),
-                          ),
+                          user.isBroker
+                              ? SvgPicture.asset(
+                                  'assets/icons/m_account_briefcase.svg',
+                                  width: 14,
+                                  height: 14,
+                                )
+                              : const Icon(
+                                  IconsaxPlusLinear.user,
+                                  size: 14,
+                                  color: Color(0xFFD47D00),
+                                ),
                           const SizedBox(width: 6),
                           Text(
                             user.isBroker ? l.realEstateBroker : l.resident,
@@ -247,93 +305,41 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // ═══════════════════════════════════
-                    // Scrollable content
-                    // ═══════════════════════════════════
+                    // ── Scrolling part ──
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: EdgeInsets.fromLTRB(
+                          20,
+                          0,
+                          20,
+                          24 + MediaQuery.paddingOf(context).bottom,
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // ── "Edit Profile" button ──
-                            GestureDetector(
-                              onTap: () => context.push('/edit-profile'),
-                              child: Container(
-                                width: double.infinity,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF123A72),
-                                  borderRadius: BorderRadius.circular(60),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      IconsaxPlusLinear.edit_2,
-                                      size: 20,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      l.editProfile,
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.inter,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            MSection(
+                              label: mTr(
+                                context,
+                                'Personal Information',
+                                'מידע אישי',
                               ),
+                              gap: 8,
+                              children: details,
                             ),
                             const SizedBox(height: 24),
-
-                            // ── Section header ──
-                            Text(
-                              l.account.toUpperCase(),
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF6D6D6D),
-                              ),
+                            MPrimaryButton(
+                              label: l.editProfile,
+                              svgIcon: 'assets/icons/m_account_edit.svg',
+                              onTap: () => context.push('/edit-profile'),
                             ),
-                            const SizedBox(height: 8),
-
-                            // ── Menu card ──
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  color: const Color(0xFFE7E7E7),
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Builder(
-                                builder: (_) {
-                                  final items = [
-                                    ..._menuItems(l),
-                                    // Web only: the panel is not in the
-                                    // mobile build at all.
-                                    if (kIsWeb && user.isAdmin) _adminItem(l),
-                                  ];
-                                  return Column(
-                                    children: List.generate(items.length, (i) {
-                                      return _MenuRow(
-                                        item: items[i],
-                                        showBorder: i != items.length - 1,
-                                      );
-                                    }),
-                                  );
-                                },
-                              ),
+                            const SizedBox(height: 24),
+                            MSection(
+                              label: l.account,
+                              gap: 8,
+                              children: [
+                                for (final item in menu) _MenuRow(item: item),
+                              ],
                             ),
-                            const SizedBox(height: 40),
                           ],
                         ),
                       ),
@@ -343,6 +349,27 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The initials on the brand gradient, for a profile without a photo.
+class _Initials extends StatelessWidget {
+  final UserModel user;
+  const _Initials(this.user);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        user.initials,
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: 42,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
         ),
       ),
     );
@@ -365,42 +392,19 @@ class _MenuItem {
 // ═══════════════════════════════════════════════
 class _MenuRow extends StatelessWidget {
   final _MenuItem item;
-  final bool showBorder;
-  const _MenuRow({required this.item, this.showBorder = true});
+  const _MenuRow({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => context.push(item.route),
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          border: showBorder
-              ? const Border(bottom: BorderSide(color: Color(0xFFE7E7E7)))
-              : null,
-        ),
         child: Row(
           children: [
-            // Icon square
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE7ECF7),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Center(
-                child: Icon(
-                  item.icon,
-                  size: 20,
-                  color: const Color(0xFF123A72),
-                ),
-              ),
-            ),
+            MIconTile(icon: item.icon),
             const SizedBox(width: 13),
-
-            // Subtitle + title
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,7 +415,7 @@ class _MenuRow extends StatelessWidget {
                       fontFamily: AppFonts.inter,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: const Color(0xFF6D6D6D),
+                      color: MAccountColors.label,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -421,12 +425,13 @@ class _MenuRow extends StatelessWidget {
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF3D3D3D),
+                      color: MAccountColors.value,
                     ),
                   ),
                 ],
               ),
             ),
+            const MChevron(),
           ],
         ),
       ),

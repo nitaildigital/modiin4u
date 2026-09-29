@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/neighborhoods.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/m_account_widgets.dart';
 import 'web_signup_screen.dart';
 
 enum AccountType { resident, broker }
@@ -229,22 +230,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               children: [
                 // Top bar with back button
                 Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 10),
+                  padding: const EdgeInsetsDirectional.only(start: 12, top: 10),
                   child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            Icons.arrow_back_ios_new,
-                            size: 16,
-                            color: Color(0xFF333333),
-                          ),
-                        ),
-                      ),
-                    ],
+                    children: [const MBackArrow(color: Color(0xFF3D3D3D))],
                   ),
                 ),
                 Expanded(
@@ -253,12 +241,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 34),
+                        const SizedBox(height: 20),
                         // Title
                         Text(
                           l.createYourAccount,
                           style: TextStyle(
-                            fontFamily: AppFonts.rubik,
+                            fontFamily: AppFonts.nunito,
                             fontSize: 28,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -268,7 +256,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         const SizedBox(height: 8),
                         // Subtitle
                         Text(
-                          "Let's get you started. It only takes a minute.",
+                          mTr(
+                            context,
+                            "Let's get you started. It only takes a minute.",
+                            'נתחיל. זה לוקח דקה.',
+                          ),
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
@@ -306,7 +298,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 icon: Icons.business_outlined,
                                 iconColor: const Color(0xFFB0B0B0),
                                 title: l.realEstateBroker,
-                                subtitle: 'I am a licensed real estate broker.',
+                                subtitle: l.accountBrokerSub,
                               ),
                             ),
                           ],
@@ -488,7 +480,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               Expanded(
                                 child: Text.rich(
                                   TextSpan(
-                                    text: 'I agree to the ',
+                                    text: mTr(
+                                      context,
+                                      'I agree to the ',
+                                      'אני מסכים ל',
+                                    ),
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 14,

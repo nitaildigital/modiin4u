@@ -4,8 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../widgets/m_account_widgets.dart';
 import 'web_change_language_screen.dart';
 
 /// Change Language screen – search bar, list of languages with flag
@@ -28,8 +29,12 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
   /// Korean — none of which exist. Choosing one did nothing, which is worse
   /// than not offering it.
   static const _languages = <_LanguageItem>[
-    _LanguageItem('עברית', '🇮🇱', 'he'),
-    _LanguageItem('English', '🇺🇸', 'en'),
+    _LanguageItem(
+      'English (United States)',
+      'assets/icons/m_account_flag_us.svg',
+      'en',
+    ),
+    _LanguageItem('עברית (Hebrew)', 'assets/icons/m_account_flag_il.svg', 'he'),
   ];
 
   @override
@@ -92,22 +97,11 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            IconsaxPlusLinear.arrow_left,
-                            size: 24,
-                            color: Color(0xFF3D3D3D),
-                          ),
-                        ),
-                      ),
+                      const MBackArrow(color: Color(0xFF3D3D3D)),
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Change Language',
+                            mTr(context, 'Change Language', 'שינוי שפה'),
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 16,
@@ -127,7 +121,7 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
                 // Search bar (pill shape)
                 // ═══════════════════════════════════
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
@@ -138,12 +132,12 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
                     child: Row(
                       children: [
                         const SizedBox(width: 16),
-                        const Icon(
-                          IconsaxPlusLinear.search_normal_1,
-                          size: 20,
-                          color: Color(0xFF6D6D6D),
+                        SvgPicture.asset(
+                          'assets/icons/m_account_search.svg',
+                          width: 18,
+                          height: 18,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: _searchController,
@@ -154,14 +148,19 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
                               color: const Color(0xFF1F1F1F),
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search',
+                              hintText: mTr(context, 'Search', 'חיפוש'),
                               hintStyle: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF6D6D6D),
                               ),
+                              // The app theme fills fields grey and rings them on focus;
+                              // this one sits inside its own bordered box.
+                              filled: false,
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 13,
                               ),
@@ -173,14 +172,14 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 39),
 
                 // ═══════════════════════════════════
                 // Language list
                 // ═══════════════════════════════════
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final lang = filtered[index];
@@ -199,15 +198,12 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
                           ),
                           child: Row(
                             children: [
-                              // Flag emoji
-                              SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: Center(
-                                  child: Text(
-                                    lang.flag,
-                                    style: const TextStyle(fontSize: 20),
-                                  ),
+                              // Round flag, from the design
+                              ClipOval(
+                                child: SvgPicture.asset(
+                                  lang.flag,
+                                  width: 24,
+                                  height: 24,
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -254,7 +250,7 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          'Save',
+                          mTr(context, 'Update Language', 'עדכון שפה'),
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
@@ -284,6 +280,8 @@ class _LanguageItem {
   final String code;
 
   final String name;
+
+  /// The flag's SVG under `assets/icons/`.
   final String flag;
   const _LanguageItem(this.name, this.flag, this.code);
 }

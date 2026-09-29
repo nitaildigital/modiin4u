@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/month_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/error_retry.dart';
@@ -13,6 +14,7 @@ import '../providers/auth_provider.dart';
 import '../../favorites/providers/favorite_providers.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
+import '../widgets/m_account_widgets.dart';
 import 'web_favorites_screen.dart';
 
 /// Favorites screen – horizontal filter chips (All, Restaurants, Events,
@@ -73,18 +75,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            IconsaxPlusLinear.arrow_left,
-                            size: 24,
-                            color: Color(0xFF3D3D3D),
-                          ),
-                        ),
-                      ),
+                      const MBackArrow(color: Color(0xFF3D3D3D)),
                       Expanded(
                         child: Center(
                           child: Text(
@@ -334,21 +325,6 @@ class _FavoriteCard extends StatelessWidget {
   final FavoriteEntry entry;
   const _FavoriteCard({required this.entry});
 
-  static const _months = [
-    'ינו',
-    'פבר',
-    'מרץ',
-    'אפר',
-    'מאי',
-    'יונ',
-    'יול',
-    'אוג',
-    'ספט',
-    'אוק',
-    'נוב',
-    'דצמ',
-  ];
-
   String _typeName(L l) => switch (entry.kind) {
     FavoriteKind.business => l.business,
     FavoriteKind.event => l.event,
@@ -449,7 +425,11 @@ class _FavoriteCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '${date.day} ב${_months[date.month - 1]} ${date.year}',
+                          // "May 24, 2026" as the design has it; in Hebrew
+                          // the day comes first.
+                          Localizations.localeOf(context).languageCode == 'he'
+                              ? '${date.day} ב${L.of(context).monthShort(date.month)} ${date.year}'
+                              : '${L.of(context).monthShort(date.month)} ${date.day}, ${date.year}',
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 12,

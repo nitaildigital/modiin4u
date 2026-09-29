@@ -24,9 +24,10 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1200),
     );
     _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scale = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
     _controller.forward();
     _navigateAfterDelay();
   }
@@ -57,9 +58,12 @@ class _SplashScreenState extends State<SplashScreen>
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
+          // The frame's 193.6° gradient: navy from the top, a touch to the
+          // right, to blue at the bottom.
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment(0.24, -1),
+            end: Alignment(-0.24, 1),
+            stops: [0.091, 1.0],
             colors: [
               Color(0xFF010A36), // dark navy
               Color(0xFF0058B5), // blue
@@ -74,12 +78,20 @@ class _SplashScreenState extends State<SplashScreen>
               bottom: 0,
               child: Opacity(
                 opacity: 0.5,
-                child: Image.asset(
-                  'assets/images/splash_illustration_left.png',
+                // Drawn to the frame's width and cropped at the foot, as the
+                // design crops it.
+                child: SizedBox(
                   width: 275,
                   height: 243,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  child: ClipRect(
+                    child: Image.asset(
+                      'assets/images/splash_illustration_left.png',
+                      width: 275,
+                      fit: BoxFit.fitWidth,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -94,7 +106,7 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 92,
                   height: 217,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
               ),
             ),

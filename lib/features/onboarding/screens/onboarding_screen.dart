@@ -38,23 +38,9 @@ class OnboardingScreen extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Background image
-          Image.asset(
-            'assets/images/hero_modiin.jpg',
-            fit: BoxFit.cover,
-          ),
-          // Dark overlay for readability
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.25),
-                  Colors.black.withValues(alpha: 0.55),
-                ],
-              ),
-            ),
-          ),
+          Image.asset('assets/images/hero_modiin.jpg', fit: BoxFit.cover),
+          // The "Get Started" frame lays the text straight on the photo,
+          // with no darkening veil.
           // Content
           SafeArea(
             child: Column(
@@ -73,17 +59,23 @@ class OnboardingScreen extends StatelessWidget {
                           children: [
                             Text(
                               l.onboardingSkip,
-                              style: TextStyle(fontFamily: AppFonts.inter, 
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 14,
-                              color: Colors.white,
+                            Transform.flip(
+                              flipX:
+                                  Directionality.of(context) ==
+                                  TextDirection.rtl,
+                              child: SvgPicture.asset(
+                                'assets/icons/m_account_arrow_right.svg',
+                                width: 18,
+                                height: 18,
+                              ),
                             ),
                           ],
                         ),
@@ -91,21 +83,22 @@ class OnboardingScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 37),
                 // Logo
                 SvgPicture.asset(
                   'assets/images/logo_white.svg',
                   width: 164,
                   height: 88,
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 51),
                 // Title
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 26),
                   child: Text(
                     l.onboardingTitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.nunito,
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -120,7 +113,8 @@ class OnboardingScreen extends StatelessWidget {
                   child: Text(
                     l.onboardingSubtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontFamily: AppFonts.inter, 
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
@@ -151,7 +145,8 @@ class OnboardingScreen extends StatelessWidget {
                           ),
                           child: Text(
                             l.signIn,
-                            style: TextStyle(fontFamily: AppFonts.inter, 
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -177,7 +172,8 @@ class OnboardingScreen extends StatelessWidget {
                           children: [
                             Text(
                               l.dontHaveAccount,
-                              style: TextStyle(fontFamily: AppFonts.inter, 
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white,
@@ -186,7 +182,8 @@ class OnboardingScreen extends StatelessWidget {
                             const SizedBox(width: 8),
                             Text(
                               l.signUp,
-                              style: TextStyle(fontFamily: AppFonts.inter, 
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
@@ -200,7 +197,8 @@ class OnboardingScreen extends StatelessWidget {
                       Text(
                         l.onboardingTermsFull,
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontFamily: AppFonts.inter, 
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: Colors.white,

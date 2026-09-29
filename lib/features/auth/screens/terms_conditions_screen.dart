@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
-import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import '../widgets/m_account_widgets.dart';
 import 'web_terms_conditions_screen.dart';
 
 /// Terms & Conditions screen – "Last updated" date row, scrollable
@@ -29,6 +29,7 @@ class TermsConditionsScreen extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 430),
           child: SafeArea(
+            bottom: false,
             child: Column(
               children: [
                 const SizedBox(height: 10),
@@ -40,22 +41,11 @@ class TermsConditionsScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            IconsaxPlusLinear.arrow_left,
-                            size: 24,
-                            color: Color(0xFF3D3D3D),
-                          ),
-                        ),
-                      ),
+                      const MBackArrow(color: Color(0xFF3D3D3D)),
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Terms & Conditions',
+                            mTr(context, 'Terms & Conditions', 'תנאים והגבלות'),
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 14,
@@ -75,7 +65,7 @@ class TermsConditionsScreen extends StatelessWidget {
                 // Last updated row
                 // ═══════════════════════════════════
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
                       const Icon(
@@ -84,8 +74,24 @@ class TermsConditionsScreen extends StatelessWidget {
                         color: Color(0xFF6D6D6D),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Last updated: 22 May 2026',
+                      Text.rich(
+                        TextSpan(
+                          text: mTr(
+                            context,
+                            'Last updated: ',
+                            'עודכן לאחרונה: ',
+                          ),
+                          children: [
+                            TextSpan(
+                              // Kept left-to-right inside a Hebrew line.
+                              text: '\u202A22 May 2026\u202C',
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 12,
@@ -101,41 +107,51 @@ class TermsConditionsScreen extends StatelessWidget {
                 // ═══════════════════════════════════
                 // Scrollable sections
                 // ═══════════════════════════════════
+                // The terms exist in English only; read right-to-left their
+                // full stops land at the start of the line.
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    itemCount: kTermsSections.length,
-                    itemBuilder: (context, index) {
-                      final section = kTermsSections[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              section.title,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF0A1230),
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: ListView.builder(
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        8,
+                        16,
+                        MediaQuery.paddingOf(context).bottom + 16,
+                      ),
+                      itemCount: kTermsSections.length,
+                      itemBuilder: (context, index) {
+                        final section = kTermsSections[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 28),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                section.title,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF0A1230),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              section.body,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                height: 1.4,
-                                color: Colors.black,
+                              const SizedBox(height: 12),
+                              Text(
+                                section.body,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.4,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],

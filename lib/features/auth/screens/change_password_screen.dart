@@ -9,6 +9,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import '../widgets/m_account_widgets.dart';
 import 'web_change_password_screen.dart';
 
 /// Change Password screen – lock illustration, subtitle,
@@ -125,18 +126,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            IconsaxPlusLinear.arrow_left,
-                            size: 24,
-                            color: Color(0xFF3D3D3D),
-                          ),
-                        ),
-                      ),
+                      const MBackArrow(color: Color(0xFF3D3D3D)),
                       Expanded(
                         child: Center(
                           child: Text(
@@ -165,23 +155,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       children: [
                         const SizedBox(height: 24),
 
-                        // ── Lock illustration placeholder ──
-                        Container(
+                        // ── Lock illustration (Figma "image 75") ──
+                        Image.asset(
+                          'assets/images/m_account_lock.webp',
                           width: 137,
                           height: 139,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F5F5),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              IconsaxPlusLinear.lock_1,
-                              size: 56,
-                              color: Color(0xFF123A72),
-                            ),
-                          ),
+                          fit: BoxFit.contain,
                         ),
-                        const SizedBox(height: 16),
 
                         // ── Subtitle ──
                         SizedBox(

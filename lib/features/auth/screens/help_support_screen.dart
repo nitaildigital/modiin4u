@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
-import 'package:go_router/go_router.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/web_chrome.dart' show kContactEmail;
+import '../widgets/m_account_widgets.dart';
 import 'web_help_support_screen.dart';
 
 /// Help & Support screen – search bar, FAQ accordion list with
@@ -19,6 +19,7 @@ class HelpSupportScreen extends StatefulWidget {
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
   final _searchController = TextEditingController();
+
   /// Which question is open, held by its text rather than by its position.
   /// The list is rebuilt in the reader's language on every build, so an index
   /// into it would point at a different question once the search narrows it.
@@ -103,18 +104,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Icon(
-                            IconsaxPlusLinear.arrow_left,
-                            size: 24,
-                            color: Color(0xFF3D3D3D),
-                          ),
-                        ),
-                      ),
+                      const MBackArrow(color: Color(0xFF3D3D3D)),
                       Expanded(
                         child: Center(
                           child: Text(
@@ -138,7 +128,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 // Search bar (pill shape)
                 // ═══════════════════════════════════
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
@@ -149,12 +139,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     child: Row(
                       children: [
                         const SizedBox(width: 16),
-                        const Icon(
-                          IconsaxPlusLinear.search_normal_1,
-                          size: 20,
-                          color: Color(0xFF6D6D6D),
+                        SvgPicture.asset(
+                          'assets/icons/m_account_search.svg',
+                          width: 18,
+                          height: 18,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: _searchController,
@@ -172,7 +162,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                 fontWeight: FontWeight.w400,
                                 color: const Color(0xFF6D6D6D),
                               ),
+                              // The app theme fills fields grey and rings them on focus;
+                              // this one sits inside its own bordered box.
+                              filled: false,
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 13,
                               ),
@@ -184,14 +179,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
 
                 // ═══════════════════════════════════
                 // FAQ accordion list
                 // ═══════════════════════════════════
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 17),
                     children: [
                       // Searching for something with no answer used to leave
                       // a blank page under the box, which reads as a fault.
@@ -233,33 +228,15 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Image placeholder
-                            Container(
+                            Image.asset(
+                              'assets/images/m_account_support.webp',
                               width: 58,
                               height: 56,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Color(0xFF0058B5),
-                                    Color(0xFF010A36),
-                                  ],
-                                ),
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  IconsaxPlusLinear.headphone,
-                                  size: 28,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              fit: BoxFit.cover,
                             ),
-                            const SizedBox(width: 12),
-
-                            // Title + subtitle
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,11 +246,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF0A1230),
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Text(
                                     l.helpContactBody,
                                     style: TextStyle(
@@ -283,37 +260,37 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                       color: const Color(0xFF6D6D6D),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-
-                            // Contact Us button
-                            GestureDetector(
-                              // The address the site footer has always
-                              // published, named in web_chrome.dart. This
-                              // was an empty handler, so the one control on
-                              // the page offering help did nothing.
-                              onTap: () => launchUrl(
-                                Uri(scheme: 'mailto', path: kContactEmail),
-                              ),
-                              child: Container(
-                                width: 120,
-                                height: 35,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF123A72),
-                                  borderRadius: BorderRadius.circular(50),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    l.helpContactButton,
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.inter,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+                                  const SizedBox(height: 16),
+                                  GestureDetector(
+                                    // The address the site footer has always
+                                    // published, named in web_chrome.dart.
+                                    onTap: () => launchUrl(
+                                      Uri(
+                                        scheme: 'mailto',
+                                        path: kContactEmail,
+                                      ),
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF123A72),
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                      child: Text(
+                                        l.helpContactButton,
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.inter,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
                             ),
                           ],
@@ -367,10 +344,7 @@ class _FaqTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
         decoration: BoxDecoration(
           color: expanded ? const Color(0xFFF0F5FD) : Colors.white,
-          borderRadius: BorderRadius.circular(expanded ? 8 : 0),
-          border: expanded
-              ? null
-              : const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+          border: const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,18 +358,20 @@ class _FaqTile extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
+                      height: 1.4,
                       fontWeight: expanded ? FontWeight.w600 : FontWeight.w400,
                       color: const Color(0xFF0A1230),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                Icon(
-                  expanded
-                      ? IconsaxPlusLinear.arrow_up_1
-                      : IconsaxPlusLinear.arrow_down_1,
-                  size: 20,
-                  color: const Color(0xFF6D6D6D),
+                Transform.flip(
+                  flipY: expanded,
+                  child: SvgPicture.asset(
+                    'assets/icons/m_account_chevron.svg',
+                    width: 20,
+                    height: 20,
+                  ),
                 ),
               ],
             ),
