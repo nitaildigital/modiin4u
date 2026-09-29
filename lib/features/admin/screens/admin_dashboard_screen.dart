@@ -11,6 +11,7 @@ import 'admin_businesses_screen.dart';
 import 'admin_articles_screen.dart';
 import 'admin_events_screen.dart';
 import 'admin_realestate_screen.dart';
+import 'admin_reviews_screen.dart';
 import 'admin_categories_screen.dart';
 import 'admin_challenges_screen.dart';
 import 'admin_tags_screen.dart';
@@ -237,7 +238,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       13 => const AdminRevenueScreen(),
       14 => const AdminAdPlacementsScreen(),
       15 => const AdminCampaignsScreen(),
-      16 => const _ReviewsSection(),
+      16 => const AdminReviewsScreen(),
       17 => const AdminCommentsScreen(),
       18 => const AdminReportsScreen(),
       19 => const AdminPushScreen(),
@@ -258,10 +259,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 class _AdminTopBar extends ConsumerWidget {
   final String sectionName;
   final VoidCallback onOpenSettings;
-  const _AdminTopBar({
-    required this.sectionName,
-    required this.onOpenSettings,
-  });
+  const _AdminTopBar({required this.sectionName, required this.onOpenSettings});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -822,9 +820,8 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
         }
       case 'ban':
         _run(
-          () => ref
-              .read(adminProfilesProvider.notifier)
-              .setBanned(id, !isBanned),
+          () =>
+              ref.read(adminProfilesProvider.notifier).setBanned(id, !isBanned),
           isBanned ? 'החסימה בוטלה' : 'המשתמש נחסם',
         );
     }
@@ -859,241 +856,6 @@ String _initials(String? name) {
   if (parts.isEmpty) return '?';
   if (parts.length == 1) return parts.first.characters.first;
   return '${parts.first.characters.first}${parts[1].characters.first}';
-}
-
-// ─── Reviews Section ───
-
-/// Reviews awaiting moderation.
-///
-/// This listed three invented reviews and its delete button dropped one from
-/// a list in memory. `reviews` has no rows yet, so the honest state of this
-/// screen is empty — and approving one, once they arrive, is what moves the
-/// business's rating, because migration 00025 counts approved reviews only.
-class _ReviewsSection extends ConsumerStatefulWidget {
-  const _ReviewsSection();
-
-  @override
-  ConsumerState<_ReviewsSection> createState() => _ReviewsSectionState();
-}
-
-class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
-  String _statusFilter = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final asyncReviews = ref.watch(adminReviewsProvider);
-
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: AppColors.adminCardBorder, width: 1),
-            ),
-          ),
-          child: Row(
-            children: [
-              _FilterPill('הכל', _statusFilter.isEmpty, () => _setStatus('')),
-              _FilterPill(
-                'ממתין',
-                _statusFilter == 'pending',
-                () => _setStatus('pending'),
-              ),
-              _FilterPill(
-                'מאושר',
-                _statusFilter == 'approved',
-                () => _setStatus('approved'),
-              ),
-              _FilterPill(
-                'נדחה',
-                _statusFilter == 'rejected',
-                () => _setStatus('rejected'),
-              ),
-              const Spacer(),
-              // Nothing is printed while the count is unknown, rather than a
-              // zero that reads as "no reviews".
-              asyncReviews
-                      .whenData(
-                        (rows) => Text(
-                          rows.isEmpty ? 'אין ביקורות' : '${rows.length} ביקורות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 13,
-                            color: AppColors.adminTextLight,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
-            ],
-          ),
-        ),
-        Expanded(
-          child: asyncReviews.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => _AdminError(
-              message: 'לא ניתן לטעון את הביקורות',
-              detail: '$e',
-              onRetry: () => ref.read(adminReviewsProvider.notifier).load(),
-            ),
-            data: (rows) {
-              if (rows.isEmpty) {
-                return const _AdminEmpty(
-                  icon: IconsaxPlusLinear.star,
-                  message: 'אין ביקורות',
-                  detail: 'ביקורות שתושבים יכתבו על עסקים יופיעו כאן לאישור.',
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                itemCount: rows.length,
-                separatorBuilder: (_, _) =>
-                    const Divider(height: 1, color: AppColors.adminCardBorder),
-                itemBuilder: (context, i) => _reviewTile(rows[i]),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _setStatus(String status) {
-    setState(() => _statusFilter = status);
-    ref
-        .read(adminReviewsProvider.notifier)
-        .setStatusFilter(status.isEmpty ? null : status);
-  }
-
-  Widget _reviewTile(Map<String, dynamic> r) {
-    final id = r['id'] as String;
-    final status = r['status'] as String? ?? 'pending';
-    final rating = (r['rating'] as num?)?.toInt();
-    final author = r['profiles'] is Map
-        ? (r['profiles'] as Map)['full_name'] as String?
-        : null;
-    final business = r['businesses'] is Map
-        ? (r['businesses'] as Map)['name'] as String?
-        : null;
-    final color = rating == null
-        ? AppColors.adminTextLight
-        : rating >= 4
-        ? AppColors.success
-        : rating >= 3
-        ? AppColors.gold
-        : AppColors.error;
-
-    return Container(
-      color: status == 'pending' ? AppColors.gold.withValues(alpha: 0.04) : null,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.15),
-          child: Text(
-            rating?.toString() ?? '—',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ),
-        title: Row(
-          children: [
-            Flexible(
-              child: Text(
-                // The reviewer's name and the business come from the joins.
-                // Where a join is missing the row is broken, and it says that
-                // rather than filling the gap with an id.
-                [author ?? 'מחבר לא ידוע', business ?? 'עסק לא ידוע'].join(' — '),
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: AppColors.adminTextDark,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            _Tag(_statusLabel(status), _statusColor(status)),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            (r['body'] as String?)?.trim().isNotEmpty == true
-                ? r['body'] as String
-                : 'דירוג בלבד, ללא טקסט',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 13,
-              color: AppColors.grayText,
-            ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (status != 'approved')
-              IconButton(
-                tooltip: 'אשר',
-                icon: const Icon(Icons.check, color: AppColors.success),
-                onPressed: () => _run(
-                  () => ref.read(adminReviewsProvider.notifier).approve(id),
-                  'הביקורת אושרה',
-                ),
-              ),
-            if (status != 'rejected')
-              IconButton(
-                tooltip: 'דחה',
-                icon: const Icon(Icons.close, color: AppColors.error),
-                onPressed: () => _run(
-                  () => ref.read(adminReviewsProvider.notifier).reject(id),
-                  'הביקורת נדחתה',
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _statusLabel(String status) => switch (status) {
-    'approved' => 'מאושר',
-    'pending' => 'ממתין',
-    'rejected' => 'נדחה',
-    'hidden' => 'מוסתר',
-    _ => status,
-  };
-
-  Color _statusColor(String status) => switch (status) {
-    'approved' => AppColors.success,
-    'pending' => AppColors.gold,
-    'rejected' => AppColors.error,
-    _ => AppColors.adminTextLight,
-  };
-
-  Future<void> _run(Future<void> Function() write, String done) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await write();
-      if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(done)));
-    } catch (e) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.error,
-          content: Text('הפעולה נכשלה: $e'),
-        ),
-      );
-    }
-  }
 }
 
 // ─── Settings Section ───
@@ -1318,8 +1080,7 @@ class _FilterPill extends StatelessWidget {
 class _AdminEmpty extends StatelessWidget {
   final IconData icon;
   final String message;
-  final String? detail;
-  const _AdminEmpty({required this.icon, required this.message, this.detail});
+  const _AdminEmpty({required this.icon, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -1343,18 +1104,6 @@ class _AdminEmpty extends StatelessWidget {
                 color: AppColors.adminTextMedium,
               ),
             ),
-            if (detail != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                detail!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  color: AppColors.adminTextLight,
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -1494,9 +1243,7 @@ void _showProfileDialog(
                         ),
                         data: (hoods) => DropdownButtonFormField<String?>(
                           initialValue: neighborhoodId,
-                          decoration: const InputDecoration(
-                            labelText: 'שכונה',
-                          ),
+                          decoration: const InputDecoration(labelText: 'שכונה'),
                           items: [
                             const DropdownMenuItem(
                               value: null,
@@ -1508,8 +1255,7 @@ void _showProfileDialog(
                                 child: Text(h['name'] as String? ?? ''),
                               ),
                           ],
-                          onChanged: (v) =>
-                              setDState(() => neighborhoodId = v),
+                          onChanged: (v) => setDState(() => neighborhoodId = v),
                         ),
                       );
                     },

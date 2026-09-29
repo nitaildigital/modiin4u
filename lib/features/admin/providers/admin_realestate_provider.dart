@@ -86,13 +86,15 @@ class AdminListingListNotifier extends AdminTableNotifier {
 }
 
 /// Agents a listing can be credited to.
+///
+/// Inactive agents are fetched too, so a listing credited to one still shows
+/// who it is credited to; the picker offers only the active ones otherwise.
 final realEstateAgentsProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
   final rows = await SupabaseConfig.client
       .from('real_estate_agents')
-      .select('id, name, agency, phone')
-      .eq('is_active', true)
+      .select('id, name, agency, phone, is_active')
       .order('name', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });
@@ -100,13 +102,13 @@ final realEstateAgentsProvider = FutureProvider<List<Map<String, dynamic>>>((
 /// The neighbourhoods a listing can be filed under.
 ///
 /// The editor asked for the name as free text and wrote it to a column that
-/// does not exist; a listing is filed by id against this table.
+/// does not exist; a listing is filed by id against this table. Inactive ones
+/// come too, for the same reason as the agents above.
 final adminNeighborhoodOptionsProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
       final rows = await SupabaseConfig.client
           .from('neighborhoods')
-          .select('id, name')
-          .eq('is_active', true)
+          .select('id, name, is_active')
           .order('sort_order', ascending: true);
       return List<Map<String, dynamic>>.from(rows);
     });
