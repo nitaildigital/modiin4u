@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/business.dart';
 import '../providers/business_providers.dart';
+import 'web_businesses_screen.dart' show WebBusinessGrid;
 
 // ═══════════════════════════════════════════════════════════
 // Web Business List — one category, at desktop width
@@ -28,11 +28,7 @@ const _kBorder = Color(0xFFE7E7E7);
 const _kGreyText = Color(0xFF5F5E5A);
 const _kHeading = Color(0xFF1C1C1E);
 const _kBodyText = Color(0xFF3D3D3D);
-const _kIconGrey = Color(0xFF6D6D6D);
 const _kPillBorder = Color(0xFFD1D1D1);
-const _kKosherBg = Color(0xFFE6F7EE);
-const _kKosherText = Color(0xFF12855A);
-const _kDeliveryBg = Color(0xFFF0F7FD);
 
 class WebBusinessListContent extends ConsumerStatefulWidget {
   /// The category being listed, or null for the whole directory — the same
@@ -51,9 +47,9 @@ class WebBusinessListContent extends ConsumerStatefulWidget {
       _WebBusinessListContentState();
 }
 
-class _WebBusinessListContentState
-    extends ConsumerState<WebBusinessListContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
+    with WebLanguageState<WebBusinessListContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   /// -1 = no pill selected.
   int _selectedFilter = -1;
@@ -64,20 +60,6 @@ class _WebBusinessListContentState
   int _shown = _pageSize;
 
   String _t(String en, String he) => _isHebrew ? he : en;
-
-  /// Colours behind the cards that carry no photograph. Same sequence the
-  /// directory walks, so a business keeps a stable stand-in between the two
-  /// pages when its index matches.
-  static const _palette = <(Color, Color)>[
-    (Color(0xFF1B3A2D), Color(0xFF2E5A47)),
-    (Color(0xFF3E2723), Color(0xFF5D4037)),
-    (Color(0xFF2D1B4E), Color(0xFF4A2D6E)),
-    (Color(0xFF4E1B3A), Color(0xFF6E2D54)),
-    (Color(0xFF1A237E), Color(0xFF283593)),
-    (Color(0xFF4E342E), Color(0xFF6D4C41)),
-    (Color(0xFF263238), Color(0xFF37474F)),
-    (Color(0xFF1B5E20), Color(0xFF2E7D32)),
-  ];
 
   /// The only two filters a column can answer. Opening hours live in
   /// `business_hours`, which holds no rows, and `reviews` is empty, so
@@ -93,15 +75,6 @@ class _WebBusinessListContentState
   List<Business> _visible(List<Business> rows) =>
       rows.where(_matchesFilter).toList();
 
-  /// What the card prints on its category line. The `businesses` table has no
-  /// category column — the links live in `entity_categories` — so on a
-  /// category page the page's own name is the truest label available, and the
-  /// whole-directory page says "Business".
-  String get _categoryLabel {
-    if (widget.categoryId == null) return _t('Business', 'עסק');
-    return widget.title;
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = businessesByCategoryProvider(widget.categoryId);
@@ -115,8 +88,7 @@ class _WebBusinessListContentState
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              activeId: 'businesses',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
+              activeId: widget.categoryId == 'services' ? 'professionals' : 'businesses',
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -187,17 +159,26 @@ class _WebBusinessListContentState
                 ),
               ),
               const SizedBox(height: 20),
+              // The Restaurants frame's section heading: 28 on a 34 line,
+              // 10, then the line under it.
+              // A category's name is the table's, Hebrew only; the whole
+              // directory's heading is the site's own words, in its language.
               Text(
-                widget.title,
+                widget.categoryId == null
+                    ? _t('All Businesses', 'כל העסקים')
+                    // The site's Professionals are the Services category.
+                    : widget.categoryId == 'services'
+                        ? _t('Professionals', 'בעלי מקצוע')
+                        : widget.title,
                 style: TextStyle(
                   fontFamily: AppFonts.nunito,
-                  fontSize: 36,
+                  fontSize: 28,
                   fontWeight: FontWeight.w600,
                   color: AppColors.midBlue,
-                  height: 1.2,
+                  height: 34 / 28,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               // The count is only true once the rows are in; while the request is
               // in flight it would read "0 businesses found".
               Text(
@@ -310,44 +291,9 @@ class _WebBusinessListContentState
 
     return Column(
       children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const gap = 20.0;
-            // Four across is the directory's grid; below roughly 1300 the
-            // fourth card gets narrower than its own contents, so it drops
-            // to three.
-            final perRow = constraints.maxWidth >= 1250 ? 4 : 3;
-            final cardWidth =
-                (constraints.maxWidth - gap * (perRow - 1)) / perRow;
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: List.generate(visible.length, (i) {
-                final b = visible[i];
-                return SizedBox(
-                  width: cardWidth,
-                  height: 372,
-                  child: _BusinessCard(
-                    business: b,
-                    categoryLabel: b.category.isNotEmpty
-                        ? b.category
-                        : _categoryLabel,
-                    imageBg: _palette[i % _palette.length].$1,
-                    logoBg: _palette[(i + 3) % _palette.length].$2,
-                    reviewsLabel: _t('reviews', 'ביקורות'),
-                    // `reviews` holds no rows, so every business here has a
-                    // review count of 0 and no score to print.
-                    notRatedLabel: _t('Not rated yet', 'אין דירוג עדיין'),
-                    kosherLabel: _t('Kosher', 'כשר'),
-                    deliveryLabel: _t('Delivery', 'משלוחים'),
-                    viewLabel: _t('View Business', 'לעמוד העסק'),
-                    onTap: () => context.push('/business/${b.id}'),
-                  ),
-                );
-              }),
-            );
-          },
-        ),
+        // The design's business card, as the directory and the home page
+        // draw it, so a business looks the same wherever it is listed.
+        WebBusinessGrid(businesses: visible, isHebrew: _isHebrew),
         if (rows.length > _shown) ...[
           const SizedBox(height: 32),
           Center(
@@ -521,361 +467,3 @@ class _FilterPillState extends State<_FilterPill> {
   }
 }
 
-// ─────────────────────────────────────────────
-// BUSINESS CARD — the directory's card, 372 tall
-// ─────────────────────────────────────────────
-class _BusinessCard extends StatefulWidget {
-  final Business business;
-  final String categoryLabel;
-  final Color imageBg, logoBg;
-  final String reviewsLabel, notRatedLabel, viewLabel;
-  final String kosherLabel, deliveryLabel;
-  final VoidCallback onTap;
-
-  const _BusinessCard({
-    required this.business,
-    required this.categoryLabel,
-    required this.imageBg,
-    required this.logoBg,
-    required this.reviewsLabel,
-    required this.notRatedLabel,
-    required this.viewLabel,
-    required this.kosherLabel,
-    required this.deliveryLabel,
-    required this.onTap,
-  });
-
-  @override
-  State<_BusinessCard> createState() => _BusinessCardState();
-}
-
-class _BusinessCardState extends State<_BusinessCard> {
-  bool _hovered = false;
-
-  Widget _chip(String label, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.inter,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: fg,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final b = widget.business;
-    final kosher = b.kosherLabel;
-    // The neighbourhood where the row is filed under one, and the street
-    // address otherwise — only 19 of the 219 carry a neighbourhood.
-    final area = b.neighborhood.isNotEmpty ? b.neighborhood : b.address;
-    final hasRating = b.rating > 0;
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _hovered ? AppColors.midBlue : _kBorder),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 168,
-                child: Stack(
-                  // The logo chip hangs 20px below the photo — the Stack's
-                  // default hardEdge clip would cut it in half.
-                  clipBehavior: Clip.none,
-                  children: [
-                    _remoteImage(
-                      b.imageUrl ?? '',
-                      widget.imageBg,
-                      width: double.infinity,
-                      height: 168,
-                      radius: const BorderRadius.vertical(
-                        top: Radius.circular(11),
-                      ),
-                      glyph: 30,
-                    ),
-                    PositionedDirectional(
-                      start: 12,
-                      top: 12,
-                      child: Row(
-                        children: [
-                          if (kosher != null)
-                            _chip(widget.kosherLabel, _kKosherBg, _kKosherText),
-                          if (kosher != null && b.hasDelivery)
-                            const SizedBox(width: 6),
-                          if (b.hasDelivery)
-                            _chip(
-                              widget.deliveryLabel,
-                              _kDeliveryBg,
-                              AppColors.midBlue,
-                            ),
-                        ],
-                      ),
-                    ),
-                    // No gold star beside a 0.0 — `reviews` is empty, so no
-                    // business here has a score yet.
-                    if (hasRating)
-                      PositionedDirectional(
-                        end: 12,
-                        top: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                IconsaxPlusBold.star_1,
-                                size: 13,
-                                color: AppColors.gold,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                b.rating.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _kHeading,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    PositionedDirectional(
-                      start: 16,
-                      bottom: -20,
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: _remoteImage(
-                          b.logoUrl ?? '',
-                          widget.logoBg,
-                          radius: BorderRadius.circular(9),
-                          glyph: 18,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        b.name,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: _kHeading,
-                          height: 1.22,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.categoryLabel,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.midBlue,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (area.isNotEmpty) ...[
-                            const SizedBox(width: 6),
-                            const Text(
-                              '•',
-                              style: TextStyle(color: _kGreyText, fontSize: 13),
-                            ),
-                            const SizedBox(width: 6),
-                            const Icon(
-                              IconsaxPlusLinear.location,
-                              size: 13,
-                              color: _kIconGrey,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                area,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 13,
-                                  color: _kGreyText,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        b.reviewCount > 0
-                            ? '${b.reviewCount} ${widget.reviewsLabel}'
-                            : widget.notRatedLabel,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: _kGreyText,
-                        ),
-                      ),
-                      const Spacer(),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 44,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: _hovered
-                                    ? AppColors.midBlue
-                                    : Colors.white,
-                                border: Border.all(color: AppColors.midBlue),
-                                borderRadius: BorderRadius.circular(60),
-                              ),
-                              child: Text(
-                                widget.viewLabel,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: _hovered
-                                      ? Colors.white
-                                      : AppColors.midBlue,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                          // 14 of the rows have no phone number, and those
-                          // draw no button rather than a dead one.
-                          if ((b.phone ?? '').isNotEmpty) ...[
-                            const SizedBox(width: 10),
-                            MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: GestureDetector(
-                                onTap: () => launchUrl(
-                                  Uri(scheme: 'tel', path: b.phone),
-                                ),
-                                child: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: _kBorder),
-                                    borderRadius: BorderRadius.circular(60),
-                                  ),
-                                  child: const Icon(
-                                    IconsaxPlusLinear.call,
-                                    size: 18,
-                                    color: AppColors.midBlue,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The card's photo, falling back to a gradient stand-in — 90 of the 219
-/// businesses have no cover image.
-Widget _remoteImage(
-  String url,
-  Color base, {
-  double? width,
-  double? height,
-  BorderRadius? radius,
-  double glyph = 28,
-}) {
-  final fallback = Container(
-    width: width,
-    height: height,
-    decoration: BoxDecoration(
-      borderRadius: radius,
-      shape: radius == null ? BoxShape.circle : BoxShape.rectangle,
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [base, Color.lerp(base, Colors.black, 0.22)!],
-      ),
-    ),
-    child: Center(
-      child: Icon(
-        IconsaxPlusLinear.image,
-        size: glyph,
-        color: Colors.white.withValues(alpha: 0.35),
-      ),
-    ),
-  );
-  if (url.isEmpty) return fallback;
-  return ClipRRect(
-    borderRadius: radius ?? BorderRadius.circular(999),
-    child: Image.network(
-      url,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      // Rendered by the browser's own <img> element rather than decoded into
-      // the CanvasKit surface, which is how these covers load elsewhere.
-      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-      errorBuilder: (_, _, _) => fallback,
-      loadingBuilder: (context, child, progress) =>
-          progress == null ? child : fallback,
-    ),
-  );
-}

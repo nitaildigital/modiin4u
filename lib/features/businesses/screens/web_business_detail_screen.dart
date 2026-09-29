@@ -10,11 +10,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/web_map_tiles.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/business.dart';
 import '../models/business_review.dart';
 import '../providers/business_providers.dart';
+import '../../../shared/widgets/web_contact_menu.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Business page, desktop — Figma "Restaurant Detail", 1920 wide
@@ -59,11 +60,16 @@ class WebBusinessDetailContent extends ConsumerStatefulWidget {
   ConsumerState<WebBusinessDetailContent> createState() => _WebBusinessDetailContentState();
 }
 
-class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailContent>
+    with WebLanguageState<WebBusinessDetailContent> {
+  bool get _isHebrew => webIsHebrew.value;
   final _galleryController = ScrollController();
   final _hoursKey = GlobalKey();
   int _reviewsShown = 5;
+  _ReviewOrder _reviewOrder = _ReviewOrder.recent;
+
+  /// The star count the list is narrowed to, or null for all of them.
+  int? _ratingFilter;
 
   Business get b => widget.business;
   String _t(String en, String he) => _isHebrew ? he : en;
@@ -89,7 +95,6 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'businesses',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -423,6 +428,8 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
   }
 
   Widget _buildGallery(List<String> photos) {
+    // Arrows only where there is further to go: five photographs fill the
+    // design's column exactly, and arrows that move nothing are decoration.
     void scroll(int direction) {
       if (!_galleryController.hasClients) return;
       final target = (_galleryController.offset + direction * 222 * 3)
@@ -435,35 +442,37 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
       children: [
         _title(_t('Business Gallery', 'גלריית העסק')),
         const SizedBox(height: 23),
-        SizedBox(
-          height: 202,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ListView.separated(
-                controller: _galleryController,
-                scrollDirection: Axis.horizontal,
-                itemCount: photos.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 22),
-                itemBuilder: (context, i) => MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => _openPhotos(photos, i),
-                    child: NetworkPhoto(
-                      url: photos[i],
-                      width: 200,
-                      height: 202,
-                      radius: BorderRadius.circular(8),
-                      icon: IconsaxPlusLinear.gallery,
+        LayoutBuilder(
+          builder: (context, c) => SizedBox(
+            height: 202,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ListView.separated(
+                  controller: _galleryController,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: photos.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 22),
+                  itemBuilder: (context, i) => MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => _openPhotos(photos, i),
+                      child: NetworkPhoto(
+                        url: photos[i],
+                        width: 200,
+                        height: 202,
+                        radius: BorderRadius.circular(8),
+                        icon: IconsaxPlusLinear.gallery,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              if (photos.length > 5) ...[
-                PositionedDirectional(start: -20, top: 81, child: _CarouselArrow(back: true, onTap: () => scroll(_isHebrew ? 1 : -1))),
-                PositionedDirectional(end: -20, top: 81, child: _CarouselArrow(back: false, onTap: () => scroll(_isHebrew ? -1 : 1))),
+                if (photos.length * 222 - 22 > c.maxWidth) ...[
+                  PositionedDirectional(start: -20, top: 81, child: _CarouselArrow(back: true, onTap: () => scroll(-1))),
+                  PositionedDirectional(end: -20, top: 81, child: _CarouselArrow(back: false, onTap: () => scroll(1))),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ],
@@ -473,7 +482,23 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
   // ── Reviews ──
   Widget _buildReviews(List<BusinessReview> reviews) {
     final summary = ReviewSummary.of(reviews);
-    final shown = reviews.take(_reviewsShown).toList();
+    final filtered = [
+      for (final r in reviews)
+        if (_ratingFilter == null || r.rating == _ratingFilter) r,
+    ];
+    switch (_reviewOrder) {
+      case _ReviewOrder.recent:
+        break; // The provider returns them newest first.
+      case _ReviewOrder.highest:
+        filtered.sort((a, b) => b.rating.compareTo(a.rating));
+      case _ReviewOrder.lowest:
+        filtered.sort((a, b) => a.rating.compareTo(b.rating));
+    }
+    final shown = filtered.take(_reviewsShown).toList();
+    final more = filtered.length > shown.length;
+
+    final orderLabels = {_ReviewOrder.recent: _t('Most Recent', 'האחרונות'), _ReviewOrder.highest: _t('Highest Rated', 'הדירוג הגבוה'), _ReviewOrder.lowest: _t('Lowest Rated', 'הדירוג הנמוך')};
+    String ratingLabel(int? stars) => stars == null ? _t('All', 'הכל') : '$stars ★';
 
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 918),
@@ -485,11 +510,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
           if (reviews.isEmpty)
             // Nothing to average, and no place on the website to write the
             // first one: reviews are written in the app.
-            Text(
-              _t('No reviews yet. Reviews are written by residents in the Modiin4u app.',
-                  'עדיין אין ביקורות. תושבים כותבים ביקורות באפליקציית מודיעין בשבילך.'),
-              style: _inter(16, color: _kBody),
-            )
+            Text(_t('No reviews yet. Reviews are written by residents in the Modiin4u app.', 'עדיין אין ביקורות. תושבים כותבים ביקורות באפליקציית מודיעין בשבילך.'), style: _inter(16, color: _kBody))
           else ...[
             IntrinsicHeight(
               child: Row(
@@ -498,17 +519,18 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                   Container(
                     width: 240,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: const BoxDecoration(border: BorderDirectional(end: BorderSide(color: _kLine))),
+                    decoration: const BoxDecoration(
+                      border: BorderDirectional(end: BorderSide(color: _kLine)),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(summary.average.toStringAsFixed(1), style: _inter(48, weight: FontWeight.w600)),
+                        Text(summary.average.toStringAsFixed(1), style: _inter(48, weight: FontWeight.w600, height: 1.21)),
                         const SizedBox(height: 16),
                         _Stars(value: summary.average.round(), size: 24, gap: 7),
                         const SizedBox(height: 16),
-                        Text(_t('Based on ${summary.total} reviews', 'מבוסס על ${summary.total} ביקורות'),
-                            style: _inter(16, color: _kBody)),
+                        Text(_t('Based on ${summary.total} reviews', 'מבוסס על ${summary.total} ביקורות'), style: _inter(16, color: _kBody, height: 1.19)),
                       ],
                     ),
                   ),
@@ -518,27 +540,80 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        for (var score = 5; score >= 1; score--) ...[
-                          if (score < 5) const SizedBox(height: 12),
-                          _ShareRow(score: score, share: summary.shareOf(score)),
-                        ],
+                        for (var score = 5; score >= 1; score--) ...[if (score < 5) const SizedBox(height: 12), _ShareRow(score: score, share: summary.shareOf(score))],
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            for (final r in shown) _ReviewRow(review: r, isHebrew: _isHebrew),
-            if (reviews.length > shown.length) ...[
-              const SizedBox(height: 24),
-              Center(
-                child: _OutlinePill(
-                  label: _t('Load More', 'טען עוד'),
-                  onTap: () => setState(() => _reviewsShown += 5),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                _DropdownBox<_ReviewOrder>(
+                  label: _t('Sort By: ${orderLabels[_reviewOrder]}', 'מיון: ${orderLabels[_reviewOrder]}'),
+                  options: [for (final e in orderLabels.entries) (e.key, e.value)],
+                  selected: _reviewOrder,
+                  onSelected: (v) => setState(() {
+                    _reviewOrder = v;
+                    _reviewsShown = 5;
+                  }),
                 ),
+                const SizedBox(width: 12),
+                _DropdownBox<int?>(
+                  label: _t('Rating: ${ratingLabel(_ratingFilter)}', 'דירוג: ${ratingLabel(_ratingFilter)}'),
+                  options: [
+                    for (final v in const [null, 5, 4, 3, 2, 1]) (v, ratingLabel(v)),
+                  ],
+                  selected: _ratingFilter,
+                  onSelected: (v) => setState(() {
+                    _ratingFilter = v;
+                    _reviewsShown = 5;
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            if (filtered.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(_t('No reviews with this rating.', 'אין ביקורות בדירוג הזה.'), style: _inter(16, color: _kBody)),
+              )
+            // While there are more to load, the last one fades out under the
+            // button, as the design draws it.
+            else if (more)
+              Stack(
+                children: [
+                  Column(
+                    children: [for (final r in shown) _ReviewRow(review: r, isHebrew: _isHebrew)],
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: -2,
+                    height: 222,
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, stops: const [0, 0.978], colors: [Colors.white.withValues(alpha: 0), Colors.white]),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 2,
+                    child: Center(
+                      child: _OutlinePill(label: _t('Load More', 'טען עוד'), onTap: () => setState(() => _reviewsShown += 5)),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Column(
+                children: [for (final r in shown) _ReviewRow(review: r, isHebrew: _isHebrew)],
               ),
-            ],
           ],
         ],
       ),
@@ -598,11 +673,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                       'https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}')),
                 ),
                 children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.modiin4u.app',
-                    maxZoom: 19,
-                  ),
+                  const WebMapTiles(),
                   MarkerLayer(
                     markers: [
                       Marker(
@@ -614,7 +685,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                       ),
                     ],
                   ),
-                  const OsmAttribution(),
+                  const WebMapCredit(),
                 ],
               ),
             ),
@@ -660,7 +731,8 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
   Widget _buildMoreInfoCard() {
     final website = (b.website ?? '').trim();
     final phone = (b.phone ?? '').trim();
-    if (website.isEmpty && phone.isEmpty) return const SizedBox.shrink();
+    final whatsapp = (b.whatsapp ?? '').trim();
+    if (website.isEmpty && phone.isEmpty && whatsapp.isEmpty) return const SizedBox.shrink();
 
     String shown(String url) => url.replaceFirst(RegExp(r'^https?://(www\.)?'), '').replaceFirst(RegExp(r'/$'), '');
     Uri link(String url) => Uri.parse(url.startsWith('http') ? url : 'https://$url');
@@ -684,12 +756,29 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
               onTap: () => launchUrl(link(website)),
             ),
           if (website.isNotEmpty && phone.isNotEmpty) const SizedBox(height: 20),
+          // The number is on the page; the tap offers it to copy or dial
+          // too, since `tel:` alone does nothing visible on most computers.
           if (phone.isNotEmpty)
+            Builder(
+              builder: (anchor) => _InfoRow(
+                icon: '$_kAsset/call.svg',
+                label: _t('Call', 'טלפון'),
+                value: phone,
+                onTap: () => showWebContactMenu(anchor, isHebrew: _isHebrew, phone: phone),
+              ),
+            ),
+          // Five businesses carry a WhatsApp number the page never showed.
+          if (whatsapp.isNotEmpty && (website.isNotEmpty || phone.isNotEmpty)) const SizedBox(height: 20),
+          if (whatsapp.isNotEmpty)
             _InfoRow(
-              icon: '$_kAsset/call.svg',
-              label: _t('Call', 'טלפון'),
-              value: phone,
-              onTap: () => launchUrl(Uri(scheme: 'tel', path: phone)),
+              icon: 'assets/web/news/share_whatsapp.svg',
+              label: 'WhatsApp',
+              value: whatsapp,
+              onTap: () {
+                var digits = whatsapp.replaceAll(RegExp(r'\D'), '');
+                if (digits.startsWith('0')) digits = '972${digits.substring(1)}';
+                launchUrl(Uri.parse('https://wa.me/$digits'), webOnlyWindowName: '_blank');
+              },
             ),
         ],
       ),
@@ -719,9 +808,12 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
       ...picked.where((x) => (x.imageUrl ?? '').isEmpty),
     ].take(5).toList();
 
+    // The design's heading names the neighbourhood. Most rows are filed
+    // under none; those show others of the same kind, which are in the same
+    // city, and say so in the design's own words.
     final heading = inNeighborhood && b.neighborhood.isNotEmpty
         ? _t('More Businesses in ${b.neighborhood}', 'עסקים נוספים ב${b.neighborhood}')
-        : _t('More Like This', 'עסקים דומים');
+        : _t('More Businesses in Modiin', 'עסקים נוספים במודיעין');
 
     return Padding(
       padding: const EdgeInsets.only(top: 64),
@@ -753,9 +845,72 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
   }
 }
 
+/// How the review list is ordered.
+enum _ReviewOrder { recent, highest, lowest }
+
 // ═══════════════════════════════════════════════
 // PIECES
 // ═══════════════════════════════════════════════
+
+/// "Sort By: Most Recent ⌄" — a 40-tall box with a grey ring that opens its
+/// choices underneath.
+class _DropdownBox<T> extends StatelessWidget {
+  final String label;
+  final List<(T, String)> options;
+  final T selected;
+  final ValueChanged<T> onSelected;
+  const _DropdownBox({required this.label, required this.options, required this.selected, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<int>(
+      tooltip: '',
+      position: PopupMenuPosition.under,
+      offset: const Offset(0, 6),
+      color: Colors.white,
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: _kLine),
+      ),
+      onSelected: (i) => onSelected(options[i].$1),
+      itemBuilder: (context) => [
+        for (var i = 0; i < options.length; i++)
+          PopupMenuItem<int>(
+            value: i,
+            height: 40,
+            child: Text(
+              options[i].$2,
+              style: _inter(14, weight: options[i].$1 == selected ? FontWeight.w600 : FontWeight.w500, color: options[i].$1 == selected ? AppColors.midBlue : _kBody),
+            ),
+          ),
+      ],
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: _kLine),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: _inter(14, weight: FontWeight.w500, color: _kBody, height: 1.21),
+              ),
+              const SizedBox(width: 8),
+              SvgPicture.asset('$_kAsset/chevron14.svg', width: 14, height: 14),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// The business's own logo in a white circle, 140 across; the shop mark where
 /// it has none.
@@ -769,17 +924,17 @@ class _HeroLogo extends StatelessWidget {
       width: 140,
       height: 140,
       decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+      // The design's logo fills its circle. Most logos here are square, so
+      // they are drawn edge to edge and the circle trims their corners; a
+      // wide wordmark keeps all its letters on white rather than being cut.
       child: ClipOval(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: NetworkPhoto(
-            url: url,
-            fit: BoxFit.contain,
-            gradient: const [Colors.white, Colors.white],
-            icon: IconsaxPlusLinear.shop,
-            iconSize: 48,
-            iconColor: AppColors.midBlue,
-          ),
+        child: NetworkPhoto(
+          url: url,
+          fit: BoxFit.contain,
+          gradient: const [Colors.white, Colors.white],
+          icon: IconsaxPlusLinear.shop,
+          iconSize: 48,
+          iconColor: AppColors.midBlue,
         ),
       ),
     );
@@ -929,9 +1084,13 @@ class _ShareRow extends StatelessWidget {
               child: Stack(
                 children: [
                   const Positioned.fill(child: ColoredBox(color: _kLine)),
+                  // heightFactor too: a Stack hands its plain children a
+                  // loose height, and a ColoredBox with nothing in it takes
+                  // the least it is allowed — none — so the bars drew empty.
                   FractionallySizedBox(
                     alignment: AlignmentDirectional.centerStart,
                     widthFactor: share.clamp(0.0, 1.0),
+                    heightFactor: 1,
                     child: const ColoredBox(color: AppColors.turquoise),
                   ),
                 ],
@@ -1015,16 +1174,21 @@ class _OutlinePill extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onTap,
+        // A Row that hugs its label, not an aligned Container: given loose
+        // room, an aligned Container takes all of it, and the button ran
+        // the full width of the list.
         child: Container(
           height: 46,
           padding: const EdgeInsets.symmetric(horizontal: 32),
-          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: AppColors.midBlue),
             borderRadius: BorderRadius.circular(60),
           ),
-          child: Text(label, style: _inter(16, weight: FontWeight.w500, color: AppColors.midBlue)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [Text(label, style: _inter(16, weight: FontWeight.w500, color: AppColors.midBlue))],
+          ),
         ),
       ),
     );
@@ -1133,9 +1297,21 @@ class _SmallBusinessCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(x.name, textDirection: _dirOf(x.name), maxLines: 1, overflow: TextOverflow.ellipsis, style: _display(20, color: _kInk)),
-                          const SizedBox(height: 8),
-                          Text(subtitle, textDirection: _dirOf(subtitle), maxLines: 1, overflow: TextOverflow.ellipsis, style: _inter(14, color: _kGrey)),
+                          // The design's 50: a 25 name, 8, a 17 kind. Left to
+                          // the font's own line height the pair ran 4 over and
+                          // pushed the rating out of the card.
+                          SizedBox(
+                            height: 50,
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(x.name, textDirection: _dirOf(x.name), maxLines: 1, overflow: TextOverflow.ellipsis, style: _display(20, color: _kInk, height: 1.25)),
+                                const SizedBox(height: 8),
+                                Text(subtitle, textDirection: _dirOf(subtitle), maxLines: 1, overflow: TextOverflow.ellipsis, style: _inter(14, color: _kGrey, height: 1.21)),
+                              ],
+                            ),
+                          ),
                           if (address.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             Row(
@@ -1143,22 +1319,28 @@ class _SmallBusinessCard extends StatelessWidget {
                                 SizedBox(width: 16, height: 16, child: Center(child: SvgPicture.asset('$_kHomeAsset/card_pin.svg', width: 12, height: 16))),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(address, textDirection: _dirOf(address), maxLines: 1, overflow: TextOverflow.ellipsis, style: _inter(14, color: _kGrey)),
+                                  child: Text(address,
+                                      textDirection: _dirOf(address),
+                                      // Beside its pin, whichever way the page reads.
+                                      textAlign: Directionality.of(context) == TextDirection.rtl ? TextAlign.right : TextAlign.left,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: _inter(14, color: _kGrey, height: 1.21)),
                                 ),
                               ],
                             ),
                           ],
                           const SizedBox(height: 16),
                           if (x.reviewCount == 0)
-                            Text(isHebrew ? 'אין דירוג עדיין' : 'Not rated yet', style: _inter(14, color: _kMuted))
+                            Text(isHebrew ? 'אין דירוג עדיין' : 'Not rated yet', style: _inter(14, color: _kMuted, height: 1.21))
                           else
                             Row(
                               children: [
                                 SvgPicture.asset('$_kHomeAsset/card_star.svg', width: 16, height: 16),
                                 const SizedBox(width: 8),
-                                Text(x.rating.toStringAsFixed(1), style: _inter(14, weight: FontWeight.w500)),
+                                Text(x.rating.toStringAsFixed(1), style: _inter(14, weight: FontWeight.w500, height: 1.21)),
                                 const SizedBox(width: 8),
-                                Text('(${x.reviewCount})', style: _inter(14, color: _kMuted)),
+                                Text('(${x.reviewCount})', style: _inter(14, color: _kMuted, height: 1.21)),
                               ],
                             ),
                         ],

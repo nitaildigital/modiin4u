@@ -19,6 +19,8 @@ import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../../shared/widgets/network_photo.dart';
 import 'web_business_detail_screen.dart';
+import '../../../shared/widgets/web_chrome.dart' show WebFooter, WebNavbar, webIsHebrew;
+import '../repositories/business_repository.dart' show BusinessNotFound;
 
 class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
@@ -33,12 +35,18 @@ class BusinessDetailScreen extends ConsumerWidget {
         .watch(provider)
         .when(
           loading: () => const _BusinessDetailSkeleton(),
-          error: (error, _) => Scaffold(
-            backgroundColor: Colors.white,
-            body: SafeArea(
-              child: ErrorRetry(onRetry: () => ref.invalidate(provider)),
-            ),
-          ),
+          // A business that is not there is not a connection problem: a
+          // retry can never find it. That page said "something went wrong,
+          // check your internet" with a retry button, and on the website
+          // without the navbar — a dead end for every old link.
+          error: (error, _) => error is BusinessNotFound
+              ? const _BusinessNotFound()
+              : Scaffold(
+                  backgroundColor: Colors.white,
+                  body: SafeArea(
+                    child: ErrorRetry(onRetry: () => ref.invalidate(provider)),
+                  ),
+                ),
           data: (business) => _BusinessDetailContent(business: business),
         );
   }
@@ -2206,6 +2214,76 @@ class _NoReviewsYet extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// No business at this address: says so, and leads back to the directory.
+/// On the website it keeps the navbar and footer, like any other page.
+class _BusinessNotFound extends StatelessWidget {
+  const _BusinessNotFound();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: webIsHebrew,
+      builder: (context, hebrewOnWeb, _) {
+        final hebrew = kIsWeb ? hebrewOnWeb : true;
+        String t(String en, String he) => hebrew ? he : en;
+        final message = Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 96),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(IconsaxPlusLinear.shop, size: 48, color: AppColors.midBlue),
+              const SizedBox(height: 20),
+              Text(
+                t('This business is not listed', 'העסק הזה לא נמצא באתר'),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.midBlue),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                t('It may have closed or moved. The directory has others like it.',
+                    'ייתכן שנסגר או עבר. במדריך העסקים יש עוד רבים כמותו.'),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, color: const Color(0xFF5F5E5A)),
+              ),
+              const SizedBox(height: 28),
+              FilledButton(
+                onPressed: () => context.go('/businesses'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.midBlue,
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(60)),
+                ),
+                child: Text(t('Back to Businesses', 'חזרה לעסקים'),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 16, fontWeight: FontWeight.w500)),
+              ),
+            ],
+          ),
+        );
+
+        return Directionality(
+          textDirection: hebrew ? TextDirection.rtl : TextDirection.ltr,
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            body: LayoutBuilder(
+              builder: (context, c) => kIsWeb && c.maxWidth > 1100
+                  ? SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          WebNavbar(isHebrew: hebrew, activeId: 'businesses'),
+                          Center(child: message),
+                          WebFooter(isHebrew: hebrew),
+                        ],
+                      ),
+                    )
+                  : SafeArea(child: Center(child: SingleChildScrollView(child: message))),
+            ),
+          ),
+        );
+      },
     );
   }
 }

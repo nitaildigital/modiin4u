@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,6 +10,8 @@ import '../../restaurants/providers/restaurant_providers.dart' show categoriesBy
 import '../models/business.dart';
 import '../providers/business_providers.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../shared/widgets/network_photo.dart' show NetworkPhoto, photoTargetWidth, sizedPhotoUrl;
+import '../../../shared/widgets/web_contact_menu.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Businesses — full desktop layout
@@ -21,9 +24,6 @@ const _kHeading = Color(0xFF1C1C1E);
 const _kBodyText = Color(0xFF3D3D3D);
 const _kIconGrey = Color(0xFF6D6D6D);
 const _kPillBorder = Color(0xFFD1D1D1);
-const _kKosherBg = Color(0xFFE6F7EE);
-const _kKosherText = Color(0xFF12855A);
-const _kDeliveryBg = Color(0xFFF0F7FD);
 
 /// Which categories each business is filed under, keyed by business id.
 ///
@@ -49,8 +49,9 @@ class WebBusinessesContent extends ConsumerStatefulWidget {
   ConsumerState<WebBusinessesContent> createState() => _WebBusinessesContentState();
 }
 
-class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent>
+    with WebLanguageState<WebBusinessesContent> {
+  bool get _isHebrew => webIsHebrew.value;
   String? _selectedCategory; // null = all categories
   int _selectedFilter = -1; // -1 = no pill selected
   String _query = '';
@@ -238,7 +239,6 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'businesses',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -437,6 +437,7 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent> {
                     style: TextStyle(
                       fontFamily: AppFonts.nunito,
                       fontSize: 28,
+                      height: 34 / 28,
                       fontWeight: FontWeight.w600,
                       color: AppColors.midBlue,
                     ),
@@ -570,11 +571,12 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent> {
               style: TextStyle(
                 fontFamily: AppFonts.nunito,
                 fontSize: 28,
+                height: 34 / 28,
                 fontWeight: FontWeight.w600,
                 color: AppColors.midBlue,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             // The count is only the truth once the rows are in; while the
             // request is in flight it would read "0 businesses found".
             Text(
@@ -622,35 +624,9 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent> {
             else if (results.isEmpty)
               _buildEmptyResults()
             else ...[
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  const gap = 20.0;
-                  const perRow = 4;
-                  final cardWidth =
-                      (constraints.maxWidth - gap * (perRow - 1)) / perRow;
-                  final visible = results.take(_shown).toList();
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: List.generate(visible.length, (i) {
-                      return SizedBox(
-                        width: cardWidth,
-                        height: 372,
-                        child: _BusinessCard(
-                          business: visible[i],
-                          reviewsLabel: _t('reviews', 'ביקורות'),
-                          notRatedLabel: _t('Not rated yet', 'אין דירוג עדיין'),
-                          kosherLabel: _t('Kosher', 'כשר'),
-                          deliveryLabel: _t('Delivery', 'משלוחים'),
-                          viewLabel: _t('View Business', 'לעמוד העסק'),
-                          // The card pushed `/business/demo_<index>` before,
-                          // which matches no row; this is the business's own id.
-                          onTap: () => context.push('/business/${visible[i].id}'),
-                        ),
-                      );
-                    }),
-                  );
-                },
+              WebBusinessGrid(
+                businesses: [for (final b in results.take(_shown)) b.source],
+                isHebrew: _isHebrew,
               ),
               if (results.length > _shown) ...[
                 const SizedBox(height: 32),
@@ -798,11 +774,12 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent> {
               style: TextStyle(
                 fontFamily: AppFonts.nunito,
                 fontSize: 28,
+                height: 34 / 28,
                 fontWeight: FontWeight.w600,
                 color: AppColors.midBlue,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               _t(
                 'Service providers listed in the Modiin directory',
@@ -960,6 +937,9 @@ class _Category {
 }
 
 class _Business {
+  /// The row itself, which the design's card draws from.
+  final Business source;
+
   /// The row's id, so a card opens the business it names.
   final String id;
   final String name, category, area, description;
@@ -973,6 +953,7 @@ class _Business {
   final Set<String> categoryIds;
 
   const _Business({
+    required this.source,
     required this.id,
     required this.name,
     required this.category,
@@ -998,6 +979,7 @@ class _Business {
     required String unlistedCategory,
   }) {
     return _Business(
+      source: b,
       id: b.id,
       name: b.name,
       // 63 of the rows are in no category at all; those say "Business" rather
@@ -1066,7 +1048,7 @@ Widget _remoteImage(
   return ClipRRect(
     borderRadius: radius ?? BorderRadius.circular(999),
     child: Image.network(
-      url,
+      sizedPhotoUrl(url, photoTargetWidth(width, height), 2),
       width: width,
       height: height,
       fit: BoxFit.cover,
@@ -1316,302 +1298,6 @@ class _FilterPillState extends State<_FilterPill> {
 }
 
 // ─────────────────────────────────────────────
-// BUSINESS CARD — 400 × 372
-// ─────────────────────────────────────────────
-class _BusinessCard extends StatefulWidget {
-  final _Business business;
-  final String reviewsLabel, notRatedLabel, viewLabel;
-  final String kosherLabel, deliveryLabel;
-  final VoidCallback onTap;
-  const _BusinessCard({
-    required this.business,
-    required this.reviewsLabel,
-    required this.notRatedLabel,
-    required this.viewLabel,
-    required this.kosherLabel,
-    required this.deliveryLabel,
-    required this.onTap,
-  });
-
-  @override
-  State<_BusinessCard> createState() => _BusinessCardState();
-}
-
-class _BusinessCardState extends State<_BusinessCard> {
-  bool _hovered = false;
-
-  Widget _chip(String label, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.inter,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: fg,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final b = widget.business;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _hovered ? AppColors.midBlue : _kBorder),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Photo + badges + rating pill
-              SizedBox(
-                height: 168,
-                child: Stack(
-                  // The logo chip hangs 20px below the photo — without this the
-                  // Stack's default hardEdge clip cuts it in half.
-                  clipBehavior: Clip.none,
-                  children: [
-                    _remoteImage(
-                      b.imageUrl,
-                      b.imageBg,
-                      width: double.infinity,
-                      height: 168,
-                      radius: const BorderRadius.vertical(
-                        top: Radius.circular(11),
-                      ),
-                      glyph: 30,
-                    ),
-                    // An "Open Now" badge stood here on every card. Opening
-                    // hours are kept in `business_hours`, which holds no rows,
-                    // so nothing on this page can know whether a place is open.
-                    PositionedDirectional(
-                      start: 12,
-                      top: 12,
-                      child: Row(
-                        children: [
-                          if (b.kosher)
-                            _chip(widget.kosherLabel, _kKosherBg, _kKosherText),
-                          if (b.kosher && b.delivery) const SizedBox(width: 6),
-                          if (b.delivery)
-                            _chip(
-                              widget.deliveryLabel,
-                              _kDeliveryBg,
-                              AppColors.midBlue,
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (b.hasRating)
-                      PositionedDirectional(
-                        end: 12,
-                        top: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                IconsaxPlusBold.star_1,
-                                size: 13,
-                                color: AppColors.gold,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                b.rating.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _kHeading,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    // Logo chip straddling the photo edge
-                    PositionedDirectional(
-                      start: 16,
-                      bottom: -20,
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: _remoteImage(
-                          b.logoUrl,
-                          b.logoBg,
-                          radius: BorderRadius.circular(9),
-                          glyph: 18,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        b.name,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: _kHeading,
-                          height: 1.22,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Text(
-                            b.category,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.midBlue,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            '•',
-                            style: TextStyle(color: _kGreyText, fontSize: 13),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(
-                            IconsaxPlusLinear.location,
-                            size: 13,
-                            color: _kIconGrey,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              b.area,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 13,
-                                color: _kGreyText,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      // A view count stood here, and `businesses` has no such
-                      // column. Until someone reviews a place there is no
-                      // number to print, so the card says as much.
-                      Text(
-                        b.reviewCount > 0
-                            ? '${b.reviewCount} ${widget.reviewsLabel}'
-                            : widget.notRatedLabel,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: _kGreyText,
-                        ),
-                      ),
-                      const Spacer(),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 44,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: _hovered
-                                    ? AppColors.midBlue
-                                    : Colors.white,
-                                border: Border.all(color: AppColors.midBlue),
-                                borderRadius: BorderRadius.circular(60),
-                              ),
-                              child: Text(
-                                widget.viewLabel,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: _hovered
-                                      ? Colors.white
-                                      : AppColors.midBlue,
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Dials the business. 14 of the rows have no phone
-                          // number, and those draw no button rather than a dead
-                          // one.
-                          if (b.phone.isNotEmpty) ...[
-                            const SizedBox(width: 10),
-                            MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: GestureDetector(
-                                onTap: () =>
-                                    launchUrl(Uri(scheme: 'tel', path: b.phone)),
-                                child: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: _kBorder),
-                                    borderRadius: BorderRadius.circular(60),
-                                  ),
-                                  child: const Icon(
-                                    IconsaxPlusLinear.call,
-                                    size: 18,
-                                    color: AppColors.midBlue,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
 // PROVIDER CARD — logo, name, category, contact
 // ─────────────────────────────────────────────
 class _ProfessionalCard extends StatefulWidget {
@@ -1706,8 +1392,8 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
               if (b.phone.isNotEmpty)
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => launchUrl(Uri(scheme: 'tel', path: b.phone)),
+                  child: Builder(builder: (anchor) => GestureDetector(
+                    onTap: () => showWebContactMenu(anchor, isHebrew: webIsHebrew.value, phone: b.phone, whatsapp: b.source.whatsapp, email: b.source.email),
                     child: Container(
                       width: double.infinity,
                       height: 40,
@@ -1727,12 +1413,275 @@ class _ProfessionalCardState extends State<_ProfessionalCard> {
                         ),
                       ),
                     ),
-                  ),
+                  )),
                 ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// THE DESIGN'S BUSINESS CARD — Homepage 17:1463, 385 × 404
+// ═══════════════════════════════════════════════
+
+const _kCardAsset = 'assets/web/home';
+const _kCardInk = Color(0xFF0A1230);
+const _kCardPill = Color(0xFF0033AC);
+final _hebrewText = RegExp(r'[֐-׿]');
+
+/// One business in the directory, drawn as the design's card: 200 of
+/// photograph with the category in a pill at the top and the kosher
+/// certificate at the bottom, the round café or restaurant badge on the
+/// photograph's edge, then name, kind, address, rating and Contact.
+///
+/// It prints what the row carries and nothing else:
+///
+/// * the rating only once reviews have earned one — a gold star over
+///   "0.0 (0)" reads as a bad score, not as no score;
+/// * no view count: `businesses` has no such column, so the design's
+///   "187 Views" has no source;
+/// * no heart: saving belongs to an account, and accounts to the app;
+/// * Contact only where there is a number to dial. The card keeps its 404
+///   either way so a row of cards lines up.
+///
+/// The directory, a category page and the whole list all use it, so a
+/// business looks the same wherever it is listed.
+class WebBusinessCard extends StatefulWidget {
+  final Business business;
+
+  /// The most specific category the business is filed under, and the slug at
+  /// the top of its branch — which decides the badge.
+  final ({BusinessCategory category, String rootSlug})? kind;
+  final bool isHebrew;
+  const WebBusinessCard({super.key, required this.business, required this.kind, required this.isHebrew});
+
+  @override
+  State<WebBusinessCard> createState() => _WebBusinessCardState();
+}
+
+class _WebBusinessCardState extends State<WebBusinessCard> {
+  bool _hovered = false;
+
+  String _t(String en, String he) => widget.isHebrew ? he : en;
+
+  /// Directory text reads in its own direction but lines up with the card:
+  /// a Hebrew address on the English page still starts beside its pin.
+  Widget _text(String s, TextStyle style) => Text(
+        s,
+        style: style,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textDirection: _hebrewText.hasMatch(s) ? TextDirection.rtl : TextDirection.ltr,
+        textAlign: Directionality.of(context) == TextDirection.rtl ? TextAlign.right : TextAlign.left,
+      );
+
+  TextStyle _inter(double size, {FontWeight weight = FontWeight.w400, Color color = Colors.black}) =>
+      TextStyle(fontFamily: AppFonts.inter, fontSize: size, fontWeight: weight, color: color, height: 1.21);
+
+  Widget _pill(String label, {Widget? icon}) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(color: _kCardPill, borderRadius: BorderRadius.circular(50)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[icon, const SizedBox(width: 6)],
+            _text(label, _inter(12, weight: FontWeight.w500, color: Colors.white)),
+          ],
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final b = widget.business;
+    final categoryName = widget.kind?.category.name ?? '';
+    final description = (b.description ?? '').trim();
+    final subtitle = description.isNotEmpty ? description : categoryName;
+    final address = b.address.isNotEmpty ? b.address : b.neighborhood;
+    final phone = (b.phone ?? '').trim();
+    final badge = switch (widget.kind?.rootSlug) {
+      'cafe-bakery' => ('card_badge_ring.svg', 'card_badge_cafe.svg'),
+      'restaurants' => ('card_badge_ring_green.svg', 'card_badge_restaurant.svg'),
+      _ => null,
+    };
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: () => context.push('/business/${b.id}'),
+        child: Container(
+          height: 404,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: _kBorder),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 200,
+                width: double.infinity,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: NetworkPhoto(url: b.imageUrl ?? b.logoUrl, icon: IconsaxPlusLinear.shop, iconSize: 40),
+                    ),
+                    if (categoryName.isNotEmpty)
+                      PositionedDirectional(top: 15, end: 14, child: _pill(categoryName)),
+                    if (b.kosherLabel != null)
+                      PositionedDirectional(
+                        top: 161,
+                        start: 12,
+                        child: _pill(
+                          widget.isHebrew ? b.kosherLabel! : 'Kosher',
+                          icon: SvgPicture.asset('$_kCardAsset/card_kosher.svg', width: 14, height: 14),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 50,
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _text(b.name, TextStyle(fontFamily: AppFonts.nunito, fontSize: 20, fontWeight: FontWeight.w600, color: _kCardInk, height: 1.25)),
+                                if (subtitle.isNotEmpty) ...[const SizedBox(height: 8), _text(subtitle, _inter(14, color: _kGreyText))],
+                              ],
+                            ),
+                          ),
+                          if (address.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: Center(child: SvgPicture.asset('$_kCardAsset/card_pin.svg', width: 12, height: 16)),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(child: _text(address, _inter(14, color: _kGreyText))),
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          if (b.reviewCount == 0)
+                            Text(_t('Not rated yet', 'אין דירוג עדיין'), style: _inter(14, color: _kIconGrey))
+                          else
+                            Row(
+                              children: [
+                                SvgPicture.asset('$_kCardAsset/card_star.svg', width: 16, height: 16),
+                                const SizedBox(width: 8),
+                                Text(b.rating.toStringAsFixed(1), style: _inter(14, weight: FontWeight.w500)),
+                                const SizedBox(width: 8),
+                                Text('(${b.reviewCount})', style: _inter(14, color: _kIconGrey)),
+                              ],
+                            ),
+                          if (phone.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            // Outlined, filled while the card is under the
+                            // pointer, as the design draws both states.
+                            Builder(builder: (anchor) => GestureDetector(
+                              onTap: () => showWebContactMenu(anchor, isHebrew: widget.isHebrew, phone: phone, whatsapp: b.whatsapp, email: b.email),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: _hovered ? AppColors.midBlue : Colors.transparent,
+                                  border: Border.all(color: AppColors.midBlue),
+                                  borderRadius: BorderRadius.circular(60),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SvgPicture.asset(_hovered ? '$_kCardAsset/card_phone_white.svg' : '$_kCardAsset/card_phone.svg', width: 16, height: 16),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _t('Contact', 'צור קשר'),
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.inter,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        height: 24 / 14,
+                                        color: _hovered ? Colors.white : AppColors.midBlue,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )),
+                          ],
+                        ],
+                      ),
+                    ),
+                    // The round badge sits on the photograph's edge, 44 across
+                    // with its white ring, half over the picture.
+                    if (badge != null)
+                      PositionedDirectional(
+                        top: -22,
+                        end: 15,
+                        child: SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SvgPicture.asset('$_kCardAsset/${badge.$1}', width: 44, height: 44),
+                              SvgPicture.asset('$_kCardAsset/${badge.$2}', width: 20, height: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The grid of [WebBusinessCard]s both listing pages draw: four across at the
+/// design's width, 24 apart, three on a narrower window.
+class WebBusinessGrid extends ConsumerWidget {
+  final List<Business> businesses;
+  final bool isHebrew;
+  const WebBusinessGrid({super.key, required this.businesses, required this.isHebrew});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final kinds = ref.watch(businessPrimaryCategoryProvider).valueOrNull ?? const {};
+    return LayoutBuilder(
+      builder: (context, c) {
+        const gap = 24.0;
+        final perRow = c.maxWidth >= 1250 ? 4 : 3;
+        final w = (c.maxWidth - gap * (perRow - 1)) / perRow;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final b in businesses)
+              SizedBox(width: w, child: WebBusinessCard(business: b, kind: kinds[b.id], isHebrew: isHebrew)),
+          ],
+        );
+      },
     );
   }
 }

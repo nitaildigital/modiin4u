@@ -43,8 +43,20 @@ class BusinessRepository {
     return List<Map<String, dynamic>>.from(data);
   }
 
-  /// Business ids linked to a category.
-  Future<List<String>> fetchBusinessIdsInCategory(String categoryId) async {
+  /// Business ids linked to a category, named by its id or its slug — the
+  /// site links Professionals as `/businesses/category/services`.
+  Future<List<String>> fetchBusinessIdsInCategory(String categoryIdOrSlug) async {
+    var categoryId = categoryIdOrSlug;
+    if (!_uuid.hasMatch(categoryId)) {
+      final row = await _client
+          .from('categories')
+          .select('id')
+          .eq('scope', 'business')
+          .eq('slug', categoryIdOrSlug)
+          .maybeSingle();
+      if (row == null) return const [];
+      categoryId = row['id'] as String;
+    }
     final data = await _client
         .from('entity_categories')
         .select('entity_id')
@@ -83,7 +95,15 @@ class BusinessRepository {
     return List<Map<String, dynamic>>.from(data);
   }
 
-  Future<Map<String, dynamic>> fetchById(String id) async {
+  /// One business, by its id or by its slug.
+  ///
+  /// Links reach the page both ways: the site's own cards use the id, and
+  /// the articles brought over from WordPress link to `/business/<slug>/`,
+  /// which is how the old site addressed a business. Throws
+  /// [BusinessNotFound] when neither matches.
+  Future<Map<String, dynamic>> fetchById(String idOrSlug) async {
+    final key = Uri.decodeComponent(idOrSlug).trim().replaceAll(RegExp(r'/+$'), '');
+    final isId = _uuid.hasMatch(key);
     final data = await _client
         .from('businesses')
         .select('''
@@ -91,8 +111,10 @@ class BusinessRepository {
       neighborhoods!businesses_neighborhood_id_fkey(id, name, slug),
       business_hours(*)
     ''')
-        .eq('id', id)
-        .single();
+        .eq(isId ? 'id' : 'slug', key)
+        .limit(1)
+        .maybeSingle();
+    if (data == null) throw BusinessNotFound(idOrSlug);
     return data;
   }
 
@@ -216,3 +238,15 @@ class BusinessRepository {
     return row != null;
   }
 }
+
+/// No business has this id or slug — a link to one since removed, or a
+/// mistyped address. Told apart from a failed connection, which a retry can
+/// mend and this cannot.
+class BusinessNotFound implements Exception {
+  final String key;
+  const BusinessNotFound(this.key);
+  @override
+  String toString() => 'No business "$key"';
+}
+
+final _uuid = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
