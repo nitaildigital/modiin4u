@@ -43,3 +43,23 @@ final myClaimedOfferIdsProvider = FutureProvider<Set<String>>((ref) async {
   if (user == null) return const {};
   return ref.watch(offerRepositoryProvider).fetchMyClaims(user.id);
 });
+
+/// Every active offer, unfiltered. The desktop page draws its category
+/// circles, its carousel and its brand tiles from this one list, and narrows
+/// it on the page rather than asking again for each filter.
+final activeOffersProvider = FutureProvider<List<Offer>>(
+  (ref) => ref.watch(offerRepositoryProvider).fetchActive(),
+);
+
+/// For each business with an active offer, the categories it is filed under
+/// and the ones above them. `offers` has no category column; a deal is in
+/// whatever category its business is in.
+final offerBusinessCategoriesProvider =
+    FutureProvider<Map<String, Set<String>>>((ref) async {
+      final offers = await ref.watch(activeOffersProvider.future);
+      return ref
+          .watch(offerRepositoryProvider)
+          .fetchCategoriesOfBusinesses(
+            offers.map((o) => o.businessId).whereType<String>(),
+          );
+    });

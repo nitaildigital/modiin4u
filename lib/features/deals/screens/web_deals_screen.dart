@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_banner_row.dart';
@@ -13,43 +15,50 @@ import '../models/offer.dart';
 import '../providers/offer_providers.dart';
 
 // ═══════════════════════════════════════════════════════════
-// Web Deals — full desktop layout from Figma
-// (Deals — 1920 × 2876)
+// Web Deals — Figma "Deals" (395:4351), 1920 × 2876
+//
+// Everything on this page used to be written into the source: eight offers
+// on shops that are not in Modiin, category counts of 62, 48 and 31, ten
+// "brand" tiles promising rewards nobody offered. It reads `offers` now, and
+// every section the design draws is built from those rows:
+//
+// * the banners are the campaigns booked for DEALS_TOP;
+// * a category is the category of the offer's business — `offers` has no
+//   category column — and its circle is the photograph of a deal in it;
+// * the orange badge is the discount the offer's own title states;
+// * "Residents Only" is an offer the admin limited to verified residents;
+// * "Most Popular Brands" are the businesses behind the most-claimed offers.
 // ═══════════════════════════════════════════════════════════
 
-const _kBorder = Color(0xFFE7E7E7);
-const _kGreyText = Color(0xFF5F5E5A);
+const _kAsset = 'assets/web/deals';
+const _kLine = Color(0xFFE7E7E7);
 const _kHeading = Color(0xFF1C1C1E);
-const _kBodyText = Color(0xFF3D3D3D);
-const _kIconGrey = Color(0xFF6D6D6D);
-const _kPillBorder = Color(0xFFD1D1D1);
+const _kGrey = Color(0xFF5F5E5A);
+const _kMuted = Color(0xFF6D6D6D);
+const _kBody = Color(0xFF3D3D3D);
+const _kPillLine = Color(0xFFD1D1D1);
+const _kOrange = Color(0xFFFB7901);
 
-/// How the deals are ordered, once there are some. Each option reads a column
-/// the `offers` table actually has.
-enum _Order {
-  /// `end_at`, soonest first. Offers with no end date come last.
-  expiringSoon,
+TextStyle _display(double size, {Color color = AppColors.midBlue, double? height}) =>
+    TextStyle(fontFamily: AppFonts.nunito, fontSize: size, fontWeight: FontWeight.w600, color: color, height: height);
 
-  /// `claim_count`, highest first.
-  mostPopular,
+TextStyle _inter(double size, {FontWeight weight = FontWeight.w400, Color color = Colors.black, double? height}) =>
+    TextStyle(fontFamily: AppFonts.inter, fontSize: size, fontWeight: weight, color: color, height: height);
 
-  /// `start_at`, most recent first.
-  newest,
-}
+final _hebrew = RegExp(r'[֐-׿]');
 
-/// The desktop Deals page.
-///
-/// Everything on it was written into the source. Eight invented offers on
-/// shops that are not in Modiin — a Nike store, an "Urban Plate Kitchen & Bar",
-/// "Soleil Spa" — each with a discount badge, a "Residents Only" shield and a
-/// countdown that was a fixed string rather than a time, all linking to
-/// `/deal/demo_$i`. Six category circles reading 62, 48, 31, 27, 19 and 15.
-/// Ten "brand" tiles offering "Upto 80% Off" and "Upto 5% Rewards" with
-/// nothing behind them at all, and a three-up banner carousel of empty
-/// rectangles with working arrows.
-///
-/// It reads `offers` now. That table is empty until the client loads a deal in
-/// the admin panel, so the honest page today is the empty state.
+/// Text from the database reads in its own direction whatever the page does.
+TextDirection _dirOf(String s) => _hebrew.hasMatch(s) ? TextDirection.rtl : TextDirection.ltr;
+
+/// ...and lines up with the page's start, so a Hebrew headline on the English
+/// page sits beside the logo above it rather than against the far edge.
+TextAlign _alignOf(BuildContext context) =>
+    Directionality.of(context) == TextDirection.rtl ? TextAlign.right : TextAlign.left;
+
+/// The four pills under the carousel. Three put the deals in an order, from a
+/// column the table has; the fourth keeps only the residents-only ones.
+enum _Pill { expiringSoon, mostPopular, newest, residentsOnly }
+
 class WebDealsContent extends ConsumerStatefulWidget {
   const WebDealsContent({super.key});
 
@@ -57,10 +66,21 @@ class WebDealsContent extends ConsumerStatefulWidget {
   ConsumerState<WebDealsContent> createState() => _WebDealsContentState();
 }
 
-class _WebDealsContentState extends ConsumerState<WebDealsContent> {
-  bool _isHebrew = webIsHebrew.value;
-  _Order? _order;
+class _WebDealsContentState extends ConsumerState<WebDealsContent>
+    with WebLanguageState<WebDealsContent> {
+  bool get _isHebrew => webIsHebrew.value;
+  _Pill? _pill;
+
+  /// The category circle chosen, if any. Held here rather than in the shared
+  /// provider, so the phone's Deals screen keeps its own choice.
+  String? _category;
+
+  /// The brand tile chosen, if any — the carousel then shows that business's
+  /// deals only.
+  String? _business;
+
   final _dealsCarousel = ScrollController();
+  final _dealsKey = GlobalKey();
 
   @override
   void dispose() {
@@ -70,36 +90,42 @@ class _WebDealsContentState extends ConsumerState<WebDealsContent> {
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  /// The pills, and the column each one reads. "Residents Only" was a fourth;
-  /// nothing on an offer says who may take it, so it is gone.
-  List<(_Order, String)> get _orderPills => [
-    (_Order.expiringSoon, _t('expiring soon', 'נגמר בקרוב')),
-    (_Order.mostPopular, _t('most popular', 'הכי פופולרי')),
-    (_Order.newest, _t('new', 'חדש')),
-  ];
+  /// Offers still running. The table keeps an offer `active` until the admin
+  /// expires it; one whose end date has passed is not a deal any more.
+  List<Offer> get _live =>
+      (ref.watch(activeOffersProvider).valueOrNull ?? const <Offer>[]).where((o) => !o.hasExpired).toList();
 
-  List<Offer> _ordered(List<Offer> offers) {
-    if (_order == null) return offers;
-    final sorted = [...offers];
-    switch (_order!) {
-      case _Order.expiringSoon:
-        sorted.sort((a, b) {
-          final x = a.endAt;
-          final y = b.endAt;
-          if (x == null || y == null) return x == null ? 1 : -1;
-          return x.compareTo(y);
-        });
-      case _Order.mostPopular:
-        sorted.sort((a, b) => b.claimCount.compareTo(a.claimCount));
-      case _Order.newest:
-        sorted.sort((a, b) {
-          final x = a.startAt;
-          final y = b.startAt;
-          if (x == null || y == null) return x == null ? 1 : -1;
-          return y.compareTo(x);
-        });
+  Map<String, Set<String>> get _kinds => ref.watch(offerBusinessCategoriesProvider).valueOrNull ?? const {};
+
+  bool _inCategory(Offer o, String categoryId) => _kinds[o.businessId]?.contains(categoryId) ?? false;
+
+  List<Offer> _shown(List<Offer> all) {
+    var list = all;
+    if (_category != null) list = list.where((o) => _inCategory(o, _category!)).toList();
+    if (_business != null) list = list.where((o) => o.businessId == _business).toList();
+    switch (_pill) {
+      case null:
+        break;
+      case _Pill.residentsOnly:
+        list = list.where((o) => o.isResidentsOnly).toList();
+      case _Pill.expiringSoon:
+        list = [...list]
+          ..sort((a, b) {
+            final x = a.endAt, y = b.endAt;
+            if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
+            return x.compareTo(y);
+          });
+      case _Pill.mostPopular:
+        list = [...list]..sort((a, b) => b.claimCount.compareTo(a.claimCount));
+      case _Pill.newest:
+        list = [...list]
+          ..sort((a, b) {
+            final x = a.startAt ?? a.createdAt, y = b.startAt ?? b.createdAt;
+            if (x == null || y == null) return x == null ? (y == null ? 0 : 1) : -1;
+            return y.compareTo(x);
+          });
     }
-    return sorted;
+    return list;
   }
 
   @override
@@ -113,22 +139,17 @@ class _WebDealsContentState extends ConsumerState<WebDealsContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'deals',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildHeroSection(),
-                    // The design's three promotion banners, from the
-                    // campaigns booked for this page.
+                    _buildTitle(),
                     const WebBannerRow(code: 'DEALS_TOP', top: 48),
-                    _buildCategoriesSection(),
-                    _buildPopularDealsSection(),
-                    // Ten "Most Popular Brands" tiles stood below the pills,
-                    // each promising a discount and a rewards rate. No table
-                    // holds a brand, a discount or a reward, so the section is
-                    // gone rather than translated.
+                    _buildCategories(),
+                    _buildPopularDeals(),
+                    _buildBrands(),
                     const SizedBox(height: 146),
                     WebFooter(isHebrew: _isHebrew),
                   ],
@@ -142,103 +163,25 @@ class _WebDealsContentState extends ConsumerState<WebDealsContent> {
   }
 
   // ─────────────────────────────────────────────
-  // STICKY NAVBAR — 1920 × 80
+  // TITLE — 44 over 16, centred, 56 under the bar
   // ─────────────────────────────────────────────
-  // ─────────────────────────────────────────────
-  // HERO — title and subtitle
-  //
-  // A carousel of three 520 × 300 promo banners sat underneath as empty
-  // rectangles. They are drawn now from the campaigns booked for DEALS_TOP,
-  // and not at all while there are none.
-  // ─────────────────────────────────────────────
-  Widget _buildHeroSection() {
+  Widget _buildTitle() {
     return Padding(
       padding: const EdgeInsets.only(top: 56),
-      child: Column(
-        children: [
-          Text(
-            _t(
-              'Best Deals & Offers in Modiin',
-              'המבצעים וההטבות הטובים במודיעין',
-            ),
-            style: TextStyle(
-              fontFamily: AppFonts.nunito,
-              fontSize: 44,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-              height: 1.23,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 14),
-          Text(
-            _t(
-              'Explore local deals, discounts, and limited-time offers across Modiin.',
-              'גלו מבצעים מקומיים, הנחות והטבות לזמן מוגבל בכל מודיעין.',
-            ),
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 16,
-              color: _kIconGrey,
-              height: 1.19,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // EXPLORE DEALS BY CATEGORY — circular tiles
-  //
-  // `offerCategoriesProvider` returns only the categories that have an active
-  // offer in them, so a category never shows a count of nought and the row
-  // disappears altogether when the table is empty.
-  // ─────────────────────────────────────────────
-  Widget _buildCategoriesSection() {
-    final categories = ref.watch(offerCategoriesProvider).valueOrNull;
-    if (categories == null || categories.isEmpty) return const SizedBox.shrink();
-
-    final counts = ref.watch(offerCountsByCategoryProvider).valueOrNull ?? const {};
-    final selected = ref.watch(offerCategoryFilterProvider);
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 56),
-      child: _Section(
+      child: WebSection(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _t('Explore Deals by Category', 'גלו מבצעים לפי קטגוריה'),
-              style: TextStyle(
-                fontFamily: AppFonts.nunito,
-                fontSize: 28,
-                fontWeight: FontWeight.w600,
-                color: AppColors.midBlue,
-              ),
+              _t('Best Deals & Offers in Modiin', 'המבצעים וההטבות הטובים במודיעין'),
+              textAlign: TextAlign.center,
+              style: _display(44, color: Colors.black, height: 1.23),
             ),
-            const SizedBox(height: 40),
-            Wrap(
-              spacing: 30,
-              runSpacing: 30,
-              children: [
-                for (final c in categories)
-                  SizedBox(
-                    width: 160,
-                    child: _CategoryTile(
-                      category: c,
-                      count: counts[c.id] ?? 0,
-                      dealsLabel: _t('Deals', 'מבצעים'),
-                      isSelected: selected == c.id,
-                      // Tapping the chosen one clears it, so there is a way
-                      // back to everything without a separate "all" tile.
-                      onTap: () =>
-                          ref.read(offerCategoryFilterProvider.notifier).state =
-                              selected == c.id ? null : c.id,
-                    ),
-                  ),
-              ],
+            const SizedBox(height: 14),
+            Text(
+              _t('Explore local deals, discounts, and limited-time offers across Modiin.',
+                  'גלו מבצעים מקומיים, הנחות והטבות לזמן מוגבל בכל מודיעין.'),
+              textAlign: TextAlign.center,
+              style: _inter(16, color: _kMuted, height: 1.19),
             ),
           ],
         ),
@@ -247,254 +190,212 @@ class _WebDealsContentState extends ConsumerState<WebDealsContent> {
   }
 
   // ─────────────────────────────────────────────
-  // POPULAR DEALS IN MODIIN — 480 × 353 card carousel
+  // EXPLORE DEALS BY CATEGORY — six columns, a 116 circle in each
+  //
+  // Only the categories that hold a running deal, in the admin's order, so no
+  // circle ever reads "0 Deals"; the section is not drawn while there are none.
   // ─────────────────────────────────────────────
-  Widget _buildPopularDealsSection() {
-    final offers = ref.watch(offersProvider);
-    final list = offers.valueOrNull ?? const <Offer>[];
+  Widget _buildCategories() {
+    final live = _live;
+    final all = ref.watch(businessCategoriesProvider).valueOrNull ?? const <BusinessCategory>[];
+    final tiles = <({BusinessCategory category, int count, String? photo})>[];
+    for (final c in all) {
+      final inIt = live.where((o) => _inCategory(o, c.id)).toList();
+      if (inIt.isEmpty) continue;
+      // The category's own picture where the admin set one; otherwise the
+      // photograph of a deal filed under it.
+      final photo = c.imageUrl ??
+          inIt.map((o) => o.imageUrl ?? o.businessCoverUrl).firstWhere((u) => (u ?? '').isNotEmpty, orElse: () => null);
+      tiles.add((category: c, count: inIt.length, photo: photo));
+    }
+    if (tiles.isEmpty) return const SizedBox.shrink();
+    final perRow = tiles.length <= 6 ? 6 : (tiles.length <= 8 ? tiles.length : 8);
 
     return Padding(
-      padding: const EdgeInsets.only(top: 80),
-      child: _Section(
+      padding: const EdgeInsets.only(top: 56),
+      child: WebSection(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Text(_t('Explore Deals by Category', 'גלו מבצעים לפי קטגוריה'), style: _display(28, height: 1.21)),
+            const SizedBox(height: 40),
+            // The design's single row of six equal columns; a seventh or
+            // eighth category narrows the columns rather than starting a
+            // second row of one. Past eight they wrap, eight to a row.
+            for (var row = 0; row * perRow < tiles.length; row++) ...[
+              if (row > 0) const SizedBox(height: 40),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = row * perRow; i < row * perRow + perRow; i++)
+                    Expanded(
+                      child: i >= tiles.length
+                          ? const SizedBox.shrink()
+                          : _CategoryTile(
+                              name: tiles[i].category.name,
+                              photo: tiles[i].photo,
+                              countLabel: tiles[i].count == 1
+                                  ? _t('1 Deal', 'מבצע אחד')
+                                  : _t('${tiles[i].count} Deals', '${tiles[i].count} מבצעים'),
+                              isSelected: _category == tiles[i].category.id,
+                              // Choosing the chosen one again clears it, so
+                              // there is a way back to everything.
+                              onTap: () => setState(() {
+                                final id = tiles[i].category.id;
+                                _category = _category == id ? null : id;
+                                _business = null;
+                              }),
+                            ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // POPULAR DEALS IN MODIIN — 480 × 353 cards running off the right edge
+  // ─────────────────────────────────────────────
+  Widget _buildPopularDeals() {
+    final async = ref.watch(activeOffersProvider);
+    final shown = _shown(_live);
+    final width = MediaQuery.sizeOf(context).width;
+    final gutter = webGutter(width);
+    // The design's row starts at the column's edge and runs past the window's
+    // far side; the list is as wide as the window and indented by the gutter.
+    final inset = gutter + (width - 2 * gutter - 1600).clamp(0.0, double.infinity) / 2;
+
+    return Padding(
+      key: _dealsKey,
+      padding: const EdgeInsets.only(top: 80),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          WebSection(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _t(
-                          'Popular Deals in Modiin',
-                          'מבצעים פופולריים במודיעין',
-                        ),
-                        style: TextStyle(
-                          fontFamily: AppFonts.nunito,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.midBlue,
-                        ),
-                      ),
+                      Text(_t('Popular Deals in Modiin', 'מבצעים פופולריים במודיעין'), style: _display(28, height: 1.21)),
                       const SizedBox(height: 8),
-                      Text(
-                        _t(
-                          'Local offers, straight from the businesses running them.',
-                          'הטבות מקומיות, ישירות מהעסקים שמציעים אותן.',
-                        ),
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          color: _kGreyText,
-                          height: 1.21,
-                        ),
-                      ),
+                      Text(_t('Top deals handpicked for you', 'המבצעים הנבחרים בשבילכם'), style: _inter(14, color: _kGrey, height: 1.21)),
                     ],
                   ),
                 ),
-                // The arrows only appear when there is a row of cards for them
-                // to move.
-                if (list.length > 1) ...[
-                  const SizedBox(width: 24),
+                if (shown.length > 1)
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _carouselArrow(step: 500, isNext: false),
+                        _HeaderArrow(back: true, onTap: () => _scrollDeals(-1)),
                         const SizedBox(width: 12),
-                        _carouselArrow(step: 500, isNext: true),
+                        _HeaderArrow(back: false, onTap: () => _scrollDeals(1)),
                       ],
                     ),
                   ),
-                ],
               ],
             ),
-            const SizedBox(height: 23),
-            offers.when(
-              loading: _buildDealsSkeleton,
-              error: (_, _) => _buildNoticeBox(
+          ),
+          const SizedBox(height: 23),
+          async.when(
+            loading: () => Padding(
+              padding: EdgeInsetsDirectional.only(start: inset),
+              child: const _DealsSkeleton(),
+            ),
+            error: (_, _) => WebSection(
+              child: _NoticeBox(
                 icon: IconsaxPlusLinear.wifi_square,
                 title: _t('Deals could not be loaded', 'לא ניתן לטעון את המבצעים'),
-                body: _t(
-                  'Check your connection and try again.',
-                  'בדקו את החיבור לאינטרנט ונסו שוב.',
-                ),
+                body: _t('Check your connection and try again.', 'בדקו את החיבור לאינטרנט ונסו שוב.'),
                 actionLabel: _t('Try again', 'נסו שוב'),
-                onAction: () => ref.invalidate(offersProvider),
+                onAction: () => ref.invalidate(activeOffersProvider),
               ),
-              data: (data) =>
-                  data.isEmpty ? _buildEmptyDeals() : _buildDealsCarousel(data),
             ),
-            // Sorting nothing is not a control, so the pills wait until there
-            // is more than one deal to put in order.
-            if (list.length > 1) _buildOrderPills(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDealsCarousel(List<Offer> offers) {
-    final ordered = _ordered(offers);
-    return SizedBox(
-      height: 353,
-      child: ListView.separated(
-        controller: _dealsCarousel,
-        scrollDirection: Axis.horizontal,
-        itemCount: ordered.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 20),
-        itemBuilder: (context, i) => SizedBox(
-          width: 480,
-          child: _DealCard(
-            offer: ordered[i],
-            isHebrew: _isHebrew,
-            timeLeftLabel: _t('Time Left', 'זמן שנותר'),
-            pointsLabel: _t('points', 'נקודות'),
-            viewLabel: ordered[i].hasExpired
-                ? _t('Ended', 'הסתיים')
-                : _t('View Deal', 'צפו במבצע'),
-            onTap: () => context.push('/deal/${ordered[i].id}'),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyDeals() {
-    final filtered = ref.watch(offerCategoryFilterProvider) != null;
-    return _buildNoticeBox(
-      icon: IconsaxPlusLinear.discount_shape,
-      title: filtered
-          ? _t('No deals in this category', 'אין מבצעים בקטגוריה הזו')
-          : _t('No deals yet', 'אין עדיין מבצעים'),
-      body: filtered
-          ? _t(
-              'Pick another category to see what else is on.',
-              'בחרו קטגוריה אחרת כדי לראות מה יש.',
-            )
-          : _t(
-              'Local businesses have not published an offer yet. They will show up here when they do.',
-              'עסקים מקומיים עדיין לא פרסמו הטבות. ההטבות יופיעו כאן כשיפורסמו.',
-            ),
-      actionLabel: filtered ? _t('Show all deals', 'הצג את כל המבצעים') : null,
-      onAction: filtered
-          ? () => ref.read(offerCategoryFilterProvider.notifier).state = null
-          : null,
-    );
-  }
-
-  Widget _buildNoticeBox({
-    required IconData icon,
-    required String title,
-    required String body,
-    String? actionLabel,
-    VoidCallback? onAction,
-  }) {
-    return Container(
-      height: 353,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(
-        border: Border.all(color: _kBorder),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 44, color: _kGreyText.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: _kHeading,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: 520,
-            child: Text(
-              body,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                color: _kGreyText,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 24),
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: onAction,
-                child: Container(
-                  height: 44,
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.midBlue,
-                    borderRadius: BorderRadius.circular(60),
-                  ),
-                  child: Text(
-                    actionLabel,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+            data: (_) => shown.isEmpty
+                ? WebSection(child: _buildEmpty())
+                : SizedBox(
+                    height: 353,
+                    child: ListView.separated(
+                      controller: _dealsCarousel,
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsetsDirectional.only(start: inset, end: inset),
+                      itemCount: shown.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 20),
+                      itemBuilder: (context, i) => SizedBox(
+                        width: 480,
+                        child: _DealCard(
+                          offer: shown[i],
+                          isHebrew: _isHebrew,
+                          onTap: () => context.push('/deal/${shown[i].id}'),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ],
+          ),
+          // The pills sort and narrow the row above, so they are drawn once
+          // there is a row to act on.
+          if (_live.isNotEmpty) _buildPills(),
         ],
       ),
     );
   }
 
-  /// Two card-shaped blocks at the real card's geometry.
-  Widget _buildDealsSkeleton() {
-    return Skeleton(
-      child: Row(
-        children: List.generate(
-          2,
-          (_) => const Padding(
-            padding: EdgeInsetsDirectional.only(end: 20),
-            child: SkeletonBox(width: 480, height: 353, radius: 12),
-          ),
-        ),
-      ),
+  void _scrollDeals(int direction) {
+    if (!_dealsCarousel.hasClients) return;
+    final target = (_dealsCarousel.offset + direction * 500).clamp(0.0, _dealsCarousel.position.maxScrollExtent);
+    _dealsCarousel.animateTo(target, duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic);
+  }
+
+  Widget _buildEmpty() {
+    final narrowed = _category != null || _business != null || _pill == _Pill.residentsOnly;
+    return _NoticeBox(
+      icon: IconsaxPlusLinear.discount_shape,
+      title: narrowed ? _t('No deals match', 'אין מבצעים מתאימים') : _t('No deals yet', 'אין עדיין מבצעים'),
+      body: narrowed
+          ? _t('Clear the filter to see every deal running now.', 'נקו את הסינון כדי לראות את כל המבצעים.')
+          : _t('Local businesses have not published an offer yet. They will show up here when they do.',
+              'עסקים מקומיים עדיין לא פרסמו הטבות. ההטבות יופיעו כאן כשיפורסמו.'),
+      actionLabel: narrowed ? _t('Show all deals', 'הצג את כל המבצעים') : null,
+      onAction: narrowed
+          ? () => setState(() {
+                _category = null;
+                _business = null;
+                _pill = null;
+              })
+          : null,
     );
   }
 
   // ─────────────────────────────────────────────
-  // ORDER PILLS — 80px tall, radius 50
+  // PILLS — 80 tall, 21 apart, centred 48 under the cards
   // ─────────────────────────────────────────────
-  Widget _buildOrderPills() {
+  Widget _buildPills() {
+    final pills = [
+      (_Pill.expiringSoon, _t('Expiring Soon', 'נגמר בקרוב')),
+      (_Pill.mostPopular, _t('Most Popular', 'הכי פופולרי')),
+      (_Pill.newest, _t('New', 'חדש')),
+      (_Pill.residentsOnly, _t('Residents Only', 'לתושבים בלבד')),
+    ];
     return Padding(
       padding: const EdgeInsets.only(top: 48),
-      child: Center(
+      child: WebSection(
         child: Wrap(
+          alignment: WrapAlignment.center,
           spacing: 21,
           runSpacing: 16,
-          alignment: WrapAlignment.center,
           children: [
-            for (final (order, label) in _orderPills)
+            for (final (pill, label) in pills)
               _FilterPill(
                 label: label,
-                isSelected: _order == order,
-                onTap: () =>
-                    setState(() => _order = _order == order ? null : order),
+                isSelected: _pill == pill,
+                onTap: () => setState(() => _pill = _pill == pill ? null : pill),
               ),
           ],
         ),
@@ -502,74 +403,140 @@ class _WebDealsContentState extends ConsumerState<WebDealsContent> {
     );
   }
 
-  Widget _carouselArrow({required double step, required bool isNext}) {
+  // ─────────────────────────────────────────────
+  // MOST POPULAR BRANDS — 300 × 210 tiles, five across, 25 apart
+  //
+  // The businesses behind the deals, the most-claimed first. The pink strip
+  // is the best discount among its deals, where their titles state one; the
+  // button opens its deal, or narrows the carousel to its deals when it has
+  // several. The design's "Upto 5% Rewards" has no column behind it anywhere.
+  // ─────────────────────────────────────────────
+  Widget _buildBrands() {
+    final byBusiness = <String, List<Offer>>{};
+    for (final o in _live) {
+      final id = o.businessId;
+      if (id == null || o.businessName == null) continue;
+      byBusiness.putIfAbsent(id, () => []).add(o);
+    }
+    if (byBusiness.isEmpty) return const SizedBox.shrink();
+
+    int claims(List<Offer> l) => l.fold(0, (s, o) => s + o.claimCount);
+    final brands = byBusiness.entries.toList()
+      ..sort((a, b) {
+        final c = claims(b.value).compareTo(claims(a.value));
+        if (c != 0) return c;
+        final f = b.value.where((o) => o.isFeatured).length.compareTo(a.value.where((o) => o.isFeatured).length);
+        return f != 0 ? f : b.value.length.compareTo(a.value.length);
+      });
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 70),
+      child: WebSection(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(_t('Most Popular Brands', 'המותגים הפופולריים'), style: _display(28, height: 1.21)),
+            const SizedBox(height: 24),
+            LayoutBuilder(
+              builder: (context, c) {
+                const gap = 25.0;
+                final w = (c.maxWidth - 4 * gap) / 5;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    for (final e in brands.take(10))
+                      SizedBox(
+                        width: w,
+                        height: 210,
+                        child: _BrandTile(
+                          offers: e.value,
+                          isHebrew: _isHebrew,
+                          isSelected: _business == e.key,
+                          onTap: () {
+                            if (e.value.length == 1) {
+                              context.push('/deal/${e.value.first.id}');
+                              return;
+                            }
+                            setState(() {
+                              _business = _business == e.key ? null : e.key;
+                              _category = null;
+                            });
+                            if (_dealsCarousel.hasClients) _dealsCarousel.jumpTo(0);
+                            final target = _dealsKey.currentContext;
+                            if (target != null && _business != null) {
+                              Scrollable.ensureVisible(target, duration: const Duration(milliseconds: 400), alignment: 0.1);
+                            }
+                          },
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// PIECES
+// ═══════════════════════════════════════════════
+
+/// The pair beside a section heading: white, grey ring, no shadow.
+class _HeaderArrow extends StatelessWidget {
+  final bool back;
+  final VoidCallback onTap;
+  const _HeaderArrow({required this.back, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: () {
-          if (!_dealsCarousel.hasClients) return;
-          final delta = step * (isNext ? 1 : -1);
-          _dealsCarousel.animateTo(
-            (_dealsCarousel.offset + delta).clamp(
-              0.0,
-              _dealsCarousel.position.maxScrollExtent,
-            ),
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOut,
-          );
-        },
+        onTap: onTap,
         child: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: _kBorder),
+            border: Border.all(color: _kLine),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Icon(
-            isNext
-                ? IconsaxPlusLinear.arrow_right_3
-                : IconsaxPlusLinear.arrow_left_2,
-            size: 20,
-            color: AppColors.midBlue,
-          ),
+          child: Center(child: _Arrow(back: back)),
         ),
       ),
     );
   }
-
-  // ─────────────────────────────────────────────
-  // FOOTER — 1920 × 632
-  // ─────────────────────────────────────────────
 }
 
-// ═══════════════════════════════════════════════
-// SHARED WIDGETS
-// ═══════════════════════════════════════════════
-
-class _Section extends StatelessWidget {
-  final Widget child;
-  const _Section({required this.child});
+/// The design's arrow, pointing along the reading direction or against it.
+class _Arrow extends StatelessWidget {
+  final bool back;
+  const _Arrow({required this.back});
 
   @override
   Widget build(BuildContext context) {
-    return WebSection(child: child);
+    return Transform.flip(
+      flipX: back != (Directionality.of(context) == TextDirection.rtl),
+      child: SvgPicture.asset('$_kAsset/arrow20.svg', width: 20, height: 20),
+    );
   }
 }
 
-// ─────────────────────────────────────────────
-// CATEGORY TILE — 116px circle + name + "N Deals"
-// ─────────────────────────────────────────────
+/// A 116 circle with the category's name and how many deals it holds.
 class _CategoryTile extends StatefulWidget {
-  final BusinessCategory category;
-  final int count;
-  final String dealsLabel;
+  final String name;
+  final String? photo;
+  final String countLabel;
   final bool isSelected;
   final VoidCallback onTap;
   const _CategoryTile({
-    required this.category,
-    required this.count,
-    required this.dealsLabel,
+    required this.name,
+    required this.photo,
+    required this.countLabel,
     required this.isSelected,
     required this.onTap,
   });
@@ -583,63 +550,48 @@ class _CategoryTileState extends State<_CategoryTile> {
 
   @override
   Widget build(BuildContext context) {
-    final c = widget.category;
+    final ring = widget.isSelected ? AppColors.midBlue : (_hovered ? AppColors.turquoise : null);
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
         child: Column(
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
+            Container(
               width: 116,
               height: 116,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: widget.isSelected
-                      ? AppColors.midBlue
-                      : (_hovered ? AppColors.turquoise : Colors.transparent),
-                  width: 2,
-                ),
-              ),
+              foregroundDecoration: ring == null
+                  ? null
+                  : BoxDecoration(shape: BoxShape.circle, border: Border.all(color: ring, width: 3)),
               child: NetworkPhoto(
-                url: c.imageUrl,
-                radius: BorderRadius.circular(55),
+                url: widget.photo,
+                width: 116,
+                height: 116,
+                radius: BorderRadius.circular(58),
                 icon: IconsaxPlusBold.discount_shape,
                 iconSize: 30,
               ),
             ),
             const SizedBox(height: 20),
-            // Fixed two-line box so every count in the row sits on one baseline.
-            SizedBox(
-              height: 44,
-              child: Text(
-                c.name,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: _kHeading,
-                  height: 1.22,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                children: [
+                  Text(
+                    widget.name,
+                    textDirection: _dirOf(widget.name),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: _inter(18, weight: FontWeight.w600, color: _kHeading, height: 1.21),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(widget.countLabel, textAlign: TextAlign.center, style: _inter(14, color: _kGrey, height: 1.21)),
+                ],
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${widget.count} ${widget.dealsLabel}',
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                color: _kGreyText,
-                height: 1.21,
-              ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -648,18 +600,11 @@ class _CategoryTileState extends State<_CategoryTile> {
   }
 }
 
-// ─────────────────────────────────────────────
-// FILTER PILL — 80px tall, radius 50
-// ─────────────────────────────────────────────
 class _FilterPill extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  const _FilterPill({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _FilterPill({required this.label, required this.isSelected, required this.onTap});
 
   @override
   State<_FilterPill> createState() => _FilterPillState();
@@ -683,28 +628,14 @@ class _FilterPillState extends State<_FilterPill> {
           padding: const EdgeInsets.symmetric(horizontal: 40),
           decoration: BoxDecoration(
             color: selected ? AppColors.midBlue : Colors.white,
-            border: Border.all(
-              color: selected
-                  ? AppColors.midBlue
-                  : (_hovered ? AppColors.turquoise : _kPillBorder),
-            ),
+            border: Border.all(color: selected ? AppColors.midBlue : (_hovered ? AppColors.turquoise : _kPillLine)),
             borderRadius: BorderRadius.circular(50),
           ),
-          // mainAxisSize.min keeps the pill hugging its label — a Container
-          // `alignment` here would stretch it to the full row width.
+          // A Row with mainAxisSize.min keeps the pill hugging its label.
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontFamily: AppFonts.nunito,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : _kBodyText,
-                  height: 1.25,
-                ),
-              ),
+              Text(widget.label, style: _display(24, color: selected ? Colors.white : _kBody, height: 1.25)),
             ],
           ),
         ),
@@ -713,22 +644,13 @@ class _FilterPillState extends State<_FilterPill> {
   }
 }
 
-// ─────────────────────────────────────────────
-// DEAL CARD — 480 × 353
-// ─────────────────────────────────────────────
+/// One deal, 480 × 353: photograph with its badge, the business's mark, the
+/// headline, the business and where it is, the time left, and the button.
 class _DealCard extends StatefulWidget {
   final Offer offer;
   final bool isHebrew;
-  final String timeLeftLabel, pointsLabel, viewLabel;
   final VoidCallback onTap;
-  const _DealCard({
-    required this.offer,
-    required this.isHebrew,
-    required this.timeLeftLabel,
-    required this.pointsLabel,
-    required this.viewLabel,
-    required this.onTap,
-  });
+  const _DealCard({required this.offer, required this.isHebrew, required this.onTap});
 
   @override
   State<_DealCard> createState() => _DealCardState();
@@ -737,23 +659,14 @@ class _DealCard extends StatefulWidget {
 class _DealCardState extends State<_DealCard> {
   bool _hovered = false;
 
-  /// "2d : 14h", or "14h : 30m" in the last day. Null when the offer has no end
-  /// date, in which case the clock is left off the card — it used to show a
-  /// fixed string counting down to nothing.
-  String? get _timeLeft {
-    final left = widget.offer.timeLeft;
-    if (left == null) return null;
-    if (left == Duration.zero) return widget.isHebrew ? 'הסתיים' : 'Ended';
-    if (left.inDays >= 1) {
-      return '${left.inDays}d : ${left.inHours % 24}h';
-    }
-    return '${left.inHours}h : ${left.inMinutes % 60}m';
-  }
+  String _t(String en, String he) => widget.isHebrew ? he : en;
 
   @override
   Widget build(BuildContext context) {
     final d = widget.offer;
-    final timeLeft = _timeLeft;
+    final timeLeft = d.timeLeftLabel(isHebrew: widget.isHebrew);
+    final place = d.businessNeighborhood ?? d.businessAddress;
+    final badge = d.badge;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -766,171 +679,124 @@ class _DealCardState extends State<_DealCard> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: _hovered ? AppColors.midBlue : _kBorder),
+            border: Border.all(color: _hovered ? AppColors.midBlue : _kLine),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
+              SizedBox(
+                height: 250,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Photo 157 × 191. An orange discount badge sat on top of
-                    // it reading "20% OFF", "FLAT ₪300 OFF", "BUY 1 GET 1" —
-                    // an offer carries no discount figure, only its name.
-                    NetworkPhoto(
-                      url: d.imageUrl,
+                    SizedBox(
                       width: 157,
                       height: 191,
-                      radius: BorderRadius.circular(12),
-                      icon: IconsaxPlusBold.discount_shape,
-                      iconSize: 30,
+                      child: Stack(
+                        children: [
+                          NetworkPhoto(
+                            url: d.imageUrl ?? d.businessCoverUrl,
+                            width: 157,
+                            height: 191,
+                            radius: BorderRadius.circular(12),
+                            icon: IconsaxPlusBold.discount_shape,
+                            iconSize: 30,
+                          ),
+                          if (badge != null)
+                            PositionedDirectional(
+                              top: 12,
+                              start: 12,
+                              end: 12,
+                              child: Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: _Badge(label: badge),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 17),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Merchant logo — 72px ring
-                          Container(
-                            width: 72,
-                            height: 72,
-                            padding: const EdgeInsets.all(3.5),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: _kBorder),
-                            ),
-                            child: NetworkPhoto(
-                              url: d.businessLogoUrl,
-                              radius: BorderRadius.circular(33),
-                              icon: IconsaxPlusBold.shop,
-                              iconSize: 20,
-                            ),
-                          ),
+                          _LogoRing(url: d.businessLogoUrl, size: 72),
                           const SizedBox(height: 13),
-                          Text(
-                            d.name,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.midBlue,
-                              height: 1.23,
+                          SizedBox(
+                            height: 54,
+                            width: double.infinity,
+                            child: Text(
+                              d.name,
+                              textDirection: _dirOf(d.name),
+                              textAlign: _alignOf(context),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: _inter(22, weight: FontWeight.w600, color: AppColors.midBlue, height: 1.21),
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                          if (d.businessName != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              d.businessName!,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: _kHeading,
-                                height: 1.21,
-                              ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 17,
+                            width: double.infinity,
+                            child: Text(
+                              d.businessName ?? '',
+                              textDirection: _dirOf(d.businessName ?? ''),
+                              textAlign: _alignOf(context),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                              style: _inter(14, weight: FontWeight.w500, color: _kHeading, height: 1.21),
                             ),
-                          ],
-                          if (d.businessAddress != null) ...[
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                const Icon(
-                                  IconsaxPlusLinear.location,
-                                  size: 16,
-                                  color: _kIconGrey,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    d.businessAddress!,
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.inter,
-                                      fontSize: 14,
-                                      color: _kBodyText,
-                                      height: 1.21,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          const Spacer(),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              if (timeLeft != null) ...[
-                                const Icon(
-                                  IconsaxPlusLinear.clock,
-                                  size: 20,
-                                  color: AppColors.midBlue,
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Directionality(
-                                      textDirection: TextDirection.ltr,
-                                      child: Text(
-                                        timeLeft,
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.inter,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.navy,
-                                          height: 1.19,
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 17,
+                            child: place == null
+                                ? null
+                                : Row(
+                                    children: [
+                                      SvgPicture.asset('$_kAsset/card_pin.svg', width: 16, height: 16),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          place,
+                                          textDirection: _dirOf(place),
+                                          textAlign: _alignOf(context),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: _inter(14, color: _kBody, height: 1.21),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      widget.timeLeftLabel,
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.inter,
-                                        fontSize: 12,
-                                        color: _kGreyText,
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                              // A "Residents Only" shield sat here on most of
-                              // the invented cards. Nothing on an offer says
-                              // who may take it; what it does say is how many
-                              // points it costs, where that is not nought.
-                              if (d.pointsRequired > 0) ...[
-                                const SizedBox(width: 20),
-                                const Icon(
-                                  IconsaxPlusLinear.medal_star,
-                                  size: 20,
-                                  color: AppColors.orange,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${d.pointsRequired} ${widget.pointsLabel}',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.inter,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.orange,
-                                      height: 1.25,
-                                    ),
-                                    maxLines: 2,
+                                    ],
                                   ),
-                                ),
+                          ),
+                          const Spacer(),
+                          SizedBox(
+                            height: 36,
+                            child: Row(
+                              children: [
+                                if (timeLeft != null) ...[
+                                  SvgPicture.asset('$_kAsset/card_clock.svg', width: 20, height: 20),
+                                  const SizedBox(width: 8),
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        timeLeft,
+                                        textDirection: TextDirection.ltr,
+                                        style: _inter(16, weight: FontWeight.w600, color: AppColors.navy, height: 1.19),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(_t('Time Left', 'זמן שנותר'), style: _inter(12, color: _kGrey, height: 1.25)),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 44),
+                                ],
+                                if (d.isResidentsOnly)
+                                  Flexible(child: _ResidentsOnly(isHebrew: widget.isHebrew)),
                               ],
-                            ],
+                            ),
                           ),
                         ],
                       ),
@@ -939,32 +805,294 @@ class _DealCardState extends State<_DealCard> {
                 ),
               ),
               const SizedBox(height: 25),
-              // View Deal button — full width, 44px, radius 60. The card is
-              // the tap target, so the button carries no handler of its own.
+              // The card is the tap target; the button is its label.
               Container(
                 width: double.infinity,
                 height: 44,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: d.hasExpired
-                      ? const Color(0xFFB9C0CE)
-                      : AppColors.midBlue,
-                  borderRadius: BorderRadius.circular(60),
-                ),
+                decoration: BoxDecoration(color: AppColors.midBlue, borderRadius: BorderRadius.circular(60)),
+                child: Text(_t('View Deal', 'צפו במבצע'), style: _inter(16, weight: FontWeight.w500, color: Colors.white, height: 1.5)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The orange label on a deal's photograph.
+class _Badge extends StatelessWidget {
+  final String label;
+  const _Badge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(color: _kOrange, borderRadius: BorderRadius.circular(6)),
+      child: Text(
+        label,
+        textDirection: _dirOf(label),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: _inter(14, weight: FontWeight.w600, color: Colors.white, height: 1.21),
+      ),
+    );
+  }
+}
+
+/// The padlock and "Residents Only", orange, on two lines as the design sets
+/// it.
+class _ResidentsOnly extends StatelessWidget {
+  final bool isHebrew;
+  const _ResidentsOnly({required this.isHebrew});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SvgPicture.asset('$_kAsset/card_lock.svg', width: 20, height: 20),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            isHebrew ? 'לתושבים\nבלבד' : 'Residents\nOnly',
+            maxLines: 2,
+            style: _inter(12, weight: FontWeight.w600, color: _kOrange, height: 1.25),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The business's mark in a thin grey ring.
+class _LogoRing extends StatelessWidget {
+  final String? url;
+  final double size;
+  const _LogoRing({required this.url, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final pad = size * 0.0488;
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(pad),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: _kLine, width: 0.878),
+      ),
+      child: NetworkPhoto(
+        url: url,
+        radius: BorderRadius.circular(size),
+        icon: IconsaxPlusBold.shop,
+        iconSize: size * 0.28,
+      ),
+    );
+  }
+}
+
+/// A business behind the deals: the pink strip with its best discount, its
+/// logo, and the button.
+class _BrandTile extends StatefulWidget {
+  final List<Offer> offers;
+  final bool isHebrew;
+  final bool isSelected;
+  final VoidCallback onTap;
+  const _BrandTile({required this.offers, required this.isHebrew, required this.isSelected, required this.onTap});
+
+  @override
+  State<_BrandTile> createState() => _BrandTileState();
+}
+
+class _BrandTileState extends State<_BrandTile> {
+  bool _hovered = false;
+
+  String _t(String en, String he) => widget.isHebrew ? he : en;
+
+  /// "Upto 30% Off" when the business runs several percentage deals, the one
+  /// deal's own badge otherwise, and how many deals it has when no title
+  /// states a discount.
+  String get _strip {
+    final pcts = widget.offers.map((o) => o.percentOff).whereType<int>().toList();
+    if (pcts.length > 1) {
+      final best = pcts.reduce((a, b) => a > b ? a : b);
+      return _t('Upto $best% Off', 'עד $best% הנחה');
+    }
+    for (final o in widget.offers) {
+      final b = o.badge;
+      if (b != null) return b;
+    }
+    final n = widget.offers.length;
+    return n == 1 ? _t('1 Deal', 'מבצע אחד') : _t('$n Deals', '$n מבצעים');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final first = widget.offers.first;
+    final name = first.businessName ?? '';
+    final logo = first.businessLogo;
+    final strip = _strip;
+    final n = widget.offers.length;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: widget.isSelected || _hovered ? AppColors.midBlue : _kLine),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              Container(
+                height: 33,
+                width: double.infinity,
+                alignment: Alignment.center,
+                color: const Color(0xFFFFE6E6),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
-                  widget.viewLabel,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                    height: 1.5,
+                  strip,
+                  textDirection: _dirOf(strip),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _inter(14, weight: FontWeight.w500, color: const Color(0xFFE90052), height: 1.21),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: logo != null
+                              ? ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 204, maxHeight: 96),
+                                  child: Image.network(
+                                    sizedPhotoUrl(logo, 204, MediaQuery.devicePixelRatioOf(context)),
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, _, _) => _Wordmark(name: name),
+                                  ),
+                                )
+                              // Where the business has no logo, its name
+                              // stands in for one rather than a photograph.
+                              : _Wordmark(name: name),
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 44,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: AppColors.midBlue, borderRadius: BorderRadius.circular(60)),
+                        child: Text(
+                          n == 1 ? _t('View Deal', 'צפו במבצע') : _t('View $n Deals', 'צפו ב־$n מבצעים'),
+                          style: _inter(16, weight: FontWeight.w500, color: Colors.white, height: 1.5),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _Wordmark extends StatelessWidget {
+  final String name;
+  const _Wordmark({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      name,
+      textDirection: _dirOf(name),
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: _display(24, color: AppColors.navy, height: 1.2),
+    );
+  }
+}
+
+/// Two card-shaped blocks at the real card's geometry.
+class _DealsSkeleton extends StatelessWidget {
+  const _DealsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 353,
+      child: Skeleton(
+        child: Row(
+          children: List.generate(
+            2,
+            (_) => const Padding(
+              padding: EdgeInsetsDirectional.only(end: 20),
+              child: SkeletonBox(width: 480, height: 353, radius: 12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NoticeBox extends StatelessWidget {
+  final IconData icon;
+  final String title, body;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  const _NoticeBox({required this.icon, required this.title, required this.body, this.actionLabel, this.onAction});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 353,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      decoration: BoxDecoration(border: Border.all(color: _kLine), borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 44, color: _kGrey.withValues(alpha: 0.5)),
+          const SizedBox(height: 16),
+          Text(title, textAlign: TextAlign.center, style: _inter(18, weight: FontWeight.w600, color: _kHeading)),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: 520,
+            child: Text(body, textAlign: TextAlign.center, style: _inter(14, color: _kGrey, height: 1.5)),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 24),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onAction,
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: AppColors.midBlue, borderRadius: BorderRadius.circular(60)),
+                  child: Text(actionLabel!, style: _inter(16, weight: FontWeight.w500, color: Colors.white)),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -13,7 +13,8 @@ class OfferRepository {
 
   static const _select = '''
     *,
-    businesses(id, name, address, logo_url, cover_url)
+    businesses(id, name, address, logo_url, cover_url,
+      neighborhoods!businesses_neighborhood_id_fkey(name))
   ''';
 
   Future<List<Offer>> fetchActive({String? categoryId, int limit = 60}) async {
@@ -35,15 +36,76 @@ class OfferRepository {
     return List<Map<String, dynamic>>.from(rows).map(Offer.fromJson).toList();
   }
 
+  /// The businesses filed under [categoryId] or anywhere beneath it.
+  ///
+  /// A pizzeria may be linked only to פיצה, the child of מסעדות; choosing
+  /// מסעדות has to find it all the same.
   Future<List<String>> _businessIdsInCategory(String categoryId) async {
+    final tree = await _categoryParents();
+    final wanted = {
+      for (final id in tree.keys)
+        if (_rootsOf(id, tree).contains(categoryId)) id,
+      categoryId,
+    };
     final rows = await _client
         .from('entity_categories')
         .select('entity_id')
         .eq('entity_type', 'business')
-        .eq('category_id', categoryId);
+        .inFilter('category_id', wanted.toList());
     return List<Map<String, dynamic>>.from(
       rows,
-    ).map((r) => r['entity_id'] as String).toList();
+    ).map((r) => r['entity_id'] as String).toSet().toList();
+  }
+
+  /// Every business category, as id → parent id (null at the top).
+  Future<Map<String, String?>> _categoryParents() async {
+    final rows = await _client
+        .from('categories')
+        .select('id, parent_id')
+        .eq('scope', 'business');
+    return {
+      for (final r in List<Map<String, dynamic>>.from(rows))
+        r['id'] as String: r['parent_id'] as String?,
+    };
+  }
+
+  /// [id] and every category above it, nearest first.
+  static List<String> _rootsOf(String id, Map<String, String?> parents) {
+    final chain = <String>[id];
+    var at = parents[id];
+    for (var depth = 0; depth < 5 && at != null; depth++) {
+      chain.add(at);
+      at = parents[at];
+    }
+    return chain;
+  }
+
+  /// For each of [businessIds], every category it is filed under together
+  /// with the ones above them — so a pizzeria answers both פיצה and מסעדות.
+  ///
+  /// An offer has no category of its own. It takes its business's.
+  Future<Map<String, Set<String>>> fetchCategoriesOfBusinesses(
+    Iterable<String> businessIds,
+  ) async {
+    final ids = businessIds.toSet().toList();
+    if (ids.isEmpty) return const {};
+    final parents = await _categoryParents();
+    final links = await _client
+        .from('entity_categories')
+        .select('category_id, entity_id')
+        .eq('entity_type', 'business')
+        .inFilter('entity_id', ids);
+
+    final out = <String, Set<String>>{};
+    for (final row in List<Map<String, dynamic>>.from(links)) {
+      final category = row['category_id'] as String;
+      // Links to an article or event category are not a business's kind.
+      if (!parents.containsKey(category)) continue;
+      out
+          .putIfAbsent(row['entity_id'] as String, () => <String>{})
+          .addAll(_rootsOf(category, parents));
+    }
+    return out;
   }
 
   Future<Offer?> fetchById(String id) async {
@@ -58,28 +120,26 @@ class OfferRepository {
   /// How many active offers sit in each category, keyed by category id.
   ///
   /// The category row used to carry fixed counts — 62, 48, 31 — written into
-  /// the screen. This counts them.
+  /// the screen. This counts them: each offer once under every category its
+  /// business is filed in, and under the categories above those. It used to
+  /// count businesses, so a shop with three offers added one.
   Future<Map<String, int>> fetchCountsByCategory() async {
     final offers = await _client
         .from('offers')
         .select('business_id')
         .eq('status', 'active');
 
-    final businessIds = List<Map<String, dynamic>>.from(
+    final perOffer = List<Map<String, dynamic>>.from(
       offers,
-    ).map((r) => r['business_id'] as String?).whereType<String>().toSet();
-    if (businessIds.isEmpty) return const {};
+    ).map((r) => r['business_id'] as String?).whereType<String>().toList();
+    if (perOffer.isEmpty) return const {};
 
-    final links = await _client
-        .from('entity_categories')
-        .select('category_id, entity_id')
-        .eq('entity_type', 'business')
-        .inFilter('entity_id', businessIds.toList());
-
+    final kinds = await fetchCategoriesOfBusinesses(perOffer);
     final counts = <String, int>{};
-    for (final row in List<Map<String, dynamic>>.from(links)) {
-      final id = row['category_id'] as String;
-      counts[id] = (counts[id] ?? 0) + 1;
+    for (final businessId in perOffer) {
+      for (final id in kinds[businessId] ?? const <String>{}) {
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
     }
     return counts;
   }
