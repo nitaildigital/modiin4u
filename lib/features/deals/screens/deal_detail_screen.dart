@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,8 +11,13 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../../businesses/providers/business_providers.dart';
+import '../../favorites/providers/favorite_providers.dart';
+import '../../favorites/repositories/favorite_repository.dart';
 import '../models/offer.dart';
 import '../providers/offer_providers.dart';
+import '../widgets/m_deal_card.dart';
+import '../widgets/m_deal_detail_parts.dart';
 import 'web_deal_detail_screen.dart';
 
 /// One deal.
@@ -37,6 +44,15 @@ class DealDetailScreen extends StatelessWidget {
   }
 }
 
+/// Figma mobile "Deal Details" (806:10899), from the offer's own row.
+///
+/// What the design draws and the database does not hold is left off rather
+/// than invented: the distance ("2.1 km away") and the "Valid Days & Hours"
+/// row. The restrictions are the offer's terms, one per line, after the
+/// limits the admin set on it (residents only, one per person).
+///
+/// Claiming takes an account, and accounts belong to the app, so on the web
+/// the page offers directions and a call but no "Redeem Deal".
 class _MobileDealDetailContent extends ConsumerWidget {
   final String dealId;
   const _MobileDealDetailContent({required this.dealId});
@@ -66,93 +82,98 @@ class _MobileDealDetailContent extends ConsumerWidget {
           child: Text(
             l.offerNotFound,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 15,
-              color: const Color(0xFF6D6D6D),
-            ),
+            style: mDealsInter(15, color: kMDealsMuted),
           ),
         ),
       ),
-      Positioned(
-        left: 12,
-        top: 51,
-        child: GestureDetector(
-          onTap: () => context.pop(),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              IconsaxPlusLinear.arrow_left,
-              size: 20,
-              color: Color(0xFF3D3D3D),
-            ),
-          ),
-        ),
+      PositionedDirectional(
+        start: 12,
+        top: MediaQuery.paddingOf(context).top + 7,
+        child: _backButton(context),
       ),
     ],
   );
 
+  static Widget _backButton(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    return GestureDetector(
+      onTap: () => context.canPop() ? context.pop() : context.go('/deals'),
+      child: Transform.flip(
+        flipX: rtl,
+        child: SvgPicture.asset('$kMDealIcon/m_deals_back.svg', width: 40, height: 40),
+      ),
+    );
+  }
+
   Widget _content(BuildContext context, WidgetRef ref, L l, Offer offer) {
-    return SafeArea(
-      top: false,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 430),
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHero(context, offer),
-                      const SizedBox(height: 50),
-                      _buildBusinessInfo(offer),
-                      _buildDealInfo(offer),
-                      _buildDealDetails(l, offer),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
+    final businessId = offer.businessId;
+    final more = businessId == null
+        ? const <Offer>[]
+        : (ref.watch(activeOffersProvider).valueOrNull ?? const <Offer>[])
+              .where((o) => o.businessId == businessId && o.id != offer.id && !o.hasExpired)
+              .toList();
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 430),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHero(context, ref, offer),
+                    _buildBusinessInfo(offer),
+                    _buildDealInfo(offer),
+                    _buildDealDetails(context, l, offer),
+                    if (more.isNotEmpty) _buildMore(offer, more),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-              _buildBottomBar(context, ref, l, offer),
-            ],
-          ),
+            ),
+            _buildBottomBar(context, ref, l, offer),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHero(BuildContext context, Offer offer) {
+  // ═══════════════════════════════════════════════
+  // Photograph, back, heart, "Show all photos", the business's mark
+  // ═══════════════════════════════════════════════
+  Widget _buildHero(BuildContext context, WidgetRef ref, Offer offer) {
+    final top = MediaQuery.paddingOf(context).top;
+    final businessId = offer.businessId;
+    final gallery = businessId == null
+        ? const <String>[]
+        : ref.watch(businessGalleryProvider(businessId)).valueOrNull ?? const <String>[];
+
     return SizedBox(
-      height: 310, // 260 hero + space for overlapping logo
+      height: 310, // 260 photograph + the lower half of the 100 logo
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Hero image
-          SizedBox(
-            width: double.infinity,
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
             height: 260,
             child: Stack(
               fit: StackFit.expand,
               children: [
                 NetworkPhoto(
-                  url: offer.imageUrl ?? offer.businessLogoUrl,
+                  url: offer.imageUrl ?? offer.businessCoverUrl,
                   icon: IconsaxPlusBold.discount_shape,
                   iconSize: 60,
                 ),
-                // Dark overlay gradient
-                Container(
-                  decoration: const BoxDecoration(
+                const DecoratedBox(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
-                      colors: [Color(0x66000000), Colors.transparent],
+                      colors: [Color(0x66000000), Color(0x00000000)],
                     ),
                   ),
                 ),
@@ -160,73 +181,61 @@ class _MobileDealDetailContent extends ConsumerWidget {
             ),
           ),
 
-          // Back button
-          Positioned(
-            left: 12,
-            top: MediaQuery.of(context).padding.top + 7,
-            child: GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    IconsaxPlusLinear.arrow_left,
-                    size: 20,
-                    color: Color(0xFF3D3D3D),
+          PositionedDirectional(start: 12, top: top + 7, child: _backButton(context)),
+
+          // The heart keeps the business in the person's saved places —
+          // favourites have no kind for an offer — and needs an account, so
+          // it is an app control.
+          if (!kIsWeb && businessId != null)
+            PositionedDirectional(
+              end: 12,
+              top: top + 7,
+              child: _HeartButton(businessId: businessId),
+            ),
+
+          if (gallery.isNotEmpty)
+            PositionedDirectional(
+              end: 14,
+              bottom: 50 + 14,
+              child: GestureDetector(
+                onTap: () => showMDealPhotos(context, gallery),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset('$kMDealIcon/m_deals_photos.svg', width: 14, height: 14),
+                      const SizedBox(width: 8),
+                      Text(
+                        mDealsT(context, 'Show all photos', 'כל התמונות'),
+                        style: mDealsInter(12, weight: FontWeight.w500, color: Colors.white),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Heart button
-          Positioned(
-            right: 12,
-            top: MediaQuery.of(context).padding.top + 7,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(
-                  IconsaxPlusLinear.heart,
-                  size: 20,
-                  color: Color(0xFF3D3D3D),
-                ),
-              ),
-            ),
-          ),
-
-          // Brand logo (overlapping bottom-left)
-          Positioned(
-            left: 16,
+          PositionedDirectional(
+            start: 16,
             top: 210,
             child: Container(
               width: 100,
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                color: Colors.white,
                 border: Border.all(color: Colors.white, width: 3),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                ),
               ),
-              child: Center(
-                child: Icon(
-                  IconsaxPlusBold.shop,
-                  size: 36,
-                  color: Colors.white.withValues(alpha: 0.3),
-                ),
+              child: NetworkPhoto(
+                url: offer.businessLogoUrl,
+                radius: BorderRadius.circular(50),
+                icon: IconsaxPlusBold.shop,
+                iconSize: 36,
               ),
             ),
           ),
@@ -240,45 +249,32 @@ class _MobileDealDetailContent extends ConsumerWidget {
   // ═══════════════════════════════════════════════
   Widget _buildBusinessInfo(Offer offer) {
     final address = offer.businessAddress;
+    final name = offer.businessName;
+    if (name == null && address == null) return const SizedBox(height: 20);
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+        border: Border(bottom: BorderSide(color: kMDealsLine)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            offer.businessName ?? '',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-              height: 34 / 28,
-              color: Colors.black,
-            ),
-          ),
-          // "2.1 km away" used to sit at the end of this row. Nothing
-          // measures that, so it is gone rather than invented.
-          if (address != null && address.isNotEmpty) ...[
-            const SizedBox(height: 8),
+          if (name != null) Text(name, style: mDealsDisplay(28, color: Colors.black)),
+          // "2.1 km away" sat at the end of this row. Nothing measures that,
+          // so it is left off rather than invented.
+          if (address != null) ...[
+            if (name != null) const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(
-                  IconsaxPlusLinear.location,
-                  size: 16,
-                  color: Color(0xFF888888),
-                ),
+                SvgPicture.asset('$kMDealIcon/m_deals_location.svg', width: 16, height: 16),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     address,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      color: const Color(0xFF6D6D6D),
-                    ),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    style: mDealsInter(14, color: kMDealsMuted),
                   ),
                 ),
               ],
@@ -293,7 +289,7 @@ class _MobileDealDetailContent extends ConsumerWidget {
   // Deal title + description
   // ═══════════════════════════════════════════════
   Widget _buildDealInfo(Offer offer) {
-    final description = offer.description;
+    final description = offer.description?.trim();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
       child: Column(
@@ -301,24 +297,11 @@ class _MobileDealDetailContent extends ConsumerWidget {
         children: [
           Text(
             offer.name,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF123A72),
-            ),
+            style: mDealsInter(20, weight: FontWeight.w600, color: AppColors.midBlue),
           ),
-          if (description != null && description.trim().isNotEmpty) ...[
+          if (description != null && description.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text(
-              description,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                height: 1.4,
-                color: const Color(0xFF6D6D6D),
-              ),
-            ),
+            Text(description, style: mDealsInter(14, color: kMDealsMuted, height: 1.4)),
           ],
         ],
       ),
@@ -326,45 +309,90 @@ class _MobileDealDetailContent extends ConsumerWidget {
   }
 
   // ═══════════════════════════════════════════════
-  // Deal details: valid until, hours, restrictions
+  // Valid until, restrictions
   // ═══════════════════════════════════════════════
-  /// Valid-until and terms, and only when the offer has them.
-  ///
   /// This block used to assert an expiry date, opening hours of 6–10pm and
   /// four restrictions for every deal, none of which came from anywhere.
-  Widget _buildDealDetails(L l, Offer offer) {
-    final end = offer.endAt;
-    final terms = offer.terms;
-    if (end == null && (terms == null || terms.trim().isEmpty)) {
-      return const SizedBox.shrink();
-    }
+  Widget _buildDealDetails(BuildContext context, L l, Offer offer) {
+    final end = offer.endAt?.toLocal();
+    final restrictions = <String>[
+      if (offer.isResidentsOnly)
+        mDealsT(context, 'Registered residents only', 'לתושבים רשומים בלבד'),
+      if (offer.maxPerUser == 1)
+        mDealsT(context, 'One redemption per user', 'מימוש אחד למשתמש'),
+      for (final line in (offer.terms ?? '').split('\n'))
+        if (line.replaceFirst(RegExp(r'^\s*[-•*·]\s*'), '').trim().isNotEmpty)
+          line.replaceFirst(RegExp(r'^\s*[-•*·]\s*'), '').trim(),
+    ];
+    if (end == null && restrictions.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
           if (end != null)
-            _DetailRow(
-              icon: IconsaxPlusLinear.calendar_1,
+            MDealFactRow(
+              icon: 'm_deals_valid_until.svg',
               title: l.validUntil,
-              subtitle: '${end.day} ${l.monthLong(end.month)} ${end.year}',
+              body: MDealFactText('${end.day} ${l.monthLong(end.month)} ${end.year}'),
             ),
-          if (end != null && terms != null && terms.trim().isNotEmpty)
-            const SizedBox(height: 20),
-          if (terms != null && terms.trim().isNotEmpty)
-            _DetailRow(
-              icon: IconsaxPlusLinear.info_circle,
-              title: l.terms,
-              subtitle: terms,
+          if (end != null && restrictions.isNotEmpty) const SizedBox(height: 20),
+          if (restrictions.isNotEmpty)
+            MDealFactRow(
+              icon: 'm_deals_restrictions.svg',
+              title: mDealsT(context, 'Restrictions', 'הגבלות'),
+              body: MDealBullets(restrictions),
             ),
         ],
       ),
     );
   }
 
-  /// Claim, directions, call.
+  // ═══════════════════════════════════════════════
+  // More Deals from <business>
+  // ═══════════════════════════════════════════════
+  Widget _buildMore(Offer offer, List<Offer> more) {
+    return Builder(
+      builder: (context) {
+        final name = offer.businessName;
+        return Padding(
+          padding: const EdgeInsets.only(top: 50),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  name == null
+                      ? mDealsT(context, 'More Deals', 'מבצעים נוספים')
+                      : mDealsT(context, 'More Deals from $name', 'מבצעים נוספים של $name'),
+                  style: mDealsInter(16, weight: FontWeight.w600, color: const Color(0xFF1F1F1F)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var i = 0; i < more.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 12),
+                      MDealMiniCard(offer: more[i]),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Redeem, directions, call.
   ///
-  /// All three were painted buttons that did nothing. Claiming now writes an
+  /// All three were painted buttons that did nothing. Redeeming writes an
   /// `offer_claims` row and shows the code; directions and calling are only
   /// offered when the business actually has an address or a number.
   Widget _buildBottomBar(
@@ -376,103 +404,62 @@ class _MobileDealDetailContent extends ConsumerWidget {
     final claimed =
         ref.watch(myClaimedOfferIdsProvider).valueOrNull ?? const <String>{};
     final alreadyClaimed = claimed.contains(offer.id);
+    final canClaim = offer.isClaimable && !alreadyClaimed;
     final address = offer.businessAddress;
+    final businessId = offer.businessId;
+    final phone = businessId == null
+        ? null
+        : ref.watch(businessByIdProvider(businessId)).valueOrNull?.phone?.trim();
+    final hasPhone = phone != null && phone.isNotEmpty;
+    final hasAddress = address != null && address.isNotEmpty;
+
+    final secondary = <Widget>[
+      if (hasAddress)
+        Expanded(
+          child: MDealActionButton(
+            icon: 'm_deals_direction.svg',
+            label: mDealsT(context, 'Get Direction', l.getDirections),
+            onTap: () => _openMap(address),
+          ),
+        ),
+      if (hasAddress && hasPhone) const SizedBox(width: 11),
+      if (hasPhone)
+        Expanded(
+          child: MDealActionButton(
+            icon: 'm_deals_call.svg',
+            label: l.callBusiness,
+            onTap: () => launchUrl(Uri(scheme: 'tel', path: phone)),
+          ),
+        ),
+    ];
+    if (kIsWeb && secondary.isEmpty) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        border: const Border(top: BorderSide(color: Color(0xFFE7E7E7))),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        border: Border(top: BorderSide(color: kMDealsLine)),
       ),
       child: SafeArea(
         top: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            GestureDetector(
-              onTap: offer.isClaimable && !alreadyClaimed
-                  ? () => _claim(context, ref, l, offer)
-                  : null,
-              child: Container(
-                width: double.infinity,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: offer.isClaimable && !alreadyClaimed
-                      ? const Color(0xFF123A72)
-                      : const Color(0xFFB9C0CE),
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        IconsaxPlusLinear.scan_barcode,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        offer.hasExpired
-                            ? l.offerExpired
-                            : alreadyClaimed
-                            ? l.offerClaimed
-                            : l.claimOffer,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            if (!kIsWeb)
+              MDealActionButton(
+                icon: 'm_deals_redeem.svg',
+                filled: true,
+                enabled: canClaim,
+                label: offer.hasExpired
+                    ? l.offerExpired
+                    : alreadyClaimed
+                    ? l.offerClaimed
+                    : mDealsT(context, 'Redeem Deal', 'מימוש המבצע'),
+                onTap: () => _claim(context, ref, l, offer),
               ),
-            ),
-            if (address != null && address.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () => _openMap(address),
-                child: Container(
-                  height: 44,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFF123A72)),
-                    borderRadius: BorderRadius.circular(60),
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          IconsaxPlusLinear.routing,
-                          size: 20,
-                          color: Color(0xFF123A72),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l.getDirections,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF123A72),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            if (!kIsWeb && secondary.isNotEmpty) const SizedBox(height: 16),
+            if (secondary.isNotEmpty) Row(children: secondary),
           ],
         ),
       ),
@@ -501,63 +488,79 @@ class _MobileDealDetailContent extends ConsumerWidget {
     }
   }
 
+  /// What a claim hands over: the offer's own code, where it has one. The
+  /// design draws no state for this, so it is the page's own pieces — the
+  /// display face, the pale blue tint, the pill button.
   void _showCode(BuildContext context, L l, Offer offer) {
+    final code = offer.code?.trim();
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          l.offerClaimed,
-          style: TextStyle(fontFamily: AppFonts.rubik),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              offer.name,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-            ),
-            if (offer.code != null && offer.code!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l.offerClaimed,
+                textAlign: TextAlign.center,
+                style: mDealsDisplay(22, color: AppColors.midBlue),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                offer.name,
+                textAlign: TextAlign.center,
+                style: mDealsInter(14, color: kMDealsMuted, height: 1.4),
+              ),
+              if (code != null && code.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF3FB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: SelectableText(
+                    code,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                      color: AppColors.midBlue,
+                    ),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F5FA),
-                  borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 12),
+                Text(
+                  l.showThisCode,
+                  textAlign: TextAlign.center,
+                  style: mDealsInter(12, color: kMDealsMuted),
                 ),
-                child: Text(
-                  offer.code!,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
-                    color: const Color(0xFF123A72),
+              ],
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.midBlue,
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  child: Text(
+                    l.close,
+                    style: mDealsInter(14, weight: FontWeight.w500, color: Colors.white),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                l.showThisCode,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 12,
-                  color: const Color(0xFF6D6D6D),
-                ),
-              ),
             ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l.close, style: TextStyle(fontFamily: AppFonts.rubik)),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -584,69 +587,43 @@ class _MobileDealDetailContent extends ConsumerWidget {
   }
 }
 
-// ═══════════════════════════════════════════════
-class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _DetailRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
+/// The white round heart on the photograph: saves the deal's business.
+class _HeartButton extends ConsumerWidget {
+  final String businessId;
+  const _HeartButton({required this.businessId});
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Icon circle
-        Container(
-          width: 38,
-          height: 38,
-          decoration: const BoxDecoration(
-            color: Color(0xFFEEF3FB),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Icon(icon, size: 20, color: const Color(0xFF123A72)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(
+      isFavoriteProvider((kind: FavoriteKind.business, id: businessId)),
+    );
+    return GestureDetector(
+      onTap: () async {
+        final l = L.of(context);
+        try {
+          final ok = await ref
+              .read(favoritesProvider.notifier)
+              .toggle(FavoriteKind.business, businessId);
+          if (!ok && context.mounted) {
+            _MobileDealDetailContent._toast(context, l.signInToSave);
+          }
+        } catch (_) {
+          if (context.mounted) {
+            _MobileDealDetailContent._toast(context, l.errCouldNotSave);
+          }
+        }
+      },
+      child: saved
+          ? Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  height: 1.4,
-                  color: const Color(0xFF5F5E5A),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+              child: const Icon(IconsaxPlusBold.heart, size: 20, color: Color(0xFFE90052)),
+            )
+          : SvgPicture.asset('$kMDealIcon/m_deals_heart.svg', width: 40, height: 40),
     );
   }
 }
-
-// ═══════════════════════════════════════════════
-// More deal data model
-// ═══════════════════════════════════════════════
