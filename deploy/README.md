@@ -27,21 +27,34 @@ mkdir -p /var/www/modiin4u
 chown -R www-data:www-data /var/www/modiin4u
 
 # the site config from this repo
-cp deploy/nginx/app.modiin4u.co.il.conf /etc/nginx/sites-available/
+cp deploy/nginx/snippets/modiin4u-site.conf /etc/nginx/snippets/
+cp deploy/nginx/*.conf /etc/nginx/sites-available/
 ln -s /etc/nginx/sites-available/app.modiin4u.co.il.conf /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
 ```
 
-Then, **once the DNS record has propagated** — certbot proves ownership over
-port 80, so it fails if the name does not resolve to this machine yet:
+## https
+
+Browsers only give the visitor's location — "businesses near me" — to a
+secure page, so each name the site answers to gets a Let's Encrypt
+certificate. The layout of the nginx files, and why, is at the top of
+`deploy/nginx/app.modiin4u.co.il.conf`.
 
 ```bash
-certbot --nginx -d app.modiin4u.co.il
+tool/enable_domain.sh                        # app.modiin4u.co.il
+tool/enable_domain.sh 45-93-94-49.sslip.io   # the interim address (done)
 ```
 
-That rewrites the site config to add the TLS block and installs a renewal
-timer. Check it with `systemctl status certbot.timer`.
+It checks the name points at the server before asking Let's Encrypt (a
+failed attempt counts against its limits), installs `deploy/nginx`, gets the
+certificate, switches https on for that name and checks the result. Safe to
+run again. For `app.modiin4u.co.il` it stops at the first check until the
+client has added the `app` A record at uPress.
+
+Do not run `certbot --nginx` here: it rewrites the site config and takes
+plain http away from the bare IP. Certificates are `certonly --webroot`, and
+renew by themselves on `certbot.timer`.
 
 ## Deploying
 
