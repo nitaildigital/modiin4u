@@ -29,13 +29,20 @@ class BusinessReview {
   factory BusinessReview.fromJson(Map<String, dynamic> json) {
     // The join is named after its foreign key, so PostgREST returns it under
     // that name; `profiles` is the fallback for anything selecting it plainly.
+    //
+    // Profiles are private (00027), so that join is null for anybody but the
+    // author and an admin. The review carries its author's name and avatar
+    // itself since 00029; those come first.
     final author = json['profiles!reviews_author_id_fkey'] ?? json['profiles'];
-    final name = author is Map ? author['full_name'] as String? : null;
+    final name = (json['author_name'] as String?) ??
+        (author is Map ? author['full_name'] as String? : null);
+    final avatar = (json['author_avatar_url'] as String?) ??
+        (author is Map ? author['avatar_url'] as String? : null);
 
     return BusinessReview(
       id: json['id'] as String,
       authorName: (name == null || name.isEmpty) ? 'תושב' : name,
-      authorAvatarUrl: author is Map ? author['avatar_url'] as String? : null,
+      authorAvatarUrl: avatar,
       rating: (json['rating'] as num?)?.toInt() ?? 0,
       title: json['title'] as String?,
       body: (json['body'] as String?) ?? '',
