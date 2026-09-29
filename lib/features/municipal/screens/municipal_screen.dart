@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -33,15 +34,16 @@ class _MobileMunicipalContent extends StatelessWidget {
   /// "coming soon" until the client tells us what each should contain, so a
   /// resident can see which ones are ready rather than tapping dead tiles.
   static List<_Service> _servicesFor(L l) => [
-    _Service(l.svcParking, IconsaxPlusLinear.car, '/parking'),
-    _Service(l.svcShabbat, IconsaxPlusLinear.candle, null),
-    _Service(l.svcInstitutions, IconsaxPlusLinear.bank, null),
-    _Service(l.svcHealth, IconsaxPlusLinear.health, null),
-    _Service(l.svcEducation, IconsaxPlusLinear.book_1, null),
-    _Service(l.svcTransport, IconsaxPlusLinear.bus, null),
-    _Service(l.svcEmergency, IconsaxPlusLinear.danger, null),
-    _Service(l.svcParks, IconsaxPlusLinear.tree, null),
-    _Service(l.svcForms, IconsaxPlusLinear.document_text, null),
+    // Icons are the Figma "Municipal" frame's (643:6301).
+    _Service(l.svcParking, 'assets/icons/m_municipal_parking.svg', '/parking'),
+    _Service(l.svcShabbat, 'assets/icons/m_municipal_shabbat.svg', null),
+    _Service(l.svcInstitutions, 'assets/icons/m_municipal_institutions.svg', null),
+    _Service(l.svcHealth, 'assets/icons/m_municipal_health.svg', null),
+    _Service(l.svcEducation, 'assets/icons/m_municipal_education.svg', null),
+    _Service(l.svcTransport, 'assets/icons/m_municipal_transport.svg', null),
+    _Service(l.svcEmergency, 'assets/icons/m_municipal_emergency.svg', null),
+    _Service(l.svcParks, 'assets/icons/m_municipal_parks.svg', null),
+    _Service(l.svcForms, 'assets/icons/m_municipal_forms.svg', null),
   ];
 
   @override
@@ -164,13 +166,15 @@ class _MobileMunicipalContent extends StatelessWidget {
                       const SizedBox(height: 15),
 
                       // Service grid 3×3
-                      GridView.count(
+                      GridView(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 3,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                        childAspectRatio: 115 / 120,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          mainAxisExtent: 120,
+                        ),
                         children: _servicesFor(
                           l,
                         ).map((s) => _ServiceCard(service: s)).toList(),
@@ -193,7 +197,8 @@ class _MobileMunicipalContent extends StatelessWidget {
 // ═══════════════════════════════════════════════
 class _Service {
   final String label;
-  final IconData icon;
+  /// An SVG under assets/icons.
+  final String icon;
   final String? route;
   const _Service(this.label, this.icon, this.route);
 }
@@ -240,43 +245,17 @@ class _ShabbatCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Icon circle
-                Container(
+                SvgPicture.asset(
+                  'assets/icons/m_municipal_shabbat_circle.svg',
                   width: 48,
                   height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFD68200).withValues(alpha: 0.3),
-                      width: 0.86,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      IconsaxPlusLinear.candle,
-                      size: 24,
-                      color: Color(0xFFD68200),
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    l.upcomingShabbat,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      height: 1.4,
-                      color: const Color(0xFF0A1230),
-                    ),
-                  ),
-                ),
+                Expanded(child: _TwoLineTitle(l.upcomingShabbat)),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Date
           Text(
@@ -317,55 +296,77 @@ class _ParkingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    // The frame's card goes on to "Modiin Center" and "High availability";
+    // nothing measures how full a car park is, so the lower half is left
+    // empty rather than claimed.
     return GestureDetector(
       onTap: () => context.push('/parking'),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFEAF6FA),
+          color: const Color(0xFFF0F7FD),
+          border: Border.all(color: const Color(0xFFD9E8F4)),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+            Container(
+              padding: const EdgeInsets.only(bottom: 12),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+              ),
+              child: Row(
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/m_municipal_parking_circle.svg',
+                    width: 48,
+                    height: 48,
                   ),
-                  child: const Icon(
-                    IconsaxPlusLinear.car,
-                    size: 18,
+                  const SizedBox(width: 12),
+                  Expanded(child: _TwoLineTitle(l.parkingInModiin)),
+                  const Icon(
+                    IconsaxPlusLinear.arrow_left_2,
+                    size: 16,
                     color: Color(0xFF0A1230),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    l.parkingInModiin,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      height: 1.4,
-                      color: const Color(0xFF0A1230),
-                    ),
-                  ),
-                ),
-                const Icon(
-                  IconsaxPlusLinear.arrow_left_2,
-                  size: 16,
-                  color: Color(0xFF0A1230),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A card's title as the frame sets it: the first word in Inter Regular 14,
+/// the rest under it in Semi Bold.
+class _TwoLineTitle extends StatelessWidget {
+  final String text;
+  const _TwoLineTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final space = text.indexOf(' ');
+    final first = space < 0 ? text : text.substring(0, space);
+    final rest = space < 0 ? '' : text.substring(space + 1);
+    final style = TextStyle(
+      fontFamily: AppFonts.inter,
+      fontSize: 14,
+      height: 1.4,
+      color: const Color(0xFF0A1230),
+    );
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: first),
+          if (rest.isNotEmpty)
+            TextSpan(text: '\n$rest', style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+      style: style,
     );
   }
 }
@@ -384,6 +385,7 @@ class _ServiceCard extends StatelessWidget {
     return GestureDetector(
       onTap: service.route != null ? () => context.push(service.route!) : null,
       child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(color: const Color(0xFFE7E7E7)),
@@ -392,12 +394,15 @@ class _ServiceCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            SvgPicture.asset(
               service.icon,
-              size: 32,
+              width: 32,
+              height: 32,
               // A tile with nowhere to go is shown greyed, so it reads as
               // not ready rather than as broken.
-              color: ready ? const Color(0xFF123A72) : const Color(0xFFB4BAC6),
+              colorFilter: ready
+                  ? null
+                  : const ColorFilter.mode(Color(0xFFB4BAC6), BlendMode.srcIn),
             ),
             const SizedBox(height: 9),
             Text(

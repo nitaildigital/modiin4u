@@ -1,18 +1,24 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../shared/providers/nav_categories_provider.dart';
+import '../../../shared/widgets/network_photo.dart';
 
 import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/article.dart';
 import '../providers/news_providers.dart';
+import '../widgets/m_article_parts.dart';
 import 'web_news_screen.dart';
 
 /// News feed – responsive wrapper.
-/// Desktop (> 1100px) renders the Modiin News web layout; mobile keeps the app UI.
+/// Desktop (> 1100px) renders the Modiin News web layout; narrower windows
+/// get the phone layout from the mobile Figma frame.
 class NewsScreen extends StatelessWidget {
   /// Set when the navbar's news menu named a category.
   final String? categoryId;
@@ -26,21 +32,41 @@ class NewsScreen extends StatelessWidget {
         if (constraints.maxWidth > 1100) {
           return WebNewsContent(categoryId: categoryId);
         }
-        return const _MobileNewsContent();
+        return _MobileNewsContent(categoryId: categoryId);
       },
     );
   }
 }
 
-/// Mobile news feed — featured hero article followed by the rest of the
-/// published articles. Everything on this screen comes from the `articles`
-/// table; nothing is hard-coded.
+/// Figma "News" (556:8719): the featured story, then a row of stories per
+/// category, each with "See All". Everything comes from the `articles` table
+/// and the categories they are filed under; nothing is hard-coded. With a
+/// [categoryId] (a "See All"), the page lists that category's stories.
 class _MobileNewsContent extends ConsumerWidget {
-  const _MobileNewsContent();
+  final String? categoryId;
+
+  const _MobileNewsContent({this.categoryId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final articles = ref.watch(publishedArticlesProvider);
+    final catId = categoryId;
+    final articles = catId == null
+        ? ref.watch(publishedArticlesProvider)
+        : ref.watch(articlesByCategoryProvider(catId));
+    final he = mIsHebrew(context);
+    final title = catId == null
+        ? (he ? 'חדשות' : 'News')
+        : (ref.watch(categoryNameProvider(catId)).valueOrNull ?? (he ? 'חדשות' : 'News'));
+
+    Future<void> refresh() async {
+      if (catId == null) {
+        ref.invalidate(publishedArticlesProvider);
+        await ref.read(publishedArticlesProvider.future);
+      } else {
+        ref.invalidate(articlesByCategoryProvider(catId));
+        await ref.read(articlesByCategoryProvider(catId).future);
+      }
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -50,35 +76,49 @@ class _MobileNewsContent extends ConsumerWidget {
             constraints: const BoxConstraints(maxWidth: 430),
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text(
-                    'חדשות',
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
+                SizedBox(
+                  height: 48,
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      if (catId != null && context.canPop())
+                        PositionedDirectional(
+                          start: 4,
+                          top: 0,
+                          bottom: 0,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back, size: 22, color: Colors.black),
+                            onPressed: () => context.pop(),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 Expanded(
                   child: articles.when(
                     loading: () => const _NewsSkeleton(),
-                    error: (error, _) => ErrorRetry(
-                      onRetry: () => ref.invalidate(publishedArticlesProvider),
-                    ),
+                    error: (error, _) => ErrorRetry(onRetry: refresh),
                     data: (list) => list.isEmpty
-                        ? const EmptyState(
+                        ? EmptyState(
                             icon: IconsaxPlusLinear.document_text,
-                            title: 'אין כתבות להצגה',
-                            subtitle: 'כתבות חדשות יופיעו כאן',
+                            title: he ? 'אין כתבות להצגה' : 'No stories yet',
+                            subtitle: he ? 'כתבות חדשות יופיעו כאן' : 'New stories will appear here',
                           )
-                        : _NewsList(
-                            articles: list,
-                            onRefresh: () async {
-                              ref.invalidate(publishedArticlesProvider);
-                              await ref.read(publishedArticlesProvider.future);
-                            },
+                        : RefreshIndicator(
+                            onRefresh: refresh,
+                            child: catId == null
+                                ? _NewsFront(articles: list)
+                                : _CategoryList(articles: list),
                           ),
                   ),
                 ),
@@ -91,49 +131,156 @@ class _MobileNewsContent extends ConsumerWidget {
   }
 }
 
-class _NewsList extends StatelessWidget {
+/// The front page: the hero story over a rule, then a section per category.
+class _NewsFront extends ConsumerWidget {
   final List<Article> articles;
-  final Future<void> Function() onRefresh;
 
-  const _NewsList({required this.articles, required this.onRefresh});
+  const _NewsFront({required this.articles});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final he = mIsHebrew(context);
+    final hero = pickHeroArticle(articles);
+    final categories =
+        ref.watch(navCategoriesProvider('article')).valueOrNull ?? const <NavCategory>[];
+
+    // The six newest stories of each category, the hero left out.
+    final sections = <({NavCategory category, List<Article> articles})>[];
+    for (final c in categories) {
+      final list = ref.watch(articlesByCategoryProvider(c.id)).valueOrNull;
+      if (list == null) continue;
+      final newest = ([...list]..sort((a, b) => b.publishedAt.compareTo(a.publishedAt)))
+          .where((a) => a.id != hero.id)
+          .take(6)
+          .toList();
+      if (newest.isNotEmpty) sections.add((category: c, articles: newest));
+    }
+    // Until the categories arrive, or where no story is filed, the newest
+    // stories stand in as one section.
+    final rest = articles.where((a) => a.id != hero.id).take(6).toList();
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(top: 8, bottom: 32),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _FeaturedArticle(article: hero),
+        ),
+        const SizedBox(height: 24),
+        if (sections.isNotEmpty)
+          for (var i = 0; i < sections.length; i++) ...[
+            if (i > 0) const SizedBox(height: 40),
+            _Section(
+              title: sections[i].category.name,
+              articles: sections[i].articles,
+              onSeeAll: () => context.push('/news/category/${sections[i].category.id}'),
+            ),
+          ]
+        else if (rest.isNotEmpty)
+          _Section(title: he ? 'הכתבות האחרונות' : 'Latest Stories', articles: rest),
+      ],
+    );
+  }
+}
+
+/// A category's heading, "See All", and its stories in a sideways row.
+class _Section extends StatelessWidget {
+  final String title;
+  final List<Article> articles;
+  final VoidCallback? onSeeAll;
+
+  const _Section({required this.title, required this.articles, this.onSeeAll});
 
   @override
   Widget build(BuildContext context) {
-    final featured = pickHeroArticle(articles);
-    final rest = articles.where((a) => a.id != featured.id).toList();
-
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          _FeaturedArticle(article: featured),
-          const SizedBox(height: 24),
-          if (rest.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'עדכונים אחרונים',
-                style: TextStyle(fontFamily: AppFonts.rubik, 
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
+    final he = mIsHebrew(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 19 / 16,
+                    color: const Color(0xFF1F1F1F),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (onSeeAll != null)
+                GestureDetector(
+                  onTap: onSeeAll,
+                  child: Text(
+                    he ? 'הצג הכל' : 'See All',
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 15 / 12,
+                      color: AppColors.midBlue,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 232,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: articles.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 20),
+            itemBuilder: (_, i) => MNewsCard(
+              article: articles[i],
+              onTap: () => context.push('/article/${articles[i].id}'),
             ),
-            const SizedBox(height: 12),
-            ...rest.map((a) => _ArticleRow(article: a)),
-          ],
-          const SizedBox(height: 24),
-        ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A category's stories, newest first, a full-width card each.
+class _CategoryList extends StatelessWidget {
+  final List<Article> articles;
+
+  const _CategoryList({required this.articles});
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...articles]..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    return LayoutBuilder(
+      builder: (context, c) => ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        itemCount: sorted.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 24),
+        itemBuilder: (_, i) => MNewsCard(
+          article: sorted[i],
+          width: c.maxWidth - 32,
+          imageHeight: 200,
+          onTap: () => context.push('/article/${sorted[i].id}'),
+        ),
       ),
     );
   }
 }
 
-// ═══════════════════════════════════════════════
-// Featured hero article
-// ═══════════════════════════════════════════════
+/// The hero story: the photo 200 tall at radius 12 with "Now in Modiin" on a
+/// featured story, the headline in Avenir Demi 20 over two lines, the date,
+/// and a rule 20 under.
 class _FeaturedArticle extends StatelessWidget {
   final Article article;
 
@@ -141,225 +288,91 @@ class _FeaturedArticle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final he = mIsHebrew(context);
     return GestureDetector(
       onTap: () => context.push('/article/${article.id}'),
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.only(bottom: 20),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+          border: Border(bottom: BorderSide(color: kMNewsBorder)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+            SizedBox(
+              height: 200,
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  _ArticleImage(
+                  NetworkPhoto(
                     url: article.imageUrl,
                     height: 200,
-                    width: double.infinity,
-                    iconSize: 48,
+                    radius: BorderRadius.circular(12),
+                    icon: IconsaxPlusBold.note,
+                    iconSize: 40,
                   ),
-                  Positioned(
-                    left: 8,
-                    top: 8,
-                    child: Container(
-                      height: 28,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFC9F31D),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            IconsaxPlusBold.location,
-                            size: 16,
-                            color: Color(0xFF0A1230),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'עכשיו במודיעין',
-                            style: TextStyle(fontFamily: AppFonts.rubik, 
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF0A1230),
+                  // The design's badge, for a story the newsroom featured.
+                  if (article.isFeatured)
+                    PositionedDirectional(
+                      start: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC9F31D),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset('assets/web/news/now_in_modiin.svg', width: 16, height: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              he ? 'עכשיו במודיעין' : 'Now in Modiin',
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                height: 15 / 12,
+                                color: AppColors.navy,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
             const SizedBox(height: 14),
-            Text(
-              article.title,
-              style: TextStyle(fontFamily: AppFonts.rubik, 
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                height: 25 / 20,
-                color: Colors.black,
+            SizedBox(
+              width: double.infinity,
+              child: Text(
+                article.title,
+                textDirection: mArticleDirection(article.title),
+                style: TextStyle(
+                  fontFamily: AppFonts.nunito,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                  color: Colors.black,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 10),
-            _DateRow(date: article.publishedAt),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// One row in the "latest" list
-// ═══════════════════════════════════════════════
-class _ArticleRow extends StatelessWidget {
-  final Article article;
-
-  const _ArticleRow({required this.article});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/article/${article.id}'),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: _ArticleImage(
-                url: article.imageUrl,
-                height: 88,
-                width: 112,
-                iconSize: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    article.title,
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      height: 20 / 15,
-                      color: Colors.black,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  _DateRow(date: article.publishedAt, fontSize: 12),
-                ],
-              ),
+            MNewsDateLine(
+              date: article.publishedAt,
+              iconSize: 16,
+              fontSize: 14,
+              gap: 8,
+              color: kMNewsGrey500,
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// Shared pieces
-// ═══════════════════════════════════════════════
-
-/// The article photo, falling back to the brand gradient when an article
-/// has no image — which is the case for most rows today.
-class _ArticleImage extends StatelessWidget {
-  final String? url;
-  final double height;
-  final double width;
-  final double iconSize;
-
-  const _ArticleImage({
-    required this.url,
-    required this.height,
-    required this.width,
-    required this.iconSize,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final placeholder = Container(
-      height: height,
-      width: width,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          IconsaxPlusBold.note,
-          size: iconSize,
-          color: Colors.white.withValues(alpha: 0.12),
-        ),
-      ),
-    );
-
-    if (url == null || url!.isEmpty) return placeholder;
-
-    return CachedNetworkImage(
-      imageUrl: url!,
-      height: height,
-      width: width,
-      fit: BoxFit.cover,
-      placeholder: (_, _) => placeholder,
-      errorWidget: (_, _, _) => placeholder,
-    );
-  }
-}
-
-class _DateRow extends StatelessWidget {
-  final DateTime date;
-  final double fontSize;
-
-  const _DateRow({required this.date, this.fontSize = 14});
-
-  static const _hebrewMonths = [
-    'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
-    'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
-  ];
-
-  String get _formatted {
-    final time = '${date.hour.toString().padLeft(2, '0')}:'
-        '${date.minute.toString().padLeft(2, '0')}';
-    return '${date.day} ב${_hebrewMonths[date.month - 1]} ${date.year} | $time';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          IconsaxPlusLinear.calendar_1,
-          size: fontSize + 2,
-          color: const Color(0xFF888888),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          _formatted,
-          style: TextStyle(fontFamily: AppFonts.rubik, 
-            fontSize: fontSize,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF6D6D6D),
-          ),
-        ),
-      ],
     );
   }
 }

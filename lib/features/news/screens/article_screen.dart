@@ -1,20 +1,22 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/error_retry.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/article.dart';
 import '../providers/news_providers.dart';
+import '../widgets/m_article_parts.dart';
 import 'web_article_screen.dart';
 
 /// News article detail – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News Detail web layout;
-/// mobile keeps the app UI.
+/// narrower windows get the phone layout from the mobile Figma frame.
 class ArticleScreen extends StatelessWidget {
   final String articleId;
 
@@ -44,6 +46,10 @@ class _MobileArticleContent extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      bottomNavigationBar: article.maybeWhen(
+        data: (a) => MArticleBottomBar(article: a, onShare: () => _share(a)),
+        orElse: () => null,
+      ),
       body: article.when(
         loading: () => const _ArticleSkeleton(),
         error: (error, _) => SafeArea(
@@ -51,9 +57,9 @@ class _MobileArticleContent extends ConsumerWidget {
             children: [
               Align(
                 alignment: AlignmentDirectional.centerStart,
-                child: _CircleButton(
-                  icon: IconsaxPlusLinear.arrow_right_3,
-                  onTap: () => context.pop(),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: _CircleButton(onTap: () => context.pop()),
                 ),
               ),
               Expanded(
@@ -74,47 +80,53 @@ class _MobileArticleContent extends ConsumerWidget {
       ),
     );
   }
+
+  void _share(Article a) {
+    final link = mShareLink(a);
+    Share.share(
+      [a.title, if (link != null) link else if ((a.excerpt ?? '').isNotEmpty) a.excerpt!].join('\n\n'),
+      subject: a.title,
+    );
+  }
 }
 
-class _ArticleView extends StatelessWidget {
+// ═══════════════════════════════════════════════
+// Figma "News Detail" (556:10027): the 260 photo with the back button, the
+// category and views, the headline and date over a rule, the body, then
+// "More Related News". The design's "12 Comments" thread and the Comments /
+// Save cells of the bar are not drawn: articles have no comments or saves in
+// the app.
+// ═══════════════════════════════════════════════
+class _ArticleView extends ConsumerWidget {
   final Article article;
 
   const _ArticleView({required this.article});
 
-  List<String> get _paragraphs => article.body
-      .split('\n')
-      .map((p) => p.trim())
-      .where((p) => p.isNotEmpty)
-      .toList();
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final related =
+        ref.watch(relatedArticlesProvider(article.id)).valueOrNull ?? const <Article>[];
+
     return SingleChildScrollView(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _Hero(article: article),
+          const SizedBox(height: 16),
           _Header(article: article),
+          const SizedBox(height: 20),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final paragraph in _paragraphs) ...[
-                  Text(
-                    paragraph,
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
-                      fontSize: 16,
-                      height: 1.7,
-                      color: const Color(0xFF2B2B2B),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ],
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: MArticleBody(article: article),
           ),
-          const _RelatedNews(),
+          if (related.isNotEmpty) ...[
+            const SizedBox(height: 41),
+            MRelatedNews(
+              articles: related,
+              onSeeAll: () => context.go('/news'),
+              onOpen: (a) => context.pushReplacement('/article/${a.id}'),
+            ),
+          ],
           const SizedBox(height: 32),
         ],
       ),
@@ -123,7 +135,7 @@ class _ArticleView extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════
-// Hero image with back and share buttons
+// Photo, 260 tall, with the white back button 12 in
 // ═══════════════════════════════════════════════
 class _Hero extends StatelessWidget {
   final Article article;
@@ -132,58 +144,24 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = article.imageUrl;
-
-    final placeholder = Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          IconsaxPlusBold.note,
-          size: 56,
-          color: Colors.white.withValues(alpha: 0.12),
-        ),
-      ),
-    );
-
     return SizedBox(
       height: 260,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (url == null || url.isEmpty)
-            placeholder
-          else
-            CachedNetworkImage(
-              imageUrl: url,
-              fit: BoxFit.cover,
-              placeholder: (_, _) => placeholder,
-              errorWidget: (_, _, _) => placeholder,
-            ),
+          NetworkPhoto(
+            url: article.imageUrl,
+            fit: BoxFit.cover,
+            icon: IconsaxPlusBold.note,
+            iconSize: 56,
+          ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _CircleButton(
-                    icon: IconsaxPlusLinear.arrow_right_3,
-                    onTap: () => context.pop(),
-                  ),
-                  _CircleButton(
-                    icon: IconsaxPlusLinear.share,
-                    onTap: () => Share.share(
-                      '${article.title}\n\n${article.excerpt ?? ''}'.trim(),
-                      subject: article.title,
-                    ),
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(12, 7, 12, 12),
+              child: Align(
+                alignment: AlignmentDirectional.topStart,
+                child: _CircleButton(onTap: () => context.pop()),
               ),
             ),
           ),
@@ -194,10 +172,9 @@ class _Hero extends StatelessWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  final IconData icon;
   final VoidCallback onTap;
 
-  const _CircleButton({required this.icon, required this.onTap});
+  const _CircleButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -210,232 +187,85 @@ class _CircleButton extends StatelessWidget {
           color: Colors.white,
           shape: BoxShape.circle,
         ),
-        child: Center(child: Icon(icon, size: 20, color: Colors.black)),
+        // Material's back arrow turns to face the reading direction.
+        child: const Center(child: Icon(Icons.arrow_back, size: 20, color: Colors.black)),
       ),
     );
   }
 }
 
 // ═══════════════════════════════════════════════
-// Title block
+// Category and views, headline, date — 16 apart, a rule 20 under
 // ═══════════════════════════════════════════════
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   final Article article;
 
   const _Header({required this.article});
 
-  static const _hebrewMonths = [
-    'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
-    'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
-  ];
-
-  String get _date {
-    final d = article.publishedAt;
-    final time = '${d.hour.toString().padLeft(2, '0')}:'
-        '${d.minute.toString().padLeft(2, '0')}';
-    return '${d.day} ב${_hebrewMonths[d.month - 1]} ${d.year} | $time';
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final category =
+        (ref.watch(articleFilingProvider).valueOrNull ?? const {})[article.id];
+    final hasTopRow = category != null || article.viewCount > 0;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.only(top: 16, bottom: 20),
+      padding: const EdgeInsets.only(bottom: 20),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+        border: Border(bottom: BorderSide(color: kMNewsBorder)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (article.isBreaking)
-                Container(
-                  height: 33,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE74C3C),
-                    borderRadius: BorderRadius.circular(8),
+          if (hasTopRow) ...[
+            Row(
+              children: [
+                if (category != null)
+                  MNewsCategoryChip(
+                    label: category.name,
+                    onTap: () => context.go('/news/category/${category.id}'),
                   ),
-                  child: Center(
-                    child: Text(
-                      'דחוף',
-                      style: TextStyle(fontFamily: AppFonts.rubik, 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                const SizedBox.shrink(),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(IconsaxPlusLinear.eye,
-                      size: 20, color: Colors.black),
+                const Spacer(),
+                // Only a counted row shows its views, as on the website.
+                if (article.viewCount > 0) ...[
+                  SvgPicture.asset('assets/web/news/stat_views.svg', width: 20, height: 20),
                   const SizedBox(width: 6),
                   Text(
                     '${article.viewCount}',
-                    style: TextStyle(fontFamily: AppFonts.rubik, 
-                        fontSize: 14, color: Colors.black),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: Colors.black),
                   ),
                 ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
           Text(
             article.title,
-            style: TextStyle(fontFamily: AppFonts.rubik, 
+            textDirection: mArticleDirection(article.title),
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
               fontSize: 24,
               fontWeight: FontWeight.w600,
               height: 1.4,
               color: Colors.black,
             ),
           ),
-          if (article.subtitle != null && article.subtitle!.isNotEmpty) ...[
+          if (article.subtitle != null && article.subtitle!.trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               article.subtitle!,
-              style: TextStyle(fontFamily: AppFonts.rubik, 
+              textDirection: mArticleDirection(article.subtitle!),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
                 fontSize: 16,
                 height: 1.5,
-                color: const Color(0xFF6D6D6D),
+                color: kMNewsGrey500,
               ),
             ),
           ],
           const SizedBox(height: 16),
-          Row(
-            children: [
-              const Icon(IconsaxPlusLinear.calendar_1,
-                  size: 16, color: Color(0xFF888888)),
-              const SizedBox(width: 8),
-              Text(
-                _date,
-                style: TextStyle(fontFamily: AppFonts.rubik, 
-                    fontSize: 14, color: const Color(0xFF6D6D6D)),
-              ),
-            ],
-          ),
+          MNewsDateLine(date: article.publishedAt),
         ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// More news — the other published articles
-// ═══════════════════════════════════════════════
-class _RelatedNews extends ConsumerWidget {
-  const _RelatedNews();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final articles = ref.watch(publishedArticlesProvider);
-
-    return articles.maybeWhen(
-      data: (list) {
-        final others = list.take(6).toList();
-        if (others.isEmpty) return const SizedBox.shrink();
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'עוד חדשות',
-                style: TextStyle(fontFamily: AppFonts.rubik, 
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 170,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: others.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (_, i) => _RelatedCard(article: others[i]),
-              ),
-            ),
-          ],
-        );
-      },
-      orElse: () => const SizedBox.shrink(),
-    );
-  }
-}
-
-class _RelatedCard extends StatelessWidget {
-  final Article article;
-
-  const _RelatedCard({required this.article});
-
-  @override
-  Widget build(BuildContext context) {
-    final url = article.imageUrl;
-
-    final placeholder = Container(
-      height: 100,
-      width: 200,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          IconsaxPlusBold.note,
-          size: 24,
-          color: Colors.white.withValues(alpha: 0.12),
-        ),
-      ),
-    );
-
-    return GestureDetector(
-      onTap: () => context.pushReplacement('/article/${article.id}'),
-      child: SizedBox(
-        width: 200,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: url == null || url.isEmpty
-                  ? placeholder
-                  : CachedNetworkImage(
-                      imageUrl: url,
-                      height: 100,
-                      width: 200,
-                      fit: BoxFit.cover,
-                      placeholder: (_, _) => placeholder,
-                      errorWidget: (_, _, _) => placeholder,
-                    ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              article.title,
-              style: TextStyle(fontFamily: AppFonts.rubik, 
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-                color: Colors.black,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
       ),
     );
   }
