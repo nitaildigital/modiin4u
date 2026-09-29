@@ -1,0 +1,93 @@
+{
+ "note": "Written by tool/import_professionals.py. What it added; --undo reads this file.",
+ "categories": {
+  "fridge-technician": "5e4bda99-c7ca-4719-b44a-9cd6efd4290e",
+  "electrician": "40d82db8-afc6-4305-8d64-edb29f2260eb",
+  "gel-nails": "4af0a938-1dc5-48e8-b8fb-22866e7e6ff2",
+  "lawyer": "4964ce92-4de2-4227-bac6-22f72e1c56ae",
+  "handyman": "baa36a5d-057f-4cd1-aae5-4a94757c4074",
+  "renovations": "883801c1-9eaf-440e-9537-4312882b39ba",
+  "web-design": "7d95428f-2ed7-4a19-b14c-9a54efb40986"
+ },
+ "businesses": {
+  "dub-law-modiin": "11d9f910-08ae-46cc-8797-160de8638354",
+  "אלדד-נונה": "b78d6293-e6ea-4024-9d06-d54b62484d1b",
+  "דקר-בן-ימין": "270aa0a6-8f14-443b-bcf2-1ee56c981402",
+  "ישראל-לוי-חשמלאי-במודיעין-מכבים-רעות": "dd3a7b2d-9359-4239-beff-374d07d91129",
+  "clicking": "b1e2e33c-ad4e-409e-9e80-7aa7e3bcc7e8"
+ },
+ "links": [
+  [
+   "business",
+   "5c7445ae-d114-41d0-bde8-19f4e28583f2",
+   "c4c08c1b-8ef2-4833-8c67-0c5769e4dfb8"
+  ],
+  [
+   "business",
+   "5c7445ae-d114-41d0-bde8-19f4e28583f2",
+   "4af0a938-1dc5-48e8-b8fb-22866e7e6ff2"
+  ],
+  [
+   "business",
+   "11d9f910-08ae-46cc-8797-160de8638354",
+   "c4c08c1b-8ef2-4833-8c67-0c5769e4dfb8"
+  ],
+  [
+   "business",
+   "11d9f910-08ae-46cc-8797-160de8638354",
+   "4964ce92-4de2-4227-bac6-22f72e1c56ae"
+  ],
+  [
+   "business",
+   "b78d6293-e6ea-4024-9d06-d54b62484d1b",
+   "c4c08c1b-8ef2-4833-8c67-0c5769e4dfb8"
+  ],
+  [
+   "business",
+   "b78d6293-e6ea-4024-9d06-d54b62484d1b",
+   "5e4bda99-c7ca-4719-b44a-9cd6efd4290e"
+  ],
+  [
+   "business",
+   "270aa0a6-8f14-443b-bcf2-1ee56c981402",
+   "c4c08c1b-8ef2-4833-8c67-0c5769e4dfb8"
+  ],
+  [
+   "business",
+   "270aa0a6-8f14-443b-bcf2-1ee56c981402",
+   "baa36a5d-057f-4cd1-aae5-4a94757c4074"
+  ],
+  [
+   "business",
+   "270aa0a6-8f14-443b-bcf2-1ee56c981402",
+   "883801c1-9eaf-440e-9537-4312882b39ba"
+  ],
+  [
+   "business",
+   "dd3a7b2d-9359-4239-beff-374d07d91129",
+   "c4c08c1b-8ef2-4833-8c67-0c5769e4dfb8"
+  ],
+  [
+   "business",
+   "dd3a7b2d-9359-4239-beff-374d07d91129",
+   "40d82db8-afc6-4305-8d64-edb29f2260eb"
+  ],
+  [
+   "business",
+   "b1e2e33c-ad4e-409e-9e80-7aa7e3bcc7e8",
+   "c4c08c1b-8ef2-4833-8c67-0c5769e4dfb8"
+  ],
+  [
+   "business",
+   "b1e2e33c-ad4e-409e-9e80-7aa7e3bcc7e8",
+   "7d95428f-2ed7-4a19-b14c-9a54efb40986"
+  ]
+ ],
+ "storage": [
+  "businesses/professionals/3c123a7ebed2d9ac.jpg",
+  "businesses/professionals/fad0dfc50f1ae083.jpg",
+  "businesses/professionals/e6b33c710209d280.jpg",
+  "businesses/professionals/b4d2e28d3da5256a.jpg",
+  "businesses/professionals/784f78e86c006fa3.png"
+ ]
+}
