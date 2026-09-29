@@ -17,6 +17,21 @@ next. Client: Nitai Levy.
 | Secrets | `.env.local` (gitignored): Supabase URL/service key/access token/DB, Brevo SMTP, deploy host/user/path, Kamatera API, `GOOGLE_MAPS_WEB_KEY`. Never print or commit them. |
 | Deploy key | `~/.ssh/modiin4u_deploy` → root@45.93.94.49 |
 
+## Access to hand over
+
+Setup is in README.md. What Harshit needs from Arvindra, privately — none of
+it is in git:
+
+- **Files:** `.env.local`, `android/local.properties` (its `MAPS_API_KEY`),
+  `ios/Flutter/Maps.xcconfig`, and the deploy SSH key `~/.ssh/modiin4u_deploy`.
+- **Accounts:** the GitHub repo `nitaildigital/modiin4u` (push access; the
+  current remote pushes as `arv-gts-020`); the Supabase project
+  `zbtgietqoxkglfxfocrb` (invite to the organisation); the Google Cloud project
+  `modiin4u-509510` (IAM — it holds both Maps keys and billing); the Kamatera
+  server; Brevo (SMTP for sign-up and reset mail); the Figma file.
+- **The client's own:** uPress (DNS), the WordPress site, Apple developer and
+  Google Play accounts — requested from him, not ours to share.
+
 ## How things run
 
 - **Deploy the web:** `AUTH_REDIRECT_URL=http://45.93.94.49/auth/callback tool/deploy_web.sh`
@@ -32,9 +47,14 @@ next. Client: Nitai Levy.
   own `--undo` and stay.
 - **Python:** Homebrew's `python3` is first on PATH and has no Pillow; image
   scripts need `/Library/Frameworks/Python.framework/Versions/3.13/bin/python3`.
-- **Testing the panel:** create a temporary super_admin with the service key,
-  test only on rows you create, delete everything after. A previous audit
-  saved a real article by mistake — open real rows, never save them.
+- **Testing the panel:** `tool/tmp_admin.py --create` makes a temporary
+  super_admin (credentials in the system temp folder, never printed);
+  `--delete` removes it. Test only on rows you create, delete everything
+  after. A previous audit saved a real article by mistake — open real rows,
+  never save them.
+- **Release builds:** not set up. Android release signing
+  (`android/key.properties` + keystore) does not exist yet; builds use the
+  debug key. iOS signing needs the client's Apple team.
 
 ## Rules the client set (keep them)
 
@@ -178,6 +198,13 @@ point 4.
 side menu with all its rows, Step Counter and Help & Support open from it.
 Not yet on a device: signed-in Profile/Settings/Edit Profile, the account
 screens' English, iPhone.
+
+**Not yet done: a side-by-side check against the frames.** The website was
+compared page by page with its Figma frames; the mobile screens were built from
+Figma's design data and assets, but each pass had 45 minutes and nobody has yet
+laid a device screenshot beside its frame. Expect small spacing and size
+differences. `get_screenshot` on a frame beside
+`adb exec-out screencap -p > shot.png` (Android) is the quickest way.
 
 **Loose ends:** the Step Counter's back arrow points the wrong way in Hebrew
 (Help's is right); a few new UI strings are inline (English/Hebrew) rather than
