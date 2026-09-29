@@ -45,10 +45,39 @@ done
 # link in the e-mail is refused.
 AUTH_REDIRECT_URL="${AUTH_REDIRECT_URL:-https://app.modiin4u.co.il/auth/callback}"
 
+# Read .env.local directly: a value containing a # would be truncated by the
+# shell. Empty when the file or the name is missing.
+get() {
+  [ -f .env.local ] || return 0
+  python3 -c "
+import sys
+for line in open('.env.local', encoding='utf-8'):
+    line = line.rstrip('\n')
+    if line.strip() and not line.lstrip().startswith('#'):
+        k, _, v = line.partition('=')
+        if k == sys.argv[1]:
+            print(v); break
+" "$1"
+}
+
+# ─── The website's maps ───
+#
+# GOOGLE_MAPS_WEB_KEY is a browser key for the Map Tiles API, restricted to
+# the site's addresses (see lib/shared/widgets/web_map_tiles.dart). Compiled
+# into the page, where any Maps key on a website can be read; its referrer
+# restriction is what protects it. Without it the maps draw OpenStreetMap.
+MAPS_WEB_KEY=$(get GOOGLE_MAPS_WEB_KEY)
+
 echo "── building"
 echo "   redirect: $AUTH_REDIRECT_URL"
+if [ -n "$MAPS_WEB_KEY" ]; then
+  echo "   maps: Google (key from .env.local)"
+else
+  echo "   maps: OpenStreetMap — no GOOGLE_MAPS_WEB_KEY in .env.local"
+fi
 flutter build web --release \
-  --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT_URL"
+  --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT_URL" \
+  --dart-define=MAPS_WEB_KEY="$MAPS_WEB_KEY"
 
 SIZE=$(du -sh build/web | cut -f1)
 echo "   build/web is $SIZE (nginx serves it gzipped, so the transfer is far less)"
@@ -63,17 +92,6 @@ if [ ! -f .env.local ]; then
   echo "no .env.local — cannot find the server. See the header of this file." >&2
   exit 1
 fi
-
-# Read it directly: a value containing a # would be truncated by the shell.
-get() { python3 -c "
-import sys
-for line in open('.env.local', encoding='utf-8'):
-    line = line.rstrip('\n')
-    if line.strip() and not line.lstrip().startswith('#'):
-        k, _, v = line.partition('=')
-        if k == sys.argv[1]:
-            print(v); break
-" "$1"; }
 
 HOST=$(get DEPLOY_HOST)
 USER=$(get DEPLOY_USER)
