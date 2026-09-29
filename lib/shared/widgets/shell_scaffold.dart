@@ -45,7 +45,7 @@ class ShellScaffold extends StatelessWidget {
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
-                    BoxShadow(color: Color(0x1A555555), blurRadius: 12),
+                    BoxShadow(color: Color(0x1A555555), blurRadius: 6),
                   ],
                 ),
                 child: Row(

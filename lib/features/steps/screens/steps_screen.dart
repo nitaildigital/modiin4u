@@ -2,6 +2,7 @@ import 'dart:math';
 import '../../../core/theme/app_fonts.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -105,7 +106,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                         Text(
                           L.of(context).stepCounter,
                           style: TextStyle(
-                            fontFamily: AppFonts.inter,
+                            fontFamily: AppFonts.nunito,
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -280,15 +281,12 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                             padding: const EdgeInsets.only(bottom: 16),
                             child: Row(
                               children: [
-                                const SizedBox(
+                                // The design's flame, not an emoji that
+                                // each phone draws its own way.
+                                SvgPicture.asset(
+                                  'assets/icons/m_steps_fire.svg',
                                   width: 32,
                                   height: 32,
-                                  child: Center(
-                                    child: Text(
-                                      '🔥',
-                                      style: TextStyle(fontSize: 24),
-                                    ),
-                                  ),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(

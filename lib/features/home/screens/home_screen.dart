@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_mobile_menu.dart';
+import '../../../shared/widgets/app_side_menu.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -87,7 +89,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         // ── Gradient header ──
         _buildHeader(topPadding),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
 
         // ── Explore Modiin ──
         Padding(
@@ -106,7 +108,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         const SizedBox(height: 16),
         _buildCategoryRow(),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
         // ── Near you, when we know where "you" is ──
         // The heading used to say "Popular near you" over a list that read
@@ -154,7 +156,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         const SizedBox(height: 12),
         _buildPopularCards(),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
         // ── Deal Near You ──
         if ((ref.watch(offersProvider).valueOrNull ?? const []).isNotEmpty) ...[
@@ -164,7 +166,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
           ),
           const SizedBox(height: 12),
           _buildDealImages(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
         ],
 
         // ── Upcoming Events ── only when there is one to come.
@@ -176,7 +178,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
           ),
           const SizedBox(height: 12),
           _buildEventCards(l),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
         ],
 
         // ── Apartment Near You ──
@@ -188,7 +190,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
           ),
           const SizedBox(height: 12),
           _buildApartmentList(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
         ],
 
         // ── Latest News ──
@@ -218,155 +220,194 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
           colors: [Color(0xFF010A36), Color(0xFF0058B5)],
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      // The frame's header: the ☰ in the corner, the greeting beside it, the
+      // palm-and-cloud drawing at half strength behind, then the search.
+      child: Stack(
         children: [
-          SizedBox(height: topPadding + 6),
-
-          // Top row: hamburger menu (right side)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                GestureDetector(
-                  // In the app this is the resident's profile. In a browser
-                  // nobody signs in — that belongs to the app — so it is
-                  // the site's menu, which is what a ☰ on a website is.
-                  onTap: () => kIsWeb
-                      ? showWebMobileMenu(context)
-                      : context.push('/profile'),
-                  child: const Icon(
-                    IconsaxPlusLinear.menu,
-                    color: Colors.white,
-                    size: 24,
+          PositionedDirectional(
+            top: topPadding + 28,
+            end: 37,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.5,
+                child: SizedBox(
+                  width: 114,
+                  height: 114,
+                  child: ClipRect(
+                    child: OverflowBox(
+                      alignment: Alignment.topLeft,
+                      maxWidth: 114 * 1.1298,
+                      maxHeight: 114 * 1.0712,
+                      child: Image.asset(
+                        'assets/web/home/hero_palm.png',
+                        width: 114 * 1.1298,
+                        height: 114 * 1.0712,
+                        fit: BoxFit.fill,
+                      ),
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          // Greeting text
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _greeting(l),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    height: 1.25,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  l.whatAreYouLookingFor,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(50),
               ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 16),
-                  const Icon(
-                    IconsaxPlusLinear.search_normal_1,
-                    color: Color(0xFF6D6D6D),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onSubmitted: (_) => _onSearch(),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: topPadding + 28),
+
+              // Greeting text
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 56, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _greeting(l),
+                      style: TextStyle(
+                        fontFamily: AppFonts.nunito,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l.whatAreYouLookingFor,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
-                        color: const Color(0xFF1F1F1F),
-                      ),
-                      decoration: InputDecoration(
-                        hintText: l.searchPlaceholder,
-                        hintStyle: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6D6D6D),
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 13,
-                        ),
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
                       ),
                     ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 22),
+
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(50),
                   ),
-                  // Ask button
-                  GestureDetector(
-                    onTap: _onSearch,
-                    child: Container(
-                      margin: const EdgeInsets.all(5),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 7,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 16),
+                      const Icon(
+                        IconsaxPlusLinear.search_normal_1,
+                        color: Color(0xFF6D6D6D),
+                        size: 18,
                       ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment(-0.5, -0.5),
-                          end: Alignment(0.8, 0.8),
-                          colors: [Color(0xFF010928), Color(0xFF00C4DC)],
-                        ),
-                        borderRadius: BorderRadius.circular(60),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            IconsaxPlusBold.magic_star,
-                            color: Colors.white,
-                            size: 16,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onSubmitted: (_) => _onSearch(),
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            color: const Color(0xFF1F1F1F),
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'שאל',
-                            style: TextStyle(
+                          decoration: InputDecoration(
+                            hintText: l.searchPlaceholder,
+                            // White on white, as drawn — not the theme's
+                            // grey field fill.
+                            filled: false,
+                            hintStyle: TextStyle(
                               fontFamily: AppFonts.inter,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF6D6D6D),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 13,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      // Ask button
+                      GestureDetector(
+                        onTap: _onSearch,
+                        child: Container(
+                          margin: const EdgeInsets.all(5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment(-0.5, -0.5),
+                              end: Alignment(0.8, 0.8),
+                              colors: [Color(0xFF010928), Color(0xFF00C4DC)],
+                            ),
+                            borderRadius: BorderRadius.circular(60),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // The design's AI sparkle, 24px frame.
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Center(
+                                  child: SvgPicture.asset(
+                                    'assets/web/home/ai.svg',
+                                    width: 17.5,
+                                    height: 21,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'שאל',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+
+              const SizedBox(height: 21),
+            ],
+          ),
+
+          // ☰ — in the app the design's side menu; in a browser nobody
+          // signs in (that belongs to the app), so it is the site's menu,
+          // which is what a ☰ on a website is.
+          PositionedDirectional(
+            top: topPadding - 2,
+            end: 7,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => kIsWeb
+                  ? showWebMobileMenu(context)
+                  : showAppSideMenu(context),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: SvgPicture.asset(
+                  'assets/icons/m_home_menu.svg',
+                  width: 24,
+                  height: 24,
+                ),
               ),
             ),
           ),
-
-          const SizedBox(height: 20),
         ],
       ),
     );
@@ -376,43 +417,36 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // Category icons (Restaurants, Events, Real Estate, Deals)
   // ─────────────────────────────────────────────
   Widget _buildCategoryRow() {
+    // The frame's four shortcuts, each a 48px tinted circle drawn in the
+    // design, with its name under it.
     final categories = [
-      ('מסעדות', IconsaxPlusLinear.reserve, '/restaurants'),
-      ('אירועים', IconsaxPlusLinear.calendar, '/events'),
-      ('נדל״ן', IconsaxPlusLinear.house_2, '/realestate'),
-      ('חדשות', IconsaxPlusLinear.note, '/news'),
-      ('מבצעים', IconsaxPlusLinear.discount_shape, '/deals'),
+      ('מסעדות', 'assets/icons/m_home_cat_restaurants.svg', '/restaurants'),
+      ('אירועים', 'assets/icons/m_home_cat_events.svg', '/events'),
+      ('נדל״ן', 'assets/icons/m_home_cat_realestate.svg', '/realestate'),
+      ('מבצעים', 'assets/icons/m_home_cat_deals.svg', '/deals'),
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: categories.map((cat) {
-          final (label, icon, route) = cat;
+          final (label, svg, route) = cat;
           return Expanded(
             child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => context.goOrPush(route),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      color: Color(0x26146DDF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 24, color: const Color(0xFF146DDF)),
-                  ),
-                  const SizedBox(height: 8),
+                  SvgPicture.asset(svg, width: 48, height: 48),
+                  const SizedBox(height: 10),
                   Text(
                     label,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF3D3D3D),
-                      height: 1.0,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
@@ -433,7 +467,9 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
   Widget _buildPopularCards() => _ProviderRow<Business>(
     provider: nearbyBusinessListProvider,
-    height: 282,
+    // The card is ~246 tall as drawn; the rest is room for a phone font
+    // that sets Hebrew a little taller.
+    height: 262,
     gap: 12,
     card: _businessCard,
     skeleton: _businessCardSkeleton,
@@ -705,7 +741,12 @@ class _ProviderRow<T> extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: items.length,
                     separatorBuilder: (_, _) => SizedBox(width: gap),
-                    itemBuilder: (_, i) => card(items[i]),
+                    // Top-aligned, so a card is as tall as what it holds
+                    // rather than stretched to the row.
+                    itemBuilder: (_, i) => Align(
+                      alignment: Alignment.topCenter,
+                      child: card(items[i]),
+                    ),
                   ),
           ),
     );
@@ -828,6 +869,7 @@ class _BusinessCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image area
@@ -896,7 +938,7 @@ class _BusinessCard extends StatelessWidget {
             Text(
               data.name,
               style: TextStyle(
-                fontFamily: AppFonts.rubik,
+                fontFamily: AppFonts.nunito,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.navy,
@@ -1053,7 +1095,7 @@ class _EventData {
       location: e.venueName ?? e.address,
       time: e.displayTime ?? '',
       price: e.displayPrice ?? '',
-      priceColor: e.isFree ? const Color(0xFF31AC4E) : Colors.black,
+      priceColor: e.isFree ? AppColors.midBlue : AppColors.navy,
       month: start == null ? '' : l.monthShort(start.month),
       day: '${start?.day ?? ''}',
       gradientColors: _gradientFor(e.id),
@@ -1079,6 +1121,7 @@ class _EventCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image area with date badge
@@ -1146,7 +1189,7 @@ class _EventCard extends StatelessWidget {
             Text(
               data.name,
               style: TextStyle(
-                fontFamily: AppFonts.rubik,
+                fontFamily: AppFonts.nunito,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.navy,
@@ -1225,7 +1268,7 @@ class _EventCard extends StatelessWidget {
                 Text(
                   data.price,
                   style: TextStyle(
-                    fontFamily: AppFonts.rubik,
+                    fontFamily: AppFonts.nunito,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: data.priceColor,
@@ -1288,7 +1331,7 @@ class _ApartmentRow extends StatelessWidget {
                             ? l.pricePerMonthValue(formatShekels(price))
                             : formatShekels(price),
                         style: TextStyle(
-                          fontFamily: AppFonts.rubik,
+                          fontFamily: AppFonts.nunito,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: AppColors.navy,
