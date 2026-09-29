@@ -95,6 +95,17 @@ final listingsProvider = FutureProvider<List<Listing>>((ref) async {
       );
 });
 
+/// Every active listing, unfiltered.
+///
+/// The website's real-estate pages each narrow the list themselves — by kind,
+/// by property type, by neighbourhood — and the map needs a listing's full
+/// row behind its pin. [listingsProvider] is keyed to the filter the mobile
+/// tab drives, which is not any of those, so the web reads this instead and
+/// the pages share one fetch.
+final allActiveListingsProvider = FutureProvider<List<Listing>>(
+  (ref) => ref.watch(listingRepositoryProvider).fetchActive(),
+);
+
 /// One listing. Null when it was removed, or when it is not active and does
 /// not belong to whoever is asking — row level security decides, not this.
 final listingByIdProvider = FutureProvider.family<Listing?, String>(

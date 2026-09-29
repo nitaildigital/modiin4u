@@ -37,8 +37,9 @@ class WebNewListingContent extends ConsumerStatefulWidget {
       _WebNewListingContentState();
 }
 
-class _WebNewListingContentState extends ConsumerState<WebNewListingContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebNewListingContentState extends ConsumerState<WebNewListingContent>
+    with WebLanguageState<WebNewListingContent> {
+  bool get _isHebrew => webIsHebrew.value;
 
   int _listingType = 0;
   String? _propertyType;
@@ -111,7 +112,6 @@ class _WebNewListingContentState extends ConsumerState<WebNewListingContent> {
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'realestate',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

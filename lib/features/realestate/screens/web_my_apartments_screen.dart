@@ -36,9 +36,9 @@ class WebMyApartmentsContent extends ConsumerStatefulWidget {
       _WebMyApartmentsContentState();
 }
 
-class _WebMyApartmentsContentState
-    extends ConsumerState<WebMyApartmentsContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebMyApartmentsContentState extends ConsumerState<WebMyApartmentsContent>
+    with WebLanguageState<WebMyApartmentsContent> {
+  bool get _isHebrew => webIsHebrew.value;
   final _searchController = TextEditingController();
 
   @override
@@ -120,7 +120,6 @@ class _WebMyApartmentsContentState
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'realestate',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(

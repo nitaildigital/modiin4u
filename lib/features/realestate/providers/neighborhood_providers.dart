@@ -39,6 +39,24 @@ class Neighborhood {
   );
 }
 
+/// Every active neighbourhood, in the order the admin set, with its photo.
+///
+/// [listingNeighborhoodsProvider] carries only the id and the name, which is
+/// all the posting form needs; the website's neighbourhood cards show the
+/// photograph as well.
+final activeNeighborhoodsProvider = FutureProvider<List<Neighborhood>>((
+  ref,
+) async {
+  final rows = await SupabaseConfig.client
+      .from('neighborhoods')
+      .select('id, name, slug, description, image_url')
+      .eq('is_active', true)
+      .order('sort_order', ascending: true);
+  return List<Map<String, dynamic>>.from(
+    rows,
+  ).map(Neighborhood.fromJson).toList();
+});
+
 /// The neighbourhood the route names. Null when the id matches no row.
 final neighborhoodByIdProvider = FutureProvider.family<Neighborhood?, String>((
   ref,

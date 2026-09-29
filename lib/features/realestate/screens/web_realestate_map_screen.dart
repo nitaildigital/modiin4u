@@ -13,8 +13,10 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/web_map_tiles.dart';
+import '../../map/screens/web_map_screen.dart' show WebMapSlide, webListingSlideData;
 import 'my_apartments_screen.dart' show formatShekels;
+import 'web_realestate_search_screen.dart' show ListingMapPin;
 
 // ═══════════════════════════════════════════════════════════
 // Web Real Estate Map — desktop layout for /realestate-map
@@ -32,7 +34,6 @@ import 'my_apartments_screen.dart' show formatShekels;
 const _kBorder = Color(0xFFE7E7E7);
 const _kSubtitle = Color(0xFF5F5E5A);
 const _kTextGrey = Color(0xFF6D6D6D);
-const _kPinBlue = Color(0xFF006BF6);
 
 class WebRealEstateMapContent extends ConsumerStatefulWidget {
   const WebRealEstateMapContent({super.key});
@@ -42,10 +43,14 @@ class WebRealEstateMapContent extends ConsumerStatefulWidget {
       _WebRealEstateMapContentState();
 }
 
-class _WebRealEstateMapContentState
-    extends ConsumerState<WebRealEstateMapContent> {
-  bool _isHebrew = webIsHebrew.value;
+class _WebRealEstateMapContentState extends ConsumerState<WebRealEstateMapContent>
+    with WebLanguageState<WebRealEstateMapContent> {
+  bool get _isHebrew => webIsHebrew.value;
   String? _selectedId;
+
+  /// The pin whose slide is open — the design's "Apartment Slide", as the
+  /// city map shows it.
+  Listing? _opened;
 
   final _searchController = TextEditingController();
   final _listController = ScrollController();
@@ -97,7 +102,6 @@ class _WebRealEstateMapContentState
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'realestate',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             // The panel takes a share of the window rather than a fixed
             // width: held at 560 it would leave a 1101px laptop with a map
@@ -189,7 +193,7 @@ class _WebRealEstateMapContentState
                                 : '${row.sqm} ${_t('m²', 'מ״ר')}',
                             floorLabel: row.floor == null
                                 ? null
-                                : _t('Floor ${row.floor}', 'קומה ${row.floor}'),
+                                : (row.floor == 0 ? _t('Ground Floor', 'קומת קרקע') : _t('Floor ${row.floor}', 'קומה ${row.floor}')),
                             onTap: () => context.push('/listing/${row.id}'),
                             onHover: (hovering) => _hover(row, hovering),
                           );
@@ -335,6 +339,7 @@ class _WebRealEstateMapContentState
               style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
               decoration: InputDecoration(
                 isCollapsed: true,
+                contentPadding: EdgeInsets.zero,
                 border: InputBorder.none,
                 // The app theme fills every field with a grey pill, which
                 // would draw a second, rounder box inside this one.
@@ -412,20 +417,22 @@ class _WebRealEstateMapContentState
           options: MapOptions(
             initialCenter: _center,
             initialZoom: 14.2,
-            onTap: (_, _) => setState(() => _selectedId = null),
+            onTap: (_, _) => setState(() {
+              _selectedId = null;
+              _opened = null;
+            }),
           ),
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.modiin4u.app',
-            ),
+            const WebMapTiles(),
             MarkerLayer(
               markers: [
                 for (final l in pinned)
                   Marker(
                     point: LatLng(l.latitude!, l.longitude!),
                     width: 40,
-                    height: 40,
+                    height: 44,
+                    // The pin's point, not its middle, sits on the address.
+                    alignment: Alignment.topCenter,
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,
                       onEnter: (_) => setState(() => _selectedId = l.id),
@@ -433,14 +440,21 @@ class _WebRealEstateMapContentState
                         if (_selectedId == l.id) _selectedId = null;
                       }),
                       child: GestureDetector(
-                        onTap: () => context.push('/listing/${l.id}'),
-                        child: _PropertyPin(selected: _selectedId == l.id),
+                        onTap: () => setState(() => _opened = l),
+                        child: AnimatedScale(
+                          scale: _selectedId == l.id || _opened?.id == l.id
+                              ? 1.2
+                              : 1,
+                          alignment: Alignment.bottomCenter,
+                          duration: const Duration(milliseconds: 150),
+                          child: const ListingMapPin(),
+                        ),
                       ),
                     ),
                   ),
               ],
             ),
-            const OsmAttribution(),
+            const WebMapCredit(),
           ],
         ),
 
@@ -477,6 +491,25 @@ class _WebRealEstateMapContentState
                     fontSize: 14,
                     color: _kSubtitle,
                   ),
+                ),
+              ),
+            ),
+          ),
+
+        if (_opened != null)
+          PositionedDirectional(
+            start: 16,
+            top: 16,
+            bottom: 16,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 832),
+                child: WebMapSlide(
+                  key: ValueKey(_opened!.id),
+                  data: webListingSlideData(_opened!, isHebrew: _isHebrew),
+                  isHebrew: _isHebrew,
+                  onClose: () => setState(() => _opened = null),
                 ),
               ),
             ),
@@ -587,14 +620,14 @@ class _PropertyRow extends StatelessWidget {
                             child: Text(
                               l.kind == ListingKind.rent
                                   ? _t(
-                                      '${formatShekels(price)} / month',
+                                      '${formatShekels(price)} / In the month',
                                       '${formatShekels(price)} לחודש',
                                     )
                                   : formatShekels(price),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontFamily: AppFonts.rubik,
+                                fontFamily: AppFonts.nunito,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.navy,
@@ -686,52 +719,6 @@ class _PropertyRow extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// MAP PIN — the mobile screen's pin, at the same size
-// ═══════════════════════════════════════════════
-
-class _PropertyPin extends StatelessWidget {
-  final bool selected;
-  const _PropertyPin({this.selected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 2.28,
-            offset: const Offset(0, 2.28),
-          ),
-        ],
-        border: selected
-            ? Border.all(color: AppColors.midBlue, width: 2)
-            : null,
-      ),
-      child: Center(
-        child: Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: selected ? AppColors.turquoise : _kPinBlue,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            IconsaxPlusBold.home_2,
-            size: 12,
-            color: Colors.white,
           ),
         ),
       ),
