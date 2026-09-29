@@ -38,6 +38,31 @@ final webIsHebrew = ValueNotifier<bool>(false);
 
 const _kWebLanguageKey = 'web_is_hebrew';
 
+/// Keeps a page in the language the navbar was last switched to.
+///
+/// Each page used to copy [webIsHebrew] when it opened and flip its own copy
+/// on the switch, so the page underneath — the list a reader comes Back to —
+/// stayed in the language it was opened in. A page with this mixin reads the
+/// shared value and draws again whenever it changes, wherever it was changed.
+mixin WebLanguageState<T extends StatefulWidget> on State<T> {
+  void _languageChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    webIsHebrew.addListener(_languageChanged);
+  }
+
+  @override
+  void dispose() {
+    webIsHebrew.removeListener(_languageChanged);
+    super.dispose();
+  }
+}
+
+
 /// Reads the language the browser was last left in, before the first page
 /// draws, and keeps it written down from then on — so a reload, or a link
 /// opened in a new tab, comes up in the language the reader chose.
@@ -129,7 +154,9 @@ List<WebNavItem> webNavItems(bool isHebrew, {bool short = false}) {
     WebNavItem(
       id: 'professionals',
       label: t('Professionals', 'בעלי מקצוע'),
-      route: '/businesses',
+      // Professionals are the businesses filed under Services; the page
+      // reads a category's slug as well as its id.
+      route: '/businesses/category/services',
       menu: WebNavMenu.professionals,
     ),
   ];
@@ -196,8 +223,8 @@ Widget _logo(BuildContext context, {double width = 90, double height = 48}) {
 /// beside "Contact Us", small, so the rest of the bar keeps its places.
 class _LanguageToggle extends StatelessWidget {
   final bool isHebrew;
-  final VoidCallback onTap;
-  const _LanguageToggle({required this.isHebrew, required this.onTap});
+  final VoidCallback? onTap;
+  const _LanguageToggle({required this.isHebrew, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +233,7 @@ class _LanguageToggle extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           webIsHebrew.value = !isHebrew;
-          onTap();
+          onTap?.call();
         },
         child: Container(
           height: 36,
@@ -253,12 +280,14 @@ class _LanguageToggle extends StatelessWidget {
 /// page still says whose it is.
 class WebAuthHeader extends StatelessWidget {
   final bool isHebrew;
-  final VoidCallback onToggleLanguage;
+  /// Anything a page wants done besides — the language itself is
+  /// [webIsHebrew], which the switch sets and every page follows.
+  final VoidCallback? onToggleLanguage;
 
   const WebAuthHeader({
     super.key,
     required this.isHebrew,
-    required this.onToggleLanguage,
+    this.onToggleLanguage,
   });
 
   @override
@@ -299,11 +328,13 @@ class WebAuthHeader extends StatelessWidget {
 // the current page's link underlined. The home page: a 1600 pill floating
 // 32px down over the hero.
 // ─────────────────────────────────────────────
-class WebNavbar extends StatefulWidget {
+class WebNavbar extends ConsumerStatefulWidget {
   /// Which [WebNavItem.id] to underline, or null on pages that aren't in the nav.
   final String? activeId;
   final bool isHebrew;
-  final VoidCallback onToggleLanguage;
+  /// Anything a page wants done besides — the language itself is
+  /// [webIsHebrew], which the switch sets and every page follows.
+  final VoidCallback? onToggleLanguage;
   final VoidCallback? onContactTap;
 
   /// The home page's pill, rather than the full-width bar.
@@ -312,17 +343,27 @@ class WebNavbar extends StatefulWidget {
   const WebNavbar({
     super.key,
     required this.isHebrew,
-    required this.onToggleLanguage,
+    this.onToggleLanguage,
     this.activeId,
     this.onContactTap,
     this.floating = false,
   });
 
   @override
-  State<WebNavbar> createState() => _WebNavbarState();
+  ConsumerState<WebNavbar> createState() => _WebNavbarState();
 }
 
-class _WebNavbarState extends State<WebNavbar> {
+class _WebNavbarState extends ConsumerState<WebNavbar> {
+  @override
+  void initState() {
+    super.initState();
+    // The two menus' lists start loading with the bar, so the first hover
+    // finds them ready; they took a second or two, and the Professionals
+    // menu opened empty until they came.
+    ref.read(navCategoriesProvider('business'));
+    ref.read(navProfessionalsProvider);
+  }
+
   /// The one menu that is open, and where on screen its link sits.
   ///
   /// The bar owns this rather than each link owning its own. When every link
@@ -1080,7 +1121,7 @@ class WebFooter extends StatelessWidget {
     (_t('News', 'חדשות'), '/news'),
     (_t('Events', 'אירועים'), '/events'),
     (_t('Businesses', 'עסקים'), '/businesses'),
-    (_t('Professionals', 'בעלי מקצוע'), '/businesses'),
+    (_t('Professionals', 'בעלי מקצוע'), '/businesses/category/services'),
     (_t('Real Estate', 'נדל״ן'), '/realestate'),
     (_t('Map', 'מפה'), '/map'),
     (_t('Restaurants', 'מסעדות'), '/restaurants'),
@@ -1090,9 +1131,9 @@ class WebFooter extends StatelessWidget {
 
   List<(String, String)> get _categoryLinks => [
     (_t('Restaurants in Modiin', 'מסעדות במודיעין'), '/restaurants'),
-    (_t('Coffee Shops', 'בתי קפה'), '/restaurants'),
-    (_t('Bars', 'ברים'), '/restaurants'),
-    (_t('Professionals', 'בעלי מקצוע'), '/businesses'),
+    (_t('Coffee Shops', 'בתי קפה'), '/restaurants-map?cuisine=cafe-bakery'),
+    (_t('Bars', 'ברים'), '/restaurants-map?cuisine=bars'),
+    (_t('Professionals', 'בעלי מקצוע'), '/businesses/category/services'),
     (_t('Real Estate', 'נדל״ן'), '/realestate'),
     (_t('Local Businesses', 'עסקים מקומיים'), '/businesses'),
     (_t('Events', 'אירועים'), '/events'),

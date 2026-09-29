@@ -51,27 +51,22 @@ final navCategoriesProvider =
 
 /// The people the Professionals menu lists.
 ///
-/// The client's own site keeps professionals as a post type of their own,
-/// with trades as its taxonomy — plumber, electrician, refrigerator
-/// technician. None of that was imported: here a professional is a business
-/// filed under Services, the same rule the home page's "Find a Professional"
-/// row uses. So the menu names those businesses, and each leads to its page,
-/// rather than listing trades that have nobody in them.
+/// A professional is a business filed under Services — the client's
+/// WordPress professionals were imported that way, with their trades as
+/// Services' children — the same rule the home page's "Find a Professional"
+/// row uses. So the menu names those businesses, and each leads to its page.
+///
+/// Two requests, not three: the links are read through the category's slug
+/// in one go. The menu opened empty for a second or two while three ran one
+/// after another.
 final navProfessionalsProvider = FutureProvider<List<NavCategory>>((ref) async {
   final client = SupabaseConfig.client;
-  final category = await client
-      .from('categories')
-      .select('id')
-      .eq('scope', 'business')
-      .eq('slug', 'services')
-      .maybeSingle();
-  if (category == null) return const [];
-
   final links = await client
       .from('entity_categories')
-      .select('entity_id')
+      .select('entity_id, categories!inner(slug, scope)')
       .eq('entity_type', 'business')
-      .eq('category_id', category['id'] as String);
+      .eq('categories.slug', 'services')
+      .eq('categories.scope', 'business');
   final ids = [
     for (final l in List<Map<String, dynamic>>.from(links))
       l['entity_id'] as String,
@@ -94,7 +89,8 @@ final navProfessionalsProvider = FutureProvider<List<NavCategory>>((ref) async {
   ];
 });
 
-/// One category's name, by id.
+/// One category's name, by id — or by slug, as `/businesses/category/services`
+/// names Professionals.
 ///
 /// The business category page took its heading from a `?title=` on the URL
 /// and fell back to the word "עסקים" — so every category read "Businesses",
@@ -102,10 +98,12 @@ final navProfessionalsProvider = FutureProvider<List<NavCategory>>((ref) async {
 /// name belongs to the row, not to the link.
 final categoryNameProvider =
     FutureProvider.family<String?, String>((ref, categoryId) async {
+      final isId = RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(categoryId);
       final row = await SupabaseConfig.client
           .from('categories')
           .select('name')
-          .eq('id', categoryId)
+          .eq(isId ? 'id' : 'slug', categoryId)
+          .limit(1)
           .maybeSingle();
       return row?['name'] as String?;
     });
