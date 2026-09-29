@@ -1,0 +1,553 @@
+{
+ "note": "Written by tool/seed_sample_content.py. Everything the sample content added or changed; --undo reads this file.",
+ "storage": [
+  "sample/agents/agent.jpg",
+  "sample/campaigns/deals-best-restaurants-40.jpg",
+  "sample/campaigns/deals-exclusive-50.jpg",
+  "sample/campaigns/deals-exclusive-60.jpg",
+  "sample/campaigns/home-map-discount.jpg",
+  "sample/campaigns/home-map-papa-johns.jpg",
+  "sample/campaigns/home-map-showtime.jpg",
+  "sample/campaigns/home-top-morasha.jpg",
+  "sample/campaigns/menu-businesses-1.jpg",
+  "sample/campaigns/menu-businesses-2.jpg",
+  "sample/campaigns/menu-businesses-3.jpg",
+  "sample/campaigns/menu-professionals-1.jpg",
+  "sample/campaigns/menu-professionals-2.jpg",
+  "sample/campaigns/menu-professionals-3.jpg",
+  "sample/campaigns/news-football.jpg",
+  "sample/campaigns/news-papa-johns.jpg",
+  "sample/campaigns/news-showtime.jpg",
+  "sample/campaigns/restaurants-best-food.jpg",
+  "sample/campaigns/restaurants-best-in-modiin.jpg",
+  "sample/campaigns/restaurants-eat-more.jpg",
+  "sample/categories/business-beauty.jpg",
+  "sample/categories/business-entertainment.jpg",
+  "sample/categories/business-restaurants.jpg",
+  "sample/categories/business-services.jpg",
+  "sample/categories/business-shopping.jpg",
+  "sample/categories/event-community.jpg",
+  "sample/categories/event-concerts.jpg",
+  "sample/categories/event-kids.jpg",
+  "sample/categories/event-sports.jpg",
+  "sample/events/acoustic-sunset.jpg",
+  "sample/events/community-festival.jpg",
+  "sample/events/community-football.jpg",
+  "sample/events/family-fun-day-anava.jpg",
+  "sample/events/family-fun-day.jpg",
+  "sample/events/indie-music-night.jpg",
+  "sample/events/kids-cooking-workshop.jpg",
+  "sample/events/live-jazz-evening.jpg",
+  "sample/events/night-run-2026.jpg",
+  "sample/events/night-run.jpg",
+  "sample/events/open-air-movie.jpg",
+  "sample/events/open-air-music-movie.jpg",
+  "sample/events/rock-festival.jpg",
+  "sample/events/street-food-festival.jpg",
+  "sample/events/summer-music-night.jpg",
+  "sample/events/summer-nights-live.jpg",
+  "sample/listings/balcony-view.jpg",
+  "sample/listings/bedroom.jpg",
+  "sample/listings/green-block.jpg",
+  "sample/listings/living-ac.jpg",
+  "sample/listings/living-art.jpg",
+  "sample/listings/living-blue.jpg",
+  "sample/listings/living-bright.jpg",
+  "sample/listings/living-dining.jpg",
+  "sample/listings/night-terrace.jpg",
+  "sample/listings/pool-villa.jpg",
+  "sample/listings/rooftop-pool.jpg",
+  "sample/listings/stone-entrance.jpg",
+  "sample/listings/street-stone.jpg",
+  "sample/listings/tower-block.jpg",
+  "sample/listings/towers-aerial.jpg",
+  "sample/neighborhoods/avnei-hen.jpg",
+  "sample/neighborhoods/tziporim.jpg",
+  "sample/offers/burger.jpg",
+  "sample/offers/cosmetics.jpg",
+  "sample/offers/dinner.jpg",
+  "sample/neighborhoods/hakeramim.jpg",
+  "sample/neighborhoods/hanahalim.jpg",
+  "sample/neighborhoods/haneviim.jpg",
+  "sample/neighborhoods/moriah.jpg",
+  "sample/neighborhoods/moriah-aerial.jpg",
+  "sample/neighborhoods/moriah-street.jpg"
+ ],
+ "auth_users": {
+  "daniel": "58a87ce8-b53f-4510-b3fd-e8a5f334149f",
+  "maya": "90e7b501-45cc-44c5-b56c-0243966513ac",
+  "amit": "6ffbda54-32fd-4bec-90e4-0a2e16edce4a",
+  "yael": "a2b8f7b8-1cfd-4990-9064-e36b3abd7076",
+  "noa": "9efff766-f2f6-44ee-b57f-1c2f1f0afeca",
+  "ron": "3b75c68c-d7f3-4ca3-9e70-230f71107dfe"
+ },
+ "rows": {
+  "events": {
+   "summer-music-night": "481569f8-65b2-47f1-8224-bde853f38e85",
+   "community-festival": "8f812a11-0a76-4873-8ad0-86286d337c5d",
+   "open-air-movie": "ec705d65-2fa1-4e37-909d-8f5466d90741",
+   "family-fun-day": "5df974dd-2ad9-4d8f-a465-b456eaee471d",
+   "acoustic-sunset": "38b4ce71-276c-47aa-825f-3df804e590bd",
+   "night-run": "bac99c15-a01d-4d9e-a8dd-cc17b0f1d6fb",
+   "kids-cooking-workshop": "4bedc26f-1d2d-4541-ad01-b89b57bb23fe",
+   "open-air-music-movie": "a5875cb0-0ff8-413f-9065-d13273245187",
+   "community-football": "1f9d8f1c-8bc7-4541-812a-4e5db52d9690",
+   "summer-nights-live": "59f32e06-9b79-4062-bf96-588648f66739",
+   "street-food-festival": "8e42cbaf-0df1-41ff-a3bb-afabdb46ab16",
+   "family-fun-day-anava": "858c419d-517d-4e5f-89b7-14a07429dc59",
+   "night-run-2026": "f93b4c9a-bce3-4fd9-bd1a-2c28eb4ccb4a",
+   "rock-festival": "accc33fe-ef2d-4586-a65d-d068edfc8c08",
+   "indie-music-night": "495baab6-8dcd-487b-afae-26a5eef8614b",
+   "live-jazz-evening": "a0922826-d4c7-4303-9ace-861802e31421"
+  },
+  "offers": {
+   "grill-dinner": "27341d88-c61d-46e0-9370-ae53fe228367",
+   "evening-dress": "45bdd796-798e-49d8-a18e-9e89e53c6d65",
+   "coffee-1plus1": "3d0b76ee-8323-49c6-81c2-d626afedcfe1",
+   "spa-packages": "d518162e-42eb-481c-bf14-f72b346a6a61",
+   "pizza-second-tray": "bbc03146-b596-4c27-b1f2-7f8f8683113e",
+   "dessert-for-two": "bc783b32-b9f0-41b0-9d9e-398c3e69f092",
+   "facial-first": "d8826e06-a177-401b-ac0d-e7a252a4a6b8",
+   "laser-second-entry": "8ea16140-dd10-4a41-9c7b-ae84c9c73e9d",
+   "wine-tasting": "a7008ba6-a025-4cc4-a01f-3eb88b1c5d66",
+   "tyres-alignment": "da44c926-af91-49da-a855-d675fd901e3c",
+   "ems-trial": "f8b08d7f-36f6-4ad1-a592-ace0992d750b",
+   "flowers-10": "d26f9f6c-351a-40ca-9c8e-949aadb38d9f"
+  },
+  "real_estate_agents": {
+   "design-agent": "99a29c2d-e8ae-4cf4-bb8b-7a2cf6dbe88c"
+  },
+  "listings": {
+   "mini-penthouse-avnei-hen": "bc1951a1-8ab3-4345-8a4b-0e4913513d61",
+   "yona-hanavi-duplex": "35f3b0ef-9899-45d2-a215-7a98e6645dd1",
+   "begin-4-rooms": "fc7adbf7-c8a7-435e-9456-b92d0279ea9a",
+   "sarah-imenu-4-rooms": "8d0c6144-39a3-462e-9109-0aa414cf5833",
+   "emek-haela-6-rooms": "ad356300-8728-42f5-92a8-f4dc6c7f98b3",
+   "shimon-peres-5-rooms": "90a82741-1afb-4c31-ba1a-1211ebcbe76c",
+   "yitzhak-shamir-6-rooms": "ecfb9f6a-3fa3-4aa3-87d8-2a87afb23a4a",
+   "dukhifat-garden": "1aa5a4b9-a3b3-44f0-83b8-ec9a0265aea9",
+   "nofim-villa": "6f478802-c92d-4e7a-ab22-ef6227f56370",
+   "lev-hair-studio": "2416c420-008d-44dd-8731-72f929aa00aa",
+   "maccabim-semi-detached": "d2ebb7e2-c6aa-408f-a45f-e5d34ec9c1c5",
+   "weizmann-penthouse-rent": "426fcf5e-f44b-4cf1-ac16-a86582a32ac4",
+   "shamir-4-rooms-rent": "7540c15b-1e33-4936-927e-1ae30d1c95df",
+   "rabin-4-rooms-rent": "772bb6eb-ff69-4aca-af33-b196b7bf14e5",
+   "emek-haela-duplex-rent": "acc9efa0-1a3a-45af-93c2-dbb244109d43",
+   "efroni-garden-rent": "9bb14f29-1f60-460c-8abc-b0f5f4b5cd68",
+   "lev-hair-studio-rent": "bb36581e-9f63-4292-ba8a-851c52821785",
+   "nofim-villa-rent": "c51b7744-49c1-45e3-b0cd-586ed1a7392c",
+   "maccabim-unit-rent": "469b8f3d-637e-439b-a0d1-013ef9f24b55",
+   "odem-3-rooms-rent": "245ca22e-5bb7-4ee0-87b9-2471bdfaefd3",
+   "bdolah-5-rooms-rent": "109a007d-0eb5-44a2-a208-ebaf0a9cf9b4",
+   "dukhifat-4-rooms-rent": "0b3e5867-29c6-4c68-8664-edd7679822e6"
+  },
+  "reviews": {
+   "grill-443/daniel": "4a56f5c3-9d58-4bca-b3fe-facb18743cc1",
+   "grill-443/maya": "cc31fe45-d004-425e-9dc4-0b07b31727aa",
+   "grill-443/amit": "5c02230e-af99-4527-8044-ab66b849f68f",
+   "grill-443/yael": "9094b603-6874-48c1-ad6e-3422c233d6d3",
+   "grill-443/noa": "e2ac7f92-47b5-4fb9-b8d9-6a96f6b53d75",
+   "betzel-hateena-modiin/ron": "440c1f28-4072-4c2a-bde1-a386362b4e16",
+   "betzel-hateena-modiin/maya": "9964ed0e-9b01-4950-90be-195269c7d9cc",
+   "betzel-hateena-modiin/amit": "50e12fab-5b2e-4dc1-b3b5-daae01fc4216",
+   "roasters-modiin/yael": "c72d1af9-e144-44d8-9a07-b30becb22b83",
+   "roasters-modiin/daniel": "0fc703c7-89f1-4b5f-b8f9-b9b3249b1eca",
+   "roasters-modiin/noa": "2a002c8c-2214-428e-b4ec-7216da8bc539",
+   "papa-johns-modiin/amit": "30e9daf7-aadb-4dc0-818f-1d6070083171",
+   "papa-johns-modiin/ron": "f3acef2e-45b3-4ed0-86fb-9a0817f3cc9b",
+   "papa-johns-modiin/maya": "f7fe5b85-e86a-4c0e-860f-c7bb0872b1ef",
+   "sushibox-modiin/noa": "154b81a6-eeb8-4797-8c19-50115b0ad2d4",
+   "sushibox-modiin/daniel": "39616349-80c8-4bff-b8e4-7f289e3aff1f",
+   "sushibox-modiin/yael": "a55b2367-f672-4237-bdc3-49c6ff0710e9",
+   "carmia-modiin/maya": "bce5865c-a6a9-48cc-b85c-fce9b19c39c8",
+   "carmia-modiin/ron": "ff0430b9-60c9-437b-80cf-f97c0c5aa650",
+   "patricks-modiin/amit": "ea4f5f5e-c67a-4332-8083-735e90657c5b",
+   "patricks-modiin/noa": "1c41fb73-060b-4e08-be1c-3aaa42e79658",
+   "patricks-modiin/daniel": "ccbc6a6c-b332-47af-9ff2-7aa22b008ebe",
+   "gabrielpatisseriemodiin/yael": "61c00e7f-02f9-4ce0-beb0-ed41cc770e12",
+   "gabrielpatisseriemodiin/daniel": "2026778e-276b-4f2e-bb57-8921ed826521",
+   "gabrielpatisseriemodiin/ron": "9b4306a1-af1f-4b13-ab24-9e48d652906b",
+   "hachla-falafel-modiin/daniel": "9e38ff56-9276-4c1f-a7c4-8f86e52077f0",
+   "hachla-falafel-modiin/amit": "c4119f18-91df-4303-85b1-525c526e706e",
+   "hachla-falafel-modiin/maya": "6ff463d9-ccd2-4ce2-8b90-faf59789a60c",
+   "alaesh-modiin/yael": "7aa5e2de-5eb4-4d75-a209-382f0d50474c",
+   "alaesh-modiin/noa": "ec9af1dd-0172-4245-a805-d325cadad243",
+   "o-spa/maya": "603d2446-96bc-42f4-a5ef-b7000f5564f7",
+   "o-spa/noa": "12c77317-8ec9-4069-8cdc-5ecc196b63b2",
+   "זירת-הלייזר-מודיעין/ron": "65394eb5-a2e4-4ccb-8cde-2f9aeb7dcad6",
+   "זירת-הלייזר-מודיעין/amit": "2179a075-c0ca-41e2-b8c3-85b9d9d9768c",
+   "modiin-water-park/yael": "6c185344-9b56-4510-99d2-7e99b546b993",
+   "modiin-water-park/daniel": "0de11e4f-66a0-4633-9207-e08dd6cb406a",
+   "modiin-water-park/ron": "869e3978-3893-41ba-8089-fb41203900a2",
+   "only-20-ems-modiin/noa": "72c076a1-5c19-4700-b4b8-23590f71a79a",
+   "only-20-ems-modiin/maya": "70b2d0b7-d71a-485a-8d3e-404c8c4ea73e",
+   "גילת-קוסמטיקס/yael": "c8bfa54b-3fef-4555-a489-fe88da2cdcb7",
+   "גילת-קוסמטיקס/amit": "666ff8ff-b1da-4340-a75e-a93d9cf3dc5c"
+  },
+  "campaigns": {
+   "home-top-morasha": "da873a4d-86ea-45f7-9827-41e73e71f841",
+   "home-map-showtime": "a41c1784-36de-4676-b730-4d5b9e42d3d2",
+   "home-map-papa-johns": "80c3819c-f0db-41b4-9dbb-ee604c168899",
+   "home-map-discount": "4fedb586-ce8a-4be4-9382-42ab5f7c29e2",
+   "news-football": "0c974992-c04d-42b9-a754-d23cce9649d1",
+   "news-showtime": "3337514b-22d3-4f21-9c52-dc4fc0afb1a6",
+   "news-papa-johns": "42dfad6f-4bf6-4b26-acd8-9dc9e4713cb3",
+   "news-football-2": "8d82b168-efb6-4360-9580-57ad88d5dc31",
+   "restaurants-best-in-modiin": "4ad8d449-7406-4dea-af69-438e92e01ced",
+   "restaurants-eat-more": "8e27251b-2dc8-49f8-9075-22d98cd84c1d",
+   "restaurants-best-food": "2f0c2261-9b6c-4630-a48b-f488342d82fa",
+   "deals-exclusive-50": "a5877acd-1bd1-4f29-82ce-85d322feb105",
+   "deals-best-restaurants-40": "8fad8121-df1b-4b37-894c-91c96a0e4826",
+   "deals-exclusive-60": "7ad332fb-349c-40e3-83d5-9d8dd64c6b7f",
+   "menu-businesses-1": "b33efc13-544e-429b-b597-3b2e70374dca",
+   "menu-businesses-2": "faddf9b8-befe-4ddd-ad0b-872978dd81e5",
+   "menu-businesses-3": "d1f64b6b-c7ab-43af-8259-c64db86b957b",
+   "menu-professionals-1": "ef47c740-e0f0-450c-aef5-236d3409168a",
+   "menu-professionals-2": "37bcb7e1-0299-40ca-8f3c-d5c2a15951b9",
+   "menu-professionals-3": "daeffb1d-85ee-430d-b44b-9a5357ac3a14"
+  },
+  "home_blocks": {
+   "traffic-update": "cab96b7b-f924-450c-b860-b32057ebdb75"
+  },
+  "neighborhoods": {
+   "hanahalim": "47119936-8691-4b6e-a7ff-329f3ba4411b",
+   "hakeramim": "0755fa20-fcd1-4091-b081-96d3ee387778",
+   "haneviim": "e3befd0f-b224-4c0b-a13f-1b31597e38de",
+   "moriah": "f22db012-80ed-4957-8df4-5ec97da19a81"
+  },
+  "media": {
+   "moriah-gallery-0": "8bcb515b-1a9f-48dd-ad8f-39ce4e72c177",
+   "moriah-gallery-1": "9ffa4063-d888-4e4d-98df-e9086d07a20f",
+   "moriah-gallery-2": "467efae7-ed19-465e-bda0-b47709d61c52"
+  },
+  "entity_media": {
+   "moriah-gallery-0": "5a75a713-e55b-4f1c-b5f5-4fed30ad9ce2",
+   "moriah-gallery-1": "622cdf53-5caa-42fd-8a80-e19c0d1b87e5",
+   "moriah-gallery-2": "f8a2bc4e-a2d2-4a28-96f2-a1a6ad6abfe8"
+  }
+ },
+ "entity_categories": [
+  [
+   "event",
+   "481569f8-65b2-47f1-8224-bde853f38e85",
+   "a0252757-5058-4cd5-888c-0ede3ef4f1e9"
+  ],
+  [
+   "event",
+   "8f812a11-0a76-4873-8ad0-86286d337c5d",
+   "e7da0f06-588d-4aae-94be-3ab2572670f7"
+  ],
+  [
+   "event",
+   "ec705d65-2fa1-4e37-909d-8f5466d90741",
+   "e7da0f06-588d-4aae-94be-3ab2572670f7"
+  ],
+  [
+   "event",
+   "5df974dd-2ad9-4d8f-a465-b456eaee471d",
+   "b86343db-86db-4f26-997f-585195314796"
+  ],
+  [
+   "event",
+   "38b4ce71-276c-47aa-825f-3df804e590bd",
+   "a0252757-5058-4cd5-888c-0ede3ef4f1e9"
+  ],
+  [
+   "event",
+   "bac99c15-a01d-4d9e-a8dd-cc17b0f1d6fb",
+   "f1f0c391-90dd-472c-b410-0f715870c946"
+  ],
+  [
+   "event",
+   "4bedc26f-1d2d-4541-ad01-b89b57bb23fe",
+   "b86343db-86db-4f26-997f-585195314796"
+  ],
+  [
+   "event",
+   "4bedc26f-1d2d-4541-ad01-b89b57bb23fe",
+   "63b9db06-2f1e-4532-8c84-4c40c86e2fa4"
+  ],
+  [
+   "event",
+   "a5875cb0-0ff8-413f-9065-d13273245187",
+   "a0252757-5058-4cd5-888c-0ede3ef4f1e9"
+  ],
+  [
+   "event",
+   "a5875cb0-0ff8-413f-9065-d13273245187",
+   "e7da0f06-588d-4aae-94be-3ab2572670f7"
+  ],
+  [
+   "event",
+   "1f9d8f1c-8bc7-4541-812a-4e5db52d9690",
+   "f1f0c391-90dd-472c-b410-0f715870c946"
+  ],
+  [
+   "event",
+   "59f32e06-9b79-4062-bf96-588648f66739",
+   "a0252757-5058-4cd5-888c-0ede3ef4f1e9"
+  ],
+  [
+   "event",
+   "8e42cbaf-0df1-41ff-a3bb-afabdb46ab16",
+   "27d552e9-4afc-4038-a3f4-684487ca1b97"
+  ],
+  [
+   "event",
+   "8e42cbaf-0df1-41ff-a3bb-afabdb46ab16",
+   "e7da0f06-588d-4aae-94be-3ab2572670f7"
+  ],
+  [
+   "event",
+   "858c419d-517d-4e5f-89b7-14a07429dc59",
+   "b86343db-86db-4f26-997f-585195314796"
+  ],
+  [
+   "event",
+   "f93b4c9a-bce3-4fd9-bd1a-2c28eb4ccb4a",
+   "f1f0c391-90dd-472c-b410-0f715870c946"
+  ],
+  [
+   "event",
+   "accc33fe-ef2d-4586-a65d-d068edfc8c08",
+   "a0252757-5058-4cd5-888c-0ede3ef4f1e9"
+  ],
+  [
+   "event",
+   "495baab6-8dcd-487b-afae-26a5eef8614b",
+   "a0252757-5058-4cd5-888c-0ede3ef4f1e9"
+  ],
+  [
+   "event",
+   "a0922826-d4c7-4303-9ace-861802e31421",
+   "a0252757-5058-4cd5-888c-0ede3ef4f1e9"
+  ]
+ ],
+ "modified": {
+  "businesses": {
+   "89077523-a77f-400e-856a-bfb7286754ff": {
+    "previous": {
+     "is_recommended": false
+    },
+    "set": {
+     "is_recommended": true
+    }
+   },
+   "fa037d19-1523-489b-9084-62f7d363f22c": {
+    "previous": {
+     "is_recommended": false
+    },
+    "set": {
+     "is_recommended": true
+    }
+   },
+   "8b0d490c-652d-4995-86ee-4b136797664a": {
+    "previous": {
+     "is_recommended": false
+    },
+    "set": {
+     "is_recommended": true
+    }
+   },
+   "a58c05c9-e5b6-464c-9ea9-fadf2811111d": {
+    "previous": {
+     "is_recommended": false
+    },
+    "set": {
+     "is_recommended": true
+    }
+   },
+   "34faca4a-f44b-4908-9b6b-335d4e240068": {
+    "previous": {
+     "is_recommended": false
+    },
+    "set": {
+     "is_recommended": true
+    }
+   },
+   "b6d22825-710d-48a4-8c23-2a632f93cc26": {
+    "previous": {
+     "is_recommended": false
+    },
+    "set": {
+     "is_recommended": true
+    }
+   },
+   "0688b7e5-7d30-4af1-a618-72023302545a": {
+    "previous": {
+     "is_recommended": false
+    },
+    "set": {
+     "is_recommended": true
+    }
+   },
+   "bb81b2c9-6f10-48ad-81c3-532a9d2b10ae": {
+    "previous": {
+     "is_recommended": false
+    },
+    "set": {
+     "is_recommended": true
+    }
+   }
+  },
+  "neighborhoods": {
+   "87ddb8c4-a8f5-4279-95d1-83992a5acd9e": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/neighborhoods/avnei-hen.jpg"
+    }
+   },
+   "8eda86c6-8d60-47f2-8b4a-4f63f10c8561": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/neighborhoods/tziporim.jpg"
+    }
+   }
+  },
+  "categories": {
+   "a0252757-5058-4cd5-888c-0ede3ef4f1e9": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/event-concerts.jpg"
+    }
+   },
+   "e7da0f06-588d-4aae-94be-3ab2572670f7": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/event-community.jpg"
+    }
+   },
+   "b86343db-86db-4f26-997f-585195314796": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/event-kids.jpg"
+    }
+   },
+   "f1f0c391-90dd-472c-b410-0f715870c946": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/event-sports.jpg"
+    }
+   },
+   "daa601d6-c073-444a-a754-56bc03aca037": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/business-restaurants.jpg"
+    }
+   },
+   "f034a7d4-bb96-4af0-806b-c4429d03667a": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/business-shopping.jpg"
+    }
+   },
+   "082cd787-c53c-4847-ad4a-0b09e63085b0": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/business-beauty.jpg"
+    }
+   },
+   "c4a0a4f1-8129-42f7-b432-0aa2a1768e7c": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/business-entertainment.jpg"
+    }
+   },
+   "c4c08c1b-8ef2-4833-8c67-0c5769e4dfb8": {
+    "previous": {
+     "image_url": null
+    },
+    "set": {
+     "image_url": "https://zbtgietqoxkglfxfocrb.supabase.co/storage/v1/object/public/media/sample/categories/business-services.jpg"
+    }
+   }
+  },
+  "articles": {
+   "7b550930-c4e8-41bc-9a9d-c6d5df71c368": {
+    "previous": {
+     "is_featured": true
+    },
+    "set": {
+     "is_featured": false
+    }
+   },
+   "0397e65c-4707-44e6-b0d7-e60fde7d5340": {
+    "previous": {
+     "is_featured": true
+    },
+    "set": {
+     "is_featured": false
+    }
+   },
+   "e77b7746-dc53-4a77-be9a-1ab079956799": {
+    "previous": {
+     "is_featured": false
+    },
+    "set": {
+     "is_featured": false
+    }
+   },
+   "6133a3b1-a6b6-4259-a36b-0a37cc97611e": {
+    "previous": {
+     "is_featured": false
+    },
+    "set": {
+     "is_featured": false
+    }
+   },
+   "b13e9bca-218c-460d-8c0e-76b668e4a592": {
+    "previous": {
+     "is_featured": false
+    },
+    "set": {
+     "is_featured": false
+    }
+   },
+   "cf24fd9c-ead2-4725-9011-4d68615b80d7": {
+    "previous": {
+     "is_featured": false
+    },
+    "set": {
+     "is_featured": false
+    }
+   },
+   "40c71496-37cb-465f-8f16-644f7b610a71": {
+    "previous": {
+     "is_featured": false
+    },
+    "set": {
+     "is_featured": false
+    }
+   },
+   "ad95129f-a8c4-490b-9796-10869accadf8": {
+    "previous": {
+     "is_featured": false
+    },
+    "set": {
+     "is_featured": false
+    }
+   }
+  }
+ },
+ "updated_at": "2026-09-28T11:37:14+00:00"
+}

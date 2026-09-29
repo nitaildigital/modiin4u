@@ -63,3 +63,8 @@ package-lock.json
 
 # Playwright MCP scratch output
 .playwright-mcp/
+
+# Photographs for the sample content (tool/seed_sample_content.py). They go
+# into storage and come out again with --undo before launch; 5 MB of
+# throwaway pictures do not belong in the history.
+/tool/sample_content/
