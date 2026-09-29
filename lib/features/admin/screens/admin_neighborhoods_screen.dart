@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgrestException, StorageException;
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_neighborhoods_provider.dart';
+import '../widgets/admin_gallery_editor.dart';
+import '../widgets/image_upload_field.dart';
 
 class AdminNeighborhoodsScreen extends ConsumerStatefulWidget {
   const AdminNeighborhoodsScreen({super.key});
@@ -179,6 +184,7 @@ class _AdminNeighborhoodsScreenState
                     ),
                     child: Row(
                       children: [
+                        const SizedBox(width: 48),
                         _Col('שם', flex: 3),
                         _Col('slug', flex: 2),
                         if (isWide) _Col('תושבים', flex: 1),
@@ -208,6 +214,15 @@ class _AdminNeighborhoodsScreenState
                             ),
                             child: Row(
                               children: [
+                                NetworkPhoto(
+                                  url: n['image_url'] as String?,
+                                  width: 38,
+                                  height: 38,
+                                  radius: BorderRadius.circular(6),
+                                  icon: Icons.image_outlined,
+                                  iconSize: 16,
+                                ),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   flex: 3,
                                   child: Column(
@@ -254,7 +269,7 @@ class _AdminNeighborhoodsScreenState
                                   Expanded(
                                     flex: 1,
                                     child: Text(
-                                      '${n['resident_count'] ?? 0}',
+                                      '${AdminNeighborhoodListNotifier.count(n, 'profiles')}',
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 13,
@@ -266,7 +281,7 @@ class _AdminNeighborhoodsScreenState
                                   Expanded(
                                     flex: 1,
                                     child: Text(
-                                      '${n['business_count'] ?? 0}',
+                                      '${AdminNeighborhoodListNotifier.count(n, 'businesses')}',
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 13,
@@ -424,9 +439,21 @@ class _NeighborhoodEditorDialogState
   late final TextEditingController _slug;
   late final TextEditingController _description;
   late final TextEditingController _sortOrder;
-  late final TextEditingController _lat;
-  late final TextEditingController _lng;
+  late final TextEditingController _imageUrl;
   bool _isActive = true;
+
+  /// The photos the neighbourhood page shows after its main picture.
+  final _gallery = AdminGalleryController(
+    entityType: 'neighborhood',
+    folder: 'neighborhoods/gallery',
+  );
+
+  /// Set once a new neighbourhood is inserted, so that a retry after a
+  /// failed photo upload updates it rather than inserting it again.
+  String? _createdId;
+
+  /// Why the last save failed, shown in the dialog rather than behind it.
+  String? _error;
 
   bool get _isEditing => widget.neighborhood != null;
 
@@ -442,13 +469,9 @@ class _NeighborhoodEditorDialogState
     _sortOrder = TextEditingController(
       text: (n?['sort_order'] as int?)?.toString() ?? '0',
     );
-    _lat = TextEditingController(
-      text: (n?['latitude'] as num?)?.toString() ?? '',
-    );
-    _lng = TextEditingController(
-      text: (n?['longitude'] as num?)?.toString() ?? '',
-    );
+    _imageUrl = TextEditingController(text: n?['image_url'] as String? ?? '');
     _isActive = n?['is_active'] as bool? ?? true;
+    if (n != null) _gallery.load(n['id'] as String);
   }
 
   @override
@@ -457,8 +480,8 @@ class _NeighborhoodEditorDialogState
     _slug.dispose();
     _description.dispose();
     _sortOrder.dispose();
-    _lat.dispose();
-    _lng.dispose();
+    _imageUrl.dispose();
+    _gallery.dispose();
     super.dispose();
   }
 
@@ -468,7 +491,7 @@ class _NeighborhoodEditorDialogState
       insetPadding: const EdgeInsets.all(24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 550, maxHeight: 600),
+        constraints: const BoxConstraints(maxWidth: 640, maxHeight: 760),
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: Form(
@@ -519,22 +542,34 @@ class _NeighborhoodEditorDialogState
                         validator: (v) =>
                             v == null || v.isEmpty ? 'שדה חובה' : null,
                       ),
-                      _field(
-                        'Slug *',
-                        _slug,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      _field('Slug (ריק ייווצר מהשם)', _slug),
+                      _field('תיאור', _description, maxLines: 8),
+                      // How the neighbourhood page splits it, so the client
+                      // knows where a paragraph will land.
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: Text(
+                          'הפסקה הראשונה מוצגת כפתיח מתחת לשם השכונה; '
+                          'שאר הפסקאות מוצגות תחת ״אודות״. '
+                          'הפרידו בין פסקאות בשורה ריקה.',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 12,
+                            color: AppColors.adminTextLight,
+                          ),
+                        ),
                       ),
-                      _field('תיאור', _description, maxLines: 3),
                       _field('סדר מיון', _sortOrder),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(child: _field('Latitude', _lat)),
-                          const SizedBox(width: 12),
-                          Expanded(child: _field('Longitude', _lng)),
-                        ],
+                      // The first picture on the page and on the
+                      // neighbourhood cards; the gallery follows it.
+                      ImageUploadField(
+                        label: 'תמונה ראשית',
+                        controller: _imageUrl,
+                        folder: 'neighborhoods',
                       ),
+                      const SizedBox(height: 20),
+                      AdminGalleryEditor(controller: _gallery),
                       const SizedBox(height: 12),
                       SwitchListTile(
                         title: Text(
@@ -562,7 +597,21 @@ class _NeighborhoodEditorDialogState
                   ),
                   child: Row(
                     children: [
-                      const Spacer(),
+                      if (_error != null)
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.error,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      else
+                        const Spacer(),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
@@ -634,38 +683,56 @@ class _NeighborhoodEditorDialogState
     );
   }
 
+  /// A slug from the name when none was typed.
+  static String _slugFrom(String name) => name
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\p{L}\p{N}\s-]', unicode: true), '')
+      .replaceAll(RegExp(r'[\s-]+'), '-')
+      .replaceAll(RegExp(r'^-|-$'), '');
+
   Future<void> _save() async {
+    setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
+    if (_slug.text.trim().isEmpty) _slug.text = _slugFrom(_name.text);
     setState(() => _saving = true);
 
+    // The table has no latitude or longitude. The form wrote both, and every
+    // save — new or edited — was refused for it.
     final fields = <String, dynamic>{
-      'name': _name.text,
-      'slug': _slug.text,
-      'description': _description.text.isEmpty ? null : _description.text,
-      'sort_order': int.tryParse(_sortOrder.text) ?? 0,
-      'latitude': double.tryParse(_lat.text),
-      'longitude': double.tryParse(_lng.text),
+      'name': _name.text.trim(),
+      'slug': _slug.text.trim(),
+      'description': _description.text.trim().isEmpty
+          ? null
+          : _description.text.trim(),
+      'image_url': _imageUrl.text.trim().isEmpty ? null : _imageUrl.text.trim(),
+      'sort_order': int.tryParse(_sortOrder.text.trim()) ?? 0,
       'is_active': _isActive,
     };
 
     try {
       final notifier = ref.read(adminNeighborhoodListProvider.notifier);
-      if (_isEditing) {
-        await notifier.updateNeighborhood(
-          widget.neighborhood!['id'] as String,
-          fields,
-        );
+      final id = widget.neighborhood?['id'] as String? ?? _createdId;
+      final String savedId;
+      if (id != null) {
+        await notifier.updateNeighborhood(id, fields);
+        savedId = id;
       } else {
-        await notifier.createNeighborhood(fields);
+        savedId = await notifier.createNeighborhood(fields);
+        _createdId = savedId;
       }
+      await _gallery.save(savedId);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('שגיאה: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        setState(
+          () => _error = switch (e) {
+            PostgrestException(code: '23505') =>
+              'השמירה נכשלה: שם או Slug זהים כבר קיימים בשכונה אחרת',
+            PostgrestException(:final message) => 'השמירה נכשלה: $message',
+            StorageException(:final message) => 'העלאת תמונה נכשלה: $message',
+            _ => 'השמירה נכשלה: $e',
+          },
         );
       }
     } finally {

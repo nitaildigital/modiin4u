@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_categories_provider.dart';
+import '../widgets/image_upload_field.dart';
 
 class AdminCategoriesScreen extends ConsumerStatefulWidget {
   const AdminCategoriesScreen({super.key});
@@ -209,11 +212,9 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                         return InkWell(
                           onTap: () => _showEditor(context, ref, category: c),
                           child: Container(
-                            padding: EdgeInsets.only(
-                              right: isChild ? 44 : 20,
-                              left: 20,
-                              top: 10,
-                              bottom: 10,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
                             ),
                             child: Row(
                               children: [
@@ -221,6 +222,27 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                   flex: 3,
                                   child: Row(
                                     children: [
+                                      // A child is indented inside the name
+                                      // cell only, so the columns after it
+                                      // stay in line with its parent's.
+                                      if (isChild) const SizedBox(width: 24),
+                                      // The picture the site's category
+                                      // tiles show, when it has one.
+                                      if ((c['image_url'] as String? ?? '')
+                                          .isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8,
+                                          ),
+                                          child: NetworkPhoto(
+                                            url: c['image_url'] as String,
+                                            width: 32,
+                                            height: 32,
+                                            radius: BorderRadius.circular(4),
+                                            icon: Icons.image_outlined,
+                                            iconSize: 14,
+                                          ),
+                                        ),
                                       if (icon.isNotEmpty)
                                         Padding(
                                           padding: const EdgeInsets.only(
@@ -254,7 +276,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                   Expanded(
                                     flex: 1,
                                     child: Text(
-                                      '${c['item_count'] ?? 0}',
+                                      '${AdminCategoryListNotifier.itemCount(c)}',
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 13,
@@ -383,7 +405,11 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
   late final TextEditingController _icon;
   late final TextEditingController _description;
   late final TextEditingController _sortOrder;
+  late final TextEditingController _imageUrl;
   String _scope = 'business';
+
+  /// Why the last save failed, shown in the dialog rather than behind it.
+  String? _error;
   String? _parentId;
   bool _isActive = true;
 
@@ -402,6 +428,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
     _sortOrder = TextEditingController(
       text: (c?['sort_order'] as int?)?.toString() ?? '0',
     );
+    _imageUrl = TextEditingController(text: c?['image_url'] as String? ?? '');
     _scope = c?['scope'] as String? ?? 'business';
     _parentId = c?['parent_id'] as String?;
     _isActive = c?['is_active'] as bool? ?? true;
@@ -414,14 +441,24 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
     _icon.dispose();
     _description.dispose();
     _sortOrder.dispose();
+    _imageUrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final parents = ref
-        .read(adminCategoryListProvider.notifier)
-        .getParentsForScope(_scope);
+    // A category cannot sit under itself, and one that already has
+    // children stays at the top: the site reads two levels, not three.
+    final selfId = widget.category?['id'];
+    final hasChildren =
+        selfId != null &&
+        (ref.watch(categoryHasChildrenProvider(selfId as String)).valueOrNull ??
+            false);
+    final parents =
+        (ref.watch(categoryParentsProvider(_scope)).valueOrNull ??
+                const <Map<String, dynamic>>[])
+            .where((p) => p['id'] != selfId)
+            .toList();
 
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
@@ -478,14 +515,17 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                         validator: (v) =>
                             v == null || v.isEmpty ? 'שדה חובה' : null,
                       ),
-                      _field(
-                        'Slug *',
-                        _slug,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
-                      ),
+                      _field('Slug (ריק ייווצר מהשם)', _slug),
                       _field('אייקון (אמוג\'י)', _icon),
                       _field('תיאור', _description, maxLines: 2),
+                      // The picture on the site's category tiles — nine of
+                      // them have one, and there was no way to set it here.
+                      ImageUploadField(
+                        label: 'תמונה',
+                        controller: _imageUrl,
+                        folder: 'categories',
+                      ),
+                      const SizedBox(height: 14),
                       _field('סדר מיון', _sortOrder),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
@@ -569,6 +609,20 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                               ),
                             ),
                           ),
+                          // The parent it has now, even if the picker's
+                          // list has not arrived yet.
+                          if (_parentId != null &&
+                              !parents.any((p) => p['id'] == _parentId))
+                            DropdownMenuItem(
+                              value: _parentId,
+                              child: Text(
+                                '…',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
                           ...parents.map(
                             (p) => DropdownMenuItem(
                               value: p['id'] as String,
@@ -582,8 +636,22 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                             ),
                           ),
                         ],
-                        onChanged: (v) => setState(() => _parentId = v),
+                        onChanged: hasChildren
+                            ? null
+                            : (v) => setState(() => _parentId = v),
                       ),
+                      if (hasChildren)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            'לקטגוריה זו יש תתי־קטגוריות, ולכן היא נשארת ראשית.',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.adminTextLight,
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 12),
                       SwitchListTile(
                         title: Text(
@@ -611,7 +679,21 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                   ),
                   child: Row(
                     children: [
-                      const Spacer(),
+                      if (_error != null)
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.error,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      else
+                        const Spacer(),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
@@ -683,16 +765,29 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
     );
   }
 
+  /// A slug from the name when none was typed.
+  static String _slugFrom(String name) => name
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\p{L}\p{N}\s-]', unicode: true), '')
+      .replaceAll(RegExp(r'[\s-]+'), '-')
+      .replaceAll(RegExp(r'^-|-$'), '');
+
   Future<void> _save() async {
+    setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
+    if (_slug.text.trim().isEmpty) _slug.text = _slugFrom(_name.text);
     setState(() => _saving = true);
 
     final fields = <String, dynamic>{
-      'name': _name.text,
-      'slug': _slug.text,
-      'icon': _icon.text.isEmpty ? null : _icon.text,
-      'description': _description.text.isEmpty ? null : _description.text,
-      'sort_order': int.tryParse(_sortOrder.text) ?? 0,
+      'name': _name.text.trim(),
+      'slug': _slug.text.trim(),
+      'icon': _icon.text.trim().isEmpty ? null : _icon.text.trim(),
+      'description': _description.text.trim().isEmpty
+          ? null
+          : _description.text.trim(),
+      'image_url': _imageUrl.text.trim().isEmpty ? null : _imageUrl.text.trim(),
+      'sort_order': int.tryParse(_sortOrder.text.trim()) ?? 0,
       'scope': _scope,
       'parent_id': _parentId,
       'is_active': _isActive,
@@ -705,14 +800,15 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
       } else {
         await notifier.createCategory(fields);
       }
+      ref.invalidate(categoryParentsProvider(_scope));
+      ref.invalidate(categoryHasChildrenProvider);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('שגיאה: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        setState(
+          () => _error = e is PostgrestException && e.code == '23505'
+              ? 'השמירה נכשלה: ה-Slug כבר בשימוש בקטגוריה אחרת באותו תחום'
+              : 'השמירה נכשלה: ${e is PostgrestException ? e.message : e}',
         );
       }
     } finally {

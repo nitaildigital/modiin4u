@@ -41,6 +41,69 @@ final businessCategoriesProvider = FutureProvider<List<Map<String, dynamic>>>((
   return List<Map<String, dynamic>>.from(rows);
 });
 
+/// What the list's category column says for each business, keyed by
+/// business id: "Parent › Child" for a trade under a parent, the name alone
+/// for a top-level category.
+///
+/// The column used to print the short description under a "category"
+/// heading, because a business's categories are not on its row. They are
+/// links in `entity_categories`, read here in one pass for the whole list
+/// rather than once per row. Hidden categories are included: a business
+/// filed under one is still filed there.
+final adminBusinessCategoryNamesProvider =
+    FutureProvider<Map<String, List<String>>>((ref) async {
+      final client = SupabaseConfig.client;
+
+      final cats = List<Map<String, dynamic>>.from(
+        await client
+            .from('categories')
+            .select('id, name, parent_id, sort_order')
+            .eq('scope', 'business'),
+      );
+      final byId = {for (final c in cats) c['id'] as String: c};
+
+      String label(String id) {
+        final c = byId[id];
+        if (c == null) return '';
+        final parent = byId[c['parent_id']];
+        return parent == null
+            ? c['name'] as String
+            : '${parent['name']} › ${c['name']}';
+      }
+
+      // Paged, because PostgREST stops at 1000 rows and says nothing.
+      final links = <Map<String, dynamic>>[];
+      const page = 1000;
+      for (var from = 0; ; from += page) {
+        final rows = List<Map<String, dynamic>>.from(
+          await client
+              .from('entity_categories')
+              .select('entity_id, category_id, is_primary')
+              .eq('entity_type', 'business')
+              .range(from, from + page - 1),
+        );
+        links.addAll(rows);
+        if (rows.length < page) break;
+      }
+
+      // The primary one first, then in the categories' own order.
+      int order(Map<String, dynamic> l) =>
+          (byId[l['category_id']]?['sort_order'] as num?)?.toInt() ?? 0;
+      links.sort((a, b) {
+        final pa = a['is_primary'] == true ? 0 : 1;
+        final pb = b['is_primary'] == true ? 0 : 1;
+        return pa != pb ? pa - pb : order(a) - order(b);
+      });
+
+      final out = <String, List<String>>{};
+      for (final l in links) {
+        final name = label(l['category_id'] as String);
+        if (name.isEmpty) continue;
+        out.putIfAbsent(l['entity_id'] as String, () => []).add(name);
+      }
+      return out;
+    });
+
 /// The categories one business belongs to, as ids.
 final businessCategoryIdsProvider = FutureProvider.family<List<String>, String>(
   (ref, businessId) async {
@@ -106,8 +169,9 @@ class AdminBusinessListNotifier
       }
 
       final rows = await query.order('created_at', ascending: false).limit(500);
-      if (mounted)
+      if (mounted) {
         state = AsyncValue.data(List<Map<String, dynamic>>.from(rows));
+      }
     } catch (e, st) {
       if (mounted) state = AsyncValue.error(e, st);
     }
@@ -141,11 +205,17 @@ class AdminBusinessListNotifier
     };
   }
 
-  Future<void> createBusiness(Map<String, dynamic> business) async {
-    await SupabaseConfig.client
+  /// Inserts the row and returns its id, which the editor needs straight
+  /// away: hours, categories, menu and gallery all hang off it, and were
+  /// silently dropped on a new business while this returned nothing.
+  Future<String> createBusiness(Map<String, dynamic> business) async {
+    final row = await SupabaseConfig.client
         .from('businesses')
-        .insert(_columnsOnly(business));
+        .insert(_columnsOnly(business))
+        .select('id')
+        .single();
     await load();
+    return row['id'] as String;
   }
 
   Future<void> updateBusiness(String id, Map<String, dynamic> fields) async {
@@ -174,21 +244,39 @@ class AdminBusinessListNotifier
 
   // ── Categories ──
 
-  /// Replaces the categories a business belongs to.
+  /// Makes a business's categories exactly [categoryIds].
+  ///
+  /// Only the difference is written. Deleting every link and inserting them
+  /// again lost `is_primary`, which the import set on 156 of the 223 links,
+  /// the first time anyone saved a business.
   Future<void> setCategories(
     String businessId,
     List<String> categoryIds,
   ) async {
     final client = SupabaseConfig.client;
-    await client
-        .from('entity_categories')
-        .delete()
-        .eq('entity_type', 'business')
-        .eq('entity_id', businessId);
+    final current = List<Map<String, dynamic>>.from(
+      await client
+          .from('entity_categories')
+          .select('category_id')
+          .eq('entity_type', 'business')
+          .eq('entity_id', businessId),
+    ).map((r) => r['category_id'] as String).toSet();
+    final wanted = categoryIds.toSet();
 
-    if (categoryIds.isEmpty) return;
+    final gone = current.difference(wanted);
+    if (gone.isNotEmpty) {
+      await client
+          .from('entity_categories')
+          .delete()
+          .eq('entity_type', 'business')
+          .eq('entity_id', businessId)
+          .inFilter('category_id', gone.toList());
+    }
+
+    final added = wanted.difference(current);
+    if (added.isEmpty) return;
     await client.from('entity_categories').insert([
-      for (final id in categoryIds)
+      for (final id in added)
         {'entity_type': 'business', 'entity_id': businessId, 'category_id': id},
     ]);
   }

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgrestException, StorageException;
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_businesses_provider.dart';
+import '../widgets/admin_gallery_editor.dart';
 import '../widgets/image_upload_field.dart';
 
 class AdminBusinessesScreen extends ConsumerStatefulWidget {
@@ -225,6 +228,9 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
 
               return _BusinessTable(
                 businesses: businesses,
+                categoryNames:
+                    ref.watch(adminBusinessCategoryNamesProvider).valueOrNull ??
+                    const {},
                 isWide: isWide,
                 onTap: (biz) =>
                     _showBusinessEditor(context, ref, business: biz),
@@ -307,12 +313,16 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
 
 class _BusinessTable extends StatelessWidget {
   final List<Map<String, dynamic>> businesses;
+
+  /// Business id → its categories as the list shows them.
+  final Map<String, List<String>> categoryNames;
   final bool isWide;
   final void Function(Map<String, dynamic>) onTap;
   final void Function(String action, Map<String, dynamic>) onAction;
 
   const _BusinessTable({
     required this.businesses,
+    required this.categoryNames,
     required this.isWide,
     required this.onTap,
     required this.onAction,
@@ -369,8 +379,11 @@ class _BusinessTable extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      // Logo + Name
-                      if (biz['logo_url'] != null) ...[
+                      // Logo + Name. The slot is kept when there is no
+                      // logo, so the columns after it stay aligned.
+                      if (biz['logo_url'] == null)
+                        const SizedBox(width: 48)
+                      else ...[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
                           child: Image.network(
@@ -420,18 +433,22 @@ class _BusinessTable extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // Category placeholder (from entity_categories in the future)
+                      // Its categories, from entity_categories. A dash where
+                      // there are none: such a business is in no category
+                      // list on the site, which is worth seeing here.
                       if (isWide)
                         Expanded(
                           flex: 2,
                           child: Text(
-                            biz['short_description'] as String? ?? '',
+                            (categoryNames[biz['id']] ?? const []).isEmpty
+                                ? '—'
+                                : categoryNames[biz['id']]!.join(', '),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 12,
                               color: AppColors.grayText,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -679,7 +696,8 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
 
   // Images
   late final TextEditingController _logoUrl;
-  late final TextEditingController _coverImageUrl;
+  late final TextEditingController _coverUrl;
+  late final TextEditingController _ogImageUrl;
   // Basic info
   late final TextEditingController _name;
   late final TextEditingController _slug;
@@ -701,11 +719,33 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   late final TextEditingController _ogTitle;
   late final TextEditingController _ogDesc;
 
+  // The homepage's recommended strip shows a featured business only inside
+  // this window; empty means no limit on that side.
+  late final TextEditingController _featuredStart;
+  late final TextEditingController _featuredEnd;
+
+  /// The photos under the business page's Photos tab.
+  final _gallery = AdminGalleryController(
+    entityType: 'business',
+    folder: 'businesses/gallery',
+  );
+
+  /// Set once a new business has been inserted. If something after the
+  /// insert fails — hours, a photo — saving again updates that row instead
+  /// of inserting a second copy.
+  String? _createdId;
+
+  /// Why the last save failed, shown in the dialog itself. A snackbar opens
+  /// on the page behind the dialog, under its barrier, where it is easy to
+  /// miss.
+  String? _error;
+
   String _status = 'draft';
   String? _neighborhoodId;
   String _kosher = 'none';
   String? _priceLevel;
   bool _hasDelivery = false;
+  bool _hasOutdoor = false;
   bool _isAccessible = false;
   bool _hasTakeaway = false;
   bool _hasParking = false;
@@ -714,10 +754,14 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   bool _hasWifi = false;
   bool _openOnShabbat = false;
   bool _isFeatured = false;
+  bool _isRecommended = false;
   bool _isVerified = false;
   bool _noindex = false;
 
   bool get _isEditing => widget.business != null;
+
+  /// The row being edited, or the one this dialog has just created.
+  String? get _rowId => widget.business?['id'] as String? ?? _createdId;
 
   /// The menu lines being edited. Loaded once when the editor opens on an
   /// existing business; a new business starts with none.
@@ -725,22 +769,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   bool _menuLoaded = false;
 
   Widget _buildMenuTab() {
-    if (!_isEditing) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'שמרו את העסק תחילה כדי להוסיף תפריט',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 13,
-              color: AppColors.grayText,
-            ),
-          ),
-        ),
-      );
-    }
+    // A new business has no menu to load, so it starts empty and is saved
+    // with the rest once the row exists.
+    if (!_isEditing) return _menuList();
 
     final id = widget.business!['id'] as String;
     final async = ref.watch(adminMenuItemsProvider(id));
@@ -767,53 +798,56 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
             );
           _menuLoaded = true;
         }
-
-        return ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              'כל שורה היא פריט. \u05f4קטגוריה\u05f4 היא הכותרת שמעליו — למשל \u05f4ראשונות\u05f4.',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontSize: 12,
-                color: AppColors.grayText,
-              ),
-            ),
-            const SizedBox(height: 12),
-            for (var i = 0; i < _menuItems.length; i++)
-              _MenuItemRow(
-                key: ValueKey(i),
-                item: _menuItems[i],
-                onChanged: (v) => setState(() => _menuItems[i] = v),
-                onRemove: () => setState(() => _menuItems.removeAt(i)),
-              ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => setState(
-                () => _menuItems.add({
-                  'section': null,
-                  'name': '',
-                  'description': null,
-                  'price_agorot': null,
-                  'is_available': true,
-                }),
-              ),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(
-                'הוספת פריט',
-                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-              ),
-            ),
-          ],
-        );
+        return _menuList();
       },
+    );
+  }
+
+  Widget _menuList() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text(
+          'כל שורה היא פריט. \u05f4קטגוריה\u05f4 היא הכותרת שמעליו — למשל \u05f4ראשונות\u05f4.',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 12,
+            color: AppColors.grayText,
+          ),
+        ),
+        const SizedBox(height: 12),
+        for (var i = 0; i < _menuItems.length; i++)
+          _MenuItemRow(
+            key: ValueKey(i),
+            item: _menuItems[i],
+            onChanged: (v) => setState(() => _menuItems[i] = v),
+            onRemove: () => setState(() => _menuItems.removeAt(i)),
+          ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => setState(
+            () => _menuItems.add({
+              'section': null,
+              'name': '',
+              'description': null,
+              'price_agorot': null,
+              'is_available': true,
+            }),
+          ),
+          icon: const Icon(Icons.add, size: 18),
+          label: Text(
+            'הוספת פריט',
+            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+          ),
+        ),
+      ],
     );
   }
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 5, vsync: this);
+    _tabs = TabController(length: 6, vsync: this);
     for (var d = DateTime.monday; d <= DateTime.sunday; d++) {
       _openCtl[d] = TextEditingController();
       _closeCtl[d] = TextEditingController();
@@ -822,12 +856,18 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     if (_isEditing) {
       _loadHours();
       _loadCategories();
+      _gallery.load(widget.business!['id'] as String);
+    } else {
+      _menuLoaded = true;
     }
     final b = widget.business;
 
     _logoUrl = TextEditingController(text: b?['logo_url'] as String? ?? '');
-    _coverImageUrl = TextEditingController(
-      text: b?['cover_image_url'] as String? ?? '',
+    // `cover_url` is the column. This read `cover_image_url`, which does
+    // not exist, so every cover showed as empty and every save was refused.
+    _coverUrl = TextEditingController(text: b?['cover_url'] as String? ?? '');
+    _ogImageUrl = TextEditingController(
+      text: b?['og_image_url'] as String? ?? '',
     );
     _name = TextEditingController(text: b?['name'] as String? ?? '');
     _slug = TextEditingController(text: b?['slug'] as String? ?? '');
@@ -860,12 +900,19 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     _ogDesc = TextEditingController(
       text: b?['og_description'] as String? ?? '',
     );
+    _featuredStart = TextEditingController(
+      text: _dateText(b?['featured_start'] as String?),
+    );
+    _featuredEnd = TextEditingController(
+      text: _dateText(b?['featured_end'] as String?),
+    );
 
     _status = b?['status'] as String? ?? 'draft';
     _neighborhoodId = b?['neighborhood_id'] as String?;
     _kosher = b?['kosher_level'] as String? ?? 'none';
     _priceLevel = b?['price_level'] as String?;
     _hasDelivery = b?['has_delivery'] as bool? ?? false;
+    _hasOutdoor = b?['has_outdoor'] as bool? ?? false;
     _isAccessible = b?['is_accessible'] as bool? ?? false;
     _hasTakeaway = b?['has_takeaway'] as bool? ?? false;
     _hasParking = b?['has_parking'] as bool? ?? false;
@@ -874,6 +921,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     _hasWifi = b?['has_wifi'] as bool? ?? false;
     _openOnShabbat = b?['open_on_shabbat'] as bool? ?? false;
     _isFeatured = b?['is_featured'] as bool? ?? false;
+    _isRecommended = b?['is_recommended'] as bool? ?? false;
     _isVerified = b?['is_verified'] as bool? ?? false;
     _noindex = b?['noindex'] as bool? ?? false;
   }
@@ -890,7 +938,11 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     _bulkOpen.dispose();
     _bulkClose.dispose();
     _logoUrl.dispose();
-    _coverImageUrl.dispose();
+    _coverUrl.dispose();
+    _ogImageUrl.dispose();
+    _featuredStart.dispose();
+    _featuredEnd.dispose();
+    _gallery.dispose();
     _name.dispose();
     _slug.dispose();
     _shortDesc.dispose();
@@ -981,6 +1033,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                     indicatorColor: AppColors.turquoise,
                     tabs: const [
                       Tab(text: 'פרטים'),
+                      Tab(text: 'גלריה'),
                       Tab(text: 'שעות פתיחה'),
                       Tab(text: 'תפריט'),
                       Tab(text: 'מאפיינים'),
@@ -995,6 +1048,10 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                     controller: _tabs,
                     children: [
                       _buildDetailsTab(neighborhoods),
+                      ListView(
+                        padding: const EdgeInsets.all(20),
+                        children: [AdminGalleryEditor(controller: _gallery)],
+                      ),
                       _buildHoursTab(),
                       _buildMenuTab(),
                       _buildAttributesTab(),
@@ -1018,7 +1075,21 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                         _StatusPill(_status),
                         const SizedBox(width: 8),
                       ],
-                      const Spacer(),
+                      if (_error != null)
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.error,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      else
+                        const Spacer(),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
@@ -1075,13 +1146,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           _name,
           validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
         ),
-        _field(
-          'Slug *',
-          _slug,
-          validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
-        ),
-        _field('תיאור קצר', _shortDesc, maxLines: 2),
-        _field('תיאור מלא', _fullDesc, maxLines: 4),
+        _field('Slug (כתובת הדף — ריק ייווצר מהשם)', _slug),
+        _field('תיאור קצר (מוצג בכרטיס)', _shortDesc, maxLines: 2),
+        _field('אודות (מוצג בדף העסק)', _fullDesc, maxLines: 6),
         const SizedBox(height: 16),
         Text(
           'תמונות',
@@ -1106,8 +1173,17 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         const SizedBox(height: 14),
         ImageUploadField(
           label: 'תמונת כריכה',
-          controller: _coverImageUrl,
+          controller: _coverUrl,
           folder: 'businesses/cover',
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'תמונות נוספות מנוהלות בלשונית ״גלריה״.',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 12,
+            color: AppColors.adminTextLight,
+          ),
         ),
         const SizedBox(height: 16),
         Text(
@@ -1319,6 +1395,16 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
+            // The fifth value of `kosher_level`. The site shows it as plain
+            // "kosher"; without it here a business set to it opened with an
+            // empty picker.
+            DropdownMenuItem(
+              value: 'other',
+              child: Text(
+                'כשר (אחר)',
+                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+              ),
+            ),
           ],
           onChanged: (v) => setState(() => _kosher = v!),
         ),
@@ -1407,6 +1493,11 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
               (v) => setState(() => _hasTakeaway = v),
             ),
             _toggle(
+              'ישיבה בחוץ',
+              _hasOutdoor,
+              (v) => setState(() => _hasOutdoor = v),
+            ),
+            _toggle(
               'נגיש',
               _isAccessible,
               (v) => setState(() => _isAccessible = v),
@@ -1445,18 +1536,94 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           ),
         ),
         const SizedBox(height: 8),
-        _toggle(
-          'מומלץ / Featured',
-          _isFeatured,
-          (v) => setState(() => _isFeatured = v),
+        // The homepage's "recommended" strip takes a business marked
+        // recommended at any time, or one marked featured inside the dates
+        // below.
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            _toggle(
+              'מומלץ (תמיד בדף הבית)',
+              _isRecommended,
+              (v) => setState(() => _isRecommended = v),
+            ),
+            _toggle(
+              'מקודם / Featured',
+              _isFeatured,
+              (v) => setState(() => _isFeatured = v),
+            ),
+            _toggle(
+              'מאומת / Verified',
+              _isVerified,
+              (v) => setState(() => _isVerified = v),
+            ),
+          ],
         ),
-        _toggle(
-          'מאומת / Verified',
-          _isVerified,
-          (v) => setState(() => _isVerified = v),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _field(
+                'קידום מתאריך (YYYY-MM-DD)',
+                _featuredStart,
+                validator: _dateValidator,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _field(
+                'קידום עד תאריך (כולל)',
+                _featuredEnd,
+                validator: _dateValidator,
+              ),
+            ),
+          ],
+        ),
+        Text(
+          'ריק = ללא הגבלה. התאריכים חלים על ״מקודם״ בלבד.',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 12,
+            color: AppColors.adminTextLight,
+          ),
         ),
       ],
     );
+  }
+
+  // ── Featured window ──
+
+  /// `2026-10-01` for a stored timestamp, in the admin's own time zone.
+  static String _dateText(String? stored) {
+    final d = DateTime.tryParse(stored ?? '')?.toLocal();
+    if (d == null) return '';
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${d.year}-${two(d.month)}-${two(d.day)}';
+  }
+
+  static DateTime? _parseDate(String text) {
+    final m = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$').firstMatch(text.trim());
+    if (m == null) return null;
+    return DateTime(
+      int.parse(m.group(1)!),
+      int.parse(m.group(2)!),
+      int.parse(m.group(3)!),
+    );
+  }
+
+  static String? _dateValidator(String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    return _parseDate(v) == null ? 'YYYY-MM-DD' : null;
+  }
+
+  /// The start of the day for the first date and the end of it for the
+  /// last, so "until the 31st" includes the 31st.
+  static String? _dateForColumn(String text, {required bool endOfDay}) {
+    final d = _parseDate(text);
+    if (d == null) return null;
+    final at = endOfDay ? DateTime(d.year, d.month, d.day, 23, 59, 59) : d;
+    return at.toUtc().toIso8601String();
   }
 
   Widget _buildSeoTab() {
@@ -1479,6 +1646,12 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         const SizedBox(height: 8),
         _field('OG Title', _ogTitle),
         _field('OG Description', _ogDesc, maxLines: 3),
+        // The site also falls back to this picture when there is no cover.
+        ImageUploadField(
+          label: 'תמונת שיתוף (OG)',
+          controller: _ogImageUrl,
+          folder: 'businesses/og',
+        ),
         const SizedBox(height: 12),
         _toggle('Noindex', _noindex, (v) => setState(() => _noindex = v)),
       ],
@@ -1589,40 +1762,111 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           color: AppColors.error,
         ),
       ),
-      data: (list) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'קטגוריות',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              color: AppColors.adminTextMedium,
+      data: (list) {
+        // Grouped by parent: the Services trades — electrician, plumber and
+        // the rest — are children of Services, and in one flat run of chips
+        // nothing said so. Each top-level category heads its own line, its
+        // children after it.
+        final roots = list.where((c) => c['parent_id'] == null).toList();
+        final rootIds = roots.map((c) => c['id']).toSet();
+        final childrenOf = <String, List<Map<String, dynamic>>>{};
+        for (final c in list) {
+          final parent = c['parent_id'] as String?;
+          if (parent != null) childrenOf.putIfAbsent(parent, () => []).add(c);
+        }
+        // A child whose parent is hidden still needs a place to be picked.
+        final orphans = list
+            .where(
+              (c) =>
+                  c['parent_id'] != null && !rootIds.contains(c['parent_id']),
+            )
+            .toList();
+
+        final leaves = roots
+            .where((r) => (childrenOf[r['id']] ?? const []).isEmpty)
+            .toList();
+        final parents = roots
+            .where((r) => (childrenOf[r['id']] ?? const []).isNotEmpty)
+            .toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'קטגוריות',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 12,
+                color: AppColors.adminTextMedium,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final c in list)
-                FilterChip(
-                  label: Text(
-                    c['name'] as String,
-                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
-                  ),
-                  selected: _categoryIds.contains(c['id']),
-                  onSelected: (on) => setState(() {
-                    on
-                        ? _categoryIds.add(c['id'] as String)
-                        : _categoryIds.remove(c['id']);
-                    _categoriesTouched = true;
-                  }),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [for (final c in leaves) _categoryChip(c)],
+            ),
+            for (final p in parents) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.adminContentBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.adminCardBorder),
                 ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // The parent itself can be picked too — a business can
+                    // be filed under Services without naming a trade.
+                    _categoryChip(p, bold: true),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 16),
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final c in childrenOf[p['id']]!)
+                            _categoryChip(c),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ),
-        ],
+            if (orphans.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [for (final c in orphans) _categoryChip(c)],
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _categoryChip(Map<String, dynamic> c, {bool bold = false}) {
+    return FilterChip(
+      label: Text(
+        c['name'] as String,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 12,
+          fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+        ),
       ),
+      selected: _categoryIds.contains(c['id']),
+      onSelected: (on) => setState(() {
+        on ? _categoryIds.add(c['id'] as String) : _categoryIds.remove(c['id']);
+        _categoriesTouched = true;
+      }),
     );
   }
 
@@ -1834,33 +2078,84 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     return week;
   }
 
+  /// A slug from the name when none was typed: the site's existing ones are
+  /// the Hebrew name with hyphens for spaces (`דקר-בן-ימין`).
+  static String _slugFrom(String name) => name
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^\p{L}\p{N}\s-]', unicode: true), '')
+      .replaceAll(RegExp(r'[\s-]+'), '-')
+      .replaceAll(RegExp(r'^-|-$'), '');
+
+  String? _t(TextEditingController c) {
+    final v = c.text.trim();
+    return v.isEmpty ? null : v;
+  }
+
   Future<void> _save() async {
+    setState(() => _error = null);
+
+    // The tabs build only the one on screen, so the form cannot validate a
+    // field on another tab. The required ones are checked here, and the
+    // details tab brought forward when one is missing.
+    if (_name.text.trim().isEmpty || _address.text.trim().isEmpty) {
+      _tabs.animateTo(0);
+      setState(() => _error = 'שם העסק והכתובת הם שדות חובה (לשונית פרטים).');
+      return;
+    }
+    if (_dateValidator(_featuredStart.text) != null ||
+        _dateValidator(_featuredEnd.text) != null) {
+      _tabs.animateTo(4);
+      setState(() => _error = 'תאריכי הקידום צריכים להיות בפורמט YYYY-MM-DD.');
+      return;
+    }
+    final badDay = [
+      for (var d = DateTime.monday; d <= DateTime.sunday; d++)
+        if (!(_dayClosed[d] ?? false) &&
+            [_openCtl[d]!.text.trim(), _closeCtl[d]!.text.trim()].any(
+              (t) =>
+                  t.isNotEmpty &&
+                  !RegExp(r'^([01]?\d|2[0-3]):[0-5]\d$').hasMatch(t),
+            ))
+          _dayNames[d]!,
+    ];
+    if (badDay.isNotEmpty) {
+      _tabs.animateTo(2);
+      setState(
+        () => _error =
+            'שעה לא תקינה ביום ${badDay.join(', ')} — HH:MM, למשל 09:00.',
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
+
+    if (_slug.text.trim().isEmpty) _slug.text = _slugFrom(_name.text);
+
     setState(() => _saving = true);
 
     final fields = <String, dynamic>{
-      'logo_url': _logoUrl.text.isEmpty ? null : _logoUrl.text,
-      'cover_image_url': _coverImageUrl.text.isEmpty
-          ? null
-          : _coverImageUrl.text,
-      'name': _name.text,
-      'slug': _slug.text,
-      'short_description': _shortDesc.text.isEmpty ? null : _shortDesc.text,
-      'full_description': _fullDesc.text.isEmpty ? null : _fullDesc.text,
-      'phone': _phone.text.isEmpty ? null : _phone.text,
-      'email': _email.text.isEmpty ? null : _email.text,
-      'website': _website.text.isEmpty ? null : _website.text,
-      'whatsapp': _whatsapp.text.isEmpty ? null : _whatsapp.text,
-      'instagram': _instagram.text.isEmpty ? null : _instagram.text,
-      'address': _address.text,
+      'logo_url': _t(_logoUrl),
+      'cover_url': _t(_coverUrl),
+      'og_image_url': _t(_ogImageUrl),
+      'name': _name.text.trim(),
+      'slug': _slug.text.trim(),
+      'short_description': _t(_shortDesc),
+      'full_description': _t(_fullDesc),
+      'phone': _t(_phone),
+      'email': _t(_email),
+      'website': _t(_website),
+      'whatsapp': _t(_whatsapp),
+      'instagram': _t(_instagram),
+      'address': _address.text.trim(),
       'neighborhood_id': _neighborhoodId,
-      'latitude': double.tryParse(_lat.text),
-      'longitude': double.tryParse(_lng.text),
+      'latitude': double.tryParse(_lat.text.trim()),
+      'longitude': double.tryParse(_lng.text.trim()),
       'status': _status,
       'kosher_level': _kosher,
       'price_level': _priceLevel,
       'has_delivery': _hasDelivery,
       'has_takeaway': _hasTakeaway,
+      'has_outdoor': _hasOutdoor,
       'is_accessible': _isAccessible,
       'has_parking': _hasParking,
       'pet_friendly': _petFriendly,
@@ -1868,55 +2163,76 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       'has_wifi': _hasWifi,
       'open_on_shabbat': _openOnShabbat,
       'is_featured': _isFeatured,
+      'is_recommended': _isRecommended,
+      'featured_start': _dateForColumn(_featuredStart.text, endOfDay: false),
+      'featured_end': _dateForColumn(_featuredEnd.text, endOfDay: true),
       'is_verified': _isVerified,
       'noindex': _noindex,
-      'meta_title': _metaTitle.text.isEmpty ? null : _metaTitle.text,
-      'meta_description': _metaDesc.text.isEmpty ? null : _metaDesc.text,
-      'meta_keywords': _metaKeywords.text.isEmpty ? null : _metaKeywords.text,
-      'og_title': _ogTitle.text.isEmpty ? null : _ogTitle.text,
-      'og_description': _ogDesc.text.isEmpty ? null : _ogDesc.text,
+      'meta_title': _t(_metaTitle),
+      'meta_description': _t(_metaDesc),
+      'meta_keywords': _t(_metaKeywords),
+      'og_title': _t(_ogTitle),
+      'og_description': _t(_ogDesc),
     };
 
     try {
       final notifier = ref.read(adminBusinessListProvider.notifier);
-      if (_isEditing) {
-        final id = widget.business!['id'] as String;
+
+      // The row first: everything else hangs off its id.
+      final String id;
+      if (_rowId != null) {
+        id = _rowId!;
         await notifier.updateBusiness(id, fields);
-        if (_hoursTouched) {
-          await notifier.setHours(id, _weekFromForm());
-          ref.invalidate(businessHoursProvider(id));
-        }
-        if (_categoriesTouched) {
-          await notifier.setCategories(id, _categoryIds.toList());
-          ref.invalidate(businessCategoryIdsProvider(id));
-        }
-        if (_menuLoaded) {
-          // Lines with no name are rows someone started and left; they are
-          // dropped rather than saved blank.
-          await saveMenuItems(
-            id,
-            _menuItems
-                .where((m) => (m['name'] as String? ?? '').trim().isNotEmpty)
-                .toList(),
-          );
-          ref.invalidate(adminMenuItemsProvider(id));
-        }
       } else {
-        await notifier.createBusiness(fields);
+        id = await notifier.createBusiness(fields);
+        _createdId = id;
       }
+
+      if (_hoursTouched) {
+        await notifier.setHours(id, _weekFromForm());
+        _hoursTouched = false;
+        ref.invalidate(businessHoursProvider(id));
+      }
+      if (_categoriesTouched) {
+        await notifier.setCategories(id, _categoryIds.toList());
+        _categoriesTouched = false;
+        ref.invalidate(businessCategoryIdsProvider(id));
+        ref.invalidate(adminBusinessCategoryNamesProvider);
+      }
+      if (_menuLoaded) {
+        // Lines with no name are rows someone started and left; they are
+        // dropped rather than saved blank.
+        await saveMenuItems(
+          id,
+          _menuItems
+              .where((m) => (m['name'] as String? ?? '').trim().isNotEmpty)
+              .toList(),
+        );
+        ref.invalidate(adminMenuItemsProvider(id));
+      }
+      await _gallery.save(id);
+
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('שגיאה: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (mounted) setState(() => _error = 'השמירה נכשלה: ${_errorText(e)}');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// The database's refusal, in words the person can act on where it is one
+  /// of the usual ones, and as it came otherwise.
+  static String _errorText(Object e) {
+    if (e is PostgrestException) {
+      return switch (e.code) {
+        '23505' => 'כתובת ה-Slug כבר בשימוש אצל עסק אחר',
+        '23502' => 'חסר שדה חובה (${e.message})',
+        '42501' => 'אין הרשאה לשמור — האם המשתמש מוגדר כמנהל?',
+        _ => e.message,
+      };
+    }
+    if (e is StorageException) return 'העלאת תמונה נכשלה (${e.message})';
+    return '$e';
   }
 }
 
