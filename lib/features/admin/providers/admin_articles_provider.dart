@@ -17,6 +17,11 @@ final adminArticleListProvider =
     });
 
 /// Article categories, from the table.
+///
+/// Inactive ones are fetched too. The picker offers only the active ones, but
+/// an article already filed under one that was since switched off must still
+/// show it — otherwise the link is invisible in the editor, and the list's
+/// category column would name a category the editor seems not to have.
 final articleCategoriesProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
@@ -24,25 +29,18 @@ final articleCategoriesProvider = FutureProvider<List<Map<String, dynamic>>>((
       .from('categories')
       .select('id, name, slug, scope, is_active, sort_order')
       .eq('scope', 'article')
-      .eq('is_active', true)
       .order('sort_order', ascending: true);
   return List<Map<String, dynamic>>.from(rows);
 });
 
-/// The categories one article sits in.
-final articleCategoryIdsProvider = FutureProvider.family<List<String>, String>((
-  ref,
-  articleId,
-) async {
-  final rows = await SupabaseConfig.client
-      .from('entity_categories')
-      .select('category_id')
-      .eq('entity_type', 'article')
-      .eq('entity_id', articleId);
-  return List<Map<String, dynamic>>.from(
-    rows,
-  ).map((r) => r['category_id'] as String).toList();
-});
+/// Now, as the database should store it.
+///
+/// `DateTime.now().toIso8601String()` has no zone on it, and the column reads
+/// a zoneless time as UTC — so an article saved at 12:00 in Modiin was stamped
+/// 12:00 UTC, three hours ahead, and sat at the top of the feed dated in the
+/// future. Converted to UTC first, the string ends in `Z` and means what it
+/// says.
+String nowForDatabase() => DateTime.now().toUtc().toIso8601String();
 
 class AdminArticleListNotifier
     extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
@@ -97,15 +95,71 @@ class AdminArticleListNotifier
           .limit(_window)
           .count(CountOption.exact);
 
+      final list = List<Map<String, dynamic>>.from(rows.data);
+      final names = await _categoryNamesOf([
+        for (final r in list) r['id'] as String,
+      ]);
+
       if (mounted) {
         totalCount = rows.count;
         state = AsyncValue.data([
-          for (final r in List<Map<String, dynamic>>.from(rows.data))
-            _toForm(r),
+          for (final r in list)
+            {
+              ..._toForm(r),
+              if (names != null)
+                'category_names': names[r['id']] ?? const <String>[],
+            },
         ]);
       }
     } catch (e, st) {
       if (mounted) state = AsyncValue.error(e, st);
+    }
+  }
+
+  /// The names of the categories each article is filed under, for the list.
+  ///
+  /// The list's category column read a `category_name` nothing ever set, so
+  /// it was blank on all 669 rows. The links are asked for a hundred articles
+  /// at a time: the ids go into the address, and five hundred of them would
+  /// make one too long to send.
+  ///
+  /// Null when the lookup fails — the column then stays empty rather than
+  /// claiming every article is unfiled.
+  Future<Map<String, List<String>>?> _categoryNamesOf(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    try {
+      final chunks = [
+        for (var i = 0; i < ids.length; i += 100)
+          ids.sublist(i, i + 100 > ids.length ? ids.length : i + 100),
+      ];
+      final results = await Future.wait([
+        for (final chunk in chunks)
+          SupabaseConfig.client
+              .from('entity_categories')
+              .select('entity_id, categories(name, sort_order)')
+              .eq('entity_type', 'article')
+              .inFilter('entity_id', chunk),
+      ]);
+      final byArticle = <String, List<(int, String)>>{};
+      for (final rows in results) {
+        for (final r in List<Map<String, dynamic>>.from(rows)) {
+          final cat = r['categories'] as Map?;
+          final name = cat?['name'] as String?;
+          if (name == null) continue;
+          (byArticle[r['entity_id'] as String] ??= []).add((
+            (cat?['sort_order'] as num?)?.toInt() ?? 0,
+            name,
+          ));
+        }
+      }
+      return {
+        for (final e in byArticle.entries)
+          e.key: ([
+            ...e.value,
+          ]..sort((a, b) => a.$1.compareTo(b.$1))).map((c) => c.$2).toList(),
+      };
+    } catch (_) {
+      return null;
     }
   }
 
@@ -119,23 +173,24 @@ class AdminArticleListNotifier
     load();
   }
 
-  // ── The editor and the table disagree on two names ──
+  // ── The editor and the table disagree on a name ──
   //
   // The form was written against a schema that was never deployed: it calls
-  // the picture `cover_image_url` where the column is `featured_image`, and
-  // carries a `category_id` where categories live in `entity_categories`.
-  // Translating here keeps the screen as it is.
+  // the picture `cover_image_url` where the column is `featured_image`.
+  // Translating here keeps the screen as it is. Categories are not a column
+  // at all — they live in `entity_categories` and travel separately.
 
   Map<String, dynamic> _toForm(Map<String, dynamic> row) => {
     ...row,
     'cover_image_url': row['featured_image'],
   };
 
-  /// Columns the form does not own: counts the database keeps, and the two
-  /// names above.
+  /// Columns the form does not own: counts the database keeps, and the
+  /// form's own names.
   static const _notColumns = {
     'cover_image_url',
     'category_id',
+    'category_names',
     'id',
     'created_at',
     'updated_at',
@@ -156,13 +211,32 @@ class AdminArticleListNotifier
     return row;
   }
 
-  Future<void> createArticle(Map<String, dynamic> article) async {
+  /// The categories an article is filed under, read fresh for the editor.
+  ///
+  /// Not taken from the list: the editor compares against this to work out
+  /// what the person changed, so it has to be what the table holds now.
+  Future<Set<String>> categoryIdsOf(String articleId) async {
+    final rows = await SupabaseConfig.client
+        .from('entity_categories')
+        .select('category_id')
+        .eq('entity_type', 'article')
+        .eq('entity_id', articleId);
+    return {
+      for (final r in List<Map<String, dynamic>>.from(rows))
+        r['category_id'] as String,
+    };
+  }
+
+  Future<void> createArticle(
+    Map<String, dynamic> article, {
+    Set<String> categoryIds = const {},
+  }) async {
     final row = _toRow(article);
 
     // Publishing without a date leaves the article out of every list the app
     // orders by it, which reads as the save having failed.
     if (row['status'] == 'published' && row['published_at'] == null) {
-      row['published_at'] = DateTime.now().toIso8601String();
+      row['published_at'] = nowForDatabase();
     }
 
     final inserted = await SupabaseConfig.client
@@ -171,27 +245,32 @@ class AdminArticleListNotifier
         .select('id')
         .single();
 
-    final id = inserted['id'] as String;
-    final categoryId = article['category_id'] as String?;
-    if (categoryId != null && categoryId.isNotEmpty) {
-      await setCategories(id, [categoryId]);
-    }
+    await changeCategories(inserted['id'] as String, add: categoryIds);
     await load();
   }
 
-  Future<void> updateArticle(String id, Map<String, dynamic> fields) async {
+  /// Writes the columns in [fields] and nothing else, and moves only the
+  /// category links in [addCategories] and [removeCategories].
+  ///
+  /// The editor used to send every field it had and a single `category_id`,
+  /// and this replaced all of the article's links with that one. The editor
+  /// never loaded the links in the first place, so opening an article and
+  /// pressing save stripped its categories — 70 articles are filed under two
+  /// or three. The editor now sends what changed and nothing more.
+  Future<void> updateArticle(
+    String id,
+    Map<String, dynamic> fields, {
+    Set<String> addCategories = const {},
+    Set<String> removeCategories = const {},
+  }) async {
     final row = _toRow(fields);
-    if (row['status'] == 'published' && row['published_at'] == null) {
-      row['published_at'] = DateTime.now().toIso8601String();
+    if (row.isNotEmpty) {
+      await SupabaseConfig.client.from('articles').update(row).eq('id', id);
     }
-    await SupabaseConfig.client.from('articles').update(row).eq('id', id);
-
-    if (fields.containsKey('category_id')) {
-      final categoryId = fields['category_id'] as String?;
-      await setCategories(id, [
-        if (categoryId != null && categoryId.isNotEmpty) categoryId,
-      ]);
+    if (row['status'] == 'published' && !row.containsKey('published_at')) {
+      await _stampFirstPublication(id);
     }
+    await changeCategories(id, add: addCategories, remove: removeCategories);
     await load();
   }
 
@@ -204,26 +283,61 @@ class AdminArticleListNotifier
   }
 
   Future<void> updateStatus(String id, String status) async {
-    final patch = <String, dynamic>{'status': status};
-    if (status == 'published') {
-      patch['published_at'] = DateTime.now().toIso8601String();
-    }
-    await SupabaseConfig.client.from('articles').update(patch).eq('id', id);
+    await SupabaseConfig.client
+        .from('articles')
+        .update({'status': status})
+        .eq('id', id);
+    if (status == 'published') await _stampFirstPublication(id);
     await load();
   }
 
-  Future<void> setCategories(String articleId, List<String> categoryIds) async {
-    final client = SupabaseConfig.client;
-    await client
-        .from('entity_categories')
-        .delete()
-        .eq('entity_type', 'article')
-        .eq('entity_id', articleId);
+  /// Dates an article the first time it is published, and never again.
+  ///
+  /// Every save of a published article used to set `published_at` to now,
+  /// so correcting a typo in a story from 2019 moved it to the top of the
+  /// feed as today's news. The date is filled only where there is none; an
+  /// article taken back to draft and published again keeps its original
+  /// date, and the editor has a field for changing it on purpose.
+  Future<void> _stampFirstPublication(String id) async {
+    await SupabaseConfig.client
+        .from('articles')
+        .update({'published_at': nowForDatabase()})
+        .eq('id', id)
+        .isFilter('published_at', null);
+  }
 
-    if (categoryIds.isEmpty) return;
-    await client.from('entity_categories').insert([
-      for (final id in categoryIds)
-        {'entity_type': 'article', 'entity_id': articleId, 'category_id': id},
-    ]);
+  /// Adds and removes individual category links, leaving the rest alone.
+  Future<void> changeCategories(
+    String articleId, {
+    Set<String> add = const {},
+    Set<String> remove = const {},
+  }) async {
+    final client = SupabaseConfig.client;
+    if (remove.isNotEmpty) {
+      await client
+          .from('entity_categories')
+          .delete()
+          .eq('entity_type', 'article')
+          .eq('entity_id', articleId)
+          .inFilter('category_id', remove.toList());
+    }
+    if (add.isNotEmpty) {
+      // Upserted with duplicates ignored, so a link someone else added in the
+      // meantime is not an error and keeps its `is_primary`.
+      await client
+          .from('entity_categories')
+          .upsert(
+            [
+              for (final c in add)
+                {
+                  'entity_type': 'article',
+                  'entity_id': articleId,
+                  'category_id': c,
+                },
+            ],
+            onConflict: 'entity_type,entity_id,category_id',
+            ignoreDuplicates: true,
+          );
+    }
   }
 }

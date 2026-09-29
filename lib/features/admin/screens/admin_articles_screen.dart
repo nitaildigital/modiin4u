@@ -3,7 +3,9 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../news/models/article_body.dart';
 import '../providers/admin_articles_provider.dart';
+import '../widgets/image_upload_field.dart';
 
 class AdminArticlesScreen extends ConsumerStatefulWidget {
   const AdminArticlesScreen({super.key});
@@ -355,7 +357,7 @@ class _ArticleTable extends StatelessWidget {
         Expanded(
           child: ListView.separated(
             itemCount: articles.length,
-            separatorBuilder: (_, __) => Divider(
+            separatorBuilder: (_, _) => Divider(
               height: 1,
               color: AppColors.border.withValues(alpha: 0.3),
             ),
@@ -371,7 +373,9 @@ class _ArticleTable extends StatelessWidget {
               final publishedAt = a['published_at'] as String?;
 
               final coverUrl = a['cover_image_url'] as String?;
-              final categoryName = a['category_name'] as String?;
+              // Absent when the lookup failed, empty when the article is
+              // filed nowhere; only the second is "—".
+              final categoryNames = a['category_names'] as List<String>?;
 
               return InkWell(
                 onTap: () => onTap(a),
@@ -391,7 +395,7 @@ class _ArticleTable extends StatelessWidget {
                             width: 52,
                             height: 36,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorBuilder: (_, _, _) => Container(
                               width: 52,
                               height: 36,
                               decoration: BoxDecoration(
@@ -462,36 +466,47 @@ class _ArticleTable extends StatelessWidget {
                       if (isWide)
                         Expanded(
                           flex: 2,
-                          child: categoryName != null
-                              ? Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.midBlue.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    categoryName,
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.midBlue,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                )
-                              : Text(
+                          child: categoryNames == null
+                              ? const SizedBox.shrink()
+                              : categoryNames.isEmpty
+                              ? Text(
                                   '—',
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 12,
                                     color: AppColors.grayLight,
                                   ),
+                                )
+                              : Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  children: [
+                                    for (final name in categoryNames)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.midBlue.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          name,
+                                          style: TextStyle(
+                                            fontFamily: AppFonts.rubik,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppColors.midBlue,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                         ),
                       if (isWide) Expanded(flex: 1, child: _StatusPill(status)),
@@ -616,7 +631,9 @@ class _ArticleTable extends StatelessWidget {
 
   String _formatDate(String iso) {
     try {
-      final d = DateTime.parse(iso);
+      // Stored in UTC; an article published after 21:00 in Modiin belongs to
+      // the next day in UTC, so the date is taken in the reader's zone.
+      final d = DateTime.parse(iso).toLocal();
       return '${d.day}/${d.month}/${d.year}';
     } catch (_) {
       return iso;
@@ -649,7 +666,18 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
   late final TextEditingController _coverImageUrl;
   late final TextEditingController _source;
   late final TextEditingController _credit;
-  String? _categoryId;
+
+  /// The categories the article was filed under when the editor opened —
+  /// null until they have loaded. Saving compares against this and moves only
+  /// the links the person added or took away.
+  Set<String>? _originalCategoryIds;
+  Set<String> _categoryIds = {};
+  bool _categoriesFailed = false;
+
+  /// In the reader's zone; converted to UTC on the way out. Written only when
+  /// [_publishedAtChanged] — the date is the article's, not the last save's.
+  DateTime? _publishedAt;
+  bool _publishedAtChanged = false;
 
   // SEO
   late final TextEditingController _seoTitle;
@@ -669,12 +697,20 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
   bool _noindex = false;
   bool _nofollow = false;
 
+  /// What the form held when it opened, in the shape [_collect] produces.
+  ///
+  /// A save sends only the fields that differ from this. Sending everything
+  /// rewrote every column of the row on each save, so anything the form
+  /// reads imperfectly — or a change someone else made in the meantime —
+  /// was overwritten by a person who only fixed a typo in the title.
+  late final Map<String, dynamic> _baseline;
+
   bool get _isEditing => widget.article != null;
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 4, vsync: this);
     final a = widget.article;
 
     _title = TextEditingController(text: a?['title'] as String? ?? '');
@@ -687,7 +723,6 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     );
     _source = TextEditingController(text: a?['source'] as String? ?? '');
     _credit = TextEditingController(text: a?['credit'] as String? ?? '');
-    _categoryId = a?['category_id'] as String?;
 
     _seoTitle = TextEditingController(text: a?['seo_title'] as String? ?? '');
     _metaDesc = TextEditingController(
@@ -713,6 +748,38 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     _pushWorthy = a?['push_worthy'] as bool? ?? false;
     _noindex = a?['noindex'] as bool? ?? false;
     _nofollow = a?['nofollow'] as bool? ?? false;
+
+    _publishedAt = DateTime.tryParse(
+      a?['published_at'] as String? ?? '',
+    )?.toLocal();
+
+    _baseline = _collect();
+
+    if (_isEditing) {
+      _loadCategories();
+    } else {
+      _originalCategoryIds = {};
+    }
+  }
+
+  /// Reads the article's category links from the table.
+  ///
+  /// The editor used to start with none selected whatever the article was
+  /// filed under, and saving then removed them all.
+  Future<void> _loadCategories() async {
+    setState(() => _categoriesFailed = false);
+    try {
+      final ids = await ref
+          .read(adminArticleListProvider.notifier)
+          .categoryIdsOf(widget.article!['id'] as String);
+      if (!mounted) return;
+      setState(() {
+        _originalCategoryIds = ids;
+        _categoryIds = {...ids};
+      });
+    } catch (_) {
+      if (mounted) setState(() => _categoriesFailed = true);
+    }
   }
 
   @override
@@ -734,6 +801,12 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     _ogDesc.dispose();
     super.dispose();
   }
+
+  /// Saving waits for the categories to load, so it cannot compare against a
+  /// set it has not read yet. If they could not be read, it saves without
+  /// touching them.
+  bool get _canSave =>
+      !_saving && (_originalCategoryIds != null || _categoriesFailed);
 
   @override
   Widget build(BuildContext context) {
@@ -805,6 +878,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                       Tab(text: 'תוכן'),
                       Tab(text: 'הגדרות'),
                       Tab(text: 'SEO'),
+                      Tab(text: 'תצוגה מקדימה'),
                     ],
                   ),
                 ),
@@ -816,6 +890,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                       _buildContentTab(),
                       _buildSettingsTab(),
                       _buildSeoTab(),
+                      _buildPreviewTab(),
                     ],
                   ),
                 ),
@@ -855,9 +930,9 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                       const SizedBox(width: 8),
                       if (_status == 'draft') ...[
                         OutlinedButton(
-                          onPressed: _saving
-                              ? null
-                              : () => _save(asDraft: true),
+                          onPressed: _canSave
+                              ? () => _save(asDraft: true)
+                              : null,
                           style: OutlinedButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -874,7 +949,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                         const SizedBox(width: 8),
                       ],
                       FilledButton(
-                        onPressed: _saving ? null : () => _save(),
+                        onPressed: _canSave ? () => _save() : null,
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.turquoise,
                           shape: RoundedRectangleBorder(
@@ -911,7 +986,6 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
   }
 
   Widget _buildContentTab() {
-    final categories = ref.watch(articleCategoriesProvider);
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -926,95 +1000,148 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
           _slug,
           validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
         ),
-        // Category dropdown
-        categories.when(
-          loading: () => const LinearProgressIndicator(),
-          error: (_, __) => const SizedBox.shrink(),
-          data: (cats) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: DropdownButtonFormField<String?>(
-              value: _categoryId,
-              decoration: InputDecoration(
-                labelText: 'קטגוריה',
-                labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-              ),
-              items: [
-                DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text(
-                    'ללא קטגוריה',
-                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                  ),
-                ),
-                ...cats.map(
-                  (c) => DropdownMenuItem(
-                    value: c['id'] as String,
-                    child: Text(
-                      c['name'] as String,
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-              onChanged: (v) => setState(() => _categoryId = v),
-            ),
-          ),
-        ),
+        _buildCategoryPicker(),
         _field('תקציר', _excerpt, maxLines: 2),
-        // Cover image
-        _field('קישור תמונת כריכה', _coverImageUrl),
-        if (_coverImageUrl.text.isNotEmpty) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              _coverImageUrl.text,
-              height: 140,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 60,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'תמונה לא נמצאה',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 12,
-                    color: AppColors.grayLight,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
+        // Uploaded to storage, or an address pasted as before.
+        ImageUploadField(
+          label: 'תמונת כריכה',
+          controller: _coverImageUrl,
+          folder: 'articles/cover',
+        ),
+        const SizedBox(height: 16),
+        // The body is kept exactly as it is stored. The imported stories are
+        // WordPress HTML, and a rich editor would rewrite that markup on
+        // every save; a text box leaves it alone, and the preview tab shows
+        // what the site will make of it.
         _field(
           'תוכן *',
           _body,
           maxLines: 12,
+          helper:
+              'הטקסט נשמר בדיוק כפי שהוא, כולל תגיות HTML מהאתר הקודם. '
+              'פסקה חדשה: שורה ריקה. לשונית "תצוגה מקדימה" מראה איך האתר יציג אותו.',
           validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
         ),
         Row(
           children: [
             Expanded(child: _field('מקור', _source)),
             const SizedBox(width: 12),
-            Expanded(child: _field('קרדיט', _credit)),
+            // `credit` is the byline the site prints under the title.
+            Expanded(child: _field('קרדיט / כותב', _credit)),
           ],
         ),
       ],
+    );
+  }
+
+  /// Several categories, not one: 70 of the articles are filed under two or
+  /// three, and a single-choice picker could only ever lose the others.
+  Widget _buildCategoryPicker() {
+    final label = Text(
+      'קטגוריות',
+      style: TextStyle(
+        fontFamily: AppFonts.rubik,
+        fontSize: 12,
+        color: AppColors.adminTextMedium,
+      ),
+    );
+
+    if (_categoriesFailed) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            label,
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'לא ניתן לטעון את הקטגוריות של הכתבה. שמירה לא תשנה אותן.',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 12,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _loadCategories,
+                  child: Text(
+                    'נסה שוב',
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    final categories = ref.watch(articleCategoriesProvider);
+    if (_originalCategoryIds == null || categories.isLoading) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            label,
+            const SizedBox(height: 8),
+            const LinearProgressIndicator(),
+          ],
+        ),
+      );
+    }
+
+    final cats = categories.valueOrNull ?? const <Map<String, dynamic>>[];
+    final known = {for (final c in cats) c['id'] as String};
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          label,
+          const SizedBox(height: 6),
+          if (categories.hasError)
+            Text(
+              'לא ניתן לטעון את רשימת הקטגוריות.',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 12,
+                color: AppColors.error,
+              ),
+            ),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final c in cats)
+                if (c['is_active'] == true ||
+                    _categoryIds.contains(c['id'] as String))
+                  _toggle(
+                    c['is_active'] == true
+                        ? c['name'] as String
+                        : '${c['name']} (לא פעילה)',
+                    _categoryIds.contains(c['id'] as String),
+                    (v) => setState(() {
+                      final id = c['id'] as String;
+                      v ? _categoryIds.add(id) : _categoryIds.remove(id);
+                    }),
+                  ),
+              // A link to a category this list does not know — kept, and
+              // shown, so that it is not removed without anyone seeing it.
+              for (final id in _categoryIds.where((id) => !known.contains(id)))
+                _toggle(
+                  'קטגוריה לא מוכרת',
+                  true,
+                  (v) => setState(() => _categoryIds.remove(id)),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1033,7 +1160,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _status,
+          initialValue: _status,
           decoration: InputDecoration(
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             contentPadding: const EdgeInsets.symmetric(
@@ -1042,29 +1169,82 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
             ),
           ),
           items: [
-            DropdownMenuItem(
-              value: 'draft',
-              child: Text(
-                'טיוטה',
-                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+            for (final (value, label) in [
+              ('draft', 'טיוטה'),
+              ('published', 'פורסם'),
+              ('archived', 'ארכיון'),
+              // Only offered to an article already there; the trash screen
+              // is where articles are sent to it.
+              if (_baseline['status'] == 'trash') ('trash', 'פח'),
+            ])
+              DropdownMenuItem(
+                value: value,
+                child: Text(
+                  label,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                ),
+              ),
+          ],
+          onChanged: (v) => setState(() => _status = v!),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'תאריך פרסום',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.navy,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                ),
+                child: Text(
+                  _publishedAt == null
+                      ? 'ייקבע בפרסום הראשון'
+                      : _formatDateTime(_publishedAt!),
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: _publishedAt == null
+                        ? AppColors.grayLight
+                        : AppColors.navy,
+                  ),
+                ),
               ),
             ),
-            DropdownMenuItem(
-              value: 'published',
-              child: Text(
-                'פורסם',
-                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-              ),
-            ),
-            DropdownMenuItem(
-              value: 'archived',
-              child: Text(
-                'ארכיון',
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: _pickPublishedAt,
+              icon: const Icon(Icons.edit_calendar_outlined, size: 16),
+              label: Text(
+                'שינוי',
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
           ],
-          onChanged: (v) => setState(() => _status = v!),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'התאריך נקבע בפרסום הראשון ונשאר קבוע, גם אחרי עריכה או פרסום מחדש. '
+          'הוא משתנה רק אם משנים אותו כאן.',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 11,
+            color: AppColors.grayText,
+          ),
         ),
         const SizedBox(height: 16),
         Text(
@@ -1113,6 +1293,40 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     );
   }
 
+  Future<void> _pickPublishedAt() async {
+    final now = DateTime.now();
+    final initial = _publishedAt ?? now;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial.isAfter(now) ? now : initial,
+      firstDate: DateTime(2000),
+      // Nothing publishes an article at a future time, so a future date
+      // would only put it at the top of the feed dated tomorrow.
+      lastDate: now,
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (!mounted) return;
+    final t = time ?? TimeOfDay.fromDateTime(initial);
+    setState(() {
+      _publishedAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        t.hour,
+        t.minute,
+      );
+      _publishedAtChanged = true;
+    });
+  }
+
+  static String _formatDateTime(DateTime d) =>
+      '${d.day}/${d.month}/${d.year} '
+      '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
   Widget _buildSeoTab() {
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -1151,10 +1365,172 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     );
   }
 
+  /// The body read the way the website reads it — the same parser — so a
+  /// broken tag or a photo that will not load shows here before it shows on
+  /// the site. Read-only; the text box on the first tab is what is saved.
+  Widget _buildPreviewTab() {
+    return ListenableBuilder(
+      listenable: Listenable.merge([_title, _subtitle, _coverImageUrl, _body]),
+      builder: (context, _) {
+        final blocks = parseArticleBody(_body.text);
+        final cover = _coverImageUrl.text.trim();
+        return ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'תצוגה מקדימה של התוכן כפי שהאתר קורא אותו. העיצוב המלא '
+                'מופיע בעמוד הכתבה באתר.',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 12,
+                  color: AppColors.grayText,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _title.text,
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+              ),
+            ),
+            if (_subtitle.text.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                _subtitle.text,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 15,
+                  color: AppColors.grayText,
+                ),
+              ),
+            ],
+            if (cover.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: _previewImage(cover, height: 260),
+              ),
+            ],
+            const SizedBox(height: 18),
+            if (blocks.isEmpty)
+              Text(
+                'אין תוכן',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 13,
+                  color: AppColors.grayLight,
+                ),
+              ),
+            for (final (i, block) in blocks.indexed) ...[
+              if (i > 0)
+                SizedBox(
+                  height:
+                      block.kind == ArticleBlockKind.listItem &&
+                          blocks[i - 1].kind == ArticleBlockKind.listItem
+                      ? 6
+                      : 16,
+                ),
+              _previewBlock(block),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _previewBlock(ArticleBlock block) {
+    final spans = TextSpan(
+      children: [
+        for (final s in block.spans)
+          TextSpan(
+            text: s.text,
+            style: TextStyle(
+              fontWeight: s.bold ? FontWeight.w600 : null,
+              fontStyle: s.italic ? FontStyle.italic : null,
+              color: s.href != null ? AppColors.midBlue : null,
+              decoration: s.href != null ? TextDecoration.underline : null,
+            ),
+          ),
+      ],
+    );
+    final base = TextStyle(
+      fontFamily: AppFonts.rubik,
+      fontSize: 15,
+      height: 1.6,
+      color: AppColors.adminTextDark,
+    );
+    return switch (block.kind) {
+      ArticleBlockKind.heading => Text.rich(
+        spans,
+        style: base.copyWith(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColors.navy,
+        ),
+      ),
+      ArticleBlockKind.listItem => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('•  ', style: base),
+          Expanded(child: Text.rich(spans, style: base)),
+        ],
+      ),
+      ArticleBlockKind.image => Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 516),
+          child: _previewImage(block.src ?? ''),
+        ),
+      ),
+      ArticleBlockKind.paragraph => Text.rich(spans, style: base),
+    };
+  }
+
+  /// Photos in the imported stories sit on the old WordPress site, which
+  /// sends no CORS headers; letting the browser draw them is what the
+  /// article page does too.
+  Widget _previewImage(String url, {double? height}) {
+    return Image.network(
+      url,
+      height: height,
+      width: height == null ? null : double.infinity,
+      fit: BoxFit.cover,
+      webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+      errorBuilder: (_, _, _) => Container(
+        height: 60,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          'התמונה לא נטענה: $url',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 11,
+            color: AppColors.grayLight,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
   Widget _field(
     String label,
     TextEditingController controller, {
     int maxLines = 1,
+    String? helper,
     String? Function(String?)? validator,
   }) {
     return Padding(
@@ -1166,6 +1542,8 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
         decoration: InputDecoration(
           labelText: label,
+          helperText: helper,
+          helperMaxLines: 3,
           labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           contentPadding: const EdgeInsets.symmetric(
@@ -1191,22 +1569,18 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     );
   }
 
-  Future<void> _save({bool asDraft = false}) async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
-
-    final fields = <String, dynamic>{
+  /// Every column the form edits, as the form currently holds it.
+  Map<String, dynamic> _collect({bool asDraft = false}) {
+    String? text(TextEditingController c) => c.text.isEmpty ? null : c.text;
+    return <String, dynamic>{
       'title': _title.text,
-      'subtitle': _subtitle.text.isEmpty ? null : _subtitle.text,
+      'subtitle': text(_subtitle),
       'slug': _slug.text,
       'body': _body.text,
-      'excerpt': _excerpt.text.isEmpty ? null : _excerpt.text,
-      'source': _source.text.isEmpty ? null : _source.text,
-      'credit': _credit.text.isEmpty ? null : _credit.text,
-      'cover_image_url': _coverImageUrl.text.isEmpty
-          ? null
-          : _coverImageUrl.text,
-      'category_id': _categoryId,
+      'excerpt': text(_excerpt),
+      'source': text(_source),
+      'credit': text(_credit),
+      'cover_image_url': text(_coverImageUrl),
       'status': asDraft ? 'draft' : _status,
       'is_breaking': _isBreaking,
       'is_featured': _isFeatured,
@@ -1214,26 +1588,59 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
       'is_sponsored': _isSponsored,
       'is_members_only': _isMembersOnly,
       'push_worthy': _pushWorthy,
-      'seo_title': _seoTitle.text.isEmpty ? null : _seoTitle.text,
-      'meta_description': _metaDesc.text.isEmpty ? null : _metaDesc.text,
-      'meta_keywords': _metaKeywords.text.isEmpty ? null : _metaKeywords.text,
-      'focus_keyword': _focusKeyword.text.isEmpty ? null : _focusKeyword.text,
-      'og_title': _ogTitle.text.isEmpty ? null : _ogTitle.text,
-      'og_description': _ogDesc.text.isEmpty ? null : _ogDesc.text,
+      'seo_title': text(_seoTitle),
+      'meta_description': text(_metaDesc),
+      'meta_keywords': text(_metaKeywords),
+      'focus_keyword': text(_focusKeyword),
+      'og_title': text(_ogTitle),
+      'og_description': text(_ogDesc),
       'noindex': _noindex,
       'nofollow': _nofollow,
     };
+  }
 
-    if (!_isEditing && _status == 'published' && !asDraft) {
-      fields['published_at'] = DateTime.now().toIso8601String();
+  Future<void> _save({bool asDraft = false}) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final fields = _collect(asDraft: asDraft);
+    if (_publishedAtChanged && _publishedAt != null) {
+      fields['published_at'] = _publishedAt!.toUtc().toIso8601String();
     }
 
+    // Null when the links could not be read: then they are not touched.
+    final original = _originalCategoryIds;
+    final added = original == null
+        ? <String>{}
+        : _categoryIds.difference(original);
+    final removed = original == null
+        ? <String>{}
+        : original.difference(_categoryIds);
+
+    final changed = _isEditing
+        ? {
+            for (final e in fields.entries)
+              if (!_baseline.containsKey(e.key) || _baseline[e.key] != e.value)
+                e.key: e.value,
+          }
+        : fields;
+
+    if (_isEditing && changed.isEmpty && added.isEmpty && removed.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
+
+    setState(() => _saving = true);
     try {
       final notifier = ref.read(adminArticleListProvider.notifier);
       if (_isEditing) {
-        await notifier.updateArticle(widget.article!['id'] as String, fields);
+        await notifier.updateArticle(
+          widget.article!['id'] as String,
+          changed,
+          addCategories: added,
+          removeCategories: removed,
+        );
       } else {
-        await notifier.createArticle(fields);
+        await notifier.createArticle(fields, categoryIds: _categoryIds);
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
