@@ -9,6 +9,8 @@ everything behind them.
 - **HANDOVER.md** — where things stand now and what is next. Start there.
 - **PLAN.md** — the long record: every decision and why, day by day.
 - **deploy/README.md** — the server (nginx, https, certificates).
+- **CLAUDE.md** — the client's rules and the project's gotchas, which Claude
+  Code reads on its own when opened in this repo.
 
 ## Stack
 
