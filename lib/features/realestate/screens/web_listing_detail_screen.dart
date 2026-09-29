@@ -1,32 +1,37 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/web_map_tiles.dart';
 import '../../../shared/widgets/web_chrome.dart';
-import '../../favorites/repositories/favorite_repository.dart';
-import '../../favorites/widgets/favorite_button.dart';
 import '../models/listing.dart';
+import '../providers/detail_providers.dart';
 import '../providers/listing_providers.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../widgets/web_detail_parts.dart';
 import 'my_apartments_screen.dart' show formatShekels;
 
 // ═══════════════════════════════════════════════════════════
 // Web Listing Detail — desktop layout for /listing/:id
 //
-// The whole page was one invented flat: a fixed ₪4,350,000 at HaShvatim St 7,
-// four bedrooms, two bathrooms, 140 m², a paragraph about a mini penthouse in
-// Avni Chen with an 18 m² balcony and a 20/80 payment schedule, a specification
-// table that answered "Yes" to balcony, parking, lift and protected room, three
-// paragraphs about the Moriah neighbourhood, an agent called Zeev Schumacher of
-// RGF Properties, four nearby properties and a row of "businesses" that were in
-// fact neighbourhood names. The id the route carried was never read.
+// Built to the Figma frame "Appartments" (123:2271). The file carries a
+// second frame of the same name (282:3075) that is a copy of it, node for
+// node — the same page placed again further along the canvas.
+//
+// The whole page was once one invented flat: a fixed ₪4,350,000 at HaShvatim
+// St 7, four bedrooms, a paragraph about a mini penthouse in Avni Chen, a
+// specification table that answered "Yes" to everything, an agent called
+// Zeev Schumacher and a row of "businesses" that were in fact neighbourhood
+// names. Everything below is read from the listing row, its agent and its
+// neighbourhood.
 // ═══════════════════════════════════════════════════════════
 
 class WebListingDetailContent extends ConsumerStatefulWidget {
@@ -38,26 +43,17 @@ class WebListingDetailContent extends ConsumerStatefulWidget {
       _WebListingDetailContentState();
 }
 
-class _WebListingDetailContentState
-    extends ConsumerState<WebListingDetailContent> {
-  bool _isHebrew = webIsHebrew.value;
-  bool _aboutExpanded = false;
-  final _scrollController = ScrollController();
-  final _nearbyController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _nearbyController.dispose();
-    super.dispose();
-  }
+class _WebListingDetailContentState extends ConsumerState<WebListingDetailContent>
+    with WebLanguageState<WebListingDetailContent> {
+  bool get _isHebrew => webIsHebrew.value;
+  final _contactKey = GlobalKey();
 
   String _t(String en, String he) => _isHebrew ? he : en;
 
-  /// The cover and the gallery are one list, largest first.
+  /// The cover and the gallery are one list, the cover first.
   List<String> _photos(Listing l) => [
     if (l.coverUrl != null && l.coverUrl!.isNotEmpty) l.coverUrl!,
-    ...l.gallery.where((u) => u.isNotEmpty),
+    ...l.gallery.where((u) => u.isNotEmpty && u != l.coverUrl),
   ];
 
   @override
@@ -73,11 +69,9 @@ class _WebListingDetailContentState
             WebNavbar(
               isHebrew: _isHebrew,
               activeId: 'realestate',
-              onToggleLanguage: () => setState(() => _isHebrew = !_isHebrew),
             ),
             Expanded(
               child: SingleChildScrollView(
-                controller: _scrollController,
                 child: async.when(
                   loading: () => const Padding(
                     padding: EdgeInsets.symmetric(vertical: 160),
@@ -85,17 +79,10 @@ class _WebListingDetailContentState
                   ),
                   error: (_, _) => _buildNotice(
                     icon: IconsaxPlusLinear.wifi_square,
-                    title: _t(
-                      'This property could not be loaded',
-                      'לא ניתן לטעון את הנכס',
-                    ),
-                    body: _t(
-                      'Check your connection and try again.',
-                      'בדקו את החיבור לאינטרנט ונסו שוב.',
-                    ),
+                    title: _t('This property could not be loaded', 'לא ניתן לטעון את הנכס'),
+                    body: _t('Check your connection and try again.', 'בדקו את החיבור לאינטרנט ונסו שוב.'),
                     actionLabel: _t('Try again', 'נסו שוב'),
-                    onAction: () =>
-                        ref.invalidate(listingByIdProvider(widget.listingId)),
+                    onAction: () => ref.invalidate(listingByIdProvider(widget.listingId)),
                   ),
                   // Null when the id matches no row, or when the row is not
                   // active and does not belong to whoever is asking.
@@ -121,248 +108,142 @@ class _WebListingDetailContentState
   }
 
   Widget _buildBody(Listing l) {
-    final photos = _photos(l);
-
     return Column(
       children: [
         const SizedBox(height: 32),
-        _buildBreadcrumb(l),
+        DetailColumn(maxWidth: 1200, child: _buildTitleBlock(l)),
         const SizedBox(height: 32),
-        _buildPhotoGallery(photos),
+        DetailColumn(
+          maxWidth: 1200,
+          child: DetailPhotoMosaic(
+            photos: _photos(l),
+            height: 514,
+            radius: 12,
+            gap: 10,
+            fourUp: true,
+            buttonInset: 16,
+            showAllLabel: _t('Show all photos', 'כל התמונות'),
+            fallbackIcon: IconsaxPlusBold.home_2,
+          ),
+        ),
         const SizedBox(height: 28),
-        _buildMainContent(l),
+        DetailColumn(maxWidth: 1200, child: _buildMainContent(l)),
         _buildNearbySection(l),
-        const SizedBox(height: 64),
+        _buildBusinessesSection(l),
+        const SizedBox(height: 167),
         WebFooter(isHebrew: _isHebrew),
       ],
     );
   }
 
   // ─────────────────────────────────────────────
-  // BREADCRUMB — back, title, heart, address, kind badge
+  // TITLE — back, title, address, kind
   // ─────────────────────────────────────────────
-  Widget _buildBreadcrumb(Listing l) {
+  /// The heart the design draws at the end of this row is not here: saving
+  /// a listing needs an account, and accounts are the app's.
+  Widget _buildTitleBlock(Listing l) {
     final where = l.address ?? l.neighborhoodName;
 
-    return _Section(
-      maxWidth: 1200,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 40,
+          child: Row(
             children: [
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () => context.canPop()
-                      ? context.pop()
-                      : context.go('/realestate'),
-                  child: Icon(
-                    _isHebrew
-                        ? IconsaxPlusLinear.arrow_right_3
-                        : IconsaxPlusLinear.arrow_left,
-                    size: 24,
-                    color: AppColors.navy,
+                  onTap: () => context.canPop() ? context.pop() : context.go('/realestate'),
+                  child: Transform.flip(
+                    flipX: _isHebrew,
+                    child: SvgPicture.asset('$kDetailAsset/detail_back.svg', width: 24, height: 24),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
+                child: DetailText(
                   l.title,
-                  style: TextStyle(
-                    fontFamily: AppFonts.nunito,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.navy,
-                  ),
-                ),
-              ),
-              // The heart was a local bool that the next page load forgot.
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFF2F3F8),
-                ),
-                child: Center(
-                  child: FavoriteButton(
-                    kind: FavoriteKind.listing,
-                    id: l.id,
-                    iconSize: 20,
-                  ),
+                  style: detailDisplay(28, color: AppColors.navy, height: 34 / 28),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 27,
+          child: Row(
             children: [
               if (where != null) ...[
-                const Icon(
-                  IconsaxPlusBold.location,
-                  size: 16,
-                  color: AppColors.turquoise,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    where,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      color: Colors.black,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+                Flexible(child: DetailPlace(where, style: detailInter(14))),
                 const SizedBox(width: 16),
               ],
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0033AC).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(50),
                 ),
                 child: Text(
-                  l.kind == ListingKind.rent
-                      ? _t('For Rent', 'להשכרה')
-                      : _t('For Sale', 'למכירה'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF0033AC),
-                  ),
+                  l.kind == ListingKind.rent ? _t('For Rent', 'להשכרה') : _t('For Sale', 'למכירה'),
+                  style: detailInter(12, weight: FontWeight.w500, color: const Color(0xFF0033AC)),
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   // ─────────────────────────────────────────────
-  // PHOTO GALLERY
-  // ─────────────────────────────────────────────
-  /// As many panels as the listing has photographs.
-  ///
-  /// Four were always drawn, three of them flat pastel rectangles, with a
-  /// "Show all photos" button that had no handler. The grid now follows the
-  /// count, and a listing with no pictures gets one brand panel rather than
-  /// four empty ones.
-  Widget _buildPhotoGallery(List<String> photos) {
-    Widget panel(int index) => NetworkPhoto(
-      url: index < photos.length ? photos[index] : null,
-      icon: IconsaxPlusBold.home_2,
-      iconSize: index == 0 ? 80 : 32,
-    );
-
-    Widget grid;
-    if (photos.length <= 1) {
-      grid = panel(0);
-    } else if (photos.length == 2) {
-      grid = Row(
-        children: [
-          Expanded(child: panel(0)),
-          const SizedBox(width: 10),
-          Expanded(child: panel(1)),
-        ],
-      );
-    } else if (photos.length == 3) {
-      grid = Row(
-        children: [
-          Expanded(child: panel(0)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(child: panel(1)),
-                const SizedBox(height: 10),
-                Expanded(child: panel(2)),
-              ],
-            ),
-          ),
-        ],
-      );
-    } else {
-      grid = Row(
-        children: [
-          Expanded(child: panel(0)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(child: panel(1)),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(child: panel(2)),
-                      const SizedBox(width: 10),
-                      Expanded(child: panel(3)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    return _Section(
-      maxWidth: 1200,
-      child: SizedBox(
-        height: 514,
-        child: ClipRRect(borderRadius: BorderRadius.circular(12), child: grid),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // MAIN CONTENT — detail on the left, contact on the right
+  // MAIN CONTENT — the listing on the left, whom to call on the right
   // ─────────────────────────────────────────────
   Widget _buildMainContent(Listing l) {
-    final sections = <Widget>[
-      // Always drawn: it says what the price is, or that there is none on
-      // file, and both are worth saying.
-      _buildPrice(l),
-      if (_highlights(l).isNotEmpty) _buildHighlights(l),
-      if ((l.description ?? '').trim().isNotEmpty) _buildAboutProperty(l),
-      if (_specs(l).isNotEmpty) _buildPropertySpecs(l),
-      if (l.latitude != null && l.longitude != null) _buildWhereYoullBe(l),
-      if (l.neighborhoodName != null) _buildAboutNeighborhood(l),
+    final about = (l.description ?? '').trim();
+    final highlights = _highlights(l);
+    final hoodAbout = _hoodAbout(l);
+
+    // Each section with the space the design leaves above it. A section with
+    // nothing to say is left out, and its gap with it.
+    final sections = <(double, Widget)>[
+      (0, _buildPrice(l)),
+      if (highlights.isNotEmpty) (48, _buildHighlights(highlights)),
+      if (about.isNotEmpty) (63, _buildAboutProperty(about)),
+      (63, _buildSpecs(l)),
+      if (l.latitude != null && l.longitude != null) (64, _buildMap(l)),
+      if (l.neighborhoodName != null && hoodAbout.isNotEmpty) (64, _buildAboutHood(l, hoodAbout)),
     ];
 
-    final contactCard = _buildContactCard(l);
+    final contact = _buildContactCard(l);
 
-    return _Section(
-      maxWidth: 1200,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 720,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (var i = 0; i < sections.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 56),
-                  sections[i],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Align(
+            alignment: AlignmentDirectional.topStart,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final (gap, section) in sections) ...[
+                    if (gap > 0) SizedBox(height: gap),
+                    section,
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-          const Spacer(),
-          ?contactCard,
+        ),
+        if (contact != null) ...[
+          const SizedBox(width: 32),
+          Padding(padding: const EdgeInsets.only(top: 6), child: contact),
         ],
-      ),
+      ],
     );
   }
 
@@ -375,44 +256,31 @@ class _WebListingDetailContentState
       children: [
         // A listing with no price is not a free one, so "Price on request"
         // stands in rather than ₪0.
-        Text(
-          price == null
-              ? _t('Price on request', 'מחיר לפי בקשה')
-              : l.kind == ListingKind.rent
-              ? _t(
-                  '${formatShekels(price)} / month',
-                  '${formatShekels(price)} לחודש',
-                )
-              : formatShekels(price),
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: price == null ? 22 : 32,
-            fontWeight: FontWeight.w600,
-            color: AppColors.navy,
-          ),
-        ),
-        if (where != null) ...[
-          const SizedBox(height: 16),
+        if (price == null)
+          Text(
+            _t('Price on request', 'מחיר לפי בקשה'),
+            style: detailInter(22, weight: FontWeight.w600, color: AppColors.navy),
+          )
+        else
           Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              const Icon(
-                IconsaxPlusBold.location,
-                size: 16,
-                color: AppColors.turquoise,
+              Text(
+                formatShekels(price),
+                textDirection: TextDirection.ltr,
+                style: detailInter(32, weight: FontWeight.w600, color: AppColors.navy),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  where,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
+              if (l.kind == ListingKind.rent) ...[
+                const SizedBox(width: 8),
+                Text(_t('/ In the month', '/ לחודש'), style: detailInter(16, color: kDetailGrey)),
+              ],
             ],
           ),
+        if (where != null) ...[
+          const SizedBox(height: 16),
+          DetailPlace(where, style: detailInter(14)),
         ],
       ],
     );
@@ -421,68 +289,96 @@ class _WebListingDetailContentState
   // ─────────────────────────────────────────────
   // HIGHLIGHTS
   // ─────────────────────────────────────────────
-  /// Only the figures the row carries.
+  /// Only the figures the row carries, two to a row.
   ///
-  /// Four were printed for every listing — 4 bedrooms, 2 bathrooms, 140 m²,
-  /// floor 4 — and the grid assumed there would always be exactly four.
-  List<({String label, String value, IconData icon})> _highlights(Listing l) {
-    String rooms(double r) =>
-        r == r.roundToDouble() ? '${r.toInt()}' : r.toString();
-
+  /// The design's first figure is "Bedrooms". A listing here records rooms —
+  /// the Israeli count, which includes the living room — and no separate
+  /// bedroom figure, so the first cell says "Rooms" with the bed the design
+  /// draws beside it rather than passing one number off as the other.
+  List<({String label, String value, String icon})> _highlights(Listing l) {
+    final floor = l.floor;
     return [
       if (l.rooms != null)
-        (
-          label: _t('Rooms', 'חדרים'),
-          value: rooms(l.rooms!),
-          icon: IconsaxPlusLinear.building_3,
-        ),
+        (label: _t('Rooms', 'חדרים'), value: detailRooms(l.rooms!), icon: 'detail_hl_rooms.svg'),
       if (l.bathrooms != null)
-        (
-          label: _t('Bathrooms', 'חדרי אמבטיה'),
-          value: '${l.bathrooms}',
-          icon: IconsaxPlusLinear.courthouse,
-        ),
+        (label: _t('Bathrooms', 'חדרי רחצה'), value: '${l.bathrooms}', icon: 'detail_hl_bath.svg'),
       if (l.sqm != null)
-        (
-          label: _t('Built-up Area', 'שטח בנוי'),
-          value: _t('${l.sqm} m²', '${l.sqm} מ״ר'),
-          icon: IconsaxPlusLinear.maximize_3,
-        ),
-      if (l.floor != null)
+        (label: _t('Built-up Area', 'שטח בנוי'), value: _t('${l.sqm} m²', '${l.sqm} מ״ר'), icon: 'detail_hl_area.svg'),
+      if (floor != null)
         (
           label: _t('Floor', 'קומה'),
-          value: l.totalFloors == null
-              ? '${l.floor}'
-              : '${l.floor} / ${l.totalFloors}',
-          icon: IconsaxPlusLinear.building_4,
+          value: floor == 0 ? _t('Ground Floor', 'קומת קרקע') : _t('$floor Floor', 'קומה $floor'),
+          icon: 'detail_hl_floor.svg',
         ),
     ];
   }
 
-  Widget _buildHighlights(Listing l) {
-    final items = _highlights(l);
+  Widget _buildHighlights(List<({String label, String value, String icon})> items) {
+    Widget cell(({String label, String value, String icon}) h) => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SvgPicture.asset('$kDetailAsset/${h.icon}', width: 32, height: 32),
+        const SizedBox(width: 16),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(h.label, style: detailInter(12, color: kDetailGrey)),
+              const SizedBox(height: 6),
+              Text(h.value, style: detailInter(18, weight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ],
+    );
 
+    return SizedBox(
+      width: 683,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_t('Highlights', 'נקודות בולטות'), style: detailDisplay(24)),
+          const SizedBox(height: 32),
+          for (var i = 0; i < items.length; i += 2) ...[
+            if (i > 0) const SizedBox(height: 32),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: cell(items[i])),
+                const SizedBox(width: 20),
+                Expanded(child: i + 1 < items.length ? cell(items[i + 1]) : const SizedBox.shrink()),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // ABOUT THIS PROPERTY
+  // ─────────────────────────────────────────────
+  Widget _buildAboutProperty(String about) {
+    final paragraphs = detailParagraphs(about);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeading(_t('Highlights', 'דגשים')),
-        const SizedBox(height: 32),
+        Text(_t('About This Property', 'על הנכס'), style: detailDisplay(24)),
+        const SizedBox(height: 24),
         SizedBox(
-          width: 683,
+          width: 620,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Two to a row, however many there are.
-              for (var i = 0; i < items.length; i += 2) ...[
-                if (i > 0) const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(child: _highlightItem(items[i])),
-                    const SizedBox(width: 20),
-                    if (i + 1 < items.length)
-                      Expanded(child: _highlightItem(items[i + 1]))
-                    else
-                      const Expanded(child: SizedBox.shrink()),
-                  ],
+              for (var i = 0; i < paragraphs.length; i++) ...[
+                if (i > 0) const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: DetailText(
+                    paragraphs[i],
+                    maxLines: null,
+                    style: detailInter(16, color: kDetailBody, height: 1.6),
+                  ),
                 ),
               ],
             ],
@@ -492,147 +388,78 @@ class _WebListingDetailContentState
     );
   }
 
-  Widget _highlightItem(({String label, String value, IconData icon}) h) {
-    return Row(
-      children: [
-        Icon(h.icon, size: 32, color: const Color(0xFF5D5D5D)),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              h.label,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 12,
-                color: const Color(0xFF5F5E5A),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              h.value,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // ABOUT THIS PROPERTY
-  // ─────────────────────────────────────────────
-  Widget _buildAboutProperty(Listing l) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionHeading(_t('About This Property', 'על הנכס')),
-        const SizedBox(height: 24),
-        SizedBox(
-          width: 620,
-          child: Text(
-            l.description!.trim(),
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 16,
-              color: const Color(0xFF3D3D3D),
-              height: 1.6,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   // ─────────────────────────────────────────────
   // PROPERTY SPECIFICATIONS
   // ─────────────────────────────────────────────
-  /// The features the listing actually has.
+  /// The design's four — balcony, parking, lift, protected room — with the
+  /// row's answer under each, then any further feature the flat has.
   ///
-  /// The table listed balcony, parking, lift and protected room and answered
-  /// "Yes" to all four on every property. These are the booleans from the row,
-  /// and the value beside the name is gone: a card that is drawn at all is a
-  /// feature the flat has.
-  List<({String label, IconData icon})> _specs(Listing l) => [
-    if (l.hasBalcony)
-      (label: _t('Balcony', 'מרפסת'), icon: IconsaxPlusLinear.element_3),
-    if (l.hasParking)
-      (label: _t('Parking', 'חניה'), icon: IconsaxPlusLinear.car),
-    if (l.hasElevator)
-      (label: _t('Elevator', 'מעלית'), icon: IconsaxPlusLinear.arrow_3),
-    if (l.hasStorage)
-      (label: _t('Storage', 'מחסן'), icon: IconsaxPlusLinear.box_1),
-    if (l.hasMamad)
-      (
-        label: _t('Protected Space', 'ממ״ד'),
-        icon: IconsaxPlusLinear.shield_tick,
-      ),
-    if (l.isFurnished)
-      (label: _t('Furnished', 'מרוהטת'), icon: IconsaxPlusLinear.home_hashtag),
-    if (l.isAccessible)
-      (label: _t('Accessible', 'נגישה'), icon: IconsaxPlusLinear.profile_2user),
-    if (l.isRenovated)
-      (label: _t('Renovated', 'משופצת'), icon: IconsaxPlusLinear.brush_2),
+  /// The four were once drawn "Yes" on every property. They are the
+  /// listing's own booleans now, so a flat without parking says "No"; the
+  /// form a resident fills in asks each of them as a yes-or-no question. The
+  /// features the design does not draw are shown only when they are true,
+  /// since a card announcing that a flat is not furnished says little.
+  List<({String label, bool value, String? asset, IconData? icon})> _specs(Listing l) => [
+    (label: _t('Balcony', 'מרפסת'), value: l.hasBalcony, asset: 'detail_spec_balcony.svg', icon: null),
+    (label: _t('Parking', 'חניה'), value: l.hasParking, asset: 'detail_spec_parking.svg', icon: null),
+    (label: _t('Elevator', 'מעלית'), value: l.hasElevator, asset: 'detail_spec_elevator.svg', icon: null),
+    (label: _t('Protected Space', 'ממ״ד'), value: l.hasMamad, asset: 'detail_spec_mamad.svg', icon: null),
+    if (l.hasStorage) (label: _t('Storage', 'מחסן'), value: true, asset: null, icon: IconsaxPlusLinear.box_1),
+    if (l.isFurnished) (label: _t('Furnished', 'מרוהטת'), value: true, asset: null, icon: IconsaxPlusLinear.home_hashtag),
+    if (l.isAccessible) (label: _t('Accessible', 'נגישה'), value: true, asset: null, icon: IconsaxPlusLinear.profile_2user),
+    if (l.isRenovated) (label: _t('Renovated', 'משופצת'), value: true, asset: null, icon: IconsaxPlusLinear.brush_2),
   ];
 
-  Widget _buildPropertySpecs(Listing l) {
+  Widget _buildSpecs(Listing l) {
     final specs = _specs(l);
+
+    Widget card(({String label, bool value, String? asset, IconData? icon}) s) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: kDetailLine),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: Center(
+              child: s.asset != null
+                  ? SvgPicture.asset('$kDetailAsset/${s.asset}')
+                  : Icon(s.icon, size: 30, color: AppColors.midBlue),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            s.label,
+            style: detailInter(14, weight: FontWeight.w500),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Text(s.value ? _t('Yes', 'יש') : _t('No', 'אין'), style: detailInter(14)),
+        ],
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeading(_t('Property Specifications', 'מפרט הנכס')),
-        const SizedBox(height: 24),
-        SizedBox(
-          width: 721,
-          child: Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              for (final spec in specs)
-                SizedBox(
-                  // Four to a row at the column's full width, and a shorter
-                  // list simply takes fewer places. The old row divided the
-                  // width by the count, so three cards came out a third wider
-                  // than four and one filled the page.
-                  width: (721 - 3 * 16) / 4,
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 132),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 20,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: const Color(0xFFE7E7E7)),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(spec.icon, size: 32, color: AppColors.midBlue),
-                        const SizedBox(height: 16),
-                        Text(
-                          spec.label,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
+        Text(_t('Property Specifications', 'מפרט הנכס'), style: detailDisplay(24)),
+        const SizedBox(height: 23),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const gap = 16.0;
+            final width = (constraints.maxWidth - 3 * gap) / 4;
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: [for (final s in specs) SizedBox(width: width, child: card(s))],
+            );
+          },
         ),
       ],
     );
@@ -641,134 +468,58 @@ class _WebListingDetailContentState
   // ─────────────────────────────────────────────
   // WHERE YOU'LL BE
   // ─────────────────────────────────────────────
-  Future<void> _openInMaps(Listing l) async {
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query='
-      '${l.latitude},${l.longitude}',
-    );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  /// The listing on the map.
+  /// The listing on the map, only when it has coordinates.
   ///
-  /// A pale blue box with a faint map glyph stood here, drawn whether or not
-  /// the listing had coordinates. `flutter_map` was already used elsewhere in
-  /// this feature, and the section is only built when there is a point to show.
-  Widget _buildWhereYoullBe(Listing l) {
+  /// The design's map is a pale, grey street plan; OpenStreetMap's tiles are
+  /// brighter, so they are drawn with most of their colour taken out. The
+  /// wheel scrolls the page over the map rather than zooming it — the map
+  /// sits in the middle of a long page and would otherwise catch the reader
+  /// mid-scroll.
+  Widget _buildMap(Listing l) {
     final point = LatLng(l.latitude!, l.longitude!);
+    const s = 0.35; // saturation left in the tiles
+    const r = 0.2126 * (1 - s), g = 0.7152 * (1 - s), b = 0.0722 * (1 - s);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeading(_t("Where You'll Be", 'היכן תהיו')),
+        Text(_t('Where You’ll Be', 'איפה זה'), style: detailDisplay(24)),
         const SizedBox(height: 24),
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: SizedBox(
-            width: 720,
             height: 320,
-            child: Stack(
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: point,
+                initialZoom: 15,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all & ~InteractiveFlag.scrollWheelZoom & ~InteractiveFlag.rotate,
+                ),
+              ),
               children: [
-                FlutterMap(
-                  options: MapOptions(initialCenter: point, initialZoom: 15.5),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.modiin4u.app',
+                WebMapTiles(tileBuilder: (context, tiles, _) => ColorFiltered(
+                    colorFilter: const ColorFilter.matrix(<double>[
+                      r + s, g, b, 0, 12, //
+                      r, g + s, b, 0, 12, //
+                      r, g, b + s, 0, 12, //
+                      0, 0, 0, 1, 0, //
+                    ]),
+                    child: tiles,
+                  )),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: point,
+                      width: 48,
+                      height: 52,
+                      // The pin's tip, not its middle, marks the spot.
+                      alignment: Alignment.topCenter,
+                      child: const _MapPin(),
                     ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: point,
-                          width: 48,
-                          height: 48,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.25),
-                                  blurRadius: 2.74,
-                                  offset: const Offset(0, 2.74),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Container(
-                                width: 26,
-                                height: 26,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF006BF6),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  IconsaxPlusBold.home_2,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const OsmAttribution(),
                   ],
                 ),
-                PositionedDirectional(
-                  start: 0,
-                  end: 0,
-                  bottom: 16,
-                  child: Center(
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        onTap: () => _openInMaps(l),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(50),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                IconsaxPlusLinear.map_1,
-                                size: 16,
-                                color: AppColors.navy,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _t('Open in Maps', 'פתחו במפות'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.navy,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                const WebMapCredit(),
               ],
             ),
           ),
@@ -780,145 +531,182 @@ class _WebListingDetailContentState
   // ─────────────────────────────────────────────
   // ABOUT THE NEIGHBOURHOOD
   // ─────────────────────────────────────────────
-  /// The neighbourhood this listing is filed under.
+  /// What the client wrote about the listing's neighbourhood, less its
+  /// opening line.
   ///
-  /// Two paragraphs about Moriah were printed under every listing, whatever
-  /// its neighbourhood. This is the description the client wrote for the
-  /// neighbourhood, and the heading alone when none was written — the heading
-  /// is worth keeping either way, because it is the way to the neighbourhood
-  /// page.
-  Widget _buildAboutNeighborhood(Listing l) {
-    final about = (l.neighborhoodDescription ?? '').trim();
-    final id = l.neighborhoodId;
+  /// The neighbourhood page opens with the first paragraph of the same text
+  /// as a one-line introduction under its name, and the design's "About
+  /// Moriah" here carries the paragraphs after it. A description of a single
+  /// paragraph is all introduction, and is shown whole.
+  List<String> _hoodAbout(Listing l) {
+    final paragraphs = detailParagraphs(l.neighborhoodDescription);
+    return paragraphs.length > 1 ? paragraphs.sublist(1) : paragraphs;
+  }
 
-    return SizedBox(
-      width: 720,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          MouseRegion(
-            cursor: id == null
-                ? SystemMouseCursors.basic
-                : SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: id == null
-                  ? null
-                  : () => context.push('/neighborhood/$id'),
-              child: Row(
+  /// A taste of the neighbourhood, faded out under a "Read More" button that
+  /// opens the neighbourhood's own page.
+  ///
+  /// The design shows about two paragraphs here, the lower half dissolving
+  /// into white, with the button over the fade. The full text, and the
+  /// neighbourhood's photographs, figures, flats and businesses, are on the
+  /// neighbourhood page, so that is where "Read More" leads — rather than
+  /// unfolding the same text in place. A description too short to fade is
+  /// shown as it is, and the heading still leads to the page.
+  Widget _buildAboutHood(Listing l, List<String> paragraphs) {
+    final id = l.neighborhoodId;
+    final style = detailInter(16, color: kDetailBody, height: 1.6);
+    void openHood() => context.push('/neighborhood/$id');
+
+    Widget text() => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < paragraphs.length; i++) ...[
+          if (i > 0) const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: DetailText(paragraphs[i], maxLines: null, style: style),
+          ),
+        ],
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        MouseRegion(
+          cursor: id == null ? SystemMouseCursors.basic : SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: id == null ? null : openHood,
+            child: Text(
+              _t('About ${l.neighborhoodName}', 'על ${l.neighborhoodName}'),
+              style: detailDisplay(24),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            // The design's block: 232px of text under the heading, the fade
+            // starting 10px in and the button 7px off the bottom.
+            final full = _measure(paragraphs, style, constraints.maxWidth, gap: 24);
+            if (id == null || full < 120) return text();
+            final height = full < 232 ? full : 232.0;
+
+            return SizedBox(
+              height: height,
+              child: Stack(
                 children: [
-                  Flexible(
-                    child: _SectionHeading(
-                      _t(
-                        'About ${l.neighborhoodName}',
-                        'על שכונת ${l.neighborhoodName}',
+                  Positioned.fill(
+                    child: ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.topCenter,
+                        maxHeight: double.infinity,
+                        child: text(),
                       ),
                     ),
                   ),
-                  if (id != null) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      _isHebrew
-                          ? IconsaxPlusLinear.arrow_left_2
-                          : IconsaxPlusLinear.arrow_right_3,
-                      size: 20,
-                      color: AppColors.midBlue,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          if (about.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            Text(
-              about,
-              maxLines: _aboutExpanded ? null : 6,
-              overflow: _aboutExpanded
-                  ? TextOverflow.visible
-                  : TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 16,
-                color: const Color(0xFF3D3D3D),
-                height: 1.6,
-              ),
-            ),
-            // Only worth offering when there is more to show. The button was
-            // drawn whatever the length of the text.
-            if (about.length > 420) ...[
-              const SizedBox(height: 16),
-              Center(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () =>
-                        setState(() => _aboutExpanded = !_aboutExpanded),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AppColors.midBlue),
-                        borderRadius: BorderRadius.circular(60),
-                      ),
-                      child: Text(
-                        _aboutExpanded
-                            ? _t('Show Less', 'הצג פחות')
-                            : _t('Read More', 'קראו עוד'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.midBlue,
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: height - 10,
+                    child: const IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0x00FFFFFF), Colors.white],
+                            stops: [0, 0.98],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 7,
+                    child: Center(child: _outlineButton(_t('Read More', 'קראו עוד'), openHood)),
+                  ),
+                ],
               ),
-            ],
-          ],
-        ],
-      ),
+            );
+          },
+        ),
+      ],
     );
   }
+
+  double _measure(List<String> paragraphs, TextStyle style, double width, {required double gap}) {
+    final scaler = MediaQuery.textScalerOf(context);
+    var height = 0.0;
+    for (var i = 0; i < paragraphs.length; i++) {
+      final painter = TextPainter(
+        text: TextSpan(text: paragraphs[i], style: style),
+        textDirection: detailDirOf(paragraphs[i]),
+        textScaler: scaler,
+      )..layout(maxWidth: width);
+      height += painter.height + (i > 0 ? gap : 0);
+      painter.dispose();
+    }
+    return height;
+  }
+
+  Widget _outlineButton(String label, VoidCallback onTap) => MouseRegion(
+    cursor: SystemMouseCursors.click,
+    child: GestureDetector(
+      onTap: onTap,
+      // Sized by its label: 32px either side of it, 11px above and below.
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: AppColors.midBlue),
+          borderRadius: BorderRadius.circular(60),
+        ),
+        child: Text(label, style: detailInter(16, weight: FontWeight.w500, color: AppColors.midBlue, height: 1.5)),
+      ),
+    ),
+  );
 
   // ─────────────────────────────────────────────
   // CONTACT CARD
   // ─────────────────────────────────────────────
   /// Whoever to call about this listing.
   ///
-  /// The card named Zeev Schumacher of RGF Properties, Modiin, with an avatar
-  /// and a Contact button that had no handler, on every listing. A listing can
-  /// arrive with no agent and no contact at all — the client enters ones that
-  /// come in by telephone — so the card is absent then rather than invented.
+  /// A listing can arrive with no agent and no contact at all — the client
+  /// enters ones that come in by telephone — and the card is absent then
+  /// rather than invented. "Get in touch with our real estate expert" is
+  /// only said of an agent; a private seller is not one.
   Widget? _buildContactCard(Listing l) {
     final name = l.contactDisplayName;
     final phone = l.contactDisplayPhone;
     if (name == null && phone == null) return null;
+    final isAgent = l.agentName != null;
 
     return Container(
       width: 374,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: const Color(0xFFE7E7E7)),
+        border: Border.all(color: kDetailLine),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _t('Contact This Property', 'צרו קשר בנוגע לנכס'),
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.navy,
-            ),
+            _t('Contact This Property', 'צרו קשר לגבי הנכס'),
+            style: detailInter(18, weight: FontWeight.w600, color: AppColors.navy),
           ),
+          if (isAgent) ...[
+            const SizedBox(height: 8),
+            Text(
+              _t('Get in touch with our real estate expert', 'דברו עם מומחה הנדל״ן שלנו'),
+              style: detailInter(14, color: kDetailBody),
+            ),
+          ],
           const SizedBox(height: 25),
           Row(
             children: [
@@ -935,37 +723,23 @@ class _WebListingDetailContentState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name ?? phone!,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                    ),
+                    DetailText(name ?? phone!, style: detailInter(16, weight: FontWeight.w600)),
                     if (l.agentAgency != null) ...[
                       const SizedBox(height: 8),
-                      Text(
-                        l.agentAgency!,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 12,
-                          color: const Color(0xFF6D6D6D),
-                        ),
-                      ),
+                      DetailText(l.agentAgency!, style: detailInter(12, color: kDetailMuted)),
                     ],
                   ],
                 ),
               ),
             ],
           ),
-          if (phone != null) ...[
+          if (phone != null || l.agentId != null) ...[
             const SizedBox(height: 26),
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
-                onTap: () => _launchPhone(phone),
+                key: _contactKey,
+                onTap: () => _openContact(l),
                 child: Container(
                   width: double.infinity,
                   height: 44,
@@ -973,16 +747,10 @@ class _WebListingDetailContentState
                     color: AppColors.midBlue,
                     borderRadius: BorderRadius.circular(60),
                   ),
-                  child: Center(
-                    child: Text(
-                      phone,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    _t('Contact', 'צרו קשר'),
+                    style: detailInter(16, weight: FontWeight.w500, color: Colors.white, height: 1.5),
                   ),
                 ),
               ),
@@ -993,103 +761,144 @@ class _WebListingDetailContentState
     );
   }
 
-  /// A number that cannot be dialled is left alone rather than reported, since
-  /// there is nothing the reader could do about it.
-  static Future<void> _launchPhone(String phone) async {
-    final uri = Uri(scheme: 'tel', path: phone.replaceAll(' ', ''));
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
-  }
-
-  // ─────────────────────────────────────────────
-  // OTHER PROPERTIES IN THE SAME NEIGHBOURHOOD
-  // ─────────────────────────────────────────────
-  /// Four invented flats sat here, all "Moriah, Modiin". The strip is left out
-  /// entirely when the neighbourhood has nothing else on file.
+  /// The ways to reach this contact, in a menu under the button.
   ///
-  /// A row of cards headed "Businesses in Moriah" followed it, whose five
-  /// entries were in fact neighbourhood names — HaNahalim, Keremim, The Birds
-  /// — each subtitled "Neighborhood, Modiin". It is gone; the neighbourhood
-  /// page is where a neighbourhood's businesses belong.
-  Widget _buildNearbySection(Listing l) {
-    final nearby = ref.watch(nearbyListingsProvider(l.id)).valueOrNull;
-    final hood = l.neighborhoodName;
-    if (nearby == null || nearby.isEmpty || hood == null) {
-      return const SizedBox.shrink();
-    }
+  /// The button had no handler in the design's first build, and dialling
+  /// straight away does nothing on most desktops; the menu shows the number
+  /// itself, so it can be read off as well as called, and adds WhatsApp and
+  /// email where the agent has them.
+  Future<void> _openContact(Listing l) async {
+    final agent = l.agentId == null ? null : await ref.read(listingAgentContactProvider(l.agentId!).future);
+    if (!mounted) return;
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 64),
-      child: _Section(
-        maxWidth: 1200,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SectionHeading(_t('Properties in $hood', 'נכסים ב$hood')),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 275,
-              child: Stack(
-                clipBehavior: Clip.none,
+    final phone = agent?.phone ?? l.contactDisplayPhone;
+    final whatsapp = agent?.whatsapp ?? phone;
+    final email = agent?.email;
+
+    final options = <({IconData icon, String label, Uri uri})>[
+      if (phone != null)
+        (icon: IconsaxPlusLinear.call, label: phone, uri: Uri(scheme: 'tel', path: phone.replaceAll(RegExp(r'[^\d+]'), ''))),
+      if (whatsapp != null && _waNumber(whatsapp) != null)
+        (icon: IconsaxPlusLinear.message, label: 'WhatsApp', uri: Uri.parse('https://wa.me/${_waNumber(whatsapp)}')),
+      if (email != null) (icon: IconsaxPlusLinear.sms, label: email, uri: Uri(scheme: 'mailto', path: email)),
+    ];
+    if (options.isEmpty) return;
+
+    final box = _contactKey.currentContext?.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (box == null || overlay == null) return;
+    // Under the button, or over it when the window has no room below —
+    // never across it, where it would hide what was just clicked.
+    final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
+    final menuHeight = options.length * 48.0 + 16;
+    final below = origin.dy + box.size.height + 8;
+    final top = below + menuHeight <= overlay.size.height ? below : origin.dy - 8 - menuHeight;
+    final anchor = Rect.fromLTWH(origin.dx, top, box.size.width, 0);
+    // The menu is drawn in the app's overlay, outside this page's own
+    // Directionality, so it is told the page's direction explicitly.
+    final direction = _isHebrew ? TextDirection.rtl : TextDirection.ltr;
+
+    final chosen = await showMenu<Uri>(
+      context: context,
+      color: Colors.white,
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      constraints: BoxConstraints(minWidth: box.size.width, maxWidth: box.size.width),
+      position: RelativeRect.fromRect(anchor, Offset.zero & overlay.size),
+      items: [
+        for (final o in options)
+          PopupMenuItem<Uri>(
+            value: o.uri,
+            height: 48,
+            child: Directionality(
+              textDirection: direction,
+              child: Row(
                 children: [
-                  ListView.separated(
-                    controller: _nearbyController,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: nearby.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 16),
-                    itemBuilder: (context, index) => SizedBox(
-                      width: 288,
-                      child: _NearbyPropertyCard(
-                        listing: nearby[index],
-                        isHebrew: _isHebrew,
-                      ),
-                    ),
-                  ),
-                  // Only worth drawing when the strip is wider than the row.
-                  if (nearby.length > 4) ...[
-                    PositionedDirectional(
-                      start: -20,
-                      top: 0,
-                      bottom: 0,
-                      child: Center(
-                        child: _CarouselArrow(
-                          isBack: true,
-                          isHebrew: _isHebrew,
-                          onTap: () => _nearbyController.animateTo(
-                            _nearbyController.offset - 304,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOut,
-                          ),
-                        ),
-                      ),
-                    ),
-                    PositionedDirectional(
-                      end: -20,
-                      top: 0,
-                      bottom: 0,
-                      child: Center(
-                        child: _CarouselArrow(
-                          isBack: false,
-                          isHebrew: _isHebrew,
-                          onTap: () => _nearbyController.animateTo(
-                            _nearbyController.offset + 304,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOut,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  Icon(o.icon, size: 20, color: AppColors.midBlue),
+                  const SizedBox(width: 12),
+                  Expanded(child: DetailText(o.label, style: detailInter(15, weight: FontWeight.w500, color: AppColors.navy))),
                 ],
               ),
             ),
-          ],
+          ),
+      ],
+    );
+    if (chosen != null) {
+      await launchUrl(chosen, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// A number as wa.me wants it: digits only, with Israel's code in place of
+  /// the leading nought. Null when there are not enough digits to be one.
+  static String? _waNumber(String raw) {
+    var digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('0')) digits = '972${digits.substring(1)}';
+    return digits.length >= 9 ? digits : null;
+  }
+
+  // ─────────────────────────────────────────────
+  // PROPERTIES IN THE SAME NEIGHBOURHOOD
+  // ─────────────────────────────────────────────
+  /// Other active listings filed under the same neighbourhood; the strip is
+  /// left out when there are none.
+  Widget _buildNearbySection(Listing l) {
+    final nearby = ref.watch(nearbyListingsProvider(l.id)).valueOrNull;
+    final hood = l.neighborhoodName;
+    if (nearby == null || nearby.isEmpty || hood == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 64),
+      child: DetailStrip(
+        maxWidth: 1200,
+        title: _t('Properties in $hood', 'נכסים ב$hood'),
+        titleGap: 24,
+        carousel: DetailCarousel(
+          itemCount: nearby.length,
+          height: 261,
+          gap: 16,
+          perView: (_) => 4,
+          arrowTop: 111,
+          itemBuilder: (context, i) => DetailListingCard(listing: nearby[i], isHebrew: _isHebrew),
         ),
       ),
     );
   }
 
   // ─────────────────────────────────────────────
-  // NOTICES — loading, missing and failed states
+  // BUSINESSES IN THE SAME NEIGHBOURHOOD
+  // ─────────────────────────────────────────────
+  /// The design fills this strip with neighbourhood names — HaNahalim,
+  /// Keremim, The Birds — each subtitled "Neighborhood, Modiin", under the
+  /// heading "Businesses in Moriah". The heading is what it means: these are
+  /// the active businesses filed under the listing's neighbourhood, with
+  /// what each one is beneath its name. Absent when there are none.
+  Widget _buildBusinessesSection(Listing l) {
+    final id = l.neighborhoodId;
+    final hood = l.neighborhoodName;
+    if (id == null || hood == null) return const SizedBox.shrink();
+    final businesses = ref.watch(neighborhoodBusinessesProvider(id)).valueOrNull;
+    if (businesses == null || businesses.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 64),
+      child: DetailStrip(
+        maxWidth: 1200,
+        title: _t('Businesses in $hood', 'עסקים ב$hood'),
+        titleGap: 24,
+        carousel: DetailCarousel(
+          itemCount: businesses.length,
+          height: 248,
+          gap: 16,
+          perView: (_) => 4,
+          arrowTop: 104,
+          itemBuilder: (context, i) => DetailBusinessCard(business: businesses[i], isHebrew: _isHebrew),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // NOTICES — missing and failed states
   // ─────────────────────────────────────────────
   Widget _buildNotice({
     required IconData icon,
@@ -1100,65 +909,33 @@ class _WebListingDetailContentState
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 80),
-      child: _Section(
+      child: DetailColumn(
         maxWidth: 1200,
         child: Container(
-          width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 72, horizontal: 24),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE7E7E7)),
+            border: Border.all(color: kDetailLine),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
-              Icon(
-                icon,
-                size: 44,
-                color: const Color(0xFF6D6D6D).withValues(alpha: 0.5),
-              ),
+              Icon(icon, size: 44, color: kDetailMuted.withValues(alpha: 0.5)),
               const SizedBox(height: 16),
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: AppFonts.nunito,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.navy,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Text(title, style: detailDisplay(20, color: AppColors.navy), textAlign: TextAlign.center),
               const SizedBox(height: 8),
-              Text(
-                body,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  color: const Color(0xFF5F5E5A),
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Text(body, style: detailInter(14, color: kDetailGrey), textAlign: TextAlign.center),
               const SizedBox(height: 24),
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: onAction,
                   child: Container(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
                     decoration: BoxDecoration(
                       color: AppColors.midBlue,
                       borderRadius: BorderRadius.circular(60),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      actionLabel,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: Text(actionLabel, style: detailInter(16, weight: FontWeight.w500, color: Colors.white, height: 1.5)),
                   ),
                 ),
               ),
@@ -1170,305 +947,30 @@ class _WebListingDetailContentState
   }
 }
 
-// ═══════════════════════════════════════════════
-// REUSABLE WIDGETS
-// ═══════════════════════════════════════════════
-
-class _SectionHeading extends StatelessWidget {
-  final String text;
-  const _SectionHeading(this.text);
+/// The design's map pin: a white drop with a blue house in it, and a soft
+/// shadow under it. The shadow in the exported SVG is a filter, which the
+/// SVG renderer ignores, so it is drawn here from the same shape.
+class _MapPin extends StatelessWidget {
+  const _MapPin();
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontFamily: AppFonts.nunito,
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: AppColors.midBlue,
-      ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  final Widget child;
-  final double maxWidth;
-  const _Section({required this.child, this.maxWidth = 1600});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxWidth),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _CarouselArrow extends StatefulWidget {
-  /// Which way the carousel moves, rather than which way the glyph points —
-  /// in Hebrew the two are opposites.
-  final bool isBack;
-  final bool isHebrew;
-  final VoidCallback onTap;
-  const _CarouselArrow({
-    required this.isBack,
-    required this.isHebrew,
-    required this.onTap,
-  });
-
-  @override
-  State<_CarouselArrow> createState() => _CarouselArrowState();
-}
-
-class _CarouselArrowState extends State<_CarouselArrow> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final pointsLeft = widget.isBack != widget.isHebrew;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: _hovered ? const Color(0xFFF8F8F8) : Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFF6F6F6)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Icon(
-            pointsLeft
-                ? IconsaxPlusLinear.arrow_left_2
-                : IconsaxPlusLinear.arrow_right_3,
-            size: 20,
-            color: AppColors.midBlue,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NearbyPropertyCard extends StatefulWidget {
-  final Listing listing;
-  final bool isHebrew;
-  const _NearbyPropertyCard({required this.listing, required this.isHebrew});
-
-  @override
-  State<_NearbyPropertyCard> createState() => _NearbyPropertyCardState();
-}
-
-class _NearbyPropertyCardState extends State<_NearbyPropertyCard> {
-  bool _hovered = false;
-
-  String _t(String en, String he) => widget.isHebrew ? he : en;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = widget.listing;
-    final isRent = l.kind == ListingKind.rent;
-    final price = l.effectivePrice;
-    final where = l.address ?? l.neighborhoodName;
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        // The card was not tappable at all.
-        onTap: () => context.push('/listing/${l.id}'),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE7E7E7)),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: _hovered
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : [],
-          ),
-          transform: _hovered
-              ? Matrix4.translationValues(0, -2, 0)
-              : Matrix4.identity(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  SizedBox(
-                    height: 150,
-                    width: double.infinity,
-                    child: NetworkPhoto(
-                      url: l.coverUrl,
-                      radius: const BorderRadius.vertical(
-                        top: Radius.circular(12),
-                      ),
-                      icon: IconsaxPlusBold.home_2,
-                      iconSize: 36,
-                    ),
-                  ),
-                  PositionedDirectional(
-                    start: 10,
-                    top: 10,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: FavoriteButton(
-                          kind: FavoriteKind.listing,
-                          id: l.id,
-                          iconSize: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            price == null
-                                ? _t('Price on request', 'מחיר לפי בקשה')
-                                : isRent
-                                ? _t(
-                                    '${formatShekels(price)} / month',
-                                    '${formatShekels(price)} לחודש',
-                                  )
-                                : formatShekels(price),
-                            style: TextStyle(
-                              fontFamily: AppFonts.nunito,
-                              fontSize: price == null ? 14 : 20,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.navy,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Text(
-                          isRent
-                              ? _t('FOR RENT', 'להשכרה')
-                              : _t('FOR SALE', 'למכירה'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.turquoise,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        if (l.sqm != null) ...[
-                          _miniStat(
-                            IconsaxPlusLinear.maximize_3,
-                            _t('${l.sqm} m²', '${l.sqm} מ״ר'),
-                          ),
-                          const SizedBox(width: 24),
-                        ],
-                        if (l.rooms != null) ...[
-                          _miniStat(
-                            IconsaxPlusLinear.building_3,
-                            _t(
-                              '${_rooms(l.rooms!)} Rooms',
-                              '${_rooms(l.rooms!)} חדרים',
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                        ],
-                        if (l.floor != null)
-                          _miniStat(
-                            IconsaxPlusLinear.building_4,
-                            _t('Floor ${l.floor}', 'קומה ${l.floor}'),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    if (where != null)
-                      Row(
-                        children: [
-                          const Icon(
-                            IconsaxPlusBold.location,
-                            size: 16,
-                            color: AppColors.turquoise,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              where,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 14,
-                                color: const Color(0xFF5F5E5A),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Half rooms are normal here, so 3.5 must not print as 3.
-  static String _rooms(double rooms) =>
-      rooms == rooms.roundToDouble() ? '${rooms.toInt()}' : '$rooms';
-
-  Widget _miniStat(IconData icon, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    const asset = '$kDetailAsset/detail_map_marker.svg';
+    return Stack(
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 12,
-            color: const Color(0xFF3D3D3D),
+        Transform.translate(
+          offset: const Offset(0, 2.74),
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 1.4, sigmaY: 1.4),
+            child: SvgPicture.asset(
+              asset,
+              width: 48,
+              height: 52,
+              colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.25), BlendMode.srcIn),
+            ),
           ),
         ),
+        SvgPicture.asset(asset, width: 48, height: 52),
       ],
     );
   }

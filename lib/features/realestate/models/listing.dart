@@ -197,6 +197,11 @@ class Listing {
   /// no price at all.
   int? get effectivePrice => kind == ListingKind.rent ? pricePerMonth : price;
 
+  /// Anything posted in the last fortnight — the rule the app's own listing
+  /// cards already use, so a flat does not read as new on the phone and old
+  /// on the website. `listings` carries no "new" flag of its own.
+  bool get isNew => DateTime.now().difference(createdAt).inDays < 14;
+
   /// Who to call. A listing entered by telephone has a contact but no agent
   /// and no account.
   String? get contactDisplayName => agentName ?? contactName;
