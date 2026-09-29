@@ -1,9 +1,14 @@
-import 'dart:ui';
-import '../../../core/theme/app_fonts.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../deals/models/offer.dart' show offerBadge;
 import '../providers/admin_offers_provider.dart';
+import '../widgets/admin_events_form_fields.dart';
+import '../widgets/image_upload_field.dart';
 
 class AdminOffersScreen extends ConsumerStatefulWidget {
   const AdminOffersScreen({super.key});
@@ -20,7 +25,15 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _debouncer.cancel();
     super.dispose();
+  }
+
+  void _filter(String status) {
+    setState(() => _statusFilter = status);
+    ref
+        .read(adminOfferListProvider.notifier)
+        .setStatusFilter(status.isEmpty ? null : status);
   }
 
   @override
@@ -35,7 +48,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
               final active = list.where((o) => o['status'] == 'active').length;
               final totalClaims = list.fold<int>(
                 0,
-                (s, o) => s + ((o['current_claims'] as int?) ?? 0),
+                (s, o) => s + ((o['claim_count'] as num?)?.toInt() ?? 0),
               );
               final featured = list
                   .where((o) => o['is_featured'] == true)
@@ -125,28 +138,29 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref.read(adminOfferListProvider.notifier).setStatusFilter(null);
-              }),
-              _FilterChip('פעיל', _statusFilter == 'active', () {
-                setState(() => _statusFilter = 'active');
-                ref
-                    .read(adminOfferListProvider.notifier)
-                    .setStatusFilter('active');
-              }),
-              _FilterChip('מתוכנן', _statusFilter == 'scheduled', () {
-                setState(() => _statusFilter = 'scheduled');
-                ref
-                    .read(adminOfferListProvider.notifier)
-                    .setStatusFilter('scheduled');
-              }),
-              _FilterChip('פג תוקף', _statusFilter == 'expired', () {
-                setState(() => _statusFilter = 'expired');
-                ref
-                    .read(adminOfferListProvider.notifier)
-                    .setStatusFilter('expired');
-              }),
+              // The four values of `offer_status`. "Scheduled" and "paused"
+              // were offered here too; the table has neither.
+              _FilterChip('הכל', _statusFilter.isEmpty, () => _filter('')),
+              _FilterChip(
+                'פעיל',
+                _statusFilter == 'active',
+                () => _filter('active'),
+              ),
+              _FilterChip(
+                'טיוטה',
+                _statusFilter == 'draft',
+                () => _filter('draft'),
+              ),
+              _FilterChip(
+                'פג תוקף',
+                _statusFilter == 'expired',
+                () => _filter('expired'),
+              ),
+              _FilterChip(
+                'אזל',
+                _statusFilter == 'redeemed_out',
+                () => _filter('redeemed_out'),
+              ),
               const Spacer(),
               asyncData
                       .whenData(
@@ -163,7 +177,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                   const SizedBox.shrink(),
               const SizedBox(width: 16),
               FilledButton.icon(
-                onPressed: () => _showEditor(context, ref),
+                onPressed: () => _showEditor(context),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
                   'מבצע חדש',
@@ -236,9 +250,9 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                       children: [
                         _Col('מבצע', flex: 3),
                         _Col('עסק', flex: 2),
-                        if (isWide) _Col('סוג הנחה', flex: 1),
+                        if (isWide) _Col('תגית באתר', flex: 1),
                         if (isWide) _Col('מימושים', flex: 1),
-                        if (isWide) _Col('קוד', flex: 1),
+                        if (isWide) _Col('בתוקף עד', flex: 1),
                         _Col('סטטוס', flex: 1),
                         const SizedBox(width: 40),
                       ],
@@ -247,21 +261,28 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                   Expanded(
                     child: ListView.separated(
                       itemCount: list.length,
-                      separatorBuilder: (_, __) => Divider(
+                      separatorBuilder: (_, _) => Divider(
                         height: 1,
                         color: AppColors.border.withValues(alpha: 0.3),
                       ),
                       itemBuilder: (_, i) {
                         final o = list[i];
                         final status = o['status'] as String? ?? 'draft';
-                        final discountType =
-                            o['discount_type'] as String? ?? '';
-                        final claims = o['current_claims'] as int? ?? 0;
-                        final maxClaims = o['max_claims'] as int?;
+                        final name = o['name'] as String? ?? '';
+                        final biz = o['businesses'];
+                        final bizName = biz is Map
+                            ? biz['name'] as String? ?? ''
+                            : '';
+                        final claims = (o['claim_count'] as num?)?.toInt() ?? 0;
+                        final maxClaims = (o['max_claims'] as num?)?.toInt();
                         final isFeatured = o['is_featured'] as bool? ?? false;
+                        final residentsOnly = o['audience'] == 'verified';
+                        final endAt = DateTime.tryParse(
+                          o['end_at'] as String? ?? '',
+                        )?.toLocal();
 
                         return InkWell(
-                          onTap: () => _showEditor(context, ref, offer: o),
+                          onTap: () => _showEditor(context, offer: o),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -290,25 +311,37 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              o['title'] as String? ?? '',
+                                              name,
                                               style: TextStyle(
                                                 fontFamily: AppFonts.rubik,
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                                 color: AppColors.navy,
                                               ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            if (o['description'] != null)
-                                              Text(
-                                                o['description'] as String,
-                                                style: TextStyle(
-                                                  fontFamily: AppFonts.rubik,
-                                                  fontSize: 11,
-                                                  color: AppColors.grayLight,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
+                                            Text(
+                                              [
+                                                if (residentsOnly)
+                                                  'לתושבים בלבד',
+                                                if ((o['code'] as String? ?? '')
+                                                    .isNotEmpty)
+                                                  'קוד ${o['code']}',
+                                                if ((o['description']
+                                                            as String? ??
+                                                        '')
+                                                    .isNotEmpty)
+                                                  o['description'] as String,
+                                              ].join(' · '),
+                                              style: TextStyle(
+                                                fontFamily: AppFonts.rubik,
+                                                fontSize: 11,
+                                                color: AppColors.grayLight,
                                               ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -318,23 +351,26 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                 Expanded(
                                   flex: 2,
                                   child: Text(
-                                    o['business_name'] as String? ?? '',
+                                    bizName,
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 13,
                                       color: AppColors.grayText,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 if (isWide)
                                   Expanded(
                                     flex: 1,
                                     child: Text(
-                                      _discountLabel(discountType),
+                                      offerBadge(name) ?? '—',
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 12,
-                                        color: AppColors.grayText,
+                                        color: AppColors.orange,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
@@ -348,8 +384,8 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 13,
-                                        fontFeatures: [
-                                          const FontFeature.tabularFigures(),
+                                        fontFeatures: const [
+                                          FontFeature.tabularFigures(),
                                         ],
                                       ),
                                     ),
@@ -358,11 +394,20 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                   Expanded(
                                     flex: 1,
                                     child: Text(
-                                      o['code'] as String? ?? '—',
+                                      endAt == null
+                                          ? 'ללא'
+                                          : '${formatAdminDate(endAt)} '
+                                                '${formatAdminTime(endAt.hour, endAt.minute)}',
+                                      textDirection: TextDirection.ltr,
+                                      textAlign: TextAlign.right,
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 12,
-                                        color: AppColors.turquoise,
+                                        color:
+                                            endAt != null &&
+                                                endAt.isBefore(DateTime.now())
+                                            ? AppColors.error
+                                            : AppColors.grayText,
                                       ),
                                     ),
                                   ),
@@ -375,49 +420,16 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                   ),
                                   onSelected: (v) => _handleAction(v, o),
                                   itemBuilder: (_) => [
-                                    PopupMenuItem(
-                                      value: 'edit',
-                                      child: Text(
-                                        'עריכה',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
+                                    _menuItem('edit', 'עריכה'),
                                     if (status != 'active')
-                                      PopupMenuItem(
-                                        value: 'activate',
-                                        child: Text(
-                                          'הפעל',
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
+                                      _menuItem('activate', 'הפעל'),
                                     if (status == 'active')
-                                      PopupMenuItem(
-                                        value: 'expire',
-                                        child: Text(
-                                          'סיים',
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text(
-                                        // The row is not removed; it becomes status = 'expired'.
-                                        'סיום',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 13,
-                                          color: AppColors.error,
-                                        ),
-                                      ),
+                                      _menuItem('expire', 'סיים'),
+                                    _menuItem(
+                                      'delete',
+                                      // The row is not removed; it becomes status = 'expired'.
+                                      'סיום',
+                                      color: AppColors.error,
                                     ),
                                   ],
                                 ),
@@ -437,34 +449,47 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
     );
   }
 
-  String _discountLabel(String t) => switch (t) {
-    'percentage' => 'אחוז',
-    'fixed' => 'סכום קבוע',
-    'bogo' => 'קנה-קבל',
-    'gift' => 'מתנה',
-    _ => t,
-  };
+  PopupMenuItem<String> _menuItem(String value, String label, {Color? color}) {
+    return PopupMenuItem(
+      value: value,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: AppFonts.rubik,
+          fontSize: 13,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _run(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('שגיאה: $e'), backgroundColor: AppColors.error),
+      );
+    }
+  }
 
   void _handleAction(String action, Map<String, dynamic> o) {
     final notifier = ref.read(adminOfferListProvider.notifier);
     final id = o['id'] as String;
     switch (action) {
       case 'edit':
-        _showEditor(context, ref, offer: o);
+        _showEditor(context, offer: o);
       case 'activate':
-        notifier.updateStatus(id, 'active');
+        _run(() => notifier.updateStatus(id, 'active'));
       case 'expire':
-        notifier.updateStatus(id, 'expired');
+        _run(() => notifier.updateStatus(id, 'expired'));
       case 'delete':
-        notifier.deleteOffer(id);
+        _run(() => notifier.deleteOffer(id));
     }
   }
 
-  void _showEditor(
-    BuildContext context,
-    WidgetRef ref, {
-    Map<String, dynamic>? offer,
-  }) {
+  void _showEditor(BuildContext context, {Map<String, dynamic>? offer}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -487,73 +512,106 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
 
-  late final TextEditingController _title;
+  late final TextEditingController _name;
   late final TextEditingController _description;
-  late final TextEditingController _businessName;
-  late final TextEditingController _businessId;
-  late final TextEditingController _discountValue;
-  late final TextEditingController _originalPrice;
-  late final TextEditingController _discountedPrice;
+  late final TextEditingController _terms;
+  late final TextEditingController _image;
   late final TextEditingController _code;
   late final TextEditingController _maxClaims;
-  late final TextEditingController _terms;
-  late final TextEditingController _startAt;
-  late final TextEditingController _endAt;
-  String _discountType = 'percentage';
+  late final TextEditingController _maxPerUser;
+  late final TextEditingController _points;
+  late final TextEditingController _startDate;
+  late final TextEditingController _startTime;
+  late final TextEditingController _endDate;
+  late final TextEditingController _endTime;
+  String? _businessId;
+  String? _businessName;
   String _status = 'draft';
+  String _audience = 'all';
   bool _isFeatured = false;
 
   bool get _isEditing => widget.offer != null;
+
+  static const _statuses = {
+    'draft': 'טיוטה',
+    'active': 'פעיל',
+    'expired': 'פג תוקף',
+    'redeemed_out': 'אזל',
+  };
+
+  /// `audience` per migration 00007. The website marks `verified` as
+  /// "Residents Only".
+  static const _audiences = {
+    'all': 'כולם',
+    'verified': 'תושבים מאומתים בלבד',
+    'new_users': 'משתמשים חדשים',
+  };
 
   @override
   void initState() {
     super.initState();
     final o = widget.offer;
-    _title = TextEditingController(text: o?['title'] as String? ?? '');
-    _description = TextEditingController(
-      text: o?['description'] as String? ?? '',
+    String text(String key) => (o?[key] as String?) ?? '';
+    String number(String key, {String fallback = ''}) =>
+        (o?[key] as num?)?.toInt().toString() ?? fallback;
+
+    // Stored in UTC; edited in the admin's own clock.
+    final start = DateTime.tryParse(text('start_at'))?.toLocal();
+    final end = DateTime.tryParse(text('end_at'))?.toLocal();
+
+    _name = TextEditingController(text: text('name'));
+    _description = TextEditingController(text: text('description'));
+    _terms = TextEditingController(text: text('terms'));
+    _image = TextEditingController(text: text('image_url'));
+    _code = TextEditingController(text: text('code'));
+    _maxClaims = TextEditingController(text: number('max_claims'));
+    _maxPerUser = TextEditingController(
+      text: number('max_per_user', fallback: '1'),
     );
-    _businessName = TextEditingController(
-      text: o?['business_name'] as String? ?? '',
+    _points = TextEditingController(
+      text: number('points_required', fallback: '0'),
     );
-    _businessId = TextEditingController(
-      text: o?['business_id'] as String? ?? '',
+    _startDate = TextEditingController(
+      text: start == null ? '' : formatAdminDate(start),
     );
-    _discountValue = TextEditingController(
-      text: (o?['discount_value'] as num?)?.toString() ?? '',
+    _startTime = TextEditingController(
+      text: start == null ? '' : formatAdminTime(start.hour, start.minute),
     );
-    _originalPrice = TextEditingController(
-      text: (o?['original_price'] as num?)?.toString() ?? '',
+    _endDate = TextEditingController(
+      text: end == null ? '' : formatAdminDate(end),
     );
-    _discountedPrice = TextEditingController(
-      text: (o?['discounted_price'] as num?)?.toString() ?? '',
+    _endTime = TextEditingController(
+      text: end == null ? '' : formatAdminTime(end.hour, end.minute),
     );
-    _code = TextEditingController(text: o?['code'] as String? ?? '');
-    _maxClaims = TextEditingController(
-      text: (o?['max_claims'] as int?)?.toString() ?? '',
-    );
-    _terms = TextEditingController(text: o?['terms'] as String? ?? '');
-    _startAt = TextEditingController(text: o?['start_at'] as String? ?? '');
-    _endAt = TextEditingController(text: o?['end_at'] as String? ?? '');
-    _discountType = o?['discount_type'] as String? ?? 'percentage';
+
+    _businessId = o?['business_id'] as String?;
+    final biz = o?['businesses'];
+    _businessName = biz is Map ? biz['name'] as String? : null;
     _status = o?['status'] as String? ?? 'draft';
+    if (!_statuses.containsKey(_status)) _status = 'draft';
+    _audience = o?['audience'] as String? ?? 'all';
+    if (!_audiences.containsKey(_audience)) _audience = 'all';
     _isFeatured = o?['is_featured'] as bool? ?? false;
   }
 
   @override
   void dispose() {
-    _title.dispose();
-    _description.dispose();
-    _businessName.dispose();
-    _businessId.dispose();
-    _discountValue.dispose();
-    _originalPrice.dispose();
-    _discountedPrice.dispose();
-    _code.dispose();
-    _maxClaims.dispose();
-    _terms.dispose();
-    _startAt.dispose();
-    _endAt.dispose();
+    for (final c in [
+      _name,
+      _description,
+      _terms,
+      _image,
+      _code,
+      _maxClaims,
+      _maxPerUser,
+      _points,
+      _startDate,
+      _startTime,
+      _endDate,
+      _endTime,
+    ]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -563,7 +621,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
       insetPadding: const EdgeInsets.all(24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 650, maxHeight: 720),
+        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 860),
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: Form(
@@ -611,78 +669,56 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildField(
-                          'כותרת',
-                          _title,
+                          'שם המבצע *',
+                          _name,
                           hint: '20% הנחה על כל הפיצות',
                           validator: (v) =>
-                              v == null || v.isEmpty ? 'שדה חובה' : null,
+                              (v ?? '').trim().isEmpty ? 'שדה חובה' : null,
+                        ),
+                        const SizedBox(height: 6),
+                        _BadgeHint(controller: _name),
+                        const SizedBox(height: 14),
+                        _label('עסק *'),
+                        AdminBusinessPickerField(
+                          label: '',
+                          businessId: _businessId,
+                          fallbackName: _businessName,
+                          required: true,
+                          onChanged: (b) => setState(() {
+                            _businessId = b?.id;
+                            _businessName = b?.name;
+                          }),
                         ),
                         const SizedBox(height: 14),
                         _buildField(
                           'תיאור',
                           _description,
                           hint: 'פירוט המבצע...',
-                          maxLines: 2,
+                          maxLines: 3,
                         ),
                         const SizedBox(height: 14),
-                        _buildField('עסק', _businessName, hint: 'פיצה פרגו'),
+                        _buildField(
+                          'תנאים',
+                          _terms,
+                          hint: 'תנאים והגבלות...',
+                          maxLines: 3,
+                        ),
                         const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildDropdown(
-                                'סוג הנחה',
-                                _discountType,
-                                {
-                                  'percentage': 'אחוז',
-                                  'fixed': 'סכום קבוע',
-                                  'bogo': 'קנה-קבל',
-                                  'gift': 'מתנה',
-                                },
-                                (v) => setState(() => _discountType = v!),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildField(
-                                'ערך הנחה',
-                                _discountValue,
-                                hint: '20',
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ],
+                        ImageUploadField(
+                          label: 'תמונה',
+                          controller: _image,
+                          folder: 'offers',
                         ),
                         const SizedBox(height: 14),
                         Row(
-                          children: [
-                            Expanded(
-                              child: _buildField(
-                                'מחיר מקורי',
-                                _originalPrice,
-                                hint: '₪',
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildField(
-                                'מחיר לאחר הנחה',
-                                _discountedPrice,
-                                hint: '₪',
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: _buildField(
                                 'קוד קופון',
                                 _code,
                                 hint: 'PIZZA20',
+                                ltr: true,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -692,65 +728,144 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                                 _maxClaims,
                                 hint: 'ללא הגבלה',
                                 keyboardType: TextInputType.number,
+                                validator: (v) =>
+                                    _wholeNumber(v, min: 1, required: false),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 14),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: _buildField(
+                                'מימושים לכל משתמש',
+                                _maxPerUser,
+                                hint: '1',
+                                keyboardType: TextInputType.number,
+                                validator: (v) =>
+                                    _wholeNumber(v, min: 1, required: true),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildField(
+                                'נקודות נדרשות',
+                                _points,
+                                hint: '0',
+                                keyboardType: TextInputType.number,
+                                validator: (v) =>
+                                    _wholeNumber(v, min: 0, required: true),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _labelled(
                                 'תחילת מבצע',
-                                _startAt,
-                                hint: '2026-09-01',
+                                AdminDateField(
+                                  controller: _startDate,
+                                  decoration: _inputDecoration(),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: _buildField(
-                                'סיום מבצע',
-                                _endAt,
-                                hint: '2026-09-30',
+                              child: _labelled(
+                                'שעה',
+                                AdminTimeField(
+                                  controller: _startTime,
+                                  decoration: _inputDecoration(hint: '00:00'),
+                                ),
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 14),
-                        _buildField(
-                          'תנאים',
-                          _terms,
-                          hint: 'תנאים והגבלות...',
-                          maxLines: 2,
                         ),
                         const SizedBox(height: 14),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: _buildDropdown('סטטוס', _status, {
-                                'draft': 'טיוטה',
-                                'active': 'פעיל',
-                                'scheduled': 'מתוכנן',
-                                'expired': 'פג תוקף',
-                              }, (v) => setState(() => _status = v!)),
+                              child: _labelled(
+                                'סיום מבצע',
+                                AdminDateField(
+                                  controller: _endDate,
+                                  decoration: _inputDecoration(),
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: SwitchListTile(
-                                title: Text(
-                                  'מומלץ',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubik,
-                                    fontSize: 14,
-                                  ),
+                              child: _labelled(
+                                'שעה',
+                                AdminTimeField(
+                                  controller: _endTime,
+                                  decoration: _inputDecoration(hint: '23:59'),
                                 ),
-                                value: _isFeatured,
-                                activeColor: AppColors.gold,
-                                onChanged: (v) =>
-                                    setState(() => _isFeatured = v),
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'בלי תאריך סיום לא יוצג באתר שעון ספירה לאחור.',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 11,
+                            color: AppColors.grayLight,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _buildDropdown(
+                                'קהל',
+                                _audience,
+                                _audiences,
+                                (v) => setState(() => _audience = v!),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildDropdown(
+                                'סטטוס',
+                                _status,
+                                _statuses,
+                                (v) => setState(() => _status = v!),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'תושבים מאומתים בלבד — מסומן באתר "לתושבים בלבד". '
+                          'רק מבצע בסטטוס "פעיל" מוצג באתר.',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 11,
+                            color: AppColors.grayLight,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'מומלץ',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _isFeatured,
+                          activeThumbColor: AppColors.gold,
+                          onChanged: (v) => setState(() => _isFeatured = v),
                         ),
                       ],
                     ),
@@ -820,6 +935,48 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     );
   }
 
+  Widget _label(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontFamily: AppFonts.rubik,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: AppColors.grayText,
+      ),
+    ),
+  );
+
+  Widget _labelled(String label, Widget field) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [_label(label), field],
+  );
+
+  InputDecoration _inputDecoration({String? hint}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+        fontFamily: AppFonts.rubik,
+        fontSize: 13,
+        color: AppColors.grayLight,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.turquoise),
+      ),
+    );
+  }
+
   Widget _buildField(
     String label,
     TextEditingController ctrl, {
@@ -827,52 +984,19 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     String? Function(String?)? validator,
     int maxLines = 1,
     TextInputType? keyboardType,
+    bool ltr = false,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: AppColors.grayText,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: ctrl,
-          validator: validator,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 13,
-              color: AppColors.grayLight,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.turquoise),
-            ),
-          ),
-        ),
-      ],
+    return _labelled(
+      label,
+      TextFormField(
+        controller: ctrl,
+        validator: validator,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        textDirection: ltr ? TextDirection.ltr : null,
+        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+        decoration: _inputDecoration(hint: hint),
+      ),
     );
   }
 
@@ -882,83 +1006,186 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     Map<String, String> items,
     ValueChanged<String?> onChanged,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: AppColors.grayText,
-          ),
-        ),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          value: value,
-          items: items.entries
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e.key,
-                  child: Text(
-                    e.value,
-                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  ),
+    return _labelled(
+      label,
+      DropdownButtonFormField<String>(
+        initialValue: value,
+        items: items.entries
+            .map(
+              (e) => DropdownMenuItem(
+                value: e.key,
+                child: Text(
+                  e.value,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                 ),
-              )
-              .toList(),
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.turquoise),
-            ),
-          ),
-        ),
-      ],
+              ),
+            )
+            .toList(),
+        onChanged: onChanged,
+        decoration: _inputDecoration(),
+      ),
+    );
+  }
+
+  String? _wholeNumber(String? v, {required int min, required bool required}) {
+    final t = (v ?? '').trim();
+    if (t.isEmpty) return required ? 'שדה חובה' : null;
+    final n = int.tryParse(t);
+    return n == null || n < min ? 'מספר שלם, $min ומעלה' : null;
+  }
+
+  /// A date and a time from the form, as a UTC timestamp. A missing time is
+  /// the start of the day for an opening and its last minute for a close.
+  String? _timestamp(
+    TextEditingController date,
+    TextEditingController time, {
+    required bool endOfDay,
+  }) {
+    final d = parseAdminDate(date.text);
+    if (d == null) return null;
+    final t =
+        parseAdminTime(time.text) ??
+        (endOfDay ? (hour: 23, minute: 59) : (hour: 0, minute: 0));
+    return DateTime(
+      d.year,
+      d.month,
+      d.day,
+      t.hour,
+      t.minute,
+    ).toUtc().toIso8601String();
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.error),
     );
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
-    final notifier = ref.read(adminOfferListProvider.notifier);
-    final data = {
-      'title': _title.text.trim(),
-      'description': _description.text.trim(),
-      'business_name': _businessName.text.trim(),
-      'business_id': _businessId.text.trim(),
-      'discount_type': _discountType,
-      'discount_value': num.tryParse(_discountValue.text) ?? 0,
-      'original_price': num.tryParse(_originalPrice.text),
-      'discounted_price': num.tryParse(_discountedPrice.text),
-      'code': _code.text.trim().isEmpty ? null : _code.text.trim(),
-      'max_claims': int.tryParse(_maxClaims.text),
-      'terms': _terms.text.trim(),
-      'start_at': _startAt.text.trim().isEmpty ? null : _startAt.text.trim(),
-      'end_at': _endAt.text.trim().isEmpty ? null : _endAt.text.trim(),
+
+    String? nullIfEmpty(TextEditingController c) {
+      final t = c.text.trim();
+      return t.isEmpty ? null : t;
+    }
+
+    final startAt = _timestamp(_startDate, _startTime, endOfDay: false);
+    final endAt = _timestamp(_endDate, _endTime, endOfDay: true);
+    if (startAt != null &&
+        endAt != null &&
+        !DateTime.parse(endAt).isAfter(DateTime.parse(startAt))) {
+      _toast('סיום המבצע חייב להיות אחרי תחילתו');
+      return;
+    }
+
+    final data = <String, dynamic>{
+      'name': _name.text.trim(),
+      'business_id': _businessId,
+      'description': nullIfEmpty(_description),
+      'terms': nullIfEmpty(_terms),
+      'image_url': nullIfEmpty(_image),
+      'code': nullIfEmpty(_code),
+      'max_claims': int.tryParse(_maxClaims.text.trim()),
+      'max_per_user': int.tryParse(_maxPerUser.text.trim()) ?? 1,
+      'points_required': int.tryParse(_points.text.trim()) ?? 0,
+      'start_at': startAt,
+      'end_at': endAt,
+      'audience': _audience,
       'status': _status,
       'is_featured': _isFeatured,
     };
-    if (_isEditing) {
-      await notifier.updateOffer(widget.offer!['id'] as String, data);
-    } else {
-      await notifier.createOffer(data);
+
+    setState(() => _saving = true);
+    final notifier = ref.read(adminOfferListProvider.notifier);
+    try {
+      if (_isEditing) {
+        await notifier.updateOffer(widget.offer!['id'] as String, data);
+      } else {
+        await notifier.createOffer(data);
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) _toast('שגיאה: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    if (mounted) Navigator.pop(context);
+  }
+}
+
+/// Says what the website will put on the card's corner, as the name is typed.
+///
+/// `offers` has no discount column; the site reads the badge out of the name
+/// (see [offerBadge]). Showing the result here is the only way the person
+/// entering the offer can know that "20% הנחה" in the name becomes the badge
+/// and "מבצע מיוחד" becomes none.
+class _BadgeHint extends StatelessWidget {
+  final TextEditingController controller;
+  const _BadgeHint({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (_, value, _) {
+        final badge = offerBadge(value.text);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'ההנחה שכתובה בשם ("20% הנחה", "1+1", "₪50 הנחה", "מתנה") '
+              'הופכת לתגית על כרטיס המבצע באתר.',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 11,
+                color: AppColors.grayLight,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(
+                  'תגית: ',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 11,
+                    color: AppColors.grayText,
+                  ),
+                ),
+                if (badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      badge,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubik,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    'אין — השם לא מציין הנחה',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 11,
+                      color: AppColors.grayLight,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -1072,8 +1299,8 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
       'active' => ('פעיל', AppColors.success),
-      'scheduled' => ('מתוכנן', AppColors.turquoise),
       'expired' => ('פג תוקף', AppColors.grayText),
+      'redeemed_out' => ('אזל', AppColors.orange),
       'draft' => ('טיוטה', AppColors.grayLight),
       _ => (status, AppColors.grayText),
     };
@@ -1097,10 +1324,16 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
+/// Runs the search once typing pauses. The previous one queued a query for
+/// every keystroke and never cancelled any of them.
 class _Debouncer {
   final int milliseconds;
   _Debouncer({required this.milliseconds});
+  Timer? _timer;
   void run(VoidCallback action) {
-    Future.delayed(Duration(milliseconds: milliseconds), action);
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
+
+  void cancel() => _timer?.cancel();
 }
