@@ -3,18 +3,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/skeleton.dart';
-import '../../../shared/widgets/network_photo.dart';
 import '../../../l10n/app_localizations.dart';
-import '../models/event.dart';
 import '../providers/event_providers.dart';
 import 'web_events_screen.dart';
-import '../../favorites/widgets/favorite_button.dart';
-import '../../favorites/repositories/favorite_repository.dart';
+import '../../../core/theme/app_colors.dart';
+import '../models/event_labels.dart';
+import '../widgets/m_event_card.dart';
+import '../widgets/m_event_categories.dart';
 
 /// Events – responsive wrapper.
 class EventsScreen extends StatelessWidget {
@@ -31,8 +32,9 @@ class EventsScreen extends StatelessWidget {
   }
 }
 
-/// Events discovery screen – category circles, vertical event cards
-/// with date badges, time/location/price, and interest counts.
+/// Events discovery screen (Figma mobile "Events"): back + "Events in
+/// Modiin", the search pill, the category circles, then the event cards and
+/// a floating "View on Map".
 class _MobileEventsContent extends ConsumerStatefulWidget {
   const _MobileEventsContent();
 
@@ -44,6 +46,9 @@ class _MobileEventsContent extends ConsumerStatefulWidget {
 class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
   final _searchController = TextEditingController();
   Timer? _debounce;
+
+  /// The circle the list is narrowed to: `all`, `free` or a category slug.
+  String _filter = 'all';
 
   @override
   void initState() {
@@ -68,7 +73,22 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final labels = EventLabels(mEventsIsHebrew(context));
     final events = ref.watch(filteredEventsProvider);
+    final upcoming = ref.watch(upcomingEventsProvider).valueOrNull;
+    final categories =
+        ref.watch(eventCategoriesProvider).valueOrNull ?? const [];
+    final byEvent =
+        ref.watch(eventCategoriesByEventProvider).valueOrNull ?? const {};
+    final circles = upcoming == null
+        ? const <MEventCircle>[]
+        : MEventCircle.build(
+            upcoming: upcoming,
+            categories: categories,
+            byEvent: byEvent,
+            labels: labels,
+          );
+    final active = circles.where((c) => c.filter == _filter).firstOrNull;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -78,80 +98,96 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
             constraints: const BoxConstraints(maxWidth: 430),
             child: Stack(
               children: [
-                // ═══════════════════════════════════
-                // Scrollable content
-                // ═══════════════════════════════════
-                SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 100), // space for sticky header
-                      const SizedBox(height: 20),
-
-                      // "Events in Modiin"
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'אירועים במודיעין',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1F1F1F),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Event cards
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: events.when(
-                          loading: () => const _EventListSkeleton(),
-                          error: (_, _) => ErrorRetry(
-                            onRetry: () =>
-                                ref.invalidate(filteredEventsProvider),
-                          ),
-                          data: (list) => list.isEmpty
-                              ? (ref.watch(eventSearchProvider).isNotEmpty
-                                    ? EmptyState(
-                                        icon: Icons.search_off,
-                                        title: l.noEventsMatch,
-                                      )
-                                    : const EmptyState(
-                                        icon: Icons.event_busy_outlined,
-                                        title: 'אין אירועים קרובים',
-                                        subtitle: 'אירועים חדשים יופיעו כאן',
-                                      ))
-                              : Column(
-                                  children: [
-                                    for (var i = 0; i < list.length; i++) ...[
-                                      _EventCard(event: _Event.from(list[i])),
-                                      if (i < list.length - 1)
-                                        const SizedBox(height: 12),
-                                    ],
-                                  ],
+                Column(
+                  children: [
+                    _buildHeader(context, labels),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (circles.isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  labels.t('Event Categories', 'קטגוריות אירועים'),
+                                  style: _sectionTitle,
                                 ),
+                              ),
+                              const SizedBox(height: 16),
+                              MEventCategoryRow(
+                                circles: circles,
+                                selected: _filter,
+                                onSelect: (f) => setState(() => _filter = f),
+                              ),
+                            ],
+                            const SizedBox(height: 32),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                active == null || active.filter == 'all'
+                                    ? labels.t('Events in Modiin', 'אירועים במודיעין')
+                                    : active.label,
+                                style: _sectionTitle,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: events.when(
+                                loading: () => const _EventListSkeleton(),
+                                error: (_, _) => ErrorRetry(
+                                  onRetry: () =>
+                                      ref.invalidate(filteredEventsProvider),
+                                ),
+                                data: (all) {
+                                  final list = active == null
+                                      ? all
+                                      : all
+                                            .where((e) => active.matches(e, byEvent))
+                                            .toList();
+                                  if (list.isEmpty) {
+                                    return ref.watch(eventSearchProvider).isNotEmpty
+                                        ? EmptyState(
+                                            icon: Icons.search_off,
+                                            title: l.noEventsMatch,
+                                          )
+                                        : EmptyState(
+                                            icon: Icons.event_busy_outlined,
+                                            title: labels.t('No upcoming events', 'אין אירועים קרובים'),
+                                            subtitle: labels.t('New events will appear here', 'אירועים חדשים יופיעו כאן'),
+                                          );
+                                  }
+                                  return Column(
+                                    children: [
+                                      for (var i = 0; i < list.length; i++) ...[
+                                        MEventCard(
+                                          event: list[i],
+                                          category: (byEvent[list[i].id] ?? const [])
+                                              .map(labels.category)
+                                              .firstOrNull,
+                                        ),
+                                        if (i < list.length - 1)
+                                          const SizedBox(height: 12),
+                                      ],
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 80),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 80),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
 
-                // ═══════════════════════════════════
-                // Frosted sticky header
-                // ═══════════════════════════════════
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: _buildStickyHeader(context),
-                ),
-
-                // ═══════════════════════════════════
-                // Floating "view on map" button
-                // ═══════════════════════════════════
+                // Floating "View on Map" (Figma 598:4750, 141 × 40).
                 Positioned(
                   left: 0,
                   right: 0,
@@ -160,17 +196,15 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                     child: GestureDetector(
                       onTap: () => context.push('/events-map'),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(50),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.25),
-                              blurRadius: 12,
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 4,
                               offset: const Offset(0, 4),
                             ),
                           ],
@@ -178,19 +212,19 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              IconsaxPlusLinear.map_1,
-                              size: 16,
-                              color: Color(0xFF0A1230),
+                            SvgPicture.asset(
+                              'assets/icons/m_events_map.svg',
+                              width: 16,
+                              height: 16,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               l.viewOnMapBtn,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: const Color(0xFF0A1230),
+                                color: AppColors.navy,
                               ),
                             ),
                           ],
@@ -207,47 +241,55 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
     );
   }
 
-  // ═══════════════════════════════════════════════
-  // Sticky header: back + title + search bar
-  // ═══════════════════════════════════════════════
-  Widget _buildStickyHeader(BuildContext context) {
+  static const _sectionTitle = TextStyle(
+    fontFamily: AppFonts.inter,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Color(0xFF1F1F1F),
+  );
+
+  /// Back arrow, the centred title and the search pill (Figma 0–144).
+  Widget _buildHeader(BuildContext context, EventLabels labels) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9)),
+      color: Colors.white,
+      padding: const EdgeInsets.only(bottom: 0),
       child: Column(
         children: [
-          // Title row
-          Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 8),
+          SizedBox(
+            height: 52,
             child: Row(
               children: [
-                const SizedBox(width: 16),
+                const SizedBox(width: 15),
                 GestureDetector(
-                  onTap: () => context.pop(),
-                  child: const Icon(
-                    IconsaxPlusLinear.arrow_left,
-                    size: 24,
-                    color: Color(0xFF3D3D3D),
+                  onTap: () => context.canPop() ? context.pop() : context.go('/'),
+                  // The arrow points the way back: right in Hebrew.
+                  child: Transform.flip(
+                    flipX: Directionality.of(context) == TextDirection.rtl,
+                    child: const Icon(
+                      IconsaxPlusLinear.arrow_left,
+                      size: 24,
+                      color: Color(0xFF3D3D3D),
+                    ),
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  'אירועים',
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                Expanded(
+                  child: Text(
+                    labels.t('Events in Modiin', 'אירועים במודיעין'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                const SizedBox(width: 40), // balance back button
+                const SizedBox(width: 39),
               ],
             ),
           ),
-
-          // Search bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             child: Container(
               height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -258,313 +300,40 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    IconsaxPlusLinear.search_normal_1,
-                    size: 18,
-                    color: Color(0xFF6D6D6D),
+                  SvgPicture.asset(
+                    'assets/web/common/search24.svg',
+                    width: 18,
+                    height: 18,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: _searchController,
                       onChanged: _onSearchChanged,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
                       ),
                       decoration: InputDecoration(
-                        hintText: L.of(context).searchEvents,
-                        hintStyle: TextStyle(
+                        hintText: labels.t('Search events, concerts, activities...', 'חפשו אירועים, הופעות, פעילויות...'),
+                        hintStyle: const TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 14,
-                          color: const Color(0xFF6D6D6D),
+                          color: Color(0xFF6D6D6D),
                         ),
+                        // The pill is the field; the theme's grey fill
+                        // and outline would draw a second one inside it.
+                        filled: false,
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
                         isDense: true,
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════
-  // Category circles horizontal row
-  // ═══════════════════════════════════════════════
-}
-
-// ═══════════════════════════════════════════════
-// Data models
-// ═══════════════════════════════════════════════
-
-class _Event {
-  final String id;
-  final String title;
-  final String category;
-  final String month;
-  final int day;
-  final String time;
-  final String venue;
-  final String price;
-  final int interested;
-  final String? imageUrl;
-
-  const _Event(
-    this.id,
-    this.title,
-    this.category,
-    this.month,
-    this.day,
-    this.time,
-    this.venue,
-    this.price,
-    this.interested,
-    this.imageUrl,
-  );
-
-  bool get isFree => price == 'חינם' || price == 'FREE';
-
-  static const _months = [
-    'ינו',
-    'פבר',
-    'מרץ',
-    'אפר',
-    'מאי',
-    'יונ',
-    'יול',
-    'אוג',
-    'ספט',
-    'אוק',
-    'נוב',
-    'דצמ',
-  ];
-
-  factory _Event.from(Event e) {
-    final start = e.startDate;
-    return _Event(
-      e.id,
-      e.title,
-      '',
-      start == null ? '' : _months[start.month - 1],
-      start?.day ?? 0,
-      e.displayTime ?? '',
-      e.venueName ?? e.address,
-      e.displayPrice ?? '',
-      e.rsvpCount,
-      e.imageUrl,
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// Category circle (64px avatar + name + count)
-// ═══════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════
-// Event card (361 × 348)
-// ═══════════════════════════════════════════════
-class _EventCard extends StatelessWidget {
-  final _Event event;
-  const _EventCard({required this.event});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/event/${event.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image area with date badge + heart
-          SizedBox(
-            height: 200,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: NetworkPhoto(
-                    url: event.imageUrl,
-                    radius: BorderRadius.circular(12),
-                    icon: IconsaxPlusBold.calendar_1,
-                    iconSize: 40,
-                  ),
-                ),
-
-                // Date badge (bottom-left)
-                Positioned(
-                  left: 12,
-                  bottom: 12,
-                  child: Container(
-                    width: 57,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          event.month,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF123A72),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${event.day}',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Heart button (top-right)
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: FavoriteButton(
-                    kind: FavoriteKind.event,
-                    id: event.id,
-                    size: 40,
-                    iconSize: 23,
-                    color: const Color(0xFF123A72),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Info section
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Text(
-                  event.title,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0A1230),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Category
-                Text(
-                  event.category,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF5F5E5A),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Time + Location row
-                Row(
-                  children: [
-                    // Time
-                    const Icon(
-                      IconsaxPlusBold.clock,
-                      size: 16,
-                      color: Color(0xFF17A9D0),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      event.time,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF5F5E5A),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Location
-                    const Icon(
-                      IconsaxPlusBold.location,
-                      size: 16,
-                      color: Color(0xFF17A9D0),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        event.venue,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF5F5E5A),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Price + Interested row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Price
-                    Text(
-                      event.price,
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: event.isFree
-                            ? const Color(0xFF123A72)
-                            : const Color(0xFF0A1230),
-                      ),
-                    ),
-                    // Only once somebody has said they are coming. Every
-                    // event carries an rsvp_count of 0 today, and "0
-                    // מתעניינים" reads as a fact about the event rather than
-                    // as nothing having happened yet.
-                    if (event.interested > 0)
-                      Row(
-                        children: [
-                          Icon(
-                            IconsaxPlusBold.star_1,
-                            size: 18,
-                            color: const Color(0xFF17A9D0),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${event.interested} מתעניינים',
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF3D3D3D),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ],
             ),
           ),
         ],

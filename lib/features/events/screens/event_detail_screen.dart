@@ -1,4 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -16,6 +20,10 @@ import 'web_event_detail_screen.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/web_share_menu.dart';
+import '../../../core/theme/app_colors.dart';
+import '../models/event_labels.dart';
+import '../widgets/m_event_card.dart';
 
 /// Event detail screen — responsive wrapper.
 /// Desktop (> 1100px) renders the web detail layout; mobile keeps the app UI.
@@ -49,8 +57,10 @@ class EventDetailScreen extends ConsumerWidget {
   }
 }
 
-/// Mobile layout – hero image, date badge, info section, organizer,
-/// about, what's included, mini-map, "You May Also Like" cards, RSVP bar.
+/// Mobile layout (Figma mobile "Event Detail"): hero with back, share and
+/// heart; the date tile over its edge and the category pill; title, time,
+/// place, interest and price; organizer; about; what's included; the map;
+/// "You May Also Like"; and the RSVP bar.
 class _MobileEventDetailContent extends ConsumerStatefulWidget {
   final Event event;
   const _MobileEventDetailContent({required this.event});
@@ -65,24 +75,28 @@ class _MobileEventDetailContentState
   bool _rsvpBusy = false;
 
   Event get event => widget.event;
+  EventLabels get _labels => EventLabels(mEventsIsHebrew(context));
 
-  static const _months = [
-    'ינו',
-    'פבר',
-    'מרץ',
-    'אפר',
-    'מאי',
-    'יונ',
-    'יול',
-    'אוג',
-    'ספט',
-    'אוק',
-    'נוב',
-    'דצמ',
-  ];
+  static const _heading = TextStyle(
+    fontFamily: AppFonts.inter,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Color(0xFF1F1F1F),
+  );
+  static const _grey500 = Color(0xFF6D6D6D);
+  static const _grey900 = Color(0xFF3D3D3D);
 
   @override
   Widget build(BuildContext context) {
+    final organizer =
+        ref.watch(eventOrganizerProvider(event.businessId)).valueOrNull;
+    final about = EventDescription.parse(
+      (event.fullDescription?.trim().isNotEmpty ?? false)
+          ? event.fullDescription
+          : event.shortDescription,
+    );
+    final hasMap = event.latitude != 0 && event.longitude != 0;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -92,37 +106,38 @@ class _MobileEventDetailContentState
             constraints: const BoxConstraints(maxWidth: 430),
             child: Column(
               children: [
-                // ═══════════════════════════════════
-                // Scrollable content
-                // ═══════════════════════════════════
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHero(context),
-                        const SizedBox(
-                          height: 49,
-                        ), // space for overlapping badges
                         _buildInfoSection(),
-                        const SizedBox(height: 24),
-                        _buildAbout(),
-                        const SizedBox(height: 32),
-                        const SizedBox(height: 32),
-                        if (event.latitude != 0 && event.longitude != 0)
+                        if (organizer != null) ...[
+                          const SizedBox(height: 20),
+                          _buildOrganizer(organizer),
+                        ],
+                        if (about.paragraphs.isNotEmpty) ...[
+                          const SizedBox(height: 32),
+                          _buildAbout(about.paragraphs),
+                        ],
+                        if (about.included.isNotEmpty) ...[
+                          const SizedBox(height: 32),
+                          _buildIncluded(about.included),
+                        ],
+                        if (hasMap) ...[
+                          const SizedBox(height: 32),
                           _buildWhereIsIt(event),
-                        const SizedBox(height: 32),
+                        ],
                         _buildYouMayAlsoLike(),
                         const SizedBox(height: 24),
                       ],
                     ),
                   ),
                 ),
-
-                // ═══════════════════════════════════
-                // Sticky RSVP bar
-                // ═══════════════════════════════════
-                _buildBottomBar(event),
+                // Going needs an account, and accounts belong to the app —
+                // in a browser the bar is not drawn, as the heart is not.
+                if (!kIsWeb) _buildBottomBar(event),
               ],
             ),
           ),
@@ -132,15 +147,22 @@ class _MobileEventDetailContentState
   }
 
   // ═══════════════════════════════════════════════
-  // Hero image (260px) with date badge + category badge
+  // Hero (260) with back / share / heart, the date tile and category pill
   // ═══════════════════════════════════════════════
   Widget _buildHero(BuildContext context) {
+    final start = event.startDate;
+    final category = (ref
+                .watch(eventCategoriesByEventProvider)
+                .valueOrNull?[event.id] ??
+            const [])
+        .firstOrNull;
+    final top = MediaQuery.of(context).padding.top + 7;
+
     return SizedBox(
-      height: 310, // 260 hero + space for overlapping badges
+      height: 309,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Hero image
           SizedBox(
             width: double.infinity,
             height: 260,
@@ -152,245 +174,260 @@ class _MobileEventDetailContentState
                   icon: IconsaxPlusBold.calendar_1,
                   iconSize: 60,
                 ),
-                // Dark overlay gradient, so the badges stay legible on any photo
-                Container(
-                  decoration: const BoxDecoration(
+                const DecoratedBox(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
-                      colors: [
-                        Color(0x66000000), // 40% black
-                        Colors.transparent,
-                      ],
+                      colors: [Color(0x66000000), Colors.transparent],
                     ),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Back button (top-left)
-          Positioned(
-            left: 12,
-            top: MediaQuery.of(context).padding.top + 7,
-            child: GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    IconsaxPlusLinear.arrow_left,
-                    size: 20,
-                    color: Color(0xFF3D3D3D),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Share button (top-right second)
-          Positioned(
-            right: 56,
-            top: MediaQuery.of(context).padding.top + 7,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(
-                  IconsaxPlusLinear.export_1,
+          PositionedDirectional(
+            start: 12,
+            top: top,
+            child: _circleButton(
+              onTap: () => context.canPop() ? context.pop() : context.go('/events'),
+              child: Transform.flip(
+                flipX: Directionality.of(context) == TextDirection.rtl,
+                child: const Icon(
+                  IconsaxPlusLinear.arrow_left,
                   size: 20,
-                  color: Color(0xFF3D3D3D),
+                  color: _grey900,
                 ),
               ),
             ),
           ),
-
-          // Heart button (top-right)
-          Positioned(
-            right: 12,
-            top: MediaQuery.of(context).padding.top + 7,
+          PositionedDirectional(
+            end: 68,
+            top: top,
+            child: Builder(
+              builder: (anchor) => _circleButton(
+                onTap: () => _share(anchor),
+                child: SvgPicture.asset(
+                  'assets/web/events/share20.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(_grey900, BlendMode.srcIn),
+                ),
+              ),
+            ),
+          ),
+          PositionedDirectional(
+            end: 12,
+            top: top,
             child: FavoriteButton(
               kind: FavoriteKind.event,
               id: event.id,
               size: 40,
               iconSize: 20,
-              color: const Color(0xFF3D3D3D),
+              color: _grey900,
             ),
           ),
-
-          // Date badge (overlapping bottom-left)
-          Positioned(
-            left: 12,
-            top: 215,
-            child: Container(
-              width: 81,
-              padding: const EdgeInsets.symmetric(vertical: 11),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFF123A72), width: 2),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    event.startDate == null
-                        ? ''
-                        : _months[event.startDate!.month - 1],
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF123A72),
+          if (start != null)
+            PositionedDirectional(
+              start: 12,
+              top: 215,
+              child: Container(
+                width: 81,
+                padding: const EdgeInsets.all(11.37),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.midBlue, width: 2),
+                  borderRadius: BorderRadius.circular(11.37),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      _labels.shortMonth(start),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.midBlue,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${event.startDate?.day ?? ''}',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                    const SizedBox(height: 6),
+                    Text(
+                      '${start.day}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-
-          // A category badge sat here reading "Music" — the literal string,
-          // on every event in the app. `events` carries no category, so
-          // there is nothing to put in it.
+          if (category != null)
+            PositionedDirectional(
+              end: 13,
+              top: 272,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.turquoise,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Text(
+                  _labels.category(category),
+                  style: const TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
+  Widget _circleButton({required VoidCallback onTap, required Widget child}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: child,
+      ),
+    );
+  }
+
+  /// The system share sheet on a device; the site's share menu in a browser,
+  /// as the website's event page does.
+  Future<void> _share(BuildContext anchor) async {
+    final date = event.startDate;
+    final message = [
+      event.title,
+      if (date != null) _labels.longDate(date),
+      _labels.venue(event),
+    ].whereType<String>().where((s) => s.isNotEmpty).join('\n');
+    // On a device, what the business page shares: the words, no link —
+    // the app has no public address for an event to point at.
+    if (!kIsWeb) {
+      await Share.share(message, subject: event.title);
+      return;
+    }
+    await showWebShareMenu(
+      anchor,
+      title: event.title,
+      link: Uri.base.toString(),
+      message: message,
+      isHebrew: mEventsIsHebrew(context),
+    );
+  }
+
+  /// Directions: the editor's Waze link, else Google Maps to the venue.
+  void _directions() {
+    final waze = event.wazeUrl?.trim() ?? '';
+    final uri = waze.isNotEmpty
+        ? Uri.parse(waze)
+        : Uri.https('www.google.com', '/maps/dir/', {
+            'api': '1',
+            'destination': '${event.latitude},${event.longitude}',
+          });
+    launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   // ═══════════════════════════════════════════════
-  // Info section – title, time, address, interested, price
+  // Title, time, place, interest, price
   // ═══════════════════════════════════════════════
   Widget _buildInfoSection() {
+    final time = _labels.timeRange(event);
+    final place = [event.venueName?.trim(), event.address.trim()]
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .join(', ');
+    final price = _labels.price(event, upper: false);
+
+    Widget row(String icon, Widget text) => Row(
+      children: [
+        SvgPicture.asset(
+          icon,
+          width: 16,
+          height: 16,
+          colorFilter: const ColorFilter.mode(Color(0xFF888888), BlendMode.srcIn),
+        ),
+        const SizedBox(width: 8),
+        Expanded(child: text),
+      ],
+    );
+    const meta = TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _grey500);
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
           Text(
             event.title,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
+            style: const TextStyle(
+              fontFamily: AppFonts.nunito,
               fontSize: 28,
               fontWeight: FontWeight.w600,
               height: 34 / 28,
               color: Colors.black,
             ),
           ),
-          const SizedBox(height: 12),
-
-          // Info rows
-          Column(
-            children: [
-              // Time
-              Row(
-                children: [
-                  const Icon(
-                    IconsaxPlusLinear.clock,
-                    size: 16,
-                    color: Color(0xFF888888),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    [
-                      event.displayTime,
-                      event.endTime?.substring(0, 5),
-                    ].whereType<String>().join(' – '),
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF6D6D6D),
+          if (time != null) ...[
+            const SizedBox(height: 12),
+            row('assets/web/events/clock16.svg', Text(time, style: meta, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          ],
+          if (place.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            row('assets/web/events/pin16.svg', Text(place, style: meta, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          ],
+          // Only once somebody has said they are coming — "0 people
+          // interested" reads as a fact about the event.
+          if (event.rsvpCount > 0) ...[
+            const SizedBox(height: 12),
+            row(
+              'assets/web/events/people16.svg',
+              Text.rich(
+                TextSpan(
+                  style: meta,
+                  children: [
+                    TextSpan(
+                      text: '${event.rsvpCount}',
+                      style: const TextStyle(color: Colors.black),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Address
-              Row(
-                children: [
-                  const Icon(
-                    IconsaxPlusLinear.location,
-                    size: 16,
-                    color: Color(0xFF888888),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      [event.venueName, event.address]
-                          .whereType<String>()
-                          .where((s) => s.isNotEmpty)
-                          .join(', '),
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF6D6D6D),
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    TextSpan(
+                      text: _labels.t(' people interested', ' מתעניינים'),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-
-              // People interested
-              Row(
-                children: [
-                  const Icon(
-                    IconsaxPlusLinear.people,
-                    size: 16,
-                    color: Color(0xFF888888),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${event.rsvpCount} מתעניינים',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // Price, only when the event has one on record.
-          if (event.displayPrice != null) ...[
+            ),
+          ],
+          if (price != null) ...[
             const SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  event.displayPrice!,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
+                  price,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.nunito,
                     fontSize: 28,
                     fontWeight: FontWeight.w600,
                     height: 34 / 28,
@@ -398,15 +435,7 @@ class _MobileEventDetailContentState
                   ),
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  'מחיר',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF6D6D6D),
-                  ),
-                ),
+                Text(_labels.t('Price', 'מחיר'), style: meta),
               ],
             ),
           ],
@@ -416,50 +445,143 @@ class _MobileEventDetailContentState
   }
 
   // ═══════════════════════════════════════════════
-  // Organized by section
+  // Organized by — the business in `business_id`
   // ═══════════════════════════════════════════════
-  // An "Organized by" card sat here, naming "Modiin Community Events" with
-  // the strapline "Community & Municipal Events" — the same body on every
-  // event, whoever actually ran it. `events` has `organizer_id` and
-  // `business_id`; neither was read. The card is gone until one of them is.
-
-  // ═══════════════════════════════════════════════
-  Widget _buildAbout() {
+  Widget _buildOrganizer(EventOrganizer organizer) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'על האירוע',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
+          Text(_labels.t('Organized by', 'מארגנים'), style: _heading),
           const SizedBox(height: 12),
-          Text(
-            event.fullDescription ?? event.shortDescription ?? '',
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              height: 1.6,
-              color: const Color(0xFF3D3D3D),
+          GestureDetector(
+            onTap: () => context.push('/business/${organizer.id}'),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6F6F6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  ClipOval(
+                    child: NetworkPhoto(
+                      url: organizer.logoUrl,
+                      width: 40,
+                      height: 40,
+                      icon: IconsaxPlusBold.shop,
+                      iconSize: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          organizer.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                        ),
+                        if (organizer.subtitle != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            organizer.subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 12,
+                              color: _grey500,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          // A second paragraph was printed here on every event — the
-          // mockup's copy about "Summer Music Night", glued under whatever
-          // the real description said.
         ],
       ),
     );
   }
-  // "What's Included" used to sit here, listing live music, food and
-  // outdoor seating for every event. There is no column behind it, so it
-  // said the same five things whatever the event was.
+
+  // ═══════════════════════════════════════════════
+  // About This Event / What's Included — from the description
+  // ═══════════════════════════════════════════════
+  Widget _buildAbout(List<String> paragraphs) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_labels.t('About This Event', 'על האירוע'), style: _heading),
+          for (final p in paragraphs) ...[
+            const SizedBox(height: 12),
+            Text(
+              p,
+              style: const TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                height: 1.6,
+                color: _grey900,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIncluded(List<String> items) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_labels.t("What's Included", 'מה כלול'), style: _heading),
+          const SizedBox(height: 20),
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 1.5),
+                  child: SvgPicture.asset(
+                    'assets/web/events/included_check.svg',
+                    width: 16,
+                    height: 16,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    items[i],
+                    style: const TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 16,
+                      color: _grey900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   // ═══════════════════════════════════════════════
   // Where Is It? (mini FlutterMap)
@@ -472,15 +594,7 @@ class _MobileEventDetailContentState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'איפה זה?',
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
+          Text(_labels.t('Where Is It?', 'איפה זה?'), style: _heading),
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -488,7 +602,6 @@ class _MobileEventDetailContentState
               height: 230,
               child: Stack(
                 children: [
-                  // Map
                   IgnorePointer(
                     child: FlutterMap(
                       options: MapOptions(
@@ -506,8 +619,13 @@ class _MobileEventDetailContentState
                             Marker(
                               point: venuePosition,
                               width: 48,
-                              height: 48,
-                              child: _buildMapPin(),
+                              height: 52,
+                              alignment: Alignment.topCenter,
+                              child: SvgPicture.asset(
+                                'assets/icons/m_events_pin.svg',
+                                width: 48,
+                                height: 52,
+                              ),
                             ),
                           ],
                         ),
@@ -515,48 +633,47 @@ class _MobileEventDetailContentState
                       ],
                     ),
                   ),
-
-                  // "Open in Maps" floating button
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: 16,
+                    bottom: 17,
                     child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(50),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              IconsaxPlusLinear.map,
-                              size: 16,
-                              color: Color(0xFF0A1230),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              L.of(context).openInMaps,
-                              style: TextStyle(
-                                fontFamily: AppFonts.inter,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF0A1230),
+                      child: GestureDetector(
+                        onTap: _directions,
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(50),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 4,
+                                offset: const Offset(0, 4),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SvgPicture.asset(
+                                'assets/icons/m_events_map.svg',
+                                width: 16,
+                                height: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                L.of(context).viewOnMapBtn,
+                                style: const TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.navy,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -570,91 +687,51 @@ class _MobileEventDetailContentState
     );
   }
 
-  // Blue location pin for the mini-map
-  Widget _buildMapPin() {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 2.74,
-            offset: const Offset(0, 2.74),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Container(
-          width: 26,
-          height: 26,
-          decoration: const BoxDecoration(
-            color: Color(0xFF006BF6),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            IconsaxPlusBold.location,
-            size: 14,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-
   // ═══════════════════════════════════════════════
   // You May Also Like
   // ═══════════════════════════════════════════════
-  /// Other events from the database, not four invented ones on a page
-  /// showing a real one. The current event is left out, and the section
-  /// disappears rather than standing empty when it is the only one.
+  /// Other upcoming events, those sharing this one's category first. The
+  /// section is left out when there are none.
   Widget _buildYouMayAlsoLike() {
-    final all = ref.watch(eventsProvider).valueOrNull ?? const <Event>[];
-    final related = all
-        .where((e) => e.id != event.id)
-        .take(4)
-        .map(_RelatedEvent.from)
-        .toList();
+    final all = ref.watch(upcomingEventsProvider).valueOrNull ?? const <Event>[];
+    final byEvent =
+        ref.watch(eventCategoriesByEventProvider).valueOrNull ?? const {};
+    final mine = (byEvent[event.id] ?? const []).map((c) => c.id).toSet();
+    bool shares(Event e) =>
+        (byEvent[e.id] ?? const []).any((c) => mine.contains(c.id));
+    final others = all.where((e) => e.id != event.id).toList();
+    final related = [
+      ...others.where(shares),
+      ...others.where((e) => !shares(e)),
+    ].take(4).toList();
     if (related.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'You May Also Like',
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
-            ),
-          ),
+          Text(_labels.t('You May Also Like', 'אולי יעניין אתכם גם'), style: _heading),
           const SizedBox(height: 16),
-          ...List.generate(related.length, (i) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: i < related.length - 1 ? 12 : 0),
-              child: _RelatedEventCard(event: related[i]),
-            );
-          }),
+          for (var i = 0; i < related.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            MEventCard(
+              event: related[i],
+              category: (byEvent[related[i].id] ?? const [])
+                  .map(_labels.category)
+                  .firstOrNull,
+            ),
+          ],
         ],
       ),
     );
   }
 
   // ═══════════════════════════════════════════════
-  // Bottom RSVP bar
+  // Bottom RSVP bar (Figma "RSVP": I'm Going / Going)
   // ═══════════════════════════════════════════════
-  /// The RSVP button.
-  ///
-  /// It was `setState(() => _isGoing = !_isGoing)` against a local field:
-  /// it changed a word on screen, wrote nothing to `event_attendees`, and
-  /// reset to "not going" every time the page was opened — so anyone who had
-  /// already signed up was told they had not. It writes now, and reads back
-  /// what it wrote.
+  /// Writes to `event_attendees` and reads back what it wrote; signed out,
+  /// it asks the person to sign in.
   Widget _buildBottomBar(Event event) {
     final l = L.of(context);
     final signedIn = ref.watch(authProvider) != null;
@@ -667,16 +744,9 @@ class _MobileEventDetailContentState
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        border: const Border(top: BorderSide(color: Color(0xFFE7E7E7))),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        border: Border(top: BorderSide(color: Color(0xFFE7E7E7))),
       ),
       child: SafeArea(
         top: false,
@@ -684,9 +754,10 @@ class _MobileEventDetailContentState
           onTap: enabled ? () => _toggleRsvp(event, signedIn, attending) : null,
           child: Container(
             height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             decoration: BoxDecoration(
-              color: enabled
-                  ? const Color(0xFF123A72)
+              color: enabled || _rsvpBusy
+                  ? AppColors.midBlue
                   : const Color(0xFFB9C0CE),
               borderRadius: BorderRadius.circular(60),
             ),
@@ -703,24 +774,29 @@ class _MobileEventDetailContentState
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          attending
-                              ? IconsaxPlusBold.tick_circle
-                              : IconsaxPlusLinear.tick_circle,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 8),
+                        if (!soldOut) ...[
+                          SvgPicture.asset(
+                            'assets/web/events/included_check.svg',
+                            width: 20,
+                            height: 20,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
                         Text(
                           soldOut
                               ? l.eventSoldOut
                               : attending
                               ? l.going
                               : l.imGoing,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
+                            height: 24 / 14,
                             color: Colors.white,
                           ),
                         ),
@@ -748,8 +824,7 @@ class _MobileEventDetailContentState
           : await repo.attend(event.id);
 
       // The trigger from migration 00024 recounts `rsvp_count`, so the
-      // number beside the button has to be re-read too — it used to sit
-      // still while the label changed.
+      // number on the page has to be re-read too.
       ref.invalidate(isAttendingProvider(event.id));
       ref.invalidate(eventByIdProvider(event.id));
     } catch (_) {
@@ -762,290 +837,9 @@ class _MobileEventDetailContentState
   void _rsvpToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        content: Text(message, style: const TextStyle(fontFamily: AppFonts.inter)),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// Data model for related events
-// ═══════════════════════════════════════════════
-class _RelatedEvent {
-  final String title;
-  final String category;
-  final String month;
-  final int day;
-  final String time;
-  final String venue;
-  final String price;
-  final int interested;
-
-  final String id;
-
-  const _RelatedEvent(
-    this.id,
-    this.title,
-    this.category,
-    this.month,
-    this.day,
-    this.time,
-    this.venue,
-    this.price,
-    this.interested,
-  );
-
-  static const _months = [
-    'ינו',
-    'פבר',
-    'מרץ',
-    'אפר',
-    'מאי',
-    'יונ',
-    'יול',
-    'אוג',
-    'ספט',
-    'אוק',
-    'נוב',
-    'דצמ',
-  ];
-
-  factory _RelatedEvent.from(Event e) {
-    final start = e.startDate;
-    return _RelatedEvent(
-      e.id,
-      e.title,
-      // Events carry no category column; the venue reads better in that slot
-      // than an empty line would.
-      e.venueName ?? '',
-      start == null ? '' : _months[start.month - 1],
-      start?.day ?? 0,
-      e.displayTime ?? '',
-      e.venueName ?? e.address,
-      e.displayPrice ?? '',
-      e.rsvpCount,
-    );
-  }
-
-  bool get isFree => price.isEmpty || price == 'FREE' || price == 'חינם';
-}
-
-// ═══════════════════════════════════════════════
-// Related event card (same pattern as events list)
-// image 361×200 + date badge + heart + info section
-// ═══════════════════════════════════════════════
-class _RelatedEventCard extends StatelessWidget {
-  final _RelatedEvent event;
-  const _RelatedEventCard({required this.event});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/event/${event.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image area with date badge + heart
-          SizedBox(
-            height: 200,
-            child: Stack(
-              children: [
-                // Image placeholder
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      IconsaxPlusBold.calendar_1,
-                      size: 40,
-                      color: Colors.white.withValues(alpha: 0.12),
-                    ),
-                  ),
-                ),
-
-                // Date badge (bottom-left)
-                Positioned(
-                  left: 12,
-                  bottom: 12,
-                  child: Container(
-                    width: 57,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          event.month,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF123A72),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${event.day}',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Heart button (top-right)
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        IconsaxPlusLinear.heart,
-                        size: 23,
-                        color: Color(0xFF123A72),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Info section
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Text(
-                  event.title,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0A1230),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Category
-                Text(
-                  event.category,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF5F5E5A),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Time + Location row
-                Row(
-                  children: [
-                    const Icon(
-                      IconsaxPlusBold.clock,
-                      size: 16,
-                      color: Color(0xFF17A9D0),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      event.time,
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF5F5E5A),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Icon(
-                      IconsaxPlusBold.location,
-                      size: 16,
-                      color: Color(0xFF17A9D0),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        event.venue,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF5F5E5A),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Price + Interested row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      event.price,
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: event.isFree
-                            ? const Color(0xFF123A72)
-                            : const Color(0xFF0A1230),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(
-                          IconsaxPlusBold.star_1,
-                          size: 18,
-                          color: Color(0xFF17A9D0),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${event.interested} interested',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF3D3D3D),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
