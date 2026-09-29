@@ -1409,6 +1409,44 @@ MB. Applied to the server (old config backed up in /root), `nginx -t` clean,
 other types unchanged. Worth doing next: subset Inter and Rubik to the scripts
 the site uses, and find out why Iconsax's tree-shaking keeps 554 of 557 KB.
 
+**"Photos take a long time on Restaurants and Real Estate."** Mostly not the
+local files — the directory's. Business photos are stored as uploaded:
+median 270 KB, the largest a 4.3 MB PNG, and the restaurants page alone asked
+for 6.9 MB of them. Storage can resize on the way out (the project's plan has
+image transformations), so `sizedPhotoUrl()` in network_photo.dart asks for
+the width a photo is drawn at — rounded up to a few steps, doubled for sharp
+screens — and the browser gets WebP. `NetworkPhoto` measures its own box; the
+direct `Image.network` calls pass their size. Anything not a stored
+JPEG/PNG/WebP is left alone, and a failed resize falls back to the original.
+Measured on the live restaurants page: the same 23 photos, 6.9 MB → 1.9 MB.
+**Cost to raise with the client:** Supabase bills transformations per origin
+image — 100 a month on Pro, then $5 per 1,000 — so a few dollars a month at
+this size. The alternative is a one-time pass that stores resized copies,
+with no running cost; not done, it writes to storage and the database.
+
+**The first resize stretched them.** Given only a width, storage keeps the
+original height and crops to a strip — a 2560 × 1708 photo came back
+800 × 1708, and the card enlarged the strip to fill itself. It asks for
+`width=W&height=2500&resize=contain` now: aspect kept, and smaller again
+(31–68 KB for those same photos). Checked on the live businesses page.
+
+**Heroes still came up blank on the way back from Events.** Flutter's image
+cache holds 100 MB and drops the least recently used; the businesses and
+restaurants pages fill it with directory photos, which pushed out the heroes
+preloaded at start. The preload now keeps the site's own photographs live
+(about 18 MB), which the cache never drops, and `WebHeroPhoto` shows the
+photograph's average colour and fades it in if one is not there yet. Checked
+live: after filling the cache on the businesses page, Events → Restaurants and
+→ Real Estate each show the photograph 150 ms after the click. A failed
+preload can no longer surface as an error; it is named in the console and
+skipped.
+
+The local hero photographs are WebP now, encoded from the design's lossless
+originals (Restaurants and Real Estate 350 → 236 KB), and the page a visitor
+lands on preloads its own photograph first. The dotted field was one 4096 ×
+1505 image — 24 MB decoded; it repeats every 199 px, so it is drawn from
+that tile (5 KB) at the same scale and strength.
+
 **Pages slid in from the side in the browser.** 26 routes used a hand-made
 slide, and the rest took Flutter's platform default — which in a browser on a
 Mac is the iPhone's slide. A website swaps pages in place. On the web every
@@ -1418,6 +1456,193 @@ live site: 60ms after a click the new page is in place with no sideways
 movement. Not yet looked at: widths below 1250, and the inner pages
 not listed here (listing detail, neighbourhood, article, event detail, map,
 municipal) — those were not in this pass.
+
+### Every web page against its frame, with sample content — 28 September
+
+"Put lots of sample data in the DB for every section, and match every screen
+to Figma — icons, titles, pixel by pixel." The database is ours alone until
+launch, so sample rows are fine as long as they come out again in one step.
+
+Done as seven agents working side by side, one per group of screens, each
+building to its own folder and checking its pages against the Figma frame at
+1920, 1440 and in Hebrew: home; restaurants; news and article; events (list,
+category, detail); deals, business page and business lists; real estate
+(landing, sale/rent search, map); listing and neighbourhood detail. A data
+agent filled the database meanwhile. Then one build of the whole, deployed,
+and every page captured on the live server beside its frame.
+
+**The sample content.** `tool/seed_sample_content.py` (`--apply`, `--verify`,
+`--undo`, `--undo --dry-run`) writes what the frames picture: 16 upcoming
+events, 12 offers, 22 sale and rent listings with their agents, reviews by six
+sample residents, the banner campaigns, four neighbourhoods with photographs
+and Moriah's text and gallery. 71 photographs in storage. Every row and file
+it writes is listed in `tool/sample_content_registry.json`, and every value it
+changed on an existing row is kept there with the old value. The sample
+residents are auth users at `.test` addresses with no password: nobody can
+sign in as one. The source photographs are in `tool/sample_content/images/`
+(5 MB), kept out of git. **Before launch: `python3 tool/seed_sample_content.py
+--undo`.**
+
+**Real content, not sample, found on the way:**
+- *Article bodies.* 659 articles were showing their excerpt as the whole
+  text. `tool/restore_article_bodies.py` put back the HTML WordPress actually
+  served (paragraphs rebuilt as WordPress does, block-editor comments removed
+  — the renderer would print them), matched by slug or old address with the
+  title required to agree, and only where the body still equalled the
+  excerpt. Its 334 inline photographs are re-hosted in our storage, none left
+  pointing at the old site. Has its own `--undo`.
+- *Professionals.* The client's six WordPress professionals were never
+  imported, so "Find a Professional" listed a bank and a laundry.
+  `tool/import_professionals.py` added five as businesses (sk nails already
+  existed) and seven trades under Services with the old site's names, which
+  are the home page's pills. Phone, photo and text come from the site's
+  export; no street address exists for any of them, so it reads "מודיעין".
+  Own `--undo`.
+
+**Changes shared by every page:**
+- *Text measured as designed.* Material 3 gives body text a 1.43 line and
+  0.25 letter spacing; the design uses the font's own. On the web the theme
+  now keeps size, weight and colour and drops both, so text is as wide and as
+  tall as drawn.
+- *The address bar follows the page.* Screens open one another with `push`,
+  which go_router keeps out of the URL: a visitor on a deal saw `/deals`, and
+  a refresh or a shared link took them back to the list.
+  `GoRouter.optionURLReflectsImperativeAPIs` in main.dart.
+- *One promotion carousel.* `WebBannerRow` is the design's now — corners of
+  12, round arrows on the edges from three banners on — and Restaurants and
+  Deals use it instead of two private copies.
+
+**What the pages still cannot show, because the database has no field for
+it** — to put to the client, not to invent: English names for categories and
+neighbourhoods (English pages show the Hebrew); view counts on businesses;
+opening hours (`business_hours` is empty for every business); a bedrooms
+count on listings; parks and schools per neighbourhood; the offer's discount
+and a brand's rewards (the badge is read out of the offer's title); attendees
+of an event, which are private; users' photos of a business. Accounts are
+app-only, so Save, RSVP, Write a Review, Upload and comments stay off the web.
+
+**Open decisions:** the language button in the navbar is not in the design
+(the site needs it); "Powered by PersonaAI" under the footer is not in the
+design either and predates this work; ten businesses (bank, money changers,
+laundry) still sit under Services and so appear under "All" among the
+professionals.
+
+Verified on the live server: sixteen pages at 1920 beside their frames, with
+no console error on any; Hebrew and 1440 on home, deals and a listing.
+`flutter analyze` 95, down from 99, none in the files touched.
+
+### Every button, "near me", https, Google's map, and an admin that saves — 28 September
+
+"The functionality buttons should work", "the near by as the client said",
+Google Maps as he chose on 22 September, and "is the admin working, up to
+date?" Two audits first (every control on the website; the admin against
+everything the website now shows), then the fixes.
+
+**Buttons.**
+- *Language.* 41 pages copied `webIsHebrew` when they opened and flipped their
+  own copy, so the page underneath — the one Back returns to — stayed in the
+  old language. `WebLanguageState` (web_chrome.dart) makes each page follow
+  the shared value and redraw when it changes.
+- *Contact / Call Now* went straight to `tel:`, which on a computer does
+  nothing visible. `showWebContactMenu` (web_contact_menu.dart) shows the
+  number, Copy, Call, and WhatsApp where the place has one; the business page
+  shows its WhatsApp number, which five businesses had and nobody saw.
+- *Share.* Events copied the address (and threw on http, where the browser
+  has no clipboard); the article's opened an e-mail, which is what
+  `share_plus` falls back to without https. `showWebShareMenu`
+  (web_share_menu.dart): WhatsApp, Facebook, X, e-mail, Copy link — plain
+  links, so they work on any page; Copy shows the link when the clipboard is
+  refused. Both menus open in the app's RTL overlay, so every row is given the
+  page's direction.
+- *Professionals* led to the general directory everywhere. It is
+  `/businesses/category/services` now; the category page and its name read a
+  slug as well as an id, and the heading says Professionals. The menu's list
+  loads with the navbar, in two requests instead of three.
+- *A business by slug.* ~140 article links name a business the old site's
+  way (`/business/<slug>/`, often on modiin4u.co.il). The article opens those
+  here, and the business page reads a slug; a business that is not there gets
+  a page with the navbar and "Back to Businesses" instead of "check your
+  internet" and a retry that could never work.
+- Smaller: sub-cuisine restaurants were missing from "View all restaurants";
+  "View all properties" dropped the type; the map card had no ×; footer Coffee
+  Shops / Bars opened the unfiltered page; "Back to Settings" (no such page on
+  the web) is "Back"; Community's chips filtered nothing and are gone until
+  there is a feed.
+- Still open: About Us and Accessibility Statement open the help page — the
+  client has to supply both texts (an accessibility statement is a legal
+  requirement in Israel); banners with no link do nothing (data);
+  /realestate-map, /events-map and /municipal have no link on the desktop
+  site.
+
+**Near me.** The client's first point ("businesses not near my location")
+had come back: the rebuilt home page's row no longer used the distance sort.
+With a location it is "Near You", nearest first (those with a photograph
+ahead); without one, "Recommended for You" and a "Show what's near me" button.
+A browser gives a location only to a secure page, so on http the button is
+not drawn.
+
+**https.** The server now also serves the site at
+`https://45-93-94-49.sslip.io` (a name that resolves to the server's own
+address), certificate from Let's Encrypt by webroot, renewing itself;
+http://45.93.94.49 is unchanged. Checked in a browser there: secure context,
+the location given, "Near You" drawn. nginx is split into a shared snippet
+and one file per address (deploy/nginx/, identical to the server);
+`certbot --nginx` must not be used — it would move the bare IP's port 80.
+**The domain is one DNS record away:** `app` A → 45.93.94.49 at uPress (the
+client's panel; we have no access), then `tool/enable_domain.sh`. The Supabase
+redirect list has both https callbacks. One build carries one
+AUTH_REDIRECT_URL, and sign-up's e-mail link completes sign-in only on the
+address it started from (PKCE).
+
+**Google's map on the website.** `WebMapTiles` / `WebMapCredit`
+(web_map_tiles.dart): the ten web maps keep their renderer — the pins, the
+hover that lights a row and its pin, the cards over the map — and take
+Google's roadmap through the Map Tiles API, in the page's language, with
+Google's own business markers off and Google's logo and credit in the corner.
+The key is a referrer-restricted browser key given at build time
+(`GOOGLE_MAPS_WEB_KEY` in .env.local → `--dart-define=MAPS_WEB_KEY`); without
+it, or if Google refuses the session, the maps draw OpenStreetMap. **Not on
+yet: the key is not made** — gcloud is installed and waits for a login to the
+client's Cloud project. The app's own other maps stay on OpenStreetMap (a
+referrer key does not work from the app).
+
+**The admin panel did not save.** Four agents, each on its own screens,
+tested only on rows they created and removed, with temporary admins deleted
+afterwards:
+- *Articles* — two data-loss bugs: saving removed every category link (the
+  editor never loaded them) and reset `published_at` to now, zoneless, so the
+  story was dated hours ahead and jumped to the top. Now: links loaded,
+  multi-select, only the difference written; the date set on first publish
+  only; only changed fields sent; cover upload; a preview through the site's
+  own parser.
+- *Businesses* — every save sent `cover_image_url` (the column is
+  `cover_url`), so nothing saved. Now saves, with a gallery editor
+  (`admin_gallery_editor.dart`, entity_media), grouped categories that keep
+  `is_primary`, and the fields the site shows. *Categories* get an image and
+  real counts; *neighbourhoods* saved lat/lng the table lacks — now save, with
+  image and gallery.
+- *Events* — the list crashed at the tenth row (a numeric price read as
+  text) and the form wrote columns that do not exist. Now every field the
+  site shows, real categories, and "What's Included" as its own list written
+  into the description in the site's format. *Offers* — names, a business
+  picker, image, audience (Residents Only), real statuses, a preview of the
+  badge.
+- *Banners* — slot and business pickers, the image the site shows, a line
+  saying whether and when it will appear; placements count what is live and
+  say which five slots no page draws. *Home notice* — the builder offered
+  block types the database refuses; the notice now has an editor for every
+  field the site reads, including its link.
+- *Listings* — photos (first is the cover), agent picker, the missing
+  fields. *Reviews* — the review's own author name, and a reply.
+- Removal stays reversible everywhere (cancel / expire / end / hide), as the
+  client asked for a trash; a permanent delete one agent added was taken out.
+- Known: replacing an image through the shared upload field leaves the old
+  file in storage; impressions and clicks are never counted.
+
+**One real row was changed by mistake** during the admin audit: sample
+article `light-rail-update`, `published_at` 2026-08-17 06:27:19.667537+00 →
+2026-09-28 18:09:09+00, so it leads the news. Restoring it waits for the
+user's go-ahead.
 
 ---
 
