@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +15,7 @@ import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
-import 'my_apartments_screen.dart' show formatShekels;
+import '../widgets/m_price_text.dart';
 import 'web_listing_detail_screen.dart';
 import '../../../shared/widgets/osm_attribution.dart';
 
@@ -130,16 +132,11 @@ class _MobileListingDetailContentState
               if (price != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                  child: Text(
-                    listing.kind == ListingKind.rent
-                        ? l.pricePerMonthValue(formatShekels(price))
-                        : formatShekels(price),
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
+                  child: MPriceText(
+                    amount: price,
+                    kind: listing.kind,
+                    size: 28,
+                    color: Colors.black,
                   ),
                 ),
 
@@ -199,7 +196,7 @@ class _MobileListingDetailContentState
                     children: [
                       if (listing.sqm != null) ...[
                         _StatCard(
-                          icon: IconsaxPlusLinear.maximize_3,
+                          asset: 'assets/icons/m_realestate_stat_area.svg',
                           value: '${listing.sqm}',
                           unit: l.sqmUnit,
                         ),
@@ -207,7 +204,7 @@ class _MobileListingDetailContentState
                       ],
                       if (listing.rooms != null) ...[
                         _StatCard(
-                          icon: IconsaxPlusLinear.building_3,
+                          asset: 'assets/icons/m_realestate_stat_bed.svg',
                           value:
                               listing.rooms! == listing.rooms!.roundToDouble()
                               ? '${listing.rooms!.toInt()}'
@@ -218,7 +215,7 @@ class _MobileListingDetailContentState
                       ],
                       if (listing.bathrooms != null)
                         _StatCard(
-                          icon: IconsaxPlusLinear.courthouse,
+                          asset: 'assets/icons/m_realestate_stat_bath.svg',
                           value: '${listing.bathrooms}',
                           unit: l.bathroomsUnit,
                         ),
@@ -312,24 +309,21 @@ class _MobileListingDetailContentState
 
           // Heart button (top-right) — it was a drawing of a heart that did
           // nothing; it saves the listing now.
-          Positioned(
-            right: 12,
-            top: 51,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: FavoriteButton(
-                  kind: FavoriteKind.listing,
-                  id: listing.id,
-                ),
+          // The button draws its own white circle, and nothing on the
+          // website, where saving is not offered — the empty circle that
+          // stood there on a phone-width browser is gone with it.
+          if (!kIsWeb)
+            Positioned(
+              right: 12,
+              top: 51,
+              child: FavoriteButton(
+                kind: FavoriteKind.listing,
+                id: listing.id,
+                size: 40,
+                iconSize: 20,
+                color: const Color(0xFF3D3D3D),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -519,12 +513,16 @@ class _MobileListingDetailContentState
   Widget _buildSpecsGrid(L l, Listing listing) {
     final specs = <_Spec>[
       if (listing.hasBalcony)
-        _Spec(l.amenityBalcony, IconsaxPlusBold.element_3),
-      if (listing.hasParking) _Spec(l.amenityParking, IconsaxPlusBold.car),
+        _Spec(l.amenityBalcony, asset: '$_specAsset/detail_spec_balcony.svg'),
+      if (listing.hasParking)
+        _Spec(l.amenityParking, asset: '$_specAsset/detail_spec_parking.svg'),
       if (listing.hasElevator)
-        _Spec(l.amenityElevator, IconsaxPlusBold.arrow_3),
-      if (listing.hasStorage) _Spec(l.amenityStorage, IconsaxPlusBold.box_1),
-      if (listing.hasMamad) _Spec(l.amenityMamad, IconsaxPlusBold.shield_tick),
+        _Spec(l.amenityElevator, asset: '$_specAsset/detail_spec_elevator.svg'),
+      // The design has no storage icon; the outline glyph matches the rest.
+      if (listing.hasStorage)
+        _Spec(l.amenityStorage, icon: IconsaxPlusLinear.box_1),
+      if (listing.hasMamad)
+        _Spec(l.amenityMamad, asset: '$_specAsset/detail_spec_mamad.svg'),
     ];
     if (specs.isEmpty) return const SizedBox.shrink();
 
@@ -911,12 +909,12 @@ Future<void> launchPhone(String phone) async {
 // Stat card (area / bedrooms / bathrooms)
 // ═══════════════════════════════════════════════
 class _StatCard extends StatelessWidget {
-  final IconData icon;
+  final String asset;
   final String value;
   final String unit;
 
   const _StatCard({
-    required this.icon,
+    required this.asset,
     required this.value,
     required this.unit,
   });
@@ -936,7 +934,7 @@ class _StatCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, size: 20, color: const Color(0xFF4F4F4F)),
+            SvgPicture.asset(asset, width: 20, height: 20),
             Row(
               children: [
                 Text(
@@ -970,13 +968,17 @@ class _StatCard extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Spec data model
 // ═══════════════════════════════════════════════
+/// The outline spec icons from the design, shared with the website's copy.
+const _specAsset = 'assets/web/realestate';
+
 class _Spec {
   final String name;
-  final IconData icon;
+  final String? asset;
+  final IconData? icon;
 
-  /// There is no value beside the name any more. The card used to read
-  /// "Balcony / Yes", and it read "Yes" whether or not the flat had one.
-  const _Spec(this.name, this.icon);
+  /// Only the features the listing has are listed, so the design's "Yes"
+  /// under each name is true of every card shown.
+  const _Spec(this.name, {this.asset, this.icon});
 }
 
 // ═══════════════════════════════════════════════
@@ -989,7 +991,6 @@ class _SpecCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 124,
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -998,7 +999,16 @@ class _SpecCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(spec.icon, size: 32, color: const Color(0xFF123A72)),
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: spec.asset != null
+                ? Padding(
+                    padding: const EdgeInsets.all(3),
+                    child: SvgPicture.asset(spec.asset!),
+                  )
+                : Icon(spec.icon, size: 32, color: const Color(0xFF123A72)),
+          ),
           const SizedBox(height: 12),
           Text(
             spec.name,
@@ -1006,6 +1016,17 @@ class _SpecCard extends StatelessWidget {
               fontFamily: AppFonts.inter,
               fontSize: 14,
               fontWeight: FontWeight.w500,
+              color: Colors.black,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            L.of(context).yes,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
               color: Colors.black,
             ),
             textAlign: TextAlign.center,
@@ -1027,14 +1048,6 @@ class _NearbyListingCard extends StatelessWidget {
   /// 3.5 reads as "3.5"; 4.0 reads as "4" — the card printed "4.0 Rooms".
   static String _roomsText(double v) =>
       v == v.roundToDouble() ? '${v.toInt()}' : '$v';
-
-  String _priceText(L l) {
-    final p = listing.effectivePrice;
-    if (p == null) return '';
-    return listing.kind == ListingKind.rent
-        ? l.pricePerMonthValue(formatShekels(p))
-        : formatShekels(p);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1061,25 +1074,18 @@ class _NearbyListingCard extends StatelessWidget {
                 ),
 
                 // Heart button
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: FavoriteButton(
-                        kind: FavoriteKind.listing,
-                        id: listing.id,
-                        color: const Color(0xFF123A72),
-                      ),
+                if (!kIsWeb)
+                  Positioned(
+                    right: 12,
+                    top: 12,
+                    child: FavoriteButton(
+                      kind: FavoriteKind.listing,
+                      id: listing.id,
+                      size: 40,
+                      iconSize: 20,
+                      color: const Color(0xFF123A72),
                     ),
                   ),
-                ),
 
                 // New badge — anything posted in the last fortnight.
                 if (DateTime.now().difference(listing.createdAt).inDays < 14)
@@ -1146,15 +1152,13 @@ class _NearbyListingCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      _priceText(l),
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF0A1230),
-                      ),
-                    ),
+                    if (listing.effectivePrice != null)
+                      MPriceText(
+                        amount: listing.effectivePrice!,
+                        kind: listing.kind,
+                      )
+                    else
+                      const SizedBox.shrink(),
                     Text(
                       listing.kind == ListingKind.rent
                           ? l.forRentBadge
@@ -1200,21 +1204,21 @@ class _NearbyListingCard extends StatelessWidget {
                   children: [
                     if (listing.sqm != null) ...[
                       _DetailChip(
-                        icon: IconsaxPlusLinear.maximize_3,
+                        asset: '$_specAsset/detail_card_area.svg',
                         text: '${listing.sqm} ${l.sqmUnit}',
                       ),
                       const SizedBox(width: 31),
                     ],
                     if (listing.rooms != null) ...[
                       _DetailChip(
-                        icon: IconsaxPlusLinear.building_3,
+                        asset: '$_specAsset/detail_card_rooms.svg',
                         text: '${_roomsText(listing.rooms!)} ${l.roomsLabel}',
                       ),
                       const SizedBox(width: 31),
                     ],
                     if (listing.floor != null)
                       _DetailChip(
-                        icon: IconsaxPlusLinear.building_4,
+                        asset: '$_specAsset/detail_card_floor.svg',
                         text: l.floorLabel('${listing.floor}'),
                       ),
                   ],
@@ -1232,17 +1236,17 @@ class _NearbyListingCard extends StatelessWidget {
 // Detail chip (area / rooms / floor) for nearby cards
 // ═══════════════════════════════════════════════
 class _DetailChip extends StatelessWidget {
-  final IconData icon;
+  final String asset;
   final String text;
 
-  const _DetailChip({required this.icon, required this.text});
+  const _DetailChip({required this.asset, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
+        SvgPicture.asset(asset, width: 14, height: 14),
         const SizedBox(width: 8),
         Text(
           text,

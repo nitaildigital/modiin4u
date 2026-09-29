@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -13,7 +15,7 @@ import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
-import 'my_apartments_screen.dart' show formatShekels;
+import '../widgets/m_price_text.dart';
 import 'web_realestate_screen.dart';
 
 /// The Real Estate tab.
@@ -24,6 +26,9 @@ import 'web_realestate_screen.dart';
 /// that was a `Text`, and a floating button labelled "Sign up with Email",
 /// copied from an auth screen, that did nothing. `listingsProvider` existed
 /// and this file imported nothing.
+/// The outline icons the design uses, kept with the website's copies.
+const _kAssets = 'assets/web/realestate';
+
 class RealEstateScreen extends StatelessWidget {
   const RealEstateScreen({super.key});
 
@@ -53,13 +58,15 @@ class _MobileRealEstateContentState
   final _searchController = TextEditingController();
   Timer? _debounce;
 
+  /// The design's outline type icons — the website's copies of the same
+  /// drawings.
   static const _types = [
-    (PropertyType.apartment, IconsaxPlusBold.building_4),
-    (PropertyType.penthouse, IconsaxPlusBold.building_3),
-    (PropertyType.garden, IconsaxPlusBold.house),
-    (PropertyType.duplex, IconsaxPlusBold.building),
-    (PropertyType.villa, IconsaxPlusBold.house_2),
-    (PropertyType.studio, IconsaxPlusBold.lamp),
+    (PropertyType.apartment, '$_kAssets/type_apartment.svg'),
+    (PropertyType.penthouse, '$_kAssets/type_penthouse.svg'),
+    (PropertyType.garden, '$_kAssets/type_garden.svg'),
+    (PropertyType.duplex, '$_kAssets/type_duplex.svg'),
+    (PropertyType.villa, '$_kAssets/type_villa.svg'),
+    (PropertyType.studio, '$_kAssets/type_studio.svg'),
   ];
 
   @override
@@ -122,7 +129,7 @@ class _MobileRealEstateContentState
               children: [
                 CustomScrollView(
                   slivers: [
-                    const SliverToBoxAdapter(child: SizedBox(height: 290)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 300)),
 
                     if (async.isLoading)
                       const SliverFillRemaining(
@@ -166,18 +173,40 @@ class _MobileRealEstateContentState
                     color: const Color(0xE6FFFFFF),
                     child: Column(
                       children: [
-                        const SizedBox(height: 8),
-                        Text(
-                          // The title read "Filter Your Discover Feed".
-                          l.realEstateInModiin,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
+                        const SizedBox(height: 10),
+                        // Back arrow and centred title, as in the design. The
+                        // arrow only when there is somewhere to go back to.
+                        SizedBox(
+                          height: 24,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Text(
+                                // The title read "Filter Your Discover Feed".
+                                l.realEstateInModiin,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              if (context.canPop())
+                                PositionedDirectional(
+                                  start: 15,
+                                  child: GestureDetector(
+                                    onTap: () => context.pop(),
+                                    child: const Icon(
+                                      Icons.arrow_back,
+                                      size: 24,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 18),
 
                         // Search — a `Text` before, so nothing could be typed.
                         Padding(
@@ -208,7 +237,13 @@ class _MobileRealEstateContentState
                                       fontFamily: AppFonts.inter,
                                       fontSize: 14,
                                     ),
+                                    // The app theme fills every field; the
+                                    // design's search is a plain white pill.
                                     decoration: InputDecoration(
+                                      filled: false,
+                                      contentPadding: EdgeInsets.zero,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
                                       hintText: l.searchByLocation,
                                       hintStyle: TextStyle(
                                         fontFamily: AppFonts.inter,
@@ -225,7 +260,7 @@ class _MobileRealEstateContentState
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
 
                         // Property-type chips. These used to set a field that
                         // nothing read, so a chip selected and the list
@@ -239,7 +274,7 @@ class _MobileRealEstateContentState
                             separatorBuilder: (_, _) =>
                                 const SizedBox(width: 12),
                             itemBuilder: (context, index) {
-                              final (type, icon) = _types[index];
+                              final (type, asset) = _types[index];
                               final selected = filter.propertyType == type;
                               return GestureDetector(
                                 onTap: () {
@@ -265,30 +300,28 @@ class _MobileRealEstateContentState
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        icon,
-                                        size: 28,
-                                        color: selected
-                                            ? AppColors.midBlue
-                                            : const Color(0xFF6D6D6D),
+                                      SvgPicture.asset(
+                                        asset,
+                                        width: 32,
+                                        height: 32,
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 6),
                                       Padding(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
+                                          horizontal: 9,
                                         ),
                                         child: Text(
                                           _typeLabel(l, type),
                                           textAlign: TextAlign.center,
-                                          maxLines: 2,
+                                          maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                             fontFamily: AppFonts.inter,
-                                            fontSize: 12,
+                                            fontSize: 14,
                                             fontWeight: selected
                                                 ? FontWeight.w600
-                                                : FontWeight.w400,
-                                            color: const Color(0xFF1F1F1F),
+                                                : FontWeight.w500,
+                                            color: Colors.black,
                                           ),
                                         ),
                                       ),
@@ -299,7 +332,7 @@ class _MobileRealEstateContentState
                             },
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
 
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -498,7 +531,10 @@ class _ListingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = L.of(context);
     final price = listing.effectivePrice;
+    // As on the website's card and in the design: the place, with the
+    // listing's own title standing in when there is no address.
     final address = listing.address ?? listing.neighborhoodName;
+    final place = (address == null || address.isEmpty) ? listing.title : address;
     // Anything posted in the last fortnight. The badge used to be a fixed
     // flag on four of the eight invented flats.
     final isNew = DateTime.now().difference(listing.createdAt).inDays < 14;
@@ -572,26 +608,20 @@ class _ListingCard extends StatelessWidget {
                 ),
 
               // A drawn heart before — it saves the listing now.
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: FavoriteButton(
-                      kind: FavoriteKind.listing,
-                      id: listing.id,
-                      iconSize: 23,
-                      color: AppColors.midBlue,
-                    ),
+              // The button draws its own circle, and nothing on the website
+              // (no saving there), so no empty white disc is left behind.
+              if (!kIsWeb)
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  child: FavoriteButton(
+                    kind: FavoriteKind.listing,
+                    id: listing.id,
+                    size: 40,
+                    iconSize: 23,
+                    color: AppColors.midBlue,
                   ),
                 ),
-              ),
             ],
           ),
 
@@ -604,16 +634,10 @@ class _ListingCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     if (price != null)
-                      Text(
-                        listing.kind == ListingKind.rent
-                            ? l.pricePerMonthValue(formatShekels(price))
-                            : formatShekels(price),
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.navy,
-                        ),
+                      MPriceText(
+                        amount: price,
+                        kind: listing.kind,
+                        color: AppColors.navy,
                       )
                     else
                       const SizedBox.shrink(),
@@ -631,32 +655,25 @@ class _ListingCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 8),
-                Text(
-                  listing.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0A1230),
-                  ),
-                ),
-
-                if (address != null && address.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                if (place.isNotEmpty) ...[
+                  const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(
-                        IconsaxPlusLinear.location,
-                        size: 16,
-                        color: AppColors.turquoise,
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: Center(
+                          child: SvgPicture.asset(
+                            '$_kAssets/card_pin.svg',
+                            width: 12,
+                            height: 16,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          address,
+                          place,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
@@ -680,21 +697,21 @@ class _ListingCard extends StatelessWidget {
                     children: [
                       if (listing.sqm != null) ...[
                         _Spec(
-                          icon: IconsaxPlusLinear.maximize_3,
+                          asset: '$_kAssets/spec_sqm.svg',
                           text: '${listing.sqm} ${l.sqmUnit}',
                         ),
                         const SizedBox(width: 24),
                       ],
                       if (listing.rooms != null) ...[
                         _Spec(
-                          icon: IconsaxPlusLinear.building_3,
+                          asset: '$_kAssets/spec_rooms.svg',
                           text: '${_rooms(listing.rooms!)} ${l.roomsLabel}',
                         ),
                         const SizedBox(width: 24),
                       ],
                       if (listing.floor != null)
                         _Spec(
-                          icon: IconsaxPlusLinear.building_4,
+                          asset: '$_kAssets/spec_floor.svg',
                           text: l.floorLabel('${listing.floor}'),
                         ),
                     ],
@@ -711,23 +728,23 @@ class _ListingCard extends StatelessWidget {
 
 /// One icon-and-text figure on a listing card.
 class _Spec extends StatelessWidget {
-  final IconData icon;
+  final String asset;
   final String text;
-  const _Spec({required this.icon, required this.text});
+  const _Spec({required this.asset, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF6D6D6D)),
-        const SizedBox(width: 6),
+        SvgPicture.asset(asset, width: 14, height: 14),
+        const SizedBox(width: 8),
         Text(
           text,
           style: TextStyle(
             fontFamily: AppFonts.inter,
-            fontSize: 13,
-            color: const Color(0xFF5F5E5A),
+            fontSize: 12,
+            color: const Color(0xFF3D3D3D),
           ),
         ),
       ],

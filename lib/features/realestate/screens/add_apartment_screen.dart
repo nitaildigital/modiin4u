@@ -307,10 +307,11 @@ class _MobileAddApartmentContentState
                         child: const SizedBox(
                           width: 24,
                           height: 24,
+                          // Points the way back in Hebrew too.
                           child: Icon(
-                            IconsaxPlusLinear.arrow_left,
+                            Icons.arrow_back,
                             size: 24,
-                            color: Color(0xFF3D3D3D),
+                            color: Colors.black,
                           ),
                         ),
                       ),
@@ -330,10 +331,14 @@ class _MobileAddApartmentContentState
                       // Step label (hidden on confirmation)
                       if (_currentStep < 3)
                         SizedBox(
-                          width: 65,
+                          width: 72,
                           child: Text(
-                            'Step ${_currentStep + 1} of 3',
-                            textAlign: TextAlign.right,
+                            // It read English whatever the app language.
+                            Localizations.localeOf(context).languageCode ==
+                                    'he'
+                                ? 'שלב ${_currentStep + 1} מתוך 3'
+                                : 'Step ${_currentStep + 1} of 3',
+                            textAlign: TextAlign.end,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 12,

@@ -269,21 +269,12 @@ class _MobileMyApartmentsContentState
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Illustration placeholder
-        Container(
+        // The design's illustration (a grey box with a glyph stood here).
+        Image.asset(
+          'assets/images/m_realestate_no_apartments.webp',
           width: 205,
           height: 153,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Center(
-            child: Icon(
-              IconsaxPlusLinear.building_3,
-              size: 64,
-              color: Color(0xFF6D6D6D),
-            ),
-          ),
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: 24),
         Text(
@@ -491,7 +482,7 @@ class _ListingCard extends StatelessWidget {
                           ? l.pricePerMonthValue(formatShekels(price))
                           : formatShekels(price),
                       style: TextStyle(
-                        fontFamily: AppFonts.inter,
+                        fontFamily: AppFonts.nunito,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF0A1230),

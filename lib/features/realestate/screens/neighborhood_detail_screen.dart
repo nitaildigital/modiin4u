@@ -1,14 +1,22 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../../favorites/widgets/favorite_button.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../models/listing.dart';
 import '../providers/neighborhood_providers.dart';
 import 'web_neighborhood_detail_screen.dart';
+
+/// The design's outline icons, kept with the website's copies.
+const _kAssets = 'assets/web/realestate';
 
 class NeighborhoodDetailScreen extends StatelessWidget {
   final String neighborhoodId;
@@ -73,7 +81,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
             child: Text(
               n.name,
               style: TextStyle(
-                fontFamily: AppFonts.rubik,
+                fontFamily: AppFonts.nunito,
                 fontSize: 28,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
@@ -190,7 +198,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
               child: _StatCard(
                 value: counts?.listings,
                 label: 'נכסים למכירה',
-                icon: IconsaxPlusBold.home_2,
+                asset: '$_kAssets/detail_stat_home.svg',
               ),
             ),
             const SizedBox(width: 12),
@@ -198,7 +206,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
               child: _StatCard(
                 value: counts?.businesses,
                 label: 'עסקים באזור',
-                icon: IconsaxPlusBold.shop,
+                asset: '$_kAssets/detail_stat_shop.svg',
               ),
             ),
           ],
@@ -307,8 +315,16 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
               Center(
                 child: GestureDetector(
                   onTap: () => context.goOrPush('/realestate'),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: const Color(0xFF123A72)),
+                      borderRadius: BorderRadius.circular(60),
+                    ),
                     child: Text(
                       'ראה הכל',
                       style: TextStyle(
@@ -366,9 +382,9 @@ class _StatCard extends StatelessWidget {
   /// dash rather than a nought — nought is a claim, a dash is not.
   final int? value;
   final String label;
-  final IconData icon;
+  final String asset;
 
-  const _StatCard({required this.value, required this.label, required this.icon});
+  const _StatCard({required this.value, required this.label, required this.asset});
 
   @override
   Widget build(BuildContext context) {
@@ -382,7 +398,7 @@ class _StatCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 32, color: const Color(0xFF123A72)),
+          SvgPicture.asset(asset, width: 32, height: 32),
           const SizedBox(height: 12),
           Text(
             value?.toString() ?? '—',
@@ -466,23 +482,20 @@ class _ListingCard extends StatelessWidget {
                   ),
                 ),
                 // Heart
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      IconsaxPlusLinear.heart,
-                      size: 20,
-                      color: Color(0xFF123A72),
+                // A drawn heart that did nothing; it saves the listing now,
+                // in the app (the website offers no saving).
+                if (!kIsWeb)
+                  Positioned(
+                    right: 12,
+                    top: 12,
+                    child: FavoriteButton(
+                      kind: FavoriteKind.listing,
+                      id: listing.id,
+                      size: 40,
+                      iconSize: 20,
+                      color: const Color(0xFF123A72),
                     ),
                   ),
-                ),
                 // Badges
                 if (listing.isBroker)
                   Positioned(
@@ -498,7 +511,7 @@ class _ListingCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Text(
-                        'Via Broker',
+                        L.of(context).viaBroker,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 12,
@@ -530,7 +543,7 @@ class _ListingCard extends StatelessWidget {
                         Text(
                           _price ?? '',
                           style: TextStyle(
-                            fontFamily: AppFonts.rubik,
+                            fontFamily: AppFonts.nunito,
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF0A1230),
@@ -566,10 +579,16 @@ class _ListingCard extends StatelessWidget {
                 // Address
                 Row(
                   children: [
-                    const Icon(
-                      IconsaxPlusBold.location,
-                      size: 16,
-                      color: Color(0xFF17A9D0),
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: Center(
+                        child: SvgPicture.asset(
+                          '$_kAssets/card_pin.svg',
+                          width: 12,
+                          height: 16,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -595,21 +614,21 @@ class _ListingCard extends StatelessWidget {
                   children: [
                     if (listing.sqm != null) ...[
                       _chip(
-                        IconsaxPlusLinear.maximize_3,
+                        '$_kAssets/spec_sqm.svg',
                         '${listing.sqm} מ״ר',
                       ),
                       const SizedBox(width: 31),
                     ],
                     if (listing.rooms != null) ...[
                       _chip(
-                        IconsaxPlusLinear.building_3,
+                        '$_kAssets/spec_rooms.svg',
                         '${_rooms(listing.rooms!)} חדרים',
                       ),
                       const SizedBox(width: 31),
                     ],
                     if (listing.floor != null)
                       _chip(
-                        IconsaxPlusLinear.building_4,
+                        '$_kAssets/spec_floor.svg',
                         'קומה ${listing.floor}',
                       ),
                   ],
@@ -627,11 +646,11 @@ class _ListingCard extends StatelessWidget {
   static String _rooms(double rooms) =>
       rooms == rooms.roundToDouble() ? '${rooms.toInt()}' : '$rooms';
 
-  Widget _chip(IconData icon, String text) {
+  Widget _chip(String asset, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF6D6D6D)),
+        SvgPicture.asset(asset, width: 14, height: 14),
         const SizedBox(width: 8),
         Text(
           text,
