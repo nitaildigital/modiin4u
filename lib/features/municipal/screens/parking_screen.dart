@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
+import '../providers/parking_providers.dart';
+import '../widgets/parking_widgets.dart';
 import 'web_parking_screen.dart';
 
+/// Parking — the car parks the client enters in the panel (חניונים), on a
+/// map and in a list.
+///
+/// The screen used to list eight car parks written into the source, with
+/// capacities, rates, an occupancy bar and a notice that residents with a
+/// permit park two hours free. None of it came from anywhere the client could
+/// correct, and nothing measures occupancy, so it is all gone: what shows now
+/// is what he entered, and nothing where he entered nothing.
 class ParkingScreen extends StatelessWidget {
   const ParkingScreen({super.key});
 
@@ -11,254 +26,135 @@ class ParkingScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) return const WebParkingContent();
-        return _buildMobile(context);
+        return const _MobileParking();
       },
-    );
-  }
-
-  Widget _buildMobile(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'חניה וחניונים',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          backgroundColor: AppColors.white,
-          foregroundColor: AppColors.navy,
-          elevation: 0,
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.turquoise.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.turquoise.withValues(alpha: 0.15),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline,
-                    size: 18,
-                    color: AppColors.turquoise,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'תושבים עם תו חניה עירוני תקף פטורים מתשלום ומקבלים שעתיים ראשונות חינם בכל חניון בעיר',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 13,
-                        color: AppColors.midBlue,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            _ParkingLot('חניון היכל התרבות', '~600 מקומות', 'חינם', 0.65, true),
-            const SizedBox(height: 10),
-            _ParkingLot(
-              'חניון הרכבת (סמוך לקניון)',
-              '~450 מקומות',
-              'חינם',
-              0.45,
-              true,
-            ),
-            const SizedBox(height: 10),
-            _ParkingLot(
-              'חניון תת-קרקעי "גריי"',
-              '~500 מקומות',
-              'חינם ל-2 שעות ראשונות',
-              0.82,
-              false,
-            ),
-            const SizedBox(height: 10),
-            _ParkingLot('חניון מרכז הספורט', '~300 מקומות', 'חינם', 0.3, true),
-            const SizedBox(height: 10),
-            _ParkingLot(
-              'חניון עמק זבולון צפון',
-              '~200 מקומות',
-              'חינם',
-              0.2,
-              true,
-            ),
-            const SizedBox(height: 10),
-            _ParkingLot(
-              'חניון ליד קופת חולים מכבי',
-              '55 מקומות',
-              'חינם',
-              0.9,
-              false,
-            ),
-            const SizedBox(height: 10),
-            _ParkingLot(
-              'חניון ליד צומת תלתן/דפנה',
-              '21 מקומות',
-              'חינם',
-              0.5,
-              true,
-            ),
-            const SizedBox(height: 10),
-            _ParkingLot('חניוני תחנת הרכבת', '—', '70 ₪ ליממה', 0.6, false),
-            const SizedBox(height: 20),
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                color: AppColors.midBlue.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.map,
-                      size: 40,
-                      color: AppColors.midBlue.withValues(alpha: 0.3),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'מפת חניונים',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 14,
-                        color: AppColors.grayText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
     );
   }
 }
 
-class _ParkingLot extends StatelessWidget {
-  final String name;
-  final String capacity;
-  final String rate;
-  final double occupancy;
-  final bool hasAvailability;
+class _MobileParking extends ConsumerStatefulWidget {
+  const _MobileParking();
 
-  const _ParkingLot(
-    this.name,
-    this.capacity,
-    this.rate,
-    this.occupancy,
-    this.hasAvailability,
-  );
+  @override
+  ConsumerState<_MobileParking> createState() => _MobileParkingState();
+}
+
+class _MobileParkingState extends ConsumerState<_MobileParking> {
+  final _map = MapController();
+  final _cardKeys = <String, GlobalKey>{};
+  String? _selectedId;
+
+  /// A pin brings its card into view below the map.
+  void _selectFromMap(ParkingLot? lot) {
+    setState(() => _selectedId = lot?.id);
+    final card = lot == null ? null : _cardKeys[lot.id]?.currentContext;
+    if (card != null) {
+      Scrollable.ensureVisible(
+        card,
+        duration: const Duration(milliseconds: 300),
+        alignment: 0.05,
+      );
+    }
+  }
+
+  /// A card brings its pin into view on the map.
+  void _selectFromList(ParkingLot lot) {
+    setState(() => _selectedId = lot.id);
+    final zoom = _map.camera.zoom;
+    _map.move(lot.position, zoom < 16 ? 16 : zoom);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final availColor = occupancy > 0.8
-        ? AppColors.error
-        : occupancy > 0.5
-        ? AppColors.gold
-        : AppColors.success;
+    final l = L.of(context);
+    final english = Localizations.localeOf(context).languageCode == 'en';
+    final lots = ref.watch(parkingLotsProvider);
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 0.5),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          l.parkingInModiin,
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.navy,
+        elevation: 0,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      body: lots.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => Center(
+          child: ParkingMessage(
+            icon: IconsaxPlusLinear.warning_2,
+            text: l.parkingLoadError,
+            action: TextButton(
+              onPressed: () => ref.invalidate(parkingLotsProvider),
+              child: Text(l.tryAgain),
+            ),
+          ),
+        ),
+        data: (lots) {
+          if (lots.isEmpty) {
+            return Center(
+              child: ParkingMessage(
+                icon: IconsaxPlusLinear.car,
+                text: l.parkingEmpty,
+              ),
+            );
+          }
+          return Column(
             children: [
-              Icon(Icons.local_parking, size: 20, color: AppColors.midBlue),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.navy,
-                  ),
+              SizedBox(
+                height: 260,
+                child: ParkingMap(
+                  lots: lots,
+                  controller: _map,
+                  selectedId: _selectedId,
+                  onSelect: _selectFromMap,
                 ),
               ),
-              if (hasAvailability)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: availColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    occupancy > 0.8
-                        ? 'כמעט מלא'
-                        : occupancy > 0.5
-                        ? 'זמין'
-                        : 'פנוי',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: availColor,
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => ref.refresh(parkingLotsProvider.future),
+                  // A column rather than a lazy list, so a pin far down the
+                  // list still has a card built to scroll to. The city has
+                  // dozens of lots, not thousands.
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          l.parkingLotCount(lots.length),
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 14,
+                            color: const Color(0xFF5F5E5A),
+                          ),
+                        ),
+                        for (final lot in lots) ...[
+                          const SizedBox(height: 12),
+                          ParkingLotCard(
+                            key: _cardKeys.putIfAbsent(lot.id, GlobalKey.new),
+                            lot: lot,
+                            l: l,
+                            english: english,
+                            selected: lot.id == _selectedId,
+                            onTap: () => _selectFromList(lot),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (hasAvailability) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: occupancy,
-                minHeight: 6,
-                backgroundColor: AppColors.border,
-                valueColor: AlwaysStoppedAnimation<Color>(availColor),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          Row(
-            children: [
-              Text(
-                capacity,
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 13,
-                  color: AppColors.grayText,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                rate,
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.navy,
-                ),
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../news/models/article_body.dart';
 import '../providers/admin_articles_provider.dart';
 import '../widgets/image_upload_field.dart';
+import '../widgets/admin_load_error.dart';
 
 class AdminArticlesScreen extends ConsumerStatefulWidget {
   const AdminArticlesScreen({super.key});
@@ -115,21 +116,20 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                     .setStatusFilter('archived');
               }),
               const Spacer(),
-              articlesAsync
-                      .whenData(
-                        (list) => Text(
-                          notifier.hasMore
-                              ? '${list.length} מתוך ${notifier.totalCount} כתבות'
-                              : '${notifier.totalCount} כתבות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 13,
-                            color: AppColors.adminTextLight,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of
+              // letting the table below show the error and a retry.
+              if (articlesAsync.valueOrNull case final list?)
+                Text(
+                  notifier.hasMore
+                      ? '${list.length} מתוך ${notifier.totalCount} כתבות'
+                      : '${notifier.totalCount} כתבות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 13,
+                    color: AppColors.adminTextLight,
+                  ),
+                ),
               const SizedBox(width: 16),
               SizedBox(
                 height: 40,
@@ -293,11 +293,11 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
       case 'edit':
         _showArticleEditor(context, ref, article: article);
       case 'publish':
-        notifier.updateStatus(id, 'published');
+        runAdminAction(context, () => notifier.updateStatus(id, 'published'));
       case 'draft':
-        notifier.updateStatus(id, 'draft');
+        runAdminAction(context, () => notifier.updateStatus(id, 'draft'));
       case 'archive':
-        notifier.updateStatus(id, 'archived');
+        runAdminAction(context, () => notifier.updateStatus(id, 'archived'));
     }
   }
 

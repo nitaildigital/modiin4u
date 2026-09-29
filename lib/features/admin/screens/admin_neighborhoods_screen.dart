@@ -8,6 +8,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_neighborhoods_provider.dart';
 import '../widgets/admin_gallery_editor.dart';
 import '../widgets/image_upload_field.dart';
+import '../widgets/admin_load_error.dart';
 
 class AdminNeighborhoodsScreen extends ConsumerStatefulWidget {
   const AdminNeighborhoodsScreen({super.key});
@@ -108,19 +109,18 @@ class _AdminNeighborhoodsScreenState
                     .setActiveFilter('inactive');
               }),
               const Spacer(),
-              async
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} שכונות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of letting
+              // the list below show the error and a retry.
+              if (async.valueOrNull case final list?)
+                Text(
+                  '${list.length} שכונות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEditor(context, ref),
@@ -145,14 +145,11 @@ class _AdminNeighborhoodsScreenState
         Expanded(
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Text(
-                'שגיאה: $e',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  color: AppColors.error,
-                ),
-              ),
+            error: (e, _) => AdminLoadError(
+              message: 'שגיאה בטעינת השכונות',
+              error: e,
+              onRetry: () =>
+                  ref.read(adminNeighborhoodListProvider.notifier).load(),
             ),
             data: (neighborhoods) {
               if (neighborhoods.isEmpty) {
@@ -315,6 +312,9 @@ class _AdminNeighborhoodsScreenState
                                         ),
                                       ),
                                     ),
+                                    // One item: a "הסתר" beside it set
+                                    // is_active = false too, the same thing
+                                    // twice. Nothing is removed either way.
                                     PopupMenuItem(
                                       value: 'toggle',
                                       child: Text(
@@ -322,18 +322,6 @@ class _AdminNeighborhoodsScreenState
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text(
-                                        // The row is not removed; it becomes is_active = false.
-                                        'הסתר',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 13,
-                                          color: AppColors.error,
                                         ),
                                       ),
                                     ),
@@ -362,47 +350,7 @@ class _AdminNeighborhoodsScreenState
       case 'edit':
         _showEditor(context, ref, neighborhood: n);
       case 'toggle':
-        notifier.toggleActive(id);
-      case 'delete':
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(
-              'מחיקת שכונה',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            content: Text(
-              'להסתיר את "${n['name']}"? השכונה תוסתר מהאפליקציה, '
-              'והעסקים והמודעות המשויכים אליה יישמרו.',
-              style: TextStyle(fontFamily: AppFonts.rubik),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  'ביטול',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  notifier.deleteNeighborhood(id);
-                },
-                child: Text(
-                  'מחק',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    color: AppColors.error,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
+        runAdminAction(context, () => notifier.toggleActive(id));
     }
   }
 

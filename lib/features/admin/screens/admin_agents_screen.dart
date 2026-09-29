@@ -6,6 +6,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_agents_provider.dart';
 import '../widgets/image_upload_field.dart';
+import '../widgets/admin_load_error.dart';
 
 /// Estate agents.
 ///
@@ -87,19 +88,18 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                 () => _setFilter('inactive'),
               ),
               const Spacer(),
-              async
-                      .whenData(
-                        (l) => Text(
-                          '${l.length} מתווכים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of letting
+              // the list below show the error and a retry.
+              if (async.valueOrNull case final l?)
+                Text(
+                  '${l.length} מתווכים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEditor(),
@@ -116,8 +116,10 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
         Expanded(
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Text('$e', style: TextStyle(fontFamily: AppFonts.rubik)),
+            error: (e, _) => AdminLoadError(
+              message: 'שגיאה בטעינת המתווכים',
+              error: e,
+              onRetry: () => ref.read(adminAgentListProvider.notifier).load(),
             ),
             data: (rows) {
               if (rows.isEmpty) {
@@ -283,17 +285,6 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Text(
-                    'מחיקה',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.error,
-                    ),
-                  ),
-                ),
               ],
             ),
           ],
@@ -309,51 +300,16 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
       case 'edit':
         _showEditor(agent: a);
       case 'activate':
-        notifier.updateAgent(id, {'is_active': true});
+        runAdminAction(
+          context,
+          () => notifier.updateAgent(id, {'is_active': true}),
+        );
+      // השבתה is the only way out: a delete removed the row for good, which
+      // the client's rule forbids — removal in the panel must be undoable.
       case 'deactivate':
-        notifier.updateAgent(id, {'is_active': false});
-      case 'delete':
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(
-              'מחיקת מתווך',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            // Deleting nulls `listings.agent_id` rather than removing the
-            // listing, so the count is shown to make that plain.
-            content: Text(
-              listings == 0
-                  ? 'למחוק את "${a['name']}"?'
-                  : 'למחוק את "${a['name']}"? $listings מודעות יישארו, אך ללא שיוך למתווך.',
-              style: TextStyle(fontFamily: AppFonts.rubik),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  'ביטול',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  notifier.deleteAgent(id);
-                },
-                child: Text(
-                  'מחק',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    color: AppColors.error,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        runAdminAction(
+          context,
+          () => notifier.updateAgent(id, {'is_active': false}),
         );
     }
   }

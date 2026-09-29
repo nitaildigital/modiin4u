@@ -124,19 +124,18 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                 () => _filter('cancelled'),
               ),
               const Spacer(),
-              eventsAsync
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} אירועים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of
+              // letting the table below show the error and a retry.
+              if (eventsAsync.valueOrNull case final list?)
+                Text(
+                  '${list.length} אירועים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEventEditor(context),
@@ -241,7 +240,10 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('שגיאה: $e'), backgroundColor: AppColors.error),
+        SnackBar(
+          content: Text('הפעולה נכשלה: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -257,13 +259,11 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
       case 'draft':
         _run(() => notifier.updateStatus(id, 'draft'));
       case 'cancel':
-        _run(() => notifier.updateStatus(id, 'cancelled'));
-      case 'delete':
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(
-              'מחיקת אירוע',
+              'ביטול אירוע',
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontWeight: FontWeight.w700,
@@ -278,7 +278,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
-                  'ביטול',
+                  'חזרה',
                   style: TextStyle(fontFamily: AppFonts.rubik),
                 ),
               ),
@@ -288,7 +288,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                   _run(() => notifier.deleteEvent(id));
                 },
                 child: Text(
-                  'מחק',
+                  'בטל אירוע',
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     color: AppColors.error,
@@ -559,14 +559,14 @@ class _EventTable extends StatelessWidget {
                             _menuItem('publish', 'פרסם'),
                           if (status != 'draft')
                             _menuItem('draft', 'החזר לטיוטה'),
+                          // One item: "cancel" and "delete" both set
+                          // status = 'cancelled' — the row is never removed.
                           if (status != 'cancelled')
-                            _menuItem('cancel', 'בטל אירוע'),
-                          _menuItem(
-                            'delete',
-                            // The row is not removed; it becomes status = 'cancelled'.
-                            'בטל',
-                            color: AppColors.error,
-                          ),
+                            _menuItem(
+                              'cancel',
+                              'בטל אירוע',
+                              color: AppColors.error,
+                            ),
                         ],
                       ),
                     ],

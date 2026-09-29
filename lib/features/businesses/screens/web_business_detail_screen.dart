@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_map_tiles.dart';
 import '../../../shared/widgets/web_chrome.dart';
@@ -1116,10 +1117,17 @@ class _ReviewRow extends StatelessWidget {
   static const _en = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   static const _he = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 
+  String _format(DateTime? at) {
+    final d = at?.toLocal();
+    if (d == null) return '';
+    return isHebrew ? '${d.day} ב${_he[d.month - 1]} ${d.year}' : '${_en[d.month - 1]} ${d.day}, ${d.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final d = review.createdAt?.toLocal();
-    final date = d == null ? '' : (isHebrew ? '${d.day} ב${_he[d.month - 1]} ${d.year}' : '${_en[d.month - 1]} ${d.day}, ${d.year}');
+    final date = _format(review.createdAt);
+    final response = review.adminResponse?.trim() ?? '';
+    final responseDate = _format(review.respondedAt);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kLine))),
@@ -1154,6 +1162,37 @@ class _ReviewRow extends StatelessWidget {
                     child: Text(review.body, textDirection: _dirOf(review.body), style: _inter(14, color: _kBody, height: 1.4)),
                   ),
                 ],
+                // The reply written in the panel (`admin_response`), set in
+                // under the review with a thin rule so it reads as an answer
+                // to it. Neutral wording: the panel does not record whether
+                // the business or the site's staff wrote it. The label is
+                // looked up in the website's language, which the navbar keeps
+                // apart from the app's locale.
+                if (response.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsetsDirectional.only(top: 12),
+                    padding: const EdgeInsetsDirectional.only(start: 14),
+                    decoration: const BoxDecoration(
+                      border: BorderDirectional(start: BorderSide(color: _kLine, width: 2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(lookupL(Locale(isHebrew ? 'he' : 'en')).reviewBusinessResponse, style: _inter(14, weight: FontWeight.w500)),
+                            if (responseDate.isNotEmpty) ...[
+                              const SizedBox(width: 12),
+                              Text(responseDate, style: _inter(12, color: _kMuted)),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Text(response, textDirection: _dirOf(response), style: _inter(14, color: _kMuted, height: 1.4)),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

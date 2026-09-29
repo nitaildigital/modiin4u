@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../l10n/app_localizations.dart';
@@ -13,6 +14,7 @@ import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../models/listing.dart';
+import '../providers/detail_providers.dart';
 import '../providers/neighborhood_providers.dart';
 import 'web_neighborhood_detail_screen.dart';
 
@@ -71,11 +73,11 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // The neighbourhood's own photograph where the admin has set one.
-          // Five tappable gradient rectangles sat under this as a thumbnail
-          // strip; `neighborhoods` holds a single image, so there was never
-          // a gallery to page through.
-          _buildHeroImage(context, n),
+          // The neighbourhood's own photograph, then its gallery from
+          // `entity_media` as the design's thumbnail strip — the same list
+          // the website reads. Only real photographs: with one on file there
+          // is no strip.
+          _NeighborhoodPhotos(neighborhood: n),
 
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
@@ -124,61 +126,6 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
           _buildListingSection(context, ref, n, ListingKind.rent),
 
           const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────
-  // Hero image
-  // ─────────────────────────────────
-  Widget _buildHeroImage(BuildContext context, Neighborhood n) {
-    return SizedBox(
-      height: 260,
-      width: double.infinity,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          NetworkPhoto(
-            url: n.imageUrl,
-            fit: BoxFit.cover,
-            icon: IconsaxPlusBold.buildings_2,
-            iconSize: 80,
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.4),
-                ],
-              ),
-            ),
-          ),
-          // Back button, at the reading start; the arrow points right in
-          // Hebrew.
-          PositionedDirectional(
-            start: 12,
-            top: 51,
-            child: GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  AppIcons.back,
-                  size: 20,
-                  color: Color(0xFF3D3D3D),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -664,6 +611,270 @@ class _ListingCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The photograph area of the design: the 260px hero, and under it a strip of
+/// 66×44 thumbnails with the one on show outlined.
+///
+/// The hero swipes between the photographs and a thumbnail brings its own up;
+/// tapping the hero opens them full size. Until the gallery arrives the hero
+/// shows the neighbourhood's own picture, which the gallery lists first.
+class _NeighborhoodPhotos extends ConsumerStatefulWidget {
+  final Neighborhood neighborhood;
+  const _NeighborhoodPhotos({required this.neighborhood});
+
+  @override
+  ConsumerState<_NeighborhoodPhotos> createState() =>
+      _NeighborhoodPhotosState();
+}
+
+class _NeighborhoodPhotosState extends ConsumerState<_NeighborhoodPhotos> {
+  final _pages = PageController();
+  int _at = 0;
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _show(int i) {
+    setState(() => _at = i);
+    _pages.animateToPage(
+      i,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _openViewer(List<String> photos, int start) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (_) => _PhotoViewer(urls: photos, start: start),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final own = widget.neighborhood.imageUrl;
+    final photos =
+        ref.watch(neighborhoodPhotosProvider(widget.neighborhood.id)).valueOrNull ??
+        [if (own != null && own.trim().isNotEmpty) own];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 260,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (photos.isEmpty)
+                const NetworkPhoto(
+                  url: null,
+                  fit: BoxFit.cover,
+                  icon: IconsaxPlusBold.buildings_2,
+                  iconSize: 80,
+                )
+              else
+                PageView.builder(
+                  controller: _pages,
+                  itemCount: photos.length,
+                  onPageChanged: (i) => setState(() => _at = i),
+                  itemBuilder: (_, i) => GestureDetector(
+                    onTap: () => _openViewer(photos, i),
+                    child: NetworkPhoto(
+                      url: photos[i],
+                      fit: BoxFit.cover,
+                      icon: IconsaxPlusBold.buildings_2,
+                      iconSize: 80,
+                    ),
+                  ),
+                ),
+              IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.4),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Back button, at the reading start; the arrow points right in
+              // Hebrew.
+              PositionedDirectional(
+                start: 12,
+                top: 51,
+                child: GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      AppIcons.back,
+                      size: 20,
+                      color: Color(0xFF3D3D3D),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (photos.length > 1)
+          SizedBox(
+            height: 60,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              itemCount: photos.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (_, i) => GestureDetector(
+                onTap: () => _show(i),
+                child: Container(
+                  width: 66,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    border: i == _at
+                        ? Border.all(color: AppColors.midBlue, width: 2)
+                        : null,
+                  ),
+                  child: NetworkPhoto(
+                    url: photos[i],
+                    fit: BoxFit.cover,
+                    radius: BorderRadius.circular(i == _at ? 2 : 4),
+                    icon: IconsaxPlusBold.buildings_2,
+                    iconSize: 18,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// The photographs full size over a dark page, swiped through; arrows too,
+/// since a narrow browser window has a mouse rather than a finger.
+///
+/// The website's viewer (`DetailPhotoViewer`) keeps 96px either side for its
+/// arrows, which on a phone would leave the photograph half the screen wide.
+class _PhotoViewer extends StatefulWidget {
+  final List<String> urls;
+  final int start;
+  const _PhotoViewer({required this.urls, required this.start});
+
+  @override
+  State<_PhotoViewer> createState() => _PhotoViewerState();
+}
+
+class _PhotoViewerState extends State<_PhotoViewer> {
+  late final _pages = PageController(initialPage: widget.start);
+  late int _at = widget.start;
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _go(int delta) {
+    final next = (_at + delta).clamp(0, widget.urls.length - 1);
+    _pages.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Photographs page left to right in either language, as on the website.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pages,
+            itemCount: widget.urls.length,
+            onPageChanged: (i) => setState(() => _at = i),
+            itemBuilder: (_, i) => InteractiveViewer(
+              child: Center(
+                child: NetworkPhoto(
+                  url: widget.urls[i],
+                  fit: BoxFit.contain,
+                  icon: IconsaxPlusBold.buildings_2,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+              ),
+            ),
+          ),
+          if (widget.urls.length > 1)
+            Positioned(
+              bottom: 24,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  '${_at + 1} / ${widget.urls.length}',
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    color: Colors.white70,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ),
+            ),
+          if (_at > 0)
+            Positioned(
+              left: 4,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: IconButton(
+                  onPressed: () => _go(-1),
+                  icon: const Icon(Icons.chevron_left, color: Colors.white, size: 36),
+                ),
+              ),
+            ),
+          if (_at < widget.urls.length - 1)
+            Positioned(
+              right: 4,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: IconButton(
+                  onPressed: () => _go(1),
+                  icon: const Icon(Icons.chevron_right, color: Colors.white, size: 36),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

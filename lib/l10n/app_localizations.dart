@@ -3096,6 +3096,84 @@ abstract class L {
   /// In he, this message translates to:
   /// **'חיפוש ב{place}...'**
   String searchInPlace(String place);
+
+  /// No description provided for @parkingEmpty.
+  ///
+  /// In he, this message translates to:
+  /// **'החניונים יתווספו בקרוב'**
+  String get parkingEmpty;
+
+  /// No description provided for @parkingSpaces.
+  ///
+  /// In he, this message translates to:
+  /// **'{n} מקומות חניה'**
+  String parkingSpaces(int n);
+
+  /// No description provided for @parkingLotCount.
+  ///
+  /// In he, this message translates to:
+  /// **'{n, plural, =1{חניון אחד} other{{n} חניונים}}'**
+  String parkingLotCount(int n);
+
+  /// No description provided for @parkingLoadError.
+  ///
+  /// In he, this message translates to:
+  /// **'לא הצלחנו לטעון את החניונים'**
+  String get parkingLoadError;
+
+  /// No description provided for @parkingIntro.
+  ///
+  /// In he, this message translates to:
+  /// **'כל החניונים בעיר, על המפה.'**
+  String get parkingIntro;
+
+  /// No description provided for @parkingLotsHeading.
+  ///
+  /// In he, this message translates to:
+  /// **'חניונים'**
+  String get parkingLotsHeading;
+
+  /// No description provided for @reviewBusinessResponse.
+  ///
+  /// In he, this message translates to:
+  /// **'תגובת העסק'**
+  String get reviewBusinessResponse;
+
+  /// No description provided for @sitePageAboutTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'אודות'**
+  String get sitePageAboutTitle;
+
+  /// No description provided for @sitePageAccessibilityTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'הצהרת נגישות'**
+  String get sitePageAccessibilityTitle;
+
+  /// No description provided for @sitePageComingSoon.
+  ///
+  /// In he, this message translates to:
+  /// **'תוכן העמוד יפורסם בקרוב'**
+  String get sitePageComingSoon;
+
+  /// No description provided for @sitePageLastUpdated.
+  ///
+  /// In he, this message translates to:
+  /// **'עודכן לאחרונה: {date}'**
+  String sitePageLastUpdated(String date);
+
+  /// No description provided for @sitePageBack.
+  ///
+  /// In he, this message translates to:
+  /// **'חזרה'**
+  String get sitePageBack;
+
+  /// No description provided for @sitePageLoadError.
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לטעון את העמוד'**
+  String get sitePageLoadError;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

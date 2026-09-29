@@ -37,7 +37,9 @@ class AdminParkingListNotifier extends AdminTableNotifier {
     final rows = state.valueOrNull;
     if (rows == null) return;
     state = AsyncValue.data(
-      rows.where((r) => (r['is_active'] as bool? ?? true) == wantActive).toList(),
+      rows
+          .where((r) => (r['is_active'] as bool? ?? true) == wantActive)
+          .toList(),
     );
   }
 

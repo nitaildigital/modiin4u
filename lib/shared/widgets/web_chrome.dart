@@ -1110,11 +1110,11 @@ class WebFooter extends StatelessWidget {
   /// in a footer, and not one of them could be clicked.
   List<(String, String)> get _companyLinks => [
     (_t('Home', 'בית'), '/'),
-    (_t('About Us', 'אודותינו'), '/help-support'),
+    (_t('About Us', 'אודותינו'), '/about'),
     (_t('Contact Us', 'צור קשר'), 'mailto:$kContactEmail'),
     (_t('Privacy Policy', 'מדיניות פרטיות'), '/terms'),
     (_t('Terms of Use', 'תנאי שימוש'), '/terms'),
-    (_t('Accessibility Statement', 'הצהרת נגישות'), '/help-support'),
+    (_t('Accessibility Statement', 'הצהרת נגישות'), '/accessibility'),
   ];
 
   List<(String, String)> get _exploreLinks => [
@@ -1322,7 +1322,7 @@ class WebFooter extends StatelessWidget {
           textAlign: TextAlign.end,
         ),
         const SizedBox(height: 24),
-        _MoreLink(label: _t('Read more', 'קראו עוד'), isHebrew: isHebrew, onTap: () => context.go('/help-support')),
+        _MoreLink(label: _t('Read more', 'קראו עוד'), isHebrew: isHebrew, onTap: () => context.go('/about')),
       ],
     );
   }

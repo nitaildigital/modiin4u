@@ -3,7 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_config.dart';
 import 'admin_table_notifier.dart';
 
-/// Tags, on the live table — 71 of them came across with the news import.
+/// Tags, on the live table — 71 of them came across with the site import.
+///
+/// **What a tag does today: nothing a visitor sees.** A tag reaches a
+/// business or an article through `entity_tags`, which holds no rows, and no
+/// screen in the app or on the website reads either table. So the list here
+/// is the vocabulary and nothing more; the panel says so. Putting tags on
+/// the site is a feature of its own and wants the client's go-ahead.
+///
+/// `usage_count` is not a column: it is counted from `entity_tags` on each
+/// load, so "sort by use" sorts by something real (all zero today).
 final adminTagListProvider =
     StateNotifierProvider<
       AdminTagListNotifier,
@@ -32,22 +41,55 @@ class AdminTagListNotifier extends AdminTableNotifier {
   @override
   Future<void> load() async {
     await super.load();
-    final by = _sortBy;
-    if (by == null || by.isEmpty) return;
+    final rows = state.valueOrNull;
+    if (rows == null) return;
 
-    state.whenData((rows) {
-      final sorted = [...rows]
-        ..sort((a, b) {
-          final x = a[by], y = b[by];
-          if (x is num && y is num) return y.compareTo(x);
-          return '$x'.compareTo('$y');
-        });
-      state = AsyncValue.data(sorted);
-    });
+    final Map<String, int> usage;
+    try {
+      usage = await _usageCounts();
+    } catch (e, st) {
+      if (mounted) state = AsyncValue.error(e, st);
+      return;
+    }
+    if (!mounted) return;
+
+    final counted = [
+      for (final r in rows) {...r, 'usage_count': usage[r['id']] ?? 0},
+    ];
+    if (_sortBy == 'usage') {
+      // Most used first; ties stay alphabetical.
+      counted.sort((a, b) {
+        final byUse = (b['usage_count'] as int).compareTo(
+          a['usage_count'] as int,
+        );
+        if (byUse != 0) return byUse;
+        return (a['name'] as String? ?? '').compareTo(
+          b['name'] as String? ?? '',
+        );
+      });
+    }
+    state = AsyncValue.data(counted);
+  }
+
+  /// How many things carry each tag, from `entity_tags`.
+  Future<Map<String, int>> _usageCounts() async {
+    final links = await SupabaseConfig.client
+        .from('entity_tags')
+        .select('tag_id');
+    final counts = <String, int>{};
+    for (final l in List<Map<String, dynamic>>.from(links)) {
+      final id = l['tag_id'] as String;
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    return counts;
   }
 
   Future<void> createTag(Map<String, dynamic> t) => create(t);
   Future<void> updateTag(String id, Map<String, dynamic> f) => update(id, f);
+
+  /// Removes the tag for good — the table has no hidden state — and with it
+  /// its `entity_tags` links (the foreign key cascades). The screen shows
+  /// how many there are before asking.
   Future<void> deleteTag(String id) => remove(id);
 
   /// Points everything tagged [from] at [to], then removes the empty tag.

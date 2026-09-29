@@ -8,11 +8,12 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_parking_provider.dart';
 import '../widgets/image_upload_field.dart';
 
-/// חניונים — the lots on the app map's Parkings layer.
+/// חניונים — the lots on the parking screens and the app map's Parkings
+/// layer.
 ///
 /// The client asked for every car park in the city with its location
-/// (handover, point 4). Each one he enters here is a pin; hiding one takes
-/// the pin off the map and keeps the row.
+/// (handover, point 4). Each one he enters here is a pin and a card; hiding
+/// one takes it off both and keeps the row.
 class AdminParkingScreen extends ConsumerStatefulWidget {
   const AdminParkingScreen({super.key});
 
@@ -161,7 +162,7 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
               if (lots.isEmpty) {
                 return Center(
                   child: Text(
-                    'אין חניונים. חניון שנוסף כאן מופיע במפת האפליקציה.',
+                    'אין חניונים. חניון שנוסף כאן מופיע בעמוד החניה ובמפת האפליקציה.',
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.grayText,
@@ -308,7 +309,7 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
               itemBuilder: (_) => [
                 _menuItem('edit', 'עריכה'),
                 // Hidden, not deleted — shown again from the same menu.
-                _menuItem('toggle', active ? 'הסתר מהמפה' : 'הצג במפה'),
+                _menuItem('toggle', active ? 'הסתרה' : 'הצגה מחדש'),
               ],
             ),
           ],
@@ -368,10 +369,17 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
   late final TextEditingController _nameEn;
   late final TextEditingController _address;
   late final TextEditingController _coordinates;
+  late final TextEditingController _hours;
+  late final TextEditingController _priceNote;
+  late final TextEditingController _capacity;
   late final TextEditingController _notes;
   late final TextEditingController _sortOrder;
   late final TextEditingController _imageUrl;
   bool _isActive = true;
+
+  /// Free, paid, or null — not stated, which the screens leave unsaid rather
+  /// than show as paid.
+  bool? _isFree;
 
   /// Why the last save failed, shown in the dialog rather than behind it.
   String? _error;
@@ -391,6 +399,12 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
     _coordinates = TextEditingController(
       text: lat == null || lng == null ? '' : '$lat, $lng',
     );
+    _hours = TextEditingController(text: text('hours'));
+    _priceNote = TextEditingController(text: text('price_note'));
+    _capacity = TextEditingController(
+      text: (p?['capacity'] as int?)?.toString() ?? '',
+    );
+    _isFree = p?['is_free'] as bool?;
     _notes = TextEditingController(text: text('notes'));
     _sortOrder = TextEditingController(
       text: (p?['sort_order'] as int?)?.toString() ?? '0',
@@ -405,6 +419,9 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
     _nameEn.dispose();
     _address.dispose();
     _coordinates.dispose();
+    _hours.dispose();
+    _priceNote.dispose();
+    _capacity.dispose();
     _notes.dispose();
     _sortOrder.dispose();
     _imageUrl.dispose();
@@ -506,8 +523,41 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                           ),
                         ),
                       ),
+                      _field('שעות פתיחה', _hours, hint: 'למשל: פתוח 24/7'),
+                      _freeChoice(),
                       _field(
-                        'הערות (שעות, מחיר, תו תושב)',
+                        'מחיר',
+                        _priceNote,
+                        hint: 'למשל: 2 שעות ראשונות חינם, אחר כך 5 ₪ לשעה',
+                      ),
+                      _field(
+                        'מספר מקומות חניה',
+                        _capacity,
+                        hint: 'ריק אם לא ידוע',
+                        ltr: true,
+                        validator: (v) {
+                          final t = v?.trim() ?? '';
+                          if (t.isEmpty) return null;
+                          final n = int.tryParse(t);
+                          return n == null || n <= 0
+                              ? 'מספר שלם גדול מאפס, או ריק'
+                              : null;
+                        },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: Text(
+                          'מספר המקומות בחניון, לא כמה פנויים עכשיו — אין לנו '
+                          'מקור לתפוסה.',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 12,
+                            color: AppColors.adminTextLight,
+                          ),
+                        ),
+                      ),
+                      _field(
+                        'הערות (תו תושב, כניסה וכו׳)',
                         _notes,
                         maxLines: 4,
                       ),
@@ -521,7 +571,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                       const SizedBox(height: 12),
                       SwitchListTile(
                         title: Text(
-                          'מוצג במפה',
+                          'מוצג באתר ובאפליקציה',
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 14,
@@ -635,6 +685,30 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
     );
   }
 
+  /// חינם / בתשלום / לא צוין. "לא צוין" saves null, so a lot is never shown
+  /// as paid (or free) because nobody said.
+  Widget _freeChoice() {
+    const options = [(null, 'לא צוין'), (true, 'חינם'), (false, 'בתשלום')];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Text(
+            'חניה בחינם?',
+            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+          ),
+          const SizedBox(width: 12),
+          for (final (value, label) in options)
+            _FilterChip(
+              label,
+              _isFree == value,
+              () => setState(() => _isFree = value),
+            ),
+        ],
+      ),
+    );
+  }
+
   String? _orNull(TextEditingController c) =>
       c.text.trim().isEmpty ? null : c.text.trim();
 
@@ -650,6 +724,10 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
       'address': _orNull(_address),
       'latitude': lat,
       'longitude': lng,
+      'hours': _orNull(_hours),
+      'price_note': _orNull(_priceNote),
+      'is_free': _isFree,
+      'capacity': int.tryParse(_capacity.text.trim()),
       'notes': _orNull(_notes),
       'image_url': _orNull(_imageUrl),
       'sort_order': int.tryParse(_sortOrder.text.trim()) ?? 0,

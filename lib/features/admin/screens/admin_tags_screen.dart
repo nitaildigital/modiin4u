@@ -3,6 +3,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_tags_provider.dart';
+import '../widgets/admin_form_pickers.dart';
 
 class AdminTagsScreen extends ConsumerStatefulWidget {
   const AdminTagsScreen({super.key});
@@ -27,6 +28,10 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
 
     return Column(
       children: [
+        // Tags look like they label things on the site; today they label
+        // nothing, and the client should not have to find that out.
+        const _NotShownNote(),
+
         // ─── Toolbar ───
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -87,19 +92,15 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                 ref.read(adminTagListProvider.notifier).setSortBy('usage');
               }),
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (l) => Text(
-                          '${l.length} תגיות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              if (asyncData.valueOrNull case final l?)
+                Text(
+                  '${l.length} תגיות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () => _showEditor(context, null),
@@ -130,7 +131,7 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                'שגיאה בטעינת התגיות: ${adminErrorText(e)}',
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -184,116 +185,18 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
   }
 
   void _showEditor(BuildContext context, Map<String, dynamic>? existing) {
-    final nameC = TextEditingController(text: existing?['name'] ?? '');
-    final slugC = TextEditingController(text: existing?['slug'] ?? '');
     showDialog(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: Text(
-            existing == null ? 'תגית חדשה' : 'עריכת תגית',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontWeight: FontWeight.w700,
-              color: AppColors.navy,
-            ),
-          ),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameC,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    labelText: 'שם',
-                    labelStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayText,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: slugC,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    labelText: 'Slug',
-                    labelStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayText,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'ביטול',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  color: AppColors.grayText,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final data = {
-                  'name': nameC.text,
-                  'slug': slugC.text.isEmpty
-                      ? nameC.text.toLowerCase().replaceAll(' ', '-')
-                      : slugC.text,
-                };
-                if (existing != null) {
-                  ref
-                      .read(adminTagListProvider.notifier)
-                      .updateTag(existing['id'] as String, data);
-                } else {
-                  ref.read(adminTagListProvider.notifier).createTag(data);
-                }
-                Navigator.pop(ctx);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.turquoise,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                existing == null ? 'צור' : 'שמור',
-                style: TextStyle(fontFamily: AppFonts.rubik),
-              ),
-            ),
-          ],
-        ),
-      ),
+      builder: (_) => _TagEditorDialog(existing: existing),
     );
   }
 
-  void _confirmDelete(BuildContext context, Map<String, dynamic> tag) {
-    showDialog(
+  Future<void> _confirmDelete(
+    BuildContext context,
+    Map<String, dynamic> tag,
+  ) async {
+    final usage = tag['usage_count'] as int? ?? 0;
+    final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
@@ -303,16 +206,19 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontWeight: FontWeight.w700,
-              color: AppColors.error,
+              color: AppColors.navy,
             ),
           ),
           content: Text(
-            'למחוק את התגית "${tag['name']}"?',
+            // Tags have no hidden state to fall back on, so this one is
+            // permanent, and it says so.
+            'למחוק את התגית "${tag['name']}" לצמיתות? '
+            '${usage == 0 ? 'היא לא מוצמדת לשום פריט.' : 'היא תוסר גם מ-$usage פריטים שמוצמדת אליהם.'}',
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () => Navigator.pop(ctx, false),
               child: Text(
                 'ביטול',
                 style: TextStyle(
@@ -322,20 +228,207 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                ref
-                    .read(adminTagListProvider.notifier)
-                    .deleteTag(tag['id'] as String);
-                Navigator.pop(ctx);
-              },
+              onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.error,
                 foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
           ],
         ),
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref
+          .read(adminTagListProvider.notifier)
+          .deleteTag(tag['id'] as String);
+    } catch (e) {
+      if (context.mounted) showAdminError(context, 'המחיקה נכשלה', e);
+    }
+  }
+}
+
+/// Says where tags show: nowhere yet.
+class _NotShownNote extends StatelessWidget {
+  const _NotShownNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.adminContentBg,
+        border: Border.all(color: AppColors.adminCardBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 18, color: AppColors.adminTextLight),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'התגיות נשמרות כאן, אך עדיין אינן מוצגות באתר או באפליקציה, '
+              'ואף עסק או כתבה אינם מתויגים בהן. הצגת תגיות למשתמשים היא '
+              'פיתוח נפרד.',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 12,
+                height: 1.5,
+                color: AppColors.adminTextLight,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TagEditorDialog extends ConsumerStatefulWidget {
+  final Map<String, dynamic>? existing;
+  const _TagEditorDialog({this.existing});
+
+  @override
+  ConsumerState<_TagEditorDialog> createState() => _TagEditorDialogState();
+}
+
+class _TagEditorDialogState extends ConsumerState<_TagEditorDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final _name = TextEditingController(
+    text: widget.existing?['name'] as String? ?? '',
+  );
+  late final _slug = TextEditingController(
+    text: widget.existing?['slug'] as String? ?? '',
+  );
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _slug.dispose();
+    super.dispose();
+  }
+
+  /// The imported slugs are the name with spaces as hyphens, Hebrew kept,
+  /// so a new one is made the same way.
+  String _slugFrom(String name) => name
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[\s_]+'), '-')
+      .replaceAll(RegExp(r'[^\p{L}\p{N}-]', unicode: true), '')
+      .replaceAll(RegExp(r'-+'), '-');
+
+  InputDecoration _decoration(String label, {String? hint}) => InputDecoration(
+    labelText: label,
+    hintText: hint,
+    labelStyle: TextStyle(
+      fontFamily: AppFonts.rubik,
+      fontSize: 13,
+      color: AppColors.grayText,
+    ),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  );
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    final name = _name.text.trim();
+    final slug = _slug.text.trim().isEmpty
+        ? _slugFrom(name)
+        : _slugFrom(_slug.text);
+    final notifier = ref.read(adminTagListProvider.notifier);
+    try {
+      final existing = widget.existing;
+      if (existing != null) {
+        await notifier.updateTag(existing['id'] as String, {
+          'name': name,
+          'slug': slug,
+        });
+      } else {
+        await notifier.createTag({'name': name, 'slug': slug});
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      // `name` and `slug` are both unique, so a duplicate is the usual cause.
+      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final existing = widget.existing;
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: AlertDialog(
+        title: Text(
+          existing == null ? 'תגית חדשה' : 'עריכת תגית',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontWeight: FontWeight.w700,
+            color: AppColors.navy,
+          ),
+        ),
+        content: SizedBox(
+          width: 400,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _name,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                  decoration: _decoration('שם'),
+                  validator: (v) =>
+                      (v ?? '').trim().isEmpty ? 'שדה חובה' : null,
+                ),
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: _slug,
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                  decoration: _decoration('Slug', hint: 'ריק — ייווצר מהשם'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'ביטול',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                color: AppColors.grayText,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _saving ? null : _save,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.turquoise,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              existing == null ? 'צור' : 'שמור',
+              style: TextStyle(fontFamily: AppFonts.rubik),
+            ),
+          ),
+        ],
       ),
     );
   }

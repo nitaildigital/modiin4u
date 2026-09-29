@@ -52,7 +52,6 @@ class AdminAgentListNotifier extends AdminTableNotifier {
 
   Future<void> createAgent(Map<String, dynamic> a) => create(a);
   Future<void> updateAgent(String id, Map<String, dynamic> f) => update(id, f);
-  Future<void> deleteAgent(String id) => remove(id);
 }
 
 /// How many listings each agent is credited on, keyed by agent id.

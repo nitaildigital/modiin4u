@@ -14,18 +14,60 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
   String _statusFilter = '';
   String _entityFilter = '';
 
+  void _setStatus(String status) {
+    setState(() => _statusFilter = status);
+    ref
+        .read(adminReportsProvider.notifier)
+        .setStatusFilter(status.isEmpty ? null : status);
+  }
+
+  void _toggleEntity(String type) {
+    setState(() => _entityFilter = _entityFilter == type ? '' : type);
+    ref
+        .read(adminReportsProvider.notifier)
+        .setEntityTypeFilter(_entityFilter.isEmpty ? null : _entityFilter);
+  }
+
+  /// Runs an action on a report and says what happened — they used to be
+  /// fired and forgotten, so a refused update looked like a success.
+  Future<void> _run(Future<void> Function() action, String done) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await action();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(done, style: TextStyle(fontFamily: AppFonts.rubik)),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'הפעולה נכשלה: $e',
+            style: TextStyle(fontFamily: AppFonts.rubik),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(adminReportsProvider);
+    final loaded = asyncData.valueOrNull;
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Column(
       children: [
         // ─── Stats ───
-        asyncData.whenData((list) {
+        if (loaded != null)
+          Builder(
+            builder: (_) {
+              final list = loaded;
               final open = list.where((r) => r['status'] == 'open').length;
               final investigating = list
-                  .where((r) => r['status'] == 'investigating')
+                  .where((r) => r['status'] == 'reviewed')
                   .length;
               final resolved = list
                   .where((r) => r['status'] == 'resolved')
@@ -55,8 +97,12 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   ],
                 ),
               );
-            }).value ??
-            const SizedBox.shrink(),
+            },
+          ),
+
+        // Nothing files reports yet; an empty list should not read as
+        // "nothing wrong".
+        const _NothingWritesThisNote(),
 
         // ─── Toolbar ───
         Container(
@@ -71,85 +117,60 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
           ),
           child: Row(
             children: [
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref.read(adminReportsProvider.notifier).setStatusFilter(null);
-              }),
-              _FilterChip('פתוח', _statusFilter == 'open', () {
-                setState(() => _statusFilter = 'open');
-                ref.read(adminReportsProvider.notifier).setStatusFilter('open');
-              }),
-              _FilterChip('בטיפול', _statusFilter == 'investigating', () {
-                setState(() => _statusFilter = 'investigating');
-                ref
-                    .read(adminReportsProvider.notifier)
-                    .setStatusFilter('investigating');
-              }),
-              _FilterChip('נפתר', _statusFilter == 'resolved', () {
-                setState(() => _statusFilter = 'resolved');
-                ref
-                    .read(adminReportsProvider.notifier)
-                    .setStatusFilter('resolved');
-              }),
-              _FilterChip('נדחה', _statusFilter == 'dismissed', () {
-                setState(() => _statusFilter = 'dismissed');
-                ref
-                    .read(adminReportsProvider.notifier)
-                    .setStatusFilter('dismissed');
-              }),
+              _FilterChip('הכל', _statusFilter.isEmpty, () => _setStatus('')),
+              _FilterChip(
+                'פתוח',
+                _statusFilter == 'open',
+                () => _setStatus('open'),
+              ),
+              _FilterChip(
+                'בטיפול',
+                _statusFilter == 'reviewed',
+                () => _setStatus('reviewed'),
+              ),
+              _FilterChip(
+                'נפתר',
+                _statusFilter == 'resolved',
+                () => _setStatus('resolved'),
+              ),
+              _FilterChip(
+                'נדחה',
+                _statusFilter == 'dismissed',
+                () => _setStatus('dismissed'),
+              ),
               if (isWide) ...[
                 const SizedBox(width: 16),
-                _FilterChip('עסקים', _entityFilter == 'business', () {
-                  setState(
-                    () => _entityFilter = _entityFilter == 'business'
-                        ? ''
-                        : 'business',
-                  );
-                  ref
-                      .read(adminReportsProvider.notifier)
-                      .setEntityTypeFilter(
-                        _entityFilter.isEmpty ? null : _entityFilter,
-                      );
-                }),
-                _FilterChip('ביקורות', _entityFilter == 'review', () {
-                  setState(
-                    () => _entityFilter = _entityFilter == 'review'
-                        ? ''
-                        : 'review',
-                  );
-                  ref
-                      .read(adminReportsProvider.notifier)
-                      .setEntityTypeFilter(
-                        _entityFilter.isEmpty ? null : _entityFilter,
-                      );
-                }),
-                _FilterChip('תגובות', _entityFilter == 'comment', () {
-                  setState(
-                    () => _entityFilter = _entityFilter == 'comment'
-                        ? ''
-                        : 'comment',
-                  );
-                  ref
-                      .read(adminReportsProvider.notifier)
-                      .setEntityTypeFilter(
-                        _entityFilter.isEmpty ? null : _entityFilter,
-                      );
-                }),
+                _FilterChip(
+                  'עסקים',
+                  _entityFilter == 'business',
+                  () => _toggleEntity('business'),
+                ),
+                _FilterChip(
+                  'ביקורות',
+                  _entityFilter == 'review',
+                  () => _toggleEntity('review'),
+                ),
+                _FilterChip(
+                  'תגובות',
+                  _entityFilter == 'comment',
+                  () => _toggleEntity('comment'),
+                ),
+                _FilterChip(
+                  'משתמשים',
+                  _entityFilter == 'user',
+                  () => _toggleEntity('user'),
+                ),
               ],
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (l) => Text(
-                          '${l.length} דיווחים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              if (loaded != null)
+                Text(
+                  '${loaded.length} דיווחים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
             ],
           ),
         ),
@@ -212,20 +233,28 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                         _Col('מדווח', flex: 2),
                         _Col('סטטוס', flex: 1),
                         if (isWide) _Col('תאריך', flex: 1),
-                        const SizedBox(width: 80),
+                        const SizedBox(width: 110),
                       ],
                     ),
                   ),
                   Expanded(
                     child: ListView.separated(
                       itemCount: list.length,
-                      separatorBuilder: (_, __) => Divider(
+                      separatorBuilder: (_, _) => Divider(
                         height: 1,
                         color: AppColors.border.withValues(alpha: 0.3),
                       ),
                       itemBuilder: (_, i) {
                         final r = list[i];
+                        final id = r['id'] as String;
+                        final notifier = ref.read(
+                          adminReportsProvider.notifier,
+                        );
                         final status = r['status'] as String? ?? 'open';
+                        final reporter = r['profiles'] is Map
+                            ? ((r['profiles'] as Map)['full_name'] as String? ??
+                                  '')
+                            : '';
                         final isOpen = status == 'open';
                         final reason = _reasonLabel(
                           r['reason'] as String? ?? '',
@@ -283,7 +312,9 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            r['entity_title'] as String? ?? '',
+                                            _entityLabel(
+                                              r['entity_type'] as String? ?? '',
+                                            ),
                                             style: TextStyle(
                                               fontFamily: AppFonts.rubik,
                                               fontSize: 13,
@@ -314,7 +345,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                               Expanded(
                                 flex: 2,
                                 child: Text(
-                                  r['reporter_name'] as String? ?? '',
+                                  reporter,
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 13,
@@ -322,7 +353,13 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                   ),
                                 ),
                               ),
-                              Expanded(flex: 1, child: _StatusPill(status)),
+                              Expanded(
+                                flex: 1,
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: _StatusPill(status),
+                                ),
+                              ),
                               if (isWide)
                                 Expanded(
                                   flex: 1,
@@ -338,56 +375,51 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                   ),
                                 ),
                               SizedBox(
-                                width: 80,
+                                width: 110,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    if (status == 'pending') ...[
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.search,
-                                          size: 16,
-                                          color: AppColors.gold,
+                                    if (status == 'open')
+                                      _IconAction(
+                                        Icons.search,
+                                        AppColors.gold,
+                                        'סמן בטיפול',
+                                        () => _run(
+                                          () => notifier.markReviewed(id),
+                                          'הדיווח סומן בטיפול',
                                         ),
-                                        tooltip: 'בדוק',
-                                        onPressed: () => ref
-                                            .read(adminReportsProvider.notifier)
-                                            .markReviewed(r['id'] as String),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.check,
-                                          size: 16,
-                                          color: AppColors.success,
+                                    if (status == 'open' ||
+                                        status == 'reviewed') ...[
+                                      _IconAction(
+                                        Icons.check,
+                                        AppColors.success,
+                                        'סמן כנפתר',
+                                        () => _run(
+                                          () => notifier.resolve(id, 'טופל'),
+                                          'הדיווח נסגר כנפתר',
                                         ),
-                                        tooltip: 'טפל',
-                                        onPressed: () => ref
-                                            .read(adminReportsProvider.notifier)
-                                            .resolve(r['id'] as String, 'טופל'),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.close,
-                                          size: 16,
-                                          color: AppColors.grayLight,
+                                      _IconAction(
+                                        Icons.close,
+                                        AppColors.grayLight,
+                                        'דחה',
+                                        () => _run(
+                                          () => notifier.dismiss(id),
+                                          'הדיווח נדחה',
                                         ),
-                                        tooltip: 'דחה',
-                                        onPressed: () => ref
-                                            .read(adminReportsProvider.notifier)
-                                            .dismiss(r['id'] as String),
                                       ),
                                     ],
-                                    if (status == 'reviewed')
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.check_circle_outline,
-                                          size: 16,
-                                          color: AppColors.success,
+                                    if (status == 'resolved' ||
+                                        status == 'dismissed')
+                                      _IconAction(
+                                        Icons.undo,
+                                        AppColors.turquoise,
+                                        'פתח מחדש',
+                                        () => _run(
+                                          () => notifier.reopen(id),
+                                          'הדיווח נפתח מחדש',
                                         ),
-                                        tooltip: 'נפתר',
-                                        onPressed: () => ref
-                                            .read(adminReportsProvider.notifier)
-                                            .resolve(r['id'] as String, 'טופל'),
                                       ),
                                   ],
                                 ),
@@ -407,22 +439,31 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
     );
   }
 
+  // The `report_reason` enum's values (migration 00001).
   String _reasonLabel(String r) => switch (r) {
     'spam' => 'ספאם',
-    'inappropriate' => 'תוכן לא הולם',
+    'offensive' => 'תוכן פוגעני',
     'fake' => 'תוכן מזויף',
+    'personal_info' => 'מידע אישי',
     'harassment' => 'הטרדה',
-    'copyright' => 'הפרת זכויות יוצרים',
     'other' => 'אחר',
     _ => r,
   };
   IconData _reasonIcon(String r) => switch (r) {
     'spam' => Icons.report,
-    'inappropriate' => Icons.warning,
+    'offensive' => Icons.warning,
     'fake' => Icons.error_outline,
+    'personal_info' => Icons.privacy_tip_outlined,
     'harassment' => Icons.person_off,
-    'copyright' => Icons.copyright,
     _ => Icons.flag,
+  };
+  String _entityLabel(String t) => switch (t) {
+    'business' => 'עסק',
+    'review' => 'ביקורת',
+    'comment' => 'תגובה',
+    'article' => 'כתבה',
+    'user' => 'משתמש',
+    _ => t,
   };
   IconData _entityIcon(String t) => switch (t) {
     'business' => Icons.store,
@@ -449,7 +490,7 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
       'open' => ('פתוח', AppColors.error),
-      'investigating' => ('בטיפול', AppColors.gold),
+      'reviewed' => ('בטיפול', AppColors.gold),
       'resolved' => ('נפתר', AppColors.success),
       'dismissed' => ('נדחה', AppColors.grayLight),
       _ => (status, AppColors.grayLight),
@@ -468,6 +509,58 @@ class _StatusPill extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: color,
         ),
+      ),
+    );
+  }
+}
+
+class _IconAction extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+  const _IconAction(this.icon, this.color, this.tooltip, this.onPressed);
+  @override
+  Widget build(BuildContext context) => IconButton(
+    icon: Icon(icon, size: 16, color: color),
+    tooltip: tooltip,
+    onPressed: onPressed,
+  );
+}
+
+/// Why this list is empty, said rather than left to be guessed.
+class _NothingWritesThisNote extends StatelessWidget {
+  const _NothingWritesThisNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.adminContentBg,
+        border: Border.all(color: AppColors.adminCardBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 18, color: AppColors.adminTextLight),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'עדיין אין באתר או באפליקציה כפתור לדיווח על תוכן, ולכן הרשימה '
+              'תתמלא רק כשיתווסף אחד.',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 12,
+                height: 1.5,
+                color: AppColors.adminTextLight,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

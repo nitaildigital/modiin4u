@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_challenges_provider.dart';
+import '../widgets/admin_load_error.dart';
 
 /// Step challenges.
 ///
@@ -86,19 +87,18 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                 () => _setFilter('inactive'),
               ),
               const Spacer(),
-              async
-                      .whenData(
-                        (l) => Text(
-                          '${l.length} אתגרים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of letting
+              // the list below show the error and a retry.
+              if (async.valueOrNull case final l?)
+                Text(
+                  '${l.length} אתגרים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEditor(),
@@ -115,8 +115,11 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
         Expanded(
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Text('$e', style: TextStyle(fontFamily: AppFonts.rubik)),
+            error: (e, _) => AdminLoadError(
+              message: 'שגיאה בטעינת האתגרים',
+              error: e,
+              onRetry: () =>
+                  ref.read(adminChallengeListProvider.notifier).load(),
             ),
             data: (rows) {
               if (rows.isEmpty) {
@@ -276,17 +279,6 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Text(
-                    'מחיקה',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.error,
-                    ),
-                  ),
-                ),
               ],
             ),
           ],
@@ -302,47 +294,16 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
       case 'edit':
         _showEditor(challenge: c);
       case 'activate':
-        notifier.updateChallenge(id, {'is_active': true});
+        runAdminAction(
+          context,
+          () => notifier.updateChallenge(id, {'is_active': true}),
+        );
+      // השבתה is the only way out: a delete removed the row for good, which
+      // the client's rule forbids — removal in the panel must be undoable.
       case 'deactivate':
-        notifier.updateChallenge(id, {'is_active': false});
-      case 'delete':
-        showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(
-              'מחיקת אתגר',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            content: Text(
-              'למחוק את "${c['name']}"? המשתתפים שנרשמו יימחקו יחד איתו.',
-              style: TextStyle(fontFamily: AppFonts.rubik),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  'ביטול',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  notifier.deleteChallenge(id);
-                },
-                child: Text(
-                  'מחק',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    color: AppColors.error,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        runAdminAction(
+          context,
+          () => notifier.updateChallenge(id, {'is_active': false}),
         );
     }
   }

@@ -1576,4 +1576,55 @@ class LHe extends L {
   String searchInPlace(String place) {
     return 'חיפוש ב$place...';
   }
+
+  @override
+  String get parkingEmpty => 'החניונים יתווספו בקרוב';
+
+  @override
+  String parkingSpaces(int n) {
+    return '$n מקומות חניה';
+  }
+
+  @override
+  String parkingLotCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n חניונים',
+      one: 'חניון אחד',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parkingLoadError => 'לא הצלחנו לטעון את החניונים';
+
+  @override
+  String get parkingIntro => 'כל החניונים בעיר, על המפה.';
+
+  @override
+  String get parkingLotsHeading => 'חניונים';
+
+  @override
+  String get reviewBusinessResponse => 'תגובת העסק';
+
+  @override
+  String get sitePageAboutTitle => 'אודות';
+
+  @override
+  String get sitePageAccessibilityTitle => 'הצהרת נגישות';
+
+  @override
+  String get sitePageComingSoon => 'תוכן העמוד יפורסם בקרוב';
+
+  @override
+  String sitePageLastUpdated(String date) {
+    return 'עודכן לאחרונה: $date';
+  }
+
+  @override
+  String get sitePageBack => 'חזרה';
+
+  @override
+  String get sitePageLoadError => 'לא ניתן היה לטעון את העמוד';
 }

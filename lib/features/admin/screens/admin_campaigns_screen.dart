@@ -7,6 +7,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_ad_placements_provider.dart';
 import '../providers/admin_campaigns_provider.dart';
 import '../widgets/image_upload_field.dart';
+import '../widgets/admin_load_error.dart';
 
 class AdminCampaignsScreen extends ConsumerStatefulWidget {
   const AdminCampaignsScreen({super.key});
@@ -35,7 +36,10 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
     return Column(
       children: [
         // ─── Stats bar ───
-        asyncData.whenData((list) {
+        // Only once the list is in; a failed load is shown by the table.
+        if (asyncData.valueOrNull case final list?)
+          Builder(
+            builder: (context) {
               final live = list.where(_isLive).length;
               final totalImpressions = list.fold<int>(
                 0,
@@ -85,8 +89,8 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                   ],
                 ),
               );
-            }).value ??
-            const SizedBox.shrink(),
+            },
+          ),
 
         // ─── Toolbar ───
         Container(
@@ -172,19 +176,18 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                     .setStatusFilter('ended');
               }),
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} קמפיינים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of letting
+              // the list below show the error and a retry.
+              if (asyncData.valueOrNull case final list?)
+                Text(
+                  '${list.length} קמפיינים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEditor(context, ref),
@@ -209,14 +212,11 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
         Expanded(
           child: asyncData.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Text(
-                'שגיאה: $e',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  color: AppColors.error,
-                ),
-              ),
+            error: (e, _) => AdminLoadError(
+              message: 'שגיאה בטעינת הקמפיינים',
+              error: e,
+              onRetry: () =>
+                  ref.read(adminCampaignListProvider.notifier).load(),
             ),
             data: (list) {
               if (list.isEmpty) {
@@ -546,7 +546,13 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
       SnackBar(
         content: Text(message, style: TextStyle(fontFamily: AppFonts.rubik)),
         duration: const Duration(seconds: 6),
-        action: SnackBarAction(label: 'ביטול', onPressed: () => undo()),
+        // Awaited like the action itself, so a refused undo says so.
+        action: SnackBarAction(
+          label: 'ביטול',
+          onPressed: () {
+            if (mounted) runAdminAction(context, undo);
+          },
+        ),
       ),
     );
   }

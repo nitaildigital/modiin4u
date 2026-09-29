@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_categories_provider.dart';
 import '../widgets/image_upload_field.dart';
+import '../widgets/admin_load_error.dart';
 
 class AdminCategoriesScreen extends ConsumerStatefulWidget {
   const AdminCategoriesScreen({super.key});
@@ -111,19 +112,18 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                     .setScopeFilter('event');
               }),
               const Spacer(),
-              async
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} קטגוריות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of letting
+              // the list below show the error and a retry.
+              if (async.valueOrNull case final list?)
+                Text(
+                  '${list.length} קטגוריות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEditor(context, ref),
@@ -148,14 +148,11 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
         Expanded(
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Text(
-                'שגיאה: $e',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  color: AppColors.error,
-                ),
-              ),
+            error: (e, _) => AdminLoadError(
+              message: 'שגיאה בטעינת הקטגוריות',
+              error: e,
+              onRetry: () =>
+                  ref.read(adminCategoryListProvider.notifier).load(),
             ),
             data: (categories) {
               if (categories.isEmpty) {
@@ -368,7 +365,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
       case 'edit':
         _showEditor(context, ref, category: c);
       case 'toggle':
-        notifier.toggleActive(id);
+        runAdminAction(context, () => notifier.toggleActive(id));
     }
   }
 

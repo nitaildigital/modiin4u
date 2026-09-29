@@ -160,6 +160,10 @@ class MEventCategoryRow extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: isOn ? AppColors.midBlue : Colors.black,
+                        // The row is a fixed 114px; on a phone Material's
+                        // taller default line height pushed the count out
+                        // of it by 6px. Inter's own height fits, as on the web.
+                        height: 1.21,
                       ),
                     ),
                   ),
@@ -171,6 +175,7 @@ class MEventCategoryRow extends StatelessWidget {
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
                       color: AppColors.grayText,
+                      height: 1.21,
                     ),
                   ),
                 ],

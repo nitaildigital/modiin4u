@@ -47,7 +47,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
   List<_Service> get _services => [
     _Service(
       label: _t('Parking', 'חניה'),
-      blurb: _t('Zones, permits and payment', 'אזורים, תווים ותשלום'),
+      blurb: _t('Car parks on the map', 'חניונים על המפה'),
       icon: IconsaxPlusLinear.clock,
       route: '/parking',
     ),
@@ -510,11 +510,14 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
       icon: IconsaxPlusLinear.car,
       title: _t('Parking in Modiin', 'חניה במודיעין'),
       onTap: () => context.push('/parking'),
+      // It said blue-and-white parking was free with a permit and that the
+      // paid hours were 08:00–19:00. Neither came from anything the client
+      // enters, so the card only says what is behind it.
       body: [
         Text(
           _t(
-            'Blue-and-white is free for residents with a valid permit.',
-            'כחול-לבן חינם לתושבים עם תו חניה בתוקף.',
+            'Every car park in the city, on the map.',
+            'כל החניונים בעיר, על המפה.',
           ),
           style: TextStyle(
             fontFamily: AppFonts.inter,
@@ -524,14 +527,6 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
           ),
         ),
         const SizedBox(height: 16),
-        // A time range is bidi-neutral, so in Hebrew "08:00–19:00" renders
-        // as "19:00–08:00" — the opposite of what it says.
-        _infoRow(
-          IconsaxPlusLinear.clock,
-          _t('Paid hours', 'שעות תשלום'),
-          '08:00–19:00',
-          valueDirection: TextDirection.ltr,
-        ),
         Row(
           children: [
             Text(

@@ -335,7 +335,10 @@ class _MobileListingDetailContentState
   // Image thumbnail row
   // ───────────────────────────────────────────────
   Widget _buildThumbnailRow(List<String> photos) {
-    return Padding(
+    // Five thumbnails fill the frame's 393px-wide phone exactly; on a
+    // narrower one (360px) a plain Row ran off the edge, so the row scrolls.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: List.generate(photos.length, (index) {

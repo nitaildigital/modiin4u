@@ -33,6 +33,7 @@ import 'admin_home_builder_screen.dart';
 import 'admin_flags_screen.dart';
 import 'admin_agents_screen.dart';
 import 'admin_analytics_screen.dart';
+import 'admin_site_pages_screen.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -79,20 +80,25 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     ('פח מחזור', IconsaxPlusLinear.trash),
     ('בונה דף הבית', IconsaxPlusLinear.element_plus),
     ('Feature Flags', IconsaxPlusLinear.toggle_on_circle),
+    ('עמודי מידע', IconsaxPlusLinear.document_1),
     ('הגדרות', IconsaxPlusLinear.setting_2),
   ];
 
   /// Where the settings pane sits in [_sections] — the top bar's gear jumps
   /// here rather than doing nothing, which is what it used to do.
-  static const _settingsSection = 27;
+  static const _settingsSection = 28;
 
+  /// The index in [_sections] each sidebar heading sits above. They move
+  /// whenever a section is added: when חניונים went in at 6 these were left
+  /// where they were, and every heading from טקסונומיה down sat one row too
+  /// high — מתווכים appeared under טקסונומיה.
   static const _sectionGroups = {
     0: 'ראשי',
     2: 'תוכן',
-    7: 'טקסונומיה',
-    11: 'מסחר ופרסום',
-    16: 'אינטראקציה',
-    20: 'מערכת',
+    8: 'טקסונומיה',
+    12: 'מסחר ופרסום',
+    17: 'אינטראקציה',
+    22: 'מערכת',
   };
 
   @override
@@ -251,7 +257,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       24 => const AdminTrashScreen(),
       25 => const AdminHomeBuilderScreen(),
       26 => const AdminFlagsScreen(),
-      27 => const _SettingsSection(),
+      27 => const AdminSitePagesScreen(),
+      28 => const _SettingsSection(),
       _ => const SizedBox(),
     };
   }

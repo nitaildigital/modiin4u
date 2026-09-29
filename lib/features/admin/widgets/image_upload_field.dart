@@ -8,6 +8,7 @@ import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../providers/media_usage.dart';
 
 /// Picks an image, uploads it, and hands back the public URL.
 ///
@@ -18,6 +19,28 @@ import '../../../shared/widgets/network_photo.dart';
 /// The field stays editable, so an address that is already good — the 129
 /// photographs still sitting on the WordPress site — can be pasted or left
 /// alone.
+///
+/// **Replaced pictures are cleared out of the bucket**, carefully. Replacing
+/// or removing a picture used to leave the old file in storage for good,
+/// and so did a picture uploaded into a form that was then cancelled. The
+/// field cannot know when its form saves, and must not delete a file the
+/// saved row, or any other row, still shows. So it only remembers: every
+/// file of ours its controller has held while the form was open — the one
+/// it opened with, and each upload. When the route the form sits in (its
+/// dialog or page) is popped, a few seconds later, each remembered file
+/// other than the one the field ends on is removed **only if the database
+/// reports that nothing uses it** (`mediaUsage`, which searches every table).
+/// The file the field ends on is kept, unless it was uploaded here and
+/// nothing uses it — the form was cancelled.
+///
+/// That relies on one thing of the call sites: **the form's save has
+/// finished before its route is popped**. All eleven do exactly that (await
+/// the save, then `Navigator.pop`); a cancelled form never saved, and a
+/// failed save keeps the form open. Were a form to pop first and save after,
+/// the old file would still be safe — the row still shows it when checked —
+/// but a new upload might be judged unused before the row was written.
+/// Such a form should pass `cleanUpOnPop: false`. A field on a route that
+/// is never popped simply never clears anything.
 class ImageUploadField extends StatefulWidget {
   final String label;
   final TextEditingController controller;
@@ -25,20 +48,128 @@ class ImageUploadField extends StatefulWidget {
   /// Where in the bucket the file lands, e.g. `businesses/logo`.
   final String folder;
 
+  /// Whether files this form stops using are cleared out when its route is
+  /// popped; see the class comment for what that asks of the form.
+  final bool cleanUpOnPop;
+
   const ImageUploadField({
     super.key,
     required this.label,
     required this.controller,
     required this.folder,
+    this.cleanUpOnPop = true,
   });
 
   @override
   State<ImageUploadField> createState() => _ImageUploadFieldState();
 }
 
+/// What one form's picture has been while it was open. Kept on the
+/// controller rather than the field: a form in tabs disposes the field when
+/// another tab is shown and builds a new one on the way back, and the
+/// history has to survive that to be of use when the form closes.
+class _FieldHistory {
+  /// Our bucket's files the controller has held — at open, and each upload.
+  final Set<String> paths = {};
+
+  /// Those uploaded by this form, which nothing may use if it was cancelled.
+  final Set<String> uploaded = {};
+
+  /// The value last seen, should the controller be disposed by the time the
+  /// form's route is popped.
+  String last = '';
+
+  /// Set once the clean-up is waiting on the route.
+  bool hooked = false;
+}
+
+final _histories = Expando<_FieldHistory>('ImageUploadField history');
+
+/// After the form's route is popped: each remembered file the field does not
+/// end on, and an upload it does end on, goes if nothing in the database
+/// uses it. Any doubt — the check fails, the storage call fails — leaves the
+/// file where it is.
+Future<void> _cleanUp(
+  _FieldHistory history,
+  TextEditingController controller,
+) async {
+  // Margin for a save still landing as the dialog closes.
+  await Future<void>.delayed(const Duration(seconds: 10));
+
+  String current;
+  try {
+    current = controller.text;
+  } catch (_) {
+    current = history.last;
+  }
+  final endsOn = mediaBucketPath(current);
+
+  final storage = SupabaseConfig.client.storage.from('media');
+  for (final path in history.paths.toList()) {
+    if (path == endsOn && !history.uploaded.contains(path)) continue;
+    try {
+      final uses = await mediaUsage(path);
+      if (uses.isNotEmpty) continue;
+      await storage.remove([path]);
+      history.paths.remove(path);
+      history.uploaded.remove(path);
+    } catch (_) {
+      // Left in place: a file kept by mistake costs a little space, a file
+      // removed by mistake is a broken picture on the site.
+    }
+  }
+}
+
 class _ImageUploadFieldState extends State<ImageUploadField> {
   bool _busy = false;
   String? _error;
+
+  _FieldHistory get _history =>
+      _histories[widget.controller] ??= _FieldHistory();
+
+  void _remember() => _history.last = widget.controller.text;
+
+  @override
+  void initState() {
+    super.initState();
+    final history = _history;
+    final path = mediaBucketPath(widget.controller.text);
+    if (path != null) history.paths.add(path);
+    history.last = widget.controller.text;
+    widget.controller.addListener(_remember);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final history = _history;
+    if (!widget.cleanUpOnPop || history.hooked) return;
+    final route = ModalRoute.of(context);
+    if (route == null) return;
+    history.hooked = true;
+    final controller = widget.controller;
+    route.popped.then((_) {
+      // A controller that outlives its dialog is watched again next time.
+      history.hooked = false;
+      return _cleanUp(history, controller);
+    });
+  }
+
+  @override
+  void didUpdateWidget(ImageUploadField old) {
+    super.didUpdateWidget(old);
+    if (old.controller == widget.controller) return;
+    old.controller.removeListener(_remember);
+    widget.controller.addListener(_remember);
+    final path = mediaBucketPath(widget.controller.text);
+    if (path != null) _history.paths.add(path);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_remember);
+    super.dispose();
+  }
 
   Future<void> _pickAndUpload() async {
     setState(() => _error = null);
@@ -85,6 +216,12 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
       final url = SupabaseConfig.client.storage
           .from('media')
           .getPublicUrl(path);
+
+      // Remembered before anything else can go wrong: this form made it, so
+      // it is this form's to clear away if it ends up unused.
+      _history
+        ..paths.add(path)
+        ..uploaded.add(path);
 
       if (!mounted) return;
       setState(() {

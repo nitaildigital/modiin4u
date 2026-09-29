@@ -54,7 +54,6 @@ class AdminChallengeListNotifier extends AdminTableNotifier {
   Future<void> createChallenge(Map<String, dynamic> c) => create(c);
   Future<void> updateChallenge(String id, Map<String, dynamic> f) =>
       update(id, f);
-  Future<void> deleteChallenge(String id) => remove(id);
 }
 
 /// How many people have joined each challenge, keyed by challenge id.

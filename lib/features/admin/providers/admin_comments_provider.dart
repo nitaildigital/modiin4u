@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/supabase/supabase_config.dart';
 import 'admin_table_notifier.dart';
 
 /// Comments awaiting moderation, on the live table.
+///
+/// Nothing on the website or in the app writes a comment yet (accounts and
+/// community features are the app's, and the app has no comment form), so
+/// this list stays empty until one does.
 final adminCommentsProvider =
     StateNotifierProvider<
       AdminCommentsNotifier,
@@ -21,45 +24,15 @@ class AdminCommentsNotifier extends AdminTableNotifier {
         orderBy: 'created_at',
       );
 
-  String? _entityType;
-
   /// Article, business or event — where the comment was left.
-  void setEntityTypeFilter(String? type) {
-    _entityType = type;
-    load();
-  }
+  void setEntityTypeFilter(String? type) =>
+      setColumnFilter('entity_type', type);
 
-  @override
-  Future<void> load() async {
-    await super.load();
-    final type = _entityType;
-    if (type == null || type.isEmpty) return;
+  Future<void> approve(String id) => updateStatus(id, 'approved');
 
-    state.whenData((rows) {
-      state = AsyncValue.data(
-        rows.where((r) => r['entity_type'] == type).toList(),
-      );
-    });
-  }
+  Future<void> reject(String id) => updateStatus(id, 'rejected');
 
-  /// Hidden rather than removed, so a moderator can put it back and the
-  /// thread it was replying to keeps its shape.
-  Future<void> deleteComment(String id) => updateStatus(id, 'rejected');
-
-  Future<void> toggleVisibility(String id) async {
-    final row = state.valueOrNull?.firstWhere(
-      (c) => c['id'] == id,
-      orElse: () => const {},
-    );
-    final approved = row?['status'] == 'approved';
-    await updateStatus(id, approved ? 'rejected' : 'approved');
-  }
-
-  /// Pinning is not a column yet — the schema has no place to keep it, so
-  /// this reports rather than pretending to have saved something.
-  Future<void> togglePin(String id) async {
-    throw UnimplementedError(
-      'comments has no pinned column; add one before offering this',
-    );
-  }
+  /// Taken off the site but kept, so a moderator can put it back and the
+  /// thread it was replying to keeps its shape. It appears in the trash.
+  Future<void> hide(String id) => updateStatus(id, 'hidden');
 }

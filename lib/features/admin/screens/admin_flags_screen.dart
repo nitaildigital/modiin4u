@@ -3,6 +3,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_flags_provider.dart';
+import '../widgets/admin_form_pickers.dart';
 
 class AdminFlagsScreen extends ConsumerStatefulWidget {
   const AdminFlagsScreen({super.key});
@@ -82,7 +83,13 @@ class _AdminFlagsScreenState extends ConsumerState<AdminFlagsScreen>
 
 /// What a flag does today, said out loud.
 class _NotYetWiredNote extends StatelessWidget {
-  const _NotYetWiredNote();
+  final String text;
+  const _NotYetWiredNote({
+    this.text =
+        'השינויים כאן נשמרים בבסיס הנתונים, אך האפליקציה עדיין אינה '
+        'קוראת את הדגלים — כיבוי מודול יירשם ולא ישנה את מה שהמשתמשים '
+        'רואים. חיבור האפליקציה לדגלים הוא פיתוח נפרד.',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +109,7 @@ class _NotYetWiredNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'השינויים כאן נשמרים בבסיס הנתונים, אך האפליקציה עדיין אינה '
-              'קוראת את הדגלים — כיבוי מודול יירשם ולא ישנה את מה שהמשתמשים '
-              'רואים. חיבור האפליקציה לדגלים הוא פיתוח נפרד.',
+              text,
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -132,7 +137,9 @@ class _FeatureFlagsTab extends ConsumerWidget {
         const _NotYetWiredNote(),
 
         // ─── Stats ───
-        asyncData.whenData((list) {
+        if (asyncData.valueOrNull case final list?)
+          Builder(
+            builder: (_) {
               final enabled = list.where((f) => f['is_enabled'] == true).length;
               final full = list.where((f) => f['rollout_pct'] == 100).length;
               final partial = list
@@ -167,8 +174,8 @@ class _FeatureFlagsTab extends ConsumerWidget {
                   ],
                 ),
               );
-            }).value ??
-            const SizedBox.shrink(),
+            },
+          ),
 
         // ─── Toolbar ───
         Container(
@@ -332,10 +339,24 @@ class _FeatureFlagsTab extends ConsumerWidget {
                               ),
                               Switch(
                                 value: isEnabled,
-                                activeColor: AppColors.success,
-                                onChanged: (_) => ref
-                                    .read(adminFeatureFlagListProvider.notifier)
-                                    .toggleFlag(f['id'] as String),
+                                activeThumbColor: AppColors.success,
+                                onChanged: (_) async {
+                                  try {
+                                    await ref
+                                        .read(
+                                          adminFeatureFlagListProvider.notifier,
+                                        )
+                                        .toggleFlag(f['id'] as String);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      showAdminError(
+                                        context,
+                                        'השמירה נכשלה',
+                                        e,
+                                      );
+                                    }
+                                  }
+                                },
                               ),
                             ],
                           ),
@@ -344,51 +365,10 @@ class _FeatureFlagsTab extends ConsumerWidget {
                             children: [
                               // Rollout slider
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Rollout: $rollout%',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 11,
-                                        color: AppColors.grayText,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    SliderTheme(
-                                      data: SliderThemeData(
-                                        activeTrackColor: AppColors.turquoise,
-                                        inactiveTrackColor: AppColors.grayLight
-                                            .withValues(alpha: 0.3),
-                                        thumbColor: AppColors.turquoise,
-                                        overlayColor: AppColors.turquoise
-                                            .withValues(alpha: 0.1),
-                                        trackHeight: 4,
-                                        thumbShape: const RoundSliderThumbShape(
-                                          enabledThumbRadius: 6,
-                                        ),
-                                      ),
-                                      child: Slider(
-                                        value: rollout.toDouble(),
-                                        min: 0,
-                                        max: 100,
-                                        divisions: 10,
-                                        label: '$rollout%',
-                                        onChanged: isEnabled
-                                            ? (v) => ref
-                                                  .read(
-                                                    adminFeatureFlagListProvider
-                                                        .notifier,
-                                                  )
-                                                  .updateRollout(
-                                                    f['id'] as String,
-                                                    v.round(),
-                                                  )
-                                            : null,
-                                      ),
-                                    ),
-                                  ],
+                                child: _RolloutSlider(
+                                  id: f['id'] as String,
+                                  value: rollout,
+                                  enabled: isEnabled,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -463,6 +443,13 @@ class _RemoteConfigTab extends ConsumerWidget {
 
     return Column(
       children: [
+        // Nothing reads `remote_config` either; same note as the flags.
+        const _NotYetWiredNote(
+          text:
+              'ההגדרות כאן נשמרות בבסיס הנתונים, אך האפליקציה והאתר עדיין '
+              'אינם קוראים אותן — שינוי ערך יירשם ולא ישנה דבר אצל המשתמשים. '
+              'חיבור ההגדרות לאפליקציה הוא פיתוח נפרד.',
+        ),
         // ─── Toolbar ───
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -488,19 +475,15 @@ class _RemoteConfigTab extends ConsumerWidget {
                 ),
               ),
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} הגדרות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              if (asyncData.valueOrNull case final list?)
+                Text(
+                  '${list.length} הגדרות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showConfigEditor(context, ref),
@@ -644,12 +627,12 @@ class _RemoteConfigTab extends ConsumerWidget {
                               color: AppColors.grayLight,
                             ),
                             onSelected: (v) {
-                              if (v == 'edit')
+                              if (v == 'edit') {
                                 _showConfigEditor(context, ref, config: c);
-                              if (v == 'delete')
-                                ref
-                                    .read(adminRemoteConfigProvider.notifier)
-                                    .deleteConfig(c['id'] as String);
+                              }
+                              if (v == 'delete') {
+                                _confirmDelete(context, ref, c);
+                              }
                             },
                             itemBuilder: (_) => [
                               PopupMenuItem(
@@ -688,6 +671,61 @@ class _RemoteConfigTab extends ConsumerWidget {
     );
   }
 
+  /// A setting has no hidden state to fall back on, so removing one is for
+  /// good; the dialog says so and names it.
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> c,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text(
+            'מחיקת הגדרה',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            'למחוק את "${c['key']}"? ההגדרה תימחק לצמיתות.',
+            style: TextStyle(fontFamily: AppFonts.rubik),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'ביטול',
+                style: TextStyle(fontFamily: AppFonts.rubik),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                'מחק',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref
+          .read(adminRemoteConfigProvider.notifier)
+          .deleteConfig(c['id'] as String);
+    } catch (e) {
+      if (context.mounted) showAdminError(context, 'המחיקה נכשלה', e);
+    }
+  }
+
   void _showConfigEditor(
     BuildContext context,
     WidgetRef ref, {
@@ -697,6 +735,85 @@ class _RemoteConfigTab extends ConsumerWidget {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _ConfigEditorDialog(config: config),
+    );
+  }
+}
+
+/// The rollout slider on a flag's card. It moves with the finger and writes
+/// once, when let go: writing on every step of a drag sent a request per
+/// step and reloaded the list under the finger.
+class _RolloutSlider extends ConsumerStatefulWidget {
+  final String id;
+  final int value;
+  final bool enabled;
+  const _RolloutSlider({
+    required this.id,
+    required this.value,
+    required this.enabled,
+  });
+
+  @override
+  ConsumerState<_RolloutSlider> createState() => _RolloutSliderState();
+}
+
+class _RolloutSliderState extends ConsumerState<_RolloutSlider> {
+  late int _value = widget.value;
+
+  @override
+  void didUpdateWidget(_RolloutSlider old) {
+    super.didUpdateWidget(old);
+    if (old.value != widget.value) _value = widget.value;
+  }
+
+  Future<void> _commit(int pct) async {
+    if (pct == widget.value) return;
+    try {
+      await ref
+          .read(adminFeatureFlagListProvider.notifier)
+          .updateRollout(widget.id, pct);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _value = widget.value);
+      showAdminError(context, 'השמירה נכשלה', e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Rollout: $_value%',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 11,
+            color: AppColors.grayText,
+          ),
+        ),
+        const SizedBox(height: 4),
+        SliderTheme(
+          data: SliderThemeData(
+            activeTrackColor: AppColors.turquoise,
+            inactiveTrackColor: AppColors.grayLight.withValues(alpha: 0.3),
+            thumbColor: AppColors.turquoise,
+            overlayColor: AppColors.turquoise.withValues(alpha: 0.1),
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+          ),
+          child: Slider(
+            value: _value.toDouble(),
+            min: 0,
+            max: 100,
+            divisions: 10,
+            label: '$_value%',
+            onChanged: widget.enabled
+                ? (v) => setState(() => _value = v.round())
+                : null,
+            onChangeEnd: (v) => _commit(v.round()),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -778,9 +895,19 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildField('מפתח (Key)', _key, hint: 'MY_FEATURE'),
+                        _buildField(
+                          'מפתח (Key)',
+                          _key,
+                          hint: 'MY_FEATURE',
+                          required: true,
+                        ),
                         const SizedBox(height: 14),
-                        _buildField('תווית', _label, hint: 'פיצ\'ר חדש'),
+                        _buildField(
+                          'תווית',
+                          _label,
+                          hint: 'פיצ\'ר חדש',
+                          required: true,
+                        ),
                         const SizedBox(height: 14),
                         _buildField(
                           'תיאור',
@@ -798,7 +925,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                             ),
                           ),
                           value: _isEnabled,
-                          activeColor: AppColors.success,
+                          activeThumbColor: AppColors.success,
                           onChanged: (v) => setState(() => _isEnabled = v),
                         ),
                         const SizedBox(height: 8),
@@ -892,6 +1019,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
     TextEditingController ctrl, {
     String? hint,
     int maxLines = 1,
+    bool required = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -909,6 +1037,9 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
         TextFormField(
           controller: ctrl,
           maxLines: maxLines,
+          validator: required
+              ? (v) => (v ?? '').trim().isEmpty ? 'שדה חובה' : null
+              : null,
           style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
@@ -940,20 +1071,29 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
   }
 
   Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    await ref.read(adminFeatureFlagListProvider.notifier).createFlag({
-      'key': _key.text.trim(),
-      'label': _label.text.trim(),
-      'description': _description.text.trim(),
-      'is_enabled': _isEnabled,
-      'rollout_pct': _rolloutPct,
-      'platforms': ['ios', 'android', 'web'],
-      'config': {},
-      // Who made the change is the signed-in administrator, which the
-      // provider fills in. This wrote the client's name into a uuid column
-      // whatever anyone did.
-    });
-    if (mounted) Navigator.pop(context);
+    try {
+      await ref.read(adminFeatureFlagListProvider.notifier).createFlag({
+        'key': _key.text.trim(),
+        'label': _label.text.trim(),
+        'description': _description.text.trim().isEmpty
+            ? null
+            : _description.text.trim(),
+        'is_enabled': _isEnabled,
+        'rollout_pct': _rolloutPct,
+        'platforms': ['ios', 'android', 'web'],
+        // Who made the change is the signed-in administrator, which the
+        // provider fills in. This wrote the client's name into a uuid column
+        // whatever anyone did.
+      });
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      // A key that already exists is the likely one: `key` is unique.
+      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }
 
@@ -1049,13 +1189,19 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildField('מפתח (Key)', _key, hint: 'HOME_HEADLINE'),
+                        _buildField(
+                          'מפתח (Key)',
+                          _key,
+                          hint: 'HOME_HEADLINE',
+                          required: true,
+                        ),
                         const SizedBox(height: 14),
                         _buildField(
                           'ערך',
                           _value,
                           hint: 'ערך ההגדרה...',
                           maxLines: 3,
+                          required: true,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
@@ -1137,6 +1283,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
     TextEditingController ctrl, {
     String? hint,
     int maxLines = 1,
+    bool required = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1154,6 +1301,9 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
         TextFormField(
           controller: ctrl,
           maxLines: maxLines,
+          validator: required
+              ? (v) => (v ?? '').trim().isEmpty ? 'שדה חובה' : null
+              : null,
           style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
@@ -1185,20 +1335,30 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
   }
 
   Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     final notifier = ref.read(adminRemoteConfigProvider.notifier);
+    // Who saved it is filled in by the provider from the signed-in admin.
+    // This used to write the client's name into a uuid column.
     final data = {
       'key': _key.text.trim(),
       'value': _value.text.trim(),
-      'description': _description.text.trim(),
-      'updated_by': 'ניתאי לוי',
+      'description': _description.text.trim().isEmpty
+          ? null
+          : _description.text.trim(),
     };
-    if (_isEditing) {
-      await notifier.updateConfig(widget.config!['id'] as String, data);
-    } else {
-      await notifier.createConfig(data);
+    try {
+      if (_isEditing) {
+        await notifier.updateConfig(widget.config!['id'] as String, data);
+      } else {
+        await notifier.createConfig(data);
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    if (mounted) Navigator.pop(context);
   }
 }
 

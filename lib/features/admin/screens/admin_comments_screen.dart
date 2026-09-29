@@ -22,49 +22,94 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
     super.dispose();
   }
 
+  void _setStatus(String status) {
+    setState(() => _statusFilter = status);
+    ref
+        .read(adminCommentsProvider.notifier)
+        .setStatusFilter(status.isEmpty ? null : status);
+  }
+
+  void _toggleEntity(String type) {
+    setState(() => _entityFilter = _entityFilter == type ? '' : type);
+    ref
+        .read(adminCommentsProvider.notifier)
+        .setEntityTypeFilter(_entityFilter.isEmpty ? null : _entityFilter);
+  }
+
+  /// Runs a moderation action and says what happened — the actions used to
+  /// be fired and forgotten, so a refused update looked like a success.
+  Future<void> _run(Future<void> Function() action, String done) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await action();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(done, style: TextStyle(fontFamily: AppFonts.rubik)),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'הפעולה נכשלה: $e',
+            style: TextStyle(fontFamily: AppFonts.rubik),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(adminCommentsProvider);
+    final list = asyncData.valueOrNull;
+    final notifier = ref.read(adminCommentsProvider.notifier);
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Column(
       children: [
         // ─── Stats ───
-        asyncData.whenData((list) {
-              final pending = list
-                  .where((c) => c['status'] == 'pending')
-                  .length;
-              final approved = list
-                  .where((c) => c['status'] == 'approved')
-                  .length;
-              final flagged = list.where((c) => c['is_flagged'] == true).length;
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
+        if (list != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.border.withValues(alpha: 0.5),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppColors.border.withValues(alpha: 0.5),
-                    ),
-                  ),
+              ),
+            ),
+            child: Row(
+              children: [
+                _StatChip(
+                  'ממתינות',
+                  '${list.where((c) => c['status'] == 'pending').length}',
+                  AppColors.gold,
                 ),
-                child: Row(
-                  children: [
-                    _StatChip('ממתינות', '$pending', AppColors.gold),
-                    const SizedBox(width: 12),
-                    _StatChip('מאושרות', '$approved', AppColors.success),
-                    const SizedBox(width: 12),
-                    _StatChip('מסומנות', '$flagged', AppColors.error),
-                    const SizedBox(width: 12),
-                    _StatChip('סה״כ', '${list.length}', AppColors.turquoise),
-                  ],
+                const SizedBox(width: 12),
+                _StatChip(
+                  'מאושרות',
+                  '${list.where((c) => c['status'] == 'approved').length}',
+                  AppColors.success,
                 ),
-              );
-            }).value ??
-            const SizedBox.shrink(),
+                const SizedBox(width: 12),
+                // `report_count` is how many residents reported the comment.
+                _StatChip(
+                  'דווחו',
+                  '${list.where((c) => ((c['report_count'] as num?) ?? 0) > 0).length}',
+                  AppColors.error,
+                ),
+                const SizedBox(width: 12),
+                _StatChip('סה״כ', '${list.length}', AppColors.turquoise),
+              ],
+            ),
+          ),
+
+        // Nothing creates comments yet; an empty list should not read as
+        // "all caught up".
+        const _NothingWritesThisNote(),
 
         // ─── Toolbar ───
         Container(
@@ -111,75 +156,59 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                       borderSide: const BorderSide(color: AppColors.turquoise),
                     ),
                   ),
-                  onChanged: (v) => ref
-                      .read(adminCommentsProvider.notifier)
-                      .setSearch(v.isEmpty ? null : v),
+                  onChanged: (v) => notifier.setSearch(v.isEmpty ? null : v),
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref.read(adminCommentsProvider.notifier).setStatusFilter(null);
-              }),
-              _FilterChip('ממתין', _statusFilter == 'pending', () {
-                setState(() => _statusFilter = 'pending');
-                ref
-                    .read(adminCommentsProvider.notifier)
-                    .setStatusFilter('pending');
-              }),
-              _FilterChip('מאושר', _statusFilter == 'approved', () {
-                setState(() => _statusFilter = 'approved');
-                ref
-                    .read(adminCommentsProvider.notifier)
-                    .setStatusFilter('approved');
-              }),
-              _FilterChip('נדחה', _statusFilter == 'rejected', () {
-                setState(() => _statusFilter = 'rejected');
-                ref
-                    .read(adminCommentsProvider.notifier)
-                    .setStatusFilter('rejected');
-              }),
+              _FilterChip('הכל', _statusFilter.isEmpty, () => _setStatus('')),
+              _FilterChip(
+                'ממתין',
+                _statusFilter == 'pending',
+                () => _setStatus('pending'),
+              ),
+              _FilterChip(
+                'מאושר',
+                _statusFilter == 'approved',
+                () => _setStatus('approved'),
+              ),
+              _FilterChip(
+                'נדחה',
+                _statusFilter == 'rejected',
+                () => _setStatus('rejected'),
+              ),
+              _FilterChip(
+                'מוסתר',
+                _statusFilter == 'hidden',
+                () => _setStatus('hidden'),
+              ),
               if (isWide) ...[
                 const SizedBox(width: 12),
-                _FilterChip('עסקים', _entityFilter == 'business', () {
-                  setState(
-                    () => _entityFilter = _entityFilter == 'business'
-                        ? ''
-                        : 'business',
-                  );
-                  ref
-                      .read(adminCommentsProvider.notifier)
-                      .setEntityTypeFilter(
-                        _entityFilter.isEmpty ? null : _entityFilter,
-                      );
-                }),
-                _FilterChip('כתבות', _entityFilter == 'article', () {
-                  setState(
-                    () => _entityFilter = _entityFilter == 'article'
-                        ? ''
-                        : 'article',
-                  );
-                  ref
-                      .read(adminCommentsProvider.notifier)
-                      .setEntityTypeFilter(
-                        _entityFilter.isEmpty ? null : _entityFilter,
-                      );
-                }),
+                _FilterChip(
+                  'עסקים',
+                  _entityFilter == 'business',
+                  () => _toggleEntity('business'),
+                ),
+                _FilterChip(
+                  'כתבות',
+                  _entityFilter == 'article',
+                  () => _toggleEntity('article'),
+                ),
+                _FilterChip(
+                  'אירועים',
+                  _entityFilter == 'event',
+                  () => _toggleEntity('event'),
+                ),
               ],
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (l) => Text(
-                          '${l.length} תגובות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              if (list != null)
+                Text(
+                  '${list.length} תגובות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
             ],
           ),
         ),
@@ -223,18 +252,22 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
               return ListView.separated(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: list.length,
-                separatorBuilder: (_, __) => Divider(
+                separatorBuilder: (_, _) => Divider(
                   height: 1,
                   color: AppColors.border.withValues(alpha: 0.3),
                 ),
                 itemBuilder: (_, i) {
                   final c = list[i];
+                  final id = c['id'] as String;
                   final status = c['status'] as String? ?? 'pending';
-                  final isFlagged = c['is_flagged'] as bool? ?? false;
-                  final isPinned = c['is_pinned'] as bool? ?? false;
+                  final reports = (c['report_count'] as num?)?.toInt() ?? 0;
+                  final author = c['profiles'] is Map
+                      ? ((c['profiles'] as Map)['full_name'] as String? ?? '')
+                            .trim()
+                      : '';
 
                   return Container(
-                    color: isFlagged
+                    color: reports > 0
                         ? AppColors.error.withValues(alpha: 0.04)
                         : (status == 'pending'
                               ? AppColors.gold.withValues(alpha: 0.04)
@@ -252,7 +285,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                             alpha: 0.1,
                           ),
                           child: Text(
-                            (c['user_name'] as String? ?? '?')[0],
+                            author.isEmpty ? '?' : author.characters.first,
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 14,
@@ -269,7 +302,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                               Row(
                                 children: [
                                   Text(
-                                    c['user_name'] as String? ?? '',
+                                    author.isEmpty ? 'ללא שם' : author,
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 13,
@@ -288,27 +321,22 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                                       color: AppColors.grayLight,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      c['entity_title'] as String? ?? '',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 11,
-                                        color: AppColors.grayText,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
                                   const Spacer(),
                                   _StatusPill(status),
-                                  if (isFlagged) ...[
+                                  if (reports > 0) ...[
                                     const SizedBox(width: 6),
                                     Icon(
                                       Icons.flag,
                                       size: 14,
                                       color: AppColors.error,
+                                    ),
+                                    Text(
+                                      '$reports',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 11,
+                                        color: AppColors.error,
+                                      ),
                                     ),
                                   ],
                                 ],
@@ -339,65 +367,36 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                                     ),
                                   ),
                                   const Spacer(),
-                                  TextButton.icon(
-                                    onPressed: () => ref
-                                        .read(adminCommentsProvider.notifier)
-                                        .toggleVisibility(c['id'] as String),
-                                    icon: Icon(
-                                      status == 'visible'
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      size: 14,
-                                    ),
-                                    label: Text(
-                                      status == 'visible' ? 'הסתר' : 'הצג',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 12,
+                                  if (status != 'approved')
+                                    _ActionButton(
+                                      'אשר',
+                                      Icons.check,
+                                      AppColors.success,
+                                      () => _run(
+                                        () => notifier.approve(id),
+                                        'התגובה אושרה',
                                       ),
                                     ),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors.turquoise,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
+                                  if (status == 'pending')
+                                    _ActionButton(
+                                      'דחה',
+                                      Icons.close,
+                                      AppColors.error,
+                                      () => _run(
+                                        () => notifier.reject(id),
+                                        'התגובה נדחתה — אפשר להחזיר אותה מסל המחזור',
                                       ),
                                     ),
-                                  ),
-                                  TextButton.icon(
-                                    onPressed: () => ref
-                                        .read(adminCommentsProvider.notifier)
-                                        .togglePin(c['id'] as String),
-                                    icon: Icon(
-                                      isPinned
-                                          ? Icons.push_pin
-                                          : Icons.push_pin_outlined,
-                                      size: 14,
-                                    ),
-                                    label: Text(
-                                      isPinned ? 'בטל הצמדה' : 'הצמד',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 12,
+                                  if (status == 'approved')
+                                    _ActionButton(
+                                      'הסתר',
+                                      Icons.visibility_off,
+                                      AppColors.turquoise,
+                                      () => _run(
+                                        () => notifier.hide(id),
+                                        'התגובה הוסתרה — אפשר להחזיר אותה מסל המחזור',
                                       ),
                                     ),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors.gold,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      size: 16,
-                                      color: AppColors.error,
-                                    ),
-                                    onPressed: () => ref
-                                        .read(adminCommentsProvider.notifier)
-                                        .deleteComment(c['id'] as String),
-                                    tooltip: 'מחק',
-                                  ),
                                 ],
                               ),
                             ],
@@ -416,18 +415,77 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
   }
 
   String _entityLabel(String t) => switch (t) {
-    'business' => 'עסק:',
-    'article' => 'כתבה:',
-    'event' => 'אירוע:',
-    _ => '$t:',
+    'business' => 'על עסק',
+    'article' => 'על כתבה',
+    'event' => 'על אירוע',
+    _ => t,
   };
   String _shortDate(String iso) {
     try {
-      final d = DateTime.parse(iso);
+      final d = DateTime.parse(iso).toLocal();
       return '${d.day}/${d.month}/${d.year}';
     } catch (_) {
       return iso;
     }
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+  const _ActionButton(this.label, this.icon, this.color, this.onPressed);
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+    onPressed: onPressed,
+    icon: Icon(icon, size: 14),
+    label: Text(
+      label,
+      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
+    ),
+    style: TextButton.styleFrom(
+      foregroundColor: color,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+    ),
+  );
+}
+
+/// Why this list is empty, said rather than left to be guessed.
+class _NothingWritesThisNote extends StatelessWidget {
+  const _NothingWritesThisNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.adminContentBg,
+        border: Border.all(color: AppColors.adminCardBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 18, color: AppColors.adminTextLight),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'עדיין אין באתר או באפליקציה מקום לכתוב תגובה, ולכן הרשימה '
+              'תתמלא רק כשיתווסף אחד.',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 12,
+                height: 1.5,
+                color: AppColors.adminTextLight,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -440,6 +498,7 @@ class _StatusPill extends StatelessWidget {
       'approved' => ('מאושר', AppColors.success),
       'pending' => ('ממתין', AppColors.gold),
       'rejected' => ('נדחה', AppColors.error),
+      'hidden' => ('מוסתר', AppColors.grayText),
       _ => (status, AppColors.grayLight),
     };
     return Container(

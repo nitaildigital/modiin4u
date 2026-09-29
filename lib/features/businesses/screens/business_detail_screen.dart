@@ -1499,6 +1499,8 @@ class _BusinessDetailContentState
                   date: _formatReviewDate(list[i].createdAt),
                   rating: list[i].rating,
                   text: list[i].body,
+                  response: list[i].adminResponse,
+                  responseDate: _formatReviewDate(list[i].respondedAt),
                   isLast: i == list.length - 1,
                 ),
             ],
@@ -1774,6 +1776,10 @@ class _ReviewCard extends StatefulWidget {
   final String date;
   final int rating;
   final String text;
+
+  /// The reply written in the panel (`admin_response`), and when.
+  final String? response;
+  final String responseDate;
   final bool isLast;
 
   const _ReviewCard({
@@ -1782,6 +1788,8 @@ class _ReviewCard extends StatefulWidget {
     required this.date,
     required this.rating,
     required this.text,
+    this.response,
+    this.responseDate = '',
     this.isLast = false,
   });
 
@@ -1886,6 +1894,11 @@ class _ReviewCardState extends State<_ReviewCard> {
                     height: 1.4,
                   ),
                 ),
+                if (widget.response?.trim().isNotEmpty ?? false)
+                  _BusinessResponse(
+                    text: widget.response!.trim(),
+                    date: widget.responseDate,
+                  ),
                 // A reply control sat here: it stored the text in a
                 // String on the widget and announced "Reply sent!".
                 // Nothing was written. `reviews` carries
@@ -1894,6 +1907,73 @@ class _ReviewCardState extends State<_ReviewCard> {
                 // another resident's review has no home in the schema
                 // at all, so the control is gone rather than lying.
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The reply an administrator wrote to a review in the panel, set in under
+/// the review with a thin rule at its start so it reads as an answer to it
+/// rather than as another review. Neutral wording: the panel does not record
+/// whether the business itself or the site's staff wrote it.
+class _BusinessResponse extends StatelessWidget {
+  final String text;
+  final String date;
+
+  const _BusinessResponse({required this.text, required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsetsDirectional.only(top: 10),
+      padding: const EdgeInsetsDirectional.only(start: 10),
+      decoration: const BoxDecoration(
+        border: BorderDirectional(
+          start: BorderSide(color: Color(0xFFE7E7E7), width: 2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  L.of(context).reviewBusinessResponse,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              if (date.isNotEmpty) ...[
+                const SizedBox(width: 12),
+                Text(
+                  date,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF6D6D6D),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF6D6D6D),
+              height: 1.4,
             ),
           ),
         ],

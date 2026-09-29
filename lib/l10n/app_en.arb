@@ -656,5 +656,18 @@
         "type": "String"
       }
     }
-  }
+  },
+  "parkingEmpty": "Car parks will be added soon",
+  "parkingSpaces": "{n} spaces",
+  "parkingLotCount": "{n, plural, =1{1 car park} other{{n} car parks}}",
+  "parkingLoadError": "Could not load the car parks",
+  "parkingIntro": "Every car park in the city, on the map.",
+  "parkingLotsHeading": "Car Parks",
+  "reviewBusinessResponse": "Response from the business",
+  "sitePageAboutTitle": "About Us",
+  "sitePageAccessibilityTitle": "Accessibility Statement",
+  "sitePageComingSoon": "The content of this page will be published soon",
+  "sitePageLastUpdated": "Last updated: {date}",
+  "sitePageBack": "Back",
+  "sitePageLoadError": "The page could not be loaded"
 }

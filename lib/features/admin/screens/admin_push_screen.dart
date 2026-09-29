@@ -1,8 +1,32 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_push_provider.dart';
+import '../providers/admin_realestate_provider.dart'
+    show adminNeighborhoodOptionsProvider;
+import '../widgets/admin_form_pickers.dart';
+
+/// `push_status`, the database enum, in the panel's words.
+const _statusLabels = {
+  'draft': 'טיוטה',
+  'scheduled': 'מתוזמן',
+  'sending': 'בשליחה',
+  'sent': 'נשלח',
+  'failed': 'נכשל',
+  'cancelled': 'בוטל',
+};
+
+/// The four topics a resident can opt in to — the `notify_*` switches on
+/// their profile.
+const _topics = {
+  'news': 'חדשות',
+  'deals': 'מבצעים',
+  'neighborhood': 'השכונה שלי',
+  'realestate': 'נדל״ן',
+};
 
 class AdminPushScreen extends ConsumerStatefulWidget {
   const AdminPushScreen({super.key});
@@ -25,81 +49,52 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
   @override
   Widget build(BuildContext context) {
     final pushAsync = ref.watch(adminPushListProvider);
+    final loaded = pushAsync.valueOrNull;
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Column(
       children: [
-        // ─── Stats Row ───
-        pushAsync.whenOrNull(
-              data: (list) {
-                final sent = list.where((n) => n['status'] == 'sent').toList();
-                final totalDelivered = sent.fold<int>(
-                  0,
-                  (sum, n) => sum + (n['delivered_count'] as int? ?? 0),
-                );
-                final totalRead = sent.fold<int>(
-                  0,
-                  (sum, n) => sum + (n['read_count'] as int? ?? 0),
-                );
-                final totalClicked = sent.fold<int>(
-                  0,
-                  (sum, n) => sum + (n['click_count'] as int? ?? 0),
-                );
-                final readRate = totalDelivered > 0
-                    ? (totalRead / totalDelivered * 100).toInt()
-                    : 0;
-                final clickRate = totalDelivered > 0
-                    ? (totalClicked / totalDelivered * 100).toInt()
-                    : 0;
+        // Said before anything else: the screen looks like it sends, and
+        // it does not.
+        const _NotConnectedNote(),
 
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceLight,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.border.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      _StatChip(
-                        'נשלחו',
-                        '${sent.length}',
-                        Icons.send,
-                        AppColors.turquoise,
-                      ),
-                      const SizedBox(width: 16),
-                      _StatChip(
-                        'אחוז קריאה',
-                        '$readRate%',
-                        Icons.visibility,
-                        AppColors.success,
-                      ),
-                      const SizedBox(width: 16),
-                      _StatChip(
-                        'אחוז הקלקה',
-                        '$clickRate%',
-                        Icons.touch_app,
-                        AppColors.midBlue,
-                      ),
-                      const SizedBox(width: 16),
-                      _StatChip(
-                        'סה״כ נמסרו',
-                        _formatNumber(totalDelivered),
-                        Icons.check_circle,
-                        AppColors.gold,
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ) ??
-            const SizedBox.shrink(),
+        // ─── Stats Row ───
+        if (loaded != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.border.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                _StatChip(
+                  'טיוטות',
+                  '${loaded.where((n) => n['status'] == 'draft').length}',
+                  Icons.edit_note,
+                  AppColors.gold,
+                ),
+                const SizedBox(width: 16),
+                _StatChip(
+                  'מתוזמנות',
+                  '${loaded.where((n) => n['status'] == 'scheduled').length}',
+                  Icons.schedule,
+                  AppColors.midBlue,
+                ),
+                const SizedBox(width: 16),
+                _StatChip(
+                  'נשלחו',
+                  '${loaded.where((n) => n['status'] == 'sent').length}',
+                  Icons.send,
+                  AppColors.turquoise,
+                ),
+              ],
+            ),
+          ),
 
         // ─── Toolbar ───
         Container(
@@ -154,45 +149,32 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref.read(adminPushListProvider.notifier).setStatusFilter(null);
-              }),
-              _FilterChip('נשלח', _statusFilter == 'sent', () {
-                setState(() => _statusFilter = 'sent');
-                ref
-                    .read(adminPushListProvider.notifier)
-                    .setStatusFilter('sent');
-              }),
-              _FilterChip('מתוזמן', _statusFilter == 'scheduled', () {
-                setState(() => _statusFilter = 'scheduled');
-                ref
-                    .read(adminPushListProvider.notifier)
-                    .setStatusFilter('scheduled');
-              }),
-              _FilterChip('טיוטה', _statusFilter == 'draft', () {
-                setState(() => _statusFilter = 'draft');
-                ref
-                    .read(adminPushListProvider.notifier)
-                    .setStatusFilter('draft');
-              }),
+              for (final e in const {
+                '': 'הכל',
+                'draft': 'טיוטה',
+                'scheduled': 'מתוזמן',
+                'sent': 'נשלח',
+                'cancelled': 'בוטל',
+              }.entries)
+                _FilterChip(e.value, _statusFilter == e.key, () {
+                  setState(() => _statusFilter = e.key);
+                  ref
+                      .read(adminPushListProvider.notifier)
+                      .setStatusFilter(e.key.isEmpty ? null : e.key);
+                }),
               const Spacer(),
-              pushAsync
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} הודעות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              if (loaded != null)
+                Text(
+                  '${loaded.length} הודעות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
-                onPressed: () => _showPushEditor(context, ref),
+                onPressed: () => _showPushEditor(context),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
                   'הודעה חדשה',
@@ -225,7 +207,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'שגיאה בטעינת הודעות',
+                    'שגיאה בטעינת הודעות: ${adminErrorText(e)}',
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.error,
@@ -260,7 +242,8 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
               return _PushTable(
                 notifications: notifications,
                 isWide: isWide,
-                onTap: (n) => _showPushEditor(context, ref, notification: n),
+                neighborhoods: _neighborhoodNames(),
+                onTap: (n) => _showPushEditor(context, notification: n),
                 onAction: _handleAction,
               );
             },
@@ -270,71 +253,125 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
     );
   }
 
-  String _formatNumber(int n) {
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
+  Map<String, String> _neighborhoodNames() => {
+    for (final n
+        in ref.watch(adminNeighborhoodOptionsProvider).valueOrNull ??
+            const <Map<String, dynamic>>[])
+      n['id'] as String: n['name'] as String? ?? '',
+  };
 
-  void _handleAction(String action, Map<String, dynamic> notification) {
+  Future<void> _handleAction(
+    String action,
+    Map<String, dynamic> notification,
+  ) async {
     final notifier = ref.read(adminPushListProvider.notifier);
     final id = notification['id'] as String;
     switch (action) {
       case 'edit':
-        _showPushEditor(context, ref, notification: notification);
-      case 'send':
-        notifier.sendNotification(id);
-      case 'delete':
-        showDialog(
+        _showPushEditor(context, notification: notification);
+      case 'restore':
+        try {
+          await notifier.restoreToDraft(id);
+        } catch (e) {
+          if (mounted) showAdminError(context, 'הפעולה נכשלה', e);
+        }
+      case 'cancel':
+        final ok = await showDialog<bool>(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(
-              'מחיקת הודעה',
-              style: TextStyle(
-                fontFamily: AppFonts.rubik,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            content: Text(
-              'לבטל את "${notification['title']}"? ההודעה תסומן כמבוטלת '
-              'ולא תישלח.',
-              style: TextStyle(fontFamily: AppFonts.rubik),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  'ביטול',
-                  style: TextStyle(fontFamily: AppFonts.rubik),
+          builder: (ctx) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              title: Text(
+                'ביטול הודעה',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  notifier.deleteNotification(id);
-                },
-                child: Text(
-                  'מחק',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    color: AppColors.error,
+              content: Text(
+                'לבטל את "${notification['title']}"? ההודעה תישאר ברשימה '
+                'תחת "בוטל", ו"החזר לטיוטה" בתפריט שלה מחזיר אותה.',
+                style: TextStyle(fontFamily: AppFonts.rubik),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(
+                    'חזרה',
+                    style: TextStyle(fontFamily: AppFonts.rubik),
                   ),
                 ),
-              ),
-            ],
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(
+                    'בטל הודעה',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
+        if (ok != true) return;
+        try {
+          await notifier.cancelNotification(id);
+        } catch (e) {
+          if (mounted) showAdminError(context, 'הביטול נכשל', e);
+        }
     }
   }
 
   void _showPushEditor(
-    BuildContext context,
-    WidgetRef ref, {
+    BuildContext context, {
     Map<String, dynamic>? notification,
   }) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _PushEditorDialog(notification: notification),
+    );
+  }
+}
+
+/// Sending is not connected, said where the client will read it.
+class _NotConnectedNote extends StatelessWidget {
+  const _NotConnectedNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.gold.withValues(alpha: 0.1),
+        border: Border(
+          bottom: BorderSide(color: AppColors.gold.withValues(alpha: 0.4)),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, size: 18, color: AppColors.gold),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'שליחת התראות עדיין לא מחוברת. אפשר לכתוב הודעות ולשמור אותן '
+              'כטיוטה או כמתוזמנות, אבל שום הודעה לא נשלחת לטלפונים — גם '
+              'לא הודעה מתוזמנת כשמגיע מועדה. כדי לחבר את השליחה נדרשים '
+              'מפתחות Firebase של האפליקציה (ולאייפון גם APNs של Apple).',
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 12,
+                height: 1.5,
+                color: AppColors.navy,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -391,14 +428,26 @@ class _StatChip extends StatelessWidget {
 
 // ─── Push Table ───
 
+/// Who a campaign is for, in words.
+String _audienceLabel(Map<String, dynamic> n, Map<String, String> hoods) {
+  final filter = n['audience_filter'] as Map?;
+  return switch (n['audience_type'] as String? ?? 'all') {
+    'neighborhood' => 'שכונה: ${hoods[filter?['neighborhood_id']] ?? '—'}',
+    'topic' => 'נושא: ${_topics[filter?['topic']] ?? '—'}',
+    _ => 'כולם',
+  };
+}
+
 class _PushTable extends StatelessWidget {
   final List<Map<String, dynamic>> notifications;
   final bool isWide;
+  final Map<String, String> neighborhoods;
   final void Function(Map<String, dynamic>) onTap;
   final void Function(String, Map<String, dynamic>) onAction;
   const _PushTable({
     required this.notifications,
     required this.isWide,
+    required this.neighborhoods,
     required this.onTap,
     required this.onAction,
   });
@@ -420,11 +469,10 @@ class _PushTable extends StatelessWidget {
           child: Row(
             children: [
               _Col('כותרת', flex: 3),
-              _Col('סוג', flex: 1),
               _Col('קהל יעד', flex: 2),
               _Col('סטטוס', flex: 1),
               if (isWide) _Col('נמסרו', flex: 1),
-              if (isWide) _Col('נקראו', flex: 1),
+              if (isWide) _Col('נפתחו', flex: 1),
               if (isWide) _Col('תאריך', flex: 2),
               const SizedBox(width: 40),
             ],
@@ -433,18 +481,15 @@ class _PushTable extends StatelessWidget {
         Expanded(
           child: ListView.separated(
             itemCount: notifications.length,
-            separatorBuilder: (_, __) => Divider(
+            separatorBuilder: (_, _) => Divider(
               height: 1,
               color: AppColors.border.withValues(alpha: 0.3),
             ),
             itemBuilder: (_, i) {
               final n = notifications[i];
               final status = n['status'] as String? ?? 'draft';
-              final type = n['type'] as String? ?? 'general';
-              final audience = n['target_audience'] as String? ?? 'all';
-              final targetValue = n['target_value'] as String?;
               final delivered = n['delivered_count'] as int? ?? 0;
-              final read = n['read_count'] as int? ?? 0;
+              final opened = n['opened_count'] as int? ?? 0;
               final sentAt = n['sent_at'] as String?;
               final scheduledAt = n['scheduled_at'] as String?;
 
@@ -457,7 +502,6 @@ class _PushTable extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      // Image thumbnail
                       if (n['image_url'] != null) ...[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(6),
@@ -466,7 +510,7 @@ class _PushTable extends StatelessWidget {
                             width: 44,
                             height: 44,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorBuilder: (_, _, _) => Container(
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
@@ -511,15 +555,10 @@ class _PushTable extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Expanded(flex: 1, child: _TypeBadge(type)),
                       Expanded(
                         flex: 2,
                         child: Text(
-                          audience == 'all'
-                              ? 'כולם'
-                              : audience == 'neighborhood'
-                              ? 'שכונה: ${targetValue ?? "—"}'
-                              : 'תפקיד: ${targetValue ?? "—"}',
+                          _audienceLabel(n, neighborhoods),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
@@ -532,7 +571,7 @@ class _PushTable extends StatelessWidget {
                         Expanded(
                           flex: 1,
                           child: Text(
-                            '$delivered',
+                            status == 'sent' ? '$delivered' : '—',
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 13,
@@ -545,7 +584,7 @@ class _PushTable extends StatelessWidget {
                           flex: 1,
                           child: Text(
                             delivered > 0
-                                ? '${(read / delivered * 100).toInt()}%'
+                                ? '${(opened / delivered * 100).toInt()}%'
                                 : '—',
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
@@ -578,40 +617,11 @@ class _PushTable extends StatelessWidget {
                         ),
                         onSelected: (v) => onAction(v, n),
                         itemBuilder: (_) => [
-                          PopupMenuItem(
-                            value: 'edit',
-                            child: Text(
-                              'עריכה',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          if (status == 'draft' || status == 'scheduled')
-                            PopupMenuItem(
-                              value: 'send',
-                              child: Text(
-                                'שלח עכשיו',
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  color: AppColors.success,
-                                ),
-                              ),
-                            ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text(
-                              // The row is not removed; it becomes status = 'cancelled'.
-                              'בטל',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                                color: AppColors.error,
-                              ),
-                            ),
-                          ),
+                          _item('edit', 'עריכה'),
+                          if (status == 'cancelled')
+                            _item('restore', 'החזר לטיוטה')
+                          else if (status == 'draft' || status == 'scheduled')
+                            _item('cancel', 'בטל', color: AppColors.error),
                         ],
                       ),
                     ],
@@ -625,14 +635,25 @@ class _PushTable extends StatelessWidget {
     );
   }
 
-  String _formatDate(String iso) {
-    try {
-      final d = DateTime.parse(iso);
-      return '${d.day}/${d.month}/${d.year} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return iso;
-    }
-  }
+  PopupMenuItem<String> _item(String value, String label, {Color? color}) =>
+      PopupMenuItem(
+        value: value,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 13,
+            color: color,
+          ),
+        ),
+      );
+}
+
+String _formatDate(String iso) {
+  final d = DateTime.tryParse(iso)?.toLocal();
+  if (d == null) return iso;
+  return '${d.day}/${d.month}/${d.year} '
+      '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 }
 
 // ─── Push Editor Dialog ───
@@ -652,14 +673,22 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
   late final TextEditingController _title;
   late final TextEditingController _body;
   late final TextEditingController _imageUrl;
-  late final TextEditingController _targetValue;
-  late final TextEditingController _scheduledAt;
+  late final TextEditingController _deepLink;
 
-  String _type = 'general';
+  /// What the form may set. Sent, sending and failed belong to the sender
+  /// that does not exist yet; a campaign in one of those is shown, not
+  /// edited back into a draft by accident.
   String _status = 'draft';
-  String _targetAudience = 'all';
+  String _audience = 'all';
+  String? _neighborhoodId;
+  String _topic = 'news';
+  DateTime? _scheduledAt;
+  bool _scheduleMissing = false;
 
   bool get _isEditing => widget.notification != null;
+  String get _original => widget.notification?['status'] as String? ?? 'draft';
+  bool get _editable =>
+      !_isEditing || _original == 'draft' || _original == 'scheduled';
 
   @override
   void initState() {
@@ -668,16 +697,19 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     _title = TextEditingController(text: n?['title'] as String? ?? '');
     _body = TextEditingController(text: n?['body'] as String? ?? '');
     _imageUrl = TextEditingController(text: n?['image_url'] as String? ?? '');
-    _targetValue = TextEditingController(
-      text: n?['target_value'] as String? ?? '',
-    );
-    _scheduledAt = TextEditingController(
-      text: n?['scheduled_at'] as String? ?? '',
-    );
-
-    _type = n?['type'] as String? ?? 'general';
-    _status = n?['status'] as String? ?? 'draft';
-    _targetAudience = n?['target_audience'] as String? ?? 'all';
+    _deepLink = TextEditingController(text: n?['deep_link'] as String? ?? '');
+    if (_original == 'scheduled') _status = 'scheduled';
+    final audience = n?['audience_type'] as String?;
+    if (audience == 'neighborhood' || audience == 'topic') {
+      _audience = audience!;
+    }
+    final filter = n?['audience_filter'] as Map?;
+    _neighborhoodId = filter?['neighborhood_id'] as String?;
+    final topic = filter?['topic'] as String?;
+    if (_topics.containsKey(topic)) _topic = topic!;
+    _scheduledAt = DateTime.tryParse(
+      n?['scheduled_at'] as String? ?? '',
+    )?.toLocal();
   }
 
   @override
@@ -685,18 +717,83 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     _title.dispose();
     _body.dispose();
     _imageUrl.dispose();
-    _targetValue.dispose();
-    _scheduledAt.dispose();
+    _deepLink.dispose();
     super.dispose();
+  }
+
+  InputDecoration _decoration(String label, {String? hint, String? error}) =>
+      InputDecoration(
+        labelText: label,
+        hintText: hint,
+        errorText: error,
+        labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+      );
+
+  Widget _dropdown<T>(
+    String label,
+    T? value,
+    Map<T, String> items,
+    ValueChanged<T?> onChanged,
+  ) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: DropdownButtonFormField<T>(
+      initialValue: value,
+      isExpanded: true,
+      decoration: _decoration(label),
+      items: [
+        for (final e in items.entries)
+          DropdownMenuItem(
+            value: e.key,
+            child: Text(
+              e.value,
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+            ),
+          ),
+      ],
+      onChanged: _editable ? (v) => setState(() => onChanged(v)) : null,
+    ),
+  );
+
+  Future<void> _pickSchedule() async {
+    final now = DateTime.now();
+    final start = _scheduledAt ?? now.add(const Duration(hours: 1));
+    final date = await showDatePicker(
+      context: context,
+      initialDate: start.isBefore(now) ? now : start,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: DateTime(now.year + 2),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(start),
+    );
+    if (time == null) return;
+    setState(() {
+      _scheduledAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+      _scheduleMissing = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final hoods = ref.watch(adminNeighborhoodOptionsProvider).valueOrNull;
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 650, maxHeight: 600),
+        constraints: const BoxConstraints(maxWidth: 650, maxHeight: 680),
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: Form(
@@ -717,7 +814,11 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת הודעה' : 'הודעה חדשה',
+                        !_isEditing
+                            ? 'הודעה חדשה'
+                            : _editable
+                            ? 'עריכת הודעה'
+                            : 'הודעה',
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -741,29 +842,48 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                   child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
+                      if (!_editable)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'ההודעה במצב "${_statusLabels[_original] ?? _original}" '
+                            'ולכן מוצגת לקריאה בלבד.'
+                            '${_original == 'cancelled' ? ' "החזר לטיוטה" בתפריט שלה מאפשר לערוך אותה שוב.' : ''}',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.grayText,
+                            ),
+                          ),
+                        ),
                       _field(
                         'כותרת *',
                         _title,
                         validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
                       ),
                       _field(
                         'תוכן ההודעה *',
                         _body,
                         maxLines: 4,
                         validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
                       ),
-                      _field('קישור תמונה', _imageUrl, hint: 'https://...'),
-                      if (_imageUrl.text.isNotEmpty) ...[
+                      _field(
+                        'קישור תמונה',
+                        _imageUrl,
+                        hint: 'https://...',
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      if (_imageUrl.text.trim().isNotEmpty) ...[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
-                            _imageUrl.text,
+                            _imageUrl.text.trim(),
                             height: 120,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorBuilder: (_, _, _) => Container(
                               height: 60,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
@@ -783,210 +903,69 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                         ),
                         const SizedBox(height: 12),
                       ],
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _type,
-                              decoration: InputDecoration(
-                                labelText: 'סוג',
-                                labelStyle: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: 'general',
-                                  child: Text(
-                                    'כללי',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'breaking',
-                                  child: Text(
-                                    'מבזק',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'event',
-                                  child: Text(
-                                    'אירוע',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'deal',
-                                  child: Text(
-                                    'מבצע',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'municipal',
-                                  child: Text(
-                                    'עירוני',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (v) => setState(() => _type = v!),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _status,
-                              decoration: InputDecoration(
-                                labelText: 'סטטוס',
-                                labelStyle: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: 'draft',
-                                  child: Text(
-                                    'טיוטה',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'scheduled',
-                                  child: Text(
-                                    'מתוזמן',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'sent',
-                                  child: Text(
-                                    'נשלח',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (v) => setState(() => _status = v!),
-                            ),
-                          ),
-                        ],
+                      _field(
+                        'קישור בתוך האפליקציה',
+                        _deepLink,
+                        hint: '/event/…',
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'קהל יעד',
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.navy,
+                      const SizedBox(height: 4),
+                      _dropdown<String>('קהל יעד', _audience, const {
+                        'all': 'כולם',
+                        'neighborhood': 'לפי שכונה',
+                        'topic': 'מי שנרשם לנושא',
+                      }, (v) => _audience = v ?? 'all'),
+                      if (_audience == 'neighborhood')
+                        hoods == null
+                            ? const LinearProgressIndicator(minHeight: 2)
+                            : _dropdown<String>('שכונה', _neighborhoodId, {
+                                for (final h in hoods)
+                                  h['id'] as String: h['name'] as String? ?? '',
+                              }, (v) => _neighborhoodId = v),
+                      if (_audience == 'topic')
+                        _dropdown<String>(
+                          'נושא',
+                          _topic,
+                          _topics,
+                          (v) => _topic = v ?? 'news',
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: _targetAudience,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
+                      if (_editable)
+                        _dropdown<String>('מצב', _status, const {
+                          'draft': 'טיוטה',
+                          'scheduled': 'מתוזמן',
+                        }, (v) => _status = v ?? 'draft'),
+                      if (_status == 'scheduled' && _editable)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: InkWell(
                             borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                        ),
-                        items: [
-                          DropdownMenuItem(
-                            value: 'all',
-                            child: Text(
-                              'כולם',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
+                            onTap: _pickSchedule,
+                            child: InputDecorator(
+                              decoration:
+                                  _decoration(
+                                    'מועד מתוכנן *',
+                                    error: _scheduleMissing
+                                        ? 'יש לבחור מועד'
+                                        : null,
+                                  ).copyWith(
+                                    suffixIcon: const Icon(
+                                      Icons.schedule,
+                                      size: 18,
+                                    ),
+                                  ),
+                              child: Text(
+                                _scheduledAt == null
+                                    ? 'בחירת תאריך ושעה'
+                                    : _formatDate(
+                                        _scheduledAt!.toIso8601String(),
+                                      ),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ),
-                          DropdownMenuItem(
-                            value: 'neighborhood',
-                            child: Text(
-                              'לפי שכונה',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'role',
-                            child: Text(
-                              'לפי תפקיד',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ],
-                        onChanged: (v) => setState(() => _targetAudience = v!),
-                      ),
-                      if (_targetAudience != 'all') ...[
-                        const SizedBox(height: 8),
-                        _field(
-                          _targetAudience == 'neighborhood' ? 'שכונה' : 'תפקיד',
-                          _targetValue,
-                          hint: _targetAudience == 'neighborhood'
-                              ? 'אבני חן'
-                              : 'הורים',
                         ),
-                      ],
-                      if (_status == 'scheduled') ...[
-                        const SizedBox(height: 12),
-                        _field(
-                          'מתוזמן ל',
-                          _scheduledAt,
-                          hint: '2026-09-01T10:00:00Z',
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -1000,62 +979,54 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                   ),
                   child: Row(
                     children: [
-                      const Spacer(),
+                      Expanded(
+                        child: Text(
+                          'נשמר בלבד — לא נשלח',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 11,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                      ),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          _editable ? 'ביטול' : 'סגירה',
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      if (!_isEditing || _status == 'draft') ...[
-                        OutlinedButton(
-                          onPressed: _saving
-                              ? null
-                              : () => _save(sendNow: true),
-                          style: OutlinedButton.styleFrom(
+                      if (_editable) ...[
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: _saving ? null : _save,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.turquoise,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            foregroundColor: AppColors.success,
                           ),
-                          child: Text(
-                            'שלח עכשיו',
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 13,
-                            ),
-                          ),
+                          child: _saving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  _status == 'scheduled'
+                                      ? 'שמור כמתוזמן'
+                                      : 'שמור כטיוטה',
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubik,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
-                        const SizedBox(width: 8),
                       ],
-                      FilledButton(
-                        onPressed: _saving ? null : () => _save(),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                _isEditing ? 'שמור' : 'צור הודעה',
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
                     ],
                   ),
                 ),
@@ -1073,6 +1044,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     int maxLines = 1,
     String? hint,
     String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -1080,40 +1052,44 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
         controller: controller,
         maxLines: maxLines,
         validator: validator,
+        onChanged: onChanged,
+        readOnly: !_editable,
         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-        ),
+        decoration: _decoration(label, hint: hint),
       ),
     );
   }
 
-  Future<void> _save({bool sendNow = false}) async {
-    if (!_formKey.currentState!.validate()) return;
+  String? _text(TextEditingController c) =>
+      c.text.trim().isEmpty ? null : c.text.trim();
+
+  Future<void> _save() async {
+    final valid = _formKey.currentState!.validate();
+    final needsTime = _status == 'scheduled' && _scheduledAt == null;
+    setState(() => _scheduleMissing = needsTime);
+    if (!valid || needsTime) return;
+    if (_audience == 'neighborhood' && _neighborhoodId == null) {
+      showAdminError(context, 'לא נשמר', 'יש לבחור שכונה');
+      return;
+    }
     setState(() => _saving = true);
 
+    // Never `sent`, never `sent_at`: nothing sends yet.
     final fields = <String, dynamic>{
-      'title': _title.text,
-      'body': _body.text,
-      'image_url': _imageUrl.text.isEmpty ? null : _imageUrl.text,
-      'type': _type,
-      'status': sendNow ? 'sent' : _status,
-      'target_audience': _targetAudience,
-      'target_value': _targetAudience == 'all'
-          ? null
-          : _targetValue.text.isEmpty
-          ? null
-          : _targetValue.text,
-      if (sendNow) 'sent_at': DateTime.now().toIso8601String(),
-      if (_status == 'scheduled')
-        'scheduled_at': _scheduledAt.text.isEmpty ? null : _scheduledAt.text,
+      'title': _title.text.trim(),
+      'body': _body.text.trim(),
+      'image_url': _text(_imageUrl),
+      'deep_link': _text(_deepLink),
+      'status': _status,
+      'scheduled_at': _status == 'scheduled'
+          ? _scheduledAt!.toUtc().toIso8601String()
+          : null,
+      'audience_type': _audience,
+      'audience_filter': switch (_audience) {
+        'neighborhood' => {'neighborhood_id': _neighborhoodId},
+        'topic' => {'topic': _topic},
+        _ => null,
+      },
     };
 
     try {
@@ -1124,22 +1100,11 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
           fields,
         );
       } else {
-        fields['read_count'] = sendNow ? 0 : 0;
-        fields['delivered_count'] = sendNow ? 0 : 0;
-        fields['click_count'] = 0;
-        fields['total_recipients'] = _targetAudience == 'all' ? 5400 : 1200;
         await notifier.createNotification(fields);
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('שגיאה: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1154,11 +1119,12 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      'sent' => ('נשלח', AppColors.success),
-      'scheduled' => ('מתוזמן', AppColors.midBlue),
-      'draft' => ('טיוטה', AppColors.gold),
-      _ => (status, AppColors.grayLight),
+    final color = switch (status) {
+      'sent' => AppColors.success,
+      'scheduled' || 'sending' => AppColors.midBlue,
+      'draft' => AppColors.gold,
+      'failed' => AppColors.error,
+      _ => AppColors.grayLight,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1167,43 +1133,10 @@ class _StatusPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        label,
+        _statusLabels[status] ?? status,
         style: TextStyle(
           fontFamily: AppFonts.rubik,
           fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-class _TypeBadge extends StatelessWidget {
-  final String type;
-  const _TypeBadge(this.type);
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (type) {
-      'breaking' => ('מבזק', AppColors.error),
-      'event' => ('אירוע', AppColors.turquoise),
-      'deal' => ('מבצע', AppColors.gold),
-      'municipal' => ('עירוני', AppColors.midBlue),
-      'general' => ('כללי', AppColors.grayLight),
-      _ => (type, AppColors.grayLight),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 10,
           fontWeight: FontWeight.w600,
           color: color,
         ),
@@ -1274,14 +1207,14 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
+/// Waits for typing to pause before searching. The old version chained
+/// futures it could not cancel, so every keystroke still ran a search.
 class _Debouncer {
   final int milliseconds;
   _Debouncer({required this.milliseconds});
-  Future<void>? _pending;
+  Timer? _timer;
   void run(VoidCallback action) {
-    _pending?.ignore();
-    _pending = Future.delayed(
-      Duration(milliseconds: milliseconds),
-    ).then((_) => action());
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
 }

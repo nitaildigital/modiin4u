@@ -1593,4 +1593,56 @@ class LEn extends L {
   String searchInPlace(String place) {
     return 'Search $place...';
   }
+
+  @override
+  String get parkingEmpty => 'Car parks will be added soon';
+
+  @override
+  String parkingSpaces(int n) {
+    return '$n spaces';
+  }
+
+  @override
+  String parkingLotCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n car parks',
+      one: '1 car park',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parkingLoadError => 'Could not load the car parks';
+
+  @override
+  String get parkingIntro => 'Every car park in the city, on the map.';
+
+  @override
+  String get parkingLotsHeading => 'Car Parks';
+
+  @override
+  String get reviewBusinessResponse => 'Response from the business';
+
+  @override
+  String get sitePageAboutTitle => 'About Us';
+
+  @override
+  String get sitePageAccessibilityTitle => 'Accessibility Statement';
+
+  @override
+  String get sitePageComingSoon =>
+      'The content of this page will be published soon';
+
+  @override
+  String sitePageLastUpdated(String date) {
+    return 'Last updated: $date';
+  }
+
+  @override
+  String get sitePageBack => 'Back';
+
+  @override
+  String get sitePageLoadError => 'The page could not be loaded';
 }

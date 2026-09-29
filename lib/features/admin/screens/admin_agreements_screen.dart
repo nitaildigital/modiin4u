@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_agreements_provider.dart';
+import '../widgets/admin_form_pickers.dart';
 
 class AdminAgreementsScreen extends ConsumerStatefulWidget {
   const AdminAgreementsScreen({super.key});
@@ -14,7 +17,6 @@ class AdminAgreementsScreen extends ConsumerStatefulWidget {
 
 class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
   String _statusFilter = '';
-  String _typeFilter = '';
   final _searchController = TextEditingController();
   final _debouncer = _Debouncer(milliseconds: 400);
 
@@ -27,12 +29,16 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(adminAgreementListProvider);
+    final loaded = asyncData.valueOrNull;
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Column(
       children: [
         // ─── Stats bar ───
-        asyncData.whenData((list) {
+        if (loaded != null)
+          Builder(
+            builder: (_) {
+              final list = loaded;
               final active = list
                   .where((a) => a['status'] == 'active')
                   .toList();
@@ -40,13 +46,16 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                 final price = (a['price'] as num?)?.toDouble() ?? 0;
                 final discount = (a['discount_pct'] as num?)?.toDouble() ?? 0;
                 final net = price * (1 - discount / 100);
-                final cycle = a['billing_cycle'] as String? ?? 'monthly';
-                return sum +
-                    (cycle == 'yearly'
-                        ? net / 12
-                        : cycle == 'quarterly'
-                        ? net / 3
-                        : net);
+                // A one-off payment is not a monthly income, so it is left
+                // out; the rest are spread over the months they cover.
+                final months = switch (a['billing_cycle'] as String?) {
+                  'quarterly' => 3,
+                  'semi_annual' => 6,
+                  'annual' => 12,
+                  'one_time' => 0,
+                  _ => 1,
+                };
+                return months == 0 ? sum : sum + net / months;
               });
               return Container(
                 padding: const EdgeInsets.symmetric(
@@ -64,7 +73,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                 child: Row(
                   children: [
                     _StatChip(
-                      'הכנסה חודשית',
+                      'הכנסה חודשית משוערת',
                       '₪${monthly.toStringAsFixed(0)}',
                       AppColors.turquoise,
                     ),
@@ -79,8 +88,8 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                   ],
                 ),
               );
-            }).value ??
-            const SizedBox.shrink(),
+            },
+          ),
 
         // ─── Toolbar ───
         Container(
@@ -166,19 +175,15 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                     .setStatusFilter('expired');
               }),
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} הסכמים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              if (loaded != null)
+                Text(
+                  '${loaded.length} הסכמים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEditor(context, ref),
@@ -205,7 +210,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                'שגיאה בטעינת ההסכמים: ${adminErrorText(e)}',
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -265,7 +270,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                   Expanded(
                     child: ListView.separated(
                       itemCount: list.length,
-                      separatorBuilder: (_, __) => Divider(
+                      separatorBuilder: (_, _) => Divider(
                         height: 1,
                         color: AppColors.border.withValues(alpha: 0.3),
                       ),
@@ -300,7 +305,9 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        a['business_name'] as String? ?? '',
+                                        (a['businesses'] as Map?)?['name']
+                                                as String? ??
+                                            '',
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 14,
@@ -441,18 +448,34 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
     );
   }
 
-  void _handleAction(String action, Map<String, dynamic> a) {
+  Future<void> _handleAction(String action, Map<String, dynamic> a) async {
     final notifier = ref.read(adminAgreementListProvider.notifier);
     final id = a['id'] as String;
-    switch (action) {
-      case 'edit':
-        _showEditor(context, ref, agreement: a);
-      case 'activate':
-        notifier.updateStatus(id, 'active');
-      case 'pause':
-        notifier.updateStatus(id, 'paused');
-      case 'cancel':
-        notifier.updateStatus(id, 'cancelled');
+    if (action == 'edit') {
+      _showEditor(context, ref, agreement: a);
+      return;
+    }
+    final status = switch (action) {
+      'activate' => 'active',
+      'pause' => 'paused',
+      _ => 'cancelled',
+    };
+    try {
+      await notifier.updateStatus(id, status);
+      if (!mounted) return;
+      if (status == 'cancelled') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'ההסכם בוטל ונשמר ברשימה תחת "בוטל". "הפעל" בתפריט שלו מחזיר '
+              'אותו.',
+              style: TextStyle(fontFamily: AppFonts.rubik),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) showAdminError(context, 'הפעולה נכשלה', e);
     }
   }
 
@@ -481,7 +504,8 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
   String _cycleLabel(String c) => switch (c) {
     'monthly' => 'חודשי',
     'quarterly' => 'רבעוני',
-    'yearly' => 'שנתי',
+    'semi_annual' => 'חצי שנתי',
+    'annual' => 'שנתי',
     'one_time' => 'חד פעמי',
     _ => c,
   };
@@ -503,16 +527,19 @@ class _AgreementEditorDialogState
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
 
-  late final TextEditingController _businessName;
   late final TextEditingController _name;
   late final TextEditingController _description;
   late final TextEditingController _price;
   late final TextEditingController _discount;
-  late final TextEditingController _startDate;
-  late final TextEditingController _endDate;
-  late final TextEditingController _salesperson;
+  late final TextEditingController _cancelReason;
   late final TextEditingController _notes;
 
+  String? _businessId;
+  String? _businessName;
+  bool _businessMissing = false;
+  String? _salespersonId;
+  String? _startDate;
+  String? _endDate;
   String _type = 'subscription';
   String _billingCycle = 'monthly';
   String _status = 'active';
@@ -521,13 +548,34 @@ class _AgreementEditorDialogState
 
   bool get _isEditing => widget.agreement != null;
 
+  static const _types = {
+    'subscription': 'מנוי',
+    'banner': 'באנר',
+    'push': 'Push',
+    'featured': 'מומלץ',
+    'sponsored': 'ממומן',
+    'custom': 'מותאם',
+  };
+
+  static const _cycles = {
+    'monthly': 'חודשי',
+    'quarterly': 'רבעוני',
+    'semi_annual': 'חצי שנתי',
+    'annual': 'שנתי',
+    'one_time': 'חד פעמי',
+  };
+
+  static const _statuses = {
+    'active': 'פעיל',
+    'paused': 'מושהה',
+    'cancelled': 'בוטל',
+    'expired': 'פג תוקף',
+  };
+
   @override
   void initState() {
     super.initState();
     final a = widget.agreement;
-    _businessName = TextEditingController(
-      text: a?['business_name'] as String? ?? '',
-    );
     _name = TextEditingController(text: a?['name'] as String? ?? '');
     _description = TextEditingController(
       text: a?['description'] as String? ?? '',
@@ -538,31 +586,75 @@ class _AgreementEditorDialogState
     _discount = TextEditingController(
       text: (a?['discount_pct'] as num?)?.toString() ?? '0',
     );
-    _startDate = TextEditingController(text: a?['start_date'] as String? ?? '');
-    _endDate = TextEditingController(text: a?['end_date'] as String? ?? '');
-    _salesperson = TextEditingController(
-      text: a?['salesperson'] as String? ?? '',
+    _cancelReason = TextEditingController(
+      text: a?['cancel_reason'] as String? ?? '',
     );
     _notes = TextEditingController(text: a?['notes'] as String? ?? '');
-    _type = a?['type'] as String? ?? 'subscription';
-    _billingCycle = a?['billing_cycle'] as String? ?? 'monthly';
-    _status = a?['status'] as String? ?? 'active';
+    _businessId = a?['business_id'] as String?;
+    _businessName = (a?['businesses'] as Map?)?['name'] as String?;
+    _salespersonId = a?['salesperson_id'] as String?;
+    _startDate = a?['start_date'] as String?;
+    _endDate = a?['end_date'] as String?;
+    // A value the enum does not know would fail the dropdown; fall back to
+    // the default rather than showing a blank form.
+    final type = a?['type'] as String?;
+    if (_types.containsKey(type)) _type = type!;
+    final cycle = a?['billing_cycle'] as String?;
+    if (_cycles.containsKey(cycle)) _billingCycle = cycle!;
+    final status = a?['status'] as String?;
+    if (_statuses.containsKey(status)) _status = status!;
     _vatIncluded = a?['vat_included'] as bool? ?? true;
     _autoRenew = a?['auto_renew'] as bool? ?? true;
   }
 
   @override
   void dispose() {
-    _businessName.dispose();
     _name.dispose();
     _description.dispose();
     _price.dispose();
     _discount.dispose();
-    _startDate.dispose();
-    _endDate.dispose();
-    _salesperson.dispose();
+    _cancelReason.dispose();
     _notes.dispose();
     super.dispose();
+  }
+
+  Widget _dropdown(
+    String label,
+    String value,
+    Map<String, String> items,
+    ValueChanged<String> onChanged,
+  ) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+      ),
+      items: [
+        for (final e in items.entries)
+          DropdownMenuItem(
+            value: e.key,
+            child: Text(
+              e.value,
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+            ),
+          ),
+      ],
+      onChanged: (v) => setState(() => onChanged(v!)),
+    );
+  }
+
+  String? _number(String? v, {bool required = false, double? max}) {
+    final t = (v ?? '').trim();
+    if (t.isEmpty) return required ? 'שדה חובה' : null;
+    final n = double.tryParse(t);
+    if (n == null || n < 0) return 'מספר לא תקין';
+    if (max != null && n > max) return 'עד $max';
+    return null;
   }
 
   @override
@@ -571,7 +663,7 @@ class _AgreementEditorDialogState
       insetPadding: const EdgeInsets.all(24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 650, maxHeight: 700),
+        constraints: const BoxConstraints(maxWidth: 650, maxHeight: 720),
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: Form(
@@ -616,98 +708,42 @@ class _AgreementEditorDialogState
                   child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
-                      _field(
-                        'שם עסק *',
-                        _businessName,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                      AdminBusinessField(
+                        label: 'עסק *',
+                        businessId: _businessId,
+                        initialName: _businessName,
+                        errorText: _businessMissing ? 'שדה חובה' : null,
+                        onPicked: (b) => setState(() {
+                          _businessId = b['id'] as String;
+                          _businessName = b['name'] as String?;
+                          _businessMissing = false;
+                        }),
                       ),
                       _field(
                         'שם הסכם *',
                         _name,
                         validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
                       ),
                       _field('תיאור', _description, maxLines: 2),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _type,
-                              decoration: InputDecoration(
-                                labelText: 'סוג',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'subscription',
-                                  child: Text('מנוי'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'banner',
-                                  child: Text('באנר'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'push',
-                                  child: Text('Push'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'featured',
-                                  child: Text('מומלץ'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'sponsored',
-                                  child: Text('ממומן'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'custom',
-                                  child: Text('מותאם'),
-                                ),
-                              ],
-                              onChanged: (v) => setState(() => _type = v!),
+                            child: _dropdown(
+                              'סוג',
+                              _type,
+                              _types,
+                              (v) => _type = v,
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _billingCycle,
-                              decoration: InputDecoration(
-                                labelText: 'מחזור חיוב',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'monthly',
-                                  child: Text('חודשי'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'quarterly',
-                                  child: Text('רבעוני'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'yearly',
-                                  child: Text('שנתי'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'one_time',
-                                  child: Text('חד פעמי'),
-                                ),
-                              ],
-                              onChanged: (v) =>
-                                  setState(() => _billingCycle = v!),
+                            child: _dropdown(
+                              'מחזור חיוב',
+                              _billingCycle,
+                              _cycles,
+                              (v) => _billingCycle = v,
                             ),
                           ),
                         ],
@@ -719,12 +755,17 @@ class _AgreementEditorDialogState
                             child: _field(
                               'מחיר (₪) *',
                               _price,
-                              validator: (v) =>
-                                  v == null || v.isEmpty ? 'שדה חובה' : null,
+                              validator: (v) => _number(v, required: true),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Expanded(child: _field('הנחה %', _discount)),
+                          Expanded(
+                            child: _field(
+                              'הנחה %',
+                              _discount,
+                              validator: (v) => _number(v, max: 100),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -776,47 +817,39 @@ class _AgreementEditorDialogState
                       ),
                       const SizedBox(height: 12),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(child: _field('תאריך התחלה', _startDate)),
+                          Expanded(
+                            child: AdminDateField(
+                              label: 'תאריך התחלה *',
+                              value: _startDate,
+                              required: true,
+                              onChanged: (v) => setState(() => _startDate = v),
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(child: _field('תאריך סיום', _endDate)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _status,
-                        decoration: InputDecoration(
-                          labelText: 'סטטוס',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'active',
-                            child: Text('פעיל'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'paused',
-                            child: Text('מושהה'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'cancelled',
-                            child: Text('בוטל'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'expired',
-                            child: Text('פג תוקף'),
+                          Expanded(
+                            child: AdminDateField(
+                              label: 'תאריך סיום',
+                              value: _endDate,
+                              onChanged: (v) => setState(() => _endDate = v),
+                            ),
                           ),
                         ],
-                        onChanged: (v) => setState(() => _status = v!),
+                      ),
+                      _dropdown(
+                        'סטטוס',
+                        _status,
+                        _statuses,
+                        (v) => _status = v,
                       ),
                       const SizedBox(height: 12),
-                      _field('איש מכירות', _salesperson),
+                      if (_status == 'cancelled')
+                        _field('סיבת ביטול', _cancelReason),
+                      AdminSalespersonField(
+                        value: _salespersonId,
+                        onChanged: (v) => setState(() => _salespersonId = v),
+                      ),
                       _field('הערות', _notes, maxLines: 2),
                     ],
                   ),
@@ -903,24 +936,38 @@ class _AgreementEditorDialogState
     );
   }
 
+  String? _text(TextEditingController c) =>
+      c.text.trim().isEmpty ? null : c.text.trim();
+
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    final valid = _formKey.currentState!.validate();
+    setState(() => _businessMissing = _businessId == null);
+    if (!valid || _businessId == null) return;
     setState(() => _saving = true);
+    final was = widget.agreement?['status'] as String?;
     final fields = <String, dynamic>{
-      'business_name': _businessName.text,
-      'name': _name.text,
-      'description': _description.text.isEmpty ? null : _description.text,
+      'business_id': _businessId,
+      'name': _name.text.trim(),
+      'description': _text(_description),
       'type': _type,
-      'price': double.tryParse(_price.text) ?? 0,
+      'price': double.parse(_price.text.trim()),
       'vat_included': _vatIncluded,
-      'discount_pct': double.tryParse(_discount.text) ?? 0,
+      'discount_pct': double.tryParse(_discount.text.trim()) ?? 0,
       'billing_cycle': _billingCycle,
-      'start_date': _startDate.text.isEmpty ? null : _startDate.text,
-      'end_date': _endDate.text.isEmpty ? null : _endDate.text,
+      'start_date': _startDate,
+      'end_date': _endDate,
       'auto_renew': _autoRenew,
       'status': _status,
-      'salesperson': _salesperson.text.isEmpty ? null : _salesperson.text,
-      'notes': _notes.text.isEmpty ? null : _notes.text,
+      'cancel_reason': _status == 'cancelled' ? _text(_cancelReason) : null,
+      // Stamped when the status becomes cancelled, kept while it stays so,
+      // cleared when it is put back.
+      'cancelled_at': _status != 'cancelled'
+          ? null
+          : was == 'cancelled'
+          ? widget.agreement!['cancelled_at']
+          : DateTime.now().toUtc().toIso8601String(),
+      'salesperson_id': _salespersonId,
+      'notes': _text(_notes),
     };
     try {
       final notifier = ref.read(adminAgreementListProvider.notifier);
@@ -934,13 +981,7 @@ class _AgreementEditorDialogState
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('שגיאה: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1084,14 +1125,14 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
+/// Waits for typing to pause before searching. The old version chained
+/// futures it could not cancel, so every keystroke still ran a search.
 class _Debouncer {
   final int milliseconds;
   _Debouncer({required this.milliseconds});
-  Future<void>? _pending;
+  Timer? _timer;
   void run(VoidCallback action) {
-    _pending?.ignore();
-    _pending = Future.delayed(
-      Duration(milliseconds: milliseconds),
-    ).then((_) => action());
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
 }

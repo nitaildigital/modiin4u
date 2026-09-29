@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart'
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_businesses_provider.dart';
 import '../widgets/admin_gallery_editor.dart';
+import '../widgets/admin_load_error.dart';
 import '../widgets/image_upload_field.dart';
 
 class AdminBusinessesScreen extends ConsumerStatefulWidget {
@@ -117,23 +118,28 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
                     .read(adminBusinessListProvider.notifier)
                     .setStatusFilter('suspended');
               }),
+              // Where a closed business is found again to be reopened.
+              _FilterChip('סגור', _statusFilter == 'closed', () {
+                setState(() => _statusFilter = 'closed');
+                ref
+                    .read(adminBusinessListProvider.notifier)
+                    .setStatusFilter('closed');
+              }),
 
               const Spacer(),
 
               // Count
-              businessesAsync
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} עסקים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 13,
-                            color: AppColors.adminTextLight,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`: `whenData(...).value` throws when the list
+              // failed to load, and greyed the whole section until a reload.
+              if (businessesAsync.valueOrNull case final list?)
+                Text(
+                  '${list.length} עסקים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 13,
+                    color: AppColors.adminTextLight,
+                  ),
+                ),
               const SizedBox(width: 16),
 
               // Add button — CRM style
@@ -243,22 +249,31 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
     );
   }
 
-  void _handleAction(String action, Map<String, dynamic> biz) {
+  /// Row actions wait for the write and say so when it is refused; they
+  /// used to fire and forget, so a failure left the row as it was with no
+  /// word why.
+  Future<void> _handleAction(String action, Map<String, dynamic> biz) async {
     final notifier = ref.read(adminBusinessListProvider.notifier);
     final id = biz['id'] as String;
     switch (action) {
       case 'edit':
         _showBusinessEditor(context, ref, business: biz);
       case 'activate':
-        notifier.updateStatus(id, 'active');
+        await runAdminAction(
+          context,
+          () => notifier.updateStatus(id, 'active'),
+        );
       case 'suspend':
-        notifier.updateStatus(id, 'suspended');
+        await runAdminAction(
+          context,
+          () => notifier.updateStatus(id, 'suspended'),
+        );
       case 'delete':
-        showDialog(
+        final close = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(
-              'מחיקת עסק',
+              'סגירת עסק',
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontWeight: FontWeight.w700,
@@ -271,19 +286,16 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(ctx),
+                onPressed: () => Navigator.pop(ctx, false),
                 child: Text(
                   'ביטול',
                   style: TextStyle(fontFamily: AppFonts.rubik),
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  notifier.deleteBusiness(id);
-                },
+                onPressed: () => Navigator.pop(ctx, true),
                 child: Text(
-                  'מחק',
+                  'סמן כסגור',
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     color: AppColors.error,
@@ -293,6 +305,9 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
             ],
           ),
         );
+        if (close == true && mounted) {
+          await runAdminAction(context, () => notifier.deleteBusiness(id));
+        }
     }
   }
 
@@ -537,7 +552,7 @@ class _BusinessTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'activate',
                               child: Text(
-                                'אשר',
+                                status == 'closed' ? 'פתיחה מחדש' : 'אשר',
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -555,17 +570,18 @@ class _BusinessTable extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text(
-                              'מחק',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                                color: AppColors.error,
+                          if (status != 'closed')
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text(
+                                'סגירת העסק',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  color: AppColors.error,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ],
@@ -767,6 +783,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   /// existing business; a new business starts with none.
   final List<Map<String, dynamic>> _menuItems = [];
   bool _menuLoaded = false;
+  int _nextMenuKey = 0;
 
   Widget _buildMenuTab() {
     // A new business has no menu to load, so it starts empty and is saved
@@ -788,6 +805,10 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
             ..addAll(
               rows.map(
                 (r) => {
+                  // The id goes with the line, so a save updates this row
+                  // instead of replacing the whole menu.
+                  'id': r['id'],
+                  '_key': _nextMenuKey++,
                   'section': r['section'],
                   'name': r['name'],
                   'description': r['description'],
@@ -818,7 +839,10 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         const SizedBox(height: 12),
         for (var i = 0; i < _menuItems.length; i++)
           _MenuItemRow(
-            key: ValueKey(i),
+            // Keyed by the line, not its place: keyed by index, removing a
+            // line left the fields below it showing the text of the one
+            // before.
+            key: ValueKey(_menuItems[i]['_key']),
             item: _menuItems[i],
             onChanged: (v) => setState(() => _menuItems[i] = v),
             onRemove: () => setState(() => _menuItems.removeAt(i)),
@@ -827,6 +851,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         OutlinedButton.icon(
           onPressed: () => setState(
             () => _menuItems.add({
+              '_key': _nextMenuKey++,
               'section': null,
               'name': '',
               'description': null,
@@ -2202,6 +2227,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       if (_menuLoaded) {
         // Lines with no name are rows someone started and left; they are
         // dropped rather than saved blank.
+        // Only what changed is written; an untouched menu is not.
         await saveMenuItems(
           id,
           _menuItems

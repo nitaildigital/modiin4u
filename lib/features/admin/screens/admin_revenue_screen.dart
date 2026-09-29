@@ -1,9 +1,32 @@
-import 'dart:ui';
+import 'dart:async';
+
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_revenue_provider.dart';
+import '../widgets/admin_form_pickers.dart';
+
+/// `payment_status`, the database enum, in the panel's words.
+const _paymentStatuses = {
+  'pending': 'ממתין',
+  'paid': 'שולם',
+  'partial': 'שולם חלקית',
+  'overdue': 'באיחור',
+  'refunded': 'זיכוי',
+  'cancelled': 'בוטל',
+};
+
+/// `revenue_type` is free text; these are the words its migration lists,
+/// the same as an agreement's type.
+const _revenueTypes = {
+  'subscription': 'מנוי',
+  'banner': 'באנר',
+  'push': 'Push',
+  'featured': 'מומלץ',
+  'sponsored': 'ממומן',
+  'custom': 'מותאם',
+};
 
 class AdminRevenueScreen extends ConsumerStatefulWidget {
   const AdminRevenueScreen({super.key});
@@ -23,45 +46,52 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     super.dispose();
   }
 
+  double _sum(Iterable<Map<String, dynamic>> rows) => rows.fold<double>(
+    0,
+    (s, t) => s + ((t['amount'] as num?)?.toDouble() ?? 0),
+  );
+
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(adminRevenueListProvider);
+    final loaded = asyncData.valueOrNull;
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Column(
       children: [
         // ─── Stats ───
-        asyncData.whenData((list) {
-              final aug = list
-                  .where(
-                    (t) =>
-                        (t['due_date'] as String? ?? '').startsWith('2026-08'),
-                  )
-                  .toList();
-              final augPaid = aug
-                  .where((t) => t['payment_status'] == 'paid')
-                  .fold<double>(
-                    0,
-                    (s, t) => s + ((t['amount'] as num?)?.toDouble() ?? 0),
-                  );
-              final pending = list
-                  .where((t) => t['payment_status'] == 'pending')
-                  .fold<double>(
-                    0,
-                    (s, t) => s + ((t['amount'] as num?)?.toDouble() ?? 0),
-                  );
-              final overdue = list
-                  .where((t) => t['payment_status'] == 'overdue')
-                  .fold<double>(
-                    0,
-                    (s, t) => s + ((t['amount'] as num?)?.toDouble() ?? 0),
-                  );
-              final yearTotal = list
-                  .where((t) => t['payment_status'] == 'paid')
-                  .fold<double>(
-                    0,
-                    (s, t) => s + ((t['amount'] as num?)?.toDouble() ?? 0),
-                  );
+        // Worked out from the rows, for the month and year it is now. This
+        // read "August" and summed every paid row as the year, whatever the
+        // date.
+        if (loaded != null)
+          Builder(
+            builder: (_) {
+              final now = DateTime.now();
+              bool paidIn(Map<String, dynamic> t, {required bool month}) {
+                if (t['payment_status'] != 'paid') return false;
+                final at = DateTime.tryParse(t['paid_at'] as String? ?? '');
+                if (at == null) return false;
+                final local = at.toLocal();
+                return local.year == now.year &&
+                    (!month || local.month == now.month);
+              }
+
+              final monthPaid = _sum(
+                loaded.where((t) => paidIn(t, month: true)),
+              );
+              final yearPaid = _sum(
+                loaded.where((t) => paidIn(t, month: false)),
+              );
+              final pending = _sum(
+                loaded.where(
+                  (t) =>
+                      t['payment_status'] == 'pending' ||
+                      t['payment_status'] == 'partial',
+                ),
+              );
+              final overdue = _sum(
+                loaded.where((t) => t['payment_status'] == 'overdue'),
+              );
 
               return Container(
                 padding: const EdgeInsets.symmetric(
@@ -79,8 +109,8 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                 child: Row(
                   children: [
                     _StatChip(
-                      'הכנסות אוגוסט',
-                      '₪${augPaid.toStringAsFixed(0)}',
+                      'שולם החודש',
+                      '₪${monthPaid.toStringAsFixed(0)}',
                       AppColors.turquoise,
                     ),
                     const SizedBox(width: 14),
@@ -91,21 +121,21 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                     ),
                     const SizedBox(width: 14),
                     _StatChip(
-                      'חובות',
+                      'באיחור',
                       '₪${overdue.toStringAsFixed(0)}',
                       AppColors.error,
                     ),
                     const SizedBox(width: 14),
                     _StatChip(
-                      'סה״כ שנתי',
-                      '₪${yearTotal.toStringAsFixed(0)}',
+                      'שולם השנה',
+                      '₪${yearPaid.toStringAsFixed(0)}',
                       AppColors.success,
                     ),
                   ],
                 ),
               );
-            }).value ??
-            const SizedBox.shrink(),
+            },
+          ),
 
         // ─── Toolbar ───
         Container(
@@ -160,50 +190,48 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref
-                    .read(adminRevenueListProvider.notifier)
-                    .setStatusFilter(null);
-              }),
-              _FilterChip('שולם', _statusFilter == 'paid', () {
-                setState(() => _statusFilter = 'paid');
-                ref
-                    .read(adminRevenueListProvider.notifier)
-                    .setStatusFilter('paid');
-              }),
-              _FilterChip('ממתין', _statusFilter == 'pending', () {
-                setState(() => _statusFilter = 'pending');
-                ref
-                    .read(adminRevenueListProvider.notifier)
-                    .setStatusFilter('pending');
-              }),
-              _FilterChip('באיחור', _statusFilter == 'overdue', () {
-                setState(() => _statusFilter = 'overdue');
-                ref
-                    .read(adminRevenueListProvider.notifier)
-                    .setStatusFilter('overdue');
-              }),
-              _FilterChip('זיכוי', _statusFilter == 'refunded', () {
-                setState(() => _statusFilter = 'refunded');
-                ref
-                    .read(adminRevenueListProvider.notifier)
-                    .setStatusFilter('refunded');
-              }),
-              const Spacer(),
-              asyncData
-                      .whenData(
-                        (l) => Text(
-                          '${l.length} רשומות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final e in {'': 'הכל', ..._paymentStatuses}.entries)
+                        _FilterChip(e.value, _statusFilter == e.key, () {
+                          setState(() => _statusFilter = e.key);
+                          ref
+                              .read(adminRevenueListProvider.notifier)
+                              .setStatusFilter(e.key.isEmpty ? null : e.key);
+                        }),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (loaded != null)
+                Text(
+                  '${loaded.length} רשומות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
+              const SizedBox(width: 16),
+              FilledButton.icon(
+                onPressed: () => _showEditor(),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'רשומה חדשה',
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.turquoise,
+                  minimumSize: const Size(0, 40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -214,7 +242,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                'שגיאה בטעינת ההכנסות: ${adminErrorText(e)}',
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -264,10 +292,9 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                         _Col('עסק', flex: 3),
                         _Col('סוג', flex: 1),
                         _Col('סכום', flex: 1),
-                        if (isWide) _Col('אמצעי', flex: 1),
                         if (isWide) _Col('חשבונית', flex: 2),
                         _Col('סטטוס', flex: 1),
-                        if (isWide) _Col('תאריך', flex: 1),
+                        if (isWide) _Col('לתשלום עד', flex: 1),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -275,160 +302,11 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                   Expanded(
                     child: ListView.separated(
                       itemCount: list.length,
-                      separatorBuilder: (_, __) => Divider(
+                      separatorBuilder: (_, _) => Divider(
                         height: 1,
                         color: AppColors.border.withValues(alpha: 0.3),
                       ),
-                      itemBuilder: (_, i) {
-                        final t = list[i];
-                        final status =
-                            t['payment_status'] as String? ?? 'pending';
-                        final amount = (t['amount'] as num?)?.toDouble() ?? 0;
-                        final isOverdue = status == 'overdue';
-                        final isRefund = amount < 0;
-                        final typeLabel = _typeLabel(
-                          t['type'] as String? ?? '',
-                        );
-                        final method = _methodLabel(
-                          t['payment_method'] as String? ?? '',
-                        );
-
-                        return Container(
-                          color: isOverdue
-                              ? AppColors.error.withValues(alpha: 0.04)
-                              : null,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      t['business_name'] as String? ?? '',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.navy,
-                                      ),
-                                    ),
-                                    Text(
-                                      t['description'] as String? ?? '',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 11,
-                                        color: AppColors.grayLight,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  typeLabel,
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubik,
-                                    fontSize: 12,
-                                    color: AppColors.grayText,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  '${isRefund ? "" : "₪"}${amount.abs().toStringAsFixed(0)}${isRefund ? "₪-" : ""}',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubik,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: isRefund
-                                        ? AppColors.error
-                                        : AppColors.navy,
-                                    fontFeatures: [
-                                      const FontFeature.tabularFigures(),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              if (isWide)
-                                Expanded(
-                                  flex: 1,
-                                  child: Text(
-                                    method,
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 12,
-                                      color: AppColors.grayText,
-                                    ),
-                                  ),
-                                ),
-                              if (isWide)
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    t['invoice_number'] as String? ?? '',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 12,
-                                      color: AppColors.grayText,
-                                      fontFeatures: [
-                                        const FontFeature.tabularFigures(),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              Expanded(flex: 1, child: _StatusPill(status)),
-                              if (isWide)
-                                Expanded(
-                                  flex: 1,
-                                  child: Text(
-                                    _shortDate(t['due_date'] as String? ?? ''),
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 12,
-                                      color: AppColors.grayText,
-                                    ),
-                                  ),
-                                ),
-                              PopupMenuButton<String>(
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  size: 18,
-                                  color: AppColors.grayLight,
-                                ),
-                                onSelected: (v) {
-                                  if (v == 'mark_paid')
-                                    ref
-                                        .read(adminRevenueListProvider.notifier)
-                                        .updateStatus(
-                                          t['id'] as String,
-                                          'paid',
-                                        );
-                                },
-                                itemBuilder: (_) => [
-                                  if (status != 'paid')
-                                    PopupMenuItem(
-                                      value: 'mark_paid',
-                                      child: Text(
-                                        'סמן כשולם',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                      itemBuilder: (_, i) => _row(list[i], isWide),
                     ),
                   ),
                 ],
@@ -440,28 +318,503 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
     );
   }
 
-  String _typeLabel(String t) => switch (t) {
-    'subscription' => 'מנוי',
-    'banner' => 'באנר',
-    'push' => 'Push',
-    'featured' => 'מומלץ',
-    'sponsored' => 'ממומן',
-    'custom' => 'מותאם',
-    _ => t,
-  };
-  String _methodLabel(String m) => switch (m) {
-    'credit_card' => 'אשראי',
-    'bank_transfer' => 'העברה',
-    'cash' => 'מזומן',
-    'check' => "צ'ק",
-    _ => m,
-  };
-  String _shortDate(String iso) {
+  Widget _row(Map<String, dynamic> t, bool isWide) {
+    final status = t['payment_status'] as String? ?? 'pending';
+    final amount = (t['amount'] as num?)?.toDouble() ?? 0;
+    final isOverdue = status == 'overdue';
+    final isRefund = amount < 0;
+    final type = t['revenue_type'] as String? ?? '';
+
+    return InkWell(
+      onTap: () => _showEditor(row: t),
+      child: Container(
+        color: isOverdue ? AppColors.error.withValues(alpha: 0.04) : null,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (t['businesses'] as Map?)?['name'] as String? ?? '',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.navy,
+                    ),
+                  ),
+                  Text(
+                    t['description'] as String? ?? '',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 11,
+                      color: AppColors.grayLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Text(
+                _revenueTypes[type] ?? type,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 12,
+                  color: AppColors.grayText,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Text(
+                '${isRefund ? "" : "₪"}${amount.abs().toStringAsFixed(0)}${isRefund ? "₪-" : ""}',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isRefund ? AppColors.error : AppColors.navy,
+                  fontFeatures: [const FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+            if (isWide)
+              Expanded(
+                flex: 2,
+                child: Text(
+                  t['invoice_ref'] as String? ?? '',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 12,
+                    color: AppColors.grayText,
+                    fontFeatures: [const FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+            Expanded(flex: 1, child: _StatusPill(status)),
+            if (isWide)
+              Expanded(
+                flex: 1,
+                child: Text(
+                  _shortDate(t['due_date'] as String? ?? ''),
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 12,
+                    color: AppColors.grayText,
+                  ),
+                ),
+              ),
+            PopupMenuButton<String>(
+              icon: const Icon(
+                Icons.more_vert,
+                size: 18,
+                color: AppColors.grayLight,
+              ),
+              onSelected: (v) => _action(v, t),
+              itemBuilder: (_) => [
+                _menuItem('edit', 'עריכה'),
+                if (status != 'paid') _menuItem('paid', 'סמן כשולם'),
+                if (status != 'pending') _menuItem('pending', 'החזר לממתין'),
+                if (status != 'cancelled')
+                  _menuItem('cancelled', 'בטל', color: AppColors.error),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _menuItem(String value, String label, {Color? color}) =>
+      PopupMenuItem(
+        value: value,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 13,
+            color: color,
+          ),
+        ),
+      );
+
+  Future<void> _action(String action, Map<String, dynamic> t) async {
+    if (action == 'edit') {
+      _showEditor(row: t);
+      return;
+    }
     try {
-      final parts = iso.split('-');
-      return '${parts[2]}/${parts[1]}';
-    } catch (_) {
-      return iso;
+      await ref
+          .read(adminRevenueListProvider.notifier)
+          .setPaymentStatus(t, action);
+      if (!mounted || action != 'cancelled') return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'הרשומה סומנה כמבוטלת ונשמרה ברשימה. "החזר לממתין" בתפריט שלה '
+            'מחזיר אותה.',
+            style: TextStyle(fontFamily: AppFonts.rubik),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) showAdminError(context, 'הפעולה נכשלה', e);
+    }
+  }
+
+  void _showEditor({Map<String, dynamic>? row}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _RevenueEditorDialog(row: row),
+    );
+  }
+
+  String _shortDate(String iso) {
+    final parts = iso.split('-');
+    if (parts.length < 3) return iso;
+    return '${parts[2]}/${parts[1]}/${parts[0].substring(2)}';
+  }
+}
+
+// ─── Editor ───
+
+class _RevenueEditorDialog extends ConsumerStatefulWidget {
+  final Map<String, dynamic>? row;
+  const _RevenueEditorDialog({this.row});
+
+  @override
+  ConsumerState<_RevenueEditorDialog> createState() =>
+      _RevenueEditorDialogState();
+}
+
+class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
+  final _formKey = GlobalKey<FormState>();
+  bool _saving = false;
+
+  late final TextEditingController _description;
+  late final TextEditingController _amount;
+  late final TextEditingController _vat;
+  late final TextEditingController _invoice;
+
+  String? _businessId;
+  String? _businessName;
+  bool _businessMissing = false;
+  String? _salespersonId;
+  String? _dueDate;
+  String _type = 'subscription';
+  String _status = 'pending';
+
+  bool get _isEditing => widget.row != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final r = widget.row;
+    _description = TextEditingController(
+      text: r?['description'] as String? ?? '',
+    );
+    _amount = TextEditingController(
+      text: (r?['amount'] as num?)?.toString() ?? '',
+    );
+    _vat = TextEditingController(
+      text: (r?['vat_amount'] as num?)?.toString() ?? '',
+    );
+    _invoice = TextEditingController(text: r?['invoice_ref'] as String? ?? '');
+    _businessId = r?['business_id'] as String?;
+    _businessName = (r?['businesses'] as Map?)?['name'] as String?;
+    _salespersonId = r?['salesperson_id'] as String?;
+    _dueDate = r?['due_date'] as String?;
+    final type = r?['revenue_type'] as String?;
+    if (_revenueTypes.containsKey(type)) _type = type!;
+    final status = r?['payment_status'] as String?;
+    if (_paymentStatuses.containsKey(status)) _status = status!;
+  }
+
+  @override
+  void dispose() {
+    _description.dispose();
+    _amount.dispose();
+    _vat.dispose();
+    _invoice.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _decoration(String label) => InputDecoration(
+    labelText: label,
+    labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+  );
+
+  Widget _field(
+    String label,
+    TextEditingController c, {
+    String? Function(String?)? validator,
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: TextFormField(
+      controller: c,
+      validator: validator,
+      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+      decoration: _decoration(label),
+    ),
+  );
+
+  Widget _dropdown(
+    String label,
+    String value,
+    Map<String, String> items,
+    ValueChanged<String> onChanged,
+  ) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: DropdownButtonFormField<String>(
+      initialValue: value,
+      decoration: _decoration(label),
+      items: [
+        for (final e in items.entries)
+          DropdownMenuItem(
+            value: e.key,
+            child: Text(
+              e.value,
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+            ),
+          ),
+      ],
+      onChanged: (v) => setState(() => onChanged(v!)),
+    ),
+  );
+
+  String? _number(String? v, {bool required = false}) {
+    final t = (v ?? '').trim();
+    if (t.isEmpty) return required ? 'שדה חובה' : null;
+    return double.tryParse(t) == null ? 'מספר לא תקין' : null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 680),
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.navy,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(14),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        _isEditing ? 'עריכת רשומה' : 'רשומת הכנסה חדשה',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
+                      AdminBusinessField(
+                        label: 'עסק *',
+                        businessId: _businessId,
+                        initialName: _businessName,
+                        errorText: _businessMissing ? 'שדה חובה' : null,
+                        onPicked: (b) => setState(() {
+                          _businessId = b['id'] as String;
+                          _businessName = b['name'] as String?;
+                          _businessMissing = false;
+                        }),
+                      ),
+                      _field(
+                        'תיאור *',
+                        _description,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _field(
+                              'סכום (₪) *',
+                              _amount,
+                              validator: (v) => _number(v, required: true),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _field(
+                              'מתוכו מע״מ (₪)',
+                              _vat,
+                              validator: (v) => _number(v),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _dropdown(
+                              'סוג',
+                              _type,
+                              _revenueTypes,
+                              (v) => _type = v,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _dropdown(
+                              'סטטוס תשלום',
+                              _status,
+                              _paymentStatuses,
+                              (v) => _status = v,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: AdminDateField(
+                              label: 'לתשלום עד',
+                              value: _dueDate,
+                              onChanged: (v) => setState(() => _dueDate = v),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(child: _field('מספר חשבונית', _invoice)),
+                        ],
+                      ),
+                      AdminSalespersonField(
+                        value: _salespersonId,
+                        onChanged: (v) => setState(() => _salespersonId = v),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'ביטול',
+                          style: TextStyle(fontFamily: AppFonts.rubik),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _saving ? null : _save,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.turquoise,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                _isEditing ? 'שמור' : 'צור רשומה',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    final valid = _formKey.currentState!.validate();
+    setState(() => _businessMissing = _businessId == null);
+    if (!valid || _businessId == null) return;
+    setState(() => _saving = true);
+    final was = widget.row;
+    final fields = <String, dynamic>{
+      'business_id': _businessId,
+      'description': _description.text.trim(),
+      'amount': double.parse(_amount.text.trim()),
+      'vat_amount': double.tryParse(_vat.text.trim()) ?? 0,
+      'revenue_type': _type,
+      'payment_status': _status,
+      // Paid keeps the date it was first marked paid; any other status has
+      // no payment date.
+      'paid_at': _status != 'paid'
+          ? null
+          : was?['paid_at'] ?? DateTime.now().toUtc().toIso8601String(),
+      'due_date': _dueDate,
+      'invoice_ref': _invoice.text.trim().isEmpty ? null : _invoice.text.trim(),
+      'salesperson_id': _salespersonId,
+    };
+    try {
+      final notifier = ref.read(adminRevenueListProvider.notifier);
+      if (_isEditing) {
+        await notifier.updateTransaction(was!['id'] as String, fields);
+      } else {
+        await notifier.createTransaction(fields);
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 }
@@ -513,13 +866,13 @@ class _StatusPill extends StatelessWidget {
   const _StatusPill(this.status);
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      'paid' => ('שולם', AppColors.success),
-      'pending' => ('ממתין', AppColors.gold),
-      'overdue' => ('באיחור', AppColors.error),
-      'refunded' => ('זיכוי', AppColors.grayLight),
-      _ => (status, AppColors.grayLight),
+    final color = switch (status) {
+      'paid' => AppColors.success,
+      'pending' || 'partial' => AppColors.gold,
+      'overdue' => AppColors.error,
+      _ => AppColors.grayLight,
     };
+    final label = _paymentStatuses[status] ?? status;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -597,14 +950,14 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
+/// Waits for typing to pause before searching. The old version chained
+/// futures it could not cancel, so every keystroke still ran a search.
 class _Debouncer {
   final int milliseconds;
   _Debouncer({required this.milliseconds});
-  Future<void>? _pending;
+  Timer? _timer;
   void run(VoidCallback action) {
-    _pending?.ignore();
-    _pending = Future.delayed(
-      Duration(milliseconds: milliseconds),
-    ).then((_) => action());
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
 }

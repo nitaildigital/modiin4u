@@ -25,7 +25,9 @@ class _AdminHomeBuilderScreenState
     return Column(
       children: [
         // ─── Stats bar ───
-        asyncData.whenData((list) {
+        if (asyncData.valueOrNull case final list?)
+          Builder(
+            builder: (_) {
               final active = list.where((b) => b['is_active'] == true).length;
               final published = list
                   .where((b) => b['published'] == true)
@@ -56,8 +58,8 @@ class _AdminHomeBuilderScreenState
                   ],
                 ),
               );
-            }).value ??
-            const SizedBox.shrink(),
+            },
+          ),
 
         // ─── Toolbar ───
         Container(

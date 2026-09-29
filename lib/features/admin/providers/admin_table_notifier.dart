@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
 
@@ -60,6 +61,11 @@ class AdminTableNotifier
   String? _search;
   String? _status;
 
+  /// Exact-match filters a section adds beyond status — the kind of thing a
+  /// comment was left on, say. Applied in the query, so they narrow the rows
+  /// the database returns rather than a page already fetched.
+  final Map<String, Object> _filters = {};
+
   AdminTableNotifier({
     required this.table,
     this.searchColumns = const ['name'],
@@ -83,11 +89,23 @@ class AdminTableNotifier
       if (hasStatus && _status != null && _status!.isNotEmpty) {
         query = query.eq('status', _status!);
       }
-      if (_search != null && _search!.isNotEmpty && searchColumns.isNotEmpty) {
-        // A comma separates the clauses in `or`, so one inside the text would
-        // be read as another clause.
-        final q = _search!.replaceAll(',', ' ');
-        query = query.or(searchColumns.map((c) => '$c.ilike.%$q%').join(','));
+      for (final f in _filters.entries) {
+        query = query.eq(f.key, f.value);
+      }
+      if (_search != null && _search!.trim().isNotEmpty) {
+        // Commas and brackets are the grammar of `or`, so inside the text
+        // they would be read as more clauses.
+        final q = _search!.replaceAll(RegExp(r'[,()]'), ' ').trim();
+        final clauses = searchClauses(q);
+        if (clauses.isEmpty) {
+          // Nothing the text could match: say so rather than ignore it.
+          if (mounted) {
+            totalCount = 0;
+            state = const AsyncValue.data([]);
+          }
+          return;
+        }
+        query = query.or(clauses.join(','));
       }
 
       final rows = await query
@@ -125,6 +143,25 @@ class AdminTableNotifier
     load();
   }
 
+  /// Narrows the list to rows whose [column] equals [value]; null or an empty
+  /// string takes the filter off.
+  void setColumnFilter(String column, Object? value) {
+    if (value == null || (value is String && value.isEmpty)) {
+      _filters.remove(column);
+    } else {
+      _filters[column] = value;
+    }
+    load();
+  }
+
+  /// The `or` clauses a search for [q] becomes: an `ilike` on each of
+  /// [searchColumns]. A section whose columns cannot take `ilike` (an enum
+  /// can't) overrides this.
+  @protected
+  List<String> searchClauses(String q) => [
+    for (final c in searchColumns) '$c.ilike.%$q%',
+  ];
+
   /// Drops anything the form carries that is not a column — joined objects
   /// arrive under their table's name and would be rejected on the way back.
   Map<String, dynamic> _writable(Map<String, dynamic> fields) => {
@@ -133,15 +170,34 @@ class AdminTableNotifier
   };
 
   Future<void> create(Map<String, dynamic> row) async {
-    await SupabaseConfig.client.from(table).insert(_writable(row));
+    final fields = _writable(row);
+    final inserted = await SupabaseConfig.client
+        .from(table)
+        .insert(fields)
+        .select('id')
+        .maybeSingle();
+    await recordAdminAction(
+      action: 'create',
+      table: table,
+      rowId: inserted?['id']?.toString(),
+      fields: fields,
+      label: _labelOf(fields),
+    );
     await load();
   }
 
   Future<void> update(String id, Map<String, dynamic> fields) async {
-    await SupabaseConfig.client
-        .from(table)
-        .update(_writable(fields))
-        .eq('id', id);
+    final writable = _writable(fields);
+    final before = _rowById(id);
+    await updateRow(table, id, writable);
+    await recordAdminAction(
+      action: auditActionFor(writable),
+      table: table,
+      rowId: id,
+      fields: writable,
+      before: before,
+      label: _labelOf(writable) ?? _labelOf(before),
+    );
     await load();
   }
 
@@ -150,24 +206,170 @@ class AdminTableNotifier
       await updateStatus(id, softDeleteStatus!);
       return;
     }
+    final before = _rowById(id);
     await SupabaseConfig.client.from(table).delete().eq('id', id);
+    await recordAdminAction(
+      action: 'delete',
+      table: table,
+      rowId: id,
+      label: _labelOf(before),
+    );
     await load();
   }
 
   Future<void> updateStatus(String id, String status) async {
-    await SupabaseConfig.client
-        .from(table)
-        .update({'status': status})
-        .eq('id', id);
+    final before = _rowById(id);
+    final fields = {'status': status};
+    await updateRow(table, id, fields);
+    await recordAdminAction(
+      action: auditActionFor(fields),
+      table: table,
+      rowId: id,
+      fields: fields,
+      before: before,
+      label: _labelOf(before),
+    );
     await load();
   }
 
   /// For the tables that mark a row active rather than carrying a status.
   Future<void> setActive(String id, bool isActive) async {
-    await SupabaseConfig.client
-        .from(table)
-        .update({'is_active': isActive})
-        .eq('id', id);
+    final before = _rowById(id);
+    final fields = {'is_active': isActive};
+    await updateRow(table, id, fields);
+    await recordAdminAction(
+      action: 'update',
+      table: table,
+      rowId: id,
+      fields: fields,
+      before: before,
+      label: _labelOf(before),
+    );
     await load();
+  }
+
+  /// The row as it was loaded, for the audit log's "before".
+  Map<String, dynamic>? _rowById(String id) {
+    for (final r in state.valueOrNull ?? const <Map<String, dynamic>>[]) {
+      if (r['id'] == id) return r;
+    }
+    return null;
+  }
+
+  /// A name for the row in the audit log, so an entry reads "category
+  /// Cafés" rather than a bare id. People's own tables are left unnamed:
+  /// the log is not a second copy of who they are.
+  String? _labelOf(Map<String, dynamic>? row) {
+    if (row == null || _unnamedTables.contains(table)) return null;
+    for (final key in const ['title', 'name', 'label', 'code']) {
+      final v = row[key];
+      if (v is String && v.trim().isNotEmpty) return v.trim();
+    }
+    return null;
+  }
+
+  static const _unnamedTables = {
+    'profiles',
+    'admin_users',
+    'comments',
+    'reports',
+  };
+}
+
+/// Updates one row and fails loudly when nothing was updated.
+///
+/// Row-level security does not refuse an update it disallows: the update
+/// simply matches no rows and reports success, so the panel used to say
+/// nothing while the change was lost. Asking for the updated ids back shows
+/// whether the row was really written.
+Future<void> updateRow(
+  String table,
+  String id,
+  Map<String, dynamic> fields,
+) async {
+  final rows = await SupabaseConfig.client
+      .from(table)
+      .update(fields)
+      .eq('id', id)
+      .select('id');
+  if (rows.isEmpty) {
+    throw const AdminWriteRefused();
+  }
+}
+
+/// An update that reached no row — refused by the database's permissions,
+/// or the row is gone.
+class AdminWriteRefused implements Exception {
+  const AdminWriteRefused();
+
+  @override
+  String toString() => 'השינוי לא נשמר — אין הרשאה או שהשורה לא נמצאה';
+}
+
+/// The columns whose values the audit log keeps. They are states — a status,
+/// a switch — and say what was done. For every other column the log keeps
+/// only the name: it records that a phone number or a price changed, not the
+/// number itself.
+const auditValueColumns = {'status', 'is_active', 'published'};
+
+/// The `audit_action` a change amounts to, from what it writes.
+String auditActionFor(Map<String, dynamic> fields) {
+  if (fields['published'] == true) return 'publish';
+  return switch (fields['status']) {
+    'published' => 'publish',
+    'archived' || 'trash' => 'archive',
+    'approved' => 'approve',
+    'rejected' => 'reject',
+    _ => 'update',
+  };
+}
+
+final _uuid = RegExp(
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+  caseSensitive: false,
+);
+
+/// Writes one entry to `audit_logs` for a change an administrator made.
+///
+/// Who made it is filled in by the database from the signed-in user (a
+/// trigger, migration 00031), so it is not taken on the client's word.
+/// [fields] is what was written: the log keeps every column's name and the
+/// values of [auditValueColumns] only; [before] supplies those same columns
+/// as they were.
+///
+/// A failure here is reported to the console and swallowed: the change
+/// itself has already gone through, and failing the action over its log
+/// entry would tell the administrator it did not happen.
+Future<void> recordAdminAction({
+  required String action,
+  required String table,
+  String? rowId,
+  Map<String, dynamic> fields = const {},
+  Map<String, dynamic>? before,
+  String? label,
+}) async {
+  final kept = {
+    for (final k in auditValueColumns)
+      if (fields.containsKey(k)) k: fields[k],
+  };
+  final was = {
+    for (final k in auditValueColumns)
+      if (before != null && fields.containsKey(k) && before.containsKey(k))
+        k: before[k],
+  };
+  try {
+    await SupabaseConfig.client.from('audit_logs').insert({
+      'action': action,
+      'entity_type': table,
+      if (rowId != null && _uuid.hasMatch(rowId)) 'entity_id': rowId,
+      if (was.isNotEmpty) 'before_data': was,
+      'after_data': {
+        if (fields.isNotEmpty) 'fields': fields.keys.toList(),
+        ...kept,
+        'label': ?label,
+      },
+    });
+  } catch (e) {
+    debugPrint('audit_logs: could not record $action on $table: $e');
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_ad_placements_provider.dart';
+import '../widgets/admin_load_error.dart';
 
 class AdminAdPlacementsScreen extends ConsumerStatefulWidget {
   const AdminAdPlacementsScreen({super.key});
@@ -23,7 +24,10 @@ class _AdminAdPlacementsScreenState
     return Column(
       children: [
         // ─── Stats bar ───
-        asyncData.whenData((list) {
+        // Only once the list is in; a failed load is shown by the table.
+        if (asyncData.valueOrNull case final list?)
+          Builder(
+            builder: (context) {
               final active = list.where((p) => p['is_active'] == true).length;
               final totalCampaigns = list.fold<int>(
                 0,
@@ -56,8 +60,8 @@ class _AdminAdPlacementsScreenState
                   ],
                 ),
               );
-            }).value ??
-            const SizedBox.shrink(),
+            },
+          ),
 
         // ─── Toolbar ───
         Container(
@@ -84,19 +88,18 @@ class _AdminAdPlacementsScreenState
                 ),
               ),
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} מיקומים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of letting
+              // the list below show the error and a retry.
+              if (asyncData.valueOrNull case final list?)
+                Text(
+                  '${list.length} מיקומים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEditor(context, ref),
@@ -121,14 +124,11 @@ class _AdminAdPlacementsScreenState
         Expanded(
           child: asyncData.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Text(
-                'שגיאה: $e',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  color: AppColors.error,
-                ),
-              ),
+            error: (e, _) => AdminLoadError(
+              message: 'שגיאה בטעינת מיקומי הפרסום',
+              error: e,
+              onRetry: () =>
+                  ref.read(adminAdPlacementListProvider.notifier).load(),
             ),
             data: (list) {
               if (list.isEmpty) {
@@ -336,18 +336,9 @@ class _AdminAdPlacementsScreenState
                                         ),
                                       ),
                                     ),
-                                    PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text(
-                                        // The row is not removed; it becomes is_active = false.
-                                        'השבתה',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 13,
-                                          color: AppColors.error,
-                                        ),
-                                      ),
-                                    ),
+                                    // A second "השבתה" item stood here; it
+                                    // set is_active = false, the same as the
+                                    // item above.
                                   ],
                                 ),
                               ],
@@ -386,8 +377,6 @@ class _AdminAdPlacementsScreenState
           _showEditor(context, ref, placement: p);
         case 'toggle':
           await notifier.toggleActive(id);
-        case 'delete':
-          await notifier.deletePlacement(id);
       }
     } catch (e) {
       if (!mounted) return;

@@ -487,7 +487,7 @@ class _PoiCard extends StatelessWidget {
                   child: switch (poi.layer) {
                     'Real Estate' => _realEstateDetails(l),
                     'Events' => _eventDetails(l),
-                    'Parkings' => _parkingDetails(context),
+                    'Parkings' => _parkingDetails(context, l),
                     _ => _businessDetails(),
                   },
                 ),
@@ -655,26 +655,63 @@ class _PoiCard extends StatelessWidget {
   }
 
   // ── Parking — no frame of its own; the business card's layout, with the
-  // client's note in place of a rating ──
-  Widget _parkingDetails(BuildContext context) {
+  // lot's price and spaces where a rating would be. Each line only where the
+  // client filled it in ──
+  Widget _parkingDetails(BuildContext context, L l) {
     final english = Localizations.localeOf(context).languageCode == 'en';
+    final lot = parkingLotOfPoi[poi];
+    // "Free" only when he ticked it; a lot he said nothing about gets no
+    // price at all rather than a guess.
+    final price = lot?.isFree == true ? l.free : lot?.priceNote;
+    final capacity = lot?.capacity;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _title(english ? (poi.nameEn ?? poi.name) : poi.name),
+        _title(lot?.displayName(english: english) ?? poi.name),
         if (poi.address != null) ...[
           const SizedBox(height: 11),
           _infoRow(IconsaxPlusBold.location, poi.address!),
         ],
+        if (lot?.hours != null) ...[
+          const SizedBox(height: 8),
+          _infoRow(IconsaxPlusBold.clock, lot!.hours!),
+        ],
         if (poi.description != null) ...[
-          const SizedBox(height: 11),
-          Text(
-            poi.description!,
-            style: _inter(12, color: _kGrey, height: 1.4),
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
+          const SizedBox(height: 8),
+          Flexible(
+            child: Text(
+              poi.description!,
+              style: _inter(12, color: _kGrey, height: 1.4),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
+        const Spacer(),
+        Row(
+          children: [
+            if (price != null)
+              Expanded(
+                child: Text(
+                  price,
+                  style: _inter(14, weight: FontWeight.w600, color: _kNavy),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+            else
+              const Spacer(),
+            if (capacity != null) ...[
+              const SizedBox(width: 8),
+              const Icon(IconsaxPlusBold.car, size: 14, color: _kTurquoise),
+              const SizedBox(width: 4),
+              Text(
+                l.parkingSpaces(capacity),
+                style: _inter(12, weight: FontWeight.w500, color: _kBodyText),
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }

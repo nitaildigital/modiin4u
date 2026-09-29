@@ -656,5 +656,39 @@
         "type": "String"
       }
     }
-  }
+  },
+  "parkingEmpty": "החניונים יתווספו בקרוב",
+  "parkingSpaces": "{n} מקומות חניה",
+  "@parkingSpaces": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "parkingLotCount": "{n, plural, =1{חניון אחד} other{{n} חניונים}}",
+  "@parkingLotCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "parkingLoadError": "לא הצלחנו לטעון את החניונים",
+  "parkingIntro": "כל החניונים בעיר, על המפה.",
+  "parkingLotsHeading": "חניונים",
+  "reviewBusinessResponse": "תגובת העסק",
+  "sitePageAboutTitle": "אודות",
+  "sitePageAccessibilityTitle": "הצהרת נגישות",
+  "sitePageComingSoon": "תוכן העמוד יפורסם בקרוב",
+  "sitePageLastUpdated": "עודכן לאחרונה: {date}",
+  "@sitePageLastUpdated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "sitePageBack": "חזרה",
+  "sitePageLoadError": "לא ניתן היה לטעון את העמוד"
 }

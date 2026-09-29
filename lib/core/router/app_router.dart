@@ -24,6 +24,7 @@ import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/auth/screens/change_language_screen.dart';
 import '../../features/auth/screens/help_support_screen.dart';
 import '../../features/auth/screens/terms_conditions_screen.dart';
+import '../../features/site_pages/screens/site_page_screen.dart';
 import '../../features/events/screens/events_screen.dart';
 import '../../features/events/screens/events_map_screen.dart';
 import '../../features/events/screens/event_detail_screen.dart';
@@ -465,6 +466,20 @@ final appRouter = GoRouter(
       path: '/terms',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(const TermsConditionsScreen(), state),
+    ),
+    // The client's own pages, written in the panel (עמודי מידע); the footer's
+    // About Us and Accessibility Statement links land here.
+    GoRoute(
+      path: '/about',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) =>
+          _slideTransition(const SitePageScreen(slug: 'about'), state),
+    ),
+    GoRoute(
+      path: '/accessibility',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) =>
+          _slideTransition(const SitePageScreen(slug: 'accessibility'), state),
     ),
     GoRoute(
       path: '/search',

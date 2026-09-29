@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import 'admin_table_notifier.dart';
 
 /// The directory, as the admin panel sees it.
 ///
@@ -209,21 +210,51 @@ class AdminBusinessListNotifier
   /// away: hours, categories, menu and gallery all hang off it, and were
   /// silently dropped on a new business while this returned nothing.
   Future<String> createBusiness(Map<String, dynamic> business) async {
+    final fields = _columnsOnly(business);
+    if (fields['status'] == 'closed') fields['closed_at'] = _now();
     final row = await SupabaseConfig.client
         .from('businesses')
-        .insert(_columnsOnly(business))
+        .insert(fields)
         .select('id')
         .single();
+    final id = row['id'] as String;
+    await recordAdminAction(
+      action: 'create',
+      table: 'businesses',
+      rowId: id,
+      fields: fields,
+      label: fields['name'] as String?,
+    );
     await load();
-    return row['id'] as String;
+    return id;
   }
 
   Future<void> updateBusiness(String id, Map<String, dynamic> fields) async {
-    await SupabaseConfig.client
-        .from('businesses')
-        .update(_columnsOnly(fields))
-        .eq('id', id);
+    final row = _columnsOnly(fields)..remove('closed_at');
+    final status = row['status'];
+    if (status is String && status != 'closed') row['closed_at'] = null;
+    final before = _rowById(id);
+    // `updateRow` throws when the database updated nothing, which is how a
+    // refused write looks — it used to pass as saved.
+    await updateRow('businesses', id, row);
+    if (status == 'closed') await _stampClosed(id);
+    await recordAdminAction(
+      action: auditActionFor(row),
+      table: 'businesses',
+      rowId: id,
+      fields: row,
+      before: before,
+      label: (row['name'] ?? before?['name']) as String?,
+    );
     await load();
+  }
+
+  /// The row as it was loaded, for the audit log's "before".
+  Map<String, dynamic>? _rowById(String id) {
+    for (final r in state.valueOrNull ?? const <Map<String, dynamic>>[]) {
+      if (r['id'] == id) return r;
+    }
+    return null;
   }
 
   /// Marks the business closed rather than removing the row.
@@ -234,13 +265,39 @@ class AdminBusinessListNotifier
     await updateStatus(id, 'closed');
   }
 
+  /// Sets the status, and `closed_at` with it: stamped when the business is
+  /// closed, cleared when it is anything else. Closing never set it, so the
+  /// column said no business had ever closed.
   Future<void> updateStatus(String id, String status) async {
-    await SupabaseConfig.client
-        .from('businesses')
-        .update({'status': status})
-        .eq('id', id);
+    final before = _rowById(id);
+    final fields = {
+      'status': status,
+      if (status != 'closed') 'closed_at': null,
+    };
+    await updateRow('businesses', id, fields);
+    if (status == 'closed') await _stampClosed(id);
+    await recordAdminAction(
+      action: auditActionFor(fields),
+      table: 'businesses',
+      rowId: id,
+      fields: fields,
+      before: before,
+      label: before?['name'] as String?,
+    );
     await load();
   }
+
+  /// The date it closed — only if it has none, so saving a business that
+  /// closed last month does not move the date to today.
+  Future<void> _stampClosed(String id) async {
+    await SupabaseConfig.client
+        .from('businesses')
+        .update({'closed_at': _now()})
+        .eq('id', id)
+        .isFilter('closed_at', null);
+  }
+
+  static String _now() => DateTime.now().toUtc().toIso8601String();
 
   // ── Categories ──
 
@@ -327,24 +384,70 @@ final adminMenuItemsProvider =
       return List<Map<String, dynamic>>.from(rows);
     });
 
-/// Replaces a business's menu with what the editor holds.
+/// The columns of a menu line the editor owns.
+const _menuColumns = [
+  'section',
+  'name',
+  'description',
+  'price_agorot',
+  'is_available',
+];
+
+/// Makes a business's menu what the editor holds, writing only what
+/// changed.
 ///
-/// Deleting and re-inserting rather than diffing: a menu is a handful of
-/// rows, it is edited rarely, and this keeps the order the editor shows as
-/// the order that is stored.
+/// This deleted every line and inserted them again on every save of the
+/// business, so each line got a new id and a new `created_at` whether or not
+/// anyone had touched the menu. Now each line the editor loaded carries its
+/// `id`: a line that is gone is deleted, a line that changed — its text or
+/// its place — is updated in place, a new line is inserted, and a menu no
+/// one touched is not written at all. The order the editor shows is still
+/// the order stored.
 Future<void> saveMenuItems(
   String businessId,
   List<Map<String, dynamic>> items,
 ) async {
   final client = SupabaseConfig.client;
-  await client
-      .from('business_menu_items')
-      .delete()
-      .eq('business_id', businessId);
-  if (items.isEmpty) return;
+  final stored = {
+    for (final r in List<Map<String, dynamic>>.from(
+      await client
+          .from('business_menu_items')
+          .select('id, sort_order, ${_menuColumns.join(', ')}')
+          .eq('business_id', businessId),
+    ))
+      r['id'] as String: r,
+  };
 
-  await client.from('business_menu_items').insert([
-    for (var i = 0; i < items.length; i++)
-      {...items[i], 'business_id': businessId, 'sort_order': i},
-  ]);
+  final kept = {
+    for (final m in items)
+      if (m['id'] is String && stored.containsKey(m['id'])) m['id'] as String,
+  };
+  final gone = stored.keys.where((id) => !kept.contains(id)).toList();
+  if (gone.isNotEmpty) {
+    await client.from('business_menu_items').delete().inFilter('id', gone);
+  }
+
+  final added = <Map<String, dynamic>>[];
+  for (var i = 0; i < items.length; i++) {
+    final wanted = {
+      for (final c in _menuColumns) c: items[i][c],
+      'is_available': items[i]['is_available'] ?? true,
+      'sort_order': i,
+    };
+    final id = items[i]['id'];
+    final was = id is String ? stored[id] : null;
+    if (was == null) {
+      added.add({...wanted, 'business_id': businessId});
+      continue;
+    }
+    final changed = {
+      for (final e in wanted.entries)
+        if (was[e.key] != e.value) e.key: e.value,
+    };
+    if (changed.isEmpty) continue;
+    await client.from('business_menu_items').update(changed).eq('id', id);
+  }
+  if (added.isNotEmpty) {
+    await client.from('business_menu_items').insert(added);
+  }
 }

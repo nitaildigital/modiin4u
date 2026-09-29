@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import 'admin_table_notifier.dart' show recordAdminAction, updateRow;
 
 /// Feature flags and remote config, on the tables that hold them.
 ///
@@ -16,9 +17,15 @@ import '../../../core/supabase/supabase_config.dart';
 /// REAL_ESTATE, STEPS).
 ///
 /// **What a flag does today: nothing.** No screen outside this panel reads
-/// `feature_flags`, so switching one off records the decision and changes
-/// nothing in the app. The panel says so rather than implying otherwise.
-/// Making the app honour them is a separate piece of work.
+/// `feature_flags` or `remote_config`, so switching one off records the
+/// decision and changes nothing in the app. The panel says so on both tabs
+/// rather than implying otherwise. Making the app honour them is a separate
+/// piece of work.
+///
+/// Every write here throws when the database refuses it, and the screen
+/// shows the reason; they used to fail silently. A write reloads quietly —
+/// the rows stay on screen rather than flashing a spinner under the switch
+/// that was just flipped.
 
 /// The `admin_users` row for whoever is signed in, which is what
 /// `feature_flags.updated_by` points at — not the profile, and not a name.
@@ -61,8 +68,8 @@ class AdminFeatureFlagListNotifier
     load();
   }
 
-  Future<void> load() async {
-    state = const AsyncValue.loading();
+  Future<void> load({bool quiet = false}) async {
+    if (!quiet || !state.hasValue) state = const AsyncValue.loading();
     try {
       final rows = await SupabaseConfig.client
           .from('feature_flags')
@@ -80,15 +87,34 @@ class AdminFeatureFlagListNotifier
   /// Writes the patch, stamps who and when, and reloads so what is on screen
   /// is what the table holds.
   Future<void> _patch(String id, Map<String, dynamic> fields) async {
-    await SupabaseConfig.client
-        .from('feature_flags')
-        .update({
-          ...fields,
-          'updated_by': await _currentAdminId(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', id);
-    await load();
+    await updateRow('feature_flags', id, {
+      ...fields,
+      'updated_by': await _currentAdminId(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+    await recordAdminAction(
+      action: 'update',
+      table: 'feature_flags',
+      rowId: id,
+      fields: fields,
+      label: _flagLabel(id, fields),
+    );
+    await load(quiet: true);
+  }
+
+  /// The flag's key and what it was set to, for the audit log — neither
+  /// `is_enabled` nor `rollout_pct` is a column the log keeps a value for.
+  String? _flagLabel(String id, Map<String, dynamic> fields) {
+    final row = state.valueOrNull?.firstWhere(
+      (f) => f['id'] == id,
+      orElse: () => const <String, dynamic>{},
+    );
+    final key = row?['key'] as String?;
+    if (key == null) return null;
+    return [
+      key,
+      for (final e in fields.entries) '${e.key}=${e.value}',
+    ].join(' · ');
   }
 
   Future<void> toggleFlag(String id) async {
@@ -108,11 +134,19 @@ class AdminFeatureFlagListNotifier
       _patch(id, _writable(fields));
 
   Future<void> createFlag(Map<String, dynamic> flag) async {
-    await SupabaseConfig.client.from('feature_flags').insert({
-      ..._writable(flag),
-      'updated_by': await _currentAdminId(),
-    });
-    await load();
+    final inserted = await SupabaseConfig.client
+        .from('feature_flags')
+        .insert({..._writable(flag), 'updated_by': await _currentAdminId()})
+        .select('id')
+        .maybeSingle();
+    await recordAdminAction(
+      action: 'create',
+      table: 'feature_flags',
+      rowId: inserted?['id']?.toString(),
+      fields: _writable(flag),
+      label: flag['key'] as String?,
+    );
+    await load(quiet: true);
   }
 
   /// Drops the keys the database owns, and the joined object that arrives
@@ -146,8 +180,8 @@ class AdminRemoteConfigNotifier
     load();
   }
 
-  Future<void> load() async {
-    state = const AsyncValue.loading();
+  Future<void> load({bool quiet = false}) async {
+    if (!quiet || !state.hasValue) state = const AsyncValue.loading();
     try {
       final rows = await SupabaseConfig.client
           .from('remote_config')
@@ -163,28 +197,50 @@ class AdminRemoteConfigNotifier
   }
 
   Future<void> updateConfig(String id, Map<String, dynamic> fields) async {
-    await SupabaseConfig.client
-        .from('remote_config')
-        .update({
-          ..._writable(fields),
-          'updated_by': await _currentAdminId(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', id);
-    await load();
+    await updateRow('remote_config', id, {
+      ..._writable(fields),
+      'updated_by': await _currentAdminId(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+    await recordAdminAction(
+      action: 'update',
+      table: 'remote_config',
+      rowId: id,
+      fields: _writable(fields),
+      label: fields['key'] as String?,
+    );
+    await load(quiet: true);
   }
 
   Future<void> createConfig(Map<String, dynamic> config) async {
-    await SupabaseConfig.client.from('remote_config').insert({
-      ..._writable(config),
-      'updated_by': await _currentAdminId(),
-    });
-    await load();
+    final inserted = await SupabaseConfig.client
+        .from('remote_config')
+        .insert({..._writable(config), 'updated_by': await _currentAdminId()})
+        .select('id')
+        .maybeSingle();
+    await recordAdminAction(
+      action: 'create',
+      table: 'remote_config',
+      rowId: inserted?['id']?.toString(),
+      fields: _writable(config),
+      label: config['key'] as String?,
+    );
+    await load(quiet: true);
   }
 
   Future<void> deleteConfig(String id) async {
+    final row = state.valueOrNull?.firstWhere(
+      (c) => c['id'] == id,
+      orElse: () => const <String, dynamic>{},
+    );
     await SupabaseConfig.client.from('remote_config').delete().eq('id', id);
-    await load();
+    await recordAdminAction(
+      action: 'delete',
+      table: 'remote_config',
+      rowId: id,
+      label: row?['key'] as String?,
+    );
+    await load(quiet: true);
   }
 
   Map<String, dynamic> _writable(Map<String, dynamic> fields) => {

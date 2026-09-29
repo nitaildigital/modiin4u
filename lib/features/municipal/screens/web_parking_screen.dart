@@ -1,94 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../providers/parking_providers.dart';
+import '../widgets/parking_widgets.dart';
 
 // ═══════════════════════════════════════════════════════════
-// Web Parking — desktop car parks and payment rules
+// Web Parking — the city's car parks, on a map beside their list
 //
 // The sibling of web_municipal_screen.dart, and reached from its parking
-// card. The phone screen stacks the permit notice, eight car parks and a
-// map placeholder in one 430px column; here the car parks take a two-up
-// grid and the payment rules sit beside them, which is what the stack was
-// standing in for.
+// card. The lots are the ones the client enters in the panel (חניונים); the
+// page used to print eight written into the source, with capacities, rates,
+// paid hours and permit rules nobody could correct from the panel. Those are
+// gone rather than kept as "general information": the client runs the
+// content, and none of it was his.
 // ═══════════════════════════════════════════════════════════
 
 const _kBorder = Color(0xFFE7E7E7);
 const _kGreyText = Color(0xFF5F5E5A);
-const _kHeading = Color(0xFF1C1C1E);
-const _kIconGrey = Color(0xFF6D6D6D);
-const _kParkingBg = Color(0xFFF0F7FD);
-const _kParkingBorder = Color(0xFFD9E8F4);
 
-class WebParkingContent extends StatefulWidget {
+/// The map and the list side by side, at one height, so the list scrolls
+/// inside it and the map never leaves the screen.
+const _kPaneHeight = 640.0;
+
+class WebParkingContent extends ConsumerStatefulWidget {
   const WebParkingContent({super.key});
 
   @override
-  State<WebParkingContent> createState() => _WebParkingContentState();
+  ConsumerState<WebParkingContent> createState() => _WebParkingContentState();
 }
 
-class _WebParkingContentState extends State<WebParkingContent>
+class _WebParkingContentState extends ConsumerState<WebParkingContent>
     with WebLanguageState<WebParkingContent> {
   bool get _isHebrew => webIsHebrew.value;
 
-  String _t(String en, String he) => _isHebrew ? he : en;
+  /// The navbar's toggle is this page's language, not the app's locale, so
+  /// both string tables are held and the page reads the one it is in.
+  static final _en = lookupL(const Locale('en'));
+  static final _he = lookupL(const Locale('he'));
+  L get _l => _isHebrew ? _he : _en;
 
-  /// The car parks the phone screen lists, with the capacity and the rate it
-  /// prints for each.
-  ///
-  /// The occupancy bar and the "free / filling up / almost full" tag the phone
-  /// screen draws are not here: nothing in the database or on any endpoint
-  /// knows how full a car park is right now, and at desktop size a progress
-  /// bar per park reads as a live feed. The same reasoning took the "Open Now"
-  /// badge off the business cards.
-  List<_Lot> get _lots => [
-    _Lot(
-      name: _t('Heichal HaTarbut car park', 'חניון היכל התרבות'),
-      capacity: _t('~600 spaces', '~600 מקומות'),
-      rate: _t('Free', 'חינם'),
-    ),
-    _Lot(
-      name: _t(
-        'Train station car park (by the mall)',
-        'חניון הרכבת (סמוך לקניון)',
-      ),
-      capacity: _t('~450 spaces', '~450 מקומות'),
-      rate: _t('Free', 'חינם'),
-    ),
-    _Lot(
-      name: _t('"Gray" underground car park', 'חניון תת-קרקעי "גריי"'),
-      capacity: _t('~500 spaces', '~500 מקומות'),
-      rate: _t('First 2 hours free', 'חינם ל-2 שעות ראשונות'),
-    ),
-    _Lot(
-      name: _t('Sports centre car park', 'חניון מרכז הספורט'),
-      capacity: _t('~300 spaces', '~300 מקומות'),
-      rate: _t('Free', 'חינם'),
-    ),
-    _Lot(
-      name: _t('Emek Zvulun North car park', 'חניון עמק זבולון צפון'),
-      capacity: _t('~200 spaces', '~200 מקומות'),
-      rate: _t('Free', 'חינם'),
-    ),
-    _Lot(
-      name: _t('By the Maccabi clinic', 'חניון ליד קופת חולים מכבי'),
-      capacity: _t('55 spaces', '55 מקומות'),
-      rate: _t('Free', 'חינם'),
-    ),
-    _Lot(
-      name: _t('By the Tiltan/Dafna junction', 'חניון ליד צומת תלתן/דפנה'),
-      capacity: _t('21 spaces', '21 מקומות'),
-      rate: _t('Free', 'חינם'),
-    ),
-    _Lot(
-      name: _t('Railway station car parks', 'חניוני תחנת הרכבת'),
-      capacity: '—',
-      rate: _t('₪70 per day', '70 ₪ ליממה'),
-    ),
-  ];
+  final _map = MapController();
+  final _listScroll = ScrollController();
+  final _cardKeys = <String, GlobalKey>{};
+  String? _selectedId;
+
+  @override
+  void dispose() {
+    _listScroll.dispose();
+    super.dispose();
+  }
+
+  void _selectFromMap(ParkingLot? lot) {
+    setState(() => _selectedId = lot?.id);
+    // Scrolls the list alone. `Scrollable.ensureVisible` would scroll the
+    // page as well, and take the map half off the screen with it.
+    final card = lot == null
+        ? null
+        : _cardKeys[lot.id]?.currentContext?.findRenderObject();
+    if (card == null || !_listScroll.hasClients) return;
+    final target = RenderAbstractViewport.of(card)
+        .getOffsetToReveal(card, 0.05)
+        .offset
+        .clamp(0.0, _listScroll.position.maxScrollExtent);
+    _listScroll.animateTo(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _selectFromList(ParkingLot lot) {
+    setState(() => _selectedId = lot.id);
+    final zoom = _map.camera.zoom;
+    _map.move(lot.position, zoom < 16 ? 16 : zoom);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,16 +91,13 @@ class _WebParkingContentState extends State<WebParkingContent>
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            WebNavbar(
-              isHebrew: _isHebrew,
-            ),
+            WebNavbar(isHebrew: _isHebrew),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
                     _buildHeader(),
-                    _buildColumns(),
-                    _buildMapPlaceholder(),
+                    _buildBody(),
                     const SizedBox(height: 100),
                     WebFooter(isHebrew: _isHebrew),
                   ],
@@ -121,9 +111,10 @@ class _WebParkingContentState extends State<WebParkingContent>
   }
 
   // ─────────────────────────────────────────────
-  // HEADER — back to city services, title, permit notice
+  // HEADER — back to city services, title
   // ─────────────────────────────────────────────
   Widget _buildHeader() {
+    final l = _l;
     return Padding(
       padding: const EdgeInsets.only(top: 48),
       child: WebSection(
@@ -147,7 +138,7 @@ class _WebParkingContentState extends State<WebParkingContent>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _t('Municipal Services', 'שירותים עירוניים'),
+                      l.municipalServices,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
@@ -161,7 +152,7 @@ class _WebParkingContentState extends State<WebParkingContent>
             ),
             const SizedBox(height: 20),
             Text(
-              _t('Parking in Modiin', 'חניה וחניונים'),
+              l.parkingInModiin,
               style: TextStyle(
                 fontFamily: AppFonts.nunito,
                 fontSize: 36,
@@ -172,10 +163,7 @@ class _WebParkingContentState extends State<WebParkingContent>
             ),
             const SizedBox(height: 8),
             Text(
-              _t(
-                'Where to leave the car, and what it costs.',
-                'איפה להשאיר את הרכב, וכמה זה עולה.',
-              ),
+              l.parkingIntro,
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 14,
@@ -183,465 +171,138 @@ class _WebParkingContentState extends State<WebParkingContent>
                 height: 1.21,
               ),
             ),
-            const SizedBox(height: 28),
-            // The notice the phone screen opens with, at full width.
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: BoxDecoration(
-                color: AppColors.turquoise.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.turquoise.withValues(alpha: 0.15),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    IconsaxPlusLinear.info_circle,
-                    size: 20,
-                    color: AppColors.turquoise,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _t(
-                        'Residents holding a valid city parking permit are exempt from payment, and get the first two hours free in every car park in the city.',
-                        'תושבים עם תו חניה עירוני תקף פטורים מתשלום ומקבלים שעתיים ראשונות חינם בכל חניון בעיר',
-                      ),
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 15,
-                        color: AppColors.midBlue,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // BODY — the list and the map, or why there is neither
+  // ─────────────────────────────────────────────
+  Widget _buildBody() {
+    final l = _l;
+    final lots = ref.watch(parkingLotsProvider);
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
+      child: WebSection(
+        child: lots.when(
+          loading: () => const SizedBox(
+            height: 300,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (_, _) => _messageBox(
+            ParkingMessage(
+              icon: IconsaxPlusLinear.warning_2,
+              text: l.parkingLoadError,
+              action: TextButton(
+                onPressed: () => ref.invalidate(parkingLotsProvider),
+                child: Text(l.tryAgain),
               ),
             ),
-          ],
+          ),
+          data: (lots) => lots.isEmpty
+              ? _messageBox(
+                  ParkingMessage(
+                    icon: IconsaxPlusLinear.car,
+                    text: l.parkingEmpty,
+                  ),
+                )
+              : _buildPanes(lots),
         ),
       ),
     );
   }
 
-  // ─────────────────────────────────────────────
-  // TWO COLUMNS — the car parks, and how paying works
-  // ─────────────────────────────────────────────
-  Widget _buildColumns() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 64),
-      child: WebSection(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 3, child: _buildLots()),
-            const SizedBox(width: 40),
-            Expanded(flex: 2, child: _buildPaymentColumn()),
-          ],
-        ),
+  Widget _messageBox(Widget child) {
+    return Container(
+      height: 300,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.midBlue.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kBorder),
       ),
+      child: Center(child: child),
     );
   }
 
-  Widget _buildLots() {
-    final lots = _lots;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _t('Car Parks', 'חניונים'),
-          style: TextStyle(
-            fontFamily: AppFonts.nunito,
-            fontSize: 28,
-            fontWeight: FontWeight.w600,
-            color: AppColors.midBlue,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          lots.length == 1
-              ? _t('1 car park', 'חניון אחד')
-              : _t('${lots.length} car parks', '${lots.length} חניונים'),
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 14,
-            color: _kGreyText,
-            height: 1.21,
-          ),
-        ),
-        const SizedBox(height: 24),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const gap = 20.0;
-            // Two across in this column at every desktop width; one below,
-            // where the column itself is narrow.
-            final perRow = constraints.maxWidth >= 560 ? 2 : 1;
-            final cardWidth =
-                (constraints.maxWidth - gap * (perRow - 1)) / perRow;
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
+  Widget _buildPanes(List<ParkingLot> lots) {
+    final l = _l;
+    return SizedBox(
+      height: _kPaneHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 440,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final lot in lots)
-                  SizedBox(
-                    width: cardWidth,
-                    // Fixed so a two-line name still lines its card up with
-                    // the one beside it.
-                    height: 132,
-                    child: _LotCard(lot: lot),
-                  ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentColumn() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _t('Paying for Parking', 'תשלום על חניה'),
-          style: TextStyle(
-            fontFamily: AppFonts.nunito,
-            fontSize: 28,
-            fontWeight: FontWeight.w600,
-            color: AppColors.midBlue,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          _t('What applies across the city.', 'מה שתקף בכל רחבי העיר.'),
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 14,
-            color: _kGreyText,
-            height: 1.21,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: _kParkingBg,
-            border: Border.all(color: _kParkingBorder),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _paymentRow(
-                IconsaxPlusLinear.clock,
-                _t('Paid hours', 'שעות תשלום'),
-                '08:00–19:00',
-                // Two numbers either side of a dash are bidi-neutral, so in
-                // Hebrew the range read back to front: "19:00–08:00".
-                isLtr: true,
-              ),
-              _paymentRow(
-                IconsaxPlusLinear.car,
-                _t('Blue-and-white', 'כחול-לבן'),
-                _t('Free with a permit', 'חינם עם תו'),
-              ),
-              _paymentRow(
-                IconsaxPlusLinear.ticket,
-                _t('Resident permit', 'תו תושב'),
-                _t('First 2 hours free', '2 שעות ראשונות חינם'),
-                isLast: true,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _kBorder),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.midBlue.withValues(alpha: 0.06),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        IconsaxPlusLinear.call,
-                        size: 22,
-                        color: AppColors.midBlue,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      _t('Municipal Hotline', 'המוקד העירוני'),
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: _kHeading,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _t('The city hotline, 24/7.', 'המוקד העירוני, 24/7.'),
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  color: _kGreyText,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Always LTR — a phone number reads left to right in Hebrew too.
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Text(
-                  '106',
+                Text(
+                  l.parkingLotsHeading,
                   style: TextStyle(
                     fontFamily: AppFonts.nunito,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.midBlue,
                   ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _t('or 08-9726000', 'או 08-9726000'),
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  color: _kGreyText,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _paymentRow(
-    IconData icon,
-    String label,
-    String value, {
-    bool isLast = false,
-    bool isLtr = false,
-  }) {
-    return Container(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
-      margin: EdgeInsets.only(bottom: isLast ? 0 : 16),
-      decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : const Border(bottom: BorderSide(color: _kParkingBorder)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: _kIconGrey),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                color: _kGreyText,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Builder(
-            builder: (context) {
-              final text = Text(
-                value,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _kHeading,
-                ),
-                textAlign: TextAlign.end,
-              );
-              return isLtr
-                  ? Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: text,
-                    )
-                  : text;
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // MAP — still a placeholder, as on the phone
-  // ─────────────────────────────────────────────
-  Widget _buildMapPlaceholder() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 64),
-      child: WebSection(
-        child: Container(
-          height: 300,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.midBlue.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _kBorder),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                IconsaxPlusLinear.map_1,
-                size: 44,
-                color: AppColors.midBlue.withValues(alpha: 0.3),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _t('Parking map', 'מפת חניונים'),
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: _kHeading,
-                ),
-              ),
-              const SizedBox(height: 10),
-              // The phone screen draws the same empty frame. Nothing holds
-              // coordinates for the car parks, so there is nothing to plot yet.
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  _t('Coming soon', 'בקרוב'),
+                const SizedBox(height: 4),
+                Text(
+                  l.parkingLotCount(lots.length),
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
                     color: _kGreyText,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                Expanded(
+                  // A column rather than a lazy list, so a pin far down the
+                  // list still has a card built to scroll to.
+                  child: SingleChildScrollView(
+                    controller: _listScroll,
+                    padding: const EdgeInsetsDirectional.only(end: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final lot in lots) ...[
+                          ParkingLotCard(
+                            key: _cardKeys.putIfAbsent(lot.id, GlobalKey.new),
+                            lot: lot,
+                            l: l,
+                            english: !_isHebrew,
+                            selected: lot.id == _selectedId,
+                            onTap: () => _selectFromList(lot),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Lot {
-  final String name, capacity, rate;
-  const _Lot({required this.name, required this.capacity, required this.rate});
-}
-
-class _LotCard extends StatelessWidget {
-  final _Lot lot;
-  const _LotCard({required this.lot});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _kBorder),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
+          const SizedBox(width: 28),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppColors.midBlue.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _kBorder),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Center(
-                  child: Icon(
-                    IconsaxPlusLinear.car,
-                    size: 22,
-                    color: AppColors.midBlue,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  lot.name,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: _kHeading,
-                    height: 1.3,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                child: ParkingMap(
+                  lots: lots,
+                  controller: _map,
+                  selectedId: _selectedId,
+                  onSelect: _selectFromMap,
+                  websiteTiles: true,
                 ),
               ),
-            ],
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              const Icon(
-                IconsaxPlusLinear.element_3,
-                size: 15,
-                color: _kIconGrey,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                lot.capacity,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  color: _kGreyText,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                lot.rate,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.midBlue,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
         ],
       ),

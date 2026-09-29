@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_realestate_provider.dart';
 import '../widgets/admin_listing_photos_field.dart';
+import '../widgets/admin_load_error.dart';
 
 class AdminRealEstateScreen extends ConsumerStatefulWidget {
   const AdminRealEstateScreen({super.key});
@@ -151,19 +152,18 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
               ],
 
               const Spacer(),
-              listingsAsync
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} נכסים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+              // on a failed load and greys the whole section instead of letting
+              // the list below show the error and a retry.
+              if (listingsAsync.valueOrNull case final list?)
+                Text(
+                  '${list.length} נכסים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showListingEditor(context, ref),
@@ -265,18 +265,21 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
       case 'edit':
         _showListingEditor(context, ref, listing: listing);
       case 'approve':
-        notifier.approve(id);
+        runAdminAction(context, () => notifier.approve(id));
       case 'reject':
-        notifier.reject(id);
+        runAdminAction(context, () => notifier.reject(id));
       case 'activate':
-        notifier.updateStatus(id, 'active');
+        runAdminAction(context, () => notifier.updateStatus(id, 'active'));
       case 'sold':
-        notifier.updateStatus(
-          id,
-          listing['kind'] == 'rent' ? 'rented' : 'sold',
+        runAdminAction(
+          context,
+          () => notifier.updateStatus(
+            id,
+            listing['kind'] == 'rent' ? 'rented' : 'sold',
+          ),
         );
       case 'expire':
-        notifier.updateStatus(id, 'expired');
+        runAdminAction(context, () => notifier.updateStatus(id, 'expired'));
       case 'delete':
         showDialog(
           context: context,
@@ -304,7 +307,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  notifier.deleteListing(id);
+                  runAdminAction(context, () => notifier.deleteListing(id));
                 },
                 child: Text(
                   'מחק',
@@ -591,18 +594,22 @@ class _ListingTable extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Text(
-                              // The row is not removed; it becomes status = 'removed'.
-                              'הסר',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                                color: AppColors.error,
+                          // "Remove" sets status = 'removed', the same as
+                          // "דחייה" on a pending listing, so it is offered
+                          // only where it does something of its own.
+                          if (status != 'pending' && status != 'removed')
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text(
+                                // The row is not removed; it becomes status = 'removed'.
+                                'הסר',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  color: AppColors.error,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ],

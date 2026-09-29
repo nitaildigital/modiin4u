@@ -3,6 +3,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_audit_provider.dart';
+import '../providers/admin_trash_provider.dart' show trashStateLabels;
 
 class AdminAuditScreen extends ConsumerStatefulWidget {
   const AdminAuditScreen({super.key});
@@ -20,9 +21,17 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     super.dispose();
   }
 
+  void _setAction(String action) {
+    setState(() => _actionFilter = action);
+    ref
+        .read(adminAuditProvider.notifier)
+        .setActionFilter(action.isEmpty ? null : action);
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(adminAuditProvider);
+    final loaded = asyncData.valueOrNull;
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Column(
@@ -78,42 +87,32 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _actionFilter.isEmpty, () {
-                setState(() => _actionFilter = '');
-                ref.read(adminAuditProvider.notifier).setActionFilter(null);
-              }),
-              _FilterChip('יצירה', _actionFilter == 'create', () {
-                setState(() => _actionFilter = 'create');
-                ref.read(adminAuditProvider.notifier).setActionFilter('create');
-              }),
-              _FilterChip('עריכה', _actionFilter == 'update', () {
-                setState(() => _actionFilter = 'update');
-                ref.read(adminAuditProvider.notifier).setActionFilter('update');
-              }),
-              _FilterChip('מחיקה', _actionFilter == 'delete', () {
-                setState(() => _actionFilter = 'delete');
-                ref.read(adminAuditProvider.notifier).setActionFilter('delete');
-              }),
-              _FilterChip('אישור', _actionFilter == 'approve', () {
-                setState(() => _actionFilter = 'approve');
-                ref
-                    .read(adminAuditProvider.notifier)
-                    .setActionFilter('approve');
-              }),
+              _FilterChip('הכל', _actionFilter.isEmpty, () => _setAction('')),
+              for (final action in const [
+                'create',
+                'update',
+                'publish',
+                'archive',
+                'approve',
+                'reject',
+                'restore',
+                'delete',
+              ])
+                _FilterChip(
+                  auditActionLabels[action]!,
+                  _actionFilter == action,
+                  () => _setAction(action),
+                ),
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (l) => Text(
-                          '${l.length} רשומות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              if (loaded != null)
+                Text(
+                  '${loaded.length} רשומות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
             ],
           ),
         ),
@@ -163,6 +162,22 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                 itemBuilder: (_, i) {
                   final e = list[i];
                   final action = e['action'] as String? ?? '';
+                  final after = e['after_data'] is Map
+                      ? e['after_data'] as Map
+                      : const {};
+                  final before = e['before_data'] is Map
+                      ? e['before_data'] as Map
+                      : const {};
+                  final admin = e['admin_users'] is Map
+                      ? e['admin_users'] as Map
+                      : const {};
+                  final adminName = admin['profiles'] is Map
+                      ? ((admin['profiles'] as Map)['full_name'] as String? ??
+                                '')
+                            .trim()
+                      : '';
+                  final label = (after['label'] as String? ?? '').trim();
+                  final summary = _summary(after, before);
                   final isLast = i == list.length - 1;
 
                   return IntrinsicHeight(
@@ -267,7 +282,9 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    e['entity_title'] as String? ?? '',
+                                    label.isEmpty
+                                        ? (e['entity_id'] as String? ?? '')
+                                        : label,
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 14,
@@ -283,8 +300,9 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                                         backgroundColor: AppColors.turquoise
                                             .withValues(alpha: 0.1),
                                         child: Text(
-                                          (e['admin_name'] as String? ??
-                                              '?')[0],
+                                          adminName.isEmpty
+                                              ? '?'
+                                              : adminName.characters.first,
                                           style: TextStyle(
                                             fontFamily: AppFonts.rubik,
                                             fontSize: 9,
@@ -295,7 +313,9 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        e['admin_name'] as String? ?? '',
+                                        adminName.isEmpty
+                                            ? 'מנהל שהוסר'
+                                            : adminName,
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 12,
@@ -319,8 +339,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                                       ],
                                     ],
                                   ),
-                                  if (e['changes'] != null &&
-                                      (e['changes'] as Map).isNotEmpty) ...[
+                                  if (summary.isNotEmpty) ...[
                                     const SizedBox(height: 8),
                                     Container(
                                       width: double.infinity,
@@ -329,83 +348,14 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                                         color: AppColors.surfaceLight,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'שינויים:',
-                                            style: TextStyle(
-                                              fontFamily: AppFonts.rubik,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.grayText,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          ...(e['changes'] as Map).entries
-                                              .take(3)
-                                              .map(
-                                                (entry) => Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        bottom: 2,
-                                                      ),
-                                                  child: RichText(
-                                                    text: TextSpan(
-                                                      style: TextStyle(
-                                                        fontFamily:
-                                                            AppFonts.rubik,
-                                                        fontSize: 11,
-                                                        color: AppColors.navy,
-                                                      ),
-                                                      children: [
-                                                        TextSpan(
-                                                          text:
-                                                              '${entry.key}: ',
-                                                          style:
-                                                              const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
-                                                        ),
-                                                        if (entry.value
-                                                            is Map) ...[
-                                                          TextSpan(
-                                                            text:
-                                                                '${(entry.value as Map)['old'] ?? ''} → ',
-                                                            style: TextStyle(
-                                                              color: AppColors
-                                                                  .error
-                                                                  .withValues(
-                                                                    alpha: 0.7,
-                                                                  ),
-                                                              decoration:
-                                                                  TextDecoration
-                                                                      .lineThrough,
-                                                            ),
-                                                          ),
-                                                          TextSpan(
-                                                            text:
-                                                                '${(entry.value as Map)['new'] ?? ''}',
-                                                            style:
-                                                                const TextStyle(
-                                                                  color: AppColors
-                                                                      .success,
-                                                                ),
-                                                          ),
-                                                        ] else
-                                                          TextSpan(
-                                                            text:
-                                                                '${entry.value}',
-                                                          ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                        ],
+                                      child: Text(
+                                        summary,
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 11,
+                                          height: 1.5,
+                                          color: AppColors.navy,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -431,6 +381,9 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     'update' => AppColors.turquoise,
     'delete' => AppColors.error,
     'approve' => AppColors.gold,
+    'publish' => AppColors.success,
+    'restore' => AppColors.success,
+    'archive' => AppColors.grayText,
     'reject' => AppColors.error,
     'login' => AppColors.midBlue,
     _ => AppColors.grayLight,
@@ -440,29 +393,49 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     'update' => Icons.edit,
     'delete' => Icons.delete_outline,
     'approve' => Icons.check_circle_outline,
+    'publish' => Icons.publish,
+    'restore' => Icons.restore,
+    'archive' => Icons.archive_outlined,
     'reject' => Icons.cancel_outlined,
     'login' => Icons.login,
     _ => Icons.info_outline,
   };
-  String _actionLabel(String a) => switch (a) {
-    'create' => 'יצירה',
-    'update' => 'עריכה',
-    'delete' => 'מחיקה',
-    'approve' => 'אישור',
-    'reject' => 'דחייה',
-    'login' => 'כניסה',
-    _ => a,
-  };
-  String _entityLabel(String t) => switch (t) {
-    'business' => 'עסק',
-    'article' => 'כתבה',
-    'event' => 'אירוע',
-    'review' => 'ביקורת',
-    'user' => 'משתמש',
-    'category' => 'קטגוריה',
-    'campaign' => 'קמפיין',
-    'offer' => 'מבצע',
-    _ => t,
+  String _actionLabel(String a) => auditActionLabels[a] ?? a;
+  String _entityLabel(String t) => auditTableLabels[t] ?? t;
+
+  /// What changed, in a line: the state columns with their old and new
+  /// values, then the names of the other fields written. The log keeps no
+  /// other values (see `recordAdminAction`).
+  String _summary(Map after, Map before) {
+    final parts = <String>[];
+    for (final key in const ['status', 'is_active', 'published']) {
+      if (!after.containsKey(key)) continue;
+      final to = _value(after[key]);
+      final from = before.containsKey(key) ? _value(before[key]) : null;
+      final name = switch (key) {
+        'status' => 'סטטוס',
+        'is_active' => 'פעיל',
+        _ => 'מפורסם',
+      };
+      parts.add(from == null ? '$name: $to' : '$name: $from ← $to');
+    }
+    final fields = after['fields'] is List
+        ? [
+            for (final f in after['fields'] as List)
+              if (!const {'status', 'is_active', 'published'}.contains(f)) '$f',
+          ]
+        : const <String>[];
+    if (fields.isNotEmpty) parts.add('שדות: ${fields.join(', ')}');
+    return parts.join(' · ');
+  }
+
+  // In Hebrew, so the arrow between old and new reads right to left with
+  // the rest of the line; a Latin run would lay it out backwards.
+  String _value(Object? v) => switch (v) {
+    true => 'כן',
+    false => 'לא',
+    null => '—',
+    _ => trashStateLabels['$v'] ?? '$v',
   };
 
   String _timeAgo(String iso) {

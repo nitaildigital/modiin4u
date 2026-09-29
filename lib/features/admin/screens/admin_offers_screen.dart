@@ -9,6 +9,7 @@ import '../../deals/models/offer.dart' show offerBadge;
 import '../providers/admin_offers_provider.dart';
 import '../widgets/admin_events_form_fields.dart';
 import '../widgets/image_upload_field.dart';
+import '../widgets/admin_load_error.dart';
 
 class AdminOffersScreen extends ConsumerStatefulWidget {
   const AdminOffersScreen({super.key});
@@ -44,7 +45,12 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
     return Column(
       children: [
         // ─── Stats bar ───
-        asyncData.whenData((list) {
+        // `valueOrNull`, not `whenData(...).value`: the latter rethrows on a
+        // failed load and greys the whole section instead of letting the
+        // table below show the error and a retry.
+        if (asyncData.valueOrNull case final list?)
+          Builder(
+            builder: (context) {
               final active = list.where((o) => o['status'] == 'active').length;
               final totalClaims = list.fold<int>(
                 0,
@@ -82,8 +88,8 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                   ],
                 ),
               );
-            }).value ??
-            const SizedBox.shrink(),
+            },
+          ),
 
         // ─── Toolbar ───
         Container(
@@ -162,19 +168,15 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                 () => _filter('redeemed_out'),
               ),
               const Spacer(),
-              asyncData
-                      .whenData(
-                        (list) => Text(
-                          '${list.length} מבצעים',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              if (asyncData.valueOrNull case final list?)
+                Text(
+                  '${list.length} מבצעים',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 13,
+                    color: AppColors.grayText,
+                  ),
+                ),
               const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEditor(context),
@@ -199,14 +201,10 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
         Expanded(
           child: asyncData.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Text(
-                'שגיאה: $e',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  color: AppColors.error,
-                ),
-              ),
+            error: (e, _) => AdminLoadError(
+              message: 'שגיאה בטעינת המבצעים',
+              error: e,
+              onRetry: () => ref.read(adminOfferListProvider.notifier).load(),
             ),
             data: (list) {
               if (list.isEmpty) {
@@ -423,14 +421,15 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                     _menuItem('edit', 'עריכה'),
                                     if (status != 'active')
                                       _menuItem('activate', 'הפעל'),
-                                    if (status == 'active')
-                                      _menuItem('expire', 'סיים'),
-                                    _menuItem(
-                                      'delete',
-                                      // The row is not removed; it becomes status = 'expired'.
-                                      'סיום',
-                                      color: AppColors.error,
-                                    ),
+                                    // One item: "end" and "delete" both set
+                                    // status = 'expired' — the row is never
+                                    // removed, and "הפעל" brings it back.
+                                    if (status != 'expired')
+                                      _menuItem(
+                                        'expire',
+                                        'סיים מבצע',
+                                        color: AppColors.error,
+                                      ),
                                   ],
                                 ),
                               ],
@@ -469,7 +468,10 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('שגיאה: $e'), backgroundColor: AppColors.error),
+        SnackBar(
+          content: Text('הפעולה נכשלה: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -483,8 +485,6 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
       case 'activate':
         _run(() => notifier.updateStatus(id, 'active'));
       case 'expire':
-        _run(() => notifier.updateStatus(id, 'expired'));
-      case 'delete':
         _run(() => notifier.deleteOffer(id));
     }
   }

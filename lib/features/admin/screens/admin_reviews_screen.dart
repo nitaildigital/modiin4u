@@ -116,22 +116,21 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                 ),
               const Spacer(),
               // Nothing is printed while the count is unknown, rather than a
-              // zero that reads as "no reviews".
-              asyncReviews
-                      .whenData(
-                        (rows) => Text(
-                          notifier.totalCount == 0
-                              ? 'אין ביקורות'
-                              : '${notifier.totalCount} ביקורות',
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 13,
-                            color: AppColors.adminTextLight,
-                          ),
-                        ),
-                      )
-                      .value ??
-                  const SizedBox.shrink(),
+              // zero that reads as "no reviews". `hasValue`, not
+              // `whenData(...).value`: the latter rethrows on a failed load
+              // and greys the whole section instead of letting the list below
+              // show the error and a retry.
+              if (asyncReviews.hasValue)
+                Text(
+                  notifier.totalCount == 0
+                      ? 'אין ביקורות'
+                      : '${notifier.totalCount} ביקורות',
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 13,
+                    color: AppColors.adminTextLight,
+                  ),
+                ),
             ],
           ),
         ),
@@ -348,20 +347,29 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                 IconButton(
                   tooltip: 'אישור',
                   icon: const Icon(Icons.check, color: AppColors.success),
-                  onPressed: () => _run(
-                    () =>
-                        ref.read(adminReviewListProvider.notifier).approve(id),
-                    'הביקורת אושרה',
-                  ),
+                  onPressed: _busy.contains(id)
+                      ? null
+                      : () => _run(
+                          () => ref
+                              .read(adminReviewListProvider.notifier)
+                              .approve(id),
+                          'הביקורת אושרה',
+                          id: id,
+                        ),
                 ),
               if (status != 'rejected')
                 IconButton(
                   tooltip: 'דחייה',
                   icon: const Icon(Icons.close, color: AppColors.error),
-                  onPressed: () => _run(
-                    () => ref.read(adminReviewListProvider.notifier).reject(id),
-                    'הביקורת נדחתה',
-                  ),
+                  onPressed: _busy.contains(id)
+                      ? null
+                      : () => _run(
+                          () => ref
+                              .read(adminReviewListProvider.notifier)
+                              .reject(id),
+                          'הביקורת נדחתה',
+                          id: id,
+                        ),
                 ),
               if (status != 'hidden')
                 IconButton(
@@ -370,10 +378,15 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                     Icons.visibility_off_outlined,
                     color: AppColors.adminTextLight,
                   ),
-                  onPressed: () => _run(
-                    () => ref.read(adminReviewListProvider.notifier).hide(id),
-                    'הביקורת הוסתרה',
-                  ),
+                  onPressed: _busy.contains(id)
+                      ? null
+                      : () => _run(
+                          () => ref
+                              .read(adminReviewListProvider.notifier)
+                              .hide(id),
+                          'הביקורת הוסתרה',
+                          id: id,
+                        ),
                 ),
             ],
           ),
@@ -414,8 +427,17 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
     _ => AppColors.adminTextLight,
   };
 
-  Future<void> _run(Future<void> Function() write, String done) async {
+  /// Reviews with a write in flight, whose buttons are off until it lands so
+  /// a second click cannot race the first.
+  final _busy = <String>{};
+
+  Future<void> _run(
+    Future<void> Function() write,
+    String done, {
+    String? id,
+  }) async {
     final messenger = ScaffoldMessenger.of(context);
+    if (id != null) setState(() => _busy.add(id));
     try {
       await write();
       if (!mounted) return;
@@ -428,6 +450,8 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
           content: Text('הפעולה נכשלה: $e'),
         ),
       );
+    } finally {
+      if (id != null && mounted) setState(() => _busy.remove(id));
     }
   }
 }

@@ -6,10 +6,13 @@
 -- source. The client asked for every lot in the city with its location,
 -- managed from the panel (handover, point 4), so this is the table he fills.
 --
--- Only what he can know and keep true: a name, where it is, and a line of
--- his own about it (hours, price, residents' permit). No capacity or live
--- occupancy — there is no feed for either, and a number nobody updates is
--- worse than none.
+-- Only what he can know and keep true: a name, where it is, its hours, a
+-- word on the price (or that it is free), how many spaces it has, and a line
+-- of his own for the rest (residents' permit, entrance). Each is optional
+-- except the name and the point, and is_free is left null when he does not
+-- know, so the screens say nothing rather than "paid". Capacity is the
+-- number of spaces he enters, not live occupancy — there is no feed for
+-- that, and the design's "high availability" is left out.
 --
 -- Hiding a lot sets is_active = false rather than deleting it; the client
 -- asked for a trash, not permanent removal.
@@ -19,6 +22,10 @@ create table if not exists parking_lots (
   name        text not null,
   name_en     text,
   address     text,
+  hours       text,
+  price_note  text,
+  is_free     boolean,
+  capacity    int check (capacity is null or capacity > 0),
   notes       text,
   latitude    double precision not null check (latitude between -90 and 90),
   longitude   double precision not null check (longitude between -180 and 180),

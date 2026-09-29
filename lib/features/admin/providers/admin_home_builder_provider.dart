@@ -56,17 +56,45 @@ class AdminHomeBuilderNotifier extends AdminTableNotifier {
   /// notice's text and link never reached the table. This writes the block
   /// directly instead.
   Future<void> createBlock(Map<String, dynamic> b) async {
-    await SupabaseConfig.client.from('home_blocks').insert(_columns(b));
+    final fields = _columns(b);
+    final row = await SupabaseConfig.client
+        .from('home_blocks')
+        .insert(fields)
+        .select('id')
+        .maybeSingle();
+    await recordAdminAction(
+      action: 'create',
+      table: 'home_blocks',
+      rowId: row?['id']?.toString(),
+      fields: fields,
+      label: _label(fields),
+    );
     await load();
   }
 
   /// See [createBlock]: the same, for an existing row.
   Future<void> updateBlock(String id, Map<String, dynamic> f) async {
-    await SupabaseConfig.client
-        .from('home_blocks')
-        .update(_columns(f))
-        .eq('id', id);
+    final fields = _columns(f);
+    final before = state.valueOrNull?.where((b) => b['id'] == id).firstOrNull;
+    await updateRow('home_blocks', id, fields);
+    await recordAdminAction(
+      action: auditActionFor(fields),
+      table: 'home_blocks',
+      rowId: id,
+      fields: fields,
+      before: before,
+      label: _label(fields) ?? _label(before),
+    );
     await load();
+  }
+
+  /// A block's name for the audit log: its title, or its kind when it has
+  /// none (the hero and banner rows are untitled).
+  static String? _label(Map<String, dynamic>? b) {
+    if (b == null) return null;
+    final title = (b['title'] as String? ?? '').trim();
+    if (title.isNotEmpty) return title;
+    return homeBlockTypes[b['block_type']];
   }
 
   /// Takes the block off the home page and keeps it, to switch back on.
@@ -140,6 +168,14 @@ class AdminHomeBuilderNotifier extends AdminTableNotifier {
             .update({'sort_order': i})
             .eq('id', rows[i]['id'] as String);
       }
+      // One entry for the block that was moved; the others only shifted.
+      await recordAdminAction(
+        action: 'update',
+        table: 'home_blocks',
+        rowId: id,
+        fields: const {'sort_order': null},
+        label: _label(moved),
+      );
     } finally {
       await load();
     }
@@ -152,11 +188,23 @@ class AdminHomeBuilderNotifier extends AdminTableNotifier {
   /// also be published on its own from its editor.
   Future<void> publishAll() async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await SupabaseConfig.client
+    final fields = {'published': true, 'published_at': now};
+    final published = await SupabaseConfig.client
         .from('home_blocks')
-        .update({'published': true, 'published_at': now})
+        .update(fields)
         .eq('is_active', true)
-        .eq('published', false);
+        .eq('published', false)
+        .select('id, title, block_type');
+    for (final b in List<Map<String, dynamic>>.from(published)) {
+      await recordAdminAction(
+        action: 'publish',
+        table: 'home_blocks',
+        rowId: b['id'] as String?,
+        fields: fields,
+        before: const {'published': false},
+        label: _label(b),
+      );
+    }
     await load();
   }
 }
