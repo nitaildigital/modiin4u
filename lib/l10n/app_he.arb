@@ -690,5 +690,23 @@
     }
   },
   "sitePageBack": "חזרה",
-  "sitePageLoadError": "לא ניתן היה לטעון את העמוד"
+  "sitePageLoadError": "לא ניתן היה לטעון את העמוד",
+  "filterCuisine": "סוג מטבח",
+  "allCuisines": "כל סוגי המטבח",
+  "filterKosher": "כשרות",
+  "notKosher": "לא כשר",
+  "filterRating": "דירוג",
+  "ratingAndUp": "ומעלה",
+  "diningOptions": "אפשרויות הגשה",
+  "sortBy": "מיון",
+  "sortNewest": "חדש ביותר",
+  "sortRating": "דירוג",
+  "sortName": "שם",
+  "candleLighting": "כניסת שבת",
+  "havdalahLabel": "צאת שבת",
+  "shabbatAndHolidaysTitle": "שבת וחגים",
+  "upcomingHolidays": "חגים ומועדים קרובים",
+  "noUpcomingHolidays": "אין חגים בחודשים הקרובים",
+  "shabbatTimesCredit": "הזמנים מ-Hebcal.com, מחושבים למודיעין",
+  "shabbatLoadError": "לא ניתן היה לטעון את זמני השבת."
 }

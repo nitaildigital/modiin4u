@@ -1627,4 +1627,58 @@ class LHe extends L {
 
   @override
   String get sitePageLoadError => 'לא ניתן היה לטעון את העמוד';
+
+  @override
+  String get filterCuisine => 'סוג מטבח';
+
+  @override
+  String get allCuisines => 'כל סוגי המטבח';
+
+  @override
+  String get filterKosher => 'כשרות';
+
+  @override
+  String get notKosher => 'לא כשר';
+
+  @override
+  String get filterRating => 'דירוג';
+
+  @override
+  String get ratingAndUp => 'ומעלה';
+
+  @override
+  String get diningOptions => 'אפשרויות הגשה';
+
+  @override
+  String get sortBy => 'מיון';
+
+  @override
+  String get sortNewest => 'חדש ביותר';
+
+  @override
+  String get sortRating => 'דירוג';
+
+  @override
+  String get sortName => 'שם';
+
+  @override
+  String get candleLighting => 'כניסת שבת';
+
+  @override
+  String get havdalahLabel => 'צאת שבת';
+
+  @override
+  String get shabbatAndHolidaysTitle => 'שבת וחגים';
+
+  @override
+  String get upcomingHolidays => 'חגים ומועדים קרובים';
+
+  @override
+  String get noUpcomingHolidays => 'אין חגים בחודשים הקרובים';
+
+  @override
+  String get shabbatTimesCredit => 'הזמנים מ-Hebcal.com, מחושבים למודיעין';
+
+  @override
+  String get shabbatLoadError => 'לא ניתן היה לטעון את זמני השבת.';
 }

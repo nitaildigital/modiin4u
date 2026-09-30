@@ -13,6 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import 'web_business_list_screen.dart';
 import '../../../shared/providers/nav_categories_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../restaurants/providers/restaurant_providers.dart';
 
 /// Businesses in one category, or all of them when [categoryId] is null.
 class BusinessListScreen extends ConsumerWidget {
@@ -51,10 +52,13 @@ class BusinessListScreen extends ConsumerWidget {
 /// The phone's category page — the mobile "Bars" frame: back and title, a
 /// search field with the filter control, the count, then one card a row.
 ///
-/// The filter control opens the same two filters the website's category
-/// page has (Kosher, Delivery) — the two a column can answer. This page had
-/// no filter at all on a phone. The search narrows the loaded list by name
-/// and address as you type.
+/// The filter control opens the filters the website's restaurants listing
+/// has — cuisine, kosher or not, a minimum rating, delivery, and the order —
+/// with cuisine offered on the restaurants list, where it can narrow
+/// something. It had only Kosher and Delivery, and the client asked for the
+/// website's set. Figma draws the control but no sheet, so the sheet is built
+/// from the page's own pills. The search narrows the loaded list by name and
+/// address as you type.
 class _MobileBusinessList extends ConsumerStatefulWidget {
   final String? categoryId;
   final String title;
@@ -69,8 +73,17 @@ class _MobileBusinessList extends ConsumerStatefulWidget {
 class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
   final _search = TextEditingController();
   String _query = '';
-  bool _kosher = false;
+
+  /// `all`, `kosher` or `not`, as on the website.
+  String _kosher = 'all';
   bool _delivery = false;
+
+  /// 0 for any rating, otherwise the fewest stars a place may have.
+  int _minRating = 0;
+
+  /// Cuisine slugs; empty means every cuisine.
+  final Set<String> _cuisines = {};
+  _Sort _sort = _Sort.newest;
 
   bool get _isHe => Localizations.localeOf(context).languageCode == 'he';
 
@@ -80,34 +93,73 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
     super.dispose();
   }
 
-  List<Business> _visible(List<Business> rows) {
+  bool get _filtering =>
+      _kosher != 'all' || _delivery || _minRating > 0 || _cuisines.isNotEmpty;
+
+  void _clearFilters() {
+    _kosher = 'all';
+    _delivery = false;
+    _minRating = 0;
+    _cuisines.clear();
+    _sort = _Sort.newest;
+  }
+
+  /// [slugs] holds each place's food categories, for the cuisine filter.
+  List<Business> _visible(List<Business> rows, Map<String, Set<String>> slugs) {
     final q = _query.trim().toLowerCase();
-    return rows.where((b) {
-      if (_kosher && b.kosherStatus == null) return false;
+    final kept = rows.where((b) {
+      if (_kosher == 'kosher' && b.kosherStatus == null) return false;
+      if (_kosher == 'not' && b.kosherStatus != null) return false;
       if (_delivery && !b.hasDelivery) return false;
+      if (_minRating > 0 && b.rating < _minRating) return false;
+      if (_cuisines.isNotEmpty &&
+          !_cuisines.any((c) => slugs[b.id]?.contains(c) ?? false)) {
+        return false;
+      }
       if (q.isEmpty) return true;
       return b.name.toLowerCase().contains(q) ||
           b.address.toLowerCase().contains(q);
     }).toList();
+
+    // The rows arrive newest first; the website sorts the same three ways,
+    // rating ties going to the place with more reviews.
+    return switch (_sort) {
+      _Sort.newest => kept,
+      _Sort.rating =>
+        kept..sort((a, b) {
+          final byRating = b.rating.compareTo(a.rating);
+          return byRating != 0
+              ? byRating
+              : b.reviewCount.compareTo(a.reviewCount);
+        }),
+      _Sort.name => kept..sort((a, b) => a.name.compareTo(b.name)),
+    };
   }
 
-  Future<void> _openFilters() async {
+  Future<void> _openFilters(List<BusinessCategory> cuisines) async {
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
-      constraints: const BoxConstraints(minWidth: double.infinity),
+      constraints: BoxConstraints(
+        minWidth: double.infinity,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+      ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheet) {
-          Widget chip(String label, bool on, VoidCallback toggle) {
+          final l = L.of(context);
+          void apply(VoidCallback change) {
+            change();
+            setSheet(() {});
+            setState(() {});
+          }
+
+          Widget chip(String label, bool on, VoidCallback change) {
             return GestureDetector(
-              onTap: () {
-                toggle();
-                setSheet(() {});
-                setState(() {});
-              },
+              onTap: () => apply(change),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -133,41 +185,111 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
             );
           }
 
+          Widget section(String title, List<Widget> chips) => Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF3D3D3D),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(spacing: 8, runSpacing: 8, children: chips),
+              ],
+            ),
+          );
+
           return SafeArea(
-            child: Container(
-              // Full width: without it the sheet shrank to its two chips.
-              width: double.infinity,
+            child: SingleChildScrollView(
+              // Full width: without it the sheet shrank to its chips.
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    L.of(context).filter,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
+                  Row(
                     children: [
-                      chip(
-                        L.of(context).kosher,
-                        _kosher,
-                        () => _kosher = !_kosher,
+                      Expanded(
+                        child: Text(
+                          l.filter,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
-                      chip(
-                        L.of(context).delivery,
-                        _delivery,
-                        () => _delivery = !_delivery,
-                      ),
+                      if (_filtering || _sort != _Sort.newest)
+                        TextButton(
+                          onPressed: () => apply(_clearFilters),
+                          child: Text(
+                            l.clearFilter,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              color: AppColors.midBlue,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
+                  if (cuisines.isNotEmpty)
+                    section(l.filterCuisine, [
+                      chip(l.allCuisines, _cuisines.isEmpty, _cuisines.clear),
+                      for (final c in cuisines)
+                        chip(
+                          c.name,
+                          _cuisines.contains(c.slug),
+                          () => _cuisines.contains(c.slug)
+                              ? _cuisines.remove(c.slug)
+                              : _cuisines.add(c.slug),
+                        ),
+                    ]),
+                  section(l.filterKosher, [
+                    chip(l.all, _kosher == 'all', () => _kosher = 'all'),
+                    chip(
+                      l.kosher,
+                      _kosher == 'kosher',
+                      () => _kosher = 'kosher',
+                    ),
+                    chip(l.notKosher, _kosher == 'not', () => _kosher = 'not'),
+                  ]),
+                  section(l.filterRating, [
+                    chip(l.all, _minRating == 0, () => _minRating = 0),
+                    for (final stars in const [4, 3, 2, 1])
+                      chip(
+                        '$stars★ ${l.ratingAndUp}',
+                        _minRating == stars,
+                        () => _minRating = stars,
+                      ),
+                  ]),
+                  section(l.diningOptions, [
+                    chip(l.delivery, _delivery, () => _delivery = !_delivery),
+                  ]),
+                  section(l.sortBy, [
+                    chip(
+                      l.sortNewest,
+                      _sort == _Sort.newest,
+                      () => _sort = _Sort.newest,
+                    ),
+                    chip(
+                      l.sortRating,
+                      _sort == _Sort.rating,
+                      () => _sort = _Sort.rating,
+                    ),
+                    chip(
+                      l.sortName,
+                      _sort == _Sort.name,
+                      () => _sort = _Sort.name,
+                    ),
+                  ]),
                 ],
               ),
             ),
@@ -179,9 +301,58 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = businessesByCategoryProvider(widget.categoryId);
-    final businesses = ref.watch(provider);
-    final filtering = _kosher || _delivery;
+    // A food category — restaurants, one of its cuisines, or cafés — reads
+    // the food places, which carry each place's categories with their
+    // parents. Read straight, "restaurants" left out a pizzeria filed only
+    // under פיצה, which the website's list includes.
+    final categories = ref.watch(categoriesBySlugProvider);
+    final category = categories.valueOrNull?.values
+        .where((c) => c.id == widget.categoryId)
+        .firstOrNull;
+    final parent = categories.valueOrNull?['restaurants'];
+    final foodSlug =
+        category != null &&
+            (category.slug == 'restaurants' ||
+                category.slug == 'cafe-bakery' ||
+                (parent != null && category.parentId == parent.id))
+        ? category.slug
+        : null;
+
+    final ProviderBase<Object?> provider;
+    final AsyncValue<List<Business>> businesses;
+    var slugs = const <String, Set<String>>{};
+    if (widget.categoryId != null && categories.isLoading) {
+      provider = categoriesBySlugProvider;
+      businesses = const AsyncLoading();
+    } else if (foodSlug != null) {
+      provider = foodMapPlacesProvider;
+      final places = ref.watch(foodMapPlacesProvider);
+      businesses = places.whenData(
+        (all) => [
+          for (final p in all)
+            if (p.slugs.contains(foodSlug)) p.business,
+        ],
+      );
+      slugs = {
+        for (final p in places.valueOrNull ?? const <FoodPlace>[])
+          p.business.id: p.slugs,
+      };
+    } else {
+      provider = businessesByCategoryProvider(widget.categoryId);
+      businesses = ref.watch(businessesByCategoryProvider(widget.categoryId));
+    }
+
+    // Cuisine only narrows the restaurants list, and only to cuisines that
+    // have a place in it.
+    final cuisines = foodSlug == 'restaurants'
+        ? [
+            for (final c
+                in ref.watch(cuisineCategoriesProvider).valueOrNull ??
+                    const <BusinessCategory>[])
+              if (slugs.values.any((s) => s.contains(c.slug))) c,
+          ]
+        : const <BusinessCategory>[];
+    final filtering = _filtering;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -264,7 +435,9 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
                               isCollapsed: true,
-                              hintText: L.of(context).searchInPlace(widget.title),
+                              hintText: L
+                                  .of(context)
+                                  .searchInPlace(widget.title),
                               hintStyle: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
@@ -275,7 +448,7 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                         ),
                         IconButton(
                           tooltip: L.of(context).filter,
-                          onPressed: _openFilters,
+                          onPressed: () => _openFilters(cuisines),
                           icon: Badge(
                             isLabelVisible: filtering,
                             smallSize: 8,
@@ -310,12 +483,9 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                           subtitle: 'עסקים יופיעו כאן ברגע שיתווספו',
                         );
                       }
-                      final list = _visible(all);
+                      final list = _visible(all, slugs);
                       return RefreshIndicator(
-                        onRefresh: () async {
-                          ref.invalidate(provider);
-                          await ref.read(provider.future);
-                        },
+                        onRefresh: () async => ref.invalidate(provider),
                         child: ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
@@ -328,8 +498,7 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                                 title: L.of(context).nothingMatchesFilter,
                                 actionLabel: L.of(context).clearFilter,
                                 onAction: () => setState(() {
-                                  _kosher = false;
-                                  _delivery = false;
+                                  _clearFilters();
                                   _query = '';
                                   _search.clear();
                                 }),
@@ -435,3 +604,6 @@ class BusinessListTile extends StatelessWidget {
     );
   }
 }
+
+/// The orders the website's restaurants listing offers.
+enum _Sort { newest, rating, name }

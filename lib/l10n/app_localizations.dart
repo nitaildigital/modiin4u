@@ -3174,6 +3174,114 @@ abstract class L {
   /// In he, this message translates to:
   /// **'לא ניתן היה לטעון את העמוד'**
   String get sitePageLoadError;
+
+  /// No description provided for @filterCuisine.
+  ///
+  /// In he, this message translates to:
+  /// **'סוג מטבח'**
+  String get filterCuisine;
+
+  /// No description provided for @allCuisines.
+  ///
+  /// In he, this message translates to:
+  /// **'כל סוגי המטבח'**
+  String get allCuisines;
+
+  /// No description provided for @filterKosher.
+  ///
+  /// In he, this message translates to:
+  /// **'כשרות'**
+  String get filterKosher;
+
+  /// No description provided for @notKosher.
+  ///
+  /// In he, this message translates to:
+  /// **'לא כשר'**
+  String get notKosher;
+
+  /// No description provided for @filterRating.
+  ///
+  /// In he, this message translates to:
+  /// **'דירוג'**
+  String get filterRating;
+
+  /// No description provided for @ratingAndUp.
+  ///
+  /// In he, this message translates to:
+  /// **'ומעלה'**
+  String get ratingAndUp;
+
+  /// No description provided for @diningOptions.
+  ///
+  /// In he, this message translates to:
+  /// **'אפשרויות הגשה'**
+  String get diningOptions;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In he, this message translates to:
+  /// **'מיון'**
+  String get sortBy;
+
+  /// No description provided for @sortNewest.
+  ///
+  /// In he, this message translates to:
+  /// **'חדש ביותר'**
+  String get sortNewest;
+
+  /// No description provided for @sortRating.
+  ///
+  /// In he, this message translates to:
+  /// **'דירוג'**
+  String get sortRating;
+
+  /// No description provided for @sortName.
+  ///
+  /// In he, this message translates to:
+  /// **'שם'**
+  String get sortName;
+
+  /// No description provided for @candleLighting.
+  ///
+  /// In he, this message translates to:
+  /// **'כניסת שבת'**
+  String get candleLighting;
+
+  /// No description provided for @havdalahLabel.
+  ///
+  /// In he, this message translates to:
+  /// **'צאת שבת'**
+  String get havdalahLabel;
+
+  /// No description provided for @shabbatAndHolidaysTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'שבת וחגים'**
+  String get shabbatAndHolidaysTitle;
+
+  /// No description provided for @upcomingHolidays.
+  ///
+  /// In he, this message translates to:
+  /// **'חגים ומועדים קרובים'**
+  String get upcomingHolidays;
+
+  /// No description provided for @noUpcomingHolidays.
+  ///
+  /// In he, this message translates to:
+  /// **'אין חגים בחודשים הקרובים'**
+  String get noUpcomingHolidays;
+
+  /// No description provided for @shabbatTimesCredit.
+  ///
+  /// In he, this message translates to:
+  /// **'הזמנים מ-Hebcal.com, מחושבים למודיעין'**
+  String get shabbatTimesCredit;
+
+  /// No description provided for @shabbatLoadError.
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לטעון את זמני השבת.'**
+  String get shabbatLoadError;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

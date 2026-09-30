@@ -348,6 +348,7 @@ class _MobileRestaurantsContentState
     final cuisines = ref.watch(cuisineCategoriesProvider);
     final counts =
         ref.watch(businessCountsByCategoryProvider).valueOrNull ?? const {};
+    final places = ref.watch(foodMapPlacesProvider).valueOrNull ?? const [];
 
     return SizedBox(
       height: 150,
@@ -365,19 +366,56 @@ class _MobileRestaurantsContentState
         error: (_, _) => ErrorRetry(
           onRetry: () => ref.invalidate(cuisineCategoriesProvider),
         ),
-        data: (list) => list.isEmpty
-            ? const SizedBox.shrink()
-            : ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: list.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (_, i) => _CuisineCard(
-                  cuisine: _Cuisine.from(list[i], counts[list[i].id]),
-                ),
-              ),
+        data: (list) {
+          if (list.isEmpty) return const SizedBox.shrink();
+          final photos = _cuisinePhotos(list, places);
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: list.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (_, i) {
+              final c = list[i];
+              return _CuisineCard(
+                cuisine: _Cuisine.from(c, counts[c.id], photos[c.slug]),
+                onTap: () => _openCategory(c.slug, c.name),
+              );
+            },
+          );
+        },
       ),
     );
+  }
+
+  /// A photograph for each cuisine card, as the website's cards have.
+  ///
+  /// No category carries its own picture yet, so the phone drew a blue
+  /// placeholder on every card while the website showed food. The website
+  /// takes a photograph from a place inside the cuisine; this does the same:
+  /// the category's own picture where the admin has set one, otherwise the
+  /// first place's photograph that no earlier card has used.
+  Map<String, String?> _cuisinePhotos(
+    List<BusinessCategory> cuisines,
+    List<FoodPlace> places,
+  ) {
+    final used = <String>{};
+    return {
+      for (final c in cuisines)
+        c.slug: (c.imageUrl ?? '').isNotEmpty
+            ? c.imageUrl
+            : () {
+                final photos = places
+                    .where((p) => p.slugs.contains(c.slug))
+                    .map((p) => p.business.imageUrl)
+                    .whereType<String>()
+                    .where((u) => u.isNotEmpty);
+                final pick =
+                    photos.where((u) => !used.contains(u)).firstOrNull ??
+                    photos.firstOrNull;
+                if (pick != null) used.add(pick);
+                return pick;
+              }(),
+    };
   }
 
   // ═══════════════════════════════════════════════
@@ -546,8 +584,8 @@ class _Cuisine {
 
   const _Cuisine(this.id, this.name, this.count, this.imageUrl);
 
-  factory _Cuisine.from(BusinessCategory c, int? count) =>
-      _Cuisine(c.id, c.name, count, c.imageUrl);
+  factory _Cuisine.from(BusinessCategory c, int? count, String? photo) =>
+      _Cuisine(c.id, c.name, count, photo);
 }
 
 class _Place {
@@ -623,57 +661,65 @@ class _HPlace {
 // ═══════════════════════════════════════════════
 class _CuisineCard extends StatelessWidget {
   final _Cuisine cuisine;
-  const _CuisineCard({required this.cuisine});
+
+  /// Opens the cuisine's own list. The card used to do nothing when tapped.
+  final VoidCallback onTap;
+
+  const _CuisineCard({required this.cuisine, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 120,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE7E7E7)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          NetworkPhoto(
-            url: cuisine.imageUrl,
-            height: 90,
-            radius: const BorderRadius.vertical(top: Radius.circular(11)),
-            icon: IconsaxPlusBold.reserve,
-            iconSize: 24,
-          ),
-          // Label
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  cuisine.name,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF0A1230),
-                  ),
-                ),
-                const SizedBox(height: 2.5),
-                if (cuisine.count != null)
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 120,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE7E7E7)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            NetworkPhoto(
+              url: cuisine.imageUrl,
+              height: 90,
+              radius: const BorderRadius.vertical(top: Radius.circular(11)),
+              icon: IconsaxPlusBold.reserve,
+              iconSize: 24,
+            ),
+            // Label
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    '${cuisine.count} מקומות',
+                    cuisine.name,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF5F5E5A),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF0A1230),
                     ),
                   ),
-              ],
+                  const SizedBox(height: 2.5),
+                  if (cuisine.count != null)
+                    Text(
+                      '${cuisine.count} מקומות',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF5F5E5A),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

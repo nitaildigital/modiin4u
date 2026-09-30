@@ -1645,4 +1645,59 @@ class LEn extends L {
 
   @override
   String get sitePageLoadError => 'The page could not be loaded';
+
+  @override
+  String get filterCuisine => 'Cuisine';
+
+  @override
+  String get allCuisines => 'All Cuisines';
+
+  @override
+  String get filterKosher => 'Kosher';
+
+  @override
+  String get notKosher => 'Not Kosher';
+
+  @override
+  String get filterRating => 'Rating';
+
+  @override
+  String get ratingAndUp => '& up';
+
+  @override
+  String get diningOptions => 'Dining Options';
+
+  @override
+  String get sortBy => 'Sort by';
+
+  @override
+  String get sortNewest => 'Newest';
+
+  @override
+  String get sortRating => 'Rating';
+
+  @override
+  String get sortName => 'Name';
+
+  @override
+  String get candleLighting => 'Candle lighting';
+
+  @override
+  String get havdalahLabel => 'Havdalah';
+
+  @override
+  String get shabbatAndHolidaysTitle => 'Shabbat & Holidays';
+
+  @override
+  String get upcomingHolidays => 'Upcoming holidays';
+
+  @override
+  String get noUpcomingHolidays => 'No holidays in the coming months';
+
+  @override
+  String get shabbatTimesCredit =>
+      'Times from Hebcal.com, calculated for Modi\'in';
+
+  @override
+  String get shabbatLoadError => 'The Shabbat times could not be loaded.';
 }
