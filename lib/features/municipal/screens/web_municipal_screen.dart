@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../l10n/app_localizations.dart';
+import '../providers/shabbat_providers.dart';
+import '../widgets/shabbat_widgets.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Municipal — desktop city-services hub
@@ -55,6 +59,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
       label: _t('Shabbat & Holidays', 'שבת וחגים'),
       blurb: _t('Candle lighting and closures', 'הדלקת נרות וסגירות'),
       icon: IconsaxPlusLinear.candle,
+      route: '/shabbat',
     ),
     _Service(
       label: _t('Public Institutions', 'מוסדות ציבור'),
@@ -161,9 +166,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
         backgroundColor: Colors.white,
         body: Column(
           children: [
-            WebNavbar(
-              isHebrew: _isHebrew,
-            ),
+            WebNavbar(isHebrew: _isHebrew),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -475,30 +478,55 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
     );
   }
 
+  /// The coming Shabbat, from Hebcal for Modi'in.
+  ///
+  /// It printed "Sep 18–19, 2026", candle lighting 18:42 and Havdalah 19:38
+  /// for every visitor, every week — times nobody had looked up. Until
+  /// Hebcal answers, or if it cannot, the times are left out rather than
+  /// guessed.
   Widget _buildShabbatCard() {
-    return _quickCard(
-      background: _kShabbatBg,
-      borderColor: _kShabbatAccent.withValues(alpha: 0.2),
-      accent: _kShabbatAccent,
-      icon: IconsaxPlusLinear.candle,
-      title: _t('Upcoming Shabbat', 'שבת הקרובה'),
-      body: [
-        Text(
-          _t('Sep 18–19, 2026', 'י״ח–י״ט אלול, 18–19 בספטמבר'),
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 14,
-            color: _kGreyText,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _infoRow(
-          IconsaxPlusLinear.clock,
-          _t('Candle lighting', 'כניסת שבת'),
-          '18:42',
-        ),
-        _infoRow(IconsaxPlusLinear.moon, _t('Havdalah', 'צאת שבת'), '19:38'),
-      ],
+    return Consumer(
+      builder: (context, ref, _) {
+        final week = ref.watch(shabbatWeekProvider).valueOrNull;
+        final l = lookupL(Locale(_isHebrew ? 'he' : 'en'));
+        final name = week == null ? null : shabbatName(week, _isHebrew);
+        return _quickCard(
+          background: _kShabbatBg,
+          borderColor: _kShabbatAccent.withValues(alpha: 0.2),
+          accent: _kShabbatAccent,
+          icon: IconsaxPlusLinear.candle,
+          title: _t('Upcoming Shabbat', 'שבת הקרובה'),
+          onTap: () => context.push('/shabbat'),
+          body: [
+            if (week != null)
+              Text(
+                name == null
+                    ? shabbatDates(l, week)
+                    : '${shabbatDates(l, week)} · $name',
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  color: _kGreyText,
+                ),
+              ),
+            const SizedBox(height: 16),
+            if (week?.candles != null)
+              _infoRow(
+                IconsaxPlusLinear.clock,
+                _t('Candle lighting', 'כניסת שבת'),
+                week!.candles!,
+                valueDirection: TextDirection.ltr,
+              ),
+            if (week?.havdalah != null)
+              _infoRow(
+                IconsaxPlusLinear.moon,
+                _t('Havdalah', 'צאת שבת'),
+                week!.havdalah!,
+                valueDirection: TextDirection.ltr,
+              ),
+          ],
+        );
+      },
     );
   }
 

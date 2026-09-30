@@ -10,6 +10,7 @@ import '../../features/news/screens/article_screen.dart';
 import '../../features/map/screens/map_screen.dart';
 import '../../features/municipal/screens/municipal_screen.dart';
 import '../../features/municipal/screens/parking_screen.dart';
+import '../../features/municipal/screens/shabbat_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/profile_screen.dart';
@@ -372,6 +373,11 @@ final appRouter = GoRouter(
       path: '/parking',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ParkingScreen(),
+    ),
+    GoRoute(
+      path: '/shabbat',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const ShabbatScreen(),
     ),
     // The control centre is web only. It was compiled into the mobile app,
     // so all 23 of its screens shipped to Play inside the resident's build.

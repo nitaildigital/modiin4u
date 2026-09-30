@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,8 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
+import '../providers/shabbat_providers.dart';
+import '../widgets/shabbat_widgets.dart';
 import 'web_municipal_screen.dart';
 
 /// Municipal – responsive wrapper.
@@ -36,8 +39,12 @@ class _MobileMunicipalContent extends StatelessWidget {
   static List<_Service> _servicesFor(L l) => [
     // Icons are the Figma "Municipal" frame's (643:6301).
     _Service(l.svcParking, 'assets/icons/m_municipal_parking.svg', '/parking'),
-    _Service(l.svcShabbat, 'assets/icons/m_municipal_shabbat.svg', null),
-    _Service(l.svcInstitutions, 'assets/icons/m_municipal_institutions.svg', null),
+    _Service(l.svcShabbat, 'assets/icons/m_municipal_shabbat.svg', '/shabbat'),
+    _Service(
+      l.svcInstitutions,
+      'assets/icons/m_municipal_institutions.svg',
+      null,
+    ),
     _Service(l.svcHealth, 'assets/icons/m_municipal_health.svg', null),
     _Service(l.svcEducation, 'assets/icons/m_municipal_education.svg', null),
     _Service(l.svcTransport, 'assets/icons/m_municipal_transport.svg', null),
@@ -169,12 +176,13 @@ class _MobileMunicipalContent extends StatelessWidget {
                       GridView(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          mainAxisExtent: 120,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 8,
+                              crossAxisSpacing: 8,
+                              mainAxisExtent: 120,
+                            ),
                         children: _servicesFor(
                           l,
                         ).map((s) => _ServiceCard(service: s)).toList(),
@@ -197,6 +205,7 @@ class _MobileMunicipalContent extends StatelessWidget {
 // ═══════════════════════════════════════════════
 class _Service {
   final String label;
+
   /// An SVG under assets/icons.
   final String icon;
   final String? route;
@@ -206,7 +215,7 @@ class _Service {
 // ═══════════════════════════════════════════════
 // Shabbat quick-info card (warm orange theme)
 // ═══════════════════════════════════════════════
-class _ShabbatCard extends StatelessWidget {
+class _ShabbatCard extends ConsumerWidget {
   /// The Friday and Saturday of the coming weekend. See the note on the
   /// screen's own copy: the card used to print one fixed date for everyone.
   static (DateTime friday, DateTime saturday) _upcomingShabbat() {
@@ -223,60 +232,86 @@ class _ShabbatCard extends StatelessWidget {
   const _ShabbatCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF8EF),
-        border: Border.all(
-          color: const Color(0xFFD68200).withValues(alpha: 0.2),
+    final week = ref.watch(shabbatWeekProvider).valueOrNull;
+    return GestureDetector(
+      onTap: () => context.push('/shabbat'),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF8EF),
+          border: Border.all(
+            color: const Color(0xFFD68200).withValues(alpha: 0.2),
+          ),
+          borderRadius: BorderRadius.circular(12),
         ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top section with border-bottom
-          Container(
-            padding: const EdgeInsets.only(bottom: 12),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top section with border-bottom
+            Container(
+              padding: const EdgeInsets.only(bottom: 12),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
+              ),
+              child: Row(
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/m_municipal_shabbat_circle.svg',
+                    width: 48,
+                    height: 48,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: _TwoLineTitle(l.upcomingShabbat)),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                SvgPicture.asset(
-                  'assets/icons/m_municipal_shabbat_circle.svg',
-                  width: 48,
-                  height: 48,
-                ),
-                const SizedBox(width: 12),
-                Expanded(child: _TwoLineTitle(l.upcomingShabbat)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          // Date
-          Text(
-            () {
-              final (fri, sat) = _upcomingShabbat();
-              return '${fri.day} ${l.monthShort(fri.month)}'
-                  '–${sat.day} ${l.monthShort(sat.month)} ${sat.year}';
-            }(),
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF0A1230),
+            // Date: Hebcal's once it has answered, the coming weekend's
+            // until then.
+            Text(
+              week != null
+                  ? shabbatDates(l, week)
+                  : () {
+                      final (fri, sat) = _upcomingShabbat();
+                      return '${fri.day} ${l.monthShort(fri.month)}'
+                          '–${sat.day} ${l.monthShort(sat.month)} ${sat.year}';
+                    }(),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF0A1230),
+              ),
             ),
-          ),
-          // A candle-lighting time used to sit here, printed as "Starts
-          // 18:42" every week of the year. It is an astronomical time that
-          // moves with the date and the town, and the project has no zmanim
-          // source, so the row is gone rather than guessed — the same call
-          // made for the parking card above.
-        ],
+            // Candle lighting and Havdalah, as the website's card has them.
+            // They come from Hebcal for Modi'in; a fixed "Starts 18:42" stood
+            // here once, for every week of the year. Until the times arrive,
+            // or if they cannot be fetched, the rows are left out rather than
+            // guessed.
+            if (week?.candles != null) ...[
+              const SizedBox(height: 8),
+              ShabbatTimeRow(
+                icon: IconsaxPlusLinear.clock,
+                label: l.candleLighting,
+                time: week!.candles!,
+                fontSize: 12,
+              ),
+            ],
+            if (week?.havdalah != null) ...[
+              const SizedBox(height: 6),
+              ShabbatTimeRow(
+                icon: IconsaxPlusLinear.moon,
+                label: l.havdalahLabel,
+                time: week!.havdalah!,
+                fontSize: 12,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -363,7 +398,10 @@ class _TwoLineTitle extends StatelessWidget {
         children: [
           TextSpan(text: first),
           if (rest.isNotEmpty)
-            TextSpan(text: '\n$rest', style: const TextStyle(fontWeight: FontWeight.w600)),
+            TextSpan(
+              text: '\n$rest',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
         ],
       ),
       style: style,
