@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,10 +15,16 @@ class AdminTagsScreen extends ConsumerStatefulWidget {
 
 class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
   final _searchController = TextEditingController();
+
+  /// Typing fired a search per keystroke, and the answers can arrive out of
+  /// order — an early, broader one landing last showed rows that did not
+  /// match. Waiting for a pause sends one.
+  Timer? _searchDebounce;
   String _sortBy = 'name';
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -77,9 +85,15 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                       borderSide: const BorderSide(color: AppColors.turquoise),
                     ),
                   ),
-                  onChanged: (v) => ref
-                      .read(adminTagListProvider.notifier)
-                      .setSearch(v.isEmpty ? null : v),
+                  onChanged: (v) {
+                    _searchDebounce?.cancel();
+                    _searchDebounce = Timer(
+                      const Duration(milliseconds: 400),
+                      () => ref
+                          .read(adminTagListProvider.notifier)
+                          .setSearch(v.isEmpty ? null : v),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -161,7 +175,9 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                   ),
                 );
               }
-              return Padding(
+              // Scrolls: 71 tags run past the bottom of the screen, and the
+              // ones below the fold could not be reached.
+              return SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Wrap(
                   spacing: 10,

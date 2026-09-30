@@ -199,7 +199,9 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                       ? null
                       : Text(
                           notifier.hasMore
-                              ? '${loaded.length} מתוך ${notifier.totalCount} קבצים'
+                              ? (isWide
+                                    ? '${loaded.length} מתוך ${notifier.totalCount} קבצים'
+                                    : '${loaded.length} מתוך ${notifier.totalCount}')
                               : '${notifier.totalCount} קבצים',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1200,7 +1202,10 @@ class _MediaRow extends StatelessWidget {
                 ),
               ),
             ],
-            Expanded(child: Text(_dateOf(media['created_at']), style: small)),
+            // On a phone the date wrapped into two lines; it is in the
+            // file's details.
+            if (isWide)
+              Expanded(child: Text(_dateOf(media['created_at']), style: small)),
             IconButton(
               icon: const Icon(
                 Icons.delete_outline,

@@ -11,8 +11,17 @@ import '../providers/admin_campaigns_provider.dart';
 /// typed into a text box. Those forms used to write `business_name` and
 /// `salesperson`, which are not columns, so every save was refused.
 
-/// The database's own message where there is one; the rest as-is.
-String adminErrorText(Object e) => e is PostgrestException ? e.message : '$e';
+/// The database's own message where there is one; the rest as-is. A
+/// duplicate is said in Hebrew, since it is the one the client will meet —
+/// keys, names and slugs are unique — and the raw text is an English
+/// constraint name.
+String adminErrorText(Object e) {
+  final text = e is PostgrestException ? '${e.code} ${e.message}' : '$e';
+  if (text.contains('23505') || text.contains('duplicate key')) {
+    return 'כבר קיים פריט עם אותו ערך (שם, מפתח או slug חייבים להיות ייחודיים)';
+  }
+  return e is PostgrestException ? e.message : '$e';
+}
 
 /// A red snackbar saying what failed and why.
 void showAdminError(BuildContext context, String what, Object e) {

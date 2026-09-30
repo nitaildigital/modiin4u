@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,8 +16,14 @@ class AdminTeamScreen extends ConsumerStatefulWidget {
 class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
   final _searchController = TextEditingController();
 
+  /// Typing fired a search per keystroke, and the answers can arrive out of
+  /// order — an early, broader one landing last showed rows that did not
+  /// match. Waiting for a pause sends one.
+  Timer? _searchDebounce;
+
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -73,9 +81,15 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
                       borderSide: const BorderSide(color: AppColors.turquoise),
                     ),
                   ),
-                  onChanged: (v) => ref
-                      .read(adminTeamProvider.notifier)
-                      .setSearch(v.isEmpty ? null : v),
+                  onChanged: (v) {
+                    _searchDebounce?.cancel();
+                    _searchDebounce = Timer(
+                      const Duration(milliseconds: 400),
+                      () => ref
+                          .read(adminTeamProvider.notifier)
+                          .setSearch(v.isEmpty ? null : v),
+                    );
+                  },
                 ),
               ),
               const Spacer(),
