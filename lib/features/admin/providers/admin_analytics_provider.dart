@@ -443,6 +443,12 @@ final adminRevenueSummaryProvider = FutureProvider<AdminRevenueSummary>((
   double total = 0, paid = 0, outstanding = 0, thisMonth = 0;
   final perType = <String, double>{};
   for (final r in rows) {
+    // A cancelled or refunded charge is money that is not coming, so it is
+    // left out of every figure here rather than swelling the total.
+    if (r['payment_status'] == 'cancelled' ||
+        r['payment_status'] == 'refunded') {
+      continue;
+    }
     final amount = (r['amount'] as num?)?.toDouble() ?? 0;
     total += amount;
     if (r['payment_status'] == 'paid') {

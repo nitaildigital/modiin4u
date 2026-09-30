@@ -81,7 +81,14 @@ class AdminTableNotifier
     load();
   }
 
+  /// Counts loads, so that one overtaken by a newer load — a search typed
+  /// on while the previous one was still in flight — drops its answer
+  /// instead of painting the older result over the newer. Typing "test" in
+  /// Tags once showed a real tag because a broader search answered last.
+  int _loadTicket = 0;
+
   Future<void> load() async {
+    final ticket = ++_loadTicket;
     if (!_loadingMore) state = const AsyncValue.loading();
     try {
       var query = SupabaseConfig.client.from(table).select(columns);
@@ -99,7 +106,7 @@ class AdminTableNotifier
         final clauses = searchClauses(q);
         if (clauses.isEmpty) {
           // Nothing the text could match: say so rather than ignore it.
-          if (mounted) {
+          if (mounted && ticket == _loadTicket) {
             totalCount = 0;
             state = const AsyncValue.data([]);
           }
@@ -113,12 +120,12 @@ class AdminTableNotifier
           .limit(_window)
           .count(CountOption.exact);
 
-      if (mounted) {
+      if (mounted && ticket == _loadTicket) {
         totalCount = rows.count;
         state = AsyncValue.data(List<Map<String, dynamic>>.from(rows.data));
       }
     } catch (e, st) {
-      if (mounted) state = AsyncValue.error(e, st);
+      if (mounted && ticket == _loadTicket) state = AsyncValue.error(e, st);
     }
   }
 
