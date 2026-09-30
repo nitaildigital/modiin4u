@@ -1479,6 +1479,80 @@ page's turquoise dot while any filter is set. `copyWith` gained
 `clearNeighborhoodId`, `clearMinPrice`, `clearMaxPrice` and `clearMinRooms`
 so a field can go back to "any".
 
+### The panel, section by section, and who may write what — 29–30 September
+
+The handover's first priority: the sections the audit found broken. Every
+one of the 28 was then opened as a temporary admin and loads with no page
+error.
+
+**Everywhere.** `whenData(...).value` in the toolbars rethrew a failed load
+and greyed the whole section; it is `valueOrNull` now, and a failed load
+shows `AdminLoadError` — the database's message and a retry. Row actions are
+awaited through `runAdminAction` and a failure is a red SnackBar. A write
+that row level security refuses updated nothing and said nothing; the table
+notifier's `updateRow` now asks for the ids back and throws
+`AdminWriteRefused` when none come. A load overtaken by a newer one (a search
+typed on) drops its answer instead of painting the older result over the
+newer. Menus that offered two items doing the same thing have one; the
+sidebar headings moved when חניונים was inserted and are back over their
+groups. Agents and challenges could be deleted outright — the client's rule
+is that removal can be undone — so they only deactivate.
+
+**Moderation, audit, trash (00031).** Comments and reports had policies that
+checked only the author, so an admin's update was refused; they have admin
+update policies, and their screens read the real columns and statuses. The
+audit log was empty because nothing wrote it: `AdminTableNotifier` records
+every create, update, status change and hide through `recordAdminAction`
+(table, row, changed field names, before/after only for status-type
+columns), and a trigger stamps the acting admin. The trash was a table
+nothing wrote to, promising deletion after 30 days; it now lists what each
+table holds as removed (archived, closed, cancelled, expired, hidden,
+inactive) and Restore puts a row back to the status the log recorded before
+its removal.
+
+**Drafts were public.** `home_blocks_read_all USING (true)` from 00014 let
+anyone read unpublished home blocks; 00031 drops it. Re-running 00014 on its
+own would bring it back — run migrations in order.
+
+**Media and businesses (00034).** The media library read `filename` and
+`file_size` for `file_name` and `size_bytes`, uploaded nothing and stopped at
+500 of 516. It pages through all of them with thumbnails, uploads for real,
+and before removing a file asks `media_usage()` — an admin-only function that
+finds the file's address in every column of every table, since it is copied
+into about fifteen — and refuses while anything uses it. The `media` table
+has no hidden flag, so an unused file's removal is permanent; a reversible
+hide needs a column and is the client's call. The shared image field removes
+a replaced or abandoned upload once its form has closed and only if nothing
+uses it. A business's menu is saved by difference, keeping its rows' ids;
+closing sets `closed_at` and reopening clears it.
+
+**Team, agreements, revenue, push, flags, tags (00035).** All on their real
+columns. Team roles come from `admin_roles`; you cannot deactivate yourself
+or remove the last active super admin. Revenue can be entered in the panel,
+since nothing else writes it, and the analytics total leaves out cancelled
+and refunded charges. Push never marks a campaign sent — there is no
+Firebase set-up — and says so; 00035 adds `cancelled` to `push_status` so
+cancelling is a status. Flags and tags say plainly that nothing reads them
+yet. Deleting a tag stays permanent (the table has no hidden flag) behind a
+confirmation that names it and its use count.
+
+**Who may write what (00032, 00033).** Residents' policies limited which row
+they wrote, not which columns: one could clear their own ban, set their own
+points, post a comment already approved, approve their own review or
+listing, mark their own offer claim redeemed, write any step count. Guard
+triggers now reset or refuse those columns for a resident (admins, the
+service role and SECURITY DEFINER functions pass): profiles' ban, points,
+level and verification; comments' and reports' status; reviews' status and
+reply; listings may only be `draft` or `pending` from a resident, with the
+featured and published fields frozen; businesses' status, verification and
+counters; offer claims' redemption; challenge progress and game scores.
+`daily_steps` is held to 0–100,000. The audit log is insert and read only.
+Tested on the live project with a throwaway resident: 74 checks, the
+throwaway and its rows deleted after.
+
+`tool/run_migrations.py --api` applies a migration through the management
+API, for a machine without `psql`.
+
 ### The phone's city map, a Parkings layer, and the events map — 29 September
 
 **The city map** (`/map`, "Map" 521:4754) had three layer chips where the
@@ -1746,6 +1820,41 @@ one person's list is short; a status filter is the obvious meaning if the
 client wants one.
 
 ---
+
+### Restaurants on the phone: category photos and the website's filters — 30 September
+
+The client: "in the website the restaurant categories have pictures and in
+the app not, and not all the filters". No category has an `image_url`; the
+website's cards fall back to a photograph of a place in the category, the
+phone's did not, so every phone card drew the blue placeholder. The phone
+now takes the same fallback, and a cuisine card opens that cuisine's list
+(it did nothing when tapped). The phone list's filter sheet had only Kosher
+and Delivery — copied from the website's general category page — where the
+website's restaurants listing has cuisine, kosher / not kosher, a minimum
+rating, delivery and a sort. The sheet now has that set (cuisine only on the
+restaurants list). The restaurants list also reads `foodMapPlacesProvider`,
+so a pizzeria filed only under פיצה is in it (56, was 54). Figma draws the
+filter icon but no sheet. Take Away stays out: `has_takeaway` is false on
+every row. Checked on an Android phone: each filter, the counts
+(47 kosher + 9 not = 56), both sorts, the photos.
+
+### Shabbat & Holidays from Hebcal — 30 September
+
+The website's Municipal page printed "Sep 18–19, 2026", candle lighting 18:42
+and Havdalah 19:38 to every visitor, every week. The times now come from
+Hebcal (`providers/shabbat_providers.dart`), asked by Modi'in's coordinates,
+on the Municipal card on the phone and the website — the phone card shows
+the website's two rows, as the client asked — and on a new page at
+`/shabbat` (phone and desktop) where the "Shabbat & Holidays" tile now leads:
+the coming Shabbat with its parasha or holiday, then three months of
+holidays. Figma has the tile but no page. Times are read off Hebcal's string
+in Israel's time, never converted or guessed; until they arrive the rows are
+left out. Credit to Hebcal as its licence asks.
+
+**Waiting on the client:** candle lighting is Hebcal's default, 18 minutes
+before sunset, and Havdalah its default (8.5°); which custom Modi'in follows
+is his to say (the `b=` parameter). The list has major, minor and modern
+holidays; he may want fewer.
 
 ### Delete, in the admin panel, does not delete — 25 September
 

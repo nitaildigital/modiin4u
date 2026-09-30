@@ -197,32 +197,39 @@ articles, businesses (incl. gallery, hours), categories, neighbourhoods, events,
 deals, banners, home notice, listings, reviews. Users, analytics, challenges and
 settings work.
 
-**Panel — still broken (audit 29 Sep, file:line in the audit notes below):**
-- *Everywhere:* `asyncData.whenData(...).value` in toolbars rethrows on a load
-  error and greys the whole section until reload (33 places, 24 screens) — use
-  `valueOrNull`. Many row actions are not awaited and fail silently.
-- *Media (מדיה):* wrong columns (`filename`/`file_size` vs `file_name`/
-  `size_bytes`), "upload" has no picker and inserts invented values, no
-  thumbnails, only 500 of 516 rows. Deleting a media row also removes it from
-  a business gallery — needs a warning. **Matters: galleries are public.**
-- *Team (צוות ניהול):* reads/writes columns that don't exist; roles hard-coded;
-  the active switch could lock the client out of his own panel.
-- *Agreements, Revenue:* save/filters use wrong columns and enum values.
-- *Comments, Reports:* RLS blocks admin updates (needs an admin policy);
-  columns wrong; nothing on the site uses them yet.
-- *Push:* writes wrong columns and marks "sent" without sending — there is no
-  Firebase set-up; needs the client's Firebase keys.
-- *Audit log:* nothing writes it; search errors. *Trash:* empty by design;
-  "deleted after 30 days" is untrue. *Flags / remote config:* saved but read by
-  nothing; no error handling. *Tags:* no effect anywhere.
-- *Security:* `home_blocks` drafts are publicly readable —
-  `home_blocks_read_all USING (true)` from `00014_rls_hardening.sql` overrides
-  the published-only policy. Drop it for home_blocks.
-- *Smaller:* replaced images stay in storage (shared `image_upload_field.dart`,
-  11 call sites); events/offers menus have two items doing the same thing; every
-  business save rewrites its menu rows; marking closed doesn't set `closed_at`.
+**Panel — fixed 29–30 Sep** (details in PLAN.md, "The panel, section by
+section, and who may write what"; migrations 00031–00035). Every section loads
+with no page error, checked as a temporary admin: error states with retry,
+awaited actions, refused writes reported; media library, image clean-up,
+business menus and `closed_at`; team, agreements, revenue, push, flags, tags on
+their real columns; comments/reports moderation, the audit log, an honest
+trash with Restore; `home_blocks` drafts private; column guards so residents
+cannot approve their own content or change bans and points.
+
+**Panel — still to do:**
+- *Not fully tested:* Team's self-lockout and last-super-admin guards (only
+  the read path was checked — testing them means changing a real admin row);
+  agents/challenges deactivate-only (code checked, not clicked through); the
+  info pages section (עמודי מידע) — publishing a page and seeing it on
+  /about has not been checked.
+- *Audit gaps:* articles and events save straight to the database and skip
+  `recordAdminAction`, so their edits are not in the audit log.
+- *Gallery editor:* removing a gallery photo deletes the `media` row and file
+  when no other gallery uses it, without asking `media_usage()` — a file also
+  used as a logo or cover could go.
+- *Businesses:* opening hours are deleted and re-inserted on every save
+  (`setHours`), so they get new ids; the list stops at 500 rows with no
+  "load more" (226 businesses today).
+- *Roles:* any active admin, whatever the role, can do everything, including
+  edit the team; `admin_roles` limits nothing yet.
+- *Municipal service tiles:* not started — see "Guide: municipality".
+- *Decisions:* media files and tags are deleted permanently (only when unused,
+  after a warning) because neither table has a hidden flag; push sending needs
+  the client's Firebase keys; nothing on the site creates comments or reports
+  yet, so those queues stay empty.
 - *Website side:* admin replies to reviews (`admin_response`) are saved but not
-  shown on the business page — the label wording is the client's call.
+  shown on the business page yet (label chosen: "תגובת העסק" / "Response from
+  the business").
 
 **Mobile app** — being matched to the Figma mobile page today; see below.
 
