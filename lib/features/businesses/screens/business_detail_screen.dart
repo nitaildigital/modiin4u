@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/month_names.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/error_retry.dart';
 import '../models/menu_item.dart' as menu;
@@ -1510,9 +1511,11 @@ class _BusinessDetailContentState
     );
   }
 
+  /// "12 בספטמבר 2026" in Hebrew, "September 12, 2026" in English.
   String _formatReviewDate(DateTime? date) {
     if (date == null) return '';
-    return '${date.day} ב${_monthNames[date.month - 1]} ${date.year}';
+    if (_isHe) return '${date.day} ב${_monthNames[date.month - 1]} ${date.year}';
+    return '${L.of(context).monthLong(date.month)} ${date.day}, ${date.year}';
   }
 
   Widget _buildRatingSummary() {
@@ -2340,7 +2343,7 @@ class _NoPhotosYet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'אין עדיין תמונות',
+            L.of(context).noPhotosYet,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 16,
@@ -2379,7 +2382,7 @@ class _NoReviewsYet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'אין עדיין ביקורות',
+            L.of(context).noReviewsYet,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 16,
@@ -2389,7 +2392,7 @@ class _NoReviewsYet extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'היו הראשונים לכתוב ביקורת על המקום הזה',
+            L.of(context).noReviewsHint,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: AppFonts.inter,

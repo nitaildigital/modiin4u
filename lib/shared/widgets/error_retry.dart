@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_fonts.dart';
 import '../../core/theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 class ErrorRetry extends StatelessWidget {
-  final String message;
+  /// Null for the usual "Something went wrong", in the language showing.
+  final String? message;
   final VoidCallback? onRetry;
 
-  const ErrorRetry({super.key, this.message = 'משהו השתבש', this.onRetry});
+  const ErrorRetry({super.key, this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -26,15 +29,15 @@ class ErrorRetry extends StatelessWidget {
               child: const Icon(Icons.wifi_off_rounded, size: 36, color: AppColors.error),
             ),
             const SizedBox(height: 20),
-            Text(message, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy), textAlign: TextAlign.center),
+            Text(message ?? l.somethingWentWrong, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy), textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Text('בדקו את החיבור לאינטרנט ונסו שוב', style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayMeta), textAlign: TextAlign.center),
+            Text(l.checkConnection, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayMeta), textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: Text('נסו שוב', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600)),
+                label: Text(l.tryAgain, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600)),
               ),
             ],
           ],

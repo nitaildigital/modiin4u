@@ -477,10 +477,10 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                         ErrorRetry(onRetry: () => ref.invalidate(provider)),
                     data: (all) {
                       if (all.isEmpty) {
-                        return const EmptyState(
+                        return EmptyState(
                           icon: IconsaxPlusLinear.shop,
-                          title: 'אין עסקים להצגה',
-                          subtitle: 'עסקים יופיעו כאן ברגע שיתווספו',
+                          title: L.of(context).noBusinessesToShow,
+                          subtitle: L.of(context).businessesAppearHere,
                         );
                       }
                       final list = _visible(all, slugs);

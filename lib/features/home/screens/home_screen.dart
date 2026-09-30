@@ -118,8 +118,8 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         // the row really is in order of distance.
         _SectionHeader(
           title: (ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ?? false)
-              ? 'קרוב אליך'
-              : 'עסקים במודיעין',
+              ? l.nearYou
+              : l.businessesInModiin,
           onSeeAll: () => context.go('/businesses'),
         ),
         if (locationIsAskable && !(ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ?? true))
@@ -135,7 +135,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                     const Icon(IconsaxPlusLinear.location, size: 16, color: AppColors.midBlue),
                     const SizedBox(width: 6),
                     Text(
-                      'הצג מה קרוב אליי',
+                      L.of(context).showNearMe,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 13,
@@ -328,7 +328,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'שאל',
+                                L.of(context).ask,
                                 style: TextStyle(
                                   fontFamily: AppFonts.inter,
                                   fontSize: 16,
@@ -376,10 +376,10 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
     // The frame's four shortcuts, each a 48px tinted circle drawn in the
     // design, with its name under it.
     final categories = [
-      ('מסעדות', 'assets/icons/m_home_cat_restaurants.svg', '/restaurants'),
-      ('אירועים', 'assets/icons/m_home_cat_events.svg', '/events'),
-      ('נדל״ן', 'assets/icons/m_home_cat_realestate.svg', '/realestate'),
-      ('מבצעים', 'assets/icons/m_home_cat_deals.svg', '/deals'),
+      (L.of(context).restaurants, 'assets/icons/m_home_cat_restaurants.svg', '/restaurants'),
+      (L.of(context).events, 'assets/icons/m_home_cat_events.svg', '/events'),
+      (L.of(context).realEstate, 'assets/icons/m_home_cat_realestate.svg', '/realestate'),
+      (L.of(context).deals, 'assets/icons/m_home_cat_deals.svg', '/deals'),
     ];
 
     return Padding(
@@ -1010,7 +1010,7 @@ class _EventData {
       category: category,
       location: e.venueName ?? e.address,
       time: e.displayTime ?? '',
-      price: e.displayPrice ?? '',
+      price: e.isFree ? l.free : (e.displayPrice ?? ''),
       priceColor: e.isFree ? AppColors.midBlue : AppColors.navy,
       month: start == null ? '' : l.monthShort(start.month),
       day: '${start?.day ?? ''}',

@@ -175,7 +175,7 @@ class _StatusTag extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        isOpen ? 'פתוח' : 'סגור',
+        isOpen ? L.of(context).openLabel : L.of(context).closed,
         style: TextStyle(
           fontFamily: AppFonts.rubik,
           fontSize: 11,

@@ -708,5 +708,77 @@
   "upcomingHolidays": "חגים ומועדים קרובים",
   "noUpcomingHolidays": "אין חגים בחודשים הקרובים",
   "shabbatTimesCredit": "הזמנים מ-Hebcal.com, מחושבים למודיעין",
-  "shabbatLoadError": "לא ניתן היה לטעון את זמני השבת."
+  "shabbatLoadError": "לא ניתן היה לטעון את זמני השבת.",
+  "nearYou": "קרוב אליך",
+  "businessesInModiin": "עסקים במודיעין",
+  "showNearMe": "הצג מה קרוב אליי",
+  "restaurantsInModiin": "מסעדות במודיעין",
+  "allRestaurantsLink": "לכל המסעדות",
+  "cafesAndBakeries": "בתי קפה ומאפיות",
+  "allCafesLink": "לכל בתי הקפה",
+  "mostRecommended": "המומלצים ביותר",
+  "searchRestaurantsHint": "חיפוש מסעדה, מטבח או מיקום",
+  "placesCount": "{count} מקומות",
+  "@placesCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "allBusinesses": "כל העסקים",
+  "noBusinessesToShow": "אין עסקים להצגה",
+  "businessesAppearHere": "עסקים יופיעו כאן ברגע שיתווספו",
+  "searchBusinessesHint": "חיפוש עסקים במודיעין",
+  "businessesCount": "{count} עסקים",
+  "@businessesCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "openLabel": "פתוח",
+  "verifiedResident": "תושב מאומת",
+  "ownerReply": "תגובת בעל העסק",
+  "couldNotLoadNeighborhood": "לא הצלחנו לטעון את השכונה",
+  "neighborhoodNotFound": "השכונה לא נמצאה",
+  "cityFullName": "מודיעין מכבים רעות",
+  "propertiesForSale": "נכסים למכירה",
+  "businessesInArea": "עסקים באזור",
+  "aboutPlace": "אודות {name}",
+  "@aboutPlace": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "apartmentsForRentIn": "דירות להשכרה ב{name}",
+  "@apartmentsForRentIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "apartmentsForSaleIn": "דירות למכירה ב{name}",
+  "@apartmentsForSaleIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noRentInNeighborhood": "אין כרגע דירות להשכרה בשכונה הזו",
+  "noSaleInNeighborhood": "אין כרגע דירות למכירה בשכונה הזו",
+  "perMonth": "לחודש",
+  "noNotifications": "אין התראות",
+  "notificationsAppearHere": "כשיהיו עדכונים עבורכם, הם יופיעו כאן.",
+  "checkConnection": "בדקו את החיבור לאינטרנט ונסו שוב",
+  "verifyingLink": "מאמתים את הקישור…",
+  "linkInvalid": "הקישור אינו בתוקף",
+  "resetLinkUsedOnce": "כל קישור לאיפוס סיסמה פועל פעם אחת בלבד, ובקשה חדשה מבטלת את הקודמת. בקשו קישור חדש והשתמשו בו מההודעה האחרונה שהגיעה.",
+  "linkUsedOrExpired": "ייתכן שהקישור כבר נוצל או שפג תוקפו. התחברו כדי לבקש קישור חדש.",
+  "requestNewLink": "בקשת קישור חדש"
 }

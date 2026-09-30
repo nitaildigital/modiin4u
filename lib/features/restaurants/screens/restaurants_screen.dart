@@ -89,7 +89,7 @@ class _MobileRestaurantsContentState
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'גלו את מודיעין',
+                          L.of(context).discoverModiin,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 16,
@@ -106,22 +106,22 @@ class _MobileRestaurantsContentState
 
                       // Restaurants
                       _buildVerticalSection(
-                        'מסעדות במודיעין',
+                        L.of(context).restaurantsInModiin,
                         'restaurants',
-                        'לכל המסעדות',
+                        L.of(context).allRestaurantsLink,
                       ),
                       const SizedBox(height: 40),
 
                       // Cafes and bakeries
                       _buildVerticalSection(
-                        'בתי קפה ומאפיות',
+                        L.of(context).cafesAndBakeries,
                         'cafe-bakery',
-                        'לכל בתי הקפה',
+                        L.of(context).allCafesLink,
                       ),
                       const SizedBox(height: 40),
 
                       // Best rated
-                      _buildHorizontalSection('המומלצים ביותר'),
+                      _buildHorizontalSection(L.of(context).mostRecommended),
                       const SizedBox(height: 40),
 
                       const SizedBox(height: 40),
@@ -177,7 +177,7 @@ class _MobileRestaurantsContentState
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'הצג במפה',
+                              L.of(context).viewOnMap,
                               style: TextStyle(
                                 fontFamily: AppFonts.inter,
                                 fontSize: 14,
@@ -224,7 +224,7 @@ class _MobileRestaurantsContentState
                   ),
                   const Spacer(),
                   Text(
-                    'מסעדות',
+                    L.of(context).restaurants,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 16,
@@ -245,7 +245,7 @@ class _MobileRestaurantsContentState
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: GestureDetector(
-                onTap: () => _openCategory('restaurants', 'מסעדות'),
+                onTap: () => _openCategory('restaurants', L.of(context).restaurants),
                 behavior: HitTestBehavior.opaque,
                 child: Container(
                   height: 48,
@@ -265,7 +265,7 @@ class _MobileRestaurantsContentState
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'חיפוש מסעדה, מטבח או מיקום',
+                          L.of(context).searchRestaurantsHint,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
@@ -707,7 +707,7 @@ class _CuisineCard extends StatelessWidget {
                   const SizedBox(height: 2.5),
                   if (cuisine.count != null)
                     Text(
-                      '${cuisine.count} מקומות',
+                      L.of(context).placesCount('${cuisine.count}'),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 12,
@@ -790,7 +790,7 @@ class _PlaceCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'כשר',
+                            L.of(context).kosher,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 12,

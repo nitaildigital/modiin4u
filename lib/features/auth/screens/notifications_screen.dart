@@ -3,6 +3,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import 'web_notifications_screen.dart';
+import '../../../l10n/app_localizations.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -42,7 +43,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'אין התראות',
+              L.of(context).noNotifications,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
@@ -53,7 +54,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'כשיהיו עדכונים עבורכם, הם יופיעו כאן.',
+              L.of(context).notificationsAppearHere,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
@@ -81,12 +82,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildMobile(BuildContext context) {
+    // The app's language sets the direction; this page was held right to
+    // left, so in English its text read back to front.
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            'התראות',
+            L.of(context).notifications,
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontWeight: FontWeight.w700,

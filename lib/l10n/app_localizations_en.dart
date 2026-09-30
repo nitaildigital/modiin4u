@@ -1700,4 +1700,131 @@ class LEn extends L {
 
   @override
   String get shabbatLoadError => 'The Shabbat times could not be loaded.';
+
+  @override
+  String get nearYou => 'Near You';
+
+  @override
+  String get businessesInModiin => 'Businesses in Modiin';
+
+  @override
+  String get showNearMe => 'Show what\'s near me';
+
+  @override
+  String get restaurantsInModiin => 'Restaurants in Modiin';
+
+  @override
+  String get allRestaurantsLink => 'All restaurants';
+
+  @override
+  String get cafesAndBakeries => 'Cafés & Bakeries';
+
+  @override
+  String get allCafesLink => 'All cafés';
+
+  @override
+  String get mostRecommended => 'Most Recommended';
+
+  @override
+  String get searchRestaurantsHint => 'Search a restaurant, cuisine or place';
+
+  @override
+  String placesCount(String count) {
+    return '$count places';
+  }
+
+  @override
+  String get allBusinesses => 'All Businesses';
+
+  @override
+  String get noBusinessesToShow => 'No businesses to show';
+
+  @override
+  String get businessesAppearHere =>
+      'Businesses will appear here once they are added';
+
+  @override
+  String get searchBusinessesHint => 'Search businesses in Modiin';
+
+  @override
+  String businessesCount(String count) {
+    return '$count businesses';
+  }
+
+  @override
+  String get openLabel => 'Open';
+
+  @override
+  String get verifiedResident => 'Verified resident';
+
+  @override
+  String get ownerReply => 'Owner\'s reply';
+
+  @override
+  String get couldNotLoadNeighborhood => 'We couldn\'t load the neighbourhood';
+
+  @override
+  String get neighborhoodNotFound => 'Neighbourhood not found';
+
+  @override
+  String get cityFullName => 'Modi\'in-Maccabim-Re\'ut';
+
+  @override
+  String get propertiesForSale => 'Properties for Sale';
+
+  @override
+  String get businessesInArea => 'Businesses in the Area';
+
+  @override
+  String aboutPlace(String name) {
+    return 'About $name';
+  }
+
+  @override
+  String apartmentsForRentIn(String name) {
+    return 'Apartments for rent in $name';
+  }
+
+  @override
+  String apartmentsForSaleIn(String name) {
+    return 'Apartments for sale in $name';
+  }
+
+  @override
+  String get noRentInNeighborhood =>
+      'No apartments for rent in this neighbourhood right now';
+
+  @override
+  String get noSaleInNeighborhood =>
+      'No apartments for sale in this neighbourhood right now';
+
+  @override
+  String get perMonth => '/ month';
+
+  @override
+  String get noNotifications => 'No notifications';
+
+  @override
+  String get notificationsAppearHere =>
+      'When there are updates for you, they will appear here.';
+
+  @override
+  String get checkConnection => 'Check your internet connection and try again';
+
+  @override
+  String get verifyingLink => 'Checking the link…';
+
+  @override
+  String get linkInvalid => 'This link is no longer valid';
+
+  @override
+  String get resetLinkUsedOnce =>
+      'Each password reset link works only once, and a new request cancels the previous one. Request a new link and use it from the latest message you received.';
+
+  @override
+  String get linkUsedOrExpired =>
+      'The link may already have been used or has expired. Sign in to request a new one.';
+
+  @override
+  String get requestNewLink => 'Request a new link';
 }

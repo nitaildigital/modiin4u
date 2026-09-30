@@ -8,6 +8,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../providers/search_providers.dart';
 import 'web_search_results_screen.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SearchResultsScreen extends ConsumerWidget {
   final String query;
@@ -30,11 +31,13 @@ class SearchResultsScreen extends ConsumerWidget {
     final provider = searchResultsProvider(query);
     final results = ref.watch(provider);
 
+    // The app's language sets the direction; this page was held right to
+    // left, so in English its text read back to front.
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
         appBar: AppBar(
-          title: Text('תוצאות חיפוש', style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+          title: Text(L.of(context).searchResults, style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
         ),
         body: Column(
           children: [
@@ -52,12 +55,12 @@ class SearchResultsScreen extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        query.isEmpty ? 'הכל' : '"$query"',
+                        query.isEmpty ? L.of(context).all : '"$query"',
                         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, color: context.textPrimary),
                       ),
                     ),
                     Text(
-                      '${results.valueOrNull?.length ?? 0} תוצאות',
+                      L.of(context).resultsCount(results.valueOrNull?.length ?? 0),
                       style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta),
                     ),
                   ],
@@ -70,10 +73,10 @@ class SearchResultsScreen extends ConsumerWidget {
                 error: (_, _) =>
                     ErrorRetry(onRetry: () => ref.invalidate(provider)),
                 data: (hits) => hits.isEmpty
-                    ? const EmptyState(
+                    ? EmptyState(
                         icon: Icons.search_off,
-                        title: 'לא נמצאו תוצאות',
-                        subtitle: 'נסו חיפוש אחר',
+                        title: L.of(context).noResults,
+                        subtitle: L.of(context).noResultsHint,
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -120,7 +123,7 @@ class SearchResultsScreen extends ConsumerWidget {
                                 color: AppColors.midBlue.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text(result.category,
+                              child: Text(_kindLabel(context, result),
                                   style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 11,
@@ -177,4 +180,15 @@ class _SearchSkeleton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The kind of result, in the language showing. The provider files each hit
+/// under a Hebrew word it has no context to translate; the route says what
+/// the hit is.
+String _kindLabel(BuildContext context, SearchHit hit) {
+  final l = L.of(context);
+  if (hit.route.startsWith('/business')) return l.business;
+  if (hit.route.startsWith('/event')) return l.event;
+  if (hit.route.startsWith('/article')) return l.news;
+  return hit.category;
 }

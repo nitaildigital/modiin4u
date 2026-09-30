@@ -1681,4 +1681,127 @@ class LHe extends L {
 
   @override
   String get shabbatLoadError => 'לא ניתן היה לטעון את זמני השבת.';
+
+  @override
+  String get nearYou => 'קרוב אליך';
+
+  @override
+  String get businessesInModiin => 'עסקים במודיעין';
+
+  @override
+  String get showNearMe => 'הצג מה קרוב אליי';
+
+  @override
+  String get restaurantsInModiin => 'מסעדות במודיעין';
+
+  @override
+  String get allRestaurantsLink => 'לכל המסעדות';
+
+  @override
+  String get cafesAndBakeries => 'בתי קפה ומאפיות';
+
+  @override
+  String get allCafesLink => 'לכל בתי הקפה';
+
+  @override
+  String get mostRecommended => 'המומלצים ביותר';
+
+  @override
+  String get searchRestaurantsHint => 'חיפוש מסעדה, מטבח או מיקום';
+
+  @override
+  String placesCount(String count) {
+    return '$count מקומות';
+  }
+
+  @override
+  String get allBusinesses => 'כל העסקים';
+
+  @override
+  String get noBusinessesToShow => 'אין עסקים להצגה';
+
+  @override
+  String get businessesAppearHere => 'עסקים יופיעו כאן ברגע שיתווספו';
+
+  @override
+  String get searchBusinessesHint => 'חיפוש עסקים במודיעין';
+
+  @override
+  String businessesCount(String count) {
+    return '$count עסקים';
+  }
+
+  @override
+  String get openLabel => 'פתוח';
+
+  @override
+  String get verifiedResident => 'תושב מאומת';
+
+  @override
+  String get ownerReply => 'תגובת בעל העסק';
+
+  @override
+  String get couldNotLoadNeighborhood => 'לא הצלחנו לטעון את השכונה';
+
+  @override
+  String get neighborhoodNotFound => 'השכונה לא נמצאה';
+
+  @override
+  String get cityFullName => 'מודיעין מכבים רעות';
+
+  @override
+  String get propertiesForSale => 'נכסים למכירה';
+
+  @override
+  String get businessesInArea => 'עסקים באזור';
+
+  @override
+  String aboutPlace(String name) {
+    return 'אודות $name';
+  }
+
+  @override
+  String apartmentsForRentIn(String name) {
+    return 'דירות להשכרה ב$name';
+  }
+
+  @override
+  String apartmentsForSaleIn(String name) {
+    return 'דירות למכירה ב$name';
+  }
+
+  @override
+  String get noRentInNeighborhood => 'אין כרגע דירות להשכרה בשכונה הזו';
+
+  @override
+  String get noSaleInNeighborhood => 'אין כרגע דירות למכירה בשכונה הזו';
+
+  @override
+  String get perMonth => 'לחודש';
+
+  @override
+  String get noNotifications => 'אין התראות';
+
+  @override
+  String get notificationsAppearHere => 'כשיהיו עדכונים עבורכם, הם יופיעו כאן.';
+
+  @override
+  String get checkConnection => 'בדקו את החיבור לאינטרנט ונסו שוב';
+
+  @override
+  String get verifyingLink => 'מאמתים את הקישור…';
+
+  @override
+  String get linkInvalid => 'הקישור אינו בתוקף';
+
+  @override
+  String get resetLinkUsedOnce =>
+      'כל קישור לאיפוס סיסמה פועל פעם אחת בלבד, ובקשה חדשה מבטלת את הקודמת. בקשו קישור חדש והשתמשו בו מההודעה האחרונה שהגיעה.';
+
+  @override
+  String get linkUsedOrExpired =>
+      'ייתכן שהקישור כבר נוצל או שפג תוקפו. התחברו כדי לבקש קישור חדש.';
+
+  @override
+  String get requestNewLink => 'בקשת קישור חדש';
 }

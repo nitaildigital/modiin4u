@@ -161,7 +161,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'לא ניתן היה לשמור. נסו שוב.',
+            L.of(context).errCouldNotSave,
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           backgroundColor: AppColors.error,

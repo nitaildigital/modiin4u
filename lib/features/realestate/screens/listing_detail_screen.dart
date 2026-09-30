@@ -752,11 +752,16 @@ class _MobileListingDetailContentState
                     ),
                   ),
                 ),
+                // Points the way forward: left in Hebrew, right in English.
                 if (neighborhoodId != null)
-                  const Icon(
-                    IconsaxPlusLinear.arrow_left_2,
-                    size: 18,
-                    color: Color(0xFF123A72),
+                  Transform.flip(
+                    flipX:
+                        Directionality.of(context) == TextDirection.ltr,
+                    child: const Icon(
+                      IconsaxPlusLinear.arrow_left_2,
+                      size: 18,
+                      color: Color(0xFF123A72),
+                    ),
                   ),
               ],
             ),

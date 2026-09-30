@@ -53,12 +53,12 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
           child: neighborhood.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, _) => _Message(
-              text: 'לא הצלחנו לטעון את השכונה',
+              text: L.of(context).couldNotLoadNeighborhood,
               onBack: () => context.pop(),
             ),
             data: (n) => n == null
                 ? _Message(
-                    text: 'השכונה לא נמצאה',
+                    text: L.of(context).neighborhoodNotFound,
                     onBack: () => context.pop(),
                   )
                 : _buildBody(context, ref, n),
@@ -103,7 +103,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'מודיעין מכבים רעות',
+                  L.of(context).cityFullName,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 14,
@@ -115,12 +115,12 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
             ),
           ),
 
-          _buildStatsGrid(ref, n),
+          _buildStatsGrid(context, ref, n),
 
           // Only when the client has written one. Three paragraphs about
           // Moriah — when it was settled, where its street names come from —
           // used to appear under every neighbourhood in the city.
-          if (n.description != null) _buildAboutSection(n),
+          if (n.description != null) _buildAboutSection(context, n),
 
           _buildListingSection(context, ref, n, ListingKind.sale),
           _buildListingSection(context, ref, n, ListingKind.rent),
@@ -134,7 +134,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
   // ─────────────────────────────────
   // Stats grid 2×2
   // ─────────────────────────────────
-  Widget _buildStatsGrid(WidgetRef ref, Neighborhood n) {
+  Widget _buildStatsGrid(BuildContext context, WidgetRef ref, Neighborhood n) {
     final counts = ref.watch(neighborhoodCountsProvider(n.id)).valueOrNull;
 
     return Padding(
@@ -146,7 +146,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
             Expanded(
               child: _StatCard(
                 value: counts?.listings,
-                label: 'נכסים למכירה',
+                label: L.of(context).propertiesForSale,
                 asset: '$_kAssets/detail_stat_home.svg',
               ),
             ),
@@ -154,7 +154,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
             Expanded(
               child: _StatCard(
                 value: counts?.businesses,
-                label: 'עסקים באזור',
+                label: L.of(context).businessesInArea,
                 asset: '$_kAssets/detail_stat_shop.svg',
               ),
             ),
@@ -167,14 +167,14 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
   // ─────────────────────────────────
   // About section
   // ─────────────────────────────────
-  Widget _buildAboutSection(Neighborhood n) {
+  Widget _buildAboutSection(BuildContext context, Neighborhood n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'אודות ${n.name}',
+            L.of(context).aboutPlace(n.name),
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 16,
@@ -222,8 +222,8 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
         const <Listing>[];
 
     final title = kind == ListingKind.rent
-        ? 'דירות להשכרה ב${n.name}'
-        : 'דירות למכירה ב${n.name}';
+        ? L.of(context).apartmentsForRentIn(n.name)
+        : L.of(context).apartmentsForSaleIn(n.name);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
@@ -246,8 +246,8 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
                 kind == ListingKind.rent
-                    ? 'אין כרגע דירות להשכרה בשכונה הזו'
-                    : 'אין כרגע דירות למכירה בשכונה הזו',
+                    ? L.of(context).noRentInNeighborhood
+                    : L.of(context).noSaleInNeighborhood,
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 14,
@@ -275,7 +275,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(60),
                     ),
                     child: Text(
-                      'ראה הכל',
+                      L.of(context).seeAll,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
@@ -316,7 +316,7 @@ class _Message extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          TextButton(onPressed: onBack, child: const Text('חזרה')),
+          TextButton(onPressed: onBack, child: Text(L.of(context).sitePageBack)),
         ],
       ),
     );
@@ -501,7 +501,7 @@ class _ListingCard extends StatelessWidget {
                         if (_isRent && _price != null) ...[
                           const SizedBox(width: 8),
                           Text(
-                            'לחודש',
+                            L.of(context).perMonth,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 14,
@@ -513,7 +513,7 @@ class _ListingCard extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      _isRent ? 'להשכרה' : 'למכירה',
+                      _isRent ? L.of(context).forRent : L.of(context).forSale,
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 12,
@@ -564,21 +564,21 @@ class _ListingCard extends StatelessWidget {
                     if (listing.sqm != null) ...[
                       _chip(
                         '$_kAssets/spec_sqm.svg',
-                        '${listing.sqm} מ״ר',
+                        '${listing.sqm} ${L.of(context).sqmUnit}',
                       ),
                       const SizedBox(width: 31),
                     ],
                     if (listing.rooms != null) ...[
                       _chip(
                         '$_kAssets/spec_rooms.svg',
-                        '${_rooms(listing.rooms!)} חדרים',
+                        '${_rooms(listing.rooms!)} ${L.of(context).roomsLabel}',
                       ),
                       const SizedBox(width: 31),
                     ],
                     if (listing.floor != null)
                       _chip(
                         '$_kAssets/spec_floor.svg',
-                        'קומה ${listing.floor}',
+                        L.of(context).floorLabel('${listing.floor}'),
                       ),
                   ],
                 ),

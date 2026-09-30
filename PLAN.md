@@ -1856,6 +1856,29 @@ before sunset, and Havdalah its default (8.5°); which custom Modi'in follows
 is his to say (the `b=` parameter). The list has major, minor and modern
 holidays; he may want fewer.
 
+### The phone in English — 30 September
+
+With the app set to English, Home, the bottom bar and a dozen screens still
+read Hebrew: plain Hebrew strings with no English beside them. They are on
+the ARB files now — Home (Ask, the four shortcuts, "Businesses in Modiin",
+"Show what's near me", a free event's price), the bottom bar, Restaurants,
+Businesses and the category list, business cards and reviews, the business
+page's empty states and review dates, the heart's sign-in prompt, search
+results (their kind label read off the route), the neighbourhood page, the
+notifications page, the e-mail link page and the shared error widget.
+Existing keys were reused where one meant the same thing (37 new). The
+bottom bar says "Municipal", as the frame does, not `navMunicipal`'s "City".
+Search, notifications and the e-mail link page were held right to left in
+both languages; they follow the language now. The neighbourhood link's arrow
+pointed back in English. Checked on an Android phone in both languages.
+
+Still Hebrew in English, and why: names from the database (business and
+event categories have one name, in Hebrew); the city map's event card
+("אירוע", "חינם") in the map files; a review's fallback author "תושב" in the
+model; Community and Games (built-in content, due to be replaced). The
+Restaurants tile on Businesses counts 54 — direct links only — where the
+restaurants list now shows 56.
+
 ### Delete, in the admin panel, does not delete — 25 September
 
 Tested the panel properly for the first time, signed in as a temporary

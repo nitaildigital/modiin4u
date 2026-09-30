@@ -50,6 +50,7 @@ import '../../features/home/screens/search_results_screen.dart';
 import '../../features/restaurants/screens/restaurants_screen.dart';
 import '../../features/restaurants/screens/restaurants_map_screen.dart';
 import '../../shared/widgets/shell_scaffold.dart';
+import '../../l10n/app_localizations.dart';
 
 
 /// The six destinations that live inside the bottom-navigation shell.
@@ -234,7 +235,7 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => _slideTransition(
         BusinessListScreen(
           categoryId: state.pathParameters['id'],
-          title: state.uri.queryParameters['title'] ?? 'עסקים',
+          title: state.uri.queryParameters['title'] ?? L.of(context).navBusinesses,
         ),
         state,
       ),
@@ -243,7 +244,7 @@ final appRouter = GoRouter(
       path: '/businesses/all',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
-        const BusinessListScreen(title: 'כל העסקים'),
+        BusinessListScreen(title: L.of(context).allBusinesses),
         state,
       ),
     ),

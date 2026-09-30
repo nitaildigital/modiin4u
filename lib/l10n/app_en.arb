@@ -687,5 +687,77 @@
   "upcomingHolidays": "Upcoming holidays",
   "noUpcomingHolidays": "No holidays in the coming months",
   "shabbatTimesCredit": "Times from Hebcal.com, calculated for Modi'in",
-  "shabbatLoadError": "The Shabbat times could not be loaded."
+  "shabbatLoadError": "The Shabbat times could not be loaded.",
+  "nearYou": "Near You",
+  "businessesInModiin": "Businesses in Modiin",
+  "showNearMe": "Show what's near me",
+  "restaurantsInModiin": "Restaurants in Modiin",
+  "allRestaurantsLink": "All restaurants",
+  "cafesAndBakeries": "Cafés & Bakeries",
+  "allCafesLink": "All cafés",
+  "mostRecommended": "Most Recommended",
+  "searchRestaurantsHint": "Search a restaurant, cuisine or place",
+  "placesCount": "{count} places",
+  "@placesCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "allBusinesses": "All Businesses",
+  "noBusinessesToShow": "No businesses to show",
+  "businessesAppearHere": "Businesses will appear here once they are added",
+  "searchBusinessesHint": "Search businesses in Modiin",
+  "businessesCount": "{count} businesses",
+  "@businessesCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "openLabel": "Open",
+  "verifiedResident": "Verified resident",
+  "ownerReply": "Owner's reply",
+  "couldNotLoadNeighborhood": "We couldn't load the neighbourhood",
+  "neighborhoodNotFound": "Neighbourhood not found",
+  "cityFullName": "Modi'in-Maccabim-Re'ut",
+  "propertiesForSale": "Properties for Sale",
+  "businessesInArea": "Businesses in the Area",
+  "aboutPlace": "About {name}",
+  "@aboutPlace": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "apartmentsForRentIn": "Apartments for rent in {name}",
+  "@apartmentsForRentIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "apartmentsForSaleIn": "Apartments for sale in {name}",
+  "@apartmentsForSaleIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noRentInNeighborhood": "No apartments for rent in this neighbourhood right now",
+  "noSaleInNeighborhood": "No apartments for sale in this neighbourhood right now",
+  "perMonth": "/ month",
+  "noNotifications": "No notifications",
+  "notificationsAppearHere": "When there are updates for you, they will appear here.",
+  "checkConnection": "Check your internet connection and try again",
+  "verifyingLink": "Checking the link…",
+  "linkInvalid": "This link is no longer valid",
+  "resetLinkUsedOnce": "Each password reset link works only once, and a new request cancels the previous one. Request a new link and use it from the latest message you received.",
+  "linkUsedOrExpired": "The link may already have been used or has expired. Sign in to request a new one.",
+  "requestNewLink": "Request a new link"
 }

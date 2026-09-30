@@ -11,6 +11,7 @@ import '../providers/business_providers.dart';
 import '../widgets/business_card.dart';
 import 'business_list_screen.dart';
 import 'web_businesses_screen.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Business directory – responsive wrapper.
 class BusinessesScreen extends StatelessWidget {
@@ -69,7 +70,7 @@ class _MobileBusinessesContentState
               children: [
                 Center(
                   child: Text(
-                    'עסקים',
+                    L.of(context).navBusinesses,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 16,
@@ -96,7 +97,7 @@ class _MobileBusinessesContentState
                     GestureDetector(
                       onTap: () => context.push('/businesses/all'),
                       child: Text(
-                        'ראה הכל',
+                        L.of(context).seeAll,
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 14,
@@ -105,7 +106,7 @@ class _MobileBusinessesContentState
                         ),
                       ),
                     ),
-                    _SectionTitle('כל העסקים'),
+                    _SectionTitle(L.of(context).allBusinesses),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -123,9 +124,9 @@ class _MobileBusinessesContentState
                     onRetry: () => ref.invalidate(businessesProvider),
                   ),
                   data: (list) => list.isEmpty
-                      ? const EmptyState(
+                      ? EmptyState(
                           icon: IconsaxPlusLinear.shop,
-                          title: 'אין עסקים להצגה',
+                          title: L.of(context).noBusinessesToShow,
                         )
                       : Column(
                           children: [
@@ -200,7 +201,7 @@ class _SearchField extends StatelessWidget {
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 isCollapsed: true,
-                hintText: 'חיפוש עסקים במודיעין',
+                hintText: L.of(context).searchBusinessesHint,
                 hintStyle: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 14,
@@ -363,7 +364,7 @@ class _CategoryCard extends StatelessWidget {
                   if (count != null && count! > 0) ...[
                     const SizedBox(height: 4),
                     Text(
-                      '$count עסקים',
+                      L.of(context).businessesCount('$count'),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 12,

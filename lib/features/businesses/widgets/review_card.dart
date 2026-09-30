@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ReviewCard extends StatelessWidget {
   final String userName;
@@ -84,7 +85,7 @@ class ReviewCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
-                                  'תושב מאומת',
+                                  L.of(context).verifiedResident,
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 10,
@@ -150,7 +151,7 @@ class ReviewCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'תגובת בעל העסק',
+                    L.of(context).ownerReply,
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 12,

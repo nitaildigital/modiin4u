@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/favorite_providers.dart';
 import '../repositories/favorite_repository.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The heart on a card, saving to the `favorites` table.
 ///
@@ -45,7 +46,7 @@ class FavoriteButton extends ConsumerWidget {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'התחברו כדי לשמור',
+            L.of(context).signInToSave,
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           behavior: SnackBarBehavior.floating,
@@ -53,7 +54,7 @@ class FavoriteButton extends ConsumerWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           action: SnackBarAction(
-            label: 'התחברות',
+            label: L.of(context).signIn,
             onPressed: () => context.push('/login'),
           ),
         ),
@@ -63,7 +64,7 @@ class FavoriteButton extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'לא ניתן היה לשמור. נסו שוב.',
+            L.of(context).errCouldNotSave,
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           backgroundColor: AppColors.error,

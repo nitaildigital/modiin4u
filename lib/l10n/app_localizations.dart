@@ -3282,6 +3282,228 @@ abstract class L {
   /// In he, this message translates to:
   /// **'לא ניתן היה לטעון את זמני השבת.'**
   String get shabbatLoadError;
+
+  /// No description provided for @nearYou.
+  ///
+  /// In he, this message translates to:
+  /// **'קרוב אליך'**
+  String get nearYou;
+
+  /// No description provided for @businessesInModiin.
+  ///
+  /// In he, this message translates to:
+  /// **'עסקים במודיעין'**
+  String get businessesInModiin;
+
+  /// No description provided for @showNearMe.
+  ///
+  /// In he, this message translates to:
+  /// **'הצג מה קרוב אליי'**
+  String get showNearMe;
+
+  /// No description provided for @restaurantsInModiin.
+  ///
+  /// In he, this message translates to:
+  /// **'מסעדות במודיעין'**
+  String get restaurantsInModiin;
+
+  /// No description provided for @allRestaurantsLink.
+  ///
+  /// In he, this message translates to:
+  /// **'לכל המסעדות'**
+  String get allRestaurantsLink;
+
+  /// No description provided for @cafesAndBakeries.
+  ///
+  /// In he, this message translates to:
+  /// **'בתי קפה ומאפיות'**
+  String get cafesAndBakeries;
+
+  /// No description provided for @allCafesLink.
+  ///
+  /// In he, this message translates to:
+  /// **'לכל בתי הקפה'**
+  String get allCafesLink;
+
+  /// No description provided for @mostRecommended.
+  ///
+  /// In he, this message translates to:
+  /// **'המומלצים ביותר'**
+  String get mostRecommended;
+
+  /// No description provided for @searchRestaurantsHint.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש מסעדה, מטבח או מיקום'**
+  String get searchRestaurantsHint;
+
+  /// No description provided for @placesCount.
+  ///
+  /// In he, this message translates to:
+  /// **'{count} מקומות'**
+  String placesCount(String count);
+
+  /// No description provided for @allBusinesses.
+  ///
+  /// In he, this message translates to:
+  /// **'כל העסקים'**
+  String get allBusinesses;
+
+  /// No description provided for @noBusinessesToShow.
+  ///
+  /// In he, this message translates to:
+  /// **'אין עסקים להצגה'**
+  String get noBusinessesToShow;
+
+  /// No description provided for @businessesAppearHere.
+  ///
+  /// In he, this message translates to:
+  /// **'עסקים יופיעו כאן ברגע שיתווספו'**
+  String get businessesAppearHere;
+
+  /// No description provided for @searchBusinessesHint.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש עסקים במודיעין'**
+  String get searchBusinessesHint;
+
+  /// No description provided for @businessesCount.
+  ///
+  /// In he, this message translates to:
+  /// **'{count} עסקים'**
+  String businessesCount(String count);
+
+  /// No description provided for @openLabel.
+  ///
+  /// In he, this message translates to:
+  /// **'פתוח'**
+  String get openLabel;
+
+  /// No description provided for @verifiedResident.
+  ///
+  /// In he, this message translates to:
+  /// **'תושב מאומת'**
+  String get verifiedResident;
+
+  /// No description provided for @ownerReply.
+  ///
+  /// In he, this message translates to:
+  /// **'תגובת בעל העסק'**
+  String get ownerReply;
+
+  /// No description provided for @couldNotLoadNeighborhood.
+  ///
+  /// In he, this message translates to:
+  /// **'לא הצלחנו לטעון את השכונה'**
+  String get couldNotLoadNeighborhood;
+
+  /// No description provided for @neighborhoodNotFound.
+  ///
+  /// In he, this message translates to:
+  /// **'השכונה לא נמצאה'**
+  String get neighborhoodNotFound;
+
+  /// No description provided for @cityFullName.
+  ///
+  /// In he, this message translates to:
+  /// **'מודיעין מכבים רעות'**
+  String get cityFullName;
+
+  /// No description provided for @propertiesForSale.
+  ///
+  /// In he, this message translates to:
+  /// **'נכסים למכירה'**
+  String get propertiesForSale;
+
+  /// No description provided for @businessesInArea.
+  ///
+  /// In he, this message translates to:
+  /// **'עסקים באזור'**
+  String get businessesInArea;
+
+  /// No description provided for @aboutPlace.
+  ///
+  /// In he, this message translates to:
+  /// **'אודות {name}'**
+  String aboutPlace(String name);
+
+  /// No description provided for @apartmentsForRentIn.
+  ///
+  /// In he, this message translates to:
+  /// **'דירות להשכרה ב{name}'**
+  String apartmentsForRentIn(String name);
+
+  /// No description provided for @apartmentsForSaleIn.
+  ///
+  /// In he, this message translates to:
+  /// **'דירות למכירה ב{name}'**
+  String apartmentsForSaleIn(String name);
+
+  /// No description provided for @noRentInNeighborhood.
+  ///
+  /// In he, this message translates to:
+  /// **'אין כרגע דירות להשכרה בשכונה הזו'**
+  String get noRentInNeighborhood;
+
+  /// No description provided for @noSaleInNeighborhood.
+  ///
+  /// In he, this message translates to:
+  /// **'אין כרגע דירות למכירה בשכונה הזו'**
+  String get noSaleInNeighborhood;
+
+  /// No description provided for @perMonth.
+  ///
+  /// In he, this message translates to:
+  /// **'לחודש'**
+  String get perMonth;
+
+  /// No description provided for @noNotifications.
+  ///
+  /// In he, this message translates to:
+  /// **'אין התראות'**
+  String get noNotifications;
+
+  /// No description provided for @notificationsAppearHere.
+  ///
+  /// In he, this message translates to:
+  /// **'כשיהיו עדכונים עבורכם, הם יופיעו כאן.'**
+  String get notificationsAppearHere;
+
+  /// No description provided for @checkConnection.
+  ///
+  /// In he, this message translates to:
+  /// **'בדקו את החיבור לאינטרנט ונסו שוב'**
+  String get checkConnection;
+
+  /// No description provided for @verifyingLink.
+  ///
+  /// In he, this message translates to:
+  /// **'מאמתים את הקישור…'**
+  String get verifyingLink;
+
+  /// No description provided for @linkInvalid.
+  ///
+  /// In he, this message translates to:
+  /// **'הקישור אינו בתוקף'**
+  String get linkInvalid;
+
+  /// No description provided for @resetLinkUsedOnce.
+  ///
+  /// In he, this message translates to:
+  /// **'כל קישור לאיפוס סיסמה פועל פעם אחת בלבד, ובקשה חדשה מבטלת את הקודמת. בקשו קישור חדש והשתמשו בו מההודעה האחרונה שהגיעה.'**
+  String get resetLinkUsedOnce;
+
+  /// No description provided for @linkUsedOrExpired.
+  ///
+  /// In he, this message translates to:
+  /// **'ייתכן שהקישור כבר נוצל או שפג תוקפו. התחברו כדי לבקש קישור חדש.'**
+  String get linkUsedOrExpired;
+
+  /// No description provided for @requestNewLink.
+  ///
+  /// In he, this message translates to:
+  /// **'בקשת קישור חדש'**
+  String get requestNewLink;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

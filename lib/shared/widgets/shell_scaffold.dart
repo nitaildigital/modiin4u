@@ -3,6 +3,7 @@ import '../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../core/theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 
 class ShellScaffold extends StatelessWidget {
   final Widget child;
@@ -53,35 +54,35 @@ class ShellScaffold extends StatelessWidget {
                     _NavItem(
                       icon: IconsaxPlusLinear.home,
                       activeIcon: IconsaxPlusBold.home,
-                      label: 'בית',
+                      label: L.of(context).navHome,
                       isActive: currentIndex == 0,
                       onTap: () => context.go('/'),
                     ),
                     _NavItem(
                       icon: IconsaxPlusLinear.shop,
                       activeIcon: IconsaxPlusBold.shop,
-                      label: 'עסקים',
+                      label: L.of(context).navBusinesses,
                       isActive: currentIndex == 1,
                       onTap: () => context.go('/businesses'),
                     ),
                     _NavItem(
                       icon: IconsaxPlusLinear.map,
                       activeIcon: IconsaxPlusBold.map,
-                      label: 'מפה',
+                      label: L.of(context).navMap,
                       isActive: currentIndex == 2,
                       onTap: () => context.go('/map'),
                     ),
                     _NavItem(
                       icon: IconsaxPlusLinear.note,
                       activeIcon: IconsaxPlusBold.note,
-                      label: 'חדשות',
+                      label: L.of(context).navNews,
                       isActive: currentIndex == 3,
                       onTap: () => context.go('/news'),
                     ),
                     _NavItem(
                       icon: IconsaxPlusLinear.bank,
                       activeIcon: IconsaxPlusBold.bank,
-                      label: 'עירייה',
+                      label: L.of(context).municipal,
                       isActive: currentIndex == 4,
                       onTap: () => context.go('/municipal'),
                     ),

@@ -7,6 +7,7 @@ import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/auth_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Where the links in the e-mails land now.
 ///
@@ -81,8 +82,10 @@ class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
   Widget build(BuildContext context) {
     final failed = _stage == _Stage.failed;
 
+    // The app's language sets the direction; this page was held right to
+    // left, so in English its text read back to front.
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
         backgroundColor: Colors.white,
         body: Center(
@@ -109,7 +112,7 @@ class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
         ),
         const SizedBox(height: 24),
         Text(
-          'מאמתים את הקישור…',
+          L.of(context).verifyingLink,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: AppFonts.rubik,
@@ -141,7 +144,7 @@ class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
         ),
         const SizedBox(height: 28),
         Text(
-          'הקישור אינו בתוקף',
+          L.of(context).linkInvalid,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: AppFonts.rubik,
@@ -153,9 +156,8 @@ class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
         const SizedBox(height: 10),
         Text(
           isRecovery
-              ? 'כל קישור לאיפוס סיסמה פועל פעם אחת בלבד, ובקשה חדשה מבטלת '
-                    'את הקודמת. בקשו קישור חדש והשתמשו בו מההודעה האחרונה שהגיעה.'
-              : 'ייתכן שהקישור כבר נוצל או שפג תוקפו. התחברו כדי לבקש קישור חדש.',
+              ? L.of(context).resetLinkUsedOnce
+              : L.of(context).linkUsedOrExpired,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: AppFonts.inter,
@@ -179,7 +181,7 @@ class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
               elevation: 0,
             ),
             child: Text(
-              isRecovery ? 'בקשת קישור חדש' : 'התחברות',
+              isRecovery ? L.of(context).requestNewLink : L.of(context).signIn,
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 14,
