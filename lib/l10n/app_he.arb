@@ -790,5 +790,34 @@
   "shareWithUsTitle": "שתפו אותנו",
   "shareWithUsBody": "שמעתם על משהו גדול? הייתם עדים לאירוע מסעיר? יש לכם תמונות או מידע שכולם חייבים לדעת? שלחו לנו – אנחנו נחקור, נאמת ונביא את הסיפור שלכם לקדמת הבמה!",
   "shareWithUsCta": "שליחת סיפור",
-  "communityNews": "חדשות הקהילה"
+  "communityNews": "חדשות הקהילה",
+  "parksCount": "{count, plural, =1{פארק אחד} other{{count} פארקים}}",
+  "@parksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "replyToReview": "הגבה",
+  "sendReply": "שליחה",
+  "replySentForApproval": "התגובה נשלחה ותופיע לאחר אישור.",
+  "signInToReply": "התחברו כדי להגיב",
+  "couldNotSendReply": "לא ניתן היה לשלוח את התגובה. נסו שוב.",
+  "repliesCount": "{count, plural, =1{תגובה אחת} other{{count} תגובות}}",
+  "@repliesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "callAction": "התקשרות",
+  "searchPlacesHint": "חיפוש לפי שם או כתובת",
+  "nothingListedYet": "עדיין לא נוספו רשומות.",
+  "couldNotLoadPlaces": "לא ניתן היה לטעון את הרשימה.",
+  "noPlacesMatchSearch": "אין תוצאות לחיפוש.",
+  "mapDataCredit": "נתוני מפה © תורמי OpenStreetMap",
+  "noParksYet": "עדיין לא נוספו פארקים",
+  "parksAppearHere": "פארקים יופיעו כאן ברגע שיתווספו"
 }

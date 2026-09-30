@@ -447,11 +447,11 @@ class _RemoteConfigTab extends ConsumerWidget {
         // are stored and read by nothing, as with the flags.
         const _NotYetWiredNote(
           text:
-              'שלוש הגדרות פעילות בעמוד הקהילה: community_facebook_url '
-              '(קישור לקבוצת הפייסבוק), community_share_url (קישור לטופס '
-              '"שתפו אותנו") ו-community_news_category (קטגוריית החדשות '
-              'שמוצגת). שאר ההגדרות כאן נשמרות, אך האפליקציה והאתר עדיין '
-              'אינם קוראים אותן.',
+              'הגדרות פעילות: community_facebook_url (קישור לקבוצת '
+              'הפייסבוק), community_share_url (קישור לטופס "שתפו אותנו"), '
+              'community_news_category (קטגוריית החדשות בעמוד הקהילה) '
+              'ו-municipal_forms_url (לאן מוביל אריח "טפסים"). שאר '
+              'ההגדרות כאן נשמרות, אך האפליקציה והאתר עדיין אינם קוראים אותן.',
         ),
         // ─── Toolbar ───
         Container(

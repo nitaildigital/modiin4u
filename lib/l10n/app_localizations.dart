@@ -3564,6 +3564,96 @@ abstract class L {
   /// In he, this message translates to:
   /// **'חדשות הקהילה'**
   String get communityNews;
+
+  /// No description provided for @parksCount.
+  ///
+  /// In he, this message translates to:
+  /// **'{count, plural, =1{פארק אחד} other{{count} פארקים}}'**
+  String parksCount(int count);
+
+  /// No description provided for @replyToReview.
+  ///
+  /// In he, this message translates to:
+  /// **'הגבה'**
+  String get replyToReview;
+
+  /// No description provided for @sendReply.
+  ///
+  /// In he, this message translates to:
+  /// **'שליחה'**
+  String get sendReply;
+
+  /// No description provided for @replySentForApproval.
+  ///
+  /// In he, this message translates to:
+  /// **'התגובה נשלחה ותופיע לאחר אישור.'**
+  String get replySentForApproval;
+
+  /// No description provided for @signInToReply.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי להגיב'**
+  String get signInToReply;
+
+  /// No description provided for @couldNotSendReply.
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לשלוח את התגובה. נסו שוב.'**
+  String get couldNotSendReply;
+
+  /// No description provided for @repliesCount.
+  ///
+  /// In he, this message translates to:
+  /// **'{count, plural, =1{תגובה אחת} other{{count} תגובות}}'**
+  String repliesCount(int count);
+
+  /// No description provided for @callAction.
+  ///
+  /// In he, this message translates to:
+  /// **'התקשרות'**
+  String get callAction;
+
+  /// No description provided for @searchPlacesHint.
+  ///
+  /// In he, this message translates to:
+  /// **'חיפוש לפי שם או כתובת'**
+  String get searchPlacesHint;
+
+  /// No description provided for @nothingListedYet.
+  ///
+  /// In he, this message translates to:
+  /// **'עדיין לא נוספו רשומות.'**
+  String get nothingListedYet;
+
+  /// No description provided for @couldNotLoadPlaces.
+  ///
+  /// In he, this message translates to:
+  /// **'לא ניתן היה לטעון את הרשימה.'**
+  String get couldNotLoadPlaces;
+
+  /// No description provided for @noPlacesMatchSearch.
+  ///
+  /// In he, this message translates to:
+  /// **'אין תוצאות לחיפוש.'**
+  String get noPlacesMatchSearch;
+
+  /// No description provided for @mapDataCredit.
+  ///
+  /// In he, this message translates to:
+  /// **'נתוני מפה © תורמי OpenStreetMap'**
+  String get mapDataCredit;
+
+  /// No description provided for @noParksYet.
+  ///
+  /// In he, this message translates to:
+  /// **'עדיין לא נוספו פארקים'**
+  String get noParksYet;
+
+  /// No description provided for @parksAppearHere.
+  ///
+  /// In he, this message translates to:
+  /// **'פארקים יופיעו כאן ברגע שיתווספו'**
+  String get parksAppearHere;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

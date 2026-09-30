@@ -91,6 +91,7 @@ final neighborhoodStatsProvider =
           .select('id')
           .eq('neighborhood_id', id)
           .eq('status', 'active')
+          .eq('kind', 'business')
           .count();
 
       return (forSale: forSale.count, businesses: businesses.count);

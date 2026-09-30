@@ -6,6 +6,7 @@ import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/business.dart';
 import '../models/business_review.dart';
+import '../models/review_reply.dart';
 import '../models/menu_item.dart' as menu;
 import '../repositories/business_repository.dart';
 
@@ -19,6 +20,18 @@ final businessesProvider = FutureProvider<List<Business>>((ref) async {
       .watch(businessRepositoryProvider)
       .fetchAll(status: 'active');
   return rows.map(Business.fromJson).toList();
+});
+
+/// The city's parks: rows the client files as a park in the panel, shown on
+/// the Municipal page's Parks tile. Best rated first, then by name.
+final parksProvider = FutureProvider<List<Business>>((ref) async {
+  final rows = await ref
+      .watch(businessRepositoryProvider)
+      .fetchAll(status: 'active', kind: 'park');
+  return rows.map(Business.fromJson).toList()..sort((a, b) {
+    final byRating = b.rating.compareTo(a.rating);
+    return byRating != 0 ? byRating : a.name.compareTo(b.name);
+  });
 });
 
 /// Whether this device can be asked where it is at all.
@@ -236,6 +249,58 @@ final businessReviewsProvider =
         rows,
       ).map(BusinessReview.fromJson).toList();
     });
+
+/// Residents' replies to one business's reviews, by review id, oldest first
+/// so a thread reads down. Row security returns the approved replies and the
+/// signed-in person's own, whatever their state. Dropped when the page
+/// closes, so reopening it shows a reply the panel has approved since.
+final reviewRepliesProvider =
+    FutureProvider.autoDispose.family<Map<String, List<ReviewReply>>, String>((
+      ref,
+      businessId,
+    ) async {
+      ref.watch(authProvider);
+      final reviews = await ref.watch(
+        businessReviewsProvider(businessId).future,
+      );
+      if (reviews.isEmpty) return const {};
+      final rows = await SupabaseConfig.client
+          .from('comments')
+          .select(
+            'id, entity_id, author_id, author_name, body, status, created_at',
+          )
+          .eq('entity_type', 'review')
+          .inFilter('entity_id', [for (final r in reviews) r.id])
+          .inFilter('status', ['approved', 'pending'])
+          .order('created_at', ascending: true);
+      final byReview = <String, List<ReviewReply>>{};
+      for (final r in List<Map<String, dynamic>>.from(rows)) {
+        final reply = ReviewReply.fromJson(r);
+        byReview.putIfAbsent(reply.reviewId, () => []).add(reply);
+      }
+      return byReview;
+    });
+
+/// Writes a reply to a review. It waits for the panel's approval, as a
+/// review does; the author sees it straight away, marked as waiting.
+Future<void> addReviewReply({
+  required String reviewId,
+  required String body,
+}) async {
+  final uid = SupabaseConfig.client.auth.currentUser?.id;
+  if (uid == null) throw StateError('signed-out');
+  await SupabaseConfig.client.from('comments').insert({
+    'entity_type': 'review',
+    'entity_id': reviewId,
+    'author_id': uid,
+    'body': body.trim(),
+  });
+}
+
+/// Removes the signed-in person's own reply.
+Future<void> deleteReviewReply(String replyId) async {
+  await SupabaseConfig.client.from('comments').delete().eq('id', replyId);
+}
 
 /// The numbers above the list, derived from the reviews themselves.
 final businessReviewSummaryProvider = Provider.family<ReviewSummary, String>((

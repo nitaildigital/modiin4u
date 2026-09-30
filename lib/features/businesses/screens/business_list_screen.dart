@@ -20,7 +20,17 @@ class BusinessListScreen extends ConsumerWidget {
   final String? categoryId;
   final String title;
 
-  const BusinessListScreen({super.key, this.categoryId, required this.title});
+  /// The city's parks rather than a business category — the Municipal
+  /// page's Parks tile. Kosher and delivery mean nothing for a park, so
+  /// those filters are left out.
+  final bool parks;
+
+  const BusinessListScreen({
+    super.key,
+    this.categoryId,
+    required this.title,
+    this.parks = false,
+  });
 
   /// The category's own name, or whatever the caller passed if the row
   /// cannot be read. The name lives on the row; the link only carries an id.
@@ -38,6 +48,7 @@ class BusinessListScreen extends ConsumerWidget {
           return WebBusinessListContent(
             categoryId: categoryId,
             title: _title(ref),
+            parks: parks,
           );
         }
         return _buildMobile(context, ref);
@@ -46,7 +57,11 @@ class BusinessListScreen extends ConsumerWidget {
   }
 
   Widget _buildMobile(BuildContext context, WidgetRef ref) =>
-      _MobileBusinessList(categoryId: categoryId, title: _title(ref));
+      _MobileBusinessList(
+        categoryId: categoryId,
+        title: _title(ref),
+        parks: parks,
+      );
 }
 
 /// The phone's category page — the mobile "Bars" frame: back and title, a
@@ -62,8 +77,13 @@ class BusinessListScreen extends ConsumerWidget {
 class _MobileBusinessList extends ConsumerStatefulWidget {
   final String? categoryId;
   final String title;
+  final bool parks;
 
-  const _MobileBusinessList({required this.categoryId, required this.title});
+  const _MobileBusinessList({
+    required this.categoryId,
+    required this.title,
+    this.parks = false,
+  });
 
   @override
   ConsumerState<_MobileBusinessList> createState() =>
@@ -252,6 +272,7 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                               : _cuisines.add(c.slug),
                         ),
                     ]),
+                  if (!widget.parks)
                   section(l.filterKosher, [
                     chip(l.all, _kosher == 'all', () => _kosher = 'all'),
                     chip(
@@ -270,6 +291,7 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                         () => _minRating = stars,
                       ),
                   ]),
+                  if (!widget.parks)
                   section(l.diningOptions, [
                     chip(l.delivery, _delivery, () => _delivery = !_delivery),
                   ]),
@@ -321,7 +343,10 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
     final ProviderBase<Object?> provider;
     final AsyncValue<List<Business>> businesses;
     var slugs = const <String, Set<String>>{};
-    if (widget.categoryId != null && categories.isLoading) {
+    if (widget.parks) {
+      provider = parksProvider;
+      businesses = ref.watch(parksProvider);
+    } else if (widget.categoryId != null && categories.isLoading) {
       provider = categoriesBySlugProvider;
       businesses = const AsyncLoading();
     } else if (foodSlug != null) {
@@ -479,8 +504,12 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                       if (all.isEmpty) {
                         return EmptyState(
                           icon: IconsaxPlusLinear.shop,
-                          title: L.of(context).noBusinessesToShow,
-                          subtitle: L.of(context).businessesAppearHere,
+                          title: widget.parks
+                              ? L.of(context).noParksYet
+                              : L.of(context).noBusinessesToShow,
+                          subtitle: widget.parks
+                              ? L.of(context).parksAppearHere
+                              : L.of(context).businessesAppearHere,
                         );
                       }
                       final list = _visible(all, slugs);
@@ -490,7 +519,17 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                           children: [
-                            _CountRow(count: list.length, title: widget.title),
+                            _CountRow(
+                              count: list.length,
+                              title: widget.title,
+                              // "1 park" / "3 parks", with a tree for parks.
+                              label: widget.parks
+                                  ? L.of(context).parksCount(list.length)
+                                  : null,
+                              icon: widget.parks
+                                  ? IconsaxPlusLinear.tree
+                                  : IconsaxPlusLinear.shop,
+                            ),
                             const SizedBox(height: 16),
                             if (list.isEmpty)
                               EmptyState(
@@ -528,7 +567,16 @@ class _CountRow extends StatelessWidget {
   final int count;
   final String title;
 
-  const _CountRow({required this.count, required this.title});
+  /// Replaces "count title" when the words need their own grammar.
+  final String? label;
+  final IconData icon;
+
+  const _CountRow({
+    required this.count,
+    required this.title,
+    this.label,
+    this.icon = IconsaxPlusLinear.shop,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -541,11 +589,7 @@ class _CountRow extends StatelessWidget {
             color: const Color(0xFFE8EEF7),
             borderRadius: BorderRadius.circular(6),
           ),
-          child: const Icon(
-            IconsaxPlusLinear.shop,
-            size: 18,
-            color: AppColors.midBlue,
-          ),
+          child: Icon(icon, size: 18, color: AppColors.midBlue),
         ),
         const SizedBox(width: 8),
         Flexible(
@@ -553,7 +597,7 @@ class _CountRow extends StatelessWidget {
             TextSpan(
               children: [
                 TextSpan(
-                  text: '$count $title',
+                  text: label ?? '$count $title',
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 16,

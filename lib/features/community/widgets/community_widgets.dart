@@ -171,7 +171,8 @@ class CommunityLinkCard extends StatelessWidget {
             child: FilledButton(
               onPressed: () => launchUrl(
                 Uri.parse(url),
-                mode: LaunchMode.externalApplication,
+                // Over the app rather than out to the browser.
+                mode: LaunchMode.inAppBrowserView,
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: facebook ? accent : AppColors.midBlue,

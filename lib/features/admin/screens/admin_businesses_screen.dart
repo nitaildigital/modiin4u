@@ -428,14 +428,45 @@ class _BusinessTable extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              biz['name'] as String? ?? '',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.navy,
-                              ),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    biz['name'] as String? ?? '',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.navy,
+                                    ),
+                                  ),
+                                ),
+                                // Parks share this list; the badge tells
+                                // them apart at a glance.
+                                if (biz['kind'] == 'park') ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE6F4EA),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'פארק',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF1E7B34),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                             Text(
                               biz['slug'] as String? ?? '',
@@ -757,6 +788,10 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   String? _error;
 
   String _status = 'draft';
+
+  /// 'business' or 'park'. A park is shown on the Municipal page's Parks
+  /// tile, not in the directory, and its page has no phone, website or menu.
+  String _kind = 'business';
   String? _neighborhoodId;
   String _kosher = 'none';
   String? _priceLevel;
@@ -933,6 +968,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     );
 
     _status = b?['status'] as String? ?? 'draft';
+    _kind = b?['kind'] as String? ?? 'business';
     _neighborhoodId = b?['neighborhood_id'] as String?;
     _kosher = b?['kosher_level'] as String? ?? 'none';
     _priceLevel = b?['price_level'] as String?;
@@ -1166,8 +1202,39 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
+        Text(
+          'סוג',
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.navy,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'business', label: Text('עסק')),
+            ButtonSegment(value: 'park', label: Text('פארק')),
+          ],
+          selected: {_kind},
+          onSelectionChanged: (v) => setState(() => _kind = v.first),
+        ),
+        if (_kind == 'park') ...[
+          const SizedBox(height: 6),
+          Text(
+            'פארק מוצג בעמוד העירייה ← פארקים, ולא במדריך העסקים. בדף הפארק '
+            'אין טלפון, אתר או תפריט; נשמרים תיאור, תמונות, ביקורות ומיקום.',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 12,
+              color: AppColors.adminTextLight,
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
         _field(
-          'שם עסק *',
+          _kind == 'park' ? 'שם הפארק *' : 'שם עסק *',
           _name,
           validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
         ),
@@ -1210,6 +1277,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
             color: AppColors.adminTextLight,
           ),
         ),
+        if (_kind != 'park') ...[
         const SizedBox(height: 16),
         Text(
           'קשר',
@@ -1236,6 +1304,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           ],
         ),
         _field('Instagram', _instagram),
+        ],
         const SizedBox(height: 16),
         Text(
           'סיווג',
@@ -2166,11 +2235,14 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       'slug': _slug.text.trim(),
       'short_description': _t(_shortDesc),
       'full_description': _t(_fullDesc),
-      'phone': _t(_phone),
-      'email': _t(_email),
-      'website': _t(_website),
-      'whatsapp': _t(_whatsapp),
-      'instagram': _t(_instagram),
+      'kind': _kind,
+      // A park has no contact details (the client's rule), so any typed
+      // before switching the type are not kept.
+      'phone': _kind == 'park' ? null : _t(_phone),
+      'email': _kind == 'park' ? null : _t(_email),
+      'website': _kind == 'park' ? null : _t(_website),
+      'whatsapp': _kind == 'park' ? null : _t(_whatsapp),
+      'instagram': _kind == 'park' ? null : _t(_instagram),
       'address': _address.text.trim(),
       'neighborhood_id': _neighborhoodId,
       'latitude': double.tryParse(_lat.text.trim()),

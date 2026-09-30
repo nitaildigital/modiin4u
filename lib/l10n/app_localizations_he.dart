@@ -1836,4 +1836,65 @@ class LHe extends L {
 
   @override
   String get communityNews => 'חדשות הקהילה';
+
+  @override
+  String parksCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count פארקים',
+      one: 'פארק אחד',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get replyToReview => 'הגבה';
+
+  @override
+  String get sendReply => 'שליחה';
+
+  @override
+  String get replySentForApproval => 'התגובה נשלחה ותופיע לאחר אישור.';
+
+  @override
+  String get signInToReply => 'התחברו כדי להגיב';
+
+  @override
+  String get couldNotSendReply => 'לא ניתן היה לשלוח את התגובה. נסו שוב.';
+
+  @override
+  String repliesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count תגובות',
+      one: 'תגובה אחת',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get callAction => 'התקשרות';
+
+  @override
+  String get searchPlacesHint => 'חיפוש לפי שם או כתובת';
+
+  @override
+  String get nothingListedYet => 'עדיין לא נוספו רשומות.';
+
+  @override
+  String get couldNotLoadPlaces => 'לא ניתן היה לטעון את הרשימה.';
+
+  @override
+  String get noPlacesMatchSearch => 'אין תוצאות לחיפוש.';
+
+  @override
+  String get mapDataCredit => 'נתוני מפה © תורמי OpenStreetMap';
+
+  @override
+  String get noParksYet => 'עדיין לא נוספו פארקים';
+
+  @override
+  String get parksAppearHere => 'פארקים יופיעו כאן ברגע שיתווספו';
 }

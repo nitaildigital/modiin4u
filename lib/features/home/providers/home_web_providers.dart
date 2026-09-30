@@ -102,6 +102,7 @@ final homeRecommendedBusinessesProvider = FutureProvider<List<Business>>((ref) a
         neighborhoods!businesses_neighborhood_id_fkey(id, name, slug)
       ''')
       .eq('status', 'active')
+      .eq('kind', 'business')
       .or('is_recommended.eq.true,is_featured.eq.true')
       .order('updated_at', ascending: false);
   final now = DateTime.now().toUtc();

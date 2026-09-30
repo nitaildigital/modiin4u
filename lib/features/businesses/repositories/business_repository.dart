@@ -10,6 +10,9 @@ class BusinessRepository {
     String? status,
     String? categoryId,
     String? neighborhoodId,
+    // The directory reads businesses; the Parks page asks for parks. Null
+    // reads both, which search wants — a park is found by its name too.
+    String? kind = 'business',
   }) async {
     // Categories live in `entity_categories`, so narrow to the ids in that
     // category first rather than trying to filter across the join.
@@ -26,6 +29,9 @@ class BusinessRepository {
 
     if (status != null && status.isNotEmpty) {
       query = query.eq('status', status);
+    }
+    if (kind != null) {
+      query = query.eq('kind', kind);
     }
     if (neighborhoodId != null && neighborhoodId.isNotEmpty) {
       query = query.eq('neighborhood_id', neighborhoodId);

@@ -7,6 +7,10 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_reviews_provider.dart';
 
+/// Whether the panel offers its own reply to a review. Off: see the note
+/// at the reply button.
+const _repliesEnabled = false;
+
 /// Reviews of businesses: approve, turn down, hide, and reply.
 ///
 /// The reviewer is named as the website names them — from the review's own
@@ -335,6 +339,11 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // The client: Modiin4u and the businesses do not reply to
+              // reviews at this stage — residents reply to each other, and
+              // those replies are moderated under תגובות. The dialog stays
+              // for when he wants it back.
+              if (_repliesEnabled)
               IconButton(
                 tooltip: response.isEmpty ? 'תגובה' : 'עריכת התגובה',
                 icon: const Icon(

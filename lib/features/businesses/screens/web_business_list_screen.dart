@@ -36,10 +36,15 @@ class WebBusinessListContent extends ConsumerStatefulWidget {
   final String? categoryId;
   final String title;
 
+  /// The city's parks (the Municipal page's Parks tile) instead of a
+  /// category. The Kosher and Delivery pills are left out for them.
+  final bool parks;
+
   const WebBusinessListContent({
     super.key,
     this.categoryId,
     required this.title,
+    this.parks = false,
   });
 
   @override
@@ -64,7 +69,9 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
   /// The only two filters a column can answer. Opening hours live in
   /// `business_hours`, which holds no rows, and `reviews` is empty, so
   /// "Open Now" and "Top Rated" could only ever empty the grid.
-  List<String> get _filters => [_t('Kosher', 'כשר'), _t('Delivery', 'משלוחים')];
+  List<String> get _filters => widget.parks
+      ? const []
+      : [_t('Kosher', 'כשר'), _t('Delivery', 'משלוחים')];
 
   bool _matchesFilter(Business b) => switch (_selectedFilter) {
     0 => b.kosherStatus != null,
@@ -77,7 +84,9 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
 
   @override
   Widget build(BuildContext context) {
-    final provider = businessesByCategoryProvider(widget.categoryId);
+    final ProviderBase<AsyncValue<List<Business>>> provider = widget.parks
+        ? parksProvider
+        : businessesByCategoryProvider(widget.categoryId);
     final request = ref.watch(provider);
 
     return Directionality(
@@ -88,7 +97,11 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              activeId: widget.categoryId == 'services' ? 'professionals' : 'businesses',
+              activeId: widget.parks
+                  ? null
+                  : widget.categoryId == 'services'
+                  ? 'professionals'
+                  : 'businesses',
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -133,7 +146,7 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
                 child: GestureDetector(
                   onTap: () => context.canPop()
                       ? context.pop()
-                      : context.go('/businesses'),
+                      : context.go(widget.parks ? '/municipal' : '/businesses'),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -146,7 +159,9 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _t('All Businesses', 'כל העסקים'),
+                        widget.parks
+                            ? _t('Municipal Services', 'שירותי עירייה')
+                            : _t('All Businesses', 'כל העסקים'),
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 14,
@@ -164,7 +179,9 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
               // A category's name is the table's, Hebrew only; the whole
               // directory's heading is the site's own words, in its language.
               Text(
-                widget.categoryId == null
+                widget.parks
+                    ? _t('Parks in Modiin', 'פארקים במודיעין')
+                    : widget.categoryId == null
                     ? _t('All Businesses', 'כל העסקים')
                     // The site's Professionals are the Services category.
                     : widget.categoryId == 'services'
@@ -188,6 +205,10 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
                     'These businesses could not be loaded.',
                     'לא ניתן לטעון את העסקים.',
                   ),
+                  _ when widget.parks =>
+                    count == 1
+                        ? _t('1 park', 'פארק אחד')
+                        : _t('$count parks', '$count פארקים'),
                   _ =>
                     count == 1
                         ? _t('1 business found', 'נמצא עסק אחד')
@@ -259,17 +280,24 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
   Widget _buildGrid(List<Business> rows) {
     if (rows.isEmpty) {
       return _buildNotice(
-        icon: IconsaxPlusLinear.shop,
+        icon: widget.parks ? IconsaxPlusLinear.tree : IconsaxPlusLinear.shop,
         title: _selectedFilter >= 0
             ? _t(
                 'Nothing here matches that filter',
                 'אין עסקים שתואמים את הסינון',
               )
+            : widget.parks
+            ? _t('No parks listed yet', 'עדיין לא נוספו פארקים')
             : _t('No businesses to show', 'אין עסקים להצגה'),
         body: _selectedFilter >= 0
             ? _t(
                 'Clear the filter to see everything in this category.',
                 'נקו את הסינון כדי לראות את כל הקטגוריה.',
+              )
+            : widget.parks
+            ? _t(
+                'Parks will appear here as soon as they are added.',
+                'פארקים יופיעו כאן ברגע שיתווספו',
               )
             : _t(
                 'Businesses will appear here as soon as they are added.',

@@ -15,6 +15,7 @@ import '../../../shared/widgets/web_map_tiles.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/business.dart';
 import '../models/business_review.dart';
+import '../models/review_reply.dart';
 import '../providers/business_providers.dart';
 import '../../../shared/widgets/web_contact_menu.dart';
 
@@ -483,6 +484,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
   // ── Reviews ──
   Widget _buildReviews(List<BusinessReview> reviews) {
     final summary = ReviewSummary.of(reviews);
+    final replies = ref.watch(reviewRepliesProvider(b.id)).valueOrNull ?? const <String, List<ReviewReply>>{};
     final filtered = [
       for (final r in reviews)
         if (_ratingFilter == null || r.rating == _ratingFilter) r,
@@ -586,7 +588,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
               Stack(
                 children: [
                   Column(
-                    children: [for (final r in shown) _ReviewRow(review: r, isHebrew: _isHebrew)],
+                    children: [for (final r in shown) _ReviewRow(review: r, isHebrew: _isHebrew, replies: replies[r.id] ?? const [])],
                   ),
                   Positioned(
                     left: 0,
@@ -613,7 +615,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
               )
             else
               Column(
-                children: [for (final r in shown) _ReviewRow(review: r, isHebrew: _isHebrew)],
+                children: [for (final r in shown) _ReviewRow(review: r, isHebrew: _isHebrew, replies: replies[r.id] ?? const [])],
               ),
           ],
         ],
@@ -733,6 +735,8 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
     final website = (b.website ?? '').trim();
     final phone = (b.phone ?? '').trim();
     final whatsapp = (b.whatsapp ?? '').trim();
+    // A park has no contact details to offer (the client's rule for parks).
+    if (b.isPark) return const SizedBox.shrink();
     if (website.isEmpty && phone.isEmpty && whatsapp.isEmpty) return const SizedBox.shrink();
 
     String shown(String url) => url.replaceFirst(RegExp(r'^https?://(www\.)?'), '').replaceFirst(RegExp(r'/$'), '');
@@ -1112,7 +1116,8 @@ class _ShareRow extends StatelessWidget {
 class _ReviewRow extends StatelessWidget {
   final BusinessReview review;
   final bool isHebrew;
-  const _ReviewRow({required this.review, required this.isHebrew});
+  final List<ReviewReply> replies;
+  const _ReviewRow({required this.review, required this.isHebrew, this.replies = const []});
 
   static const _en = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   static const _he = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -1126,8 +1131,6 @@ class _ReviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = _format(review.createdAt);
-    final response = review.adminResponse?.trim() ?? '';
-    final responseDate = _format(review.respondedAt);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kLine))),
@@ -1162,13 +1165,11 @@ class _ReviewRow extends StatelessWidget {
                     child: Text(review.body, textDirection: _dirOf(review.body), style: _inter(14, color: _kBody, height: 1.4)),
                   ),
                 ],
-                // The reply written in the panel (`admin_response`), set in
-                // under the review with a thin rule so it reads as an answer
-                // to it. Neutral wording: the panel does not record whether
-                // the business or the site's staff wrote it. The label is
-                // looked up in the website's language, which the navbar keeps
-                // apart from the app's locale.
-                if (response.isNotEmpty)
+                // Residents' replies (approved only: the website has no
+                // accounts, so no one's own pending reply is shown here and
+                // there is no reply button). Modiin4u and the businesses do
+                // not reply at this stage, so `admin_response` is not shown.
+                for (final reply in replies.where((r) => r.isApproved))
                   Container(
                     width: double.infinity,
                     margin: const EdgeInsetsDirectional.only(top: 12),
@@ -1181,15 +1182,18 @@ class _ReviewRow extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Text(lookupL(Locale(isHebrew ? 'he' : 'en')).reviewBusinessResponse, style: _inter(14, weight: FontWeight.w500)),
-                            if (responseDate.isNotEmpty) ...[
-                              const SizedBox(width: 12),
-                              Text(responseDate, style: _inter(12, color: _kMuted)),
-                            ],
+                            Text(
+                              reply.authorName.isEmpty
+                                  ? lookupL(Locale(isHebrew ? 'he' : 'en')).resident
+                                  : reply.authorName,
+                              style: _inter(14, weight: FontWeight.w500),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(_format(reply.createdAt), style: _inter(12, color: _kMuted)),
                           ],
                         ),
                         const SizedBox(height: 5),
-                        Text(response, textDirection: _dirOf(response), style: _inter(14, color: _kMuted, height: 1.4)),
+                        Text(reply.body, textDirection: _dirOf(reply.body), style: _inter(14, color: _kBody, height: 1.4)),
                       ],
                     ),
                   ),

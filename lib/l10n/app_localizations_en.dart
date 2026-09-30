@@ -1860,4 +1860,67 @@ class LEn extends L {
 
   @override
   String get communityNews => 'Community news';
+
+  @override
+  String parksCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count parks',
+      one: '1 park',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get replyToReview => 'Reply';
+
+  @override
+  String get sendReply => 'Send';
+
+  @override
+  String get replySentForApproval =>
+      'Your reply was sent and will appear once approved.';
+
+  @override
+  String get signInToReply => 'Sign in to reply';
+
+  @override
+  String get couldNotSendReply => 'Could not send the reply. Please try again.';
+
+  @override
+  String repliesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count replies',
+      one: '1 reply',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get callAction => 'Call';
+
+  @override
+  String get searchPlacesHint => 'Search by name or address';
+
+  @override
+  String get nothingListedYet => 'Nothing is listed here yet.';
+
+  @override
+  String get couldNotLoadPlaces => 'This list could not be loaded.';
+
+  @override
+  String get noPlacesMatchSearch => 'Nothing matches your search.';
+
+  @override
+  String get mapDataCredit => 'Map data © OpenStreetMap contributors';
+
+  @override
+  String get noParksYet => 'No parks listed yet';
+
+  @override
+  String get parksAppearHere =>
+      'Parks will appear here as soon as they are added.';
 }

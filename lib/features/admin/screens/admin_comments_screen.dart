@@ -183,6 +183,12 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
               ),
               if (isWide) ...[
                 const SizedBox(width: 12),
+                // Residents' replies to reviews, from the business pages.
+                _FilterChip(
+                  'ביקורות',
+                  _entityFilter == 'review',
+                  () => _toggleEntity('review'),
+                ),
                 _FilterChip(
                   'עסקים',
                   _entityFilter == 'business',
@@ -415,6 +421,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
   }
 
   String _entityLabel(String t) => switch (t) {
+    'review' => 'תגובה לביקורת',
     'business' => 'על עסק',
     'article' => 'על כתבה',
     'event' => 'על אירוע',

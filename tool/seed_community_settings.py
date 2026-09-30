@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Adds the Community page's three settings to `remote_config`, where the
+"""Adds the Community page's settings, and the Forms tile's link, to
+`remote_config`, where the
 client edits them in the panel (דגלים והגדרות › Remote Config).
 
 They are his, taken from his WordPress site, not written for him:
@@ -34,6 +35,9 @@ SETTINGS = [
      'עמוד קהילה: הקישור לטופס "שתפו אותנו". ריק = הכרטיס מוסתר.'),
     ('community_news_category', 'people',
      'עמוד קהילה: ה-slug של קטגוריית החדשות שמוצגת (למשל people, city-updates).'),
+    ('municipal_forms_url',
+     'https://www.modiin.muni.il/modiinwebsite/ChannelArticle.aspx?PageID=51_108',
+     'עמוד העירייה: לאן מוביל אריח "טפסים" (עמוד הטפסים של העירייה).'),
 ]
 
 env = {}
@@ -67,9 +71,9 @@ if '--undo' in sys.argv:
         print('removed', key)
     os.remove(REGISTRY)
 elif '--apply' in sys.argv:
-    if os.path.exists(REGISTRY):
-        raise SystemExit('already applied — run --undo first')
-    added = []
+    # A rerun adds only the keys that are not there yet, and --undo still
+    # removes everything this script has added.
+    added = json.load(open(REGISTRY, encoding='utf-8')) if os.path.exists(REGISTRY) else []
     for key, value, description in SETTINGS:
         if db('GET', f'remote_config?key=eq.{key}&select=key'):
             print('kept existing', key)

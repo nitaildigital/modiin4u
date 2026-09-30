@@ -1902,6 +1902,60 @@ category is called community. Nothing in the app links to /community; the
 website does, from Home and the footer. Games has nothing on his site and
 is left as it is, unlinked, pending his decision.
 
+### The client's answers of 30 September: parks, replies, Shabbat, municipal lists, Games
+
+**Games** removed (his answer: "As of now, remove it"). The screens and the
+route are gone; the `games` tables stay.
+
+**Parks** — "like businesses, but without a phone number, menu, or website;
+keep reviews, photos, description." Migration **00038** adds
+`businesses.kind` ('business' | 'park'), so a park is a business row with
+the page, gallery, reviews and editor it already has. The directory reads
+`kind = 'business'` (Businesses tab, Home, recommended, neighbourhood
+counts); search reads both. `/parks` is the Municipal page's Parks tile, on
+the phone and the website, with rating and sort filters (no kosher or
+delivery). A park's page drops the phone, website, social and menu. The
+panel's business editor has a type switch (עסק / פארק); a park keeps no
+contact details. No parks exist yet — the client adds them.
+
+**Replies to reviews** — "Modiin4u and businesses will not be replying …
+users can reply to other users, like on Facebook." Migration **00039**: a
+reply is a `comments` row (entity_type 'review'), with the author's name
+copied on as reviews do. Replies wait for approval like reviews (the panel's
+תגובות, new "ביקורות" filter); the author sees their own marked "Pending
+Approval" and can delete it. The app has a Reply button under each review;
+the website shows approved replies only, with no button (no accounts). The
+panel's own reply to a review is switched off (`_repliesEnabled`), and
+`admin_response` is no longer shown. Whether replies should appear without
+approval is the client's call.
+
+**Shabbat times** — "pull everything from the municipality; all of them."
+The municipality publishes its own table (modiin.muni.il, "זמני הדלקת
+נרות"): candle lighting 20 minutes before sunset, Havdalah 30 after. Hebcal
+now asks for exactly that at the city's elevation (`b=20&m=30`, `ue=on&
+elev=300`): 9 of 12 times equal to the municipality's over six weeks, the
+rest a minute apart. The holiday list adds the minor fasts.
+
+**Municipal lists** — Institutions (with synagogues), Health, Education,
+Transportation and Emergency. Migration **00040** adds `municipal_places`
+(one table, `category` per row), a panel section מוסדות עירוניים, and
+`/municipal/<section>` on the phone and the website, with search, Call and
+Waze. `tool/seed_municipal_places.py` fills it, with `--undo`:
+`--emergency` adds the national numbers he named (106, 100, 101) and 102;
+`--osm` imports OpenStreetMap inside the city boundary (relation 1381425):
+352 bus stops, 2 train stations, 46 schools, 17 kindergartens, 16
+synagogues, 25 clinics and pharmacies, 10 institutions. The pages credit
+OpenStreetMap. The government's open data was tried first: the schools file
+has no addresses and mixes in Modi'in Illit, and the stops file has no
+names. OpenStreetMap is real but incomplete — kindergartens and synagogues
+especially — and a few rows are mis-tagged (a sports hall under schools);
+the client completes and hides in the panel.
+
+**Forms** opens the municipality's own page "טפסים, הנחיות, חוקים ותקנות"
+(the client chose it over the online-inquiry form), outside the app, on
+the phone and the website. The link is Remote Config `municipal_forms_url`,
+so he can change it; without it the tile uses the municipality's page.
+
 ### Delete, in the admin panel, does not delete — 25 September
 
 Tested the panel properly for the first time, signed in as a temporary

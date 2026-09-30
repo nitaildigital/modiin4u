@@ -40,7 +40,7 @@ final searchResultsProvider =
   if (q.isEmpty) return const [];
 
   final results = await Future.wait([
-    ref.watch(businessRepositoryProvider).fetchAll(status: 'active', search: q),
+    ref.watch(businessRepositoryProvider).fetchAll(status: 'active', search: q, kind: null),
     ref.watch(articleRepositoryProvider).fetchAll(status: 'published', search: q),
     ref.watch(eventRepositoryProvider).fetchAll(search: q),
   ]);

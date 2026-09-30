@@ -17,6 +17,7 @@ import '../../../shared/widgets/error_retry.dart';
 import '../models/menu_item.dart' as menu;
 import '../../../shared/widgets/skeleton.dart';
 import '../models/business.dart';
+import '../models/review_reply.dart';
 import '../providers/business_providers.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
@@ -630,6 +631,9 @@ class _BusinessDetailContentState
         children: [
           direction,
           const Spacer(),
+          // A park has no phone, website or social page (the client's
+          // rule for parks), so it keeps only the directions button.
+          if (!business.isPark) ...[
           _OutlineCircleButton(
             icon: IconsaxPlusLinear.call,
             color: AppColors.turquoise,
@@ -645,7 +649,8 @@ class _BusinessDetailContentState
                 ? null
                 : () => launchUrl(Uri.parse(business.website!)),
           ),
-          if (business.instagram != null) ...[
+          ],
+          if (business.instagram != null && !business.isPark) ...[
             const SizedBox(width: 12),
             _OutlineCircleButton(
               icon: IconsaxPlusLinear.instagram,
@@ -668,6 +673,7 @@ class _BusinessDetailContentState
   /// Israeli beer — on a hairdresser as readily as on a restaurant.
   List<({String label, int index})> _tabsFor(Business business, L l) {
     final hasMenu =
+        !business.isPark &&
         (ref.watch(businessMenuProvider(business.id)).valueOrNull ?? const [])
             .isNotEmpty;
     return [
@@ -944,6 +950,44 @@ class _BusinessDetailContentState
       if (!mounted) return;
       setState(() => _savingReview = false);
       _reviewToast(l.errCouldNotSave, error: true);
+    }
+  }
+
+  /// Opens the reply box for one review. Signed out, it says sign-in is
+  /// needed, as the review form does.
+  Future<void> _replyTo(String reviewId) async {
+    final l = L.of(context);
+    if (ref.read(authProvider) == null) {
+      _reviewToast(l.signInToReply, error: true);
+      return;
+    }
+    final text = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const _ReplySheet(),
+    );
+    if (text == null || text.trim().isEmpty || !mounted) return;
+    try {
+      await addReviewReply(reviewId: reviewId, body: text);
+      ref.invalidate(reviewRepliesProvider(business.id));
+      if (mounted) _reviewToast(l.replySentForApproval);
+    } catch (_) {
+      if (mounted) _reviewToast(l.couldNotSendReply, error: true);
+    }
+  }
+
+  Future<void> _deleteReply(String replyId) async {
+    try {
+      await deleteReviewReply(replyId);
+      ref.invalidate(reviewRepliesProvider(business.id));
+    } catch (_) {
+      if (mounted) {
+        _reviewToast(L.of(context).couldNotSendReply, error: true);
+      }
     }
   }
 
@@ -1488,6 +1532,10 @@ class _BusinessDetailContentState
       ),
       data: (list) {
         if (list.isEmpty) return const _NoReviewsYet();
+        final replies =
+            ref.watch(reviewRepliesProvider(business.id)).valueOrNull ??
+            const <String, List<ReviewReply>>{};
+        final me = ref.watch(authProvider)?.id;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1500,8 +1548,13 @@ class _BusinessDetailContentState
                   date: _formatReviewDate(list[i].createdAt),
                   rating: list[i].rating,
                   text: list[i].body,
-                  response: list[i].adminResponse,
-                  responseDate: _formatReviewDate(list[i].respondedAt),
+                  replies: replies[list[i].id] ?? const [],
+                  myId: me,
+                  formatDate: _formatReviewDate,
+                  // Replying needs an account, and accounts are the app's:
+                  // the website shows the replies but offers no button.
+                  onReply: kIsWeb ? null : () => _replyTo(list[i].id),
+                  onDeleteReply: _deleteReply,
                   isLast: i == list.length - 1,
                 ),
             ],
@@ -1780,9 +1833,14 @@ class _ReviewCard extends StatefulWidget {
   final int rating;
   final String text;
 
-  /// The reply written in the panel (`admin_response`), and when.
-  final String? response;
-  final String responseDate;
+  /// Residents' replies to this review (approved, and the signed-in
+  /// person's own while it waits). Modiin4u and the businesses do not reply
+  /// at this stage, so the panel's `admin_response` is no longer shown.
+  final List<ReviewReply> replies;
+  final String? myId;
+  final String Function(DateTime?) formatDate;
+  final VoidCallback? onReply;
+  final void Function(String replyId) onDeleteReply;
   final bool isLast;
 
   const _ReviewCard({
@@ -1791,8 +1849,11 @@ class _ReviewCard extends StatefulWidget {
     required this.date,
     required this.rating,
     required this.text,
-    this.response,
-    this.responseDate = '',
+    this.replies = const [],
+    this.myId,
+    required this.formatDate,
+    this.onReply,
+    required this.onDeleteReply,
     this.isLast = false,
   });
 
@@ -1897,86 +1958,34 @@ class _ReviewCardState extends State<_ReviewCard> {
                     height: 1.4,
                   ),
                 ),
-                if (widget.response?.trim().isNotEmpty ?? false)
-                  _BusinessResponse(
-                    text: widget.response!.trim(),
-                    date: widget.responseDate,
+                for (final reply in widget.replies)
+                  _ReplyTile(
+                    reply: reply,
+                    date: widget.formatDate(reply.createdAt),
+                    isMine: reply.authorId == widget.myId,
+                    onDelete: () => widget.onDeleteReply(reply.id),
                   ),
-                // A reply control sat here: it stored the text in a
-                // String on the widget and announced "Reply sent!".
-                // Nothing was written. `reviews` carries
-                // `admin_response` — the business's or an
-                // administrator's reply — and a resident replying to
-                // another resident's review has no home in the schema
-                // at all, so the control is gone rather than lying.
+                if (widget.onReply != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: GestureDetector(
+                      onTap: widget.onReply,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          L.of(context).replyToReview,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.midBlue,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The reply an administrator wrote to a review in the panel, set in under
-/// the review with a thin rule at its start so it reads as an answer to it
-/// rather than as another review. Neutral wording: the panel does not record
-/// whether the business itself or the site's staff wrote it.
-class _BusinessResponse extends StatelessWidget {
-  final String text;
-  final String date;
-
-  const _BusinessResponse({required this.text, required this.date});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsetsDirectional.only(top: 10),
-      padding: const EdgeInsetsDirectional.only(start: 10),
-      decoration: const BoxDecoration(
-        border: BorderDirectional(
-          start: BorderSide(color: Color(0xFFE7E7E7), width: 2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  L.of(context).reviewBusinessResponse,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              if (date.isNotEmpty) ...[
-                const SizedBox(width: 12),
-                Text(
-                  date,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF6D6D6D),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            text,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF6D6D6D),
-              height: 1.4,
             ),
           ),
         ],
@@ -2476,6 +2485,204 @@ class _BusinessNotFound extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// One reply under a review: set in with a rule at its start, the author's
+/// initials, name and date, then the text. The author's own reply says when
+/// it is still waiting for approval, and can be deleted.
+class _ReplyTile extends StatelessWidget {
+  final ReviewReply reply;
+  final String date;
+  final bool isMine;
+  final VoidCallback onDelete;
+
+  const _ReplyTile({
+    required this.reply,
+    required this.date,
+    required this.isMine,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final name = reply.authorName.isEmpty ? l.resident : reply.authorName;
+    return Container(
+      margin: const EdgeInsetsDirectional.only(top: 10),
+      padding: const EdgeInsetsDirectional.only(start: 10),
+      decoration: const BoxDecoration(
+        border: BorderDirectional(
+          start: BorderSide(color: Color(0xFFE7E7E7), width: 2),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE8EEF7),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                reply.authorName.isEmpty ? '?' : reply.initials,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.midBlue,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      date,
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 10,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                    if (!reply.isApproved)
+                      Text(
+                        l.pendingApproval,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFFD68200),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reply.body,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 12,
+                    color: const Color(0xFF3D3D3D),
+                    height: 1.4,
+                  ),
+                ),
+                if (isMine)
+                  GestureDetector(
+                    onTap: onDelete,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        l.delete,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 11,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The reply box: one field and Send, above the keyboard. Returns the text.
+class _ReplySheet extends StatefulWidget {
+  const _ReplySheet();
+
+  @override
+  State<_ReplySheet> createState() => _ReplySheetState();
+}
+
+class _ReplySheetState extends State<_ReplySheet> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        MediaQuery.viewInsetsOf(context).bottom + 16,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                autofocus: true,
+                minLines: 1,
+                maxLines: 5,
+                maxLength: 1000,
+                onChanged: (_) => setState(() {}),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: l.writeReplyHint,
+                  counterText: '',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: _controller.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.pop(context, _controller.text.trim()),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.midBlue,
+                minimumSize: const Size(0, 44),
+              ),
+              child: Text(
+                l.sendReply,
+                style: TextStyle(fontFamily: AppFonts.inter),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

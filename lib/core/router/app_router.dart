@@ -11,6 +11,8 @@ import '../../features/map/screens/map_screen.dart';
 import '../../features/municipal/screens/municipal_screen.dart';
 import '../../features/municipal/screens/parking_screen.dart';
 import '../../features/municipal/screens/shabbat_screen.dart';
+import '../../features/municipal/screens/municipal_places_screen.dart';
+import '../../features/municipal/models/municipal_place.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/profile_screen.dart';
@@ -39,7 +41,6 @@ import '../../features/realestate/screens/realestate_search_screen.dart';
 import '../../features/community/screens/community_screen.dart';
 import '../../features/deals/screens/deals_screen.dart';
 import '../../features/deals/screens/deal_detail_screen.dart';
-import '../../features/games/screens/games_screen.dart';
 import '../../features/steps/screens/steps_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../../features/admin/widgets/admin_gate.dart';
@@ -360,11 +361,6 @@ final appRouter = GoRouter(
       ),
     ),
     GoRoute(
-      path: '/games',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const GamesScreen(),
-    ),
-    GoRoute(
       path: '/steps',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const StepsScreen(),
@@ -373,6 +369,33 @@ final appRouter = GoRouter(
       path: '/parking',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ParkingScreen(),
+    ),
+    // Parks are businesses filed as a park (`kind = 'park'`); the Municipal
+    // page's Parks tile leads here.
+    GoRoute(
+      path: '/parks',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        BusinessListScreen(title: L.of(context).svcParks, parks: true),
+        state,
+      ),
+    ),
+    // The Municipal page's service tiles: institutions, health, education,
+    // transport, emergency. An unknown section falls back to the page.
+    GoRoute(
+      path: '/municipal/:section',
+      parentNavigatorKey: _rootNavigatorKey,
+      redirect: (context, state) =>
+          MunicipalSection.fromSlug(state.pathParameters['section'] ?? '') ==
+              null
+          ? '/municipal'
+          : null,
+      pageBuilder: (context, state) => _slideTransition(
+        MunicipalPlacesScreen(
+          section: MunicipalSection.fromSlug(state.pathParameters['section']!)!,
+        ),
+        state,
+      ),
     ),
     GoRoute(
       path: '/shabbat',

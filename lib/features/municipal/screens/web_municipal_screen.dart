@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
+import '../providers/municipal_links.dart';
 import '../providers/shabbat_providers.dart';
 import '../widgets/shabbat_widgets.dart';
 
@@ -65,6 +66,7 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
       label: _t('Public Institutions', 'מוסדות ציבור'),
       blurb: _t('City hall, libraries, centres', 'עירייה, ספריות ומתנ״סים'),
       icon: IconsaxPlusLinear.bank,
+      route: '/municipal/institutions',
     ),
     _Service(
       label: _t('Health', 'בריאות'),
@@ -73,31 +75,37 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
         'מרפאות, בתי מרקחת ורופאי שיניים',
       ),
       icon: IconsaxPlusLinear.health,
+      route: '/municipal/health',
     ),
     _Service(
       label: _t('Education', 'חינוך'),
       blurb: _t('Schools, kindergartens, registration', 'בתי ספר, גנים ורישום'),
       icon: IconsaxPlusLinear.book_1,
+      route: '/municipal/education',
     ),
     _Service(
       label: _t('Transportation', 'תחבורה'),
       blurb: _t('Bus lines, train and routes', 'קווי אוטובוס, רכבת ומסלולים'),
       icon: IconsaxPlusLinear.bus,
+      route: '/municipal/transport',
     ),
     _Service(
       label: _t('Emergency', 'חירום'),
       blurb: _t('Hotlines and shelters', 'מוקדי חירום ומקלטים'),
       icon: IconsaxPlusLinear.danger,
+      route: '/municipal/emergency',
     ),
     _Service(
       label: _t('Parks', 'פארקים'),
       blurb: _t('Green spaces and playgrounds', 'שטחים ירוקים וגני שעשועים'),
       icon: IconsaxPlusLinear.tree,
+      route: '/parks',
     ),
     _Service(
       label: _t('Forms', 'טפסים'),
       blurb: _t('Applications and permits', 'בקשות ואישורים'),
       icon: IconsaxPlusLinear.document_text,
+      route: kMunicipalFormsUrl,
     ),
   ];
 
@@ -683,9 +691,12 @@ class _WebMunicipalContentState extends State<WebMunicipalContent>
                         child: _ServiceCard(
                           service: s,
                           comingSoonLabel: _t('Coming soon', 'בקרוב'),
-                          onTap: s.route == null
-                              ? null
-                              : () => context.push(s.route!),
+                          onTap: switch (s.route) {
+                            null => null,
+                            final r when r.startsWith('http') =>
+                              () => openMunicipalLink(r),
+                            final r => () => context.push(r),
+                          },
                         ),
                       );
                     }).toList(),

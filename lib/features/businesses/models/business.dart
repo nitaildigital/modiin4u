@@ -75,6 +75,10 @@ class Business {
   final bool petFriendly;
   final bool openOnShabbat;
   final BusinessStatus status;
+
+  /// A park rather than a business (`kind = 'park'`): the page leaves out
+  /// the phone, website and menu, as the client asked.
+  final bool isPark;
   final String? ownerId;
   final DateTime createdAt;
 
@@ -112,6 +116,7 @@ class Business {
     this.petFriendly = false,
     this.openOnShabbat = false,
     this.status = BusinessStatus.active,
+    this.isPark = false,
     this.ownerId,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -293,6 +298,7 @@ class Business {
         (s) => s.name == json['status'],
         orElse: () => BusinessStatus.active,
       ),
+      isPark: json['kind'] == 'park',
       ownerId: json['owner_id'] as String?,
       createdAt: json['created_at'] is String
           ? DateTime.tryParse(json['created_at'] as String)

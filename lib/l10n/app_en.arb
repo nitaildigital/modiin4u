@@ -769,5 +769,34 @@
   "shareWithUsTitle": "Share with us",
   "shareWithUsBody": "Heard about something big? Witnessed a dramatic event? Have photos or information everyone should know? Send them to us – we will look into it, verify it and bring your story to the front page!",
   "shareWithUsCta": "Send a story",
-  "communityNews": "Community news"
+  "communityNews": "Community news",
+  "parksCount": "{count, plural, =1{1 park} other{{count} parks}}",
+  "@parksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "replyToReview": "Reply",
+  "sendReply": "Send",
+  "replySentForApproval": "Your reply was sent and will appear once approved.",
+  "signInToReply": "Sign in to reply",
+  "couldNotSendReply": "Could not send the reply. Please try again.",
+  "repliesCount": "{count, plural, =1{1 reply} other{{count} replies}}",
+  "@repliesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "callAction": "Call",
+  "searchPlacesHint": "Search by name or address",
+  "nothingListedYet": "Nothing is listed here yet.",
+  "couldNotLoadPlaces": "This list could not be loaded.",
+  "noPlacesMatchSearch": "Nothing matches your search.",
+  "mapDataCredit": "Map data © OpenStreetMap contributors",
+  "noParksYet": "No parks listed yet",
+  "parksAppearHere": "Parks will appear here as soon as they are added."
 }

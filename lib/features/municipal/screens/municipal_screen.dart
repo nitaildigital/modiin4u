@@ -7,6 +7,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
+import '../providers/municipal_links.dart';
 import '../providers/shabbat_providers.dart';
 import '../widgets/shabbat_widgets.dart';
 import 'web_municipal_screen.dart';
@@ -43,14 +44,14 @@ class _MobileMunicipalContent extends StatelessWidget {
     _Service(
       l.svcInstitutions,
       'assets/icons/m_municipal_institutions.svg',
-      null,
+      '/municipal/institutions',
     ),
-    _Service(l.svcHealth, 'assets/icons/m_municipal_health.svg', null),
-    _Service(l.svcEducation, 'assets/icons/m_municipal_education.svg', null),
-    _Service(l.svcTransport, 'assets/icons/m_municipal_transport.svg', null),
-    _Service(l.svcEmergency, 'assets/icons/m_municipal_emergency.svg', null),
-    _Service(l.svcParks, 'assets/icons/m_municipal_parks.svg', null),
-    _Service(l.svcForms, 'assets/icons/m_municipal_forms.svg', null),
+    _Service(l.svcHealth, 'assets/icons/m_municipal_health.svg', '/municipal/health'),
+    _Service(l.svcEducation, 'assets/icons/m_municipal_education.svg', '/municipal/education'),
+    _Service(l.svcTransport, 'assets/icons/m_municipal_transport.svg', '/municipal/transport'),
+    _Service(l.svcEmergency, 'assets/icons/m_municipal_emergency.svg', '/municipal/emergency'),
+    _Service(l.svcParks, 'assets/icons/m_municipal_parks.svg', '/parks'),
+    _Service(l.svcForms, 'assets/icons/m_municipal_forms.svg', kMunicipalFormsUrl),
   ];
 
   @override
@@ -421,7 +422,12 @@ class _ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: service.route != null ? () => context.push(service.route!) : null,
+      // A web address opens outside the app (Forms: the municipality's page).
+      onTap: switch (service.route) {
+        null => null,
+        final r when r.startsWith('http') => () => openMunicipalLink(r),
+        final r => () => context.push(r),
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
@@ -443,18 +449,23 @@ class _ServiceCard extends StatelessWidget {
                   : const ColorFilter.mode(Color(0xFFB4BAC6), BlendMode.srcIn),
             ),
             const SizedBox(height: 9),
-            Text(
-              service.label,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-                color: ready
-                    ? const Color(0xFF0A1230)
-                    : const Color(0xFF9AA1AE),
+            // Scaled down rather than broken mid-word: "Transportation" is
+            // wider than the tile in English.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                service.label,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                  color: ready
+                      ? const Color(0xFF0A1230)
+                      : const Color(0xFF9AA1AE),
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
             if (!ready) ...[
               const SizedBox(height: 4),

@@ -53,9 +53,11 @@ class ShabbatTimeRow extends StatelessWidget {
         Icon(icon, size: fontSize + 2, color: _kGrey),
         const SizedBox(width: 8),
         Flexible(
+          // Two lines rather than an ellipsis: "Candle lighting" does not fit
+          // the phone's half-width card in English.
           child: Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: AppFonts.inter,
@@ -260,7 +262,7 @@ class HebcalCredit extends StatelessWidget {
       child: GestureDetector(
         onTap: () => launchUrl(
           Uri.parse('https://www.hebcal.com'),
-          mode: LaunchMode.externalApplication,
+          mode: LaunchMode.inAppBrowserView,
         ),
         child: Text(
           l.shabbatTimesCredit,

@@ -11,12 +11,18 @@ import 'package:http/http.dart' as http;
 /// by the city's coordinates, so the times are Modi'in's own, and its licence
 /// (CC BY 4.0) asks for the credit the screens show.
 ///
-/// The candle-lighting offset is Hebcal's default (18 minutes before sunset)
-/// and Havdalah is its default too (the sun 8.5° below the horizon). Some
-/// towns light earlier — Jerusalem at 40 — and which custom Modi'in follows is
-/// the client's to say; it is the `b=` parameter below when he does.
+/// The times follow the municipality's own table ("זמני הדלקת נרות" on
+/// modiin.muni.il), as the client asked: candle lighting 20 minutes before
+/// sunset, Havdalah 30 minutes after, with sunset taken at the city's
+/// elevation (about 300 m). Checked against six weeks of the municipality's
+/// table (Oct–Nov 2026): 9 of 12 times equal, the other three a minute
+/// apart, which is the two sources rounding differently.
 const _kLocation =
-    'latitude=31.8969&longitude=35.0095&tzid=Asia/Jerusalem&geo=pos';
+    'latitude=31.8969&longitude=35.0095&tzid=Asia/Jerusalem&geo=pos'
+    '&ue=on&elev=300';
+
+/// Candle lighting and Havdalah, in minutes from sunset.
+const _kTimes = 'b=20&m=30';
 
 /// A name Hebcal gives in both languages from one request.
 class HebcalName {
@@ -85,7 +91,7 @@ Future<List<Map<String, dynamic>>> _items(String url) async {
 /// the screens, never as a guessed time.
 final shabbatWeekProvider = FutureProvider<ShabbatWeek>((ref) async {
   final items = await _items(
-    'https://www.hebcal.com/shabbat?cfg=json&$_kLocation&M=on&lg=he',
+    'https://www.hebcal.com/shabbat?cfg=json&$_kLocation&$_kTimes&lg=he',
   );
 
   // The week can hold a holiday's own candle lighting too (the eve of a
@@ -127,9 +133,10 @@ final shabbatWeekProvider = FutureProvider<ShabbatWeek>((ref) async {
   );
 });
 
-/// Holidays in the next three months, as Israel keeps them: the major ones,
-/// the minor ones and the modern Israeli days. Rosh Chodesh is left out.
-/// Which of the three the client wants listed is his to confirm.
+/// Holidays in the next three months, as Israel keeps them — all of them,
+/// as the client asked: the major ones, the minor ones, the modern Israeli
+/// days and the minor fasts. Rosh Chodesh and the special Shabbatot are not
+/// holidays and stay out.
 final upcomingHolidaysProvider = FutureProvider<List<HolidayDay>>((ref) async {
   final today = DateTime.now();
   final end = today.add(const Duration(days: 90));
@@ -138,7 +145,7 @@ final upcomingHolidaysProvider = FutureProvider<List<HolidayDay>>((ref) async {
 
   final items = await _items(
     'https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=on&mod=on&nx=off'
-    '&ss=off&mf=off&c=off&i=on&lg=he&start=${ymd(today)}&end=${ymd(end)}',
+    '&ss=off&mf=on&c=off&i=on&lg=he&start=${ymd(today)}&end=${ymd(end)}',
   );
   return [
     for (final i in items)
