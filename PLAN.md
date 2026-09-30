@@ -1952,9 +1952,25 @@ especially — and a few rows are mis-tagged (a sports hall under schools);
 the client completes and hides in the panel.
 
 **Forms** opens the municipality's own page "טפסים, הנחיות, חוקים ותקנות"
-(the client chose it over the online-inquiry form), outside the app, on
-the phone and the website. The link is Remote Config `municipal_forms_url`,
+(the client chose it over the online-inquiry form), in the app's own
+browser sheet — a Chrome custom tab, Safari's view on an iPhone, with a
+close button back to the app; a new tab on the website. It went out to
+Chrome first; the user asked for it to stay in the app. The Community
+page's Facebook and "Share with us" links and the Hebcal credit open the
+same way; Waze and the dialer still open their own apps. The link is
+Remote Config `municipal_forms_url`,
 so he can change it; without it the tile uses the municipality's page.
+
+### iOS: minimum iOS 15 — 30 September
+
+`pod install` failed: `google_maps_flutter_ios` needs iOS 14 and the
+Podfile set no platform, so CocoaPods assumed 13. The Podfile now says
+`platform :ios, '15.0'` and holds every pod to 15.0, and the Xcode
+project's deployment target is 15.0. 15 rather than 14 lets CocoaPods pick
+GoogleMaps 9.x instead of 8.x; iOS 15 runs on the iPhone 6s and later. The
+build succeeds without signing (`flutter build ios --no-codesign`); running
+it on a phone needs a signing team, and the Map tab needs
+`ios/Flutter/Maps.xcconfig` with an iOS-restricted key.
 
 ### Delete, in the admin panel, does not delete — 25 September
 
