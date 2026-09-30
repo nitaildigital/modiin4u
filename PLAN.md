@@ -1879,6 +1879,29 @@ model; Community and Games (built-in content, due to be replaced). The
 Restaurants tile on Businesses counts 54 — direct links only — where the
 restaurants list now shows 56.
 
+### Accessibility Statement and Terms from the client's site; Community from what he has — 30 September
+
+**Legal pages.** His WordPress site already has an Accessibility Statement
+(page 2095, last edited April 2024) and a Terms of Use and Privacy Policy
+(page 2065, August 2025). `tool/import_site_pages.py` copies both, word for
+word, into `site_pages` (`accessibility`, and a new `terms` row) as
+**unpublished drafts**, with `--undo`. He reviews and publishes them in the
+panel (עמודי מידע); legal text is his to approve, and the accessibility one
+describes the old site. `/terms` now shows that page: the Terms screen
+printed invented English terms dated "22 May 2026", and is deleted. The
+bodies are Hebrew only; the English titles are the footer's link names.
+
+**Community** was an empty feed with no table behind it. It is now his
+Facebook group (the "הצטרפות לקבוצה" page's button), his "שתפו אותנו" form
+— its own words on the card — and a news category's latest stories. The
+three are `remote_config` keys he edits (`community_facebook_url`,
+`community_share_url`, `community_news_category`, seeded by
+`tool/seed_community_settings.py`); an empty link hides its card. The news
+category is "people" (אנשים, 27 stories) until he picks one: no article
+category is called community. Nothing in the app links to /community; the
+website does, from Home and the footer. Games has nothing on his site and
+is left as it is, unlinked, pending his decision.
+
 ### Delete, in the admin panel, does not delete — 25 September
 
 Tested the panel properly for the first time, signed in as a temporary

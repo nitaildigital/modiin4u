@@ -759,5 +759,15 @@
   "linkInvalid": "This link is no longer valid",
   "resetLinkUsedOnce": "Each password reset link works only once, and a new request cancels the previous one. Request a new link and use it from the latest message you received.",
   "linkUsedOrExpired": "The link may already have been used or has expired. Sign in to request a new one.",
-  "requestNewLink": "Request a new link"
+  "requestNewLink": "Request a new link",
+  "sitePageTermsTitle": "Terms of Use & Privacy Policy",
+  "communityTitle": "Community",
+  "communityIntro": "Modi'in's community in one place: our Facebook group, your stories and news from around the city.",
+  "joinGroupTitle": "Join our Facebook group",
+  "joinGroupBody": "Talk with Modi'in residents: questions, recommendations and updates.",
+  "joinGroupCta": "Join now",
+  "shareWithUsTitle": "Share with us",
+  "shareWithUsBody": "Heard about something big? Witnessed a dramatic event? Have photos or information everyone should know? Send them to us – we will look into it, verify it and bring your story to the front page!",
+  "shareWithUsCta": "Send a story",
+  "communityNews": "Community news"
 }

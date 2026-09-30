@@ -8,6 +8,7 @@ import '../../../l10n/app_localizations.dart';
 /// same names the footer links print.
 String sitePageFallbackTitle(L l, String slug) => switch (slug) {
   'accessibility' => l.sitePageAccessibilityTitle,
+  'terms' => l.sitePageTermsTitle,
   _ => l.sitePageAboutTitle,
 };
 

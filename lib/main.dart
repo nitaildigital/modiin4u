@@ -70,7 +70,9 @@ class Modiin4uApp extends ConsumerWidget {
     });
 
     return MaterialApp.router(
-      title: 'מודיעין בשבילך',
+      // The name in the recent-apps screen and the browser tab, in the
+      // language chosen; a fixed Hebrew title stayed Hebrew in English.
+      onGenerateTitle: (context) => L.of(context).appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

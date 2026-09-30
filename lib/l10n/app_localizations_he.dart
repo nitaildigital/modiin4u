@@ -1804,4 +1804,36 @@ class LHe extends L {
 
   @override
   String get requestNewLink => 'בקשת קישור חדש';
+
+  @override
+  String get sitePageTermsTitle => 'תקנון תנאי שימוש ומדיניות פרטיות';
+
+  @override
+  String get communityTitle => 'קהילה';
+
+  @override
+  String get communityIntro =>
+      'הקהילה של מודיעין במקום אחד: קבוצת הפייסבוק, הסיפורים שלכם וחדשות מהעיר.';
+
+  @override
+  String get joinGroupTitle => 'הצטרפו לקבוצת הפייסבוק שלנו';
+
+  @override
+  String get joinGroupBody => 'שיחות עם תושבי מודיעין: שאלות, המלצות ועדכונים.';
+
+  @override
+  String get joinGroupCta => 'הצטרף עכשיו';
+
+  @override
+  String get shareWithUsTitle => 'שתפו אותנו';
+
+  @override
+  String get shareWithUsBody =>
+      'שמעתם על משהו גדול? הייתם עדים לאירוע מסעיר? יש לכם תמונות או מידע שכולם חייבים לדעת? שלחו לנו – אנחנו נחקור, נאמת ונביא את הסיפור שלכם לקדמת הבמה!';
+
+  @override
+  String get shareWithUsCta => 'שליחת סיפור';
+
+  @override
+  String get communityNews => 'חדשות הקהילה';
 }

@@ -1827,4 +1827,37 @@ class LEn extends L {
 
   @override
   String get requestNewLink => 'Request a new link';
+
+  @override
+  String get sitePageTermsTitle => 'Terms of Use & Privacy Policy';
+
+  @override
+  String get communityTitle => 'Community';
+
+  @override
+  String get communityIntro =>
+      'Modi\'in\'s community in one place: our Facebook group, your stories and news from around the city.';
+
+  @override
+  String get joinGroupTitle => 'Join our Facebook group';
+
+  @override
+  String get joinGroupBody =>
+      'Talk with Modi\'in residents: questions, recommendations and updates.';
+
+  @override
+  String get joinGroupCta => 'Join now';
+
+  @override
+  String get shareWithUsTitle => 'Share with us';
+
+  @override
+  String get shareWithUsBody =>
+      'Heard about something big? Witnessed a dramatic event? Have photos or information everyone should know? Send them to us – we will look into it, verify it and bring your story to the front page!';
+
+  @override
+  String get shareWithUsCta => 'Send a story';
+
+  @override
+  String get communityNews => 'Community news';
 }

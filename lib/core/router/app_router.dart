@@ -24,7 +24,6 @@ import '../../features/auth/screens/auth_confirm_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/auth/screens/change_language_screen.dart';
 import '../../features/auth/screens/help_support_screen.dart';
-import '../../features/auth/screens/terms_conditions_screen.dart';
 import '../../features/site_pages/screens/site_page_screen.dart';
 import '../../features/events/screens/events_screen.dart';
 import '../../features/events/screens/events_map_screen.dart';
@@ -472,7 +471,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/terms',
       parentNavigatorKey: _rootNavigatorKey,
-      pageBuilder: (context, state) => _slideTransition(const TermsConditionsScreen(), state),
+      // The client's own Terms of Use and Privacy Policy, from the panel's
+      // עמודי מידע. The screen here printed invented English terms.
+      pageBuilder: (context, state) =>
+          _slideTransition(const SitePageScreen(slug: 'terms'), state),
     ),
     // The client's own pages, written in the panel (עמודי מידע); the footer's
     // About Us and Accessibility Statement links land here.

@@ -3504,6 +3504,66 @@ abstract class L {
   /// In he, this message translates to:
   /// **'בקשת קישור חדש'**
   String get requestNewLink;
+
+  /// No description provided for @sitePageTermsTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'תקנון תנאי שימוש ומדיניות פרטיות'**
+  String get sitePageTermsTitle;
+
+  /// No description provided for @communityTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'קהילה'**
+  String get communityTitle;
+
+  /// No description provided for @communityIntro.
+  ///
+  /// In he, this message translates to:
+  /// **'הקהילה של מודיעין במקום אחד: קבוצת הפייסבוק, הסיפורים שלכם וחדשות מהעיר.'**
+  String get communityIntro;
+
+  /// No description provided for @joinGroupTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'הצטרפו לקבוצת הפייסבוק שלנו'**
+  String get joinGroupTitle;
+
+  /// No description provided for @joinGroupBody.
+  ///
+  /// In he, this message translates to:
+  /// **'שיחות עם תושבי מודיעין: שאלות, המלצות ועדכונים.'**
+  String get joinGroupBody;
+
+  /// No description provided for @joinGroupCta.
+  ///
+  /// In he, this message translates to:
+  /// **'הצטרף עכשיו'**
+  String get joinGroupCta;
+
+  /// No description provided for @shareWithUsTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'שתפו אותנו'**
+  String get shareWithUsTitle;
+
+  /// No description provided for @shareWithUsBody.
+  ///
+  /// In he, this message translates to:
+  /// **'שמעתם על משהו גדול? הייתם עדים לאירוע מסעיר? יש לכם תמונות או מידע שכולם חייבים לדעת? שלחו לנו – אנחנו נחקור, נאמת ונביא את הסיפור שלכם לקדמת הבמה!'**
+  String get shareWithUsBody;
+
+  /// No description provided for @shareWithUsCta.
+  ///
+  /// In he, this message translates to:
+  /// **'שליחת סיפור'**
+  String get shareWithUsCta;
+
+  /// No description provided for @communityNews.
+  ///
+  /// In he, this message translates to:
+  /// **'חדשות הקהילה'**
+  String get communityNews;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -443,12 +443,15 @@ class _RemoteConfigTab extends ConsumerWidget {
 
     return Column(
       children: [
-        // Nothing reads `remote_config` either; same note as the flags.
+        // Only the Community page's three keys are read so far; the rest
+        // are stored and read by nothing, as with the flags.
         const _NotYetWiredNote(
           text:
-              'ההגדרות כאן נשמרות בבסיס הנתונים, אך האפליקציה והאתר עדיין '
-              'אינם קוראים אותן — שינוי ערך יירשם ולא ישנה דבר אצל המשתמשים. '
-              'חיבור ההגדרות לאפליקציה הוא פיתוח נפרד.',
+              'שלוש הגדרות פעילות בעמוד הקהילה: community_facebook_url '
+              '(קישור לקבוצת הפייסבוק), community_share_url (קישור לטופס '
+              '"שתפו אותנו") ו-community_news_category (קטגוריית החדשות '
+              'שמוצגת). שאר ההגדרות כאן נשמרות, אך האפליקציה והאתר עדיין '
+              'אינם קוראים אותן.',
         ),
         // ─── Toolbar ───
         Container(

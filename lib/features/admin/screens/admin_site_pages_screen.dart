@@ -22,7 +22,11 @@ class AdminSitePagesScreen extends ConsumerWidget {
   const AdminSitePagesScreen({super.key});
 
   /// Where each page lives on the site, shown so the client can open it.
-  static const _paths = {'about': '/about', 'accessibility': '/accessibility'};
+  static const _paths = {
+    'about': '/about',
+    'accessibility': '/accessibility',
+    'terms': '/terms',
+  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
