@@ -6,7 +6,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-import 'osm_attribution.dart';
 import 'web_chrome.dart' show webIsHebrew;
 
 /// The website's maps, on Google's map when the build carries a key.
@@ -22,11 +21,12 @@ import 'web_chrome.dart' show webIsHebrew;
 /// build time (`--dart-define=MAPS_WEB_KEY=…`, which tool/deploy_web.sh reads
 /// from .env.local). It is in the page for anyone to read, as every Maps key
 /// in a web page is; the restriction is what protects it. It does not work
-/// from the app, which sends no address, so the app's other maps stay on
-/// OpenStreetMap until they are moved to the Google map widget.
+/// from the app, which sends no address; the app draws Google's own map
+/// widget instead (AppMap).
 ///
-/// Without a key, or if Google refuses the session, the maps draw
-/// OpenStreetMap as before rather than nothing.
+/// OpenStreetMap is gone from the site as the client asked: without a key
+/// (a local build), or if Google refuses the session, the map shows its
+/// plain background and the pins, not another provider's map.
 const _key = String.fromEnvironment('MAPS_WEB_KEY');
 
 bool get _googleTiles => kIsWeb && _key.isNotEmpty;
@@ -70,7 +70,7 @@ final _sessionProvider = FutureProvider.family<_GoogleSession?, bool>((ref, hebr
       }),
     );
     if (res.statusCode != 200) {
-      debugPrint('Google map session refused (${res.statusCode}); drawing OpenStreetMap');
+      debugPrint('Google map session refused (${res.statusCode}); no map tiles');
       return null;
     }
     final token = (jsonDecode(res.body) as Map<String, dynamic>)['session'] as String;
@@ -87,20 +87,13 @@ final _sessionProvider = FutureProvider.family<_GoogleSession?, bool>((ref, hebr
     } catch (_) {}
     return _GoogleSession(token, copyright);
   } catch (e) {
-    debugPrint('Google map session failed ($e); drawing OpenStreetMap');
+    debugPrint('Google map session failed ($e); no map tiles');
     return null;
   }
 });
 
-TileLayer _osm({int maxZoom = 19, TileBuilder? tileBuilder}) => TileLayer(
-      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      userAgentPackageName: 'com.modiin4u.app',
-      maxZoom: maxZoom.toDouble(),
-      tileBuilder: tileBuilder,
-    );
-
 /// The map itself, for a `FlutterMap`'s children: Google's roadmap in the
-/// page's language, or OpenStreetMap.
+/// page's language, or nothing while it is unavailable.
 class WebMapTiles extends ConsumerWidget {
   /// For a page that tints the map, as the listing page greys it.
   final TileBuilder? tileBuilder;
@@ -108,18 +101,17 @@ class WebMapTiles extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!_googleTiles) return _osm(tileBuilder: tileBuilder);
+    if (!_googleTiles) return const SizedBox.shrink();
     return ValueListenableBuilder<bool>(
       valueListenable: webIsHebrew,
       builder: (context, hebrew, _) {
         final session = ref.watch(_sessionProvider(hebrew));
         return session.when(
-          // A moment of the map's own background, not OpenStreetMap
-          // flashing up and being replaced.
+          // The map's own background for the moment the session takes.
           loading: () => const SizedBox.shrink(),
-          error: (_, _) => _osm(tileBuilder: tileBuilder),
+          error: (_, _) => const SizedBox.shrink(),
           data: (s) => s == null
-              ? _osm(tileBuilder: tileBuilder)
+              ? const SizedBox.shrink()
               : TileLayer(
                   urlTemplate: 'https://tile.googleapis.com/v1/2dtiles/{z}/{x}/{y}?session=${s.token}&key=$_key',
                   maxZoom: 21,
@@ -131,21 +123,21 @@ class WebMapTiles extends ConsumerWidget {
   }
 }
 
-/// Whose map it is, in the corner, as each provider requires: Google's logo
-/// and credit, or OpenStreetMap's.
+/// Whose map it is, in the corner, as Google requires: its logo and the
+/// credit it gives for the area.
 class WebMapCredit extends ConsumerWidget {
   const WebMapCredit({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!_googleTiles) return const OsmAttribution();
+    if (!_googleTiles) return const SizedBox.shrink();
     return ValueListenableBuilder<bool>(
       valueListenable: webIsHebrew,
       builder: (context, hebrew, _) {
         final session = ref.watch(_sessionProvider(hebrew));
         if (session.isLoading) return const SizedBox.shrink();
         final s = session.valueOrNull;
-        if (s == null) return const OsmAttribution();
+        if (s == null) return const SizedBox.shrink();
         // The logo and credit sit in the same corners whatever the page's
         // language: they belong to the map, which does not mirror.
         return Directionality(

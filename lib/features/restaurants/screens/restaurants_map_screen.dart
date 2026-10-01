@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -11,7 +10,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/restaurant_providers.dart';
 import 'web_restaurants_map_screen.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/app_map.dart';
 
 /// Restaurants map view — responsive wrapper.
 /// Desktop (> 1100px) renders the web search + map layout; mobile keeps the app UI.
@@ -88,40 +87,27 @@ class _MobileRestaurantsMapContentState
           constraints: const BoxConstraints(maxWidth: 430),
           child: Stack(
             children: [
-              FlutterMap(
-                options: MapOptions(
-                  initialCenter: _center,
-                  initialZoom: 14.5,
-                  onTap: (_, _) => setState(() => _selectedId = null),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.modiin4u.app',
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      for (final place in places)
-                        Marker(
-                          point: LatLng(
-                            place.business.latitude,
-                            place.business.longitude,
-                          ),
-                          width: 40,
-                          height: 40,
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedId = place.business.id),
-                            child: _MapPin(
-                              isCafe: place.isCafe,
-                              isSelected: _selectedId == place.business.id,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const OsmAttribution(),
+              // Google's map (AppMap), with the frame's round pins: blue for a
+              // café, green for a restaurant.
+              AppMap(
+                center: _center,
+                selectedId: _selectedId,
+                onSelect: (id) => setState(() => _selectedId = id),
+                pins: [
+                  for (final place in places)
+                    AppMapPin.circle(
+                      id: place.business.id,
+                      position: LatLng(
+                        place.business.latitude,
+                        place.business.longitude,
+                      ),
+                      color: place.isCafe
+                          ? const Color(0xFF006BF6)
+                          : const Color(0xFF31AC4E),
+                      icon: place.isCafe
+                          ? IconsaxPlusBold.coffee
+                          : IconsaxPlusBold.reserve,
+                    ),
                 ],
               ),
 
@@ -287,56 +273,6 @@ class _MobileRestaurantsMapContentState
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// Map pin — white circle, coloured inner circle, icon.
-//
-// Green for a restaurant, blue for a café. The design also has a red bar pin,
-// but there is no bar category in the database, so nothing can fill it.
-// ═══════════════════════════════════════════════
-class _MapPin extends StatelessWidget {
-  final bool isCafe;
-  final bool isSelected;
-
-  const _MapPin({required this.isCafe, this.isSelected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 2.28,
-            offset: const Offset(0, 2.28),
-          ),
-        ],
-        border: isSelected
-            ? Border.all(color: const Color(0xFF123A72), width: 2)
-            : null,
-      ),
-      child: Center(
-        child: Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: isCafe ? const Color(0xFF006BF6) : const Color(0xFF31AC4E),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            isCafe ? IconsaxPlusBold.coffee : IconsaxPlusBold.reserve,
-            size: 12,
-            color: Colors.white,
           ),
         ),
       ),

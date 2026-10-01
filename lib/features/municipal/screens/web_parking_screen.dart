@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
-import 'package:flutter_map/flutter_map.dart';
+import '../../../shared/widgets/app_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -47,7 +47,7 @@ class _WebParkingContentState extends ConsumerState<WebParkingContent>
   static final _he = lookupL(const Locale('he'));
   L get _l => _isHebrew ? _he : _en;
 
-  final _map = MapController();
+  final _map = AppMapController();
   final _listScroll = ScrollController();
   final _cardKeys = <String, GlobalKey>{};
   String? _selectedId;
@@ -79,8 +79,7 @@ class _WebParkingContentState extends ConsumerState<WebParkingContent>
 
   void _selectFromList(ParkingLot lot) {
     setState(() => _selectedId = lot.id);
-    final zoom = _map.camera.zoom;
-    _map.move(lot.position, zoom < 16 ? 16 : zoom);
+    _map.moveTo(lot.position);
   }
 
   @override

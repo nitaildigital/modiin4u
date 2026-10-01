@@ -5,7 +5,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
@@ -19,7 +18,7 @@ import '../providers/event_providers.dart';
 import 'web_event_detail_screen.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/app_map.dart';
 import '../../../shared/widgets/web_share_menu.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/event_labels.dart';
@@ -602,35 +601,27 @@ class _MobileEventDetailContentState
               height: 230,
               child: Stack(
                 children: [
+                  // Google's map of the venue, still (AppMap, not
+                  // interactive), with the frame's pin over its centre —
+                  // which is the venue — tip down on the spot.
                   IgnorePointer(
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter: venuePosition,
-                        initialZoom: 15.5,
+                    child: AppMap(
+                      center: venuePosition,
+                      zoom: 15.5,
+                      interactive: false,
+                      pins: const [],
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: Center(
+                      child: Transform.translate(
+                        offset: const Offset(0, -26),
+                        child: SvgPicture.asset(
+                          'assets/icons/m_events_pin.svg',
+                          width: 48,
+                          height: 52,
+                        ),
                       ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.modiin4u.app',
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: venuePosition,
-                              width: 48,
-                              height: 52,
-                              alignment: Alignment.topCenter,
-                              child: SvgPicture.asset(
-                                'assets/icons/m_events_pin.svg',
-                                width: 48,
-                                height: 52,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const OsmAttribution(),
-                      ],
                     ),
                   ),
                   Positioned(

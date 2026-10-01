@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -17,7 +16,7 @@ import '../models/event_labels.dart';
 import '../providers/event_providers.dart';
 import '../widgets/m_event_card.dart' show mEventsIsHebrew;
 import 'web_events_map_screen.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/app_map.dart';
 
 /// The events map.
 ///
@@ -103,38 +102,18 @@ class _MobileEventsMapContentState
           constraints: const BoxConstraints(maxWidth: 430),
           child: Stack(
             children: [
-              FlutterMap(
-                options: MapOptions(
-                  initialCenter: _center,
-                  initialZoom: 14.5,
-                  onTap: (_, _) => setState(() => _selectedId = null),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.modiin4u.app',
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      for (final event in pinned)
-                        Marker(
-                          point: LatLng(event.latitude, event.longitude),
-                          width: 40,
-                          height: 43,
-                          // The teardrop's tip, not its middle, marks the
-                          // place.
-                          alignment: Alignment.topCenter,
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedId = event.id),
-                            child: _EventMapPin(
-                              isSelected: _selectedId == event.id,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const OsmAttribution(),
+              // Google's map (AppMap), with the frame's event pin.
+              AppMap(
+                center: _center,
+                selectedId: _selectedId,
+                onSelect: (id) => setState(() => _selectedId = id),
+                pins: [
+                  for (final event in pinned)
+                    AppMapPin(
+                      id: event.id,
+                      position: LatLng(event.latitude, event.longitude),
+                      asset: 'assets/web/events/map_pin.svg',
+                    ),
                 ],
               ),
 
@@ -298,60 +277,6 @@ class _MobileEventsMapContentState
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// The design's pin: a white teardrop with a purple disc and a calendar.
-// ═══════════════════════════════════════════════
-class _EventMapPin extends StatelessWidget {
-  final bool isSelected;
-  const _EventMapPin({this.isSelected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    // The frame draws every pin alike. The chosen one is grown a little, as
-    // on the website's map, so it can be told from the rest while its card
-    // is open.
-    return AnimatedScale(
-      duration: const Duration(milliseconds: 150),
-      scale: isSelected ? 1.15 : 1.0,
-      alignment: Alignment.bottomCenter,
-      child: SizedBox(
-        width: 40,
-        height: 43,
-        child: Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            // flutter_svg does not draw the SVG's drop-shadow filter; a soft
-            // shadow is painted under the teardrop instead, or the white pin
-            // is lost on the pale map.
-            Positioned(
-              top: 6,
-              child: Container(
-                width: 26,
-                height: 26,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x40000000),
-                      blurRadius: 4,
-                      offset: Offset(0, 2.3),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SvgPicture.asset(
-              'assets/web/events/map_pin.svg',
-              width: 40,
-              height: 43,
-            ),
-          ],
         ),
       ),
     );

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -13,13 +12,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/network_photo.dart';
-import '../../map/screens/web_map_screen.dart' show WebMapPin;
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 import '../widgets/m_listing_filter_sheet.dart';
 import 'my_apartments_screen.dart' show formatShekels;
 import 'web_realestate_map_screen.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/app_map.dart';
 
 /// The real-estate map.
 ///
@@ -99,48 +97,19 @@ class _RealEstateMapScreenState extends ConsumerState<RealEstateMapScreen> {
           constraints: const BoxConstraints(maxWidth: 430),
           child: Stack(
             children: [
-              FlutterMap(
-                options: MapOptions(
-                  initialCenter: _center,
-                  initialZoom: 14.5,
-                  onTap: (_, _) => setState(() => _selectedId = null),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.modiin4u.app',
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      for (final listing in pinned)
-                        Marker(
-                          point: LatLng(listing.latitude!, listing.longitude!),
-                          width: 40,
-                          height: 44,
-                          // The pin's point, not its middle, sits on the
-                          // address.
-                          alignment: Alignment.topCenter,
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedId = listing.id),
-                            // The frame draws every pin alike. The chosen
-                            // one is lifted the way the website lifts a
-                            // hovered pin, so the card can be told apart
-                            // from its neighbours.
-                            child: AnimatedScale(
-                              scale: _selectedId == listing.id ? 1.2 : 1,
-                              alignment: Alignment.bottomCenter,
-                              duration: const Duration(milliseconds: 150),
-                              child: const WebMapPin(
-                                asset: 'assets/web/map/pin_biz.svg',
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const OsmAttribution(),
+              // Google's map (AppMap). The frame draws every pin alike; the
+              // chosen one is drawn larger so its card can be told apart.
+              AppMap(
+                center: _center,
+                selectedId: _selectedId,
+                onSelect: (id) => setState(() => _selectedId = id),
+                pins: [
+                  for (final listing in pinned)
+                    AppMapPin(
+                      id: listing.id,
+                      position: LatLng(listing.latitude!, listing.longitude!),
+                      asset: 'assets/web/map/pin_biz.svg',
+                    ),
                 ],
               ),
 

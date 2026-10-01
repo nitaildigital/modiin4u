@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -7,10 +6,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/network_photo.dart';
-import '../../../shared/widgets/osm_attribution.dart';
-import '../../../shared/widgets/web_map_tiles.dart';
+import '../../../shared/widgets/app_map.dart';
 import '../../map/data/map_pois.dart' show modiinCenter;
-import '../../map/screens/web_map_screen.dart' show WebMapPin;
 import '../providers/parking_providers.dart';
 
 // The pieces the phone and desktop parking screens share: the map of the
@@ -24,16 +21,16 @@ const _kIconGrey = Color(0xFF6D6D6D);
 /// The city map's parking pin, so a lot looks the same here as on /map.
 const _kPin = 'assets/web/map/pin_parking.svg';
 
-/// The lots as pins, the chosen one lifted.
+/// The lots as pins, the chosen one lifted — on Google's map (AppMap), in
+/// the app and on the website alike.
 class ParkingMap extends StatelessWidget {
   final List<ParkingLot> lots;
   final String? selectedId;
   final ValueChanged<ParkingLot?> onSelect;
-  final MapController? controller;
+  final AppMapController? controller;
 
-  /// The website's map (Google's where the build carries a key) rather than
-  /// OpenStreetMap, which the phone layouts draw as the app's other small
-  /// maps do.
+  /// The website's page, which scrolls: the wheel moves the page, not the
+  /// map, as on the listing page.
   final bool websiteTiles;
 
   const ParkingMap({
@@ -47,66 +44,21 @@ class ParkingMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FlutterMap(
-      mapController: controller,
-      options: MapOptions(
-        initialCenter: lots.length == 1 ? lots.first.position : modiinCenter,
-        initialZoom: lots.length == 1 ? 16 : 14,
-        initialCameraFit: lots.length < 2
-            ? null
-            : CameraFit.coordinates(
-                coordinates: [for (final lot in lots) lot.position],
-                padding: const EdgeInsets.all(48),
-                maxZoom: 16,
-              ),
-        minZoom: 11,
-        maxZoom: 18,
-        backgroundColor: const Color(0xFFF9F5ED),
-        // On the website the map sits in a page that scrolls, and the wheel
-        // zoomed the map instead of moving the page; as on the listing page,
-        // it is left to the page. Never rotated: north stays up.
-        interactionOptions: InteractionOptions(
-          flags: websiteTiles
-              ? InteractiveFlag.all &
-                    ~InteractiveFlag.scrollWheelZoom &
-                    ~InteractiveFlag.rotate
-              : InteractiveFlag.all & ~InteractiveFlag.rotate,
-        ),
-        onTap: (_, _) => onSelect(null),
+    return AppMap(
+      controller: controller,
+      center: lots.length == 1 ? lots.first.position : modiinCenter,
+      zoom: lots.length == 1 ? 16 : 14,
+      fitPins: true,
+      minZoom: 11,
+      maxZoom: 18,
+      scrollWheelZoom: !websiteTiles,
+      selectedId: selectedId,
+      onSelect: (id) => onSelect(
+        id == null ? null : lots.where((l) => l.id == id).firstOrNull,
       ),
-      children: [
-        if (websiteTiles)
-          const WebMapTiles()
-        else
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.modiin4u.app',
-          ),
-        MarkerLayer(
-          markers: [
-            for (final lot in lots)
-              Marker(
-                point: lot.position,
-                width: 40,
-                height: 44,
-                // The pin's point, not its middle, sits on the lot.
-                alignment: Alignment.topCenter,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => onSelect(lot),
-                    child: AnimatedScale(
-                      scale: selectedId == lot.id ? 1.2 : 1,
-                      alignment: Alignment.bottomCenter,
-                      duration: const Duration(milliseconds: 150),
-                      child: const WebMapPin(asset: _kPin),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        if (websiteTiles) const WebMapCredit() else const OsmAttribution(),
+      pins: [
+        for (final lot in lots)
+          AppMapPin(id: lot.id, position: lot.position, asset: _kPin),
       ],
     );
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +17,7 @@ import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 import '../widgets/m_price_text.dart';
 import 'web_listing_detail_screen.dart';
-import '../../../shared/widgets/osm_attribution.dart';
+import '../../../shared/widgets/app_map.dart';
 
 /// One apartment listing.
 ///
@@ -604,27 +603,15 @@ class _MobileListingDetailContentState
               width: double.infinity,
               child: Stack(
                 children: [
-                  // The real map. A flat pastel box with a faint glyph
-                  // stood here, while `flutter_map` was already used
-                  // elsewhere in this same feature and this section only
-                  // renders when the listing has coordinates.
+                  // The real map of the address — Google's, still (AppMap,
+                  // not interactive); the pin below sits on its centre. A
+                  // flat pastel box with a faint glyph once stood here.
                   IgnorePointer(
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter: LatLng(
-                          listing.latitude!,
-                          listing.longitude!,
-                        ),
-                        initialZoom: 15.5,
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.modiin4u.app',
-                        ),
-                        const OsmAttribution(),
-                      ],
+                    child: AppMap(
+                      center: LatLng(listing.latitude!, listing.longitude!),
+                      zoom: 15.5,
+                      interactive: false,
+                      pins: const [],
                     ),
                   ),
 

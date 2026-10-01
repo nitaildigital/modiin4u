@@ -91,4 +91,75 @@ abstract final class MapPinBitmap {
       height: _height * logicalScale,
     );
   }
+
+  /// The phone restaurants map's pin: a white disc with a coloured centre
+  /// and a white glyph, ringed in navy when chosen (Figma's mobile frame).
+  /// Anchored at its middle, as it sits centred on the place.
+  static Future<BitmapDescriptor> ofCircle({
+    required Color color,
+    required IconData icon,
+    required bool isSelected,
+    required double devicePixelRatio,
+  }) async {
+    final key =
+        'circle|${color.toARGB32()}|${icon.codePoint}|$isSelected|'
+        '${devicePixelRatio.toStringAsFixed(2)}';
+    final cached = _cache[key];
+    if (cached != null) return cached;
+
+    const size = 40.0;
+    final scale = devicePixelRatio;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)..scale(scale);
+    const centre = Offset(size / 2, size / 2 - 2);
+
+    // Shadow — y 2.28, blur 2.28 — then the white disc, the ring, the
+    // coloured centre and the glyph.
+    canvas.drawCircle(
+      centre.translate(0, 2.28),
+      17,
+      Paint()
+        ..color = const Color(0x40000000)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.28),
+    );
+    canvas.drawCircle(centre, 17, Paint()..color = Colors.white);
+    if (isSelected) {
+      canvas.drawCircle(
+        centre,
+        16,
+        Paint()
+          ..color = const Color(0xFF123A72)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+    }
+    canvas.drawCircle(centre, 11, Paint()..color = color);
+    final glyph = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+          fontFamily: icon.fontFamily,
+          package: icon.fontPackage,
+          fontSize: 12,
+          color: Colors.white,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    glyph.paint(canvas, centre - Offset(glyph.width / 2, glyph.height / 2));
+
+    final image = await recorder.endRecording().toImage(
+      (size * scale).ceil(),
+      (size * scale).ceil(),
+    );
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    final built = BitmapDescriptor.bytes(
+      bytes!.buffer.asUint8List(),
+      width: size,
+      height: size,
+    );
+    _cache[key] = built;
+    return built;
+  }
 }
