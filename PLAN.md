@@ -2111,6 +2111,59 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### Car parks from Google, and a page for each — 1 October
+
+The client chose the new parking UI and said: "We need to pull all the
+parking information available on Google … It should display whatever
+information we can get from Google." He left tap and navigation to us. No
+availability is shown, and no space counts.
+
+**What Google has.** A grid of Places (API New) searches over the city
+found 15 places of type parking, 4 of which aren't car parks: a private
+home, a person's name, a bus company's depot and a private parking
+business. Details are thin: 4 have hours, 4 have photos, ratings come from
+1 to 16 people, and most list payment methods.
+
+**Linked and added** (`tool/link_parking_google.py`, migration 00044):
+- Our car parks within 100 m of a Google one are linked to it by place ID
+  (4).
+- Google's other car parks are added (7). That makes 26 in all, 11 linked.
+- Google's terms allow keeping a place's ID but not its details. So an
+  added row has its own name ("חניון ברחוב הרכבת", from the street) and an
+  OpenStreetMap location where an outline is within 60 m.
+- Registry `tool/parking_google_registry.json`, `--undo`.
+- The panel's car park editor has the place ID field, so the client can
+  link or unlink a car park.
+
+**The car park page** (`/parking/:id`) is what tapping a car park now does;
+tapping a pin still picks it out in the list.
+- For a linked car park it fetches Google's name, address, hours, rating,
+  photos (with their authors), payment methods, phone and website live.
+  This is one Place Details request per page opened, shown with Google's
+  logo and "Information from Google Maps".
+- Next to that it shows the client's own hours, price, spaces and notes,
+  and a small map.
+- Navigation offers Waze or Google Maps; the card's Directions button
+  opens the same choice.
+
+**Keys.** Each platform has its own key from `.env.local`, given at build
+time:
+- website: `PLACES_WEB_KEY` in `tool/deploy_web.sh`;
+- Android: `PLACES_ANDROID_KEY` plus the signing certificate's SHA-1, in
+  the new `tool/build_android.sh`;
+- iOS: `PLACES_IOS_KEY`, not wired into an iOS build yet.
+
+Google allows the browser's requests (CORS), so no relay is needed. **The
+three keys had no restrictions when created**, and the website's is now in
+the deployed page. They must be restricted to their platform (site
+addresses / package plus SHA-1 / bundle ID) and given a daily quota.
+
+Checked:
+- live website at 1440 px (Anava Park lot with photos and rating) and
+  locally at 390 px;
+- Android emulator: a linked lot with Google's name and address, an
+  unlinked one with ours, and the Waze / Google Maps sheet.
+
 ### Small items: Paid tag, leaderboard days, a sample date, panel click-throughs — 1 October
 
 - **Paid tag.** A parking card marked only free lots, so the four paid lots
