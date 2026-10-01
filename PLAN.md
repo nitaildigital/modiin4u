@@ -2111,6 +2111,27 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### Bugs from the day's testing — 1 October
+
+- **The website's Map tab at phone width was a grey page.** The screen used
+  google_maps_flutter, whose web version needs Google's script, which the
+  site does not load. It now draws AppMap like the other maps: the native map
+  in the app, Google's tiles in a browser. The marker code it carried is gone.
+- **The step group page in English** squeezed "Average per member" and the
+  column headings, and cut names short. Labels may take two lines, the
+  headings shrink to fit with room between them, and names wrap.
+- **The city leaderboard** wrote "steps" in English in the Hebrew app (now
+  the translated label). Its Neighbourhood/City switch rounded its buttons
+  left-to-right, so in Hebrew the selected one looked cut off at the card's
+  edge; the rounding now follows the reading direction.
+- **A park's page on the desktop site** lit "עסקים" in the navbar and showed
+  the shop icon in its badge. A park lights nothing, since the navbar has no
+  Municipal item, and its badge shows the Municipal page's park icon.
+
+Checked on the deployed site (Map tab at 390 px, a park page at 1440 px) and
+on the Android emulator (Map tab and its card, the leaderboard in Hebrew, the
+group page in English), with temporary accounts deleted after.
+
 ### Google's map everywhere, OpenStreetMap gone — 1 October
 
 Harshit: "remove open street map view with the google maps in entire all

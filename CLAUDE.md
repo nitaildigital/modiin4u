@@ -42,7 +42,7 @@ decision and why — when you make one, add it there in the same plain style.
 - On the web the theme drops Material 3's line height and letter spacing so
   text measures as designed (`app_theme.dart`).
 - The web Maps key is referrer-restricted to the site's addresses; locally the
-  maps fall back to OpenStreetMap. Never put it in a mobile build.
+  maps show pins without map tiles. Never put it in a mobile build.
 - Never run `certbot --nginx` on the server; use `tool/enable_domain.sh`.
 - Homebrew's `python3` has no Pillow — image scripts need
   `/Library/Frameworks/Python.framework/Versions/3.13/bin/python3`.

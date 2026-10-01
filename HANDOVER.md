@@ -52,7 +52,8 @@ it is in git:
 
 - **Deploy the web:** `AUTH_REDIRECT_URL=http://45.93.94.49/auth/callback tool/deploy_web.sh`
   (`--build-only` to build without uploading). It compiles the Google Maps key
-  in from `.env.local`; without it the maps fall back to OpenStreetMap.
+  in from `.env.local`; without it the maps show pins but no map tiles
+  (OpenStreetMap was removed on 1 Oct).
 - **Switch on the domain:** once `app` A → 45.93.94.49 exists at uPress, run
   `tool/enable_domain.sh`. Never `certbot --nginx` (it would move the bare IP's
   port 80). nginx config lives in `deploy/nginx/`, identical to the server.

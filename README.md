@@ -18,9 +18,10 @@ everything behind them.
 - Supabase (project `zbtgietqoxkglfxfocrb`): Postgres with row level security,
   auth, storage (`media` bucket), RPCs such as `active_banners()` and
   `is_admin()`.
-- Maps: the app's main map is `google_maps_flutter`; the other maps use
-  `flutter_map`, which on the website draws Google's roadmap through the Map
-  Tiles API when the build has a key, and OpenStreetMap otherwise.
+- Maps: every map is Google's, through `lib/shared/widgets/app_map.dart` —
+  `google_maps_flutter` in the app, and on the website `flutter_map` drawing
+  Google's roadmap through the Map Tiles API. Without a key a map shows its
+  background and pins; OpenStreetMap was removed (1 Oct).
 - The website is the same Flutter code built for the web, served as static
   files by nginx on a Kamatera server.
 
@@ -42,8 +43,8 @@ everything behind them.
    - **iOS:** `flutter run -d <device>`; signing needs the client's Apple
      developer team (pending).
    - **Web:** `flutter run -d chrome`. Below 1100 px wide the website shows the
-     phone layout; above it, the `web_*` desktop screens. The maps fall back to
-     OpenStreetMap locally: the web Maps key only works from the site's
+     phone layout; above it, the `web_*` desktop screens. Locally the maps show
+     no map tiles, only pins: the web Maps key only works from the site's
      addresses.
    - **Admin panel:** `/admin` on the web build. An admin is a row in
      `admin_users`; `tool/tmp_admin.py --create` makes a temporary one for
