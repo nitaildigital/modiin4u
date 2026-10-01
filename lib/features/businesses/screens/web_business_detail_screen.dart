@@ -96,7 +96,9 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
           children: [
             WebNavbar(
               isHebrew: _isHebrew,
-              activeId: 'businesses',
+              // A park belongs to the Municipal page, which the navbar has
+              // no item for; lighting Businesses said it was a business.
+              activeId: b.isPark ? null : 'businesses',
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -203,7 +205,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _HeroLogo(url: b.logoUrl),
+                        _HeroLogo(url: b.logoUrl, isPark: b.isPark),
                         const SizedBox(width: 33),
                         Expanded(
                           child: Column(
@@ -921,10 +923,27 @@ class _DropdownBox<T> extends StatelessWidget {
 /// it has none.
 class _HeroLogo extends StatelessWidget {
   final String? url;
-  const _HeroLogo({required this.url});
+  final bool isPark;
+  const _HeroLogo({required this.url, this.isPark = false});
 
   @override
   Widget build(BuildContext context) {
+    // A park has no logo; its badge carries the Municipal page's park icon
+    // rather than the shop front that stands in for a missing business logo.
+    if (isPark && (url == null || url!.isEmpty)) {
+      return Container(
+        width: 140,
+        height: 140,
+        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        alignment: Alignment.center,
+        child: SvgPicture.asset(
+          'assets/icons/m_municipal_parks.svg',
+          width: 56,
+          height: 56,
+          colorFilter: const ColorFilter.mode(AppColors.midBlue, BlendMode.srcIn),
+        ),
+      );
+    }
     return Container(
       width: 140,
       height: 140,

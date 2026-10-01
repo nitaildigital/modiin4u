@@ -1051,9 +1051,11 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
         decoration: BoxDecoration(
           color: active ? const Color(0xFF123A72) : Colors.white,
           border: active ? null : Border.all(color: const Color(0xFFE7E7E7)),
+          // The first button is at the reading start — the right in Hebrew
+          // — so its rounded side follows the direction, not the left.
           borderRadius: isLeft
-              ? const BorderRadius.horizontal(left: Radius.circular(8))
-              : const BorderRadius.horizontal(right: Radius.circular(8)),
+              ? const BorderRadiusDirectional.horizontal(start: Radius.circular(8))
+              : const BorderRadiusDirectional.horizontal(end: Radius.circular(8)),
         ),
         child: Center(
           child: Text(
@@ -1389,7 +1391,7 @@ class _NeighborhoodRow extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'steps',
+            L.of(context).stepsUnit,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 12,
@@ -1476,7 +1478,7 @@ class _CityRow extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'steps',
+            L.of(context).stepsUnit,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 12,

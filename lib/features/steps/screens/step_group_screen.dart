@@ -49,7 +49,8 @@ class _StepGroupScreenState extends ConsumerState<StepGroupScreen> {
 
   String get _id => widget.groupId;
 
-  void _back() => context.canPop() ? context.pop() : context.go('/steps?tab=groups');
+  void _back() =>
+      context.canPop() ? context.pop() : context.go('/steps?tab=groups');
 
   Future<void> _refresh() async {
     ref.invalidate(stepGroupProvider(_id));
@@ -77,7 +78,9 @@ class _StepGroupScreenState extends ConsumerState<StepGroupScreen> {
       action: l.sgSave,
       initial: group.name,
     );
-    if (name == null || name.trim().isEmpty || name.trim() == group.name) return;
+    if (name == null || name.trim().isEmpty || name.trim() == group.name) {
+      return;
+    }
     await _run(() => ref.read(stepGroupsRepositoryProvider).rename(_id, name));
   }
 
@@ -138,11 +141,15 @@ class _StepGroupScreenState extends ConsumerState<StepGroupScreen> {
     );
     if (!ok) return;
     await _run(
-      () => ref.read(stepGroupsRepositoryProvider).removeMember(_id, m.profileId),
+      () =>
+          ref.read(stepGroupsRepositoryProvider).removeMember(_id, m.profileId),
     );
   }
 
-  Future<void> _run(Future<void> Function() action, {bool refresh = true}) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    bool refresh = true,
+  }) async {
     final l = L.of(context);
     try {
       await action();
@@ -168,8 +175,7 @@ class _StepGroupScreenState extends ConsumerState<StepGroupScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _invite(group));
     }
 
-    final gone =
-        (groupAsync.hasValue && group == null) || statsAsync.hasError;
+    final gone = (groupAsync.hasValue && group == null) || statsAsync.hasError;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -183,10 +189,7 @@ class _StepGroupScreenState extends ConsumerState<StepGroupScreen> {
                   padding: const EdgeInsets.fromLTRB(15, 10, 6, 0),
                   child: Row(
                     children: [
-                      MBackArrow(
-                        color: const Color(0xFF3D3D3D),
-                        onTap: _back,
-                      ),
+                      MBackArrow(color: const Color(0xFF3D3D3D), onTap: _back),
                       Expanded(
                         child: Text(
                           group?.name ?? '',
@@ -275,21 +278,28 @@ class _Menu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback f,
-            {Color color = _ink}) =>
-        PopupMenuItem(
-          value: f,
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: color),
-              ),
-            ],
+    PopupMenuItem<VoidCallback> item(
+      IconData icon,
+      String label,
+      VoidCallback f, {
+      Color color = _ink,
+    }) => PopupMenuItem(
+      value: f,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: color,
+            ),
           ),
-        );
+        ],
+      ),
+    );
     return PopupMenuButton<VoidCallback>(
       icon: const Icon(IconsaxPlusLinear.more, color: Color(0xFF3D3D3D)),
       color: Colors.white,
@@ -300,9 +310,19 @@ class _Menu extends StatelessWidget {
           item(IconsaxPlusLinear.edit_2, l.sgRename, onRename),
           item(IconsaxPlusLinear.refresh, l.sgNewInvite, onNewInvite),
         ],
-        item(IconsaxPlusLinear.logout, l.sgLeaveGroup, onLeave, color: AppColors.error),
+        item(
+          IconsaxPlusLinear.logout,
+          l.sgLeaveGroup,
+          onLeave,
+          color: AppColors.error,
+        ),
         if (isOwner)
-          item(IconsaxPlusLinear.trash, l.sgDeleteGroup, onDelete, color: AppColors.error),
+          item(
+            IconsaxPlusLinear.trash,
+            l.sgDeleteGroup,
+            onDelete,
+            color: AppColors.error,
+          ),
       ],
     );
   }
@@ -367,7 +387,11 @@ class _InviteCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(IconsaxPlusLinear.share, size: 18, color: AppColors.midBlue),
+                          const Icon(
+                            IconsaxPlusLinear.share,
+                            size: 18,
+                            color: AppColors.midBlue,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             l.sgInvite,
@@ -394,7 +418,10 @@ class _InviteCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: group.inviteCode));
-                    showGroupError(context, '${l.sgInviteCode}: ${group.inviteCode}');
+                    showGroupError(
+                      context,
+                      '${l.sgInviteCode}: ${group.inviteCode}',
+                    );
                   },
                   child: Container(
                     height: 42,
@@ -414,7 +441,11 @@ class _InviteCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Icon(IconsaxPlusLinear.copy, size: 16, color: Colors.white),
+                        const Icon(
+                          IconsaxPlusLinear.copy,
+                          size: 16,
+                          color: Colors.white,
+                        ),
                       ],
                     ),
                   ),
@@ -462,7 +493,13 @@ class _PeriodSwitch extends StatelessWidget {
                     color: p == value ? Colors.white : Colors.transparent,
                     borderRadius: BorderRadius.circular(9),
                     boxShadow: p == value
-                        ? const [BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))]
+                        ? const [
+                            BoxShadow(
+                              color: Color(0x14000000),
+                              blurRadius: 4,
+                              offset: Offset(0, 1),
+                            ),
+                          ]
                         : null,
                   ),
                   child: Text(
@@ -470,7 +507,9 @@ class _PeriodSwitch extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 13,
-                      fontWeight: p == value ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: p == value
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       color: p == value ? AppColors.midBlue : _muted,
                     ),
                   ),
@@ -495,8 +534,11 @@ class _GroupStats extends StatelessWidget {
     final l = L.of(context);
     final total = members.fold<int>(0, (s, m) => s + m.stepsFor(period));
     final average = members.isEmpty ? 0 : (total / members.length).round();
-    final sorted = [...members]..sort((a, b) => b.stepsFor(period).compareTo(a.stepsFor(period)));
-    final leader = sorted.isEmpty || sorted.first.stepsFor(period) == 0 ? null : sorted.first;
+    final sorted = [...members]
+      ..sort((a, b) => b.stepsFor(period).compareTo(a.stepsFor(period)));
+    final leader = sorted.isEmpty || sorted.first.stepsFor(period) == 0
+        ? null
+        : sorted.first;
 
     Widget tile(String label, String value, {String? sub}) => Expanded(
       child: Container(
@@ -508,16 +550,22 @@ class _GroupStats extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Two lines, so "Average per member" is read whole in English.
             Text(
               label,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _muted),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 12,
+                color: _muted,
+                height: 1.2,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               value,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: AppFonts.inter,
@@ -532,7 +580,11 @@ class _GroupStats extends StatelessWidget {
                 sub,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: _muted),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 11,
+                  color: _muted,
+                ),
               ),
             ],
           ],
@@ -593,7 +645,9 @@ class _CompareTable extends StatelessWidget {
       fontWeight: p == period ? FontWeight.w700 : FontWeight.w400,
       color: p == period ? _ink : const Color(0xFF5D5D5D),
     );
-    const numW = 62.0;
+    // Narrow enough to leave a name its room on a phone; the headings
+    // shrink to fit rather than wrap ("This Month").
+    const numW = 56.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -620,17 +674,67 @@ class _CompareTable extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: Text(l.sgColMember, style: head(null))),
-                SizedBox(width: numW, child: Text(l.sgToday, textAlign: TextAlign.end, style: head(GroupPeriod.today))),
-                SizedBox(width: numW, child: Text(l.thisWeek, textAlign: TextAlign.end, style: head(GroupPeriod.week))),
-                SizedBox(width: numW, child: Text(l.sgThisMonth, textAlign: TextAlign.end, style: head(GroupPeriod.month))),
+                SizedBox(
+                  width: numW,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 6),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Text(
+                        l.sgToday,
+                        textAlign: TextAlign.end,
+                        style: head(GroupPeriod.today),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: numW,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 6),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Text(
+                        l.thisWeek,
+                        textAlign: TextAlign.end,
+                        style: head(GroupPeriod.week),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: numW,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 6),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Text(
+                        l.sgThisMonth,
+                        textAlign: TextAlign.end,
+                        style: head(GroupPeriod.month),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           for (var i = 0; i < sorted.length; i++)
             InkWell(
-              onLongPress: canRemove && !sorted[i].isMe ? () => onRemove(sorted[i]) : null,
+              onLongPress: canRemove && !sorted[i].isMe
+                  ? () => onRemove(sorted[i])
+                  : null,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: sorted[i].isMe ? const Color(0xFFF1F6FD) : null,
                   border: const Border(top: BorderSide(color: _border)),
@@ -659,7 +763,7 @@ class _CompareTable extends StatelessWidget {
                         children: [
                           Text(
                             sorted[i].name,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
@@ -704,7 +808,11 @@ class _CompareTable extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
               child: Text(
                 l.sgRemoveHint,
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: _muted),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 11,
+                  color: _muted,
+                ),
               ),
             )
           else
@@ -713,7 +821,6 @@ class _CompareTable extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _Avatar extends StatelessWidget {
@@ -734,7 +841,10 @@ class _Avatar extends StatelessWidget {
     return Container(
       width: 28,
       height: 28,
-      decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFD9D9D9)),
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Color(0xFFD9D9D9),
+      ),
       alignment: Alignment.center,
       child: Text(
         member.name.isEmpty ? '?' : member.name.characters.first,
@@ -759,10 +869,12 @@ class _GroupWeekChart extends StatelessWidget {
     final l = L.of(context);
     final now = DateTime.now();
     final days = [
-      for (var i = 6; i >= 0; i--) DateTime(now.year, now.month, now.day).subtract(Duration(days: i)),
+      for (var i = 6; i >= 0; i--)
+        DateTime(now.year, now.month, now.day).subtract(Duration(days: i)),
     ];
     final totals = [
-      for (final d in days) members.fold<int>(0, (s, m) => s + (m.last7[dateKey(d)] ?? 0)),
+      for (final d in days)
+        members.fold<int>(0, (s, m) => s + (m.last7[dateKey(d)] ?? 0)),
     ];
     final best = totals.fold<int>(0, (a, b) => a > b ? a : b);
     const barMaxH = 120.0;
@@ -792,7 +904,11 @@ class _GroupWeekChart extends StatelessWidget {
               child: Center(
                 child: Text(
                   l.sgNoStepsShared,
-                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: _muted),
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 13,
+                    color: _muted,
+                  ),
                 ),
               ),
             )
@@ -811,21 +927,33 @@ class _GroupWeekChart extends StatelessWidget {
                             totals[i] >= 1000
                                 ? '${(totals[i] / 1000).toStringAsFixed(1)}K'
                                 : '${totals[i]}',
-                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: _ink),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 11,
+                              color: _ink,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Container(
                             width: 16,
-                            height: best == 0 ? 0 : (totals[i] / best) * barMaxH,
+                            height: best == 0
+                                ? 0
+                                : (totals[i] / best) * barMaxH,
                             decoration: BoxDecoration(
-                              color: i == days.length - 1 ? AppColors.midBlue : _blue,
+                              color: i == days.length - 1
+                                  ? AppColors.midBlue
+                                  : _blue,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             weekdayShort(l, days[i]),
-                            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: _muted),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 11,
+                              color: _muted,
+                            ),
                           ),
                         ],
                       ),
@@ -861,7 +989,11 @@ class _Centered extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _muted),
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: 14,
+          color: _muted,
+        ),
       ),
     ),
   );

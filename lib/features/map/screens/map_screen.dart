@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_fonts.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -13,7 +11,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../data/map_pois.dart';
 import '../providers/map_providers.dart';
-import '../widgets/map_pin_bitmap.dart';
+import '../../../shared/widgets/app_map.dart';
 import 'web_map_screen.dart';
 
 /// Map – responsive wrapper.
@@ -99,51 +97,8 @@ class _MobileMapContentState extends ConsumerState<_MobileMapContent> {
   MapPoi? _selectedPoi;
   String _mapSearchQuery = '';
 
-  /// Markers are bitmaps that have to be drawn before the map can show them,
-  /// so they are built off to the side and the map picks them up on the next
-  /// frame. Keyed by the POI's route, which is unique per pin.
-  Map<String, gmaps.Marker> _markers = {};
-  int _markerBuild = 0;
-
-  /// Set when the selected pin changes, since that alters how it is drawn
-  /// without changing which pins are on screen.
-  bool _pinsNeedRedraw = false;
-
   static String _markerId(MapPoi poi) =>
       poi.route ?? '${poi.name}@${poi.position}';
-
-  /// Redraws the marker set. Each call takes a ticket, and a build that
-  /// finishes after a newer one started throws its result away rather than
-  /// overwriting it.
-  Future<void> _rebuildMarkers(List<MapPoi> pois) async {
-    final ticket = ++_markerBuild;
-    final ratio = MediaQuery.devicePixelRatioOf(context);
-
-    final built = <String, gmaps.Marker>{};
-    for (final poi in pois) {
-      final icon = await MapPinBitmap.ofAsset(
-        asset: _lookOf(poi.layer).pin,
-        isSelected: _selectedPoi == poi,
-        devicePixelRatio: ratio,
-      );
-      final id = _markerId(poi);
-      built[id] = gmaps.Marker(
-        markerId: gmaps.MarkerId(id),
-        position: gmaps.LatLng(poi.position.latitude, poi.position.longitude),
-        icon: icon,
-        anchor: MapPinBitmap.anchor,
-        // The selected pin over its neighbours, not hidden behind them.
-        zIndexInt: _selectedPoi == poi ? 1 : 0,
-        onTap: () => setState(() {
-          _selectedPoi = poi;
-          _pinsNeedRedraw = true;
-        }),
-      );
-    }
-
-    if (!mounted || ticket != _markerBuild) return;
-    setState(() => _markers = built);
-  }
 
   static String _layerLabel(BuildContext context, String layer) {
     final l = L.of(context);
@@ -180,44 +135,41 @@ class _MobileMapContentState extends ConsumerState<_MobileMapContent> {
     });
   }
 
-  void _clearSelection() => setState(() {
-    _selectedPoi = null;
-    _pinsNeedRedraw = true;
-  });
+  void _clearSelection() => setState(() => _selectedPoi = null);
 
   @override
   Widget build(BuildContext context) {
-    // Drawing a marker is asynchronous, so it cannot happen during build; the
-    // set is refreshed just after, and only when it has actually changed.
     final pois = _visiblePois;
-    final wanted = {for (final p in pois) _markerId(p)};
-    if (!setEquals(wanted, _markers.keys.toSet()) || _pinsNeedRedraw) {
-      _pinsNeedRedraw = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _rebuildMarkers(pois);
-      });
-    }
 
     return Stack(
       children: [
         // ── Map ──
-        gmaps.GoogleMap(
-          initialCameraPosition: gmaps.CameraPosition(
-            target: gmaps.LatLng(modiinCenter.latitude, modiinCenter.longitude),
-            zoom: 15,
-          ),
-          minMaxZoomPreference: const gmaps.MinMaxZoomPreference(12, 18),
-          markers: _markers.values.toSet(),
-          onTap: (_) => _clearSelection(),
-          // The frame has no buttons over the map — pinching zooms — so
-          // Google's own are off too. The locate and zoom buttons this screen
-          // drew are gone for the same reason, as on the restaurants map.
-          myLocationButtonEnabled: false,
-          zoomControlsEnabled: false,
-          mapToolbarEnabled: false,
+        // Google's map (AppMap): the native widget in the app, Google's
+        // tiles in a browser — where the app widget drew a grey page, since
+        // the website does not load Google's script. The frame has no buttons
+        // over the map; pinching zooms.
+        AppMap(
+          center: modiinCenter,
+          zoom: 15,
+          minZoom: 12,
+          maxZoom: 18,
+          selectedId: _selectedPoi == null ? null : _markerId(_selectedPoi!),
+          onSelect: (id) => setState(() {
+            _selectedPoi = id == null
+                ? null
+                : pois.where((p) => _markerId(p) == id).firstOrNull;
+          }),
           // The card sits at the foot of the screen; this keeps Google's
           // required attribution above it rather than behind it.
-          padding: EdgeInsets.only(bottom: _selectedPoi == null ? 0 : 250),
+          bottomPadding: _selectedPoi == null ? 0 : 250,
+          pins: [
+            for (final poi in pois)
+              AppMapPin(
+                id: _markerId(poi),
+                position: poi.position,
+                asset: _lookOf(poi.layer).pin,
+              ),
+          ],
         ),
 
         // ── Search bar + layer chips ──
