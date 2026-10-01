@@ -1972,6 +1972,16 @@ build succeeds without signing (`flutter build ios --no-codesign`); running
 it on a phone needs a signing team, and the Map tab needs
 `ios/Flutter/Maps.xcconfig` with an iOS-restricted key.
 
+### A way to the Municipal page on the desktop site — 30 September
+
+The desktop site had no link to `/municipal` at all: not in the navbar, the
+footer or the home page (the Figma web frames have no Municipal page; only
+the phone's bottom bar and ☰ led there). The home page's category row gains
+an eighth card, "Municipal / עירייה — City services & Shabbat", after Real
+Estate, with the app's municipal-building icon (same 32 px navy line style;
+copied to `assets/web/home/card_municipal.svg`). Checked at 1440 and 1280,
+in both languages; deployed.
+
 ### Delete, in the admin panel, does not delete — 25 September
 
 Tested the panel properly for the first time, signed in as a temporary

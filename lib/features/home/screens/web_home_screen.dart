@@ -533,7 +533,7 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> with WebLanguag
   }
 
   // ─────────────────────────────────────────────
-  // CATEGORY CARDS — seven across the 1600 column
+  // CATEGORY CARDS — eight across the 1600 column
   // ─────────────────────────────────────────────
   Widget _buildCategoryCards() {
     final categories = [
@@ -544,6 +544,11 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> with WebLanguag
       (_t('Maps', 'מפות'), 'maps', _t('Explore Modiin', 'גלו את מודיעין'), '/map'),
       (_t('Businesses', 'עסקים'), 'businesses', _t('All Businesses in Modiin', 'כל העסקים במודיעין'), '/businesses'),
       (_t('Real Estate', 'נדל״ן'), 'realestate', _t('Apartments & Projects', 'דירות ופרויקטים'), '/realestate'),
+      // Not in the Figma web frame. The desktop site had no way to the
+      // Municipal page at all — no card, no navbar or footer link — though
+      // the phone's bottom bar has one. The icon is the app's own municipal
+      // building, drawn in the same line style as the cards'.
+      (_t('Municipal', 'עירייה'), 'municipal', _t('City services & Shabbat', 'שירותי עירייה ושבת'), '/municipal'),
     ];
 
     Widget card((String, String, String, String) cat) {
