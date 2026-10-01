@@ -1982,6 +1982,49 @@ Estate, with the app's municipal-building icon (same 32 px navy line style;
 copied to `assets/web/home/card_municipal.svg`). Checked at 1440 and 1280,
 in both languages; deployed.
 
+### What the WordPress site gained since the import — 1 October
+
+The client: articles and businesses added on the old site since the first
+import were missing. `tool/import_new_wordpress.py` compares the WordPress
+REST lists (`news`, `business`) with our rows by `canonical_url` or slug and
+adds only what is new: 6 articles and 8 businesses. Articles keep their full
+text with the inline pictures copied into our `media` bucket (WordPress sends
+no CORS header, so the browser cannot show its pictures), their category,
+and Yoast's SEO title and description. The REST API does not expose a
+business's details (ACF), so phone, address, About, website and kosher are
+read from its public page. Opening hours are not taken: the page shows this
+week's, holiday closures included. Categories were set by hand from the
+names (the shawarma and burger places, Root & Bloom and Beit HaKerem under
+Restaurants; the three banks left uncategorised). Seven of the eight have no
+picture on WordPress, so they show the placeholder until the client adds
+one. Everything added is in `tool/new_wordpress_registry.json`; `--undo`
+removes it.
+
+### Restaurants first on the phone's home — 1 October
+
+The client asked for restaurants to lead the home screen. The first row is
+now restaurants (Restaurants, Cafés & Bakeries and Restaurants' children):
+nearest first when the location is allowed ("Restaurants Near You"),
+otherwise "Restaurants in Modi'in" ordered photo first, then rating, then
+review count. See all opens `/restaurants`.
+
+### Parks from the municipality's website — 1 October
+
+The client: "pull everything from the municipality website — names,
+descriptions, locations, and photos". `tool/import_parks.py` reads its
+"גנים ופארקים" page (PageID 314_209) and adds 70 parks as `businesses` with
+kind = 'park': the name, the neighbourhood as the subtitle (and linked where
+the neighbourhood exists), the page's text with a closing line naming the
+municipality as the source, the address, and the photo copied into `media`.
+The location comes from each park's Google Maps link, else from the address
+on OpenStreetMap, and is kept only inside Modi'in: 58 have one. The other 12
+have no pin (matching their names to OpenStreetMap gave wrong parks), so the
+client can place them in the panel. The address column is required; a park
+the page gives no address for shows its neighbourhood. The page writes
+quotation marks as two apostrophes and doubles spaces; the names are tidied.
+A rerun adds only parks not already there by name; `tool/parks_registry.json`
+and `--undo` as above.
+
 ### Delete, in the admin panel, does not delete — 25 September
 
 Tested the panel properly for the first time, signed in as a temporary
