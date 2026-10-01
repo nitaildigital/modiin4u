@@ -2111,6 +2111,44 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### Car parks, from OpenStreetMap's data — 1 October
+
+Harshit asked for the car parks to be in. No list exists for Modi'in:
+neither the municipality's website nor data.gov.il has one. OpenStreetMap
+maps 148 car parks in the city, almost none named.
+`tool/import_parking_lots.py` added 19 of them:
+- **Which lots:** public lots of 2,500 m² or more with a named public place
+  within 175 m — the two train stations, the water park, the city pool,
+  City Hall, Anava Park, the Re'ut farmers' market, Ishpro Center, and
+  supermarket centres.
+- **Names:** "חניון ליד <place>" ("Parking by …"). That is what the data
+  shows and no more. Lots with nothing named nearby are left out.
+- **Address, location, free or paid:** the street from the reverse lookup,
+  the lot's middle, and free or paid where the map tags it.
+- **Left empty:** hours, prices and capacity, which nothing maps.
+
+The parking screens now carry "Map data © OpenStreetMap contributors"
+under the list, as the data's licence asks. Registry
+`tool/parking_registry.json`, `--undo`. The client edits, hides or adds
+lots in the panel's "חניונים".
+
+Checked: the live panel lists 19, and the live parking page shows them at
+390 and 1440 px. A test lot entered earlier through the panel's form
+appeared on the site and hid correctly, and was deleted.
+
+**The Municipal page's parking card** was a title and an arrow with an
+empty lower half. The frame's "Parking Right Now — Modiin Center — High
+availability" claims an occupancy nothing measures, so the card was left
+empty when there were no car parks. It now shows what the data knows:
+- **With the person's location** (checked, never asked for): the nearest
+  car park and how far it is, plus "free" when it is. This applies within
+  25 km of the city.
+- **Otherwise:** how many car parks there are, and how many are free.
+
+Checked: on the live site at 390 px it shows "19 חניונים · 14 מהם בחינם".
+On the emulator with a test location in central Modi'in it shows "Parking
+by Yeinot Bitan · 0.2 km".
+
 ### Panel bugs: shared files, hours, the audit log, the team — 1 October
 
 - **Removing a gallery photo could delete a file used elsewhere.** The
