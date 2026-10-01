@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
 
 import '../../../core/supabase/supabase_config.dart';
+import 'admin_table_notifier.dart' show auditActionFor, recordAdminAction;
 
 /// The news desk, on the live table.
 ///
@@ -246,7 +247,24 @@ class AdminArticleListNotifier
         .single();
 
     await changeCategories(inserted['id'] as String, add: categoryIds);
+    // Articles saved straight to the table and left no trace in the audit
+    // log, which every other section writes; now they do, as businesses do.
+    await recordAdminAction(
+      action: 'create',
+      table: 'articles',
+      rowId: inserted['id'] as String,
+      fields: row,
+      label: row['title'] as String?,
+    );
     await load();
+  }
+
+  /// The row as it was loaded, for the audit log's "before".
+  Map<String, dynamic>? _rowById(String id) {
+    for (final r in state.valueOrNull ?? const <Map<String, dynamic>>[]) {
+      if (r['id'] == id) return r;
+    }
+    return null;
   }
 
   /// Writes the columns in [fields] and nothing else, and moves only the
@@ -264,6 +282,7 @@ class AdminArticleListNotifier
     Set<String> removeCategories = const {},
   }) async {
     final row = _toRow(fields);
+    final before = _rowById(id);
     if (row.isNotEmpty) {
       await SupabaseConfig.client.from('articles').update(row).eq('id', id);
     }
@@ -271,6 +290,22 @@ class AdminArticleListNotifier
       await _stampFirstPublication(id);
     }
     await changeCategories(id, add: addCategories, remove: removeCategories);
+    if (row.isNotEmpty ||
+        addCategories.isNotEmpty ||
+        removeCategories.isNotEmpty) {
+      await recordAdminAction(
+        action: auditActionFor(row),
+        table: 'articles',
+        rowId: id,
+        fields: {
+          ...row,
+          if (addCategories.isNotEmpty || removeCategories.isNotEmpty)
+            'categories': true,
+        },
+        before: before,
+        label: (row['title'] ?? before?['title']) as String?,
+      );
+    }
     await load();
   }
 
@@ -283,11 +318,20 @@ class AdminArticleListNotifier
   }
 
   Future<void> updateStatus(String id, String status) async {
+    final before = _rowById(id);
     await SupabaseConfig.client
         .from('articles')
         .update({'status': status})
         .eq('id', id);
     if (status == 'published') await _stampFirstPublication(id);
+    await recordAdminAction(
+      action: auditActionFor({'status': status}),
+      table: 'articles',
+      rowId: id,
+      fields: {'status': status},
+      before: before,
+      label: before?['title'] as String?,
+    );
     await load();
   }
 

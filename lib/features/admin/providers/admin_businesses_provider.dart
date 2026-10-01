@@ -169,10 +169,20 @@ class AdminBusinessListNotifier
         query = query.or('name.ilike.%$q%,short_description.ilike.%$q%');
       }
 
-      final rows = await query.order('created_at', ascending: false).limit(500);
-      if (mounted) {
-        state = AsyncValue.data(List<Map<String, dynamic>>.from(rows));
+      // Every business, page by page. The list stopped at 500 with nothing
+      // to say so, and with the parks there are some 380 already.
+      final rows = <Map<String, dynamic>>[];
+      const page = 1000;
+      for (var from = 0; ; from += page) {
+        final batch = List<Map<String, dynamic>>.from(
+          await query
+              .order('created_at', ascending: false)
+              .range(from, from + page - 1),
+        );
+        rows.addAll(batch);
+        if (batch.length < page) break;
       }
+      if (mounted) state = AsyncValue.data(rows);
     } catch (e, st) {
       if (mounted) state = AsyncValue.error(e, st);
     }
@@ -350,8 +360,12 @@ class AdminBusinessListNotifier
     Map<int, ({String? open, String? close, bool closed})> week,
   ) async {
     final client = SupabaseConfig.client;
-    await client.from('business_hours').delete().eq('business_id', businessId);
 
+    // Written in place, one row per day (the table is unique on business and
+    // day), rather than deleted and inserted again. The delete left a
+    // business with no hours at all whenever the insert after it failed, gave
+    // every day a new id on each save, and wiped what the editor does not
+    // show — a second opening, a day's note.
     final rows = [
       for (final entry in week.entries)
         {
@@ -362,7 +376,22 @@ class AdminBusinessListNotifier
           'close_time': entry.value.closed ? null : entry.value.close,
         },
     ];
-    if (rows.isNotEmpty) await client.from('business_hours').insert(rows);
+    if (rows.isNotEmpty) {
+      await client
+          .from('business_hours')
+          .upsert(rows, onConflict: 'business_id,day_of_week');
+    }
+
+    // Only the days the editor no longer has go.
+    final kept = [for (final r in rows) r['day_of_week']];
+    var gone = client
+        .from('business_hours')
+        .delete()
+        .eq('business_id', businessId);
+    if (kept.isNotEmpty) {
+      gone = gone.not('day_of_week', 'in', '(${kept.join(',')})');
+    }
+    await gone;
   }
 }
 

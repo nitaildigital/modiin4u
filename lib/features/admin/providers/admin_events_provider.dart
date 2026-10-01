@@ -66,6 +66,13 @@ class AdminEventListNotifier extends AdminTableNotifier {
         if (!readOnlyColumns.contains(e.key)) e.key: e.value,
     };
 
+    // The row as it was loaded, for the audit log's "before".
+    final before = id == null
+        ? null
+        : (state.valueOrNull ?? const <Map<String, dynamic>>[])
+              .where((r) => r['id'] == id)
+              .firstOrNull;
+
     String eventId;
     if (id == null) {
       final created = await client
@@ -81,6 +88,16 @@ class AdminEventListNotifier extends AdminTableNotifier {
     }
 
     if (categoryIds != null) await setCategories(eventId, categoryIds);
+    // Saving went straight to the table, past the audit log the shared
+    // create and update write; cancelling was the only event action in it.
+    await recordAdminAction(
+      action: id == null ? 'create' : auditActionFor(row),
+      table: 'events',
+      rowId: eventId,
+      fields: {...row, if (categoryIds != null) 'categories': true},
+      before: before,
+      label: (row['title'] ?? before?['title']) as String?,
+    );
     await load();
     _ref.invalidate(adminEventCategoryLinksProvider);
     return eventId;
@@ -113,6 +130,9 @@ class AdminEventListNotifier extends AdminTableNotifier {
   /// would move an old event to the top each time it was touched — which is
   /// what happened to articles.
   Future<void> publish(String id, {Object? publishedAt}) async {
+    final before = (state.valueOrNull ?? const <Map<String, dynamic>>[])
+        .where((r) => r['id'] == id)
+        .firstOrNull;
     await SupabaseConfig.client
         .from('events')
         .update({
@@ -121,6 +141,14 @@ class AdminEventListNotifier extends AdminTableNotifier {
             'published_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', id);
+    await recordAdminAction(
+      action: auditActionFor({'status': 'published'}),
+      table: 'events',
+      rowId: id,
+      fields: {'status': 'published'},
+      before: before,
+      label: before?['title'] as String?,
+    );
     await load();
   }
 

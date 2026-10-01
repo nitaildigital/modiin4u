@@ -10,6 +10,7 @@ import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../providers/media_usage.dart';
 
 /// One photo in a gallery: either a row already stored, or a file picked in
 /// this session that has not been uploaded yet.
@@ -189,6 +190,14 @@ class AdminGalleryController extends ChangeNotifier {
   /// The `media` row and its file go too, unless something else still points
   /// at them — the table is shared, and a photo can hang off more than one
   /// row.
+  ///
+  /// Other galleries were the only check, so a file that was also a
+  /// business's logo or cover, an article's picture or a banner was deleted
+  /// with the gallery photo and those showed a broken image. The database's
+  /// `media_usage` (00034), which the media library already asks before a
+  /// delete, searches every table for the address; anything it finds keeps
+  /// the file and its library row. When it cannot be asked, the file stays —
+  /// a spare file costs nothing, a missing one breaks a page.
   Future<void> _dropMediaIfUnused(AdminGalleryPhoto p) async {
     final mediaId = p.mediaId;
     if (mediaId == null) return;
@@ -202,6 +211,13 @@ class AdminGalleryController extends ChangeNotifier {
     if (List<dynamic>.from(others).isNotEmpty) return;
 
     final path = p.filePath;
+    if (path != null && path.isNotEmpty) {
+      try {
+        if ((await mediaUsage(path, mediaId: mediaId)).isNotEmpty) return;
+      } catch (_) {
+        return;
+      }
+    }
     if (path != null && path.isNotEmpty) {
       try {
         await client.storage.from('media').remove([path]);
