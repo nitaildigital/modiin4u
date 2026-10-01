@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["ZFRCFY62KJ.il.co.modiin4u.modiin4u"],
+        "components": [
+          { "/": "/join/*", "comment": "Step group invitations" }
+        ]
+      }
+    ]
+  }
+}

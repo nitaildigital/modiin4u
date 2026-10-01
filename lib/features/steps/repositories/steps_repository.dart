@@ -13,25 +13,29 @@ import '../models/step_entry.dart';
 class StepsRepository {
   final SupabaseClient _client = SupabaseConfig.client;
 
-  /// Records today's count.
+  /// Records day totals, `{'yyyy-mm-dd': steps}`.
   ///
-  /// Upserted on `(profile_id, date)` so the sensor can report repeatedly
-  /// through the day and the row is corrected rather than duplicated.
-  Future<void> recordToday(int steps) async {
-    final uid = _client.auth.currentUser?.id;
-    if (uid == null) return;
-
-    await _client.from('daily_steps').upsert({
-      'profile_id': uid,
-      'date': _today(),
-      'steps': steps,
-    }, onConflict: 'profile_id,date');
+  /// Through `record_daily_steps` (00041), which keeps the higher of what is
+  /// stored and what is sent. The counter can restart lower — a reboot, a
+  /// reinstall, a phone that lost its health permission — and a day already
+  /// recorded must not shrink, least of all in a group's ranking.
+  Future<void> recordDays(Map<String, int> days) async {
+    if (_client.auth.currentUser == null || days.isEmpty) return;
+    await _client.rpc('record_daily_steps', params: {
+      'p_days': [
+        for (final e in days.entries)
+          if (e.value > 0) {'date': e.key, 'steps': e.value},
+      ],
+    });
   }
+
+  /// This person's last seven days.
+  Future<List<StepEntry>> fetchMyWeek() => fetchMyDays(7);
 
   /// This person's last [days] days, oldest first, with the missing days
   /// filled in at zero so the chart has a bar for every day rather than a
   /// gap.
-  Future<List<StepEntry>> fetchMyWeek({int days = 7}) async {
+  Future<List<StepEntry>> fetchMyDays(int days) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return const [];
 
@@ -78,8 +82,6 @@ class StepsRepository {
       rows ?? const [],
     ).map(NeighborhoodRanking.fromJson).toList();
   }
-
-  static String _today() => _asDate(DateTime.now());
 
   static String _asDate(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-'

@@ -3660,6 +3660,432 @@ abstract class L {
   /// In he, this message translates to:
   /// **'מסעדות קרובות אליך'**
   String get restaurantsNearYou;
+
+  /// No description provided for @sgTabActivity.
+  ///
+  /// In he, this message translates to:
+  /// **'הפעילות שלי'**
+  String get sgTabActivity;
+
+  /// No description provided for @sgTabGroups.
+  ///
+  /// In he, this message translates to:
+  /// **'קבוצות'**
+  String get sgTabGroups;
+
+  /// No description provided for @sgConnectHealthConnect.
+  ///
+  /// In he, this message translates to:
+  /// **'חיבור ל-Health Connect'**
+  String get sgConnectHealthConnect;
+
+  /// No description provided for @sgConnectAppleHealth.
+  ///
+  /// In he, this message translates to:
+  /// **'חיבור ל-Apple Health'**
+  String get sgConnectAppleHealth;
+
+  /// No description provided for @sgConnectHealthBody.
+  ///
+  /// In he, this message translates to:
+  /// **'ספירת הצעדים המלאה של היום, החודש האחרון, מרחק וקלוריות — מהטלפון ומכל שעון.'**
+  String get sgConnectHealthBody;
+
+  /// No description provided for @sgConnect.
+  ///
+  /// In he, this message translates to:
+  /// **'חיבור'**
+  String get sgConnect;
+
+  /// No description provided for @sgInstallHealthConnect.
+  ///
+  /// In he, this message translates to:
+  /// **'התקנת Health Connect'**
+  String get sgInstallHealthConnect;
+
+  /// No description provided for @sgInstallHealthConnectBody.
+  ///
+  /// In he, this message translates to:
+  /// **'Health Connect, אפליקציה חינמית של Google, מאפשרת לאפליקציה לקרוא את היסטוריית הצעדים, המרחק והקלוריות.'**
+  String get sgInstallHealthConnectBody;
+
+  /// No description provided for @sgInstall.
+  ///
+  /// In he, this message translates to:
+  /// **'התקנה'**
+  String get sgInstall;
+
+  /// No description provided for @sgSourceHealthConnect.
+  ///
+  /// In he, this message translates to:
+  /// **'מתוך Health Connect'**
+  String get sgSourceHealthConnect;
+
+  /// No description provided for @sgSourceAppleHealth.
+  ///
+  /// In he, this message translates to:
+  /// **'מתוך Apple Health'**
+  String get sgSourceAppleHealth;
+
+  /// No description provided for @sgSourceSensor.
+  ///
+  /// In he, this message translates to:
+  /// **'נספר בטלפון כשהאפליקציה פתוחה'**
+  String get sgSourceSensor;
+
+  /// No description provided for @sgDistance.
+  ///
+  /// In he, this message translates to:
+  /// **'מרחק'**
+  String get sgDistance;
+
+  /// No description provided for @sgActiveCalories.
+  ///
+  /// In he, this message translates to:
+  /// **'קלוריות פעילות'**
+  String get sgActiveCalories;
+
+  /// No description provided for @sgKcal.
+  ///
+  /// In he, this message translates to:
+  /// **'קק״ל'**
+  String get sgKcal;
+
+  /// No description provided for @sgHistoryWeek.
+  ///
+  /// In he, this message translates to:
+  /// **'שבוע'**
+  String get sgHistoryWeek;
+
+  /// No description provided for @sgHistoryMonth.
+  ///
+  /// In he, this message translates to:
+  /// **'חודש'**
+  String get sgHistoryMonth;
+
+  /// No description provided for @sgLast30Days.
+  ///
+  /// In he, this message translates to:
+  /// **'30 הימים האחרונים'**
+  String get sgLast30Days;
+
+  /// No description provided for @sgDailyAverage.
+  ///
+  /// In he, this message translates to:
+  /// **'ממוצע יומי {steps}'**
+  String sgDailyAverage(String steps);
+
+  /// No description provided for @sgPeriodTotal.
+  ///
+  /// In he, this message translates to:
+  /// **'סה״כ {steps}'**
+  String sgPeriodTotal(String steps);
+
+  /// No description provided for @sgSignInPrompt.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי ליצור קבוצה, להזמין חברים וללכת יחד.'**
+  String get sgSignInPrompt;
+
+  /// No description provided for @sgEmpty.
+  ///
+  /// In he, this message translates to:
+  /// **'עדיין אין קבוצות. צרו קבוצה והזמינו משפחה, חברים או עמיתים כדי להשוות צעדים.'**
+  String get sgEmpty;
+
+  /// No description provided for @sgCreateGroup.
+  ///
+  /// In he, this message translates to:
+  /// **'יצירת קבוצה'**
+  String get sgCreateGroup;
+
+  /// No description provided for @sgJoinWithCode.
+  ///
+  /// In he, this message translates to:
+  /// **'הצטרפות עם קוד'**
+  String get sgJoinWithCode;
+
+  /// No description provided for @sgGroupName.
+  ///
+  /// In he, this message translates to:
+  /// **'שם הקבוצה'**
+  String get sgGroupName;
+
+  /// No description provided for @sgCreate.
+  ///
+  /// In he, this message translates to:
+  /// **'יצירה'**
+  String get sgCreate;
+
+  /// No description provided for @sgInviteCode.
+  ///
+  /// In he, this message translates to:
+  /// **'קוד הזמנה'**
+  String get sgInviteCode;
+
+  /// No description provided for @sgContinue.
+  ///
+  /// In he, this message translates to:
+  /// **'המשך'**
+  String get sgContinue;
+
+  /// No description provided for @sgMembers.
+  ///
+  /// In he, this message translates to:
+  /// **'{count, plural, =1{חבר אחד} other{{count} חברים}}'**
+  String sgMembers(int count);
+
+  /// No description provided for @sgStepsToday.
+  ///
+  /// In he, this message translates to:
+  /// **'{steps} צעדים היום'**
+  String sgStepsToday(String steps);
+
+  /// No description provided for @sgMyRankToday.
+  ///
+  /// In he, this message translates to:
+  /// **'אתם במקום {rank} היום'**
+  String sgMyRankToday(int rank);
+
+  /// No description provided for @sgOwner.
+  ///
+  /// In he, this message translates to:
+  /// **'מנהל/ת'**
+  String get sgOwner;
+
+  /// No description provided for @sgInvite.
+  ///
+  /// In he, this message translates to:
+  /// **'הזמנה'**
+  String get sgInvite;
+
+  /// No description provided for @sgInviteMessage.
+  ///
+  /// In he, this message translates to:
+  /// **'הצטרפו לקבוצת ההליכה שלי \"{group}\" באפליקציית Modiin4U:\n{link}\n\nאו הזינו את הקוד {code} במונה הצעדים ← קבוצות ← הצטרפות עם קוד.'**
+  String sgInviteMessage(String group, String link, String code);
+
+  /// No description provided for @sgToday.
+  ///
+  /// In he, this message translates to:
+  /// **'היום'**
+  String get sgToday;
+
+  /// No description provided for @sgThisMonth.
+  ///
+  /// In he, this message translates to:
+  /// **'החודש'**
+  String get sgThisMonth;
+
+  /// No description provided for @sgGroupTotal.
+  ///
+  /// In he, this message translates to:
+  /// **'סה״כ הקבוצה'**
+  String get sgGroupTotal;
+
+  /// No description provided for @sgAverage.
+  ///
+  /// In he, this message translates to:
+  /// **'ממוצע לחבר'**
+  String get sgAverage;
+
+  /// No description provided for @sgTopWalker.
+  ///
+  /// In he, this message translates to:
+  /// **'מוביל/ה'**
+  String get sgTopWalker;
+
+  /// No description provided for @sgMembersTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'חברים'**
+  String get sgMembersTitle;
+
+  /// No description provided for @sgGroupLast7.
+  ///
+  /// In he, this message translates to:
+  /// **'הקבוצה, 7 הימים האחרונים'**
+  String get sgGroupLast7;
+
+  /// No description provided for @sgCompareTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'השוואה'**
+  String get sgCompareTitle;
+
+  /// No description provided for @sgColMember.
+  ///
+  /// In he, this message translates to:
+  /// **'חבר/ה'**
+  String get sgColMember;
+
+  /// No description provided for @sgRename.
+  ///
+  /// In he, this message translates to:
+  /// **'שינוי שם הקבוצה'**
+  String get sgRename;
+
+  /// No description provided for @sgSave.
+  ///
+  /// In he, this message translates to:
+  /// **'שמירה'**
+  String get sgSave;
+
+  /// No description provided for @sgNewInvite.
+  ///
+  /// In he, this message translates to:
+  /// **'קישור הזמנה חדש'**
+  String get sgNewInvite;
+
+  /// No description provided for @sgNewInviteBody.
+  ///
+  /// In he, this message translates to:
+  /// **'קישורים וקודים שכבר נשלחו יפסיקו לעבוד.'**
+  String get sgNewInviteBody;
+
+  /// No description provided for @sgNewInviteDone.
+  ///
+  /// In he, this message translates to:
+  /// **'קוד הזמנה חדש: {code}'**
+  String sgNewInviteDone(String code);
+
+  /// No description provided for @sgDeleteGroup.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקת הקבוצה'**
+  String get sgDeleteGroup;
+
+  /// No description provided for @sgDeleteGroupBody.
+  ///
+  /// In he, this message translates to:
+  /// **'הקבוצה תוסר עבור כל החברים. הצעדים של כל אחד נשארים אצלו.'**
+  String get sgDeleteGroupBody;
+
+  /// No description provided for @sgLeaveGroup.
+  ///
+  /// In he, this message translates to:
+  /// **'יציאה מהקבוצה'**
+  String get sgLeaveGroup;
+
+  /// No description provided for @sgLeaveGroupBody.
+  ///
+  /// In he, this message translates to:
+  /// **'אפשר לחזור עם הזמנה.'**
+  String get sgLeaveGroupBody;
+
+  /// No description provided for @sgLeaveGroupOwnerBody.
+  ///
+  /// In he, this message translates to:
+  /// **'החבר/ה הוותיק/ה ביותר בקבוצה יהפוך/תהפוך למנהל/ת. אפשר לחזור עם הזמנה.'**
+  String get sgLeaveGroupOwnerBody;
+
+  /// No description provided for @sgLeave.
+  ///
+  /// In he, this message translates to:
+  /// **'יציאה'**
+  String get sgLeave;
+
+  /// No description provided for @sgRemove.
+  ///
+  /// In he, this message translates to:
+  /// **'הסרה'**
+  String get sgRemove;
+
+  /// No description provided for @sgRemoveMemberConfirm.
+  ///
+  /// In he, this message translates to:
+  /// **'להסיר את {name} מהקבוצה?'**
+  String sgRemoveMemberConfirm(String name);
+
+  /// No description provided for @sgGroupGone.
+  ///
+  /// In he, this message translates to:
+  /// **'הקבוצה הזו כבר לא זמינה.'**
+  String get sgGroupGone;
+
+  /// No description provided for @sgInvitationTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'הזמנה לקבוצת הליכה'**
+  String get sgInvitationTitle;
+
+  /// No description provided for @sgJoinConsent.
+  ///
+  /// In he, this message translates to:
+  /// **'חברי הקבוצה רואים את מספר הצעדים היומי זה של זה. אפשר לצאת בכל עת.'**
+  String get sgJoinConsent;
+
+  /// No description provided for @sgJoin.
+  ///
+  /// In he, this message translates to:
+  /// **'הצטרפות לקבוצה'**
+  String get sgJoin;
+
+  /// No description provided for @sgNotNow.
+  ///
+  /// In he, this message translates to:
+  /// **'לא עכשיו'**
+  String get sgNotNow;
+
+  /// No description provided for @sgSignInToJoin.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי להצטרף'**
+  String get sgSignInToJoin;
+
+  /// No description provided for @sgAlreadyMember.
+  ///
+  /// In he, this message translates to:
+  /// **'אתם כבר בקבוצה הזו.'**
+  String get sgAlreadyMember;
+
+  /// No description provided for @sgOpenGroup.
+  ///
+  /// In he, this message translates to:
+  /// **'פתיחת הקבוצה'**
+  String get sgOpenGroup;
+
+  /// No description provided for @sgInviteInvalid.
+  ///
+  /// In he, this message translates to:
+  /// **'ההזמנה הזו כבר לא בתוקף. בקשו קישור חדש.'**
+  String get sgInviteInvalid;
+
+  /// No description provided for @sgGroupFull.
+  ///
+  /// In he, this message translates to:
+  /// **'הקבוצה מלאה (50 חברים).'**
+  String get sgGroupFull;
+
+  /// No description provided for @sgTooManyGroups.
+  ///
+  /// In he, this message translates to:
+  /// **'אפשר לנהל עד 10 קבוצות.'**
+  String get sgTooManyGroups;
+
+  /// No description provided for @sgOpenInApp.
+  ///
+  /// In he, this message translates to:
+  /// **'פתיחה באפליקציה'**
+  String get sgOpenInApp;
+
+  /// No description provided for @sgWebJoinHint.
+  ///
+  /// In he, this message translates to:
+  /// **'יש לכם את אפליקציית Modiin4U? פתחו בה את ההזמנה, או הזינו את הקוד {code} במונה הצעדים ← קבוצות ← הצטרפות עם קוד.'**
+  String sgWebJoinHint(String code);
+
+  /// No description provided for @sgNoStepsShared.
+  ///
+  /// In he, this message translates to:
+  /// **'עדיין לא נרשמו צעדים'**
+  String get sgNoStepsShared;
+
+  /// No description provided for @sgRemoveHint.
+  ///
+  /// In he, this message translates to:
+  /// **'להסרת חבר/ה מהקבוצה, לחצו לחיצה ארוכה על השם.'**
+  String get sgRemoveHint;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

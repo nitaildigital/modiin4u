@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Step group invitations open the app from https://<site>/join/<code>:
+	     the interim secure address until app.modiin4u.co.il is live, and the
+	     domain. Each site serves /.well-known/apple-app-site-association
+	     (from web/.well-known). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:app.modiin4u.co.il</string>
+		<string>applinks:45-93-94-49.sslip.io</string>
+	</array>
+	<!-- The Step Counter reads steps, distance and active calories. -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array/>
+</dict>
+</plist>

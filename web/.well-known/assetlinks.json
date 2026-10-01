@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "il.co.modiin4u.modiin4u",
+      "sha256_cert_fingerprints": [
+        "A7:57:B4:EC:BD:85:A6:64:E5:7B:87:5A:CF:8E:10:30:E8:B3:E7:C0:EF:7A:28:5C:DA:F0:2F:FF:05:28:FF:69"
+      ]
+    }
+  }
+]

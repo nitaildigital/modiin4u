@@ -1,7 +1,10 @@
+import 'dart:io' show Platform;
 import 'dart:math';
 import '../../../core/theme/app_fonts.dart';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+// Material has a StepState of its own (the Stepper's).
+import 'package:flutter/material.dart' hide StepState;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/widgets/m_account_widgets.dart' show MBackArrow;
@@ -13,13 +16,21 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/step_entry.dart';
 import '../providers/steps_providers.dart';
+import '../services/health_steps.dart';
+import '../widgets/step_groups_tab.dart';
 import 'web_steps_screen.dart';
 
-/// Step Counter screen – circular progress ring with daily stats,
-/// weekly bar chart, monthly challenge card with progress bar,
-/// neighborhood/city leaderboard, and recommended walking routes.
+/// Step Counter screen, in two tabs.
+///
+/// My Activity: today's ring with distance and calories, the week or the
+/// month as bars, the city challenge and the leaderboards. Groups (app
+/// only — the website has no accounts): the person's step groups, and
+/// creating or joining one.
 class StepsScreen extends ConsumerStatefulWidget {
-  const StepsScreen({super.key});
+  /// Open on the Groups tab, as `/steps?tab=groups` asks.
+  final bool groupsTab;
+
+  const StepsScreen({super.key, this.groupsTab = false});
 
   @override
   ConsumerState<StepsScreen> createState() => _StepsScreenState();
@@ -27,6 +38,8 @@ class StepsScreen extends ConsumerStatefulWidget {
 
 class _StepsScreenState extends ConsumerState<StepsScreen> {
   int _leaderboardTab = 0; // 0 = Neighborhood, 1 = City
+  late bool _groups = widget.groupsTab && !kIsWeb;
+  bool _month = false;
 
   /// The daily target the ring fills against.
   static const _goal = 10000;
@@ -115,19 +128,28 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        _buildTodayProgress(),
-                        const SizedBox(height: 16),
-
-                        _buildWeeklyChart(),
-                        const SizedBox(height: 16),
-
-                        if (ref.watch(activeChallengeProvider).valueOrNull !=
-                            null) ...[
-                          _buildMonthlyChallenge(),
+                        if (!kIsWeb) ...[
+                          _buildTabs(),
                           const SizedBox(height: 16),
                         ],
 
-                        _buildLeaderboard(),
+                        if (_groups)
+                          const StepGroupsTab()
+                        else ...[
+                          _buildTodayProgress(),
+                          const SizedBox(height: 16),
+
+                          _buildWeeklyChart(),
+                          const SizedBox(height: 16),
+
+                          if (ref.watch(activeChallengeProvider).valueOrNull !=
+                              null) ...[
+                            _buildMonthlyChallenge(),
+                            const SizedBox(height: 16),
+                          ],
+
+                          _buildLeaderboard(),
+                        ],
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -142,20 +164,165 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
   }
 
   // ═══════════════════════════════════════════════
+  // My Activity | Groups
+  // ═══════════════════════════════════════════════
+  Widget _buildTabs() {
+    final l = L.of(context);
+    Widget tab(String label, bool groups) {
+      final active = _groups == groups;
+      return Expanded(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _groups = groups),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: active ? Colors.white : Colors.transparent,
+              borderRadius: BorderRadius.circular(9),
+              boxShadow: active
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x14000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                color: active
+                    ? const Color(0xFF123A72)
+                    : const Color(0xFF6D6D6D),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F6F6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [tab(l.sgTabActivity, false), tab(l.sgTabGroups, true)],
+      ),
+    );
+  }
+
+  /// Offers the phone's health store where it is not connected yet: the
+  /// permission screen, or on an older Android the Play Store page of
+  /// Health Connect. Nothing once it is connected, or where there is none.
+  Widget _buildHealthOffer(StepState counter) {
+    final l = L.of(context);
+    final install = counter.health == HealthAccess.needsInstall;
+    if (!install && counter.health != HealthAccess.notConnected) {
+      return const SizedBox.shrink();
+    }
+    final notifier = ref.read(stepCounterProvider.notifier);
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F6FD),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            IconsaxPlusLinear.health,
+            size: 24,
+            color: Color(0xFF216AD0),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  install
+                      ? l.sgInstallHealthConnect
+                      : Platform.isIOS
+                      ? l.sgConnectAppleHealth
+                      : l.sgConnectHealthConnect,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1F1F1F),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  install ? l.sgInstallHealthConnectBody : l.sgConnectHealthBody,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 12,
+                    color: const Color(0xFF5D5D5D),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF123A72),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              minimumSize: const Size(0, 36),
+            ),
+            onPressed: install
+                ? notifier.installHealthConnect
+                : notifier.connectHealth,
+            child: Text(install ? l.sgInstall : l.sgConnect),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════
   // Card 1 — Today's Progress
   // ═══════════════════════════════════════════════
   Widget _buildTodayProgress() {
     final l = L.of(context);
     final counter = ref.watch(stepCounterProvider);
-    final week =
-        ref.watch(myStepWeekProvider).valueOrNull ?? const <StepEntry>[];
+    final week = ref.watch(myActivityDaysProvider(30));
     final now = DateTime.now();
 
-    // Null until the sensor reports; the ring shows nothing rather than a
-    // figure the phone has not given us.
-    final steps = counter.today;
+    // Null until the sensor or the health store reports; the ring shows
+    // nothing rather than a figure the phone has not given us. Once one
+    // has, the day's figure is the highest of them and of what is stored —
+    // a count saved earlier from another source is not shown lower.
+    final steps = counter.today == null
+        ? null
+        : max(counter.today!, week.isEmpty ? 0 : week.last.steps);
     final progress = steps == null ? 0.0 : (steps / _goal).clamp(0.0, 1.0);
-    final km = steps == null ? null : (steps * _metresPerStep) / 1000;
+
+    // The health store's distance and calories belong to its own step
+    // count. When the figure shown came from elsewhere — the sensor, or a
+    // day saved from another phone — they would sit at zero beside
+    // thousands of steps, so the distance is estimated instead and the
+    // calories left out.
+    final healthSteps = counter.healthDays[dateKey(now)]?.steps;
+    final fromHealth = counter.health == HealthAccess.connected &&
+        healthSteps != null &&
+        healthSteps >= (steps ?? 0);
+    final measuredKm = fromHealth && counter.todayMetres != null
+        ? counter.todayMetres! / 1000
+        : null;
+    final km = measuredKm ??
+        (steps == null ? null : (steps * _metresPerStep) / 1000);
+    final kcal = fromHealth ? counter.todayKcal : null;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -193,8 +360,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
           // The counter cannot run without permission, and on a phone with
           // no step sensor it cannot run at all. Both are said plainly
           // instead of showing a number.
-          if (counter.permission == StepPermission.denied ||
-              counter.permission == StepPermission.unsupported)
+          if (!counter.canCount)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Row(
@@ -313,18 +479,55 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
               ],
             ),
 
-            // Distance only. The card also claimed calories and active
-            // hours; calories depend on body weight, which the app does not
-            // know, and the pedometer reports no active time at all.
+            // Distance, and calories only when the health store has them.
+            // Without it the distance is the steps times an average stride,
+            // and says so; calories depend on body weight, which the app
+            // does not know, so it does not make them up.
             if (km != null) ...[
               const SizedBox(height: 16),
-              _StatColumn(
-                value: km.toStringAsFixed(1),
-                label: '${l.kmUnit} · ${l.distanceEstimate}',
-                valueColor: const Color(0xFF17A9D0),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatColumn(
+                      value: km.toStringAsFixed(1),
+                      label: measuredKm != null
+                          ? '${l.kmUnit} · ${l.sgDistance}'
+                          : '${l.kmUnit} · ${l.distanceEstimate}',
+                      valueColor: const Color(0xFF17A9D0),
+                    ),
+                  ),
+                  if (kcal != null)
+                    Expanded(
+                      child: _StatColumn(
+                        value: kcal.round().toString(),
+                        label: '${l.sgKcal} · ${l.sgActiveCalories}',
+                        valueColor: const Color(0xFFFB7901),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+            if (fromHealth ||
+                counter.permission == StepPermission.granted) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  fromHealth
+                      ? (Platform.isIOS
+                            ? l.sgSourceAppleHealth
+                            : l.sgSourceHealthConnect)
+                      : l.sgSourceSensor,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 12,
+                    color: const Color(0xFF8A8A8A),
+                  ),
+                ),
               ),
             ],
           ],
+          if (!kIsWeb) _buildHealthOffer(counter),
         ],
       ),
     );
@@ -357,22 +560,29 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
   // ═══════════════════════════════════════════════
   Widget _buildWeeklyChart() {
     final l = L.of(context);
-    final week =
-        ref.watch(myStepWeekProvider).valueOrNull ?? const <StepEntry>[];
+    final week = ref.watch(myActivityDaysProvider(_month ? 30 : 7));
 
     // Seven fixed bars — 8.2K, 6.4K, 10.1K and so on — used to be written
     // into this method. These are the rows, with a bar at zero for a day
-    // with nothing recorded rather than a gap.
+    // with nothing recorded rather than a gap. Thirty of them are too
+    // narrow for a figure each, so the month labels every fifth day by its
+    // date and leaves the figures to the total and the average.
     final data = [
-      for (final e in week)
+      for (var i = 0; i < week.length; i++)
         _BarData(
-          _weekdayShort(l, e.date),
-          e.steps,
-          e.steps >= 1000
-              ? '${(e.steps / 1000).toStringAsFixed(1)}K'
-              : '${e.steps}',
+          _month
+              ? ((week.length - 1 - i) % 5 == 0 ? '${week[i].date.day}' : '')
+              : _weekdayShort(l, week[i].date),
+          week[i].steps,
+          _month
+              ? ''
+              : week[i].steps >= 1000
+              ? '${(week[i].steps / 1000).toStringAsFixed(1)}K'
+              : '${week[i].steps}',
         ),
     ];
+    final total = week.fold<int>(0, (sum, e) => sum + e.steps);
+    final average = week.isEmpty ? 0 : (total / week.length).round();
 
     if (data.isEmpty) {
       return Container(
@@ -427,14 +637,33 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header, with the week/month switch
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _month ? l.sgLast30Days : l.thisWeek,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1F1F1F),
+                  ),
+                ),
+              ),
+              _rangeChip(l.sgHistoryWeek, !_month, () => _month = false),
+              const SizedBox(width: 6),
+              _rangeChip(l.sgHistoryMonth, _month, () => _month = true),
+            ],
+          ),
+          const SizedBox(height: 6),
           Text(
-            l.thisWeek,
+            '${l.sgPeriodTotal(_thousands(total))} · '
+            '${l.sgDailyAverage(_thousands(average))}',
             style: TextStyle(
               fontFamily: AppFonts.inter,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F1F1F),
+              fontSize: 12,
+              color: const Color(0xFF6D6D6D),
             ),
           ),
           const SizedBox(height: 16),
@@ -480,6 +709,8 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                       children: [
                         Text(
                           d.label,
+                          maxLines: 1,
+                          softWrap: false,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 12,
@@ -489,7 +720,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          width: 15,
+                          width: _month ? 6 : 15,
                           height: barH,
                           decoration: BoxDecoration(
                             color: const Color(0xFF216AD0),
@@ -499,6 +730,9 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                         const SizedBox(height: 8),
                         Text(
                           d.day,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.visible,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 12,
@@ -517,6 +751,27 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
       ),
     );
   }
+
+  Widget _rangeChip(String label, bool active, VoidCallback select) =>
+      GestureDetector(
+        onTap: () => setState(select),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFF123A72) : const Color(0xFFF6F6F6),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: active ? Colors.white : const Color(0xFF6D6D6D),
+            ),
+          ),
+        ),
+      );
 
   // ═══════════════════════════════════════════════
   // Card 3 — Monthly Challenge

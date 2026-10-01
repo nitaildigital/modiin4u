@@ -443,14 +443,15 @@ class _RemoteConfigTab extends ConsumerWidget {
 
     return Column(
       children: [
-        // Only the Community page's three keys are read so far; the rest
-        // are stored and read by nothing, as with the flags.
+        // Only the keys named here are read; the rest are stored and read
+        // by nothing, as with the flags.
         const _NotYetWiredNote(
           text:
               'הגדרות פעילות: community_facebook_url (קישור לקבוצת '
               'הפייסבוק), community_share_url (קישור לטופס "שתפו אותנו"), '
               'community_news_category (קטגוריית החדשות בעמוד הקהילה) '
-              'ו-municipal_forms_url (לאן מוביל אריח "טפסים"). שאר '
+              'municipal_forms_url (לאן מוביל אריח "טפסים") '
+              'ו-site_url (כתובת האתר בקישורי ההזמנה לקבוצות צעדים). שאר '
               'ההגדרות כאן נשמרות, אך האפליקציה והאתר עדיין אינם קוראים אותן.',
         ),
         // ─── Toolbar ───

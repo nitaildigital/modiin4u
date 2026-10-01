@@ -28,7 +28,9 @@ android {
 
     defaultConfig {
         applicationId = "il.co.modiin4u.modiin4u"
-        minSdk = flutter.minSdkVersion       // 24 (Android 7.0)
+        // 26 (Android 8.0): the step counter reads Health Connect through the
+        // `health` plugin, which needs it. Phones older than 2017.
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion  // 36 (Android 16) — meets Aug 2026 requirement
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -1926,4 +1926,250 @@ class LEn extends L {
 
   @override
   String get restaurantsNearYou => 'Restaurants Near You';
+
+  @override
+  String get sgTabActivity => 'My Activity';
+
+  @override
+  String get sgTabGroups => 'Groups';
+
+  @override
+  String get sgConnectHealthConnect => 'Connect Health Connect';
+
+  @override
+  String get sgConnectAppleHealth => 'Connect Apple Health';
+
+  @override
+  String get sgConnectHealthBody =>
+      'See today\'s full count, the past month, distance and calories — from your phone and any watch.';
+
+  @override
+  String get sgConnect => 'Connect';
+
+  @override
+  String get sgInstallHealthConnect => 'Install Health Connect';
+
+  @override
+  String get sgInstallHealthConnectBody =>
+      'Health Connect, a free app from Google, lets the app read your full step history, distance and calories.';
+
+  @override
+  String get sgInstall => 'Install';
+
+  @override
+  String get sgSourceHealthConnect => 'From Health Connect';
+
+  @override
+  String get sgSourceAppleHealth => 'From Apple Health';
+
+  @override
+  String get sgSourceSensor => 'Counted by the phone while the app is open';
+
+  @override
+  String get sgDistance => 'Distance';
+
+  @override
+  String get sgActiveCalories => 'Active calories';
+
+  @override
+  String get sgKcal => 'kcal';
+
+  @override
+  String get sgHistoryWeek => 'Week';
+
+  @override
+  String get sgHistoryMonth => 'Month';
+
+  @override
+  String get sgLast30Days => 'Last 30 Days';
+
+  @override
+  String sgDailyAverage(String steps) {
+    return 'Daily average $steps';
+  }
+
+  @override
+  String sgPeriodTotal(String steps) {
+    return 'Total $steps';
+  }
+
+  @override
+  String get sgSignInPrompt =>
+      'Sign in to create a group, invite friends and walk together.';
+
+  @override
+  String get sgEmpty =>
+      'No groups yet. Create one and invite family, friends or colleagues to compare steps.';
+
+  @override
+  String get sgCreateGroup => 'Create Group';
+
+  @override
+  String get sgJoinWithCode => 'Join with Code';
+
+  @override
+  String get sgGroupName => 'Group name';
+
+  @override
+  String get sgCreate => 'Create';
+
+  @override
+  String get sgInviteCode => 'Invitation code';
+
+  @override
+  String get sgContinue => 'Continue';
+
+  @override
+  String sgMembers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sgStepsToday(String steps) {
+    return '$steps steps today';
+  }
+
+  @override
+  String sgMyRankToday(int rank) {
+    return 'You\'re #$rank today';
+  }
+
+  @override
+  String get sgOwner => 'Owner';
+
+  @override
+  String get sgInvite => 'Invite';
+
+  @override
+  String sgInviteMessage(String group, String link, String code) {
+    return 'Join my walking group \"$group\" on Modiin4U:\n$link\n\nOr enter the code $code in Step Counter → Groups → Join with Code.';
+  }
+
+  @override
+  String get sgToday => 'Today';
+
+  @override
+  String get sgThisMonth => 'This Month';
+
+  @override
+  String get sgGroupTotal => 'Group total';
+
+  @override
+  String get sgAverage => 'Average per member';
+
+  @override
+  String get sgTopWalker => 'Leading';
+
+  @override
+  String get sgMembersTitle => 'Members';
+
+  @override
+  String get sgGroupLast7 => 'The Group, Last 7 Days';
+
+  @override
+  String get sgCompareTitle => 'Compare';
+
+  @override
+  String get sgColMember => 'Member';
+
+  @override
+  String get sgRename => 'Rename group';
+
+  @override
+  String get sgSave => 'Save';
+
+  @override
+  String get sgNewInvite => 'New invitation link';
+
+  @override
+  String get sgNewInviteBody =>
+      'Links and codes already sent will stop working.';
+
+  @override
+  String sgNewInviteDone(String code) {
+    return 'New invitation code: $code';
+  }
+
+  @override
+  String get sgDeleteGroup => 'Delete group';
+
+  @override
+  String get sgDeleteGroupBody =>
+      'The group is removed for all its members. Everyone keeps their own steps.';
+
+  @override
+  String get sgLeaveGroup => 'Leave group';
+
+  @override
+  String get sgLeaveGroupBody => 'You can come back with an invitation.';
+
+  @override
+  String get sgLeaveGroupOwnerBody =>
+      'The member who has been in the group longest becomes its owner. You can come back with an invitation.';
+
+  @override
+  String get sgLeave => 'Leave';
+
+  @override
+  String get sgRemove => 'Remove';
+
+  @override
+  String sgRemoveMemberConfirm(String name) {
+    return 'Remove $name from the group?';
+  }
+
+  @override
+  String get sgGroupGone => 'This group is no longer available.';
+
+  @override
+  String get sgInvitationTitle => 'Walking group invitation';
+
+  @override
+  String get sgJoinConsent =>
+      'Members of the group see each other\'s daily steps. You can leave at any time.';
+
+  @override
+  String get sgJoin => 'Join Group';
+
+  @override
+  String get sgNotNow => 'Not now';
+
+  @override
+  String get sgSignInToJoin => 'Sign in to join';
+
+  @override
+  String get sgAlreadyMember => 'You\'re already in this group.';
+
+  @override
+  String get sgOpenGroup => 'Open Group';
+
+  @override
+  String get sgInviteInvalid =>
+      'This invitation is no longer valid. Ask for a new link.';
+
+  @override
+  String get sgGroupFull => 'This group is full (50 members).';
+
+  @override
+  String get sgTooManyGroups => 'You can own up to 10 groups.';
+
+  @override
+  String get sgOpenInApp => 'Open in the App';
+
+  @override
+  String sgWebJoinHint(String code) {
+    return 'Have the Modiin4U app? Open this invitation in it, or enter the code $code in Step Counter → Groups → Join with Code.';
+  }
+
+  @override
+  String get sgNoStepsShared => 'No steps recorded yet';
+
+  @override
+  String get sgRemoveHint => 'To remove a member, press and hold their name.';
 }

@@ -42,6 +42,8 @@ import '../../features/community/screens/community_screen.dart';
 import '../../features/deals/screens/deals_screen.dart';
 import '../../features/deals/screens/deal_detail_screen.dart';
 import '../../features/steps/screens/steps_screen.dart';
+import '../../features/steps/screens/join_group_screen.dart';
+import '../../features/steps/screens/step_group_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../../features/admin/widgets/admin_gate.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
@@ -363,7 +365,31 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/steps',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const StepsScreen(),
+      builder: (context, state) => StepsScreen(
+        groupsTab: state.uri.queryParameters['tab'] == 'groups',
+      ),
+    ),
+    GoRoute(
+      path: '/steps/groups/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        StepGroupScreen(
+          groupId: state.pathParameters['id']!,
+          inviteNow: state.uri.queryParameters['invite'] == '1',
+        ),
+        state,
+      ),
+    ),
+    // A step group invitation, https://<site>/join/<code>. In the app it
+    // asks to join; on the website it offers to open the app. Not on the
+    // app-only list: someone without the app must land somewhere.
+    GoRoute(
+      path: '/join/:code',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        JoinGroupScreen(code: state.pathParameters['code']!),
+        state,
+      ),
     ),
     GoRoute(
       path: '/parking',

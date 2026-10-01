@@ -1900,4 +1900,248 @@ class LHe extends L {
 
   @override
   String get restaurantsNearYou => 'מסעדות קרובות אליך';
+
+  @override
+  String get sgTabActivity => 'הפעילות שלי';
+
+  @override
+  String get sgTabGroups => 'קבוצות';
+
+  @override
+  String get sgConnectHealthConnect => 'חיבור ל-Health Connect';
+
+  @override
+  String get sgConnectAppleHealth => 'חיבור ל-Apple Health';
+
+  @override
+  String get sgConnectHealthBody =>
+      'ספירת הצעדים המלאה של היום, החודש האחרון, מרחק וקלוריות — מהטלפון ומכל שעון.';
+
+  @override
+  String get sgConnect => 'חיבור';
+
+  @override
+  String get sgInstallHealthConnect => 'התקנת Health Connect';
+
+  @override
+  String get sgInstallHealthConnectBody =>
+      'Health Connect, אפליקציה חינמית של Google, מאפשרת לאפליקציה לקרוא את היסטוריית הצעדים, המרחק והקלוריות.';
+
+  @override
+  String get sgInstall => 'התקנה';
+
+  @override
+  String get sgSourceHealthConnect => 'מתוך Health Connect';
+
+  @override
+  String get sgSourceAppleHealth => 'מתוך Apple Health';
+
+  @override
+  String get sgSourceSensor => 'נספר בטלפון כשהאפליקציה פתוחה';
+
+  @override
+  String get sgDistance => 'מרחק';
+
+  @override
+  String get sgActiveCalories => 'קלוריות פעילות';
+
+  @override
+  String get sgKcal => 'קק״ל';
+
+  @override
+  String get sgHistoryWeek => 'שבוע';
+
+  @override
+  String get sgHistoryMonth => 'חודש';
+
+  @override
+  String get sgLast30Days => '30 הימים האחרונים';
+
+  @override
+  String sgDailyAverage(String steps) {
+    return 'ממוצע יומי $steps';
+  }
+
+  @override
+  String sgPeriodTotal(String steps) {
+    return 'סה״כ $steps';
+  }
+
+  @override
+  String get sgSignInPrompt =>
+      'התחברו כדי ליצור קבוצה, להזמין חברים וללכת יחד.';
+
+  @override
+  String get sgEmpty =>
+      'עדיין אין קבוצות. צרו קבוצה והזמינו משפחה, חברים או עמיתים כדי להשוות צעדים.';
+
+  @override
+  String get sgCreateGroup => 'יצירת קבוצה';
+
+  @override
+  String get sgJoinWithCode => 'הצטרפות עם קוד';
+
+  @override
+  String get sgGroupName => 'שם הקבוצה';
+
+  @override
+  String get sgCreate => 'יצירה';
+
+  @override
+  String get sgInviteCode => 'קוד הזמנה';
+
+  @override
+  String get sgContinue => 'המשך';
+
+  @override
+  String sgMembers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count חברים',
+      one: 'חבר אחד',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sgStepsToday(String steps) {
+    return '$steps צעדים היום';
+  }
+
+  @override
+  String sgMyRankToday(int rank) {
+    return 'אתם במקום $rank היום';
+  }
+
+  @override
+  String get sgOwner => 'מנהל/ת';
+
+  @override
+  String get sgInvite => 'הזמנה';
+
+  @override
+  String sgInviteMessage(String group, String link, String code) {
+    return 'הצטרפו לקבוצת ההליכה שלי \"$group\" באפליקציית Modiin4U:\n$link\n\nאו הזינו את הקוד $code במונה הצעדים ← קבוצות ← הצטרפות עם קוד.';
+  }
+
+  @override
+  String get sgToday => 'היום';
+
+  @override
+  String get sgThisMonth => 'החודש';
+
+  @override
+  String get sgGroupTotal => 'סה״כ הקבוצה';
+
+  @override
+  String get sgAverage => 'ממוצע לחבר';
+
+  @override
+  String get sgTopWalker => 'מוביל/ה';
+
+  @override
+  String get sgMembersTitle => 'חברים';
+
+  @override
+  String get sgGroupLast7 => 'הקבוצה, 7 הימים האחרונים';
+
+  @override
+  String get sgCompareTitle => 'השוואה';
+
+  @override
+  String get sgColMember => 'חבר/ה';
+
+  @override
+  String get sgRename => 'שינוי שם הקבוצה';
+
+  @override
+  String get sgSave => 'שמירה';
+
+  @override
+  String get sgNewInvite => 'קישור הזמנה חדש';
+
+  @override
+  String get sgNewInviteBody => 'קישורים וקודים שכבר נשלחו יפסיקו לעבוד.';
+
+  @override
+  String sgNewInviteDone(String code) {
+    return 'קוד הזמנה חדש: $code';
+  }
+
+  @override
+  String get sgDeleteGroup => 'מחיקת הקבוצה';
+
+  @override
+  String get sgDeleteGroupBody =>
+      'הקבוצה תוסר עבור כל החברים. הצעדים של כל אחד נשארים אצלו.';
+
+  @override
+  String get sgLeaveGroup => 'יציאה מהקבוצה';
+
+  @override
+  String get sgLeaveGroupBody => 'אפשר לחזור עם הזמנה.';
+
+  @override
+  String get sgLeaveGroupOwnerBody =>
+      'החבר/ה הוותיק/ה ביותר בקבוצה יהפוך/תהפוך למנהל/ת. אפשר לחזור עם הזמנה.';
+
+  @override
+  String get sgLeave => 'יציאה';
+
+  @override
+  String get sgRemove => 'הסרה';
+
+  @override
+  String sgRemoveMemberConfirm(String name) {
+    return 'להסיר את $name מהקבוצה?';
+  }
+
+  @override
+  String get sgGroupGone => 'הקבוצה הזו כבר לא זמינה.';
+
+  @override
+  String get sgInvitationTitle => 'הזמנה לקבוצת הליכה';
+
+  @override
+  String get sgJoinConsent =>
+      'חברי הקבוצה רואים את מספר הצעדים היומי זה של זה. אפשר לצאת בכל עת.';
+
+  @override
+  String get sgJoin => 'הצטרפות לקבוצה';
+
+  @override
+  String get sgNotNow => 'לא עכשיו';
+
+  @override
+  String get sgSignInToJoin => 'התחברו כדי להצטרף';
+
+  @override
+  String get sgAlreadyMember => 'אתם כבר בקבוצה הזו.';
+
+  @override
+  String get sgOpenGroup => 'פתיחת הקבוצה';
+
+  @override
+  String get sgInviteInvalid => 'ההזמנה הזו כבר לא בתוקף. בקשו קישור חדש.';
+
+  @override
+  String get sgGroupFull => 'הקבוצה מלאה (50 חברים).';
+
+  @override
+  String get sgTooManyGroups => 'אפשר לנהל עד 10 קבוצות.';
+
+  @override
+  String get sgOpenInApp => 'פתיחה באפליקציה';
+
+  @override
+  String sgWebJoinHint(String code) {
+    return 'יש לכם את אפליקציית Modiin4U? פתחו בה את ההזמנה, או הזינו את הקוד $code במונה הצעדים ← קבוצות ← הצטרפות עם קוד.';
+  }
+
+  @override
+  String get sgNoStepsShared => 'עדיין לא נרשמו צעדים';
+
+  @override
+  String get sgRemoveHint => 'להסרת חבר/ה מהקבוצה, לחצו לחיצה ארוכה על השם.';
 }

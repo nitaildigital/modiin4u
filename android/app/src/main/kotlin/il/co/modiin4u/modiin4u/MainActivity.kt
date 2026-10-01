@@ -2,9 +2,13 @@ package il.co.modiin4u.modiin4u
 
 import android.os.Build
 import android.os.Bundle
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity() {
+// A FlutterFragmentActivity because Health Connect's permission screen is
+// opened through registerForActivityResult, which only a ComponentActivity
+// has; the `health` plugin cannot ask for step data from a plain
+// FlutterActivity.
+class MainActivity : FlutterFragmentActivity() {
 
     /**
      * Ask for the display's fastest refresh rate.

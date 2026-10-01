@@ -15,6 +15,14 @@
     <uses-feature android:name="android.hardware.sensor.stepcounter"
                   android:required="false"/>
 
+    <!-- Health Connect: the day's steps, distance and active calories as the
+         phone and any watch or fitness app recorded them, for today and the
+         last month. Read only; the app writes nothing to it. Google Play
+         asks for a declaration of these in the Console before release. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
+    <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
+
     <!-- Camera & gallery for image_picker (apartment photos) -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
@@ -57,7 +65,50 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="il.co.modiin4u" android:host="auth"/>
             </intent-filter>
+
+            <!-- Step group invitations: https://<site>/join/<code> opens the
+                 app straight on the join screen once Android has verified the
+                 site's /.well-known/assetlinks.json (served from
+                 web/.well-known). Two sites: the interim secure address the
+                 links use until app.modiin4u.co.il is live, and the domain.
+                 Where the app is not verified, the website's join page offers
+                 the scheme link below. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="app.modiin4u.co.il"/>
+                <data android:host="45-93-94-49.sslip.io"/>
+                <data android:pathPrefix="/join/"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="il.co.modiin4u"
+                      android:host="app"
+                      android:pathPrefix="/join/"/>
+            </intent-filter>
+
+            <!-- Health Connect's "why does this app ask" link. -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+            </intent-filter>
         </activity>
+        <!-- Android 14's Health Connect settings link to how the app uses
+             the data. Google requires the link; it opens the app, whose
+             Step Counter says what is read and why. -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+            </intent-filter>
+        </activity-alias>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -78,6 +129,11 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Whether Health Connect is installed (Android 13 and older). -->
+        <package android:name="com.google.android.apps.healthdata"/>
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

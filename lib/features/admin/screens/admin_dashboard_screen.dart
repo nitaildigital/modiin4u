@@ -13,7 +13,7 @@ import 'admin_events_screen.dart';
 import 'admin_realestate_screen.dart';
 import 'admin_reviews_screen.dart';
 import 'admin_categories_screen.dart';
-import 'admin_challenges_screen.dart';
+import 'admin_step_groups_screen.dart';
 import 'admin_tags_screen.dart';
 import 'admin_neighborhoods_screen.dart';
 import 'admin_parking_screen.dart';
@@ -75,7 +75,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     ('תגובות', IconsaxPlusLinear.message_text),
     ('דיווחים', IconsaxPlusLinear.flag),
     ('Push', IconsaxPlusLinear.notification),
-    ('אתגרים', IconsaxPlusLinear.cup),
+    ('אתגרים וקבוצות', IconsaxPlusLinear.cup),
     // ── מערכת ──
     ('צוות ניהול', IconsaxPlusLinear.people),
     ('יומן פעולות', IconsaxPlusLinear.clock),
@@ -254,7 +254,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       19 => const AdminCommentsScreen(),
       20 => const AdminReportsScreen(),
       21 => const AdminPushScreen(),
-      22 => const AdminChallengesScreen(),
+      22 => const AdminStepsSection(),
       23 => const AdminTeamScreen(),
       24 => const AdminAuditScreen(),
       25 => const AdminTrashScreen(),

@@ -1,111 +1,246 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/step_entry.dart';
 import '../repositories/steps_repository.dart';
+import '../services/health_steps.dart';
 
 final stepsRepositoryProvider = Provider<StepsRepository>(
   (ref) => StepsRepository(),
 );
 
-/// What the counter knows right now.
+/// What the phone's step sensor allows.
 enum StepPermission { unknown, granted, denied, unsupported }
 
 class StepState {
-  /// Steps taken today, or null before the first reading arrives.
-  final int? today;
+  /// Steps the sensor has counted today, or null before its first reading.
+  final int? sensorToday;
   final StepPermission permission;
+  final HealthAccess health;
 
-  const StepState({this.today, this.permission = StepPermission.unknown});
+  /// The last month from Health Connect or Apple Health, keyed by date.
+  final Map<String, DayActivity> healthDays;
 
-  StepState copyWith({int? today, StepPermission? permission}) => StepState(
-    today: today ?? this.today,
+  const StepState({
+    this.sensorToday,
+    this.permission = StepPermission.unknown,
+    this.health = HealthAccess.unavailable,
+    this.healthDays = const {},
+  });
+
+  StepState copyWith({
+    int? sensorToday,
+    StepPermission? permission,
+    HealthAccess? health,
+    Map<String, DayActivity>? healthDays,
+  }) => StepState(
+    sensorToday: sensorToday ?? this.sensorToday,
     permission: permission ?? this.permission,
+    health: health ?? this.health,
+    healthDays: healthDays ?? this.healthDays,
   );
+
+  DayActivity? get _healthToday => healthDays[dateKey(DateTime.now())];
+
+  /// Today's steps: the health store's figure or the sensor's, whichever is
+  /// higher — the sensor only counts while the app listens, the store may
+  /// lag a few minutes behind the phone. Null while neither has reported.
+  int? get today {
+    final h = _healthToday?.steps;
+    if (h == null) return sensorToday;
+    if (sensorToday == null) return h;
+    return h > sensorToday! ? h : sensorToday;
+  }
+
+  /// Measured distance and active calories, from the health store only.
+  double? get todayMetres => _healthToday?.metres;
+  double? get todayKcal => _healthToday?.kcal;
+
+  /// Whether anything can count steps on this phone.
+  bool get canCount =>
+      health == HealthAccess.connected ||
+      permission == StepPermission.granted ||
+      permission == StepPermission.unknown;
 }
 
-/// Today's steps, from the phone's own counter.
+/// Today's steps, from the phone's health store and its step sensor.
 ///
-/// The screen used to show a fixed number with a fixed weekly chart beside
-/// it. This reads the pedometer, and says plainly when it cannot.
+/// The health store (Health Connect, Apple Health) is read when the person
+/// has allowed it: the whole day and the last month, with distance and
+/// active calories. The sensor runs beside it for a count that moves while
+/// the screen is open, and is all there is on a phone without the store.
 ///
-/// The sensor reports steps since the phone last rebooted, not since
+/// The sensor reports steps since the phone last restarted, not since
 /// midnight, so the first reading of the day is kept as a baseline and
-/// today's figure is the difference. The baseline is re-established whenever
-/// the reading drops below it, which is what a reboot looks like.
+/// today's figure is the difference. The baseline is kept on the phone, so
+/// opening the app again later in the day carries on from it rather than
+/// starting again at zero; and a reading below the last one — a restart —
+/// carries what was counted so far.
+///
+/// What is counted goes to `daily_steps` (which keeps each day's highest
+/// figure): today's at most once a minute while it changes, and the month
+/// from the health store when it is read, so a group sees the morning walk
+/// even if the app was opened only in the evening.
 class StepCounter extends StateNotifier<StepState> {
   StepCounter(this._ref) : super(const StepState()) {
     _start();
   }
 
   final Ref _ref;
+  // Late, so a browser — where there is no health store — never makes one.
+  late final HealthSteps _healthSteps = HealthSteps();
   StreamSubscription<StepCount>? _sub;
-  int? _baseline;
-  DateTime? _baselineDay;
-  Timer? _saveTimer;
+  Timer? _tick;
+  AppLifecycleListener? _lifecycle;
+  SharedPreferences? _prefs;
+  int? _lastUploaded;
+
+  static const _kDay = 'steps_sensor_day';
+  static const _kBase = 'steps_sensor_base';
+  static const _kCarried = 'steps_sensor_carried';
+  static const _kLast = 'steps_sensor_last';
+  static const _kHealthAsked = 'steps_health_asked';
+
+  /// The health store is read for this many days, the most Health Connect
+  /// gives an app without the extra history permission.
+  static const _healthDays = 30;
 
   Future<void> _start() async {
-    // The pedometer is a phone sensor; there is nothing to read on the web.
+    // Neither the sensor nor the health store exists in a browser.
     if (kIsWeb) {
       state = state.copyWith(permission: StepPermission.unsupported);
       return;
     }
+    _prefs = await SharedPreferences.getInstance();
 
+    // Health first: on an iPhone it is the only reliable source, and its
+    // permission screen should not race the sensor's.
+    await refreshHealth(upload: true);
+    await _startSensor();
+
+    // A minute's tick saves today's count while it changes; coming back to
+    // the app re-reads the health store, which went on counting meanwhile.
+    _tick = Timer.periodic(const Duration(minutes: 1), (t) {
+      if (t.tick % 5 == 0) refreshHealth();
+      _uploadToday();
+    });
+    _lifecycle = AppLifecycleListener(onResume: () => refreshHealth());
+  }
+
+  Future<void> _startSensor() async {
     final status = await Permission.activityRecognition.request();
     if (!status.isGranted) {
-      state = state.copyWith(permission: StepPermission.denied);
+      if (mounted) state = state.copyWith(permission: StepPermission.denied);
       return;
     }
+    if (!mounted) return;
     state = state.copyWith(permission: StepPermission.granted);
 
     _sub = Pedometer.stepCountStream.listen(
       _onReading,
-      onError: (_) =>
-          state = state.copyWith(permission: StepPermission.unsupported),
+      onError: (_) {
+        if (mounted) {
+          state = state.copyWith(permission: StepPermission.unsupported);
+        }
+      },
       cancelOnError: false,
     );
   }
 
   void _onReading(StepCount reading) {
-    final today = DateTime.now();
-    final isNewDay =
-        _baselineDay == null ||
-        _baselineDay!.day != today.day ||
-        _baselineDay!.month != today.month ||
-        _baselineDay!.year != today.year;
+    final prefs = _prefs;
+    if (prefs == null || !mounted) return;
+    final today = dateKey(DateTime.now());
+    final r = reading.steps;
 
-    // A count lower than the baseline means the phone restarted and the
-    // sensor began again from zero.
-    if (isNewDay || _baseline == null || reading.steps < _baseline!) {
-      _baseline = reading.steps;
-      _baselineDay = today;
+    var base = prefs.getInt(_kBase);
+    var carried = prefs.getInt(_kCarried) ?? 0;
+    final last = prefs.getInt(_kLast);
+
+    if (prefs.getString(_kDay) != today || base == null || last == null) {
+      // The first reading today: everything before it belongs to earlier.
+      base = r;
+      carried = 0;
+    } else if (r < last) {
+      // The phone restarted and the sensor began again from zero; what was
+      // counted before it is kept, and the new count adds to it.
+      carried += last - base;
+      base = 0;
     }
 
-    final steps = reading.steps - _baseline!;
-    state = state.copyWith(today: steps);
+    prefs
+      ..setString(_kDay, today)
+      ..setInt(_kBase, base)
+      ..setInt(_kCarried, carried)
+      ..setInt(_kLast, r);
 
-    // The sensor fires often; writing on every reading would be a request per
-    // step. This saves at most once a minute.
-    _saveTimer ??= Timer(const Duration(minutes: 1), () {
-      _saveTimer = null;
-      final value = state.today;
-      if (value != null && value > 0) {
-        _ref.read(stepsRepositoryProvider).recordToday(value);
-        _ref.invalidate(myStepWeekProvider);
-      }
-    });
+    state = state.copyWith(sensorToday: carried + r - base);
+  }
+
+  /// Re-reads the health store if it is allowed, and with [upload] sends
+  /// the month it holds.
+  Future<void> refreshHealth({bool upload = false}) async {
+    if (kIsWeb) return;
+    final asked = _prefs?.getBool(_kHealthAsked) ?? false;
+    final access = await _healthSteps.access(askedBefore: asked);
+    if (!mounted) return;
+    state = state.copyWith(health: access);
+    if (access != HealthAccess.connected) return;
+
+    final days = await _healthSteps.readDays(_healthDays);
+    if (!mounted) return;
+    state = state.copyWith(healthDays: days);
+    if (upload) {
+      await _upload({
+        for (final e in days.entries)
+          if (e.value.steps > 0) e.key: e.value.steps,
+      });
+    }
+  }
+
+  /// Puts up the platform's permission screen for the health store, then
+  /// reads it.
+  Future<void> connectHealth() async {
+    await _prefs?.setBool(_kHealthAsked, true);
+    await _healthSteps.connect();
+    await refreshHealth(upload: true);
+  }
+
+  /// Health Connect's Play Store page, for an Android 13 phone without it.
+  Future<void> installHealthConnect() => _healthSteps.install();
+
+  Future<void> _uploadToday() async {
+    final value = state.today;
+    if (value == null || value <= 0 || value == _lastUploaded) return;
+    await _upload({dateKey(DateTime.now()): value});
+    _lastUploaded = value;
+  }
+
+  Future<void> _upload(Map<String, int> days) async {
+    if (days.isEmpty || _ref.read(authProvider) == null) return;
+    try {
+      await _ref.read(stepsRepositoryProvider).recordDays(days);
+      _ref.invalidate(myStepWeekProvider);
+      _ref.invalidate(myStepMonthProvider);
+    } catch (_) {
+      // Offline: the next minute tries again with the same or a higher
+      // figure, and the day keeps its highest.
+    }
   }
 
   @override
   void dispose() {
     _sub?.cancel();
-    _saveTimer?.cancel();
+    _tick?.cancel();
+    _lifecycle?.dispose();
     super.dispose();
   }
 }
@@ -119,6 +254,43 @@ final myStepWeekProvider = FutureProvider<List<StepEntry>>((ref) async {
   final user = ref.watch(authProvider);
   if (user == null) return const [];
   return ref.watch(stepsRepositoryProvider).fetchMyWeek();
+});
+
+/// This person's last thirty days, for the month view.
+final myStepMonthProvider = FutureProvider<List<StepEntry>>((ref) async {
+  final user = ref.watch(authProvider);
+  if (user == null) return const [];
+  return ref.watch(stepsRepositoryProvider).fetchMyDays(30);
+});
+
+/// The last [days] days (7 or 30) as the screen shows them: for each day the
+/// highest of what is stored, what the health store has, and — for today —
+/// the live count. Signed out, nothing is stored, and the health store and
+/// the sensor still give the person their own figures.
+final myActivityDaysProvider = Provider.family<List<StepEntry>, int>((
+  ref,
+  days,
+) {
+  final stored =
+      (days <= 7 ? ref.watch(myStepWeekProvider) : ref.watch(myStepMonthProvider))
+          .valueOrNull ??
+      const <StepEntry>[];
+  final counter = ref.watch(stepCounterProvider);
+  final byDate = {for (final e in stored) dateKey(e.date): e.steps};
+  final now = DateTime.now();
+  final first = DateTime(now.year, now.month, now.day)
+      .subtract(Duration(days: days - 1));
+  int best(int a, int b) => a > b ? a : b;
+  return [
+    for (var i = 0; i < days; i++)
+      () {
+        final day = first.add(Duration(days: i));
+        final key = dateKey(day);
+        var steps = best(byDate[key] ?? 0, counter.healthDays[key]?.steps ?? 0);
+        if (i == days - 1) steps = best(steps, counter.today ?? 0);
+        return StepEntry(date: day, steps: steps);
+      }(),
+  ];
 });
 
 /// The city ranking. Empty when signed out — the functions are only granted
