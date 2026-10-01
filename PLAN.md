@@ -2111,6 +2111,37 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### Small items: Paid tag, leaderboard days, a sample date, panel click-throughs — 1 October
+
+- **Paid tag.** A parking card marked only free lots, so the four paid lots
+  looked like ones nobody knew about. Paid lots now carry an amber "Paid"
+  tag, and the Municipal card's nearest lot says "Paid" as it said "Free".
+  A lot of unknown status carries neither. Checked on the live site.
+- **Leaderboard days.** Migration 00043: both step rankings counted from
+  the server's UTC date, a day behind Israel's between midnight and about
+  3 a.m. They also took one day too many (`date >= today - 7` is eight
+  dates). They now take exactly `days` days ending at `step_today()`.
+  Checked: a temporary account with 1,000 steps a day for nine days ranks
+  at 7,000; the old query gave 8,000.
+- **Sample article `light-rail-update`.** Its `published_at`, moved to 28
+  Sep by the 28 Sep audit, is restored to 2026-08-17 06:27:19.667537+00 on
+  Harshit's go-ahead. The news now leads with real articles.
+- **Panel click-throughs, as a temporary super admin on the deployed panel,
+  on temporary rows deleted after:**
+  - *Info pages:* publishing a page made it readable to visitors, and
+    unpublishing hid it again. Tested on a page of our own: the three real
+    pages are the client's unpublished drafts and were not touched.
+  - *Team:* your own card has a lock instead of the on/off switch, and
+    opening it offers no role picker ("only another super admin can change
+    your role"). The last-super-admin guard can't be reached without
+    demoting real admins; its count was read in the code, not clicked.
+  - *Agents:* the menu has Edit and Deactivate only. Deactivating hid the
+    agent from visitors, and reactivating brought it back.
+  - *Challenges:* activating put the challenge on the Step Counter's query,
+    and deactivating took it off.
+  - The six actions are in the audit log, which is insert-only, under the
+    test rows' names.
+
 ### Car parks, from OpenStreetMap's data — 1 October
 
 Harshit asked for the car parks to be in. No list exists for Modi'in:

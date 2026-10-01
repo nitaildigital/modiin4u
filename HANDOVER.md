@@ -210,11 +210,10 @@ trash with Restore; `home_blocks` drafts private; column guards so residents
 cannot approve their own content or change bans and points.
 
 **Panel — still to do:**
-- *Not fully tested:* Team's self-lockout and last-super-admin guards (only
-  the read path was checked — testing them means changing a real admin row);
-  agents/challenges deactivate-only (code checked, not clicked through); the
-  info pages section (עמודי מידע) — publishing a page and seeing it on
-  /about has not been checked.
+- *Clicked through 1 Oct* (PLAN.md, "Small items"): info pages publish and
+  unpublish, Team's self-guards, agents and challenges deactivate and
+  reactivate. Not reachable without demoting a real admin: the
+  last-super-admin guard (code read only).
 - *Roles:* only a super admin can change the team or the roles (00042, 1
   Oct). What each other role may do section by section is the client's
   decision and is not built.
@@ -245,8 +244,6 @@ cannot approve their own content or change bans and points.
 
 ## Waiting on Arvindra's decisions
 
-- Sample article `light-rail-update` had its date changed by a test on 28 Sep
-  (2026-08-17 06:27:19.667537+00 → 2026-09-28): restore with approval.
 - Keep or drop the navbar language button and "Powered by PersonaAI" (neither is
   in the design).
 - The app's Google Maps key has no app restriction and was pasted in chat —
