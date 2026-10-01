@@ -4,6 +4,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../../../core/supabase/supabase_config.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../businesses/providers/business_providers.dart'
+    show locationIsAskable;
 
 /// A car park the client entered in the panel (חניונים, migration 00030).
 ///
@@ -65,9 +68,8 @@ class ParkingLot {
   LatLng get position => LatLng(latitude, longitude);
 
   /// Waze, which people here drive with, as the business page does.
-  Uri get wazeUri => Uri.parse(
-    'https://waze.com/ul?ll=$latitude,$longitude&navigate=yes',
-  );
+  Uri get wazeUri =>
+      Uri.parse('https://waze.com/ul?ll=$latitude,$longitude&navigate=yes');
 }
 
 String? _nonEmpty(Object? value) {
@@ -99,3 +101,40 @@ final parkingLotsProvider = FutureProvider<List<ParkingLot>>((ref) async {
     return const [];
   }
 });
+
+/// The car park nearest the person and how far it is, for the Municipal
+/// page's card — or null without a location to measure from.
+///
+/// Permission is checked, never asked for, as on the home page's "near you"
+/// row: nobody gets a location prompt for opening a page.
+final nearestParkingProvider =
+    FutureProvider<({ParkingLot lot, double metres})?>((ref) async {
+      final lots = await ref.watch(parkingLotsProvider.future);
+      if (lots.isEmpty || !locationIsAskable) return null;
+      try {
+        final allowed = await Geolocator.checkPermission();
+        if (allowed != LocationPermission.always &&
+            allowed != LocationPermission.whileInUse) {
+          return null;
+        }
+        final here = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 8),
+          ),
+        );
+        double away(ParkingLot l) => Geolocator.distanceBetween(
+          here.latitude,
+          here.longitude,
+          l.latitude,
+          l.longitude,
+        );
+        final nearest = lots.reduce((a, b) => away(a) <= away(b) ? a : b);
+        // Away from the city the nearest car park is no news to anyone:
+        // the card shows the city's counts instead.
+        if (away(nearest) > 25000) return null;
+        return (lot: nearest, metres: away(nearest));
+      } catch (_) {
+        return null;
+      }
+    });

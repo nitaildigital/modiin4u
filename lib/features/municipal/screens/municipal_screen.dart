@@ -11,6 +11,7 @@ import '../providers/municipal_links.dart';
 import '../providers/shabbat_providers.dart';
 import '../widgets/shabbat_widgets.dart';
 import 'web_municipal_screen.dart';
+import '../providers/parking_providers.dart';
 
 /// Municipal – responsive wrapper.
 class MunicipalScreen extends StatelessWidget {
@@ -321,20 +322,69 @@ class _ShabbatCard extends ConsumerWidget {
 // ═══════════════════════════════════════════════
 // Parking quick-info card (light blue theme)
 // ═══════════════════════════════════════════════
-/// A way into the parking screen.
+/// A way into the parking screen, with what is true about the car parks.
 ///
-/// It used to read "Parking Right Now — Modiin Center — High availability".
-/// Nothing measures how full a car park is, so the claim is gone and the
-/// card is a link.
-class _ParkingCard extends StatelessWidget {
+/// The frame's card reads "Parking Right Now — Modiin Center — High
+/// availability". Nothing measures how full a car park is, so availability
+/// is never claimed. Its two lines carry what the data does know: with the
+/// person's location, the nearest car park and how far it is (and free, if
+/// it is); without it, how many car parks the city has and how many are
+/// free. While the car parks load, or if there are none, the lower half
+/// stays empty.
+class _ParkingCard extends ConsumerWidget {
   const _ParkingCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
-    // The frame's card goes on to "Modiin Center" and "High availability";
-    // nothing measures how full a car park is, so the lower half is left
-    // empty rather than claimed.
+    final english = Localizations.localeOf(context).languageCode == 'en';
+    final lots = ref.watch(parkingLotsProvider).valueOrNull ?? const [];
+    final nearest = ref.watch(nearestParkingProvider).valueOrNull;
+    final freeCount = lots.where((p) => p.isFree == true).length;
+    final style = TextStyle(
+      fontFamily: AppFonts.inter,
+      fontSize: 12,
+      color: const Color(0xFF0A1230),
+    );
+    Widget line(IconData icon, String text) => Row(
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF17A9D0)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
+        ),
+      ],
+    );
+    final List<Widget> details;
+    if (nearest != null) {
+      final km = (nearest.metres / 1000).toStringAsFixed(1);
+      final name = english && (nearest.lot.nameEn ?? '').isNotEmpty
+          ? nearest.lot.nameEn!
+          : nearest.lot.name;
+      details = [
+        line(IconsaxPlusLinear.location, name),
+        const SizedBox(height: 6),
+        line(
+          IconsaxPlusLinear.routing_2,
+          '$km ${l.kmUnit}${nearest.lot.isFree == true ? ' · ${l.free}' : ''}',
+        ),
+      ];
+    } else if (lots.isNotEmpty) {
+      details = [
+        line(IconsaxPlusLinear.car, l.parkingLotCount(lots.length)),
+        if (freeCount > 0) ...[
+          const SizedBox(height: 6),
+          line(IconsaxPlusLinear.tick_circle, l.parkingFreeCount(freeCount)),
+        ],
+      ];
+    } else {
+      details = const [];
+    }
     return GestureDetector(
       onTap: () => context.push('/parking'),
       behavior: HitTestBehavior.opaque,
@@ -370,6 +420,7 @@ class _ParkingCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (details.isNotEmpty) ...[const SizedBox(height: 12), ...details],
           ],
         ),
       ),

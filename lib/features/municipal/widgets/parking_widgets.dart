@@ -319,3 +319,15 @@ class ParkingMessage extends StatelessWidget {
     );
   }
 }
+
+/// The credit for the car parks' data, under the list.
+class ParkingDataCredit extends StatelessWidget {
+  final String text;
+  const ParkingDataCredit({super.key, required this.text});
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText),
+  );
+}

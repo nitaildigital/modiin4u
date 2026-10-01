@@ -146,6 +146,11 @@ class _MobileParkingState extends ConsumerState<_MobileParking> {
                             onTap: () => _selectFromList(lot),
                           ),
                         ],
+                        // The car parks came from OpenStreetMap's data
+                        // (tool/import_parking_lots.py), whose licence asks
+                        // for this credit wherever it is shown.
+                        const SizedBox(height: 20),
+                        ParkingDataCredit(text: l.mapDataCredit),
                       ],
                     ),
                   ),

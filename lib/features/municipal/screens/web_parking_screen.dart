@@ -277,6 +277,10 @@ class _WebParkingContentState extends ConsumerState<WebParkingContent>
                           ),
                           const SizedBox(height: 12),
                         ],
+                        // The car parks came from OpenStreetMap's data,
+                        // whose licence asks for this credit.
+                        const SizedBox(height: 8),
+                        ParkingDataCredit(text: l.mapDataCredit),
                       ],
                     ),
                   ),

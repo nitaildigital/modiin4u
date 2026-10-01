@@ -2144,4 +2144,15 @@ class LHe extends L {
 
   @override
   String get sgRemoveHint => 'להסרת חבר/ה מהקבוצה, לחצו לחיצה ארוכה על השם.';
+
+  @override
+  String parkingFreeCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n מהם בחינם',
+      one: 'אחד מהם בחינם',
+    );
+    return '$_temp0';
+  }
 }

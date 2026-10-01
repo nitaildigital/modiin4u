@@ -879,5 +879,7 @@
   "sgWebJoinHint": "Have the Modiin4U app? Open this invitation in it, or enter the code {code} in Step Counter → Groups → Join with Code.",
   "@sgWebJoinHint": {"placeholders": {"code": {"type": "String"}}},
   "sgNoStepsShared": "No steps recorded yet",
-  "sgRemoveHint": "To remove a member, press and hold their name."
+  "sgRemoveHint": "To remove a member, press and hold their name.",
+  "parkingFreeCount": "{n, plural, =1{1 of them free} other{{n} of them free}}",
+  "@parkingFreeCount": {"placeholders": {"n": {"type": "int"}}}
 }

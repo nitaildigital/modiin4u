@@ -2172,4 +2172,15 @@ class LEn extends L {
 
   @override
   String get sgRemoveHint => 'To remove a member, press and hold their name.';
+
+  @override
+  String parkingFreeCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n of them free',
+      one: '1 of them free',
+    );
+    return '$_temp0';
+  }
 }

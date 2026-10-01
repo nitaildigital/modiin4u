@@ -4086,6 +4086,12 @@ abstract class L {
   /// In he, this message translates to:
   /// **'להסרת חבר/ה מהקבוצה, לחצו לחיצה ארוכה על השם.'**
   String get sgRemoveHint;
+
+  /// No description provided for @parkingFreeCount.
+  ///
+  /// In he, this message translates to:
+  /// **'{n, plural, =1{אחד מהם בחינם} other{{n} מהם בחינם}}'**
+  String parkingFreeCount(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
