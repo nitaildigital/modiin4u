@@ -2157,6 +2157,12 @@ Flutter replaced every page's title with the app's name. On the website it
 now keeps the served title while the visitor is on that page
 (`lib/shared/page_title`, `main.dart`).
 
+**The site name on Google.** The client's answer: "See in WordPress the
+site name". WordPress's Site Title (Settings → General) is מודיעין בשבילך,
+and that is the WebSite name, the Organization name and `og:site_name`.
+Yoast's own site name, Modiin4u, is the `alternateName`, which Google also
+reads for site names.
+
 **Not launched yet.** The copies on the IP and sslip.io addresses must not
 be indexed next to the live WordPress site, so every page says noindex and
 `robots.txt` disallows all. At launch, `SEO_LIVE=1 tool/deploy_web.sh`
@@ -2176,8 +2182,6 @@ Left for launch and for Michael:
   bare domain to www, then submit the sitemap in Search Console.
 - **Images.** The old `/wp-content/uploads/` image addresses are not
   redirected.
-- **The site name.** The client chooses the name Google shows; WordPress's
-  names are kept until then.
 - **Category landing pages.** The client decides whether any of the merged
   ones should come back as categories of their own.
 
