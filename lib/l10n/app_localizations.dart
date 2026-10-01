@@ -3654,6 +3654,12 @@ abstract class L {
   /// In he, this message translates to:
   /// **'פארקים יופיעו כאן ברגע שיתווספו'**
   String get parksAppearHere;
+
+  /// No description provided for @restaurantsNearYou.
+  ///
+  /// In he, this message translates to:
+  /// **'מסעדות קרובות אליך'**
+  String get restaurantsNearYou;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

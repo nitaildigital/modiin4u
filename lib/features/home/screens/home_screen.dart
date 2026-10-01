@@ -117,12 +117,13 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         // neither popularity nor location. It says "near you" now only when
         // the row really is in order of distance.
         _SectionHeader(
-          title: (ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ?? false)
-              ? l.nearYou
-              : l.businessesInModiin,
-          onSeeAll: () => context.go('/businesses'),
+          // Restaurants rather than the whole directory, as the client asked.
+          title: (ref.watch(nearbyRestaurantsProvider).valueOrNull?.byDistance ?? false)
+              ? l.restaurantsNearYou
+              : l.restaurantsInModiin,
+          onSeeAll: () => context.goOrPush('/restaurants'),
         ),
-        if (locationIsAskable && !(ref.watch(nearbyBusinessesProvider).valueOrNull?.byDistance ?? true))
+        if (locationIsAskable && !(ref.watch(nearbyRestaurantsProvider).valueOrNull?.byDistance ?? true))
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
             child: Align(
@@ -422,7 +423,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // ─────────────────────────────────────────────
 
   Widget _buildPopularCards() => _ProviderRow<Business>(
-    provider: nearbyBusinessListProvider,
+    provider: nearbyRestaurantListProvider,
     // The card is ~246 tall as drawn; the rest is room for a phone font
     // that sets Hebrew a little taller.
     height: 262,

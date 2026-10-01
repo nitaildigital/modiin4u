@@ -1897,4 +1897,7 @@ class LHe extends L {
 
   @override
   String get parksAppearHere => 'פארקים יופיעו כאן ברגע שיתווספו';
+
+  @override
+  String get restaurantsNearYou => 'מסעדות קרובות אליך';
 }

@@ -819,5 +819,6 @@
   "noPlacesMatchSearch": "אין תוצאות לחיפוש.",
   "mapDataCredit": "נתוני מפה © תורמי OpenStreetMap",
   "noParksYet": "עדיין לא נוספו פארקים",
-  "parksAppearHere": "פארקים יופיעו כאן ברגע שיתווספו"
+  "parksAppearHere": "פארקים יופיעו כאן ברגע שיתווספו",
+  "restaurantsNearYou": "מסעדות קרובות אליך"
 }

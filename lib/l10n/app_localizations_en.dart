@@ -1923,4 +1923,7 @@ class LEn extends L {
   @override
   String get parksAppearHere =>
       'Parks will appear here as soon as they are added.';
+
+  @override
+  String get restaurantsNearYou => 'Restaurants Near You';
 }

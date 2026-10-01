@@ -97,6 +97,65 @@ final nearbyBusinessListProvider = FutureProvider<List<Business>>(
   (ref) async => (await ref.watch(nearbyBusinessesProvider.future)).businesses,
 );
 
+/// Restaurants and cafés for the app's home row, and whether they are in
+/// order of distance.
+///
+/// The client (1 Oct): the home screen "shows businesses that are a bit
+/// irrelevant; it would be better to prioritize showing restaurants". The
+/// row drew the whole directory — electricians, banks, lawyers. It is the
+/// food places now (the restaurants category, its cuisines and cafés),
+/// those with a photograph first and then the best rated; nearest first
+/// once this device has allowed location, as [nearbyBusinessesProvider].
+final nearbyRestaurantsProvider =
+    FutureProvider<({List<Business> businesses, bool byDistance})>((ref) async {
+      final food = await ref.watch(foodPlaceBusinessesProvider.future);
+      final near = await ref.watch(nearbyBusinessesProvider.future);
+      final ids = {for (final b in food) b.id};
+      if (near.byDistance) {
+        return (
+          businesses: near.businesses.where((b) => ids.contains(b.id)).toList(),
+          byDistance: true,
+        );
+      }
+      int photo(Business b) => (b.imageUrl ?? '').isEmpty ? 1 : 0;
+      final sorted = [...food]
+        ..sort((a, b) {
+          final byPhoto = photo(a).compareTo(photo(b));
+          if (byPhoto != 0) return byPhoto;
+          final byRating = b.rating.compareTo(a.rating);
+          return byRating != 0 ? byRating : b.reviewCount.compareTo(a.reviewCount);
+        });
+      return (businesses: sorted, byDistance: false);
+    });
+
+/// The same list, in the shape the home page's rows take.
+final nearbyRestaurantListProvider = FutureProvider<List<Business>>(
+  (ref) async => (await ref.watch(nearbyRestaurantsProvider.future)).businesses,
+);
+
+/// The businesses filed under a food category — restaurants, its cuisines,
+/// or cafés — read through the same links the Restaurants page uses.
+final foodPlaceBusinessesProvider = FutureProvider<List<Business>>((ref) async {
+  final repo = ref.watch(businessRepositoryProvider);
+  final all = await ref.watch(businessesProvider.future);
+  final categories = await repo.fetchCategories();
+  final restaurants =
+      categories.where((c) => c['slug'] == 'restaurants').firstOrNull?['id'];
+  final food = {
+    for (final c in categories)
+      if (c['slug'] == 'restaurants' ||
+          c['slug'] == 'cafe-bakery' ||
+          (restaurants != null && c['parent_id'] == restaurants))
+        c['id'],
+  };
+  final links = await repo.fetchCategoryLinks();
+  final ids = {
+    for (final l in links)
+      if (food.contains(l['category_id'])) l['entity_id'],
+  };
+  return all.where((b) => ids.contains(b.id)).toList();
+});
+
 /// Asks for location, then works the row out again.
 Future<void> askForNearby(WidgetRef ref) async {
   try {

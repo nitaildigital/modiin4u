@@ -798,5 +798,6 @@
   "noPlacesMatchSearch": "Nothing matches your search.",
   "mapDataCredit": "Map data © OpenStreetMap contributors",
   "noParksYet": "No parks listed yet",
-  "parksAppearHere": "Parks will appear here as soon as they are added."
+  "parksAppearHere": "Parks will appear here as soon as they are added.",
+  "restaurantsNearYou": "Restaurants Near You"
 }
