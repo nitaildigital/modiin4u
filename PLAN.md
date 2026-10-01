@@ -2111,6 +2111,36 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### Google's map everywhere, OpenStreetMap gone — 1 October
+
+Harshit: "remove open street map view with the google maps in entire all
+sides and panels". The app's main map was already Google's, and the
+website's maps drew Google's tiles (WebMapTiles). Six phone maps still drew
+OpenStreetMap: restaurants, events and real estate, an event's and a
+listing's venue map, and parking.
+
+They now share `lib/shared/widgets/app_map.dart`:
+- **In the app:** Google's native map (Maps SDK for Android and iOS, no
+  charge per view), with the design's pins drawn as bitmaps. That is
+  `MapPinBitmap`, which can now also draw the restaurants map's round pin.
+  Google's own business markers are hidden, as on the website. A detail
+  page's small map is still, and uses lite mode on Android.
+- **In a browser:** the website's renderer over Google's tiles, as before.
+
+The OpenStreetMap fallback is gone too. With no key, or if Google refuses,
+a map shows its background and pins, not another provider's map.
+`osm_attribution.dart` is deleted. The municipal places page keeps its
+"Map data © OpenStreetMap contributors" line: that credits the data
+imported from it, which the licence requires, not a map.
+
+The panel draws no maps. Locations are pasted as coordinates from Google
+Maps.
+
+Checked on the Android emulator: all six maps on Google, pins, the selected
+card, the parking list moving the map to a lot (two temporary lots, deleted
+after), the still venue maps. An iPhone needs the iOS key
+(`ios/Flutter/Maps.xcconfig`), as the main map already did.
+
 ### SEO: every old address kept, a real page for each, the old titles — 1 October
 
 The client: preserving the SEO "is critical"; the old site's links must be
