@@ -77,11 +77,6 @@ class _WebParkingContentState extends ConsumerState<WebParkingContent>
     );
   }
 
-  void _selectFromList(ParkingLot lot) {
-    setState(() => _selectedId = lot.id);
-    _map.moveTo(lot.position);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -273,7 +268,9 @@ class _WebParkingContentState extends ConsumerState<WebParkingContent>
                             l: l,
                             english: !_isHebrew,
                             selected: lot.id == _selectedId,
-                            onTap: () => _selectFromList(lot),
+                            // A car park opens its page — the client left the choice
+                            // to us; a pin still picks it out in the list.
+                            onTap: () => context.push('/parking/${lot.id}'),
                           ),
                           const SizedBox(height: 12),
                         ],

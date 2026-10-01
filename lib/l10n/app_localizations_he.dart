@@ -2158,4 +2158,50 @@ class LHe extends L {
 
   @override
   String get parkingPaid => 'בתשלום';
+
+  @override
+  String get parkingNavigateWith => 'ניווט עם';
+
+  @override
+  String get parkingWaze => 'Waze';
+
+  @override
+  String get parkingGoogleMaps => 'Google Maps';
+
+  @override
+  String get parkingPayment => 'תשלום';
+
+  @override
+  String get parkingPayCards => 'כרטיסי אשראי';
+
+  @override
+  String get parkingPayDebit => 'כרטיסי חיוב';
+
+  @override
+  String get parkingPayCash => 'מזומן בלבד';
+
+  @override
+  String get parkingPayNfc => 'תשלום ללא מגע';
+
+  @override
+  String parkingGoogleRating(String rating, int count) {
+    return '$rating · $count דירוגים בגוגל';
+  }
+
+  @override
+  String get parkingFromGoogle => 'מידע מתוך Google Maps';
+
+  @override
+  String get parkingViewOnGoogle => 'צפייה ב-Google Maps';
+
+  @override
+  String parkingPhotoBy(String name) {
+    return 'צילום: $name';
+  }
+
+  @override
+  String get parkingWebsite => 'אתר';
+
+  @override
+  String get parkingNotFound => 'החניון לא נמצא';
 }

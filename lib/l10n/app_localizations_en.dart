@@ -2186,4 +2186,50 @@ class LEn extends L {
 
   @override
   String get parkingPaid => 'Paid';
+
+  @override
+  String get parkingNavigateWith => 'Navigate with';
+
+  @override
+  String get parkingWaze => 'Waze';
+
+  @override
+  String get parkingGoogleMaps => 'Google Maps';
+
+  @override
+  String get parkingPayment => 'Payment';
+
+  @override
+  String get parkingPayCards => 'Credit cards';
+
+  @override
+  String get parkingPayDebit => 'Debit cards';
+
+  @override
+  String get parkingPayCash => 'Cash only';
+
+  @override
+  String get parkingPayNfc => 'Contactless';
+
+  @override
+  String parkingGoogleRating(String rating, int count) {
+    return '$rating · $count ratings on Google';
+  }
+
+  @override
+  String get parkingFromGoogle => 'Information from Google Maps';
+
+  @override
+  String get parkingViewOnGoogle => 'View on Google Maps';
+
+  @override
+  String parkingPhotoBy(String name) {
+    return 'Photo: $name';
+  }
+
+  @override
+  String get parkingWebsite => 'Website';
+
+  @override
+  String get parkingNotFound => 'This car park could not be found';
 }

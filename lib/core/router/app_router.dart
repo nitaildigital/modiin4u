@@ -41,6 +41,7 @@ import '../../features/realestate/screens/realestate_search_screen.dart';
 import '../../features/community/screens/community_screen.dart';
 import '../../features/deals/screens/deals_screen.dart';
 import '../../features/deals/screens/deal_detail_screen.dart';
+import '../../features/municipal/screens/parking_detail_screen.dart';
 import '../../features/steps/screens/steps_screen.dart';
 import 'slug_routes.dart';
 import '../../features/steps/screens/join_group_screen.dart';
@@ -457,6 +458,16 @@ final appRouter = GoRouter(
       path: '/parking',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ParkingScreen(),
+    ),
+    // One car park, with what Google Maps knows about it (the client: show
+    // whatever Google has).
+    GoRoute(
+      path: '/parking/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        ParkingDetailScreen(lotId: state.pathParameters['id']!),
+        state,
+      ),
     ),
     // Parks are businesses filed as a park (`kind = 'park'`); the Municipal
     // page's Parks tile leads here.

@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../../../core/supabase/supabase_config.dart';
+import '../services/google_place.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../businesses/providers/business_providers.dart'
     show locationIsAskable;
@@ -31,6 +32,10 @@ class ParkingLot {
   final double latitude;
   final double longitude;
 
+  /// Its place on Google Maps (00044), whose details the car park page
+  /// fetches live. Null for a car park Google does not list.
+  final String? googlePlaceId;
+
   const ParkingLot({
     required this.id,
     required this.name,
@@ -44,6 +49,7 @@ class ParkingLot {
     this.capacity,
     this.notes,
     this.imageUrl,
+    this.googlePlaceId,
   });
 
   factory ParkingLot.fromRow(Map<String, dynamic> r) => ParkingLot(
@@ -59,6 +65,7 @@ class ParkingLot {
     imageUrl: _nonEmpty(r['image_url']),
     latitude: (r['latitude'] as num).toDouble(),
     longitude: (r['longitude'] as num).toDouble(),
+    googlePlaceId: _nonEmpty(r['google_place_id']),
   );
 
   /// The English name in English where he gave one, the Hebrew otherwise.
@@ -70,6 +77,12 @@ class ParkingLot {
   /// Waze, which people here drive with, as the business page does.
   Uri get wazeUri =>
       Uri.parse('https://waze.com/ul?ll=$latitude,$longitude&navigate=yes');
+
+  /// Directions in Google Maps — to the place itself when Google lists it.
+  Uri get googleMapsUri => Uri.parse(
+    'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude'
+    '${googlePlaceId == null ? '' : '&destination_place_id=$googlePlaceId'}',
+  );
 }
 
 String? _nonEmpty(Object? value) {
@@ -89,7 +102,7 @@ final parkingLotsProvider = FutureProvider<List<ParkingLot>>((ref) async {
         .from('parking_lots')
         .select(
           'id, name, name_en, address, hours, price_note, is_free, capacity, '
-          'notes, latitude, longitude, image_url',
+          'notes, latitude, longitude, image_url, google_place_id',
         )
         .eq('is_active', true)
         // Both ascending: postgrest's `order` is descending unless told.
@@ -138,3 +151,10 @@ final nearestParkingProvider =
         return null;
       }
     });
+
+/// What Google Maps knows about a car park, fetched when its page opens —
+/// in the page's language — and kept only while the page is open.
+final googleParkingDetailsProvider = FutureProvider.autoDispose
+    .family<GooglePlaceDetails?, ({String placeId, String language})>(
+      (ref, key) => fetchGooglePlace(key.placeId, language: key.language),
+    );

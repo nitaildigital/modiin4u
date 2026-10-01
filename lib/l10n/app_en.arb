@@ -882,5 +882,21 @@
   "sgRemoveHint": "To remove a member, press and hold their name.",
   "parkingFreeCount": "{n, plural, =1{1 of them free} other{{n} of them free}}",
   "@parkingFreeCount": {"placeholders": {"n": {"type": "int"}}},
-  "parkingPaid": "Paid"
+  "parkingPaid": "Paid",
+  "parkingNavigateWith": "Navigate with",
+  "parkingWaze": "Waze",
+  "parkingGoogleMaps": "Google Maps",
+  "parkingPayment": "Payment",
+  "parkingPayCards": "Credit cards",
+  "parkingPayDebit": "Debit cards",
+  "parkingPayCash": "Cash only",
+  "parkingPayNfc": "Contactless",
+  "parkingGoogleRating": "{rating} · {count} ratings on Google",
+  "@parkingGoogleRating": {"placeholders": {"rating": {"type": "String"}, "count": {"type": "int"}}},
+  "parkingFromGoogle": "Information from Google Maps",
+  "parkingViewOnGoogle": "View on Google Maps",
+  "parkingPhotoBy": "Photo: {name}",
+  "@parkingPhotoBy": {"placeholders": {"name": {"type": "String"}}},
+  "parkingWebsite": "Website",
+  "parkingNotFound": "This car park could not be found"
 }

@@ -67,6 +67,10 @@ for line in open('.env.local', encoding='utf-8'):
 # into the page, where any Maps key on a website can be read; its referrer
 # restriction is what protects it. Without it the maps draw OpenStreetMap.
 MAPS_WEB_KEY=$(get GOOGLE_MAPS_WEB_KEY)
+# The car park page asks Google Places for a car park's details from the
+# browser, with the website's own Places key (restricted to the site's
+# addresses in Google Cloud).
+PLACES_WEB_KEY=$(get GOOGLE_PLACES_WEB_KEY)
 
 echo "── building"
 echo "   redirect: $AUTH_REDIRECT_URL"
@@ -77,7 +81,8 @@ else
 fi
 flutter build web --release \
   --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT_URL" \
-  --dart-define=MAPS_WEB_KEY="$MAPS_WEB_KEY"
+  --dart-define=MAPS_WEB_KEY="$MAPS_WEB_KEY" \
+  --dart-define=PLACES_WEB_KEY="$PLACES_WEB_KEY"
 
 # A page of its own for every address Google should know — titles,
 # descriptions, canonical links and the text itself — plus sitemap.xml and

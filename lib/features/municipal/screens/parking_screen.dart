@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/app_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -56,13 +57,6 @@ class _MobileParkingState extends ConsumerState<_MobileParking> {
       );
     }
   }
-
-  /// A card brings its pin into view on the map.
-  void _selectFromList(ParkingLot lot) {
-    setState(() => _selectedId = lot.id);
-    _map.moveTo(lot.position);
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
@@ -143,7 +137,9 @@ class _MobileParkingState extends ConsumerState<_MobileParking> {
                             l: l,
                             english: english,
                             selected: lot.id == _selectedId,
-                            onTap: () => _selectFromList(lot),
+                            // A car park opens its page — the client left the choice
+                            // to us; a pin still picks it out in the list.
+                            onTap: () => context.push('/parking/${lot.id}'),
                           ),
                         ],
                         // The car parks came from OpenStreetMap's data

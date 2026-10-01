@@ -375,6 +375,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
   late final TextEditingController _notes;
   late final TextEditingController _sortOrder;
   late final TextEditingController _imageUrl;
+  late final TextEditingController _googlePlaceId;
   bool _isActive = true;
 
   /// Free, paid, or null — not stated, which the screens leave unsaid rather
@@ -410,6 +411,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
       text: (p?['sort_order'] as int?)?.toString() ?? '0',
     );
     _imageUrl = TextEditingController(text: text('image_url'));
+    _googlePlaceId = TextEditingController(text: text('google_place_id'));
     _isActive = p?['is_active'] as bool? ?? true;
   }
 
@@ -425,6 +427,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
     _notes.dispose();
     _sortOrder.dispose();
     _imageUrl.dispose();
+    _googlePlaceId.dispose();
     super.dispose();
   }
 
@@ -562,6 +565,16 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                         maxLines: 4,
                       ),
                       _field('סדר מיון', _sortOrder, ltr: true),
+                      // The car park page shows Google's hours, rating and
+                      // photos for a car park linked here (00044). Filled
+                      // by tool/link_parking_google.py; empty when Google
+                      // does not list it.
+                      _field(
+                        'מזהה מקום בגוגל מפות (Place ID)',
+                        _googlePlaceId,
+                        ltr: true,
+                        hint: 'ChIJ… — ריק אם החניון לא מופיע בגוגל',
+                      ),
                       const SizedBox(height: 8),
                       ImageUploadField(
                         label: 'תמונה',
@@ -730,6 +743,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
       'capacity': int.tryParse(_capacity.text.trim()),
       'notes': _orNull(_notes),
       'image_url': _orNull(_imageUrl),
+      'google_place_id': _orNull(_googlePlaceId),
       'sort_order': int.tryParse(_sortOrder.text.trim()) ?? 0,
       'is_active': _isActive,
     };

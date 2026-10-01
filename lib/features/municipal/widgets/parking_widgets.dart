@@ -201,7 +201,7 @@ class ParkingLotCard extends StatelessWidget {
               Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: OutlinedButton.icon(
-                  onPressed: () => launchUrl(lot.wazeUri),
+                  onPressed: () => showNavigationChoice(context, lot, l),
                   icon: const Icon(IconsaxPlusLinear.routing_2, size: 16),
                   label: Text(
                     l.getDirections,
@@ -333,5 +333,51 @@ class ParkingDataCredit extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     text,
     style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kGreyText),
+  );
+}
+
+/// Waze or Google Maps, as the person chooses — the client left it to us,
+/// and people here use both.
+Future<void> showNavigationChoice(BuildContext context, ParkingLot lot, L l) {
+  Widget option(String label, IconData icon, Uri uri) => ListTile(
+    leading: Icon(icon, color: AppColors.midBlue),
+    title: Text(
+      label,
+      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 15, fontWeight: FontWeight.w500),
+    ),
+    onTap: () {
+      Navigator.of(context).pop();
+      launchUrl(uri, mode: LaunchMode.externalApplication);
+    },
+  );
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+    builder: (_) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: Text(
+                l.parkingNavigateWith,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: _kHeading,
+                ),
+              ),
+            ),
+            option(l.parkingWaze, IconsaxPlusLinear.routing_2, lot.wazeUri),
+            option(l.parkingGoogleMaps, IconsaxPlusLinear.map_1, lot.googleMapsUri),
+          ],
+        ),
+      ),
+    ),
   );
 }

@@ -903,5 +903,21 @@
   "sgRemoveHint": "להסרת חבר/ה מהקבוצה, לחצו לחיצה ארוכה על השם.",
   "parkingFreeCount": "{n, plural, =1{אחד מהם בחינם} other{{n} מהם בחינם}}",
   "@parkingFreeCount": {"placeholders": {"n": {"type": "int"}}},
-  "parkingPaid": "בתשלום"
+  "parkingPaid": "בתשלום",
+  "parkingNavigateWith": "ניווט עם",
+  "parkingWaze": "Waze",
+  "parkingGoogleMaps": "Google Maps",
+  "parkingPayment": "תשלום",
+  "parkingPayCards": "כרטיסי אשראי",
+  "parkingPayDebit": "כרטיסי חיוב",
+  "parkingPayCash": "מזומן בלבד",
+  "parkingPayNfc": "תשלום ללא מגע",
+  "parkingGoogleRating": "{rating} · {count} דירוגים בגוגל",
+  "@parkingGoogleRating": {"placeholders": {"rating": {"type": "String"}, "count": {"type": "int"}}},
+  "parkingFromGoogle": "מידע מתוך Google Maps",
+  "parkingViewOnGoogle": "צפייה ב-Google Maps",
+  "parkingPhotoBy": "צילום: {name}",
+  "@parkingPhotoBy": {"placeholders": {"name": {"type": "String"}}},
+  "parkingWebsite": "אתר",
+  "parkingNotFound": "החניון לא נמצא"
 }

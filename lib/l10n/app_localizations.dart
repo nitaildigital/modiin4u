@@ -4098,6 +4098,90 @@ abstract class L {
   /// In he, this message translates to:
   /// **'בתשלום'**
   String get parkingPaid;
+
+  /// No description provided for @parkingNavigateWith.
+  ///
+  /// In he, this message translates to:
+  /// **'ניווט עם'**
+  String get parkingNavigateWith;
+
+  /// No description provided for @parkingWaze.
+  ///
+  /// In he, this message translates to:
+  /// **'Waze'**
+  String get parkingWaze;
+
+  /// No description provided for @parkingGoogleMaps.
+  ///
+  /// In he, this message translates to:
+  /// **'Google Maps'**
+  String get parkingGoogleMaps;
+
+  /// No description provided for @parkingPayment.
+  ///
+  /// In he, this message translates to:
+  /// **'תשלום'**
+  String get parkingPayment;
+
+  /// No description provided for @parkingPayCards.
+  ///
+  /// In he, this message translates to:
+  /// **'כרטיסי אשראי'**
+  String get parkingPayCards;
+
+  /// No description provided for @parkingPayDebit.
+  ///
+  /// In he, this message translates to:
+  /// **'כרטיסי חיוב'**
+  String get parkingPayDebit;
+
+  /// No description provided for @parkingPayCash.
+  ///
+  /// In he, this message translates to:
+  /// **'מזומן בלבד'**
+  String get parkingPayCash;
+
+  /// No description provided for @parkingPayNfc.
+  ///
+  /// In he, this message translates to:
+  /// **'תשלום ללא מגע'**
+  String get parkingPayNfc;
+
+  /// No description provided for @parkingGoogleRating.
+  ///
+  /// In he, this message translates to:
+  /// **'{rating} · {count} דירוגים בגוגל'**
+  String parkingGoogleRating(String rating, int count);
+
+  /// No description provided for @parkingFromGoogle.
+  ///
+  /// In he, this message translates to:
+  /// **'מידע מתוך Google Maps'**
+  String get parkingFromGoogle;
+
+  /// No description provided for @parkingViewOnGoogle.
+  ///
+  /// In he, this message translates to:
+  /// **'צפייה ב-Google Maps'**
+  String get parkingViewOnGoogle;
+
+  /// No description provided for @parkingPhotoBy.
+  ///
+  /// In he, this message translates to:
+  /// **'צילום: {name}'**
+  String parkingPhotoBy(String name);
+
+  /// No description provided for @parkingWebsite.
+  ///
+  /// In he, this message translates to:
+  /// **'אתר'**
+  String get parkingWebsite;
+
+  /// No description provided for @parkingNotFound.
+  ///
+  /// In he, this message translates to:
+  /// **'החניון לא נמצא'**
+  String get parkingNotFound;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
