@@ -2163,6 +2163,12 @@ Checked:
   locally at 390 px;
 - Android emulator: a linked lot with Google's name and address, an
   unlinked one with ours, and the Waze / Google Maps sheet.
+- Realme phone (Android 11): Google's photos with their credit, rating,
+  hours, payment methods and map. Google Maps opens with directions; Waze,
+  not installed there, opens its web link; Call opens the dialer with
+  Google's number. Found there and fixed: in Hebrew Google's hours read
+  backwards ("0:00–7:00"), because the time range took the line's
+  right-to-left direction. The time is now isolated left to right.
 
 ### Small items: Paid tag, leaderboard days, a sample date, panel click-throughs — 1 October
 
