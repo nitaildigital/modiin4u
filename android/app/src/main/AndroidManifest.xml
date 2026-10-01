@@ -129,6 +129,17 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Whether Waze and Google Maps' navigation can be opened, for the
+             car park page's directions (Android 11+ must name them). -->
+        <package android:name="com.waze"/>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="waze"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="google.navigation"/>
+        </intent>
         <!-- Whether Health Connect is installed (Android 13 and older). -->
         <package android:name="com.google.android.apps.healthdata"/>
         <intent>

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -339,7 +341,7 @@ class ParkingDataCredit extends StatelessWidget {
 /// Waze or Google Maps, as the person chooses — the client left it to us,
 /// and people here use both.
 Future<void> showNavigationChoice(BuildContext context, ParkingLot lot, L l) {
-  Widget option(String label, IconData icon, Uri uri) => ListTile(
+  Widget option(String label, IconData icon, Future<void> Function() open) => ListTile(
     leading: Icon(icon, color: AppColors.midBlue),
     title: Text(
       label,
@@ -347,7 +349,7 @@ Future<void> showNavigationChoice(BuildContext context, ParkingLot lot, L l) {
     ),
     onTap: () {
       Navigator.of(context).pop();
-      launchUrl(uri, mode: LaunchMode.externalApplication);
+      open();
     },
   );
   return showModalBottomSheet<void>(
@@ -373,11 +375,53 @@ Future<void> showNavigationChoice(BuildContext context, ParkingLot lot, L l) {
                 ),
               ),
             ),
-            option(l.parkingWaze, IconsaxPlusLinear.routing_2, lot.wazeUri),
-            option(l.parkingGoogleMaps, IconsaxPlusLinear.map_1, lot.googleMapsUri),
+            option(l.parkingWaze, IconsaxPlusLinear.routing_2, () => openWaze(lot)),
+            option(l.parkingGoogleMaps, IconsaxPlusLinear.map_1, () => openGoogleMaps(lot)),
           ],
         ),
       ),
     ),
   );
+}
+
+/// Waze's own app, which starts from where the person is. Its web link,
+/// opened when the app is missing, asked them to pick a starting point, so
+/// a phone without Waze goes to the store to get it instead. A browser
+/// keeps the web link: there is nothing to install.
+Future<void> openWaze(ParkingLot lot) async {
+  final ll = '${lot.latitude},${lot.longitude}';
+  if (kIsWeb) {
+    await launchUrl(lot.wazeUri, webOnlyWindowName: '_blank');
+    return;
+  }
+  final app = Uri.parse('waze://?ll=$ll&navigate=yes');
+  if (await canLaunchUrl(app)) {
+    await launchUrl(app, mode: LaunchMode.externalApplication);
+    return;
+  }
+  await launchUrl(
+    defaultTargetPlatform == TargetPlatform.iOS
+        ? Uri.parse('https://apps.apple.com/app/id323229106')
+        : Uri.parse('market://details?id=com.waze'),
+    mode: LaunchMode.externalApplication,
+  );
+}
+
+/// Google Maps' navigation, from where the person is. The app answered the
+/// web directions link with "Unsupported link" on Android, so each platform
+/// gets the link its Maps app takes: Android's navigation intent, the iOS
+/// app's own scheme, and the web link in a browser or where the app is
+/// missing.
+Future<void> openGoogleMaps(ParkingLot lot) async {
+  final ll = '${lot.latitude},${lot.longitude}';
+  if (!kIsWeb) {
+    final app = defaultTargetPlatform == TargetPlatform.iOS
+        ? Uri.parse('comgooglemaps://?daddr=$ll&directionsmode=driving')
+        : Uri.parse('google.navigation:q=$ll');
+    if (await canLaunchUrl(app)) {
+      await launchUrl(app, mode: LaunchMode.externalApplication);
+      return;
+    }
+  }
+  await launchUrl(lot.googleMapsUri, mode: LaunchMode.externalApplication);
 }
