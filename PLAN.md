@@ -2111,6 +2111,76 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### SEO: every old address kept, a real page for each, the old titles — 1 October
+
+The client: preserving the SEO "is critical"; the old site's links must be
+exported and mapped to the new ones, with "the SEO title, the site name on
+Google, etc."
+
+**The map.** `tool/seo_inventory.py` reads the old site's sitemaps, 979
+addresses, and its REST API for each item's Yoast title and description. It
+matches every address to our database and writes `tool/seo/url_map.csv`,
+with old address, kind, matched row, new address and how — the export for
+Michael.
+- All 665 articles and all 205 businesses keep their exact address.
+- Ten articles had slugs the first import mangled into hex. They now have
+  their WordPress slugs back (`tool/seo_restore_slugs.py`, undoable).
+- The old site's 63 business categories, many of them search landing pages,
+  go to the nearest of our 22 categories. The mapping was chosen by hand and
+  is marked in the map for the client to review.
+- Pages, professionals, agents and apartments go to the matching section.
+- 100 addresses moved in all. Each gets a 301 in
+  `deploy/nginx/seo-redirects.conf`.
+
+**Old addresses on the new site.** The router answers `/news/<slug>`,
+`/business/<slug>`, `/business-cat/<slug>` and `/new/<slug>` by looking the
+slug up (`slug_routes.dart`), and drops the old trailing slash.
+
+**A page per address.** The site draws text on a canvas, so a crawler saw
+an empty page. `tool/build_seo_pages.py` runs in every deploy and writes
+1,022 pages, each the app's `index.html` with:
+- its title and description: Yoast's, copied into the panel's SEO fields
+  where they were empty (816 rows, `tool/seo_fill.py`, undoable), otherwise
+  "<name> - מודיעין בשבילך" as the old site wrote them;
+- a canonical on `https://www.modiin4u.co.il` in the old address form, so
+  nothing changes for Google when the domain moves;
+- Open Graph tags;
+- NewsArticle, LocalBusiness, Park and BreadcrumbList structured data, plus a
+  WebSite entry with the old site's names ("Modiin4u" and "מודיעין בשבילך");
+- the text and links, hidden from the eye under the app.
+
+It also writes `sitemap.xml`, `robots.txt` and `shell.html`. nginx now falls
+back to `shell.html` (the app, noindex) instead of `index.html`, which is
+the home page now.
+
+Flutter replaced every page's title with the app's name. On the website it
+now keeps the served title while the visitor is on that page
+(`lib/shared/page_title`, `main.dart`).
+
+**Not launched yet.** The copies on the IP and sslip.io addresses must not
+be indexed next to the live WordPress site, so every page says noindex and
+`robots.txt` disallows all. At launch, `SEO_LIVE=1 tool/deploy_web.sh`
+opens both.
+
+Checked:
+- on the deployed server with curl as Googlebot: pages, titles, canonicals,
+  301s, shell, robots and sitemap;
+- in a browser: old addresses open the right article, business and category
+  pages, with the page's own title kept after the app loads.
+
+Left for launch and for Michael:
+- **Refreshing pages.** Pages are rewritten only at deploy. Once live, a
+  cron on the server must run the generator, so news published in the panel
+  gets its page.
+- **The domain.** www.modiin4u.co.il moves to the server: certificate,
+  bare domain to www, then submit the sitemap in Search Console.
+- **Images.** The old `/wp-content/uploads/` image addresses are not
+  redirected.
+- **The site name.** The client chooses the name Google shows; WordPress's
+  names are kept until then.
+- **Category landing pages.** The client decides whether any of the merged
+  ones should come back as categories of their own.
+
 ### Delete, in the admin panel, does not delete — 25 September
 
 Tested the panel properly for the first time, signed in as a temporary
