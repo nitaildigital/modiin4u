@@ -215,17 +215,13 @@ cannot approve their own content or change bans and points.
   agents/challenges deactivate-only (code checked, not clicked through); the
   info pages section (עמודי מידע) — publishing a page and seeing it on
   /about has not been checked.
-- *Audit gaps:* articles and events save straight to the database and skip
-  `recordAdminAction`, so their edits are not in the audit log.
-- *Gallery editor:* removing a gallery photo deletes the `media` row and file
-  when no other gallery uses it, without asking `media_usage()` — a file also
-  used as a logo or cover could go.
-- *Businesses:* opening hours are deleted and re-inserted on every save
-  (`setHours`), so they get new ids; the list stops at 500 rows with no
-  "load more" (226 businesses today).
-- *Roles:* any active admin, whatever the role, can do everything, including
-  edit the team; `admin_roles` limits nothing yet.
-- *Municipal service tiles:* not started — see "Guide: municipality".
+- *Roles:* only a super admin can change the team or the roles (00042, 1
+  Oct). What each other role may do section by section is the client's
+  decision and is not built.
+- *Fixed 1 Oct* (PLAN.md, "Panel bugs"): article and event edits now reach
+  the audit log; removing a gallery photo checks `media_usage()` first; hours
+  are saved in place; the businesses list is no longer cut at 500.
+- *Municipal service tiles:* built 30 Sep — the panel's "מוסדות עירוניים" (`municipal_places`), parking ("חניונים") and parks (a business set to "פארק"); see PLAN.md.
 - *Decisions:* media files and tags are deleted permanently (only when unused,
   after a warning) because neither table has a hidden flag; push sending needs
   the client's Firebase keys; nothing on the site creates comments or reports

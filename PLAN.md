@@ -2111,6 +2111,35 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### Panel bugs: shared files, hours, the audit log, the team — 1 October
+
+- **Removing a gallery photo could delete a file used elsewhere.** The
+  editor checked only other galleries before deleting the file and its
+  library row. It now also asks `media_usage` (00034), which searches every
+  table; anything found, such as a logo, a cover or an article picture,
+  keeps the file. If it can't ask, the file stays.
+  Checked: a temporary business's cover was found as a use, and not found
+  once cleared.
+- **Opening hours were deleted and inserted again on every save.** A failed
+  insert left the business with no hours, every day got a new id, and the
+  columns the editor doesn't show (a second opening, a note) were wiped. Now
+  each day is upserted on (business, day), and only days the editor dropped
+  are deleted. Checked with a temporary business: ids kept, a day updated, a
+  dropped day removed.
+- **The businesses list stopped at 500.** With the parks there are about
+  380; it now pages through all of them.
+- **Articles and events didn't reach the audit log.** Articles never logged.
+  Events logged only cancelling, since saving and publishing went past the
+  shared helper. Create, edit, status, publish and category changes now call
+  `recordAdminAction`, as businesses do. Not clicked through: the audit log is
+  insert-only, so a test would stay in the client's log.
+- **Any admin could manage the team.** Migration 00042: every admin still
+  reads `admin_users` and `admin_roles`, but adding, changing or removing a
+  member or a role takes a super admin (`is_super_admin()`). Checked with a
+  temporary content editor and a temporary super admin, both deleted after.
+  What each role may do section by section is the client's decision and is
+  not built; all three admins today are super admins.
+
 ### Bugs from the day's testing — 1 October
 
 - **The website's Map tab at phone width was a grey page.** The screen used
