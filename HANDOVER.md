@@ -88,8 +88,10 @@ it is in git:
 1. **Step counter — groups.** His words: "there should be an option to create
    a group with people who have the app and invite them to it — for example,
    by sending them an invitation — and then view group stats/activity
-   together. Quite similar to StepsApp." Not built. How to build it is under
-   "Guide: pedometer groups" below.
+   together. Quite similar to StepsApp." **Built 1 Oct** (health data,
+   groups, invitation links, panel moderation) — see PLAN.md, "The step
+   counter: health data, groups, and invitation links". The guide below was
+   the plan it followed.
 2. **Category pages: the filter isn't working — found and fixed (29 Sep).**
    Checked in a browser: the website's filters work (restaurants category
    page 54 → Kosher 46 → Delivery 35, matching the database; the restaurants

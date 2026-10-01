@@ -2025,6 +2025,92 @@ quotation marks as two apostrophes and doubles spaces; the names are tidied.
 A rerun adds only parks not already there by name; `tool/parks_registry.json`
 and `--undo` as above.
 
+### The step counter: health data, groups, and invitation links — 1 October
+
+The client's handover point 1 ("create a group with people who have the
+app and invite them … then view group stats/activity together. Quite
+similar to StepsApp"), built to the scope Harshit set: personal steps with
+history, groups, invitations, members, shared statistics.
+
+**Counting.** The sensor alone missed every step taken before the app was
+opened, and restarted at zero each time the app did (its baseline lived in
+memory). Now:
+- Health Connect (Android) and Apple Health (iPhone) are read through the
+  `health` plugin, when the person allows it. The data is the whole day and
+  the last 30 days, with distance and active calories, deduplicated by the
+  platform, so a phone and a watch worn together aren't counted twice.
+  The screen offers the connection, or Health Connect's Play Store page on
+  an Android 13 phone without it.
+- The sensor still runs beside it. Its baseline is kept on the phone, and a
+  restart carries what was counted.
+- Each day shows the highest of the stored figure, the health store's and
+  the sensor's.
+- Uploads go through `record_daily_steps` (00041), which keeps each day's
+  highest figure. A count that restarts lower can never shrink a day in a
+  group's ranking. Only the last 31 days are accepted.
+- Measured distance and calories show only when the health store supplied
+  the day's count. Otherwise the distance is the labelled stride estimate,
+  and calories are left out, because they need body weight, which we don't
+  have.
+- On Android, minSdk is now 26 (the plugin needs it) and MainActivity is a
+  FlutterFragmentActivity. On iOS, the HealthKit entitlement is added.
+- Google Play asks for a Health Connect declaration in the Console before
+  release.
+
+**Groups.** Migration 00041 adds `step_groups` and `step_group_members`.
+- Residents write neither table directly. Create, join, leave, remove,
+  rename, renew the code and delete are each a function that checks who is
+  asking.
+- Members read each other's figures only through `step_group_stats`. It
+  checks membership first and returns names and totals (today, this week
+  from Sunday, this month, and the last 7 days), never rows.
+- Joining is the consent. The join screen says members see each other's
+  daily steps.
+- Limits: 50 members per group, and 10 owned groups per person.
+- An owner who leaves hands the group to the longest-standing member. The
+  last member out removes it.
+- "Today" is Israel's date.
+- The panel's Challenges section becomes "אתגרים וקבוצות" (challenges and
+  groups) with a second tab. It lists groups with their creator and size,
+  shows the members' figures, and offers Hide and Restore. Hiding also
+  stops the group's invitation from working. The panel never deletes.
+
+**Invitations.** There is no people search, because profiles are private.
+- Invite opens the share sheet with `<site>/join/<code>` and the code.
+  `<site>` is Remote Config `site_url` (editable in the panel), set to the
+  interim https address, `https://45-93-94-49.sslip.io`.
+- When app.modiin4u.co.il is live, change `site_url` to it. Both hosts are
+  already in the Android intent filter and the iOS associated domains.
+- The site serves `web/.well-known/assetlinks.json` and
+  `apple-app-site-association`; the nginx snippet gives both a JSON type.
+- Android verified the interim host (`pm get-app-links`), and an https link
+  opened the app straight on the join screen.
+- `assetlinks.json` holds the debug keystore's fingerprint, the one release
+  builds are signed with today. When a release key or Play App Signing
+  exists, add its SHA-256 there.
+- Where the link opens the browser (no app, an unverified phone), `/join`
+  shows the group and an "Open in the App" button. The button uses
+  `il.co.modiin4u://app/join/<code>`; the host is `app` because the router
+  keeps only the path. The page also shows the code to type in.
+
+Checked on the Android 15 emulator with two temporary residents, all
+deleted after:
+- joining by scheme link, by https link and by code, including a wrong code;
+- the group's figures against the stored rows;
+- leave, renew code, delete, create with the share sheet;
+- connecting Health Connect.
+
+Also checked:
+- the panel's tab, including Hide and Restore, and the web `/join` page at
+  390 and 1440 px;
+- the iOS build, without signing.
+
+Not checked:
+- an iPhone: HealthKit and associated domains need the capabilities on the
+  App ID, which Xcode's automatic signing adds;
+- real Health Connect step data: the emulator has none;
+- signing in from the join screen.
+
 ### Delete, in the admin panel, does not delete — 25 September
 
 Tested the panel properly for the first time, signed in as a temporary
