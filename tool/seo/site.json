@@ -1,5 +1,5 @@
 {
- "site_name": "Modiin4u",
+ "site_name": "מודיעין בשבילך",
  "og_site_name": "מודיעין בשבילך",
  "title_suffix": " - מודיעין בשבילך",
  "home": {
@@ -24,5 +24,7 @@
    "description": ""
   }
  },
- "_source": "The old WordPress site on 1 Oct 2026: its home <title> and description, Yoast WebSite name and og:site_name, and the Yoast data of the pages these sections replace."
+ "_source": "The old WordPress site on 1 Oct 2026: its home <title> and description, Yoast WebSite name and og:site_name, and the Yoast data of the pages these sections replace.",
+ "alternate_name": "Modiin4u",
+ "_site_name": "The client (1 Oct): \"See in WordPress the site name\". WordPress's Site Title (Settings → General) is מודיעין בשבילך — the name Google is given; Yoast's own site name, Modiin4u, is kept as the alternate name."
 }

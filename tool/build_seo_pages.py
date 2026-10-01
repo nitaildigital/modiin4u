@@ -14,7 +14,9 @@ address, the app's own index.html with that page's:
   canonical                the old site's address form, on www.modiin4u.co.il,
                            so nothing changes for Google when the domain moves
   Open Graph, JSON-LD      NewsArticle, LocalBusiness, WebSite — the site name
-                           as the old site gave it (tool/seo/site.json)
+                           WordPress's Site Title, מודיעין בשבילך, as the
+                           client chose, with Modiin4u as its alternate
+                           (tool/seo/site.json)
   the text itself          headline, article, address, phone, links — in a
                            block hidden from the eye (the app draws the same
                            thing over it), present in the HTML for crawlers
@@ -208,7 +210,8 @@ class Builder:
     # ── structured data ──
 
     def org(self):
-        return {'@type': 'Organization', 'name': SITE.get('site_name', 'Modiin4u'),
+        return {'@type': 'Organization', 'name': SITE.get('site_name', 'מודיעין בשבילך'),
+                'alternateName': SITE.get('alternate_name', 'Modiin4u'),
                 'url': self.site + '/', 'logo': self.site + '/icons/Icon-512.png'}
 
     def breadcrumb(self, *items):
@@ -307,7 +310,8 @@ def main():
            f'<h2>עסקים</h2>{cat_list("business")}'
            f'<h2>מסעדות</h2>{biz_list(restaurants[:30])}',
            jsonld=[{'@context': 'https://schema.org', '@type': 'WebSite',
-                    'name': SITE.get('site_name', 'Modiin4u'), 'alternateName': site_name,
+                    'name': SITE.get('site_name', 'מודיעין בשבילך'),
+                    'alternateName': SITE.get('alternate_name', 'Modiin4u'),
                     'url': a.site.rstrip('/') + '/'},
                    dict({'@context': 'https://schema.org'}, **b.org())])
 
