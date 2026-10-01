@@ -79,6 +79,13 @@ flutter build web --release \
   --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT_URL" \
   --dart-define=MAPS_WEB_KEY="$MAPS_WEB_KEY"
 
+# A page of its own for every address Google should know — titles,
+# descriptions, canonical links and the text itself — plus sitemap.xml and
+# robots.txt (tool/build_seo_pages.py). noindex until launch; SEO_LIVE=1 at
+# launch opens the site to search engines.
+echo "── pages for search engines"
+python3 tool/build_seo_pages.py ${SEO_LIVE:+--live}
+
 SIZE=$(du -sh build/web | cut -f1)
 echo "   build/web is $SIZE (nginx serves it gzipped, so the transfer is far less)"
 

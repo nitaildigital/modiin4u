@@ -42,6 +42,7 @@ import '../../features/community/screens/community_screen.dart';
 import '../../features/deals/screens/deals_screen.dart';
 import '../../features/deals/screens/deal_detail_screen.dart';
 import '../../features/steps/screens/steps_screen.dart';
+import 'slug_routes.dart';
 import '../../features/steps/screens/join_group_screen.dart';
 import '../../features/steps/screens/step_group_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
@@ -146,8 +147,19 @@ final appRouter = GoRouter(
   //
   // `/login`, `/reset-password` and `/auth/*` are not on the list: they are
   // how an administrator gets into the control centre, which is web-only.
-  redirect: (context, state) =>
-      kIsWeb && _appOnlyPaths.contains(state.uri.path) ? '/' : null,
+  redirect: (context, state) {
+    final path = state.uri.path;
+    if (kIsWeb && _appOnlyPaths.contains(path)) return '/';
+    // The old site's addresses end in a slash (/news/modiin-news-523/), and
+    // that is how Google and every link out there has them. The routes are
+    // written without one.
+    if (path.length > 1 && path.endsWith('/')) {
+      return state.uri
+          .replace(path: path.substring(0, path.length - 1))
+          .toString();
+    }
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/splash',
@@ -179,6 +191,17 @@ final appRouter = GoRouter(
           path: '/news',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: NewsScreen(),
+          ),
+        ),
+        // The old site's news category addresses (`/new/<slug>/`).
+        GoRoute(
+          path: '/new/:slug',
+          pageBuilder: (context, state) => NoTransitionPage(
+            child: SlugPage(
+              kind: SlugKind.articleCategory,
+              slug: state.pathParameters['slug']!,
+              builder: (row) => NewsScreen(categoryId: row.id),
+            ),
           ),
         ),
         GoRoute(
@@ -250,18 +273,57 @@ final appRouter = GoRouter(
         state,
       ),
     ),
+    // By id from inside the app, or by slug from the old site's addresses
+    // (`/business/<slug>/`), which Google and every outside link still use.
     GoRoute(
       path: '/business/:id',
       parentNavigatorKey: _rootNavigatorKey,
-      pageBuilder: (context, state) => _slideTransition(
-        BusinessDetailScreen(businessId: state.pathParameters['id']!), state,
-      ),
+      pageBuilder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return _slideTransition(
+          isRowId(id)
+              ? BusinessDetailScreen(businessId: id)
+              : SlugPage(
+                  kind: SlugKind.business,
+                  slug: id,
+                  builder: (row) => BusinessDetailScreen(businessId: row.id),
+                ),
+          state,
+        );
+      },
     ),
     GoRoute(
       path: '/article/:id',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(
         ArticleScreen(articleId: state.pathParameters['id']!), state,
+      ),
+    ),
+    // The old site's article addresses (`/news/<slug>/`).
+    GoRoute(
+      path: '/news/:slug',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        SlugPage(
+          kind: SlugKind.article,
+          slug: state.pathParameters['slug']!,
+          builder: (row) => ArticleScreen(articleId: row.id),
+        ),
+        state,
+      ),
+    ),
+    // The old site's business category addresses (`/business-cat/<slug>/`).
+    GoRoute(
+      path: '/business-cat/:slug',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(
+        SlugPage(
+          kind: SlugKind.businessCategory,
+          slug: state.pathParameters['slug']!,
+          builder: (row) =>
+              BusinessListScreen(categoryId: row.id, title: row.name),
+        ),
+        state,
       ),
     ),
     GoRoute(

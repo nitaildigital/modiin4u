@@ -47,6 +47,8 @@ dependencies:
   http: ^1.6.0
   intl: ^0.20.2
   url_launcher: ^6.3.1
+  # The website reads the title its page was served with (lib/shared/page_title).
+  web: ^1.1.1
   share_plus: ^10.1.4
   flutter_rating_bar: ^4.0.1
   image_picker: ^1.1.2
