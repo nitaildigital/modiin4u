@@ -881,5 +881,6 @@
   "sgNoStepsShared": "No steps recorded yet",
   "sgRemoveHint": "To remove a member, press and hold their name.",
   "parkingFreeCount": "{n, plural, =1{1 of them free} other{{n} of them free}}",
-  "@parkingFreeCount": {"placeholders": {"n": {"type": "int"}}}
+  "@parkingFreeCount": {"placeholders": {"n": {"type": "int"}}},
+  "parkingPaid": "Paid"
 }

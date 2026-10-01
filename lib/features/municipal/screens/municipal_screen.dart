@@ -327,8 +327,8 @@ class _ShabbatCard extends ConsumerWidget {
 /// The frame's card reads "Parking Right Now — Modiin Center — High
 /// availability". Nothing measures how full a car park is, so availability
 /// is never claimed. Its two lines carry what the data does know: with the
-/// person's location, the nearest car park and how far it is (and free, if
-/// it is); without it, how many car parks the city has and how many are
+/// person's location, the nearest car park and how far it is (and free or
+/// paid, where known); without it, how many car parks the city has and how many are
 /// free. While the car parks load, or if there are none, the lower half
 /// stays empty.
 class _ParkingCard extends ConsumerWidget {
@@ -371,7 +371,11 @@ class _ParkingCard extends ConsumerWidget {
         const SizedBox(height: 6),
         line(
           IconsaxPlusLinear.routing_2,
-          '$km ${l.kmUnit}${nearest.lot.isFree == true ? ' · ${l.free}' : ''}',
+          '$km ${l.kmUnit}${switch (nearest.lot.isFree) {
+            true => ' · ${l.free}',
+            false => ' · ${l.parkingPaid}',
+            null => '',
+          }}',
         ),
       ];
     } else if (lots.isNotEmpty) {

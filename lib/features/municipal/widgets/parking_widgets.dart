@@ -17,6 +17,7 @@ const _kBorder = Color(0xFFE7E7E7);
 const _kGreyText = Color(0xFF5F5E5A);
 const _kHeading = Color(0xFF1C1C1E);
 const _kIconGrey = Color(0xFF6D6D6D);
+const _kPaid = Color(0xFFB26A00);
 
 /// The city map's parking pin, so a lot looks the same here as on /map.
 const _kPin = 'assets/web/map/pin_parking.svg';
@@ -148,9 +149,11 @@ class ParkingLotCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Only when the client said so; a lot he said nothing
-                  // about is not marked either way.
-                  if (lot.isFree == true) ...[
+                  // Free in green, paid in amber — only when it is known; a
+                  // lot nobody has said anything about is not marked either
+                  // way. Paid lots showed nothing, so a driver could not tell
+                  // them from the unknown ones.
+                  if (lot.isFree != null) ...[
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -158,16 +161,17 @@ class ParkingLotCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.1),
+                        color: (lot.isFree! ? AppColors.success : _kPaid)
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        l.free,
+                        lot.isFree! ? l.free : l.parkingPaid,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.success,
+                          color: lot.isFree! ? AppColors.success : _kPaid,
                         ),
                       ),
                     ),

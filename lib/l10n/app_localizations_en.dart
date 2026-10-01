@@ -2183,4 +2183,7 @@ class LEn extends L {
     );
     return '$_temp0';
   }
+
+  @override
+  String get parkingPaid => 'Paid';
 }

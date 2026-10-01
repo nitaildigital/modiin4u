@@ -2155,4 +2155,7 @@ class LHe extends L {
     );
     return '$_temp0';
   }
+
+  @override
+  String get parkingPaid => 'בתשלום';
 }

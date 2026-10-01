@@ -902,5 +902,6 @@
   "@sgWebJoinHint": {"placeholders": {"code": {"type": "String"}}},
   "sgRemoveHint": "להסרת חבר/ה מהקבוצה, לחצו לחיצה ארוכה על השם.",
   "parkingFreeCount": "{n, plural, =1{אחד מהם בחינם} other{{n} מהם בחינם}}",
-  "@parkingFreeCount": {"placeholders": {"n": {"type": "int"}}}
+  "@parkingFreeCount": {"placeholders": {"n": {"type": "int"}}},
+  "parkingPaid": "בתשלום"
 }

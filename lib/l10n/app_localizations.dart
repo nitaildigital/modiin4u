@@ -4092,6 +4092,12 @@ abstract class L {
   /// In he, this message translates to:
   /// **'{n, plural, =1{אחד מהם בחינם} other{{n} מהם בחינם}}'**
   String parkingFreeCount(int n);
+
+  /// No description provided for @parkingPaid.
+  ///
+  /// In he, this message translates to:
+  /// **'בתשלום'**
+  String get parkingPaid;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
