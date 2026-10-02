@@ -2140,6 +2140,14 @@ Checked: the website at 1440 and 390 px (bubble placement, the chat opening
 with the client's greeting), and on the Realme phone (bubble, the chat in
 the app's sheet, the chat's × closing it).
 
+**Typing in the app's chat (2 Oct).** In the sheet, the keyboard covered the
+box being typed in and then the newest answers, and a drag inside the chat
+pulled the sheet instead of scrolling. The chat now opens on a full screen
+of its own (`resizeToAvoidBottomInset`), which shrinks above the keyboard
+and gives every gesture to the chat; closed with the chat's × or Back.
+Checked on a OnePlus 6T (Android 9): the box stays above the keyboard, a
+reply shows whole above it, older messages scroll, and × returns to the app.
+
 ### Car parks from Google, and a page for each — 1 October
 
 The client chose the new parking UI and said: "We need to pull all the
@@ -2198,6 +2206,26 @@ Checked:
   Google's number. Found there and fixed: in Hebrew Google's hours read
   backwards ("0:00–7:00"), because the time range took the line's
   right-to-left direction. The time is now isolated left to right.
+
+**Navigation, fixed on the phone (2 Oct).**
+- *Google Maps:* every web directions link (`maps/dir/?api=1…`) answers
+  "Unsupported link" in this phone's Maps app. Android now sends the
+  navigation intent (`google.navigation:q=`) to the Maps app by package
+  (`android_intent_plus`), so the phone no longer asks "Maps or Waze?". The
+  destination is the car park's Google name and address when the page has
+  them, so Maps shows it by name; otherwise the exact coordinates, because
+  our own names aren't places Google could find. Start: the person's
+  location.
+- *Waze:* the app's own `waze://` link, starting from where the person is.
+  Without Waze installed, the store offers it, instead of Waze's web page,
+  which asked for a starting point.
+- *Website:* Google's web directions link with the place ID, and Waze's
+  live map.
+
+Checked on the Realme: Maps opens straight into driving directions from
+"Your location" to the car park by name; Waze opens. The phone is in India,
+so neither finds a driving route to Modi'in; in Israel they do. On the live
+site, Google Maps and Waze each open in a new tab.
 
 ### Small items: Paid tag, leaderboard days, a sample date, panel click-throughs — 1 October
 
