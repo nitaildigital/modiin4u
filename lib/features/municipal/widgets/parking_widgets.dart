@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -340,7 +341,16 @@ class ParkingDataCredit extends StatelessWidget {
 
 /// Waze or Google Maps, as the person chooses — the client left it to us,
 /// and people here use both.
-Future<void> showNavigationChoice(BuildContext context, ParkingLot lot, L l) {
+///
+/// [placeName] is the car park's name and address on Google Maps, when the
+/// page has them: Google Maps then shows the destination by name rather
+/// than as coordinates.
+Future<void> showNavigationChoice(
+  BuildContext context,
+  ParkingLot lot,
+  L l, {
+  String? placeName,
+}) {
   Widget option(String label, IconData icon, Future<void> Function() open) => ListTile(
     leading: Icon(icon, color: AppColors.midBlue),
     title: Text(
@@ -376,7 +386,11 @@ Future<void> showNavigationChoice(BuildContext context, ParkingLot lot, L l) {
               ),
             ),
             option(l.parkingWaze, IconsaxPlusLinear.routing_2, () => openWaze(lot)),
-            option(l.parkingGoogleMaps, IconsaxPlusLinear.map_1, () => openGoogleMaps(lot)),
+            option(
+              l.parkingGoogleMaps,
+              IconsaxPlusLinear.map_1,
+              () => openGoogleMaps(lot, placeName: placeName),
+            ),
           ],
         ),
       ),
@@ -407,17 +421,34 @@ Future<void> openWaze(ParkingLot lot) async {
   );
 }
 
-/// Google Maps' navigation, from where the person is. The app answered the
-/// web directions link with "Unsupported link" on Android, so each platform
-/// gets the link its Maps app takes: Android's navigation intent, the iOS
-/// app's own scheme, and the web link in a browser or where the app is
-/// missing.
-Future<void> openGoogleMaps(ParkingLot lot) async {
+/// Google Maps' navigation, from where the person is.
+///
+/// Android: the navigation intent, sent to the Google Maps app by name. The
+/// web directions link answered "Unsupported link" in the Maps app, and the
+/// intent sent to whoever handles it made the phone ask "Maps or Waze?"
+/// once Waze was installed. The destination is the place's Google name and
+/// address when the page has them, which Maps shows by name; otherwise the
+/// car park's exact coordinates — our own names ("חניון ליד …") are not
+/// places Google could find. iOS: the Maps app's own scheme. A browser, or
+/// a phone without the app: the web link.
+Future<void> openGoogleMaps(ParkingLot lot, {String? placeName}) async {
   final ll = '${lot.latitude},${lot.longitude}';
-  if (!kIsWeb) {
-    final app = defaultTargetPlatform == TargetPlatform.iOS
-        ? Uri.parse('comgooglemaps://?daddr=$ll&directionsmode=driving')
-        : Uri.parse('google.navigation:q=$ll');
+  final destination = placeName ?? ll;
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    final intent = AndroidIntent(
+      action: 'action_view',
+      data: 'google.navigation:q=${Uri.encodeComponent(destination)}',
+      package: 'com.google.android.apps.maps',
+    );
+    if (await intent.canResolveActivity() ?? false) {
+      await intent.launch();
+      return;
+    }
+  }
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+    final app = Uri.parse(
+      'comgooglemaps://?daddr=${Uri.encodeComponent(destination)}&directionsmode=driving',
+    );
     if (await canLaunchUrl(app)) {
       await launchUrl(app, mode: LaunchMode.externalApplication);
       return;

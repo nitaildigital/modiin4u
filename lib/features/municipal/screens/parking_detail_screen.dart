@@ -236,7 +236,14 @@ class _ParkingDetailBody extends ConsumerWidget {
           children: [
             Expanded(
               child: FilledButton.icon(
-                onPressed: () => showNavigationChoice(context, lot, l),
+                onPressed: () => showNavigationChoice(
+                  context,
+                  lot,
+                  l,
+                  placeName: g?.name == null
+                      ? null
+                      : [g!.name!, if (g.address != null) g.address!].join(', '),
+                ),
                 icon: const Icon(IconsaxPlusLinear.routing_2, size: 18),
                 label: Text(l.getDirections),
                 style: FilledButton.styleFrom(
