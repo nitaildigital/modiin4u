@@ -2111,6 +2111,28 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### The client's PersonaAI chat on the website and in the app — 2 October
+
+The client sent his PersonaAI chat widget script (business ID 25ea67c7…,
+bottom right, #5B21E6) for the website and the app.
+
+- **Website:** the script is in `web/index.html`, so every page has it,
+  including the SEO pages and `shell.html` built from it. It is left off
+  `/admin` and `/login`, where the bubble would cover the panel's buttons.
+  The widget then loads the business's settings saved at PersonaAI (20 px
+  from the bottom), which replace the page's and put the bubble over the
+  phone layout's bottom menu. With no "ready" event, the page calls its
+  `setOffsetBottom(92)` repeatedly for 15 s after loading, and again on
+  resize, below 1100 px.
+- **App:** a native app cannot run the script, so `ShellScaffold` draws the
+  same bubble (the site's logo, bottom right, above the menu, not on the Map
+  tab). It opens the page the widget itself loads,
+  `personaai.me/chat/embed.html?businessId=…`, in the in-app browser.
+
+Checked: the website at 1440 and 390 px (bubble placement, the chat opening
+with the client's greeting), and on the Realme phone (bubble, chat in the
+in-app browser).
+
 ### Car parks from Google, and a page for each — 1 October
 
 The client chose the new parking UI and said: "We need to pull all the
