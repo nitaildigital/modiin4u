@@ -73,16 +73,11 @@ void _linkWebLanguage(ProviderContainer container, {required bool languageChosen
   void follow(bool hebrew) {
     final code = hebrew ? 'he' : 'en';
     if (container.read(localeProvider).languageCode == code) return;
-    container
-        .read(localeProvider.notifier)
-        .setLocale(supportedLocales.firstWhere((l) => l.languageCode == code));
+    container.read(localeProvider.notifier).setLocale(supportedLocales.firstWhere((l) => l.languageCode == code));
   }
 
   webIsHebrew.addListener(() => follow(webIsHebrew.value));
-  container.listen<Locale>(
-    localeProvider,
-    (_, next) => webIsHebrew.value = next.languageCode == 'he',
-  );
+  container.listen<Locale>(localeProvider, (_, next) => webIsHebrew.value = next.languageCode == 'he');
   if (languageChosen) follow(webIsHebrew.value);
 }
 
