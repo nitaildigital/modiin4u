@@ -2127,11 +2127,18 @@ bottom right, #5B21E6) for the website and the app.
 - **App:** a native app cannot run the script, so `ShellScaffold` draws the
   same bubble (the site's logo, bottom right, above the menu, not on the Map
   tab). It opens the page the widget itself loads,
-  `personaai.me/chat/embed.html?businessId=…`, in the in-app browser.
+  `personaai.me/chat/embed.html?businessId=…`, inside the app: a WebView
+  (`webview_flutter`) in a sheet over the app. It first opened in Chrome's
+  in-app tab, whose bar and personaai.me address read as leaving the app.
+  The chat's own × asks its host page to close it ('personaai-close'). A
+  page that is not embedded has no host, so the sheet gives it a stand-in
+  `window.parent` that passes the message to the app, which closes the
+  sheet. Other links the chat gives (WhatsApp, a website, a phone number)
+  open in their own apps.
 
 Checked: the website at 1440 and 390 px (bubble placement, the chat opening
-with the client's greeting), and on the Realme phone (bubble, chat in the
-in-app browser).
+with the client's greeting), and on the Realme phone (bubble, the chat in
+the app's sheet, the chat's × closing it).
 
 ### Car parks from Google, and a page for each — 1 October
 
