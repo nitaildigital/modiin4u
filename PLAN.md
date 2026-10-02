@@ -2201,6 +2201,44 @@ and gives every gesture to the chat; closed with the chat's × or Back.
 Checked on a OnePlus 6T (Android 9): the box stays above the keyboard, a
 reply shows whole above it, older messages scroll, and × returns to the app.
 
+### The admin panel in English or Hebrew — 2 October
+
+The client asked for a setting in the panel to switch it between Hebrew and
+English, Hebrew by default, with no text left behind in Hebrew.
+
+- **Where:** Settings → "שפת ממשק הניהול / Admin panel language", עברית |
+  English. It is the panel's own language, separate from the site's, and is
+  kept on that browser (`admin_language` in local storage), so each admin
+  sees the panel in the language they chose. Hebrew if nothing was chosen.
+- **How:** every text in `lib/features/admin/` is written
+  `tr('עברית', 'English')` (`admin_language.dart`), the two side by side so
+  neither can be forgotten — about 1,150 texts. A script found every Hebrew
+  literal outside comments; after the change none is left unwrapped except
+  data (below). The dashboard remounts under a new key on a switch, since its
+  sections are const widgets a plain rebuild would skip; label tables that
+  were `const` maps are getters now, so they are read in the current
+  language.
+- **Direction and dates:** the panel and every dialog read `adminDir`
+  (right-to-left in Hebrew, left-to-right in English) instead of a fixed
+  right-to-left; icon gaps and the sidebar's edge are start/end, so Hebrew
+  looks exactly as before and English mirrors it. Date and time pickers get
+  the panel's locale, so they are English or Hebrew with it.
+- **Not translated, on purpose:** the client's content (business names,
+  reviews, categories, neighbourhoods — they are his data and show as he
+  wrote them); the "מה כלול:" heading the event editor writes into the
+  event's description, which the site reads, so saved text never depends on
+  the admin's language; a slug regex. The eight admin roles exist in the
+  database in Hebrew only; the panel names them in English by their code
+  (super_admin → Super admin …). Municipal categories use the English the
+  model already had.
+- **Checked:** in a browser as a temporary admin (deleted after): Hebrew by
+  default, the switch, a reload keeping the choice, all thirty sections in
+  English, an event form with its date and time pickers, the trash and the
+  audit log, and back to Hebrew. Short labels were read in context, which
+  caught "השבת" (disable, not Shabbat) and "הקדמה" (move earlier).
+- **Deploy:** not yet. Another session is working on the website from the
+  same working tree, and a deploy builds whatever is in it.
+
 ### Car parks from Google, and a page for each — 1 October
 
 The client chose the new parking UI and said: "We need to pull all the
