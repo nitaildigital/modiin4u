@@ -641,7 +641,12 @@ class BusinessListTile extends StatelessWidget {
       reviewCount: business.reviewCount,
       // No hours on record yet, so the open/closed tag stays hidden.
       isOpen: business.hours.isEmpty ? null : business.isOpenNow,
-      kosher: business.kosherLabel,
+      // The certificate's Hebrew name in Hebrew; "Kosher" in English.
+      kosher: business.kosherLabel == null
+          ? null
+          : Localizations.localeOf(context).languageCode == 'he'
+          ? business.kosherLabel
+          : L.of(context).kosher,
       neighborhood: business.neighborhood,
       imageUrl: business.imageUrl,
       onTap: () => context.push('/business/${business.id}'),

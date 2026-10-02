@@ -25,11 +25,15 @@ class LocaleNotifier extends StateNotifier<Locale> {
     _restore();
   }
 
+  /// Set once a language is chosen in this run, so the saved one — read a
+  /// moment after start — does not overwrite it.
+  bool _chosen = false;
+
   Future<void> _restore() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final code = prefs.getString(_key);
-      if (code == null) return;
+      if (code == null || _chosen) return;
 
       final saved = supportedLocales.firstWhere(
         (l) => l.languageCode == code,
@@ -45,6 +49,7 @@ class LocaleNotifier extends StateNotifier<Locale> {
     if (!supportedLocales.any((l) => l.languageCode == locale.languageCode)) {
       return;
     }
+    _chosen = true;
     state = locale;
     try {
       final prefs = await SharedPreferences.getInstance();

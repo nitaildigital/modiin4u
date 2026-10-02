@@ -66,13 +66,18 @@ mixin WebLanguageState<T extends StatefulWidget> on State<T> {
 /// Reads the language the browser was last left in, before the first page
 /// draws, and keeps it written down from then on — so a reload, or a link
 /// opened in a new tab, comes up in the language the reader chose.
-Future<void> restoreWebLanguage() async {
+///
+/// True when the reader had chosen one, false when the site is on its default.
+Future<bool> restoreWebLanguage() async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    webIsHebrew.value = prefs.getBool(_kWebLanguageKey) ?? false;
+    final saved = prefs.getBool(_kWebLanguageKey);
+    webIsHebrew.value = saved ?? false;
     webIsHebrew.addListener(() => prefs.setBool(_kWebLanguageKey, webIsHebrew.value));
+    return saved != null;
   } catch (_) {
     // Storage the browser will not open leaves the site in English.
+    return false;
   }
 }
 

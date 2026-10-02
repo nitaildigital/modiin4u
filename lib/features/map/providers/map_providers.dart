@@ -68,7 +68,10 @@ final mapPoisProvider = FutureProvider<List<MapPoi>>((ref) async {
           time: e.displayTime,
           venue: e.venueName,
           interestedCount: e.rsvpCount,
-          eventPrice: e.displayPrice,
+          // Not `displayPrice`, which says "free" in Hebrew whatever the
+          // reader's language.
+          eventPrice: e.isFree ? null : e.displayPrice,
+          eventFree: e.isFree,
           photos: [if (e.imageUrl != null) e.imageUrl!],
         ),
     for (final l in listings)

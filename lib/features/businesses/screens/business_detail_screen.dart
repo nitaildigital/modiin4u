@@ -362,8 +362,11 @@ class _BusinessDetailContentState
   // ─────────────────────────────────────────────
   /// Only when the business is certified; nothing otherwise.
   Widget _buildKosherChip() {
-    final label = business.kosherLabel;
-    if (label == null) return const SizedBox.shrink();
+    // The certificate's Hebrew name ("מהדרין") in Hebrew; "Kosher" in English,
+    // as the website has it.
+    final certificate = business.kosherLabel;
+    if (certificate == null) return const SizedBox.shrink();
+    final label = _isHe ? certificate : L.of(context).kosher;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
@@ -1544,7 +1547,9 @@ class _BusinessDetailContentState
               for (var i = 0; i < list.length; i++)
                 _ReviewCard(
                   initials: list[i].initials,
-                  name: list[i].authorName,
+                  name: list[i].authorName.isEmpty
+                      ? L.of(context).resident
+                      : list[i].authorName,
                   date: _formatReviewDate(list[i].createdAt),
                   rating: list[i].rating,
                   text: list[i].body,

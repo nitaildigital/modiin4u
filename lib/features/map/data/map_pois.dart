@@ -69,6 +69,10 @@ class MapPoi {
   final int? interestedCount;
   final String? eventPrice;
 
+  /// A free event, which each screen words in its own language;
+  /// [eventPrice] is null for one.
+  final bool eventFree;
+
   const MapPoi({
     required this.name,
     required this.category,
@@ -97,6 +101,7 @@ class MapPoi {
     this.venue,
     this.interestedCount,
     this.eventPrice,
+    this.eventFree = false,
   });
 }
 

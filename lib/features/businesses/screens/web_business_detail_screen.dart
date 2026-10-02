@@ -1150,6 +1150,9 @@ class _ReviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = _format(review.createdAt);
+    final author = review.authorName.isEmpty
+        ? (isHebrew ? 'תושב' : 'Resident')
+        : review.authorName;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kLine))),
@@ -1170,7 +1173,7 @@ class _ReviewRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(review.authorName, textDirection: _dirOf(review.authorName), style: _inter(16, weight: FontWeight.w500)),
+                    Text(author, textDirection: _dirOf(author), style: _inter(16, weight: FontWeight.w500)),
                     const SizedBox(width: 12),
                     Text(date, style: _inter(12, color: _kMuted)),
                   ],

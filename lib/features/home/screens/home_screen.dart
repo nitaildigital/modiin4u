@@ -860,7 +860,7 @@ class _BusinessCard extends StatelessWidget {
                           const Icon(IconsaxPlusBold.verify, size: 12, color: Colors.white),
                           const SizedBox(width: 4),
                           Text(
-                            'Kosher',
+                            L.of(context).kosher,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 10,

@@ -462,6 +462,8 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
     final l = _listingFor(poi);
     if (l != null) return webListingSlideData(l, isHebrew: _isHebrew);
 
+    final eventPrice = poi.eventFree ? _t('Free', 'חינם') : poi.eventPrice;
+
     final rows = switch (poi.layer) {
       // "Property Type: Apartment" was printed for every pin, whatever the
       // listing actually is. Without the listing's row the type is not known,
@@ -472,10 +474,10 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
         if (poi.area != null) (_t('Size', 'שטח'), poi.area!),
       ],
       'Events' => [
-        (_t('Category', 'קטגוריה'), poi.category),
+        (_t('Category', 'קטגוריה'), _t('Event', 'אירוע')),
         if (poi.venue != null) (_t('Venue', 'מיקום'), poi.venue!),
         if (poi.time != null) (_t('Time', 'שעה'), poi.time!),
-        if (poi.eventPrice != null) (_t('Price', 'מחיר'), poi.eventPrice!),
+        if (eventPrice != null) (_t('Price', 'מחיר'), eventPrice),
       ],
       _ => [
         (_t('Category', 'קטגוריה'), poi.category),
@@ -493,7 +495,7 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
     final facts = switch (poi.layer) {
       'Real Estate' => [?poi.rooms, ?poi.area, ?poi.floor],
       'Events' => [
-        poi.category,
+        _t('Event', 'אירוע'),
         ?poi.time,
         if (poi.interestedCount != null)
           _t(
@@ -527,7 +529,7 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
                   poi.saleTag!,
                   poi.saleTag == 'FOR RENT' ? 'להשכרה' : 'למכירה',
                 ),
-        'Events' => poi.eventPrice,
+        'Events' => eventPrice,
         _ => poi.rating == null ? null : '★ ${poi.rating}',
       },
       facts: facts,

@@ -14,7 +14,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/page_title/page_title.dart';
 import 'shared/web_asset_precache.dart';
-import 'shared/widgets/web_chrome.dart' show restoreWebLanguage;
+import 'shared/widgets/web_chrome.dart' show restoreWebLanguage, webIsHebrew;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,12 +48,42 @@ void main() async {
   } catch (e) {
     debugPrint('⚠️ Supabase init failed/timed out: $e');
   }
+  final container = ProviderContainer();
   if (kIsWeb) {
-    await restoreWebLanguage();
+    final languageChosen = await restoreWebLanguage();
+    _linkWebLanguage(container, languageChosen: languageChosen);
     await pictures.timeout(const Duration(milliseconds: 1500), onTimeout: () {});
   }
   if (kIsWeb) _keepServedTitle();
-  runApp(const ProviderScope(child: Modiin4uApp()));
+  runApp(UncontrolledProviderScope(container: container, child: const Modiin4uApp()));
+}
+
+/// One language for the whole website.
+///
+/// It is kept in two places: [webIsHebrew], which the navbar's switch writes
+/// and the desktop pages read, and [localeProvider], which the phone-width
+/// pages, the ☰ menu and Flutter's own widgets read, and which the Change
+/// Language page writes. Each switch wrote only its own, so choosing English
+/// left the other half of the site in Hebrew. Now each follows the other.
+///
+/// A reader who has not chosen yet keeps the defaults as they were — the
+/// desktop pages in English, the phone-width ones in Hebrew; once they
+/// choose, the choice they saved wins over the app's.
+void _linkWebLanguage(ProviderContainer container, {required bool languageChosen}) {
+  void follow(bool hebrew) {
+    final code = hebrew ? 'he' : 'en';
+    if (container.read(localeProvider).languageCode == code) return;
+    container
+        .read(localeProvider.notifier)
+        .setLocale(supportedLocales.firstWhere((l) => l.languageCode == code));
+  }
+
+  webIsHebrew.addListener(() => follow(webIsHebrew.value));
+  container.listen<Locale>(
+    localeProvider,
+    (_, next) => webIsHebrew.value = next.languageCode == 'he',
+  );
+  if (languageChosen) follow(webIsHebrew.value);
 }
 
 /// The title the website's page was served with, while the visitor is still

@@ -567,7 +567,7 @@ class _PoiCard extends StatelessWidget {
       children: [
         _title(poi.name),
         const SizedBox(height: 8),
-        _subtitle(poi.category),
+        _subtitle(l.event),
         if (poi.time != null) ...[
           const SizedBox(height: 11),
           _infoRow(IconsaxPlusBold.clock, poi.time!),
@@ -579,10 +579,10 @@ class _PoiCard extends StatelessWidget {
         const Spacer(),
         Row(
           children: [
-            if (poi.eventPrice != null)
+            if (poi.eventFree || poi.eventPrice != null)
               Expanded(
                 child: Text(
-                  poi.eventPrice!,
+                  poi.eventFree ? l.free : poi.eventPrice!,
                   style: _display(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

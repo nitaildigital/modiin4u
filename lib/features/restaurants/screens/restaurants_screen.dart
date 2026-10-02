@@ -1101,7 +1101,9 @@ class _HPlaceCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Views',
+                    Localizations.localeOf(context).languageCode == 'he'
+                        ? 'צפיות'
+                        : 'Views',
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,

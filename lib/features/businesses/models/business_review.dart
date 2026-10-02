@@ -1,6 +1,10 @@
 /// A review someone wrote about a business.
 class BusinessReview {
   final String id;
+
+  /// Empty when the review carries no name; the page then says "Resident"
+  /// in the reader's language. It used to be filled with the Hebrew word
+  /// here, which the English website printed as it was.
   final String authorName;
   final String? authorAvatarUrl;
   final int rating;
@@ -41,7 +45,7 @@ class BusinessReview {
 
     return BusinessReview(
       id: json['id'] as String,
-      authorName: (name == null || name.isEmpty) ? 'תושב' : name,
+      authorName: name ?? '',
       authorAvatarUrl: avatar,
       rating: (json['rating'] as num?)?.toInt() ?? 0,
       title: json['title'] as String?,
