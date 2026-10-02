@@ -48,20 +48,22 @@ class PersonaAiChatButton extends StatelessWidget {
   }
 }
 
-/// The chat in a sheet over the app, nearly full height, closed with the
-/// chat's own × or by dragging it down.
+/// The chat on a screen of its own, closed with the chat's own × or Back.
+///
+/// It was a sheet at first, which kept its height when the keyboard opened:
+/// the box being typed in and the newest answers went behind the keyboard,
+/// and a drag inside it pulled the sheet down instead of scrolling the
+/// chat. A full screen shrinks above the keyboard, as a messaging app does,
+/// and every gesture goes to the chat.
 Future<void> showPersonaAiChat(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (_) => FractionallySizedBox(
-      heightFactor: 0.92,
-      child: const _ChatSheet(),
+  return Navigator.of(context, rootNavigator: true).push(
+    MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) => const Scaffold(
+        backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(child: _ChatSheet()),
+      ),
     ),
   );
 }
@@ -124,28 +126,11 @@ class _ChatSheetState extends State<_ChatSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // The chat draws its own header (logo, name, ×); the sheet adds only a
-    // handle to drag it down by.
-    return Column(
+    // The chat draws its own header (logo, name, ×).
+    return Stack(
       children: [
-        Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          width: 40,
-          height: 4,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD0D0D0),
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        Expanded(
-          child: Stack(
-            children: [
-              WebViewWidget(controller: _web),
-              if (_loading)
-                const Center(child: CircularProgressIndicator(color: _kColor)),
-            ],
-          ),
-        ),
+        WebViewWidget(controller: _web),
+        if (_loading) const Center(child: CircularProgressIndicator(color: _kColor)),
       ],
     );
   }
