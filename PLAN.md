@@ -2111,6 +2111,59 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### English on the website stopped halfway — 2 October
+
+"Why is the website not fully English when English is selected?"
+
+**Two language settings.** The website kept its language in two places:
+`webIsHebrew`, which the navbar's EN/עב switch writes and the desktop pages
+read, and `localeProvider`, which the phone-width pages, the ☰ menu and
+Flutter's own widgets read and the Change Language page writes. Each switch
+wrote only its own, so the navbar's English left the phone-width site in
+Hebrew. On the website each now follows the other (`_linkWebLanguage`,
+main.dart). A visitor who has not chosen keeps the defaults as they were —
+desktop pages in English, phone-width pages in Hebrew; a saved choice wins
+over the app's saved locale, which no longer overwrites a choice made while
+it loads.
+
+**Hebrew written into the code.**
+- The ☰ menu at phone width was Hebrew only; it is in both now, and comes in
+  from the ☰'s side in either direction.
+- A review with no name read "תושב"; the name is left empty and the page says
+  Resident / תושב.
+- On both maps an event's category was "אירוע" and a free one's price "חינם";
+  both follow the language (`MapPoi.eventFree`).
+
+**Not a bug: the content.** Articles, businesses, events, deals and
+categories have one name and text, in Hebrew, as the old site did. Only car
+parks, municipal places and info pages have English fields. English content
+would need English fields and someone to write them — the client's decision;
+no machine translation without his say-so.
+
+Checked in Chrome on a local build: switching to Hebrew and back on the
+desktop, then the phone width in English (home and ☰ menu), a reload, a
+first-time phone visitor (Hebrew, menu as before), and a free event on the
+map in English.
+
+Not changed: the PersonaAI greeting is the client's, from his dashboard, and
+stays Hebrew.
+
+**The app.** Its language comes from Settings → Language alone, and switching
+works both ways, at once, and survives a restart. Fixed in the same pass:
+- the kosher badge printed the certificate's Hebrew name ("מהדרין") in English
+  on the business list and page — "Kosher" now, as the website has it;
+- the home page's restaurant cards said "Kosher" in Hebrew too — "כשר" now;
+- "Views" on the restaurants page was English in Hebrew.
+
+Checked on the Android emulator in English: home, businesses, a category and
+a business, map, news and an article, municipal, parking, Shabbat and
+holidays, restaurants, events and an event, real estate, deals and a deal,
+side menu, settings; and Hebrew → English → Hebrew from Settings. Not opened
+(the emulator stopped answering): step counter, help, sign-in, favourites —
+the code scan found no Hebrew-only text in them. Seen on the way, not
+language: the deals page's category row overflows by 6 px on the 7-inch
+emulator.
+
 ### The client's PersonaAI chat on the website and in the app — 2 October
 
 The client sent his PersonaAI chat widget script (business ID 25ea67c7…,
