@@ -9,6 +9,7 @@ import '../../events/models/event_labels.dart';
 import '../providers/admin_events_provider.dart';
 import '../widgets/admin_events_form_fields.dart';
 import '../widgets/image_upload_field.dart';
+import '../admin_language.dart';
 
 class AdminEventsScreen extends ConsumerStatefulWidget {
   const AdminEventsScreen({super.key});
@@ -69,7 +70,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש אירוע...',
+                    hintText: tr('חיפוש אירוע...', 'Search events...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -102,24 +103,24 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _statusFilter.isEmpty, () => _filter('')),
+              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _filter('')),
               _FilterChip(
-                'פורסם',
+                tr('פורסם', 'Published'),
                 _statusFilter == 'published',
                 () => _filter('published'),
               ),
               _FilterChip(
-                'טיוטה',
+                tr('טיוטה', 'Draft'),
                 _statusFilter == 'draft',
                 () => _filter('draft'),
               ),
               _FilterChip(
-                'ממתין',
+                tr('ממתין', 'Pending'),
                 _statusFilter == 'pending',
                 () => _filter('pending'),
               ),
               _FilterChip(
-                'בוטל',
+                tr('בוטל', 'Cancelled'),
                 _statusFilter == 'cancelled',
                 () => _filter('cancelled'),
               ),
@@ -129,7 +130,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
               // letting the table below show the error and a retry.
               if (eventsAsync.valueOrNull case final list?)
                 Text(
-                  '${list.length} אירועים',
+                  tr('${list.length} אירועים', '${list.length} events'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -141,7 +142,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                 onPressed: () => _showEventEditor(context),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'אירוע חדש',
+                  tr('אירוע חדש', 'New event'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -171,7 +172,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'שגיאה בטעינת אירועים',
+                    tr('שגיאה בטעינת אירועים', 'Error loading events'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.error,
@@ -189,7 +190,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                   TextButton(
                     onPressed: () =>
                         ref.read(adminEventListProvider.notifier).load(),
-                    child: const Text('נסה שוב'),
+                    child: Text(tr('נסה שוב', 'Try again')),
                   ),
                 ],
               ),
@@ -207,7 +208,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין אירועים',
+                        tr('אין אירועים', 'No events'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -241,7 +242,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('הפעולה נכשלה: $e'),
+          content: Text(tr('הפעולה נכשלה: $e', 'The action failed: $e')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -263,22 +264,22 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(
-              'ביטול אירוע',
+              tr('ביטול אירוע', 'Cancel event'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontWeight: FontWeight.w700,
               ),
             ),
             content: Text(
-              'לבטל את "${event['title']}"? האירוע ירד מהאפליקציה '
-              'וניתן יהיה להחזירו על ידי שינוי הסטטוס.',
+              tr('לבטל את "${event['title']}"? האירוע ירד מהאפליקציה '
+              'וניתן יהיה להחזירו על ידי שינוי הסטטוס.', 'Cancel "${event['title']}"? The event will leave the app, and it can be brought back by changing its status.'),
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
-                  'חזרה',
+                  tr('חזרה', 'Back'),
                   style: TextStyle(fontFamily: AppFonts.rubik),
                 ),
               ),
@@ -288,7 +289,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                   _run(() => notifier.deleteEvent(id));
                 },
                 child: Text(
-                  'בטל אירוע',
+                  tr('בטל אירוע', 'Cancel event'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     color: AppColors.error,
@@ -353,12 +354,12 @@ class _EventTable extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _Col('שם אירוע', flex: 3),
-              _Col('תאריך', flex: 2),
-              if (isWide) _Col('מיקום', flex: 2),
-              _Col('קטגוריה', flex: 2),
-              _Col('סטטוס', flex: 1),
-              if (isWide) _Col('מתעניינים', flex: 1),
+              _Col(tr('שם אירוע', 'Event name'), flex: 3),
+              _Col(tr('תאריך', 'Date'), flex: 2),
+              if (isWide) _Col(tr('מיקום', 'Location'), flex: 2),
+              _Col(tr('קטגוריה', 'Category'), flex: 2),
+              _Col(tr('סטטוס', 'Status'), flex: 1),
+              if (isWide) _Col(tr('מתעניינים', 'Interested'), flex: 1),
               const SizedBox(width: 40),
             ],
           ),
@@ -413,7 +414,7 @@ class _EventTable extends StatelessWidget {
                               children: [
                                 if (isFeatured)
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 4),
+                                    padding: const EdgeInsetsDirectional.only(end: 4),
                                     child: Icon(
                                       Icons.star,
                                       size: 14,
@@ -422,7 +423,7 @@ class _EventTable extends StatelessWidget {
                                   ),
                                 if (isFree)
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 4),
+                                    padding: const EdgeInsetsDirectional.only(end: 4),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 4,
@@ -435,7 +436,7 @@ class _EventTable extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(3),
                                       ),
                                       child: Text(
-                                        'חינם',
+                                        tr('חינם', 'Free'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 9,
@@ -487,7 +488,7 @@ class _EventTable extends StatelessWidget {
                             ),
                             Text(
                               isAllDay
-                                  ? 'כל היום'
+                                  ? tr('כל היום', 'All day')
                                   : end.isNotEmpty
                                   ? '$start–$end'
                                   : start,
@@ -505,7 +506,7 @@ class _EventTable extends StatelessWidget {
                           flex: 2,
                           child: Text(
                             (ev['is_online'] as bool? ?? false)
-                                ? 'אונליין'
+                                ? tr('אונליין', 'Online')
                                 : venue ?? '',
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
@@ -554,17 +555,17 @@ class _EventTable extends StatelessWidget {
                         ),
                         onSelected: (v) => onAction(v, ev),
                         itemBuilder: (_) => [
-                          _menuItem('edit', 'עריכה'),
+                          _menuItem('edit', tr('עריכה', 'Edit')),
                           if (status != 'published')
-                            _menuItem('publish', 'פרסם'),
+                            _menuItem('publish', tr('פרסם', 'Publish')),
                           if (status != 'draft')
-                            _menuItem('draft', 'החזר לטיוטה'),
+                            _menuItem('draft', tr('החזר לטיוטה', 'Back to draft')),
                           // One item: "cancel" and "delete" both set
                           // status = 'cancelled' — the row is never removed.
                           if (status != 'cancelled')
                             _menuItem(
                               'cancel',
-                              'בטל אירוע',
+                              tr('בטל אירוע', 'Cancel event'),
                               color: AppColors.error,
                             ),
                         ],
@@ -619,6 +620,8 @@ String? _composeFullDescription(String body, String included) {
   final items = _includedItems(included);
   final parts = [
     if (b.isNotEmpty) b,
+    // Saved into the event's text, which the site reads, so it stays the
+    // same whichever language the panel is in.
     if (items.isNotEmpty) 'מה כלול:\n${items.map((i) => '• $i').join('\n')}',
   ];
   return parts.isEmpty ? null : parts.join('\n\n');
@@ -683,12 +686,12 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
   bool get _isEditing => widget.event != null || _savedId != null;
   String? get _id => widget.event?['id'] as String? ?? _savedId;
 
-  static const _statuses = {
-    'draft': 'טיוטה',
-    'pending': 'ממתין לאישור',
-    'published': 'פורסם',
-    'cancelled': 'בוטל',
-    'past': 'הסתיים',
+  static Map<String, String> get _statuses => {
+    'draft': tr('טיוטה', 'Draft'),
+    'pending': tr('ממתין לאישור', 'Pending approval'),
+    'published': tr('פורסם', 'Published'),
+    'cancelled': tr('בוטל', 'Cancelled'),
+    'past': tr('הסתיים', 'Ended'),
   };
 
   @override
@@ -806,7 +809,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760, maxHeight: 860),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -825,7 +828,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת אירוע' : 'אירוע חדש',
+                        _isEditing ? tr('עריכת אירוע', 'Edit event') : tr('אירוע חדש', 'New event'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -851,45 +854,45 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                     padding: const EdgeInsets.all(20),
                     children: [
                       // ── What ──
-                      _section('פרטי האירוע'),
+                      _section(tr('פרטי האירוע', 'Event details')),
                       _field(
                         _title,
-                        _decoration('שם אירוע *'),
+                        _decoration(tr('שם אירוע *', 'Event name *')),
                         validator: (v) =>
-                            (v ?? '').trim().isEmpty ? 'שדה חובה' : null,
+                            (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
                       _field(
                         _shortDescription,
                         _decoration(
-                          'תיאור קצר',
-                          helper: 'משפט או שניים. מוצג באתר כשאין תיאור מלא.',
+                          tr('תיאור קצר', 'Short description'),
+                          helper: tr('משפט או שניים. מוצג באתר כשאין תיאור מלא.', 'A sentence or two. Shown on the site when there is no full description.'),
                         ),
                         maxLines: 2,
                       ),
                       _field(
                         _body,
                         _decoration(
-                          'תיאור מלא',
+                          tr('תיאור מלא', 'Full description'),
                           helper:
-                              'מוצג תחת "אודות האירוע". שורה ריקה מפרידה בין פסקאות.',
+                              tr('מוצג תחת "אודות האירוע". שורה ריקה מפרידה בין פסקאות.', 'Shown under "About the event". An empty line separates paragraphs.'),
                         ),
                         maxLines: 6,
                       ),
                       _field(
                         _included,
                         _decoration(
-                          'מה כלול',
-                          hint: 'הופעה חיה\nכיבוד קל\nחניה חופשית',
+                          tr('מה כלול', 'What is included'),
+                          hint: tr('הופעה חיה\nכיבוד קל\nחניה חופשית', 'Live show\nLight refreshments\nFree parking'),
                           helper:
-                              'פריט אחד בכל שורה. מוצג באתר כרשימת סימונים תחת '
-                              '"מה כלול"; ריק — החלק לא יוצג.',
+                              tr('פריט אחד בכל שורה. מוצג באתר כרשימת סימונים תחת '
+                              '"מה כלול"; ריק — החלק לא יוצג.', 'One item per line. Shown on the site as a checklist under "What is included"; empty — the section is not shown.'),
                         ),
                         maxLines: 5,
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: ImageUploadField(
-                          label: 'תמונה',
+                          label: tr('תמונה', 'Image'),
                           controller: _image,
                           folder: 'events',
                         ),
@@ -897,7 +900,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                       _categoriesField(links),
 
                       // ── When ──
-                      _section('מועד'),
+                      _section(tr('מועד', 'Time')),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -905,7 +908,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                             child: _padded(
                               AdminDateField(
                                 controller: _startDate,
-                                decoration: _decoration('תאריך התחלה *'),
+                                decoration: _decoration(tr('תאריך התחלה *', 'Start date *')),
                                 required: true,
                               ),
                             ),
@@ -915,7 +918,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                             child: _padded(
                               AdminTimeField(
                                 controller: _startTime,
-                                decoration: _decoration('שעת התחלה'),
+                                decoration: _decoration(tr('שעת התחלה', 'Start time')),
                                 enabled: !_isAllDay,
                               ),
                             ),
@@ -930,8 +933,8 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                               AdminDateField(
                                 controller: _endDate,
                                 decoration: _decoration(
-                                  'תאריך סיום',
-                                  helper: 'רק לאירוע של יותר מיום אחד',
+                                  tr('תאריך סיום', 'End date'),
+                                  helper: tr('רק לאירוע של יותר מיום אחד', 'Only for an event longer than one day'),
                                 ),
                               ),
                             ),
@@ -941,7 +944,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                             child: _padded(
                               AdminTimeField(
                                 controller: _endTime,
-                                decoration: _decoration('שעת סיום'),
+                                decoration: _decoration(tr('שעת סיום', 'End time')),
                                 enabled: !_isAllDay,
                               ),
                             ),
@@ -953,7 +956,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                         runSpacing: 4,
                         children: [
                           _toggle(
-                            'כל היום',
+                            tr('כל היום', 'All day'),
                             _isAllDay,
                             (v) => setState(() => _isAllDay = v),
                           ),
@@ -961,14 +964,14 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                       ),
 
                       // ── Where ──
-                      _section('מיקום'),
+                      _section(tr('מיקום', 'Location')),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: _field(
                               _venue,
-                              _decoration('שם המקום', hint: 'היכל התרבות'),
+                              _decoration(tr('שם המקום', 'Place name'), hint: tr('היכל התרבות', 'Heichal HaTarbut')),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -981,7 +984,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                                 size: 16,
                               ),
                               label: Text(
-                                'מילוי מעסק',
+                                tr('מילוי מעסק', 'Fill from a business'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 12,
@@ -991,7 +994,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                           ),
                         ],
                       ),
-                      _field(_address, _decoration('כתובת')),
+                      _field(_address, _decoration(tr('כתובת', 'Address'))),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -999,10 +1002,10 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                             child: _field(
                               _latitude,
                               _decoration(
-                                'קו רוחב',
+                                tr('קו רוחב', 'Latitude'),
                                 hint: '31.8969',
                                 helper:
-                                    'אפשר להדביק כאן "31.89, 35.01" מגוגל מפות',
+                                    tr('אפשר להדביק כאן "31.89, 35.01" מגוגל מפות', 'You can paste "31.89, 35.01" from Google Maps here'),
                               ),
                               ltr: true,
                               onChanged: _splitPastedCoordinates,
@@ -1014,9 +1017,9 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                             child: _field(
                               _longitude,
                               _decoration(
-                                'קו אורך',
+                                tr('קו אורך', 'Longitude'),
                                 hint: '35.0095',
-                                helper: 'בלי נקודה — אין מפה ואין ניווט באתר',
+                                helper: tr('בלי נקודה — אין מפה ואין ניווט באתר', 'No point — no map and no navigation on the site'),
                               ),
                               ltr: true,
                               validator: (v) => _coordinate(v, 180),
@@ -1027,9 +1030,9 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                       _field(
                         _waze,
                         _decoration(
-                          'קישור Waze',
+                          tr('קישור Waze', 'Waze link'),
                           hint: 'https://waze.com/ul?...',
-                          helper: 'אם ריק, כפתור הניווט באתר ישתמש בנקודה',
+                          helper: tr('אם ריק, כפתור הניווט באתר ישתמש בנקודה', 'If empty, the site\'s navigation button uses the point'),
                         ),
                         ltr: true,
                         validator: _url,
@@ -1039,7 +1042,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                         runSpacing: 4,
                         children: [
                           _toggle(
-                            'אירוע אונליין',
+                            tr('אירוע אונליין', 'Online event'),
                             _isOnline,
                             (v) => setState(() => _isOnline = v),
                           ),
@@ -1049,25 +1052,25 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                         const SizedBox(height: 8),
                         _field(
                           _onlineUrl,
-                          _decoration('קישור לשידור', hint: 'https://'),
+                          _decoration(tr('קישור לשידור', 'Stream link'), hint: 'https://'),
                           ltr: true,
                           validator: _url,
                         ),
                       ],
 
                       // ── Tickets ──
-                      _section('כרטיסים'),
+                      _section(tr('כרטיסים', 'Tickets')),
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
                         children: [
                           _toggle(
-                            'כניסה חופשית',
+                            tr('כניסה חופשית', 'Free entry'),
                             _isFree,
                             (v) => setState(() => _isFree = v),
                           ),
                           _toggle(
-                            'אזלו הכרטיסים',
+                            tr('אזלו הכרטיסים', 'Tickets sold out'),
                             _isSoldOut,
                             (v) => setState(() => _isSoldOut = v),
                           ),
@@ -1081,9 +1084,9 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                             child: _field(
                               _price,
                               _decoration(
-                                'מחיר (₪)',
+                                tr('מחיר (₪)', 'Price (₪)'),
                                 hint: '50',
-                                helper: _isFree ? 'האירוע מסומן חינם' : null,
+                                helper: _isFree ? tr('האירוע מסומן חינם', 'The event is marked free') : null,
                               ),
                               ltr: true,
                               enabled: !_isFree,
@@ -1094,7 +1097,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                           Expanded(
                             child: _field(
                               _maxAttendees,
-                              _decoration('מספר משתתפים מרבי', hint: '100'),
+                              _decoration(tr('מספר משתתפים מרבי', 'Maximum participants'), hint: '100'),
                               ltr: true,
                               validator: _positiveInt,
                             ),
@@ -1103,16 +1106,16 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                       ),
                       _field(
                         _ticketUrl,
-                        _decoration('קישור לרכישת כרטיסים', hint: 'https://'),
+                        _decoration(tr('קישור לרכישת כרטיסים', 'Ticket purchase link'), hint: 'https://'),
                         ltr: true,
                         validator: _url,
                       ),
 
                       // ── Who ──
-                      _section('מארגן'),
+                      _section(tr('מארגן', 'Organiser')),
                       _padded(
                         AdminBusinessPickerField(
-                          label: 'העסק המארגן',
+                          label: tr('העסק המארגן', 'Organising business'),
                           businessId: _businessId,
                           onChanged: (b) => setState(() => _businessId = b?.id),
                         ),
@@ -1120,7 +1123,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12, right: 4),
                         child: Text(
-                          'מוצג בעמוד האירוע בכרטיס "מאורגן על ידי". ריק — הכרטיס לא יוצג.',
+                          tr('מוצג בעמוד האירוע בכרטיס "מאורגן על ידי". ריק — הכרטיס לא יוצג.', 'Shown on the event page in the "Organised by" card. Empty — the card is not shown.'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 11,
@@ -1130,10 +1133,10 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                       ),
 
                       // ── Status ──
-                      _section('פרסום'),
+                      _section(tr('פרסום', 'Publish')),
                       DropdownButtonFormField<String>(
                         initialValue: _status,
-                        decoration: _decoration('סטטוס'),
+                        decoration: _decoration(tr('סטטוס', 'Status')),
                         items: [
                           for (final s in _statuses.entries)
                             DropdownMenuItem(
@@ -1166,7 +1169,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                         runSpacing: 4,
                         children: [
                           _toggle(
-                            'מומלץ',
+                            tr('מומלץ', 'Recommended'),
                             _isFeatured,
                             (v) => setState(() => _isFeatured = v),
                           ),
@@ -1190,7 +1193,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -1213,7 +1216,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור אירוע',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור אירוע', 'Create event'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -1238,10 +1241,10 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     );
     if (at != null) {
       final l = at.toLocal();
-      return 'פורסם לראשונה ${_displayDate(formatAdminDate(l))} '
-          '${formatAdminTime(l.hour, l.minute)} — המיון "החדשים" באתר לפיו.';
+      return tr('פורסם לראשונה ${_displayDate(formatAdminDate(l))} '
+          '${formatAdminTime(l.hour, l.minute)} — המיון "החדשים" באתר לפיו.', 'First published ${_displayDate(formatAdminDate(l))} ${formatAdminTime(l.hour, l.minute)} — the site\'s "Newest" sort uses it.');
     }
-    return 'תאריך הפרסום יירשם בשמירה הראשונה בסטטוס "פורסם".';
+    return tr('תאריך הפרסום יירשם בשמירה הראשונה בסטטוס "פורסם".', 'The publication date is recorded at the first save with the status "Published".');
   }
 
   Widget _section(String title) {
@@ -1307,7 +1310,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     Widget body;
     if (links.hasError || categories.hasError) {
       body = Text(
-        'לא ניתן לטעון את הקטגוריות: ${links.error ?? categories.error}',
+        tr('לא ניתן לטעון את הקטגוריות: ${links.error ?? categories.error}', 'Could not load the categories: ${links.error ?? categories.error}'),
         style: TextStyle(
           fontFamily: AppFonts.rubik,
           fontSize: 12,
@@ -1333,8 +1336,8 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                   [
                     c.name,
                     if (selected.isNotEmpty && selected.first == c.id)
-                      '(ראשית)',
-                    if (!c.isActive) '(לא פעילה)',
+                      tr('(ראשית)', '(primary)'),
+                    if (!c.isActive) tr('(לא פעילה)', '(inactive)'),
                   ].join(' '),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
                 ),
@@ -1364,7 +1367,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'קטגוריות',
+            tr('קטגוריות', 'Categories'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 12,
@@ -1375,7 +1378,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
           body,
           const SizedBox(height: 4),
           Text(
-            'הקטגוריה הראשונה שנבחרה היא הראשית — היא מוצגת על כרטיס האירוע.',
+            tr('הקטגוריה הראשונה שנבחרה היא הראשית — היא מוצגת על כרטיס האירוע.', 'The first category chosen is the primary one — it is shown on the event card.'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 11,
@@ -1439,7 +1442,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     if (t.isEmpty) return null;
     if (limit == 90 && _coordinatePair(t) != null) return null;
     final n = double.tryParse(t);
-    if (n == null || n.abs() > limit) return 'מספר לא תקין';
+    if (n == null || n.abs() > limit) return tr('מספר לא תקין', 'Invalid number');
     return null;
   }
 
@@ -1448,21 +1451,21 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     if (t.isEmpty) return null;
     return t.startsWith('http://') || t.startsWith('https://')
         ? null
-        : 'קישור מלא, מתחיל ב-https://';
+        : tr('קישור מלא, מתחיל ב-https://', 'A full link, starting with https://');
   }
 
   String? _priceValidator(String? v) {
     final t = (v ?? '').trim();
     if (t.isEmpty) return null;
     final n = num.tryParse(t.replaceAll('₪', '').trim());
-    return n == null || n < 0 ? 'מספר בלבד, למשל 50' : null;
+    return n == null || n < 0 ? tr('מספר בלבד, למשל 50', 'A number only, for example 50') : null;
   }
 
   String? _positiveInt(String? v) {
     final t = (v ?? '').trim();
     if (t.isEmpty) return null;
     final n = int.tryParse(t);
-    return n == null || n <= 0 ? 'מספר שלם חיובי' : null;
+    return n == null || n <= 0 ? tr('מספר שלם חיובי', 'A positive whole number') : null;
   }
 
   void _toast(String message) {
@@ -1482,14 +1485,14 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     final start = parseAdminDate(_startDate.text)!;
     final end = parseAdminDate(_endDate.text);
     if (end != null && end.isBefore(start)) {
-      _toast('תאריך הסיום לפני תאריך ההתחלה');
+      _toast(tr('תאריך הסיום לפני תאריך ההתחלה', 'The end date is before the start date'));
       return;
     }
     final pair = _coordinatePair(_latitude.text);
     final lat = pair?.lat ?? double.tryParse(_latitude.text.trim());
     final lng = pair?.lng ?? double.tryParse(_longitude.text.trim());
     if ((lat == null) != (lng == null)) {
-      _toast('יש למלא גם קו רוחב וגם קו אורך, או להשאיר את שניהם ריקים');
+      _toast(tr('יש למלא גם קו רוחב וגם קו אורך, או להשאיר את שניהם ריקים', 'Fill in both latitude and longitude, or leave both empty'));
       return;
     }
 
@@ -1558,7 +1561,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) _toast('שגיאה: $e');
+      if (mounted) _toast(tr('שגיאה: $e', 'Error: $e'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1574,11 +1577,11 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'published' => ('פורסם', AppColors.success),
-      'draft' => ('טיוטה', AppColors.gold),
-      'pending' => ('ממתין', AppColors.turquoise),
-      'cancelled' => ('בוטל', AppColors.error),
-      'past' => ('הסתיים', AppColors.grayText),
+      'published' => (tr('פורסם', 'Published'), AppColors.success),
+      'draft' => (tr('טיוטה', 'Draft'), AppColors.gold),
+      'pending' => (tr('ממתין', 'Pending'), AppColors.turquoise),
+      'cancelled' => (tr('בוטל', 'Cancelled'), AppColors.error),
+      'past' => (tr('הסתיים', 'Ended'), AppColors.grayText),
       _ => (status, AppColors.grayLight),
     };
     return Align(
@@ -1634,7 +1637,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

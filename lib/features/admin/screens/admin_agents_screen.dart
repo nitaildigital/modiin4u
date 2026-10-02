@@ -7,6 +7,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_agents_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 /// Estate agents.
 ///
@@ -61,7 +62,7 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                   onChanged: (v) =>
                       ref.read(adminAgentListProvider.notifier).setSearch(v),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש מתווך / סוכנות...',
+                    hintText: tr('חיפוש מתווך / סוכנות...', 'Search agent / agency...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -76,14 +77,14 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _chip('הכל', _activeFilter.isEmpty, () => _setFilter('')),
+              _chip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
               _chip(
-                'פעילים',
+                tr('פעילים', 'Active'),
                 _activeFilter == 'active',
                 () => _setFilter('active'),
               ),
               _chip(
-                'לא פעילים',
+                tr('לא פעילים', 'Inactive'),
                 _activeFilter == 'inactive',
                 () => _setFilter('inactive'),
               ),
@@ -93,7 +94,7 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
               // the list below show the error and a retry.
               if (async.valueOrNull case final l?)
                 Text(
-                  '${l.length} מתווכים',
+                  tr('${l.length} מתווכים', '${l.length} agents'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -105,7 +106,7 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                 onPressed: () => _showEditor(),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'מתווך חדש',
+                  tr('מתווך חדש', 'New agent'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
               ),
@@ -117,7 +118,7 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת המתווכים',
+              message: tr('שגיאה בטעינת המתווכים', 'Error loading the agents'),
               error: e,
               onRetry: () => ref.read(adminAgentListProvider.notifier).load(),
             ),
@@ -127,7 +128,7 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(32),
                     child: Text(
-                      'אין מתווכים עדיין. מתווך שנוסיף כאן יוכל להיות משויך למודעת נדל\u05f4ן.',
+                      tr('אין מתווכים עדיין. מתווך שנוסיף כאן יוכל להיות משויך למודעת נדל\u05f4ן.', 'No agents yet. An agent added here can be assigned to a real estate listing.'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
@@ -162,7 +163,7 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
   }
 
   Widget _chip(String label, bool selected, VoidCallback onTap) => Padding(
-    padding: const EdgeInsets.only(left: 6),
+    padding: const EdgeInsetsDirectional.only(end: 6),
     child: FilterChip(
       label: Text(
         label,
@@ -233,7 +234,7 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
               ),
             Expanded(
               child: Text(
-                '$listings מודעות',
+                tr('$listings מודעות', '$listings listings'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 13,
@@ -253,7 +254,7 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  active ? 'פעיל' : 'לא פעיל',
+                  active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
@@ -274,14 +275,14 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                 PopupMenuItem(
                   value: 'edit',
                   child: Text(
-                    'עריכה',
+                    tr('עריכה', 'Edit'),
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   ),
                 ),
                 PopupMenuItem(
                   value: active ? 'deactivate' : 'activate',
                   child: Text(
-                    active ? 'השבתה' : 'הפעלה',
+                    active ? tr('השבתה', 'Disable') : tr('הפעלה', 'Activate'),
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   ),
                 ),
@@ -410,7 +411,7 @@ class _AgentEditorState extends ConsumerState<_AgentEditor> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'שגיאה: $e',
+              tr('שגיאה: $e', 'Error: $e'),
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             backgroundColor: AppColors.error,
@@ -444,7 +445,7 @@ class _AgentEditorState extends ConsumerState<_AgentEditor> {
                 child: Row(
                   children: [
                     Text(
-                      _isEditing ? 'עריכת מתווך' : 'מתווך חדש',
+                      _isEditing ? tr('עריכת מתווך', 'Edit agent') : tr('מתווך חדש', 'New agent'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontSize: 16,
@@ -470,29 +471,29 @@ class _AgentEditorState extends ConsumerState<_AgentEditor> {
                   padding: const EdgeInsets.all(20),
                   children: [
                     _field(
-                      'שם *',
+                      tr('שם *', 'Name *'),
                       _name,
                       validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'שדה חובה' : null,
+                          (v == null || v.trim().isEmpty) ? tr('שדה חובה', 'Required field') : null,
                     ),
-                    _field('סוכנות', _agency),
+                    _field(tr('סוכנות', 'Agency'), _agency),
                     Row(
                       children: [
-                        Expanded(child: _field('טלפון', _phone)),
+                        Expanded(child: _field(tr('טלפון', 'Phone'), _phone)),
                         const SizedBox(width: 12),
-                        Expanded(child: _field('וואטסאפ', _whatsapp)),
+                        Expanded(child: _field(tr('וואטסאפ', 'WhatsApp'), _whatsapp)),
                       ],
                     ),
                     Row(
                       children: [
-                        Expanded(child: _field('אימייל', _email)),
+                        Expanded(child: _field(tr('אימייל', 'Email'), _email)),
                         const SizedBox(width: 12),
-                        Expanded(child: _field('מספר רישיון', _licence)),
+                        Expanded(child: _field(tr('מספר רישיון', 'Licence number'), _licence)),
                       ],
                     ),
-                    _field('אודות', _about, maxLines: 3),
+                    _field(tr('אודות', 'About'), _about, maxLines: 3),
                     ImageUploadField(
-                      label: 'תמונה',
+                      label: tr('תמונה', 'Image'),
                       controller: _photoUrl,
                       folder: 'agents',
                     ),
@@ -502,7 +503,7 @@ class _AgentEditorState extends ConsumerState<_AgentEditor> {
                       onChanged: (v) => setState(() => _isActive = v),
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        'פעיל',
+                        tr('פעיל', 'Active'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 14,
@@ -526,7 +527,7 @@ class _AgentEditorState extends ConsumerState<_AgentEditor> {
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        'ביטול',
+                        tr('ביטול', 'Cancel'),
                         style: TextStyle(fontFamily: AppFonts.rubik),
                       ),
                     ),
@@ -534,7 +535,7 @@ class _AgentEditorState extends ConsumerState<_AgentEditor> {
                     FilledButton(
                       onPressed: _saving ? null : _save,
                       child: Text(
-                        _saving ? 'שומר...' : 'שמירה',
+                        _saving ? tr('שומר...', 'Saving...') : tr('שמירה', 'Save'),
                         style: TextStyle(fontFamily: AppFonts.rubik),
                       ),
                     ),

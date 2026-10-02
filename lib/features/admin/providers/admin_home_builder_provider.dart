@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
 import 'admin_table_notifier.dart';
+import '../admin_language.dart';
 
 /// The rows on the home screen, in the order they appear.
 ///
@@ -21,22 +22,22 @@ final adminHomeBuilderProvider =
 /// the name the panel shows. The form used to offer eight invented ones —
 /// `hero_banner`, `deals`, `stats_bar` … — that the database refused, and
 /// left out `alert`, the one the website reads.
-const homeBlockTypes = <String, String>{
-  'alert': 'הודעה באתר (מתחת לתמונה הראשית)',
-  'hero': 'תמונה ראשית',
-  'news_grid': 'חדשות',
-  'event_carousel': 'אירועים',
-  'business_carousel': 'עסקים',
-  'restaurant_carousel': 'מסעדות',
-  'banner': 'באנר',
-  'offers': 'הטבות',
-  'game': 'משחק',
-  'ai_search': 'חיפוש AI',
-  'map_preview': 'מפה',
-  'real_estate': 'נדל״ן',
-  'steps_challenge': 'אתגר צעדים',
-  'custom_promo': 'קידום מותאם',
-  'weather': 'מזג אוויר',
+Map<String, String> get homeBlockTypes => <String, String>{
+  'alert': tr('הודעה באתר (מתחת לתמונה הראשית)', 'Site notice (below the main image)'),
+  'hero': tr('תמונה ראשית', 'Main image'),
+  'news_grid': tr('חדשות', 'News'),
+  'event_carousel': tr('אירועים', 'Events'),
+  'business_carousel': tr('עסקים', 'Businesses'),
+  'restaurant_carousel': tr('מסעדות', 'Restaurants'),
+  'banner': tr('באנר', 'Banner'),
+  'offers': tr('הטבות', 'Benefits'),
+  'game': tr('משחק', 'Game'),
+  'ai_search': tr('חיפוש AI', 'AI search'),
+  'map_preview': tr('מפה', 'Map'),
+  'real_estate': tr('נדל״ן', 'Real estate'),
+  'steps_challenge': tr('אתגר צעדים', 'Step challenge'),
+  'custom_promo': tr('קידום מותאם', 'Custom promotion'),
+  'weather': tr('מזג אוויר', 'Weather'),
 };
 
 class AdminHomeBuilderNotifier extends AdminTableNotifier {

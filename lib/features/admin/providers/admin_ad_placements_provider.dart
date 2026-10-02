@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'admin_table_notifier.dart';
+import '../admin_language.dart';
 
 /// The slots a banner can occupy, on the live table.
 ///
@@ -51,16 +52,16 @@ class AdminAdPlacementListNotifier extends AdminTableNotifier {
 /// is a slot no page of the website draws yet: a campaign booked there is
 /// saved but shown nowhere, and the panel says so rather than taking the
 /// booking silently.
-const placementSiteSizes = <String, String>{
-  'HOME_TOP': '728×90 · עמוד הבית, מתחת לכרטיסים · מוצג באנר אחד',
-  'HOME_MAP_SIDE': 'ליד המפה בעמוד הבית: הראשון 460×281, השני והשלישי 220×220',
-  'ARTICLE_INLINE': 'רוחב 796 (בעיצוב 796×228) · מתחת לכתבה · מוצג באנר אחד',
+Map<String, String> get placementSiteSizes => <String, String>{
+  'HOME_TOP': tr('728×90 · עמוד הבית, מתחת לכרטיסים · מוצג באנר אחד', '728×90 · home page, below the cards · one banner shown'),
+  'HOME_MAP_SIDE': tr('ליד המפה בעמוד הבית: הראשון 460×281, השני והשלישי 220×220', 'Next to the map on the home page: the first 460×281, the second and third 220×220'),
+  'ARTICLE_INLINE': tr('רוחב 796 (בעיצוב 796×228) · מתחת לכתבה · מוצג באנר אחד', 'Width 796 (796×228 in the design) · below the article · one banner shown'),
   'NEWS_SIDEBAR':
-      'עמוד החדשות: רוחב 370, גובה חופשי · עמוד כתבה: 426×260 לרוחב',
-  'RESTAURANTS_TOP': '520×300 · שלושה בשורה בראש עמוד המסעדות',
-  'DEALS_TOP': '520×300 · שלושה בשורה בראש עמוד המבצעים',
-  'MENU_BUSINESSES': '276×308 · בתוך תפריט "עסקים"',
-  'MENU_PROFESSIONALS': '276×308 · בתוך תפריט "בעלי מקצוע"',
+      tr('עמוד החדשות: רוחב 370, גובה חופשי · עמוד כתבה: 426×260 לרוחב', 'News page: width 370, any height · article page: 426×260 wide'),
+  'RESTAURANTS_TOP': tr('520×300 · שלושה בשורה בראש עמוד המסעדות', '520×300 · three in a row at the top of the Restaurants page'),
+  'DEALS_TOP': tr('520×300 · שלושה בשורה בראש עמוד המבצעים', '520×300 · three in a row at the top of the Deals page'),
+  'MENU_BUSINESSES': tr('276×308 · בתוך תפריט "עסקים"', '276×308 · inside the "Businesses" menu'),
+  'MENU_PROFESSIONALS': tr('276×308 · בתוך תפריט "בעלי מקצוע"', '276×308 · inside the "Professionals" menu'),
 };
 
 /// The shape to upload for [placement]: its own `allowed_sizes` when set,
@@ -70,7 +71,7 @@ String placementSizeText(Map<String, dynamic>? placement) {
   if (placement == null) return '';
   final sizes = formatAllowedSizes(placement['allowed_sizes']);
   if (sizes.isNotEmpty) return sizes;
-  return placementSiteSizes[placement['code']] ?? 'לא מוצג באתר כרגע';
+  return placementSiteSizes[placement['code']] ?? tr('לא מוצג באתר כרגע', 'Not shown on the site right now');
 }
 
 /// Whether any page of the website draws the slot [code].

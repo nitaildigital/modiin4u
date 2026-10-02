@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_challenges_provider.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 /// Step challenges.
 ///
@@ -60,7 +61,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                       .read(adminChallengeListProvider.notifier)
                       .setSearch(v),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש אתגר...',
+                    hintText: tr('חיפוש אתגר...', 'Search challenges...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -75,14 +76,14 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _chip('הכל', _activeFilter.isEmpty, () => _setFilter('')),
+              _chip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
               _chip(
-                'פעילים',
+                tr('פעילים', 'Active'),
                 _activeFilter == 'active',
                 () => _setFilter('active'),
               ),
               _chip(
-                'לא פעילים',
+                tr('לא פעילים', 'Inactive'),
                 _activeFilter == 'inactive',
                 () => _setFilter('inactive'),
               ),
@@ -92,7 +93,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
               // the list below show the error and a retry.
               if (async.valueOrNull case final l?)
                 Text(
-                  '${l.length} אתגרים',
+                  tr('${l.length} אתגרים', '${l.length} challenges'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -104,7 +105,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                 onPressed: () => _showEditor(),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'אתגר חדש',
+                  tr('אתגר חדש', 'New challenge'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
               ),
@@ -116,7 +117,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת האתגרים',
+              message: tr('שגיאה בטעינת האתגרים', 'Error loading the challenges'),
               error: e,
               onRetry: () =>
                   ref.read(adminChallengeListProvider.notifier).load(),
@@ -127,7 +128,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(32),
                     child: Text(
-                      'אין אתגרים עדיין. אתגר פעיל יופיע במסך מד הצעדים.',
+                      tr('אין אתגרים עדיין. אתגר פעיל יופיע במסך מד הצעדים.', 'No challenges yet. An active challenge appears on the Step Counter screen.'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
@@ -162,7 +163,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
   }
 
   Widget _chip(String label, bool selected, VoidCallback onTap) => Padding(
-    padding: const EdgeInsets.only(left: 6),
+    padding: const EdgeInsetsDirectional.only(end: 6),
     child: FilterChip(
       label: Text(
         label,
@@ -217,7 +218,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
             if (isWide)
               Expanded(
                 child: Text(
-                  goal == null ? '—' : '$goal צעדים',
+                  goal == null ? '—' : tr('$goal צעדים', '$goal steps'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -227,7 +228,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
               ),
             Expanded(
               child: Text(
-                '$joined משתתפים',
+                tr('$joined משתתפים', '$joined participants'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 13,
@@ -247,7 +248,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  active ? 'פעיל' : 'לא פעיל',
+                  active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
@@ -268,14 +269,14 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                 PopupMenuItem(
                   value: 'edit',
                   child: Text(
-                    'עריכה',
+                    tr('עריכה', 'Edit'),
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   ),
                 ),
                 PopupMenuItem(
                   value: active ? 'deactivate' : 'activate',
                   child: Text(
-                    active ? 'השבתה' : 'הפעלה',
+                    active ? tr('השבתה', 'Disable') : tr('הפעלה', 'Activate'),
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   ),
                 ),
@@ -367,6 +368,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
   Future<void> _pickDate(bool start) async {
     final now = DateTime.now();
     final picked = await showDatePicker(
+      locale: adminLocale,
       context: context,
       initialDate: (start ? _startAt : _endAt) ?? now,
       firstDate: DateTime(now.year - 1),
@@ -382,11 +384,11 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
     // today, so a challenge with no dates would never appear. Saying so here
     // is better than saving one that silently does nothing.
     if (_startAt == null || _endAt == null) {
-      _toast('יש לבחור תאריך התחלה וסיום');
+      _toast(tr('יש לבחור תאריך התחלה וסיום', 'A start and end date must be chosen'));
       return;
     }
     if (!_endAt!.isAfter(_startAt!)) {
-      _toast('תאריך הסיום חייב להיות אחרי תאריך ההתחלה');
+      _toast(tr('תאריך הסיום חייב להיות אחרי תאריך ההתחלה', 'The end date must be after the start date'));
       return;
     }
 
@@ -425,7 +427,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) _toast('שגיאה: $e');
+      if (mounted) _toast(tr('שגיאה: $e', 'Error: $e'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -462,7 +464,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                 child: Row(
                   children: [
                     Text(
-                      _isEditing ? 'עריכת אתגר' : 'אתגר חדש',
+                      _isEditing ? tr('עריכת אתגר', 'Edit challenge') : tr('אתגר חדש', 'New challenge'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontSize: 16,
@@ -488,17 +490,17 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                   padding: const EdgeInsets.all(20),
                   children: [
                     _field(
-                      'שם האתגר *',
+                      tr('שם האתגר *', 'Challenge name *'),
                       _name,
                       validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'שדה חובה' : null,
+                          (v == null || v.trim().isEmpty) ? tr('שדה חובה', 'Required field') : null,
                     ),
-                    _field('תיאור', _description, maxLines: 3),
+                    _field(tr('תיאור', 'Description'), _description, maxLines: 3),
                     Row(
                       children: [
                         Expanded(
                           child: _field(
-                            'יעד (צעדים)',
+                            tr('יעד (צעדים)', 'Goal (steps)'),
                             _goal,
                             hint: '150000',
                             keyboardType: TextInputType.number,
@@ -507,7 +509,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _field(
-                            'נקודות תגמול',
+                            tr('נקודות תגמול', 'Reward points'),
                             _reward,
                             hint: '100',
                             keyboardType: TextInputType.number,
@@ -519,7 +521,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                       children: [
                         Expanded(
                           child: _dateField(
-                            'התחלה *',
+                            tr('התחלה *', 'Start *'),
                             _startAt,
                             () => _pickDate(true),
                           ),
@@ -527,7 +529,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _dateField(
-                            'סיום *',
+                            tr('סיום *', 'End *'),
                             _endAt,
                             () => _pickDate(false),
                           ),
@@ -540,14 +542,14 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                       onChanged: (v) => setState(() => _isActive = v),
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        'פעיל',
+                        tr('פעיל', 'Active'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 14,
                         ),
                       ),
                       subtitle: Text(
-                        'אתגר פעיל שהתאריך של היום נמצא בטווח שלו יוצג במסך מד הצעדים',
+                        tr('אתגר פעיל שהתאריך של היום נמצא בטווח שלו יוצג במסך מד הצעדים', 'An active challenge whose date range includes today is shown on the Step Counter screen'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 12,
@@ -572,7 +574,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        'ביטול',
+                        tr('ביטול', 'Cancel'),
                         style: TextStyle(fontFamily: AppFonts.rubik),
                       ),
                     ),
@@ -580,7 +582,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                     FilledButton(
                       onPressed: _saving ? null : _save,
                       child: Text(
-                        _saving ? 'שומר...' : 'שמירה',
+                        _saving ? tr('שומר...', 'Saving...') : tr('שמירה', 'Save'),
                         style: TextStyle(fontFamily: AppFonts.rubik),
                       ),
                     ),
@@ -639,7 +641,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
         ),
         child: Text(
           value == null
-              ? 'בחרו תאריך'
+              ? tr('בחרו תאריך', 'Choose a date')
               : '${value.day}/${value.month}/${value.year}',
           style: TextStyle(
             fontFamily: AppFonts.rubik,

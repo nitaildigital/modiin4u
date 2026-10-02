@@ -9,6 +9,7 @@ import '../providers/admin_neighborhoods_provider.dart';
 import '../widgets/admin_gallery_editor.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 class AdminNeighborhoodsScreen extends ConsumerStatefulWidget {
   const AdminNeighborhoodsScreen({super.key});
@@ -57,7 +58,7 @@ class _AdminNeighborhoodsScreenState
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש שכונה...',
+                    hintText: tr('חיפוש שכונה...', 'Search neighbourhoods...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -90,19 +91,19 @@ class _AdminNeighborhoodsScreenState
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _activeFilter.isEmpty, () {
+              _FilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () {
                 setState(() => _activeFilter = '');
                 ref
                     .read(adminNeighborhoodListProvider.notifier)
                     .setActiveFilter(null);
               }),
-              _FilterChip('פעיל', _activeFilter == 'active', () {
+              _FilterChip(tr('פעיל', 'Active'), _activeFilter == 'active', () {
                 setState(() => _activeFilter = 'active');
                 ref
                     .read(adminNeighborhoodListProvider.notifier)
                     .setActiveFilter('active');
               }),
-              _FilterChip('לא פעיל', _activeFilter == 'inactive', () {
+              _FilterChip(tr('לא פעיל', 'Inactive'), _activeFilter == 'inactive', () {
                 setState(() => _activeFilter = 'inactive');
                 ref
                     .read(adminNeighborhoodListProvider.notifier)
@@ -114,7 +115,7 @@ class _AdminNeighborhoodsScreenState
               // the list below show the error and a retry.
               if (async.valueOrNull case final list?)
                 Text(
-                  '${list.length} שכונות',
+                  tr('${list.length} שכונות', '${list.length} neighbourhoods'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -126,7 +127,7 @@ class _AdminNeighborhoodsScreenState
                 onPressed: () => _showEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'שכונה חדשה',
+                  tr('שכונה חדשה', 'New neighbourhood'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -146,7 +147,7 @@ class _AdminNeighborhoodsScreenState
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת השכונות',
+              message: tr('שגיאה בטעינת השכונות', 'Error loading the neighbourhoods'),
               error: e,
               onRetry: () =>
                   ref.read(adminNeighborhoodListProvider.notifier).load(),
@@ -155,7 +156,7 @@ class _AdminNeighborhoodsScreenState
               if (neighborhoods.isEmpty) {
                 return Center(
                   child: Text(
-                    'אין שכונות',
+                    tr('אין שכונות', 'No neighbourhoods'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.grayText,
@@ -182,11 +183,11 @@ class _AdminNeighborhoodsScreenState
                     child: Row(
                       children: [
                         const SizedBox(width: 48),
-                        _Col('שם', flex: 3),
+                        _Col(tr('שם', 'Name'), flex: 3),
                         _Col('slug', flex: 2),
-                        if (isWide) _Col('תושבים', flex: 1),
-                        if (isWide) _Col('עסקים', flex: 1),
-                        _Col('סטטוס', flex: 1),
+                        if (isWide) _Col(tr('תושבים', 'Residents'), flex: 1),
+                        if (isWide) _Col(tr('עסקים', 'Businesses'), flex: 1),
+                        _Col(tr('סטטוס', 'Status'), flex: 1),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -288,7 +289,7 @@ class _AdminNeighborhoodsScreenState
                                 Expanded(
                                   flex: 1,
                                   child: _StatusPill(
-                                    active ? 'פעיל' : 'לא פעיל',
+                                    active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
                                     active
                                         ? AppColors.success
                                         : AppColors.grayLight,
@@ -305,7 +306,7 @@ class _AdminNeighborhoodsScreenState
                                     PopupMenuItem(
                                       value: 'edit',
                                       child: Text(
-                                        'עריכה',
+                                        tr('עריכה', 'Edit'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -318,7 +319,7 @@ class _AdminNeighborhoodsScreenState
                                     PopupMenuItem(
                                       value: 'toggle',
                                       child: Text(
-                                        active ? 'השבת' : 'הפעל',
+                                        active ? tr('השבת', 'Disable') : tr('הפעל', 'Activate'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -441,7 +442,7 @@ class _NeighborhoodEditorDialogState
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640, maxHeight: 760),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -460,7 +461,7 @@ class _NeighborhoodEditorDialogState
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת שכונה' : 'שכונה חדשה',
+                        _isEditing ? tr('עריכת שכונה', 'Edit neighbourhood') : tr('שכונה חדשה', 'New neighbourhood'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -485,21 +486,21 @@ class _NeighborhoodEditorDialogState
                     padding: const EdgeInsets.all(20),
                     children: [
                       _field(
-                        'שם שכונה *',
+                        tr('שם שכונה *', 'Neighbourhood name *'),
                         _name,
                         validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                            v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
-                      _field('Slug (ריק ייווצר מהשם)', _slug),
-                      _field('תיאור', _description, maxLines: 8),
+                      _field(tr('Slug (ריק ייווצר מהשם)', 'Slug (left empty, it is made from the name)'), _slug),
+                      _field(tr('תיאור', 'Description'), _description, maxLines: 8),
                       // How the neighbourhood page splits it, so the client
                       // knows where a paragraph will land.
                       Padding(
                         padding: const EdgeInsets.only(bottom: 14),
                         child: Text(
-                          'הפסקה הראשונה מוצגת כפתיח מתחת לשם השכונה; '
+                          tr('הפסקה הראשונה מוצגת כפתיח מתחת לשם השכונה; '
                           'שאר הפסקאות מוצגות תחת ״אודות״. '
-                          'הפרידו בין פסקאות בשורה ריקה.',
+                          'הפרידו בין פסקאות בשורה ריקה.', 'The first paragraph is shown as the intro below the neighbourhood name; the other paragraphs are shown under "About". Separate paragraphs with an empty line.'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
@@ -507,12 +508,12 @@ class _NeighborhoodEditorDialogState
                           ),
                         ),
                       ),
-                      _field('סדר מיון', _sortOrder),
+                      _field(tr('סדר מיון', 'Sort order'), _sortOrder),
                       const SizedBox(height: 8),
                       // The first picture on the page and on the
                       // neighbourhood cards; the gallery follows it.
                       ImageUploadField(
-                        label: 'תמונה ראשית',
+                        label: tr('תמונה ראשית', 'Main image'),
                         controller: _imageUrl,
                         folder: 'neighborhoods',
                       ),
@@ -521,7 +522,7 @@ class _NeighborhoodEditorDialogState
                       const SizedBox(height: 12),
                       SwitchListTile(
                         title: Text(
-                          'פעיל',
+                          tr('פעיל', 'Active'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 14,
@@ -563,7 +564,7 @@ class _NeighborhoodEditorDialogState
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -586,7 +587,7 @@ class _NeighborhoodEditorDialogState
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור שכונה',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור שכונה', 'Create neighbourhood'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -676,10 +677,10 @@ class _NeighborhoodEditorDialogState
         setState(
           () => _error = switch (e) {
             PostgrestException(code: '23505') =>
-              'השמירה נכשלה: שם או Slug זהים כבר קיימים בשכונה אחרת',
-            PostgrestException(:final message) => 'השמירה נכשלה: $message',
-            StorageException(:final message) => 'העלאת תמונה נכשלה: $message',
-            _ => 'השמירה נכשלה: $e',
+              tr('השמירה נכשלה: שם או Slug זהים כבר קיימים בשכונה אחרת', 'Saving failed: the same name or slug already exists in another neighbourhood'),
+            PostgrestException(:final message) => tr('השמירה נכשלה: $message', 'Saving failed: $message'),
+            StorageException(:final message) => tr('העלאת תמונה נכשלה: $message', 'Image upload failed: $message'),
+            _ => tr('השמירה נכשלה: $e', 'Saving failed: $e'),
           },
         );
       }
@@ -748,7 +749,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

@@ -35,6 +35,7 @@ import 'admin_flags_screen.dart';
 import 'admin_agents_screen.dart';
 import 'admin_analytics_screen.dart';
 import 'admin_site_pages_screen.dart';
+import '../admin_language.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -47,43 +48,43 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   int _selectedSection = 0;
 
-  static final _sections = [
+  static List<(String, IconData)> get _sections => [
     // ── ראשי ──
-    ('סקירה', IconsaxPlusLinear.element_3),
-    ('משתמשים', IconsaxPlusLinear.profile_2user),
+    (tr('סקירה', 'Overview'), IconsaxPlusLinear.element_3),
+    (tr('משתמשים', 'Users'), IconsaxPlusLinear.profile_2user),
     // ── תוכן ──
-    ('עסקים', IconsaxPlusLinear.shop),
-    ('כתבות', IconsaxPlusLinear.document_text),
-    ('אירועים', IconsaxPlusLinear.calendar),
-    ('נדל״ן', IconsaxPlusLinear.building_3),
-    ('חניונים', IconsaxPlusLinear.car),
-    ('מוסדות עירוניים', IconsaxPlusLinear.bank),
-    ('מתווכים', IconsaxPlusLinear.profile_circle),
+    (tr('עסקים', 'Businesses'), IconsaxPlusLinear.shop),
+    (tr('כתבות', 'Articles'), IconsaxPlusLinear.document_text),
+    (tr('אירועים', 'Events'), IconsaxPlusLinear.calendar),
+    (tr('נדל״ן', 'Real estate'), IconsaxPlusLinear.building_3),
+    (tr('חניונים', 'Car parks'), IconsaxPlusLinear.car),
+    (tr('מוסדות עירוניים', 'Municipal places'), IconsaxPlusLinear.bank),
+    (tr('מתווכים', 'Agents'), IconsaxPlusLinear.profile_circle),
     // ── טקסונומיה ──
-    ('קטגוריות', IconsaxPlusLinear.category_2),
-    ('תגיות', IconsaxPlusLinear.tag),
-    ('שכונות', IconsaxPlusLinear.building),
-    ('מדיה', IconsaxPlusLinear.gallery),
+    (tr('קטגוריות', 'Categories'), IconsaxPlusLinear.category_2),
+    (tr('תגיות', 'Tags'), IconsaxPlusLinear.tag),
+    (tr('שכונות', 'Neighbourhoods'), IconsaxPlusLinear.building),
+    (tr('מדיה', 'Media'), IconsaxPlusLinear.gallery),
     // ── מסחר ופרסום ──
-    ('מבצעים', IconsaxPlusLinear.discount_shape),
-    ('הסכמים', IconsaxPlusLinear.document),
-    ('הכנסות', IconsaxPlusLinear.wallet_3),
-    ('מיקומי פרסום', IconsaxPlusLinear.monitor_mobbile),
-    ('קמפיינים', IconsaxPlusLinear.magicpen),
+    (tr('מבצעים', 'Deals'), IconsaxPlusLinear.discount_shape),
+    (tr('הסכמים', 'Agreements'), IconsaxPlusLinear.document),
+    (tr('הכנסות', 'Revenue'), IconsaxPlusLinear.wallet_3),
+    (tr('מיקומי פרסום', 'Ad placements'), IconsaxPlusLinear.monitor_mobbile),
+    (tr('קמפיינים', 'Campaigns'), IconsaxPlusLinear.magicpen),
     // ── אינטראקציה ──
-    ('ביקורות', IconsaxPlusLinear.star),
-    ('תגובות', IconsaxPlusLinear.message_text),
-    ('דיווחים', IconsaxPlusLinear.flag),
+    (tr('ביקורות', 'Reviews'), IconsaxPlusLinear.star),
+    (tr('תגובות', 'Comments'), IconsaxPlusLinear.message_text),
+    (tr('דיווחים', 'Reports'), IconsaxPlusLinear.flag),
     ('Push', IconsaxPlusLinear.notification),
-    ('אתגרים וקבוצות', IconsaxPlusLinear.cup),
+    (tr('אתגרים וקבוצות', 'Challenges & groups'), IconsaxPlusLinear.cup),
     // ── מערכת ──
-    ('צוות ניהול', IconsaxPlusLinear.people),
-    ('יומן פעולות', IconsaxPlusLinear.clock),
-    ('פח מחזור', IconsaxPlusLinear.trash),
-    ('בונה דף הבית', IconsaxPlusLinear.element_plus),
+    (tr('צוות ניהול', 'Admin team'), IconsaxPlusLinear.people),
+    (tr('יומן פעולות', 'Activity log'), IconsaxPlusLinear.clock),
+    (tr('פח מחזור', 'Trash'), IconsaxPlusLinear.trash),
+    (tr('בונה דף הבית', 'Home page builder'), IconsaxPlusLinear.element_plus),
     ('Feature Flags', IconsaxPlusLinear.toggle_on_circle),
-    ('עמודי מידע', IconsaxPlusLinear.document_1),
-    ('הגדרות', IconsaxPlusLinear.setting_2),
+    (tr('עמודי מידע', 'Info pages'), IconsaxPlusLinear.document_1),
+    (tr('הגדרות', 'Settings'), IconsaxPlusLinear.setting_2),
   ];
 
   /// Where the settings pane sits in [_sections] — the top bar's gear jumps
@@ -94,21 +95,45 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   /// whenever a section is added: when חניונים went in at 6 these were left
   /// where they were, and every heading from טקסונומיה down sat one row too
   /// high — מתווכים appeared under טקסונומיה.
-  static const _sectionGroups = {
-    0: 'ראשי',
-    2: 'תוכן',
-    9: 'טקסונומיה',
-    13: 'מסחר ופרסום',
-    18: 'אינטראקציה',
-    23: 'מערכת',
+  static Map<int, String> get _sectionGroups => {
+    0: tr('ראשי', 'Main'),
+    2: tr('תוכן', 'Content'),
+    9: tr('טקסונומיה', 'Taxonomy'),
+    13: tr('מסחר ופרסום', 'Commerce & advertising'),
+    18: tr('אינטראקציה', 'Interaction'),
+    23: tr('מערכת', 'System'),
   };
 
   @override
+  void initState() {
+    super.initState();
+    loadAdminLanguage();
+  }
+
+  /// The panel in the language chosen in Settings. A switch rebuilds the
+  /// whole panel under a new key: the sections are const widgets, which a
+  /// plain rebuild would skip, and every text in them is read as it builds.
+  /// Dates, pickers and the like follow through the overridden locale.
+  @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: adminEnglish,
+      builder: (context, english, _) => Localizations.override(
+        context: context,
+        locale: adminLocale,
+        child: KeyedSubtree(
+          key: ValueKey(english),
+          child: Builder(builder: _buildPanel),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPanel(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 800;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: Scaffold(
         backgroundColor: AppColors.adminContentBg,
         body: Column(
@@ -133,8 +158,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           child: Container(
                             decoration: const BoxDecoration(
                               color: AppColors.adminContentBg,
-                              borderRadius: BorderRadius.only(
-                                topRight: Radius.circular(12),
+                              borderRadius: BorderRadiusDirectional.only(
+                                topStart: Radius.circular(12),
                               ),
                             ),
                             child: _buildSection(),
@@ -317,7 +342,7 @@ class _AdminTopBar extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ניהול — מודיעין בשבילך',
+                tr('ניהול — מודיעין בשבילך', 'Admin — Modiin4U'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 16,
@@ -348,7 +373,7 @@ class _AdminTopBar extends ConsumerWidget {
           // The signed-in administrator, rather than the initials of the one
           // invented person this panel used to be built around.
           Tooltip(
-            message: signedIn?.name ?? 'לא מחובר',
+            message: signedIn?.name ?? tr('לא מחובר', 'Not connected'),
             child: Container(
               width: 36,
               height: 36,
@@ -506,8 +531,8 @@ class _Sidebar extends StatelessWidget {
       width: 280,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          left: BorderSide(color: AppColors.adminSidebarBorder, width: 1),
+        border: BorderDirectional(
+          end: BorderSide(color: AppColors.adminSidebarBorder, width: 1),
         ),
       ),
       child: ListView(
@@ -610,7 +635,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'חיפוש לפי שם, טלפון, אימייל...',
+                      hintText: tr('חיפוש לפי שם, טלפון, אימייל...', 'Search by name, phone, email...'),
                       hintStyle: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
@@ -635,13 +660,13 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterPill('הכל', _filter == ProfileFilter.all, () {
+              _FilterPill(tr('הכל', 'All'), _filter == ProfileFilter.all, () {
                 _setFilter(ProfileFilter.all);
               }),
-              _FilterPill('מאומתים', _filter == ProfileFilter.verified, () {
+              _FilterPill(tr('מאומתים', 'Verified'), _filter == ProfileFilter.verified, () {
                 _setFilter(ProfileFilter.verified);
               }),
-              _FilterPill('חסומים', _filter == ProfileFilter.banned, () {
+              _FilterPill(tr('חסומים', 'Blocked'), _filter == ProfileFilter.banned, () {
                 _setFilter(ProfileFilter.banned);
               }),
               const SizedBox(width: 12),
@@ -651,15 +676,15 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
               // opening a form that could not save.
               Tooltip(
                 message:
-                    'חשבון נוצר כשהתושב נכנס לאפליקציה בפעם הראשונה. '
-                    'לא ניתן ליצור משתמש מכאן.',
+                    tr('חשבון נוצר כשהתושב נכנס לאפליקציה בפעם הראשונה. '
+                    'לא ניתן ליצור משתמש מכאן.', 'An account is created when a resident first signs in to the app. Users cannot be created from here.'),
                 child: SizedBox(
                   height: 40,
                   child: FilledButton.icon(
                     onPressed: null,
                     icon: const Icon(Icons.add, size: 18),
                     label: Text(
-                      'משתמש חדש',
+                      tr('משתמש חדש', 'New user'),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,
@@ -683,15 +708,15 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
           child: asyncProfiles.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => _AdminError(
-              message: 'לא ניתן לטעון את רשימת המשתמשים',
+              message: tr('לא ניתן לטעון את רשימת המשתמשים', 'Could not load the user list'),
               detail: '$e',
               onRetry: () => ref.read(adminProfilesProvider.notifier).load(),
             ),
             data: (rows) {
               if (rows.isEmpty) {
-                return const _AdminEmpty(
+                return _AdminEmpty(
                   icon: IconsaxPlusLinear.profile_2user,
-                  message: 'אין משתמשים להצגה',
+                  message: tr('אין משתמשים להצגה', 'No users to show'),
                 );
               }
               return ListView.separated(
@@ -752,7 +777,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
               child: Text(
                 // A profile can only be created with a name, but an empty
                 // string gets through; saying so beats printing nothing.
-                name == null || name.isEmpty ? 'ללא שם' : name,
+                name == null || name.isEmpty ? tr('ללא שם', 'Untitled') : name,
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontWeight: FontWeight.w500,
@@ -764,15 +789,15 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
             ),
             if (p['is_verified'] == true) ...[
               const SizedBox(width: 8),
-              _Tag('מאומת', AppColors.success),
+              _Tag(tr('מאומת', 'Verified'), AppColors.success),
             ],
             if (p['is_broker'] == true) ...[
               const SizedBox(width: 6),
-              _Tag('מתווך', AppColors.midBlue),
+              _Tag(tr('מתווך', 'Agent'), AppColors.midBlue),
             ],
             if (isBanned) ...[
               const SizedBox(width: 6),
-              _Tag('חסום', AppColors.error),
+              _Tag(tr('חסום', 'Blocked'), AppColors.error),
             ],
           ],
         ),
@@ -799,14 +824,14 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
             PopupMenuItem(
               value: 'edit',
               child: Text(
-                'עריכה',
+                tr('עריכה', 'Edit'),
                 style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
               ),
             ),
             PopupMenuItem(
               value: 'ban',
               child: Text(
-                isBanned ? 'בטל חסימה' : 'חסום משתמש',
+                isBanned ? tr('בטל חסימה', 'Unblock') : tr('חסום משתמש', 'Block user'),
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontSize: 14,
@@ -835,7 +860,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
         _run(
           () =>
               ref.read(adminProfilesProvider.notifier).setBanned(id, !isBanned),
-          isBanned ? 'החסימה בוטלה' : 'המשתמש נחסם',
+          isBanned ? tr('החסימה בוטלה', 'Unblocked') : tr('המשתמש נחסם', 'User blocked'),
         );
     }
   }
@@ -856,7 +881,7 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
       messenger.showSnackBar(
         SnackBar(
           backgroundColor: AppColors.error,
-          content: Text('הפעולה נכשלה: $e'),
+          content: Text(tr('הפעולה נכשלה: $e', 'The action failed: $e')),
         ),
       );
     }
@@ -890,7 +915,7 @@ class _SettingsSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       children: [
         Text(
-          'הגדרות אפליקציה',
+          tr('הגדרות אפליקציה', 'App settings'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 20,
@@ -900,7 +925,7 @@ class _SettingsSection extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'ניהול הגדרות כלליות של המערכת',
+          tr('ניהול הגדרות כלליות של המערכת', 'Manage the system\'s general settings'),
           style: TextStyle(
             fontFamily: AppFonts.inter,
             fontSize: 14,
@@ -908,9 +933,10 @@ class _SettingsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
+        const _LanguageTile(),
         _SettingsTile(
-          'שם האפליקציה',
-          'מודיעין בשבילך',
+          tr('שם האפליקציה', 'App name'),
+          tr('מודיעין בשבילך', 'Modiin4U'),
           IconsaxPlusLinear.mobile,
         ),
         _SettingsTile(
@@ -940,9 +966,9 @@ class _SettingsSection extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'הגדרות הניתנות לעריכה — התראות Push, מצב תחזוקה, מפתחות API — '
+                  tr('הגדרות הניתנות לעריכה — התראות Push, מצב תחזוקה, מפתחות API — '
                   'אינן מחוברות לטבלה. הן יופיעו כאן כשיהיה להן מקום לשמור אליו '
-                  '(app_settings ריקה).',
+                  '(app_settings ריקה).', 'Editable settings — push notifications, maintenance mode, API keys — are not connected to a table. They will appear here once they have somewhere to be saved (app_settings is empty).'),
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 13,
@@ -955,6 +981,88 @@ class _SettingsSection extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The panel's language: Hebrew (the default) or English. Each language is
+/// named in itself, so it can be found whichever one the panel is in.
+class _LanguageTile extends StatelessWidget {
+  const _LanguageTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final english = adminEnglish.value;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.midBlue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              IconsaxPlusLinear.language_square,
+              size: 20,
+              color: AppColors.midBlue,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tr('שפת ממשק הניהול', 'Admin panel language'),
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: AppColors.adminTextDark,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  tr(
+                    'נשמרת בדפדפן הזה. לא משנה את שפת האתר.',
+                    'Kept on this browser. It does not change the site\'s language.',
+                  ),
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    color: AppColors.adminTextLight,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('עברית')),
+              ButtonSegment(value: true, label: Text('English')),
+            ],
+            selected: {english},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) => setAdminEnglish(s.first),
+            style: SegmentedButton.styleFrom(
+              selectedBackgroundColor: AppColors.adminActiveBg,
+              selectedForegroundColor: AppColors.midBlue,
+              textStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1057,7 +1165,7 @@ class _FilterPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),
@@ -1171,7 +1279,7 @@ class _AdminError extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh, size: 18),
               label: Text(
-                'נסה שוב',
+                tr('נסה שוב', 'Try again'),
                 style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
               ),
             ),
@@ -1208,10 +1316,10 @@ void _showProfileDialog(
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setDState) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: adminDir,
         child: AlertDialog(
           title: Text(
-            'עריכת משתמש',
+            tr('עריכת משתמש', 'Edit user'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontWeight: FontWeight.w700,
@@ -1225,17 +1333,17 @@ void _showProfileDialog(
                 children: [
                   TextField(
                     controller: nameC,
-                    decoration: const InputDecoration(labelText: 'שם מלא'),
+                    decoration: InputDecoration(labelText: tr('שם מלא', 'Full name')),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: emailC,
-                    decoration: const InputDecoration(labelText: 'אימייל'),
+                    decoration: InputDecoration(labelText: tr('אימייל', 'Email')),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: phoneC,
-                    decoration: const InputDecoration(labelText: 'טלפון'),
+                    decoration: InputDecoration(labelText: tr('טלפון', 'Phone')),
                   ),
                   const SizedBox(height: 12),
                   // The neighbourhood is a foreign key, so this is the list of
@@ -1247,7 +1355,7 @@ void _showProfileDialog(
                       return asyncHoods.when(
                         loading: () => const LinearProgressIndicator(),
                         error: (e, _) => Text(
-                          'לא ניתן לטעון שכונות: $e',
+                          tr('לא ניתן לטעון שכונות: $e', 'Could not load neighbourhoods: $e'),
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 12,
@@ -1256,7 +1364,7 @@ void _showProfileDialog(
                         ),
                         data: (hoods) => DropdownButtonFormField<String?>(
                           initialValue: neighborhoodId,
-                          decoration: const InputDecoration(labelText: 'שכונה'),
+                          decoration: InputDecoration(labelText: tr('שכונה', 'Neighbourhood')),
                           items: [
                             const DropdownMenuItem(
                               value: null,
@@ -1280,7 +1388,7 @@ void _showProfileDialog(
                     value: isVerified,
                     onChanged: (v) => setDState(() => isVerified = v ?? false),
                     title: Text(
-                      'תושב מאומת',
+                      tr('תושב מאומת', 'Verified resident'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontSize: 14,
@@ -1295,7 +1403,7 @@ void _showProfileDialog(
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(
-                'ביטול',
+                tr('ביטול', 'Cancel'),
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   color: AppColors.adminTextMedium,
@@ -1318,13 +1426,13 @@ void _showProfileDialog(
                       });
                   navigator.pop();
                   messenger.showSnackBar(
-                    const SnackBar(content: Text('המשתמש נשמר')),
+                    SnackBar(content: Text(tr('המשתמש נשמר', 'User saved'))),
                   );
                 } catch (e) {
                   messenger.showSnackBar(
                     SnackBar(
                       backgroundColor: AppColors.error,
-                      content: Text('השמירה נכשלה: $e'),
+                      content: Text(tr('השמירה נכשלה: $e', 'Saving failed: $e')),
                     ),
                   );
                 }
@@ -1336,7 +1444,7 @@ void _showProfileDialog(
                 ),
               ),
               child: Text(
-                'שמור',
+                tr('שמור', 'Save'),
                 style: TextStyle(
                   fontFamily: AppFonts.inter,
                   fontWeight: FontWeight.w500,

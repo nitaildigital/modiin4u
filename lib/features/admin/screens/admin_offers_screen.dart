@@ -10,6 +10,7 @@ import '../providers/admin_offers_provider.dart';
 import '../widgets/admin_events_form_fields.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 class AdminOffersScreen extends ConsumerStatefulWidget {
   const AdminOffersScreen({super.key});
@@ -74,17 +75,17 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                 ),
                 child: Row(
                   children: [
-                    _StatChip('מבצעים פעילים', '$active', AppColors.success),
+                    _StatChip(tr('מבצעים פעילים', 'Active deals'), '$active', AppColors.success),
                     const SizedBox(width: 16),
                     _StatChip(
-                      'סה״כ מימושים',
+                      tr('סה״כ מימושים', 'Total redemptions'),
                       '$totalClaims',
                       AppColors.turquoise,
                     ),
                     const SizedBox(width: 16),
-                    _StatChip('מומלצים', '$featured', AppColors.gold),
+                    _StatChip(tr('מומלצים', 'Recommended'), '$featured', AppColors.gold),
                     const SizedBox(width: 16),
-                    _StatChip('סה״כ מבצעים', '${list.length}', AppColors.navy),
+                    _StatChip(tr('סה״כ מבצעים', 'Total deals'), '${list.length}', AppColors.navy),
                   ],
                 ),
               );
@@ -111,7 +112,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש מבצע...',
+                    hintText: tr('חיפוש מבצע...', 'Search deals...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -146,31 +147,31 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
               const SizedBox(width: 12),
               // The four values of `offer_status`. "Scheduled" and "paused"
               // were offered here too; the table has neither.
-              _FilterChip('הכל', _statusFilter.isEmpty, () => _filter('')),
+              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _filter('')),
               _FilterChip(
-                'פעיל',
+                tr('פעיל', 'Active'),
                 _statusFilter == 'active',
                 () => _filter('active'),
               ),
               _FilterChip(
-                'טיוטה',
+                tr('טיוטה', 'Draft'),
                 _statusFilter == 'draft',
                 () => _filter('draft'),
               ),
               _FilterChip(
-                'פג תוקף',
+                tr('פג תוקף', 'Expired'),
                 _statusFilter == 'expired',
                 () => _filter('expired'),
               ),
               _FilterChip(
-                'אזל',
+                tr('אזל', 'Sold out'),
                 _statusFilter == 'redeemed_out',
                 () => _filter('redeemed_out'),
               ),
               const Spacer(),
               if (asyncData.valueOrNull case final list?)
                 Text(
-                  '${list.length} מבצעים',
+                  tr('${list.length} מבצעים', '${list.length} deals'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -182,7 +183,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                 onPressed: () => _showEditor(context),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'מבצע חדש',
+                  tr('מבצע חדש', 'New deal'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -202,7 +203,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
           child: asyncData.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת המבצעים',
+              message: tr('שגיאה בטעינת המבצעים', 'Error loading the deals'),
               error: e,
               onRetry: () => ref.read(adminOfferListProvider.notifier).load(),
             ),
@@ -219,7 +220,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין מבצעים',
+                        tr('אין מבצעים', 'No deals'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -246,12 +247,12 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                     ),
                     child: Row(
                       children: [
-                        _Col('מבצע', flex: 3),
-                        _Col('עסק', flex: 2),
-                        if (isWide) _Col('תגית באתר', flex: 1),
-                        if (isWide) _Col('מימושים', flex: 1),
-                        if (isWide) _Col('בתוקף עד', flex: 1),
-                        _Col('סטטוס', flex: 1),
+                        _Col(tr('מבצע', 'Deal'), flex: 3),
+                        _Col(tr('עסק', 'Business'), flex: 2),
+                        if (isWide) _Col(tr('תגית באתר', 'Tag on the site'), flex: 1),
+                        if (isWide) _Col(tr('מימושים', 'Redemptions'), flex: 1),
+                        if (isWide) _Col(tr('בתוקף עד', 'Valid until'), flex: 1),
+                        _Col(tr('סטטוס', 'Status'), flex: 1),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -322,10 +323,10 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                             Text(
                                               [
                                                 if (residentsOnly)
-                                                  'לתושבים בלבד',
+                                                  tr('לתושבים בלבד', 'Residents only'),
                                                 if ((o['code'] as String? ?? '')
                                                     .isNotEmpty)
-                                                  'קוד ${o['code']}',
+                                                  tr('קוד ${o['code']}', 'Code ${o['code']}'),
                                                 if ((o['description']
                                                             as String? ??
                                                         '')
@@ -393,11 +394,13 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                     flex: 1,
                                     child: Text(
                                       endAt == null
-                                          ? 'ללא'
+                                          ? tr('ללא', 'None')
                                           : '${formatAdminDate(endAt)} '
                                                 '${formatAdminTime(endAt.hour, endAt.minute)}',
                                       textDirection: TextDirection.ltr,
-                                      textAlign: TextAlign.right,
+                                      textAlign: adminEnglish.value
+                                          ? TextAlign.left
+                                          : TextAlign.right,
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 12,
@@ -418,16 +421,16 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                   ),
                                   onSelected: (v) => _handleAction(v, o),
                                   itemBuilder: (_) => [
-                                    _menuItem('edit', 'עריכה'),
+                                    _menuItem('edit', tr('עריכה', 'Edit')),
                                     if (status != 'active')
-                                      _menuItem('activate', 'הפעל'),
+                                      _menuItem('activate', tr('הפעל', 'Activate')),
                                     // One item: "end" and "delete" both set
                                     // status = 'expired' — the row is never
                                     // removed, and "הפעל" brings it back.
                                     if (status != 'expired')
                                       _menuItem(
                                         'expire',
-                                        'סיים מבצע',
+                                        tr('סיים מבצע', 'End deal'),
                                         color: AppColors.error,
                                       ),
                                   ],
@@ -469,7 +472,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('הפעולה נכשלה: $e'),
+          content: Text(tr('הפעולה נכשלה: $e', 'The action failed: $e')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -532,19 +535,19 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
 
   bool get _isEditing => widget.offer != null;
 
-  static const _statuses = {
-    'draft': 'טיוטה',
-    'active': 'פעיל',
-    'expired': 'פג תוקף',
-    'redeemed_out': 'אזל',
+  static Map<String, String> get _statuses => {
+    'draft': tr('טיוטה', 'Draft'),
+    'active': tr('פעיל', 'Active'),
+    'expired': tr('פג תוקף', 'Expired'),
+    'redeemed_out': tr('אזל', 'Sold out'),
   };
 
   /// `audience` per migration 00007. The website marks `verified` as
   /// "Residents Only".
-  static const _audiences = {
-    'all': 'כולם',
-    'verified': 'תושבים מאומתים בלבד',
-    'new_users': 'משתמשים חדשים',
+  static Map<String, String> get _audiences => {
+    'all': tr('כולם', 'Everyone'),
+    'verified': tr('תושבים מאומתים בלבד', 'Verified residents only'),
+    'new_users': tr('משתמשים חדשים', 'New users'),
   };
 
   @override
@@ -623,7 +626,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 680, maxHeight: 860),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -642,7 +645,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת מבצע' : 'מבצע חדש',
+                        _isEditing ? tr('עריכת מבצע', 'Edit deal') : tr('מבצע חדש', 'New deal'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -669,16 +672,16 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildField(
-                          'שם המבצע *',
+                          tr('שם המבצע *', 'Deal name *'),
                           _name,
-                          hint: '20% הנחה על כל הפיצות',
+                          hint: tr('20% הנחה על כל הפיצות', '20% off all pizzas'),
                           validator: (v) =>
-                              (v ?? '').trim().isEmpty ? 'שדה חובה' : null,
+                              (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                         ),
                         const SizedBox(height: 6),
                         _BadgeHint(controller: _name),
                         const SizedBox(height: 14),
-                        _label('עסק *'),
+                        _label(tr('עסק *', 'Business *')),
                         AdminBusinessPickerField(
                           label: '',
                           businessId: _businessId,
@@ -691,21 +694,21 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'תיאור',
+                          tr('תיאור', 'Description'),
                           _description,
-                          hint: 'פירוט המבצע...',
+                          hint: tr('פירוט המבצע...', 'Deal details...'),
                           maxLines: 3,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'תנאים',
+                          tr('תנאים', 'Terms'),
                           _terms,
-                          hint: 'תנאים והגבלות...',
+                          hint: tr('תנאים והגבלות...', 'Terms and conditions...'),
                           maxLines: 3,
                         ),
                         const SizedBox(height: 14),
                         ImageUploadField(
-                          label: 'תמונה',
+                          label: tr('תמונה', 'Image'),
                           controller: _image,
                           folder: 'offers',
                         ),
@@ -715,7 +718,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                           children: [
                             Expanded(
                               child: _buildField(
-                                'קוד קופון',
+                                tr('קוד קופון', 'Coupon code'),
                                 _code,
                                 hint: 'PIZZA20',
                                 ltr: true,
@@ -724,9 +727,9 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildField(
-                                'מקסימום מימושים',
+                                tr('מקסימום מימושים', 'Maximum redemptions'),
                                 _maxClaims,
-                                hint: 'ללא הגבלה',
+                                hint: tr('ללא הגבלה', 'No limit'),
                                 keyboardType: TextInputType.number,
                                 validator: (v) =>
                                     _wholeNumber(v, min: 1, required: false),
@@ -740,7 +743,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                           children: [
                             Expanded(
                               child: _buildField(
-                                'מימושים לכל משתמש',
+                                tr('מימושים לכל משתמש', 'Redemptions per user'),
                                 _maxPerUser,
                                 hint: '1',
                                 keyboardType: TextInputType.number,
@@ -751,7 +754,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildField(
-                                'נקודות נדרשות',
+                                tr('נקודות נדרשות', 'Points required'),
                                 _points,
                                 hint: '0',
                                 keyboardType: TextInputType.number,
@@ -767,7 +770,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                           children: [
                             Expanded(
                               child: _labelled(
-                                'תחילת מבצע',
+                                tr('תחילת מבצע', 'Deal start'),
                                 AdminDateField(
                                   controller: _startDate,
                                   decoration: _inputDecoration(),
@@ -777,7 +780,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _labelled(
-                                'שעה',
+                                tr('שעה', 'Time'),
                                 AdminTimeField(
                                   controller: _startTime,
                                   decoration: _inputDecoration(hint: '00:00'),
@@ -792,7 +795,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                           children: [
                             Expanded(
                               child: _labelled(
-                                'סיום מבצע',
+                                tr('סיום מבצע', 'End deal'),
                                 AdminDateField(
                                   controller: _endDate,
                                   decoration: _inputDecoration(),
@@ -802,7 +805,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _labelled(
-                                'שעה',
+                                tr('שעה', 'Time'),
                                 AdminTimeField(
                                   controller: _endTime,
                                   decoration: _inputDecoration(hint: '23:59'),
@@ -813,7 +816,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'בלי תאריך סיום לא יוצג באתר שעון ספירה לאחור.',
+                          tr('בלי תאריך סיום לא יוצג באתר שעון ספירה לאחור.', 'Without an end date, no countdown is shown on the site.'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 11,
@@ -826,7 +829,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                           children: [
                             Expanded(
                               child: _buildDropdown(
-                                'קהל',
+                                tr('קהל', 'Audience'),
                                 _audience,
                                 _audiences,
                                 (v) => setState(() => _audience = v!),
@@ -835,7 +838,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildDropdown(
-                                'סטטוס',
+                                tr('סטטוס', 'Status'),
                                 _status,
                                 _statuses,
                                 (v) => setState(() => _status = v!),
@@ -845,8 +848,8 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'תושבים מאומתים בלבד — מסומן באתר "לתושבים בלבד". '
-                          'רק מבצע בסטטוס "פעיל" מוצג באתר.',
+                          tr('תושבים מאומתים בלבד — מסומן באתר "לתושבים בלבד". '
+                          'רק מבצע בסטטוס "פעיל" מוצג באתר.', 'Verified residents only — marked "Residents only" on the site. Only a deal with the status "Active" is shown on the site.'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 11,
@@ -857,7 +860,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(
-                            'מומלץ',
+                            tr('מומלץ', 'Recommended'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 14,
@@ -888,7 +891,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -916,7 +919,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'עדכון' : 'יצירה',
+                                _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 14,
@@ -1029,9 +1032,9 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
 
   String? _wholeNumber(String? v, {required int min, required bool required}) {
     final t = (v ?? '').trim();
-    if (t.isEmpty) return required ? 'שדה חובה' : null;
+    if (t.isEmpty) return required ? tr('שדה חובה', 'Required field') : null;
     final n = int.tryParse(t);
-    return n == null || n < min ? 'מספר שלם, $min ומעלה' : null;
+    return n == null || n < min ? tr('מספר שלם, $min ומעלה', 'A whole number, $min or more') : null;
   }
 
   /// A date and a time from the form, as a UTC timestamp. A missing time is
@@ -1074,7 +1077,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     if (startAt != null &&
         endAt != null &&
         !DateTime.parse(endAt).isAfter(DateTime.parse(startAt))) {
-      _toast('סיום המבצע חייב להיות אחרי תחילתו');
+      _toast(tr('סיום המבצע חייב להיות אחרי תחילתו', 'The deal\'s end must be after its start'));
       return;
     }
 
@@ -1105,7 +1108,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) _toast('שגיאה: $e');
+      if (mounted) _toast(tr('שגיאה: $e', 'Error: $e'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1132,8 +1135,8 @@ class _BadgeHint extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ההנחה שכתובה בשם ("20% הנחה", "1+1", "₪50 הנחה", "מתנה") '
-              'הופכת לתגית על כרטיס המבצע באתר.',
+              tr('ההנחה שכתובה בשם ("20% הנחה", "1+1", "₪50 הנחה", "מתנה") '
+              'הופכת לתגית על כרטיס המבצע באתר.', 'The discount written in the name ("20% off", "1+1", "₪50 off", "gift") becomes a tag on the deal card on the site.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 11,
@@ -1144,7 +1147,7 @@ class _BadgeHint extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'תגית: ',
+                  tr('תגית: ', 'Tag: '),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 11,
@@ -1173,7 +1176,7 @@ class _BadgeHint extends StatelessWidget {
                   )
                 else
                   Text(
-                    'אין — השם לא מציין הנחה',
+                    tr('אין — השם לא מציין הנחה', 'None — the name does not mention a discount'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 11,
@@ -1241,7 +1244,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
@@ -1298,10 +1301,10 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'active' => ('פעיל', AppColors.success),
-      'expired' => ('פג תוקף', AppColors.grayText),
-      'redeemed_out' => ('אזל', AppColors.orange),
-      'draft' => ('טיוטה', AppColors.grayLight),
+      'active' => (tr('פעיל', 'Active'), AppColors.success),
+      'expired' => (tr('פג תוקף', 'Expired'), AppColors.grayText),
+      'redeemed_out' => (tr('אזל', 'Sold out'), AppColors.orange),
+      'draft' => (tr('טיוטה', 'Draft'), AppColors.grayLight),
       _ => (status, AppColors.grayText),
     };
     return Container(

@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_parking_provider.dart';
 import '../widgets/image_upload_field.dart';
+import '../admin_language.dart';
 
 /// חניונים — the lots on the parking screens and the app map's Parkings
 /// layer.
@@ -69,7 +70,7 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש חניון...',
+                    hintText: tr('חיפוש חניון...', 'Search car parks...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -102,21 +103,21 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _activeFilter.isEmpty, () => _setFilter('')),
+              _FilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
               _FilterChip(
-                'מוצג',
+                tr('מוצג', 'Shown'),
                 _activeFilter == 'active',
                 () => _setFilter('active'),
               ),
               _FilterChip(
-                'מוסתר',
+                tr('מוסתר', 'Hidden'),
                 _activeFilter == 'inactive',
                 () => _setFilter('inactive'),
               ),
               const Spacer(),
               if (count != null)
                 Text(
-                  '$count חניונים',
+                  tr('$count חניונים', '$count car parks'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -128,7 +129,7 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
                 onPressed: () => _showEditor(),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'חניון חדש',
+                  tr('חניון חדש', 'New car park'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -151,7 +152,7 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
               child: Text(
                 // The likeliest cause on a fresh database: migration 00030
                 // has not been applied, so the table does not exist yet.
-                'שגיאה: $e',
+                tr('שגיאה: $e', 'Error: $e'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -162,7 +163,7 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
               if (lots.isEmpty) {
                 return Center(
                   child: Text(
-                    'אין חניונים. חניון שנוסף כאן מופיע בעמוד החניה ובמפת האפליקציה.',
+                    tr('אין חניונים. חניון שנוסף כאן מופיע בעמוד החניה ובמפת האפליקציה.', 'No car parks. A car park added here appears on the Parking page and on the app\'s map.'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.grayText,
@@ -188,10 +189,10 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
                     child: Row(
                       children: [
                         const SizedBox(width: 48),
-                        _Col('שם', flex: 3),
-                        _Col('כתובת', flex: 3),
-                        if (isWide) _Col('מיקום', flex: 2),
-                        _Col('סטטוס', flex: 1),
+                        _Col(tr('שם', 'Name'), flex: 3),
+                        _Col(tr('כתובת', 'Address'), flex: 3),
+                        if (isWide) _Col(tr('מיקום', 'Location'), flex: 2),
+                        _Col(tr('סטטוס', 'Status'), flex: 1),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -283,7 +284,9 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
                       : '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}',
                   style: small,
                   textDirection: TextDirection.ltr,
-                  textAlign: TextAlign.right,
+                  textAlign: adminEnglish.value
+                      ? TextAlign.left
+                      : TextAlign.right,
                 ),
               ),
             Expanded(
@@ -291,7 +294,7 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: _StatusPill(
-                  active ? 'מוצג' : 'מוסתר',
+                  active ? tr('מוצג', 'Shown') : tr('מוסתר', 'Hidden'),
                   active ? AppColors.success : AppColors.grayLight,
                 ),
               ),
@@ -307,9 +310,9 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
                 _ => _toggle(p),
               },
               itemBuilder: (_) => [
-                _menuItem('edit', 'עריכה'),
+                _menuItem('edit', tr('עריכה', 'Edit')),
                 // Hidden, not deleted — shown again from the same menu.
-                _menuItem('toggle', active ? 'הסתרה' : 'הצגה מחדש'),
+                _menuItem('toggle', active ? tr('הסתרה', 'Hide') : tr('הצגה מחדש', 'Show again')),
               ],
             ),
           ],
@@ -336,7 +339,7 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('העדכון נכשל: $e')),
+        SnackBar(content: Text(tr('העדכון נכשל: $e', 'The update failed: $e'))),
       );
     }
   }
@@ -454,7 +457,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640, maxHeight: 760),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -473,7 +476,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת חניון' : 'חניון חדש',
+                        _isEditing ? tr('עריכת חניון', 'Edit car park') : tr('חניון חדש', 'New car park'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -498,27 +501,27 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                     padding: const EdgeInsets.all(20),
                     children: [
                       _field(
-                        'שם החניון *',
+                        tr('שם החניון *', 'Car park name *'),
                         _name,
                         validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
-                      _field('שם באנגלית (לאפליקציה באנגלית)', _nameEn),
-                      _field('כתובת', _address),
+                      _field(tr('שם באנגלית (לאפליקציה באנגלית)', 'English name (for the app in English)'), _nameEn),
+                      _field(tr('כתובת', 'Address'), _address),
                       _field(
-                        'קואורדינטות *',
+                        tr('קואורדינטות *', 'Coordinates *'),
                         _coordinates,
                         hint: '31.8928, 35.0104',
                         ltr: true,
                         validator: (v) => _parseCoordinates(v ?? '') == null
-                            ? 'קו רוחב, קו אורך — למשל 31.8928, 35.0104'
+                            ? tr('קו רוחב, קו אורך — למשל 31.8928, 35.0104', 'Latitude, longitude — for example 31.8928, 35.0104')
                             : null,
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 14),
                         child: Text(
-                          'בגוגל מפות: לחיצה ימנית על החניון, ולחיצה על '
-                          'המספרים שבראש התפריט מעתיקה אותם.',
+                          tr('בגוגל מפות: לחיצה ימנית על החניון, ולחיצה על '
+                          'המספרים שבראש התפריט מעתיקה אותם.', 'In Google Maps: right-click the car park, and clicking the numbers at the top of the menu copies them.'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
@@ -526,32 +529,32 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                           ),
                         ),
                       ),
-                      _field('שעות פתיחה', _hours, hint: 'למשל: פתוח 24/7'),
+                      _field(tr('שעות פתיחה', 'Opening hours'), _hours, hint: tr('למשל: פתוח 24/7', 'For example: open 24/7')),
                       _freeChoice(),
                       _field(
-                        'מחיר',
+                        tr('מחיר', 'Price'),
                         _priceNote,
-                        hint: 'למשל: 2 שעות ראשונות חינם, אחר כך 5 ₪ לשעה',
+                        hint: tr('למשל: 2 שעות ראשונות חינם, אחר כך 5 ₪ לשעה', 'For example: first 2 hours free, then ₪5 an hour'),
                       ),
                       _field(
-                        'מספר מקומות חניה',
+                        tr('מספר מקומות חניה', 'Number of parking spaces'),
                         _capacity,
-                        hint: 'ריק אם לא ידוע',
+                        hint: tr('ריק אם לא ידוע', 'Empty if unknown'),
                         ltr: true,
                         validator: (v) {
                           final t = v?.trim() ?? '';
                           if (t.isEmpty) return null;
                           final n = int.tryParse(t);
                           return n == null || n <= 0
-                              ? 'מספר שלם גדול מאפס, או ריק'
+                              ? tr('מספר שלם גדול מאפס, או ריק', 'A whole number above zero, or empty')
                               : null;
                         },
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 14),
                         child: Text(
-                          'מספר המקומות בחניון, לא כמה פנויים עכשיו — אין לנו '
-                          'מקור לתפוסה.',
+                          tr('מספר המקומות בחניון, לא כמה פנויים עכשיו — אין לנו '
+                          'מקור לתפוסה.', 'The number of spaces in the car park, not how many are free now — we have no source for occupancy.'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
@@ -560,31 +563,31 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                         ),
                       ),
                       _field(
-                        'הערות (תו תושב, כניסה וכו׳)',
+                        tr('הערות (תו תושב, כניסה וכו׳)', 'Notes (resident permit, entrance, etc.)'),
                         _notes,
                         maxLines: 4,
                       ),
-                      _field('סדר מיון', _sortOrder, ltr: true),
+                      _field(tr('סדר מיון', 'Sort order'), _sortOrder, ltr: true),
                       // The car park page shows Google's hours, rating and
                       // photos for a car park linked here (00044). Filled
                       // by tool/link_parking_google.py; empty when Google
                       // does not list it.
                       _field(
-                        'מזהה מקום בגוגל מפות (Place ID)',
+                        tr('מזהה מקום בגוגל מפות (Place ID)', 'Google Maps place ID'),
                         _googlePlaceId,
                         ltr: true,
-                        hint: 'ChIJ… — ריק אם החניון לא מופיע בגוגל',
+                        hint: tr('ChIJ… — ריק אם החניון לא מופיע בגוגל', 'ChIJ… — empty if the car park is not on Google'),
                       ),
                       const SizedBox(height: 8),
                       ImageUploadField(
-                        label: 'תמונה',
+                        label: tr('תמונה', 'Image'),
                         controller: _imageUrl,
                         folder: 'parking',
                       ),
                       const SizedBox(height: 12),
                       SwitchListTile(
                         title: Text(
-                          'מוצג באתר ובאפליקציה',
+                          tr('מוצג באתר ובאפליקציה', 'Shown on the site and in the app'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 14,
@@ -626,7 +629,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -649,7 +652,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור חניון',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור חניון', 'Create car park'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -701,13 +704,13 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
   /// חינם / בתשלום / לא צוין. "לא צוין" saves null, so a lot is never shown
   /// as paid (or free) because nobody said.
   Widget _freeChoice() {
-    const options = [(null, 'לא צוין'), (true, 'חינם'), (false, 'בתשלום')];
+    final options = [(null, tr('לא צוין', 'Not specified')), (true, tr('חינם', 'Free')), (false, tr('בתשלום', 'Paid'))];
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Text(
-            'חניה בחינם?',
+            tr('חניה בחינם?', 'Free parking?'),
             style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           ),
           const SizedBox(width: 12),
@@ -761,9 +764,9 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
       if (mounted) {
         setState(
           () => _error = switch (e) {
-            PostgrestException(:final message) => 'השמירה נכשלה: $message',
-            StorageException(:final message) => 'העלאת תמונה נכשלה: $message',
-            _ => 'השמירה נכשלה: $e',
+            PostgrestException(:final message) => tr('השמירה נכשלה: $message', 'Saving failed: $message'),
+            StorageException(:final message) => tr('העלאת תמונה נכשלה: $message', 'Image upload failed: $message'),
+            _ => tr('השמירה נכשלה: $e', 'Saving failed: $e'),
           },
         );
       }
@@ -832,7 +835,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

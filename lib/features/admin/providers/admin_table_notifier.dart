@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
 
 import '../../../core/supabase/supabase_config.dart';
+import '../admin_language.dart';
 
 /// Reading and writing one table, for the admin panel.
 ///
@@ -310,7 +311,7 @@ class AdminWriteRefused implements Exception {
   const AdminWriteRefused();
 
   @override
-  String toString() => 'השינוי לא נשמר — אין הרשאה או שהשורה לא נמצאה';
+  String toString() => tr('השינוי לא נשמר — אין הרשאה או שהשורה לא נמצאה', 'The change was not saved — no permission, or the row was not found');
 }
 
 /// The columns whose values the audit log keeps. They are states — a status,

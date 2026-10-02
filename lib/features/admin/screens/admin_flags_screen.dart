@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_flags_provider.dart';
 import '../widgets/admin_form_pickers.dart';
+import '../admin_language.dart';
 
 class AdminFlagsScreen extends ConsumerStatefulWidget {
   const AdminFlagsScreen({super.key});
@@ -83,13 +84,15 @@ class _AdminFlagsScreenState extends ConsumerState<AdminFlagsScreen>
 
 /// What a flag does today, said out loud.
 class _NotYetWiredNote extends StatelessWidget {
-  final String text;
-  const _NotYetWiredNote({
-    this.text =
-        'השינויים כאן נשמרים בבסיס הנתונים, אך האפליקציה עדיין אינה '
+  final String? text;
+  const _NotYetWiredNote({this.text});
+
+  // The default is a getter so it follows the panel's language.
+  String get _text =>
+      text ??
+      tr('השינויים כאן נשמרים בבסיס הנתונים, אך האפליקציה עדיין אינה '
         'קוראת את הדגלים — כיבוי מודול יירשם ולא ישנה את מה שהמשתמשים '
-        'רואים. חיבור האפליקציה לדגלים הוא פיתוח נפרד.',
-  });
+        'רואים. חיבור האפליקציה לדגלים הוא פיתוח נפרד.', 'Changes here are saved in the database, but the app does not read the flags yet — turning a module off is recorded and does not change what users see. Connecting the app to the flags is separate development.');
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +112,7 @@ class _NotYetWiredNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              text,
+              _text,
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -164,9 +167,9 @@ class _FeatureFlagsTab extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    _StatChip('סה״כ Flags', '${list.length}', AppColors.navy),
+                    _StatChip(tr('סה״כ Flags', 'Total flags'), '${list.length}', AppColors.navy),
                     const SizedBox(width: 16),
-                    _StatChip('מופעלים', '$enabled', AppColors.success),
+                    _StatChip(tr('מופעלים', 'Enabled'), '$enabled', AppColors.success),
                     const SizedBox(width: 16),
                     _StatChip('100% Rollout', '$full', AppColors.turquoise),
                     const SizedBox(width: 16),
@@ -206,7 +209,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
                 onPressed: () => _showFlagEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'Flag חדש',
+                  tr('Flag חדש', 'New flag'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -227,7 +230,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                tr('שגיאה: $e', 'Error: $e'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -238,7 +241,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
               if (list.isEmpty) {
                 return Center(
                   child: Text(
-                    'אין Feature Flags',
+                    tr('אין Feature Flags', 'No feature flags'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.grayText,
@@ -351,7 +354,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
                                     if (context.mounted) {
                                       showAdminError(
                                         context,
-                                        'השמירה נכשלה',
+                                        tr('השמירה נכשלה', 'Saving failed'),
                                         e,
                                       );
                                     }
@@ -375,7 +378,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
                               // Platforms
                               ...platforms.map(
                                 (p) => Padding(
-                                  padding: const EdgeInsets.only(left: 4),
+                                  padding: const EdgeInsetsDirectional.only(end: 4),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 6,
@@ -445,14 +448,14 @@ class _RemoteConfigTab extends ConsumerWidget {
       children: [
         // Only the keys named here are read; the rest are stored and read
         // by nothing, as with the flags.
-        const _NotYetWiredNote(
+        _NotYetWiredNote(
           text:
-              'הגדרות פעילות: community_facebook_url (קישור לקבוצת '
+              tr('הגדרות פעילות: community_facebook_url (קישור לקבוצת '
               'הפייסבוק), community_share_url (קישור לטופס "שתפו אותנו"), '
               'community_news_category (קטגוריית החדשות בעמוד הקהילה) '
               'municipal_forms_url (לאן מוביל אריח "טפסים") '
               'ו-site_url (כתובת האתר בקישורי ההזמנה לקבוצות צעדים). שאר '
-              'ההגדרות כאן נשמרות, אך האפליקציה והאתר עדיין אינם קוראים אותן.',
+              'ההגדרות כאן נשמרות, אך האפליקציה והאתר עדיין אינם קוראים אותן.', 'Active settings: community_facebook_url (link to the Facebook group), community_share_url (link to the "Share with us" form), community_news_category (the news category on the Community page), municipal_forms_url (where the "Forms" tile leads) and site_url (the site address in step group invitation links). The other settings here are saved, but the app and the site do not read them yet.'),
         ),
         // ─── Toolbar ───
         Container(
@@ -481,7 +484,7 @@ class _RemoteConfigTab extends ConsumerWidget {
               const Spacer(),
               if (asyncData.valueOrNull case final list?)
                 Text(
-                  '${list.length} הגדרות',
+                  tr('${list.length} הגדרות', '${list.length} settings'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -493,7 +496,7 @@ class _RemoteConfigTab extends ConsumerWidget {
                 onPressed: () => _showConfigEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'הגדרה חדשה',
+                  tr('הגדרה חדשה', 'New setting'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -514,7 +517,7 @@ class _RemoteConfigTab extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                tr('שגיאה: $e', 'Error: $e'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -525,7 +528,7 @@ class _RemoteConfigTab extends ConsumerWidget {
               if (list.isEmpty) {
                 return Center(
                   child: Text(
-                    'אין הגדרות',
+                    tr('אין הגדרות', 'No settings'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.grayText,
@@ -642,7 +645,7 @@ class _RemoteConfigTab extends ConsumerWidget {
                               PopupMenuItem(
                                 value: 'edit',
                                 child: Text(
-                                  'עריכה',
+                                  tr('עריכה', 'Edit'),
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 13,
@@ -652,7 +655,7 @@ class _RemoteConfigTab extends ConsumerWidget {
                               PopupMenuItem(
                                 value: 'delete',
                                 child: Text(
-                                  'מחיקה',
+                                  tr('מחיקה', 'Delete'),
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 13,
@@ -685,31 +688,31 @@ class _RemoteConfigTab extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: adminDir,
         child: AlertDialog(
           title: Text(
-            'מחיקת הגדרה',
+            tr('מחיקת הגדרה', 'Delete setting'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontWeight: FontWeight.w700,
             ),
           ),
           content: Text(
-            'למחוק את "${c['key']}"? ההגדרה תימחק לצמיתות.',
+            tr('למחוק את "${c['key']}"? ההגדרה תימחק לצמיתות.', 'Delete "${c['key']}"? The setting will be deleted permanently.'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(
-                'ביטול',
+                tr('ביטול', 'Cancel'),
                 style: TextStyle(fontFamily: AppFonts.rubik),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(
-                'מחק',
+                tr('מחק', 'Delete'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -726,7 +729,7 @@ class _RemoteConfigTab extends ConsumerWidget {
           .read(adminRemoteConfigProvider.notifier)
           .deleteConfig(c['id'] as String);
     } catch (e) {
-      if (context.mounted) showAdminError(context, 'המחיקה נכשלה', e);
+      if (context.mounted) showAdminError(context, tr('המחיקה נכשלה', 'Deleting failed'), e);
     }
   }
 
@@ -778,7 +781,7 @@ class _RolloutSliderState extends ConsumerState<_RolloutSlider> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _value = widget.value);
-      showAdminError(context, 'השמירה נכשלה', e);
+      showAdminError(context, tr('השמירה נכשלה', 'Saving failed'), e);
     }
   }
 
@@ -854,7 +857,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500, maxHeight: 520),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -873,7 +876,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        'Flag חדש',
+                        tr('Flag חדש', 'New flag'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -900,29 +903,29 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildField(
-                          'מפתח (Key)',
+                          tr('מפתח (Key)', 'Key'),
                           _key,
                           hint: 'MY_FEATURE',
                           required: true,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'תווית',
+                          tr('תווית', 'Label'),
                           _label,
-                          hint: 'פיצ\'ר חדש',
+                          hint: tr('פיצ\'ר חדש', 'New feature'),
                           required: true,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'תיאור',
+                          tr('תיאור', 'Description'),
                           _description,
-                          hint: 'מה הפיצ\'ר עושה',
+                          hint: tr('מה הפיצ\'ר עושה', 'What the feature does'),
                           maxLines: 2,
                         ),
                         const SizedBox(height: 14),
                         SwitchListTile(
                           title: Text(
-                            'מופעל',
+                            tr('מופעל', 'On'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 14,
@@ -971,7 +974,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -999,7 +1002,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                                 ),
                               )
                             : Text(
-                                'יצירה',
+                                tr('יצירה', 'Create'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 14,
@@ -1042,7 +1045,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
           controller: ctrl,
           maxLines: maxLines,
           validator: required
-              ? (v) => (v ?? '').trim().isEmpty ? 'שדה חובה' : null
+              ? (v) => (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null
               : null,
           style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
           decoration: InputDecoration(
@@ -1094,7 +1097,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       // A key that already exists is the likely one: `key` is unique.
-      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+      if (mounted) showAdminError(context, tr('השמירה נכשלה', 'Saving failed'), e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1148,7 +1151,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500, maxHeight: 460),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -1167,7 +1170,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת הגדרה' : 'הגדרה חדשה',
+                        _isEditing ? tr('עריכת הגדרה', 'Edit setting') : tr('הגדרה חדשה', 'New setting'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -1194,24 +1197,24 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildField(
-                          'מפתח (Key)',
+                          tr('מפתח (Key)', 'Key'),
                           _key,
                           hint: 'HOME_HEADLINE',
                           required: true,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'ערך',
+                          tr('ערך', 'Value'),
                           _value,
-                          hint: 'ערך ההגדרה...',
+                          hint: tr('ערך ההגדרה...', 'Setting value...'),
                           maxLines: 3,
                           required: true,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'תיאור',
+                          tr('תיאור', 'Description'),
                           _description,
-                          hint: 'למה משמשת ההגדרה הזו',
+                          hint: tr('למה משמשת ההגדרה הזו', 'What this setting is for'),
                           maxLines: 2,
                         ),
                       ],
@@ -1235,7 +1238,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -1263,7 +1266,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'עדכון' : 'יצירה',
+                                _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 14,
@@ -1306,7 +1309,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
           controller: ctrl,
           maxLines: maxLines,
           validator: required
-              ? (v) => (v ?? '').trim().isEmpty ? 'שדה חובה' : null
+              ? (v) => (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null
               : null,
           style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
           decoration: InputDecoration(
@@ -1359,7 +1362,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+      if (mounted) showAdminError(context, tr('השמירה נכשלה', 'Saving failed'), e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

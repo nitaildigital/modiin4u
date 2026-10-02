@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_reviews_provider.dart';
+import '../admin_language.dart';
 
 /// Whether the panel offers its own reply to a review. Off: see the note
 /// at the reply button.
@@ -78,7 +79,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                   onChanged: _onSearch,
                   style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש לפי שם או טקסט...',
+                    hintText: tr('חיפוש לפי שם או טקסט...', 'Search by name or text...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
@@ -106,12 +107,12 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              for (final (value, label) in const [
-                ('', 'הכל'),
-                ('pending', 'ממתין'),
-                ('approved', 'מאושר'),
-                ('rejected', 'נדחה'),
-                ('hidden', 'מוסתר'),
+              for (final (value, label) in [
+                ('', tr('הכל', 'All')),
+                ('pending', tr('ממתין', 'Pending')),
+                ('approved', tr('מאושר', 'Approved')),
+                ('rejected', tr('נדחה', 'Rejected')),
+                ('hidden', tr('מוסתר', 'Hidden')),
               ])
                 _FilterPill(
                   label,
@@ -127,8 +128,8 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
               if (asyncReviews.hasValue)
                 Text(
                   notifier.totalCount == 0
-                      ? 'אין ביקורות'
-                      : '${notifier.totalCount} ביקורות',
+                      ? tr('אין ביקורות', 'No reviews')
+                      : tr('${notifier.totalCount} ביקורות', '${notifier.totalCount} reviews'),
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 13,
@@ -143,16 +144,16 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => _Message(
               icon: IconsaxPlusLinear.danger,
-              message: 'לא ניתן לטעון את הביקורות',
+              message: tr('לא ניתן לטעון את הביקורות', 'Could not load the reviews'),
               detail: '$e',
               onRetry: () => ref.read(adminReviewListProvider.notifier).load(),
             ),
             data: (rows) {
               if (rows.isEmpty) {
-                return const _Message(
+                return _Message(
                   icon: IconsaxPlusLinear.star,
-                  message: 'אין ביקורות',
-                  detail: 'ביקורות שתושבים יכתבו על עסקים יופיעו כאן.',
+                  message: tr('אין ביקורות', 'No reviews'),
+                  detail: tr('ביקורות שתושבים יכתבו על עסקים יופיעו כאן.', 'Reviews residents write about businesses appear here.'),
                 );
               }
               return ListView.separated(
@@ -167,7 +168,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                           child: OutlinedButton(
                             onPressed: notifier.loadMore,
                             child: Text(
-                              'טען עוד',
+                              tr('טען עוד', 'Load more'),
                               style: TextStyle(fontFamily: AppFonts.inter),
                             ),
                           ),
@@ -249,7 +250,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                     Text(
                       // The website prints "תושב" for a review with no name;
                       // the panel says plainly that the name is missing.
-                      name.isEmpty ? 'ללא שם' : name,
+                      name.isEmpty ? tr('ללא שם', 'Untitled') : name,
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontWeight: FontWeight.w600,
@@ -258,7 +259,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                       ),
                     ),
                     Text(
-                      '— ${business ?? 'עסק לא ידוע'}',
+                      tr('— ${business ?? 'עסק לא ידוע'}', '— ${business ?? 'unknown business'}'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontSize: 13,
@@ -267,7 +268,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                     ),
                     _Stars(rating),
                     _Tag(_statusLabel(status), _statusColor(status)),
-                    if (verified) const _Tag('מאומת', AppColors.midBlue),
+                    if (verified) _Tag(tr('מאומת', 'Verified'), AppColors.midBlue),
                   ],
                 ),
                 if (title.isNotEmpty) ...[
@@ -284,7 +285,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                 ],
                 const SizedBox(height: 4),
                 Text(
-                  body.isEmpty ? 'דירוג בלבד, ללא טקסט' : body,
+                  body.isEmpty ? tr('דירוג בלבד, ללא טקסט', 'Rating only, no text') : body,
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -315,8 +316,8 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                       children: [
                         Text(
                           responded == null
-                              ? 'תגובה'
-                              : 'תגובה · ${_date(responded)}',
+                              ? tr('תגובה', 'Comment')
+                              : tr('תגובה · ${_date(responded)}', 'Reply · ${_date(responded)}'),
                           style: small.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
@@ -345,7 +346,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
               // for when he wants it back.
               if (_repliesEnabled)
               IconButton(
-                tooltip: response.isEmpty ? 'תגובה' : 'עריכת התגובה',
+                tooltip: response.isEmpty ? tr('תגובה', 'Comment') : tr('עריכת התגובה', 'Edit the comment'),
                 icon: const Icon(
                   Icons.reply_outlined,
                   color: AppColors.midBlue,
@@ -354,7 +355,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
               ),
               if (status != 'approved')
                 IconButton(
-                  tooltip: 'אישור',
+                  tooltip: tr('אישור', 'Approve'),
                   icon: const Icon(Icons.check, color: AppColors.success),
                   onPressed: _busy.contains(id)
                       ? null
@@ -362,13 +363,13 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                           () => ref
                               .read(adminReviewListProvider.notifier)
                               .approve(id),
-                          'הביקורת אושרה',
+                          tr('הביקורת אושרה', 'Review approved'),
                           id: id,
                         ),
                 ),
               if (status != 'rejected')
                 IconButton(
-                  tooltip: 'דחייה',
+                  tooltip: tr('דחייה', 'Reject'),
                   icon: const Icon(Icons.close, color: AppColors.error),
                   onPressed: _busy.contains(id)
                       ? null
@@ -376,13 +377,13 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                           () => ref
                               .read(adminReviewListProvider.notifier)
                               .reject(id),
-                          'הביקורת נדחתה',
+                          tr('הביקורת נדחתה', 'Review rejected'),
                           id: id,
                         ),
                 ),
               if (status != 'hidden')
                 IconButton(
-                  tooltip: 'הסתרה מהאתר',
+                  tooltip: tr('הסתרה מהאתר', 'Hide from the site'),
                   icon: const Icon(
                     Icons.visibility_off_outlined,
                     color: AppColors.adminTextLight,
@@ -393,7 +394,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                           () => ref
                               .read(adminReviewListProvider.notifier)
                               .hide(id),
-                          'הביקורת הוסתרה',
+                          tr('הביקורת הוסתרה', 'Review hidden'),
                           id: id,
                         ),
                 ),
@@ -412,7 +413,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
     if (text == null) return;
     await _run(
       () => ref.read(adminReviewListProvider.notifier).reply(id, text),
-      text.trim().isEmpty ? 'התגובה הוסרה' : 'התגובה נשמרה',
+      text.trim().isEmpty ? tr('התגובה הוסרה', 'Comment removed') : tr('התגובה נשמרה', 'Comment saved'),
     );
   }
 
@@ -422,10 +423,10 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
   }
 
   String _statusLabel(String status) => switch (status) {
-    'approved' => 'מאושר',
-    'pending' => 'ממתין',
-    'rejected' => 'נדחה',
-    'hidden' => 'מוסתר',
+    'approved' => tr('מאושר', 'Approved'),
+    'pending' => tr('ממתין', 'Pending'),
+    'rejected' => tr('נדחה', 'Rejected'),
+    'hidden' => tr('מוסתר', 'Hidden'),
     _ => status,
   };
 
@@ -456,7 +457,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
       messenger.showSnackBar(
         SnackBar(
           backgroundColor: AppColors.error,
-          content: Text('הפעולה נכשלה: $e'),
+          content: Text(tr('הפעולה נכשלה: $e', 'The action failed: $e')),
         ),
       );
     } finally {
@@ -487,10 +488,10 @@ class _ReplyDialogState extends State<_ReplyDialog> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: AlertDialog(
         title: Text(
-          widget.initial.isEmpty ? 'תגובה לביקורת' : 'עריכת התגובה',
+          widget.initial.isEmpty ? tr('תגובה לביקורת', 'Reply to the review') : tr('עריכת התגובה', 'Edit the comment'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontWeight: FontWeight.w700,
@@ -509,13 +510,13 @@ class _ReplyDialogState extends State<_ReplyDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik)),
+            child: Text(tr('ביטול', 'Cancel'), style: TextStyle(fontFamily: AppFonts.rubik)),
           ),
           if (widget.initial.isNotEmpty)
             TextButton(
               onPressed: () => Navigator.pop(context, ''),
               child: Text(
-                'מחיקת התגובה',
+                tr('מחיקת התגובה', 'Delete the comment'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -524,7 +525,7 @@ class _ReplyDialogState extends State<_ReplyDialog> {
             ),
           FilledButton(
             onPressed: () => Navigator.pop(context, _text.text),
-            child: Text('שמירה', style: TextStyle(fontFamily: AppFonts.rubik)),
+            child: Text(tr('שמירה', 'Save'), style: TextStyle(fontFamily: AppFonts.rubik)),
           ),
         ],
       ),
@@ -587,7 +588,7 @@ class _FilterPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),
@@ -669,7 +670,7 @@ class _Message extends StatelessWidget {
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 18),
                 label: Text(
-                  'נסה שוב',
+                  tr('נסה שוב', 'Try again'),
                   style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
                 ),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
 import 'admin_table_notifier.dart';
+import '../admin_language.dart';
 
 /// Who may use the control centre.
 ///
@@ -117,14 +118,14 @@ class AdminTeamNotifier extends AdminTableNotifier {
     final current = member['role_id'] as String?;
     if (current == roleId) return;
     if (member['profile_id'] == currentProfileId) {
-      throw const AdminTeamGuard(
-        'אי אפשר לשנות את התפקיד של עצמך. מנהל ראשי אחר יכול לעשות זאת.',
+      throw AdminTeamGuard(
+        tr('אי אפשר לשנות את התפקיד של עצמך. מנהל ראשי אחר יכול לעשות זאת.', 'You cannot change your own role. Another super admin can do it.'),
       );
     }
     if (await _isLastActiveSuperAdmin(member)) {
-      throw const AdminTeamGuard(
-        'זהו המנהל הראשי הפעיל היחיד. יש למנות מנהל ראשי נוסף לפני שינוי '
-        'התפקיד, אחרת לא יישאר מי שינהל את הצוות.',
+      throw AdminTeamGuard(
+        tr('זהו המנהל הראשי הפעיל היחיד. יש למנות מנהל ראשי נוסף לפני שינוי '
+        'התפקיד, אחרת לא יישאר מי שינהל את הצוות.', 'This is the only active super admin. Appoint another super admin before changing the role, otherwise nobody will be left to manage the team.'),
       );
     }
     await update(member['id'] as String, {'role_id': roleId});
@@ -135,15 +136,15 @@ class AdminTeamNotifier extends AdminTableNotifier {
   Future<void> setMemberActive(Map<String, dynamic> member, bool active) async {
     if (!active) {
       if (member['profile_id'] == currentProfileId) {
-        throw const AdminTeamGuard(
-          'אי אפשר להשבית את עצמך — היית ננעל מחוץ לממשק. '
-          'מנהל ראשי אחר יכול לעשות זאת.',
+        throw AdminTeamGuard(
+          tr('אי אפשר להשבית את עצמך — היית ננעל מחוץ לממשק. '
+          'מנהל ראשי אחר יכול לעשות זאת.', 'You cannot disable yourself — you would be locked out of the panel. Another super admin can do it.'),
         );
       }
       if (await _isLastActiveSuperAdmin(member)) {
-        throw const AdminTeamGuard(
-          'זהו המנהל הראשי הפעיל היחיד. השבתתו הייתה משאירה את הממשק ללא '
-          'מנהל ראשי.',
+        throw AdminTeamGuard(
+          tr('זהו המנהל הראשי הפעיל היחיד. השבתתו הייתה משאירה את הממשק ללא '
+          'מנהל ראשי.', 'This is the only active super admin. Disabling them would leave the panel without a super admin.'),
         );
       }
     }

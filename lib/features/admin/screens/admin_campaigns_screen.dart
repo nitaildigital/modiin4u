@@ -8,6 +8,7 @@ import '../providers/admin_ad_placements_provider.dart';
 import '../providers/admin_campaigns_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 class AdminCampaignsScreen extends ConsumerStatefulWidget {
   const AdminCampaignsScreen({super.key});
@@ -67,22 +68,22 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                 ),
                 child: Row(
                   children: [
-                    _StatChip('מוצגים באתר עכשיו', '$live', AppColors.success),
+                    _StatChip(tr('מוצגים באתר עכשיו', 'Shown on the site now'), '$live', AppColors.success),
                     const SizedBox(width: 16),
                     _StatChip(
-                      'חשיפות',
+                      tr('חשיפות', 'Impressions'),
                       _formatNumber(totalImpressions),
                       AppColors.turquoise,
                     ),
                     const SizedBox(width: 16),
                     _StatChip(
-                      'קליקים',
+                      tr('קליקים', 'Clicks'),
                       _formatNumber(totalClicks),
                       AppColors.navy,
                     ),
                     const SizedBox(width: 16),
                     _StatChip(
-                      'CTR ממוצע',
+                      tr('CTR ממוצע', 'Average CTR'),
                       '${ctr.toStringAsFixed(1)}%',
                       AppColors.gold,
                     ),
@@ -112,7 +113,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש קמפיין...',
+                    hintText: tr('חיפוש קמפיין...', 'Search campaigns...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -145,31 +146,31 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
+              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
                 setState(() => _statusFilter = '');
                 ref
                     .read(adminCampaignListProvider.notifier)
                     .setStatusFilter(null);
               }),
-              _FilterChip('פעיל', _statusFilter == 'active', () {
+              _FilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
                 setState(() => _statusFilter = 'active');
                 ref
                     .read(adminCampaignListProvider.notifier)
                     .setStatusFilter('active');
               }),
-              _FilterChip('מושהה', _statusFilter == 'paused', () {
+              _FilterChip(tr('מושהה', 'Paused'), _statusFilter == 'paused', () {
                 setState(() => _statusFilter = 'paused');
                 ref
                     .read(adminCampaignListProvider.notifier)
                     .setStatusFilter('paused');
               }),
-              _FilterChip('טיוטה', _statusFilter == 'draft', () {
+              _FilterChip(tr('טיוטה', 'Draft'), _statusFilter == 'draft', () {
                 setState(() => _statusFilter = 'draft');
                 ref
                     .read(adminCampaignListProvider.notifier)
                     .setStatusFilter('draft');
               }),
-              _FilterChip('הסתיים', _statusFilter == 'ended', () {
+              _FilterChip(tr('הסתיים', 'Ended'), _statusFilter == 'ended', () {
                 setState(() => _statusFilter = 'ended');
                 ref
                     .read(adminCampaignListProvider.notifier)
@@ -181,7 +182,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
               // the list below show the error and a retry.
               if (asyncData.valueOrNull case final list?)
                 Text(
-                  '${list.length} קמפיינים',
+                  tr('${list.length} קמפיינים', '${list.length} campaigns'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -193,7 +194,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                 onPressed: () => _showEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'קמפיין חדש',
+                  tr('קמפיין חדש', 'New campaign'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -213,7 +214,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
           child: asyncData.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת הקמפיינים',
+              message: tr('שגיאה בטעינת הקמפיינים', 'Error loading the campaigns'),
               error: e,
               onRetry: () =>
                   ref.read(adminCampaignListProvider.notifier).load(),
@@ -231,7 +232,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין קמפיינים',
+                        tr('אין קמפיינים', 'No campaigns'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -259,12 +260,12 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                     child: Row(
                       children: [
                         const SizedBox(width: 84),
-                        _Col('קמפיין', flex: 3),
-                        _Col('מיקום', flex: 2),
-                        if (isWide) _Col('חשיפות', flex: 1),
-                        if (isWide) _Col('קליקים', flex: 1),
+                        _Col(tr('קמפיין', 'Campaign'), flex: 3),
+                        _Col(tr('מיקום', 'Location'), flex: 2),
+                        if (isWide) _Col(tr('חשיפות', 'Impressions'), flex: 1),
+                        if (isWide) _Col(tr('קליקים', 'Clicks'), flex: 1),
                         if (isWide) _Col('CTR', flex: 1),
-                        _Col('סטטוס', flex: 2),
+                        _Col(tr('סטטוס', 'Status'), flex: 2),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -425,7 +426,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                                     PopupMenuItem(
                                       value: 'edit',
                                       child: Text(
-                                        'עריכה',
+                                        tr('עריכה', 'Edit'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -436,7 +437,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                                       PopupMenuItem(
                                         value: 'activate',
                                         child: Text(
-                                          'הפעל',
+                                          tr('הפעל', 'Activate'),
                                           style: TextStyle(
                                             fontFamily: AppFonts.rubik,
                                             fontSize: 13,
@@ -447,7 +448,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                                       PopupMenuItem(
                                         value: 'pause',
                                         child: Text(
-                                          'השהה',
+                                          tr('השהה', 'Pause'),
                                           style: TextStyle(
                                             fontFamily: AppFonts.rubik,
                                             fontSize: 13,
@@ -463,7 +464,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                                       PopupMenuItem(
                                         value: 'end',
                                         child: Text(
-                                          'הסרה מהאתר',
+                                          tr('הסרה מהאתר', 'Take off the site'),
                                           style: TextStyle(
                                             fontFamily: AppFonts.rubik,
                                             fontSize: 13,
@@ -513,14 +514,14 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
         case 'pause':
           await notifier.updateStatus(id, 'paused');
           _said(
-            '"$name" הושהה ולא מוצג באתר. "הפעל" בתפריט מחזיר אותו.',
+            tr('"$name" הושהה ולא מוצג באתר. "הפעל" בתפריט מחזיר אותו.', '"$name" is paused and not shown on the site. "Activate" in the menu brings it back.'),
             undo: () => notifier.updateStatus(id, was),
           );
         case 'end':
           await notifier.endCampaign(id);
           _said(
-            '"$name" הוסר מהאתר. הוא נשמר ברשימה תחת "הסתיים", '
-            'ו"הפעל" בתפריט שלו מחזיר אותו.',
+            tr('"$name" הוסר מהאתר. הוא נשמר ברשימה תחת "הסתיים", '
+            'ו"הפעל" בתפריט שלו מחזיר אותו.', '"$name" was taken off the site. It stays in the list under "Ended", and "Activate" in its menu brings it back.'),
             undo: () => notifier.updateStatus(id, was),
           );
       }
@@ -529,7 +530,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'הפעולה נכשלה: ${_why(e)}',
+            tr('הפעולה נכשלה: ${_why(e)}', 'The action failed: ${_why(e)}'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           backgroundColor: AppColors.error,
@@ -548,7 +549,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
         duration: const Duration(seconds: 6),
         // Awaited like the action itself, so a refused undo says so.
         action: SnackBarAction(
-          label: 'ביטול',
+          label: tr('ביטול', 'Cancel'),
           onPressed: () {
             if (mounted) runAdminAction(context, undo);
           },
@@ -665,7 +666,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 700, maxHeight: 820),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -684,7 +685,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת קמפיין' : 'קמפיין חדש',
+                        _isEditing ? tr('עריכת קמפיין', 'Edit campaign') : tr('קמפיין חדש', 'New campaign'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -711,11 +712,11 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildField(
-                          'שם קמפיין',
+                          tr('שם קמפיין', 'Campaign name'),
                           _name,
-                          hint: 'פיצה פרגו — 20% הנחה',
+                          hint: tr('פיצה פרגו — 20% הנחה', 'Pizza Prego — 20% off'),
                           validator: (v) =>
-                              v == null || v.trim().isEmpty ? 'שדה חובה' : null,
+                              v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                         ),
                         const SizedBox(height: 14),
                         _buildSlotPicker(slots),
@@ -727,27 +728,27 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                         _buildBusinessPicker(),
                         const SizedBox(height: 14),
                         ImageUploadField(
-                          label: 'תמונת הבאנר — מה שמוצג באתר',
+                          label: tr('תמונת הבאנר — מה שמוצג באתר', 'The banner image — what the site shows'),
                           controller: _desktopImage,
                           folder: 'campaigns',
                         ),
                         const SizedBox(height: 14),
                         ImageUploadField(
                           label:
-                              'תמונה למובייל (לא חובה — האתר מציג את התמונה שלמעלה)',
+                              tr('תמונה למובייל (לא חובה — האתר מציג את התמונה שלמעלה)', 'Mobile image (optional — the site shows the image above)'),
                           controller: _mobileImage,
                           folder: 'campaigns/mobile',
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'קישור יעד — לאן לוחצים',
+                          tr('קישור יעד — לאן לוחצים', 'Target link — where a tap leads'),
                           _destinationUrl,
                           hint: 'https://...',
                           validator: (v) {
                             final t = (v ?? '').trim();
                             if (t.isEmpty) return null;
                             return _normalizeUrl(t) == null
-                                ? 'כתובת לא תקינה — למשל https://example.co.il'
+                                ? tr('כתובת לא תקינה — למשל https://example.co.il', 'Invalid address — for example https://example.co.il')
                                 : null;
                           },
                         ),
@@ -756,9 +757,9 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                           children: [
                             Expanded(
                               child: _buildDateField(
-                                'תחילת הצגה',
+                                tr('תחילת הצגה', 'Show from'),
                                 _startAt,
-                                empty: 'מיד',
+                                empty: tr('מיד', 'Immediately'),
                                 onPick: (d) => setState(
                                   () => _startAt = DateTime(
                                     d.year,
@@ -772,9 +773,9 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildDateField(
-                                'סיום הצגה (כולל היום הזה)',
+                                tr('סיום הצגה (כולל היום הזה)', 'Show until (including that day)'),
                                 _endAt,
-                                empty: 'ללא סיום',
+                                empty: tr('ללא סיום', 'No end'),
                                 // To the end of the chosen day, so a campaign
                                 // "until the 30th" runs through the 30th.
                                 onPick: (d) => setState(
@@ -797,16 +798,16 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                           children: [
                             Expanded(
                               child: _buildField(
-                                'עדיפות',
+                                tr('עדיפות', 'Priority'),
                                 _priority,
                                 hint: '0',
-                                helper: 'מספר גבוה יותר מוצג ראשון במיקום',
+                                helper: tr('מספר גבוה יותר מוצג ראשון במיקום', 'A higher number is shown first in the placement'),
                                 keyboardType: TextInputType.number,
                                 // The column is a 32-bit integer.
                                 validator: (v) {
                                   final n = int.tryParse((v ?? '').trim());
                                   return n == null || n.abs() > 2147483647
-                                      ? 'מספר שלם'
+                                      ? tr('מספר שלם', 'A whole number')
                                       : null;
                                 },
                               ),
@@ -816,17 +817,17 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                           ],
                         ),
                         const SizedBox(height: 14),
-                        _buildDropdown('סטטוס', _status, {
-                          'draft': 'טיוטה — לא מוצג',
-                          'active': 'פעיל — מוצג בתאריכים שנקבעו',
-                          'paused': 'מושהה — לא מוצג',
-                          'ended': 'הסתיים — לא מוצג',
+                        _buildDropdown(tr('סטטוס', 'Status'), _status, {
+                          'draft': tr('טיוטה — לא מוצג', 'Draft — not shown'),
+                          'active': tr('פעיל — מוצג בתאריכים שנקבעו', 'Active — shown on the set dates'),
+                          'paused': tr('מושהה — לא מוצג', 'Paused — not shown'),
+                          'ended': tr('הסתיים — לא מוצג', 'Ended — not shown'),
                           // Nothing moves a campaign from "scheduled" to
                           // "active", and the site shows only active ones,
                           // so it is offered only to a row that has it.
                           // Scheduling is "active" with a start date.
                           if (_status == 'scheduled')
-                            'scheduled': 'מתוכנן — לא מוצג (בחרו פעיל)',
+                            'scheduled': tr('מתוכנן — לא מוצג (בחרו פעיל)', 'Planned — not shown (choose Active)'),
                         }, (v) => setState(() => _status = v!)),
                         const SizedBox(height: 14),
                         _SiteHint(
@@ -836,8 +837,8 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                         if (_isEditing) ...[
                           const SizedBox(height: 14),
                           Text(
-                            'חשיפות: ${widget.campaign!['impressions'] ?? 0} · '
-                            'קליקים: ${widget.campaign!['clicks'] ?? 0}',
+                            tr('חשיפות: ${widget.campaign!['impressions'] ?? 0} · '
+                            'קליקים: ${widget.campaign!['clicks'] ?? 0}', 'Impressions: ${widget.campaign!['impressions'] ?? 0} · Clicks: ${widget.campaign!['clicks'] ?? 0}'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 12,
@@ -866,7 +867,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'סגירה',
+                          tr('סגירה', 'Close'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -907,7 +908,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'עדכון' : 'יצירה',
+                                _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 14,
@@ -931,11 +932,11 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
   Widget _buildSlotPicker(AsyncValue<List<Map<String, dynamic>>> slots) {
     return slots.when(
       loading: () =>
-          _labelled('מיקום באתר', const LinearProgressIndicator(minHeight: 2)),
+          _labelled(tr('מיקום באתר', 'Placement on the site'), const LinearProgressIndicator(minHeight: 2)),
       error: (e, _) => _labelled(
-        'מיקום באתר',
+        tr('מיקום באתר', 'Placement on the site'),
         Text(
-          'לא ניתן לטעון את המיקומים: $e',
+          tr('לא ניתן לטעון את המיקומים: $e', 'Could not load the placements: $e'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 12,
@@ -944,17 +945,17 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
         ),
       ),
       data: (list) => _buildDropdown(
-        'מיקום באתר',
+        tr('מיקום באתר', 'Placement on the site'),
         _placementId,
         {
           for (final p in list)
             p['id'] as String:
-                '${p['label']} · ${p['code']}'
-                '${p['is_active'] == true ? '' : ' (מושבת)'}',
+                tr('${p['label']} · ${p['code']}'
+                '${p['is_active'] == true ? '' : ' (מושבת)'}', '${p['label']} · ${p['code']}${p['is_active'] == true ? '' : ' (disabled)'}'),
         },
         (v) => setState(() => _placementId = v),
-        validator: (v) => v == null ? 'בחרו מיקום' : null,
-        hint: 'בחרו היכן הבאנר יופיע',
+        validator: (v) => v == null ? tr('בחרו מיקום', 'Choose a placement') : null,
+        hint: tr('בחרו היכן הבאנר יופיע', 'Choose where the banner appears'),
       ),
     );
   }
@@ -963,7 +964,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
 
   Widget _buildBusinessPicker() {
     return _labelled(
-      'עסק מפרסם (לא חובה)',
+      tr('עסק מפרסם (לא חובה)', 'Advertising business (optional)'),
       InkWell(
         onTap: _pickBusiness,
         borderRadius: BorderRadius.circular(8),
@@ -972,7 +973,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
             suffixIcon: _businessId == null
                 ? const Icon(Icons.search, size: 18)
                 : IconButton(
-                    tooltip: 'ללא עסק',
+                    tooltip: tr('ללא עסק', 'No business'),
                     icon: const Icon(Icons.close, size: 18),
                     onPressed: () => setState(() {
                       _businessId = null;
@@ -981,7 +982,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                   ),
           ),
           child: Text(
-            _businessId == null ? 'ללא עסק' : (_businessName ?? _businessId!),
+            _businessId == null ? tr('ללא עסק', 'No business') : (_businessName ?? _businessId!),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 14,
@@ -1011,7 +1012,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
     final team = ref.watch(adminCampaignSalespeopleProvider).valueOrNull;
     if (team == null) {
       return _labelled(
-        'איש מכירות',
+        tr('איש מכירות', 'Salesperson'),
         const LinearProgressIndicator(minHeight: 2),
       );
     }
@@ -1023,7 +1024,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
     }
 
     final items = <String, String>{
-      '': 'ללא',
+      '': tr('ללא', 'None'),
       for (final a in team)
         if (a['is_active'] == true || a['id'] == _salespersonId)
           a['id'] as String: nameOf(a),
@@ -1031,10 +1032,10 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
     // A salesperson whose admin row is gone still shows as chosen rather
     // than failing the dropdown.
     if (_salespersonId != null && !items.containsKey(_salespersonId)) {
-      items[_salespersonId!] = 'איש צוות שאינו ברשימה';
+      items[_salespersonId!] = tr('איש צוות שאינו ברשימה', 'A team member not on the list');
     }
     return _buildDropdown(
-      'איש מכירות',
+      tr('איש מכירות', 'Salesperson'),
       _salespersonId ?? '',
       items,
       (v) => setState(() => _salespersonId = (v ?? '').isEmpty ? null : v),
@@ -1059,22 +1060,22 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
   /// A sentence on whether, and when, the banner will be on the site once
   /// saved — every condition `active_banners()` checks, in words.
   String _siteHint(Map<String, dynamic>? slot) {
-    if (slot == null) return 'בחרו מיקום כדי לראות אם ומתי הבאנר יוצג.';
+    if (slot == null) return tr('בחרו מיקום כדי לראות אם ומתי הבאנר יוצג.', 'Choose a placement to see whether and when the banner is shown.');
     final reasons = <String>[
       if (_status != 'active')
-        'הסטטוס "${_statusLabel(_status)}" — רק קמפיין פעיל מוצג',
-      if (_desktopImage.text.trim().isEmpty) 'אין תמונה',
-      if (slot['is_active'] != true) 'המיקום מושבת',
+        tr('הסטטוס "${_statusLabel(_status)}" — רק קמפיין פעיל מוצג', 'The status is "${_statusLabel(_status)}" — only an active campaign is shown'),
+      if (_desktopImage.text.trim().isEmpty) tr('אין תמונה', 'No image'),
+      if (slot['is_active'] != true) tr('המיקום מושבת', 'The placement is disabled'),
       if (!placementIsDrawn(slot['code'] as String?))
-        'המיקום הזה לא מוצג באף עמוד באתר כרגע',
-      if (_endAt != null && !_endAt!.isAfter(DateTime.now())) 'תאריך הסיום עבר',
+        tr('המיקום הזה לא מוצג באף עמוד באתר כרגע', 'This placement is not shown on any page of the site right now'),
+      if (_endAt != null && !_endAt!.isAfter(DateTime.now())) tr('תאריך הסיום עבר', 'The end date has passed'),
     ];
-    if (reasons.isNotEmpty) return 'לא יוצג באתר: ${reasons.join(' · ')}.';
-    final until = _endAt == null ? '' : ' ועד ${_fmtDate(_endAt!)}';
+    if (reasons.isNotEmpty) return tr('לא יוצג באתר: ${reasons.join(' · ')}.', 'Not shown on the site: ${reasons.join(' · ')}.');
+    final until = _endAt == null ? '' : tr(' ועד ${_fmtDate(_endAt!)}', ' to ${_fmtDate(_endAt!)}');
     if (_startAt != null && _startAt!.isAfter(DateTime.now())) {
-      return 'יוצג באתר מ-${_fmtDate(_startAt!)}$until.';
+      return tr('יוצג באתר מ-${_fmtDate(_startAt!)}$until.', 'Shown on the site from ${_fmtDate(_startAt!)}$until.');
     }
-    return 'יוצג באתר מיד עם השמירה$until.';
+    return tr('יוצג באתר מיד עם השמירה$until.', 'Shown on the site as soon as it is saved$until.');
   }
 
   // ─── Saving ───
@@ -1083,14 +1084,14 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
     setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
     if (_startAt != null && _endAt != null && !_endAt!.isAfter(_startAt!)) {
-      setState(() => _error = 'תאריך הסיום חייב להיות אחרי תאריך ההתחלה');
+      setState(() => _error = tr('תאריך הסיום חייב להיות אחרי תאריך ההתחלה', 'The end date must be after the start date'));
       return;
     }
     // The site skips a campaign with no picture, so an active one without
     // it would be a booking that shows nothing.
     if (_status == 'active' && _desktopImage.text.trim().isEmpty) {
       setState(
-        () => _error = 'קמפיין פעיל צריך תמונה — העלו תמונה או שמרו כטיוטה',
+        () => _error = tr('קמפיין פעיל צריך תמונה — העלו תמונה או שמרו כטיוטה', 'An active campaign needs an image — upload one or save as a draft'),
       );
       return;
     }
@@ -1123,7 +1124,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'השמירה נכשלה: ${_why(e)}';
+          _error = tr('השמירה נכשלה: ${_why(e)}', 'Saving failed: ${_why(e)}');
         });
       }
     }
@@ -1235,6 +1236,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
         onTap: () async {
           final now = DateTime.now();
           final picked = await showDatePicker(
+            locale: adminLocale,
             context: context,
             initialDate: value ?? now,
             firstDate: DateTime(now.year - 2),
@@ -1247,7 +1249,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
             suffixIcon: value == null
                 ? const Icon(Icons.calendar_today_outlined, size: 16)
                 : IconButton(
-                    tooltip: 'ניקוי',
+                    tooltip: tr('ניקוי', 'Clear'),
                     icon: const Icon(Icons.close, size: 18),
                     onPressed: onClear,
                   ),
@@ -1332,9 +1334,9 @@ class _SlotNote extends StatelessWidget {
       ),
       child: Text(
         [
-          'גודל: ${placementSizeText(slot)}',
-          'עד ${slot['max_banners'] ?? 1} באנרים במיקום',
-          if (inactive) 'המיקום מושבת — שום באנר בו לא יוצג',
+          tr('גודל: ${placementSizeText(slot)}', 'Size: ${placementSizeText(slot)}'),
+          tr('עד ${slot['max_banners'] ?? 1} באנרים במיקום', 'Up to ${slot['max_banners'] ?? 1} banners in the placement'),
+          if (inactive) tr('המיקום מושבת — שום באנר בו לא יוצג', 'The placement is disabled — no banner in it will be shown'),
         ].join(' · '),
         style: TextStyle(
           fontFamily: AppFonts.rubik,
@@ -1408,7 +1410,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460, maxHeight: 560),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1417,7 +1419,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                   autofocus: true,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש עסק לפי שם',
+                    hintText: tr('חיפוש עסק לפי שם', 'Search a business by name'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -1438,7 +1440,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Center(
                       child: Text(
-                        'לא ניתן לטעון עסקים: $e',
+                        tr('לא ניתן לטעון עסקים: $e', 'Could not load businesses: $e'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.error,
@@ -1459,7 +1461,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                       if (shown.isEmpty) {
                         return Center(
                           child: Text(
-                            'לא נמצא עסק',
+                            tr('לא נמצא עסק', 'No business found'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               color: AppColors.grayText,
@@ -1483,7 +1485,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                             subtitle: b['status'] == 'active'
                                 ? null
                                 : Text(
-                                    'סטטוס: ${b['status']}',
+                                    tr('סטטוס: ${b['status']}', 'Status: ${b['status']}'),
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 11,
@@ -1510,11 +1512,11 @@ String _fmtDate(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
 String _statusLabel(String status) => switch (status) {
-  'active' => 'פעיל',
-  'scheduled' => 'מתוכנן',
-  'paused' => 'מושהה',
-  'ended' => 'הסתיים',
-  'draft' => 'טיוטה',
+  'active' => tr('פעיל', 'Active'),
+  'scheduled' => tr('מתוכנן', 'Planned'),
+  'paused' => tr('מושהה', 'Paused'),
+  'ended' => tr('הסתיים', 'Ended'),
+  'draft' => tr('טיוטה', 'Draft'),
   _ => status,
 };
 
@@ -1533,28 +1535,28 @@ class _SiteState extends StatelessWidget {
     final end = DateTime.tryParse(c['end_at'] as String? ?? '')?.toLocal();
     final image = (c['desktop_image'] as String? ?? '').isNotEmpty;
     final (String text, Color color) = switch (c['status']) {
-      'active' when !image => ('ללא תמונה — לא מוצג', AppColors.error),
+      'active' when !image => (tr('ללא תמונה — לא מוצג', 'No image — not shown'), AppColors.error),
       'active' when slot?['is_active'] != true => (
-        'המיקום מושבת',
+        tr('המיקום מושבת', 'The placement is disabled'),
         AppColors.error,
       ),
       'active' when !placementIsDrawn(slot?['code'] as String?) => (
-        'מיקום שלא מוצג באתר',
+        tr('מיקום שלא מוצג באתר', 'A placement not shown on the site'),
         AppColors.error,
       ),
       'active' when end != null && !end.isAfter(now) => (
-        'הסתיים ב-${_fmtDate(end)}',
+        tr('הסתיים ב-${_fmtDate(end)}', 'Ended on ${_fmtDate(end)}'),
         AppColors.grayText,
       ),
       'active' when start != null && start.isAfter(now) => (
-        'יתחיל ב-${_fmtDate(start)}',
+        tr('יתחיל ב-${_fmtDate(start)}', 'Starts on ${_fmtDate(start)}'),
         AppColors.turquoise,
       ),
       'active' => (
-        end == null ? 'באתר עכשיו' : 'באתר עד ${_fmtDate(end)}',
+        end == null ? tr('באתר עכשיו', 'On the site now') : tr('באתר עד ${_fmtDate(end)}', 'On the site until ${_fmtDate(end)}'),
         AppColors.success,
       ),
-      _ => ('לא מוצג', AppColors.grayLight),
+      _ => (tr('לא מוצג', 'Not shown'), AppColors.grayLight),
     };
     return Text(
       text,
@@ -1615,7 +1617,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
@@ -1672,11 +1674,11 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'active' => ('פעיל', AppColors.success),
-      'scheduled' => ('מתוכנן', AppColors.turquoise),
-      'paused' => ('מושהה', AppColors.gold),
-      'ended' => ('הסתיים', AppColors.grayText),
-      'draft' => ('טיוטה', AppColors.grayLight),
+      'active' => (tr('פעיל', 'Active'), AppColors.success),
+      'scheduled' => (tr('מתוכנן', 'Planned'), AppColors.turquoise),
+      'paused' => (tr('מושהה', 'Paused'), AppColors.gold),
+      'ended' => (tr('הסתיים', 'Ended'), AppColors.grayText),
+      'draft' => (tr('טיוטה', 'Draft'), AppColors.grayLight),
       _ => (status, AppColors.grayText),
     };
     return Container(

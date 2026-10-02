@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'admin_table_notifier.dart';
+import '../admin_language.dart';
 
 /// What administrators have done, on the live table.
 ///
@@ -18,43 +19,43 @@ final adminAuditProvider =
 
 /// Hebrew names for the tables the panel edits, as the log shows them and as
 /// its search matches them.
-const auditTableLabels = <String, String>{
-  'articles': 'כתבה',
-  'businesses': 'עסק',
-  'events': 'אירוע',
-  'offers': 'הטבה',
-  'listings': 'מודעת נדל״ן',
-  'real_estate_agents': 'סוכן נדל״ן',
-  'categories': 'קטגוריה',
-  'neighborhoods': 'שכונה',
-  'tags': 'תגית',
-  'media': 'מדיה',
-  'home_blocks': 'בלוק בדף הבית',
-  'ad_placements': 'מיקום פרסום',
-  'campaigns': 'קמפיין',
-  'push_campaigns': 'הודעת פוש',
-  'commercial_agreements': 'הסכם מסחרי',
-  'revenue_transactions': 'הכנסה',
-  'challenges': 'אתגר',
-  'reviews': 'ביקורת',
-  'comments': 'תגובה',
-  'reports': 'דיווח',
-  'profiles': 'משתמש',
-  'admin_users': 'צוות ניהול',
-  'parking_lots': 'חניון',
+Map<String, String> get auditTableLabels => <String, String>{
+  'articles': tr('כתבה', 'Article'),
+  'businesses': tr('עסק', 'Business'),
+  'events': tr('אירוע', 'Event'),
+  'offers': tr('הטבה', 'Benefit'),
+  'listings': tr('מודעת נדל״ן', 'Real estate listing'),
+  'real_estate_agents': tr('סוכן נדל״ן', 'Real estate agent'),
+  'categories': tr('קטגוריה', 'Category'),
+  'neighborhoods': tr('שכונה', 'Neighbourhood'),
+  'tags': tr('תגית', 'Tag'),
+  'media': tr('מדיה', 'Media'),
+  'home_blocks': tr('בלוק בדף הבית', 'Home page block'),
+  'ad_placements': tr('מיקום פרסום', 'Ad placement'),
+  'campaigns': tr('קמפיין', 'Campaign'),
+  'push_campaigns': tr('הודעת פוש', 'Push notification'),
+  'commercial_agreements': tr('הסכם מסחרי', 'Commercial agreement'),
+  'revenue_transactions': tr('הכנסה', 'Revenue'),
+  'challenges': tr('אתגר', 'Challenge'),
+  'reviews': tr('ביקורת', 'Review'),
+  'comments': tr('תגובה', 'Comment'),
+  'reports': tr('דיווח', 'Report'),
+  'profiles': tr('משתמש', 'User'),
+  'admin_users': tr('צוות ניהול', 'Admin team'),
+  'parking_lots': tr('חניון', 'Car park'),
 };
 
 /// Hebrew names for the `audit_action` values the panel writes.
-const auditActionLabels = <String, String>{
-  'create': 'יצירה',
-  'update': 'עריכה',
-  'delete': 'מחיקה',
-  'restore': 'שחזור',
-  'approve': 'אישור',
-  'reject': 'דחייה',
-  'publish': 'פרסום',
-  'unpublish': 'הסרת פרסום',
-  'archive': 'העברה לארכיון',
+Map<String, String> get auditActionLabels => <String, String>{
+  'create': tr('יצירה', 'Create'),
+  'update': tr('עריכה', 'Edit'),
+  'delete': tr('מחיקה', 'Delete'),
+  'restore': tr('שחזור', 'Restore'),
+  'approve': tr('אישור', 'Approve'),
+  'reject': tr('דחייה', 'Reject'),
+  'publish': tr('פרסום', 'Publish'),
+  'unpublish': tr('הסרת פרסום', 'Unpublish'),
+  'archive': tr('העברה לארכיון', 'Move to archive'),
 };
 
 final _uuidText = RegExp(

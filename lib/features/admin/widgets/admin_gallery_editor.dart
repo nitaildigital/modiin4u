@@ -11,6 +11,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/media_usage.dart';
+import '../admin_language.dart';
 
 /// One photo in a gallery: either a row already stored, or a file picked in
 /// this session that has not been uploaded yet.
@@ -337,12 +338,12 @@ class AdminGalleryController extends ChangeNotifier {
 /// once.
 class AdminGalleryEditor extends StatefulWidget {
   final AdminGalleryController controller;
-  final String title;
+  final String? title;
 
   const AdminGalleryEditor({
     super.key,
     required this.controller,
-    this.title = 'גלריית תמונות',
+    this.title,
   });
 
   @override
@@ -379,10 +380,10 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
       }
       _c.addPicked(picked);
       if (tooBig > 0 && mounted) {
-        setState(() => _error = '$tooBig קבצים גדולים מ-10MB ולא נוספו');
+        setState(() => _error = tr('$tooBig קבצים גדולים מ-10MB ולא נוספו', '$tooBig files are larger than 10MB and were not added'));
       }
     } catch (_) {
-      if (mounted) setState(() => _error = 'לא ניתן לפתוח את בוחר הקבצים');
+      if (mounted) setState(() => _error = tr('לא ניתן לפתוח את בוחר הקבצים', 'Could not open the file picker'));
     } finally {
       if (mounted) setState(() => _picking = false);
     }
@@ -399,7 +400,7 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
             Row(
               children: [
                 Text(
-                  widget.title,
+                  widget.title ?? tr('גלריית תמונות', 'Photo gallery'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 14,
@@ -410,7 +411,7 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
                 const SizedBox(width: 8),
                 if (!_c.loading)
                   Text(
-                    '${_c.photos.length} תמונות',
+                    tr('${_c.photos.length} תמונות', '${_c.photos.length} photos'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 12,
@@ -431,7 +432,7 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
                           size: 18,
                         ),
                   label: Text(
-                    'הוספת תמונות',
+                    tr('הוספת תמונות', 'Add photos'),
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   ),
                 ),
@@ -439,8 +440,8 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
             ),
             const SizedBox(height: 6),
             Text(
-              'התמונות נשמרות יחד עם הטופס. הראשונה מוצגת ראשונה באתר; '
-              'החצים משנים את הסדר.',
+              tr('התמונות נשמרות יחד עם הטופס. הראשונה מוצגת ראשונה באתר; '
+              'החצים משנים את הסדר.', 'Photos are saved together with the form. The first is shown first on the site; the arrows change the order.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -463,7 +464,7 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
               const LinearProgressIndicator()
             else if (_c.loadError != null)
               Text(
-                'לא ניתן לטעון את הגלריה: ${_c.loadError}',
+                tr('לא ניתן לטעון את הגלריה: ${_c.loadError}', 'Could not load the gallery: ${_c.loadError}'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 12,
@@ -480,7 +481,7 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
                   border: Border.all(color: AppColors.adminCardBorder),
                 ),
                 child: Text(
-                  'אין תמונות בגלריה',
+                  tr('אין תמונות בגלריה', 'No photos in the gallery'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
@@ -568,7 +569,7 @@ class _Thumb extends StatelessWidget {
                 top: 4,
                 start: 4,
                 child: _Badge(
-                  photo.isNew ? '${index + 1} · חדשה' : '${index + 1}',
+                  photo.isNew ? tr('${index + 1} · חדשה', '${index + 1} · new') : '${index + 1}',
                   photo.isNew ? AppColors.turquoise : AppColors.navy,
                 ),
               ),
@@ -583,18 +584,18 @@ class _Thumb extends StatelessWidget {
                 // which is where "earlier" moves a photo.
                 _IconBtn(
                   icon: Icons.chevron_left,
-                  tooltip: 'הקדמה',
+                  tooltip: tr('הקדמה', 'Move earlier'),
                   onTap: isFirst ? null : onEarlier,
                 ),
                 _IconBtn(
                   icon: Icons.chevron_right,
-                  tooltip: 'הזזה אחורה',
+                  tooltip: tr('הזזה אחורה', 'Move later'),
                   onTap: isLast ? null : onLater,
                 ),
                 const Spacer(),
                 _IconBtn(
                   icon: Icons.delete_outline,
-                  tooltip: 'הסרה מהגלריה',
+                  tooltip: tr('הסרה מהגלריה', 'Remove from the gallery'),
                   color: AppColors.error,
                   onTap: onRemove,
                 ),

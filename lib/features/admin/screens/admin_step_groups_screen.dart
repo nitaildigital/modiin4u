@@ -8,6 +8,7 @@ import '../../steps/models/step_group.dart';
 import '../../steps/repositories/step_groups_repository.dart';
 import '../widgets/admin_load_error.dart';
 import 'admin_challenges_screen.dart';
+import '../admin_language.dart';
 
 /// The panel's Step Counter section: the city's challenges, and the step
 /// groups residents make in the app.
@@ -34,7 +35,7 @@ class AdminStepsSection extends StatelessWidget {
                 fontFamily: AppFonts.rubik,
                 fontSize: 14,
               ),
-              tabs: const [Tab(text: 'אתגרים'), Tab(text: 'קבוצות צעדים')],
+              tabs: [Tab(text: tr('אתגרים', 'Challenges')), Tab(text: tr('קבוצות צעדים', 'Step groups'))],
             ),
           ),
           const Expanded(
@@ -78,7 +79,7 @@ class AdminStepGroupsScreen extends ConsumerWidget {
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => AdminLoadError(
-        message: 'שגיאה בטעינת הקבוצות',
+        message: tr('שגיאה בטעינת הקבוצות', 'Error loading the groups'),
         error: e,
         onRetry: () => ref.invalidate(adminStepGroupsProvider),
       ),
@@ -88,8 +89,8 @@ class AdminStepGroupsScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(32),
               child: Text(
-                'אין קבוצות עדיין. תושבים יוצרים קבוצות במד הצעדים באפליקציה '
-                'ומזמינים אליהן בקישור.',
+                tr('אין קבוצות עדיין. תושבים יוצרים קבוצות במד הצעדים באפליקציה '
+                'ומזמינים אליהן בקישור.', 'No groups yet. Residents create groups in the app\'s Step Counter and invite others with a link.'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
@@ -110,7 +111,7 @@ class AdminStepGroupsScreen extends ConsumerWidget {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Text(
-                  '${rows.length} קבוצות',
+                  tr('${rows.length} קבוצות', '${rows.length} groups'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -161,8 +162,8 @@ class AdminStepGroupsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            Expanded(flex: 2, child: Text('נוצרה על ידי $creator', style: style)),
-            Expanded(child: Text('$members חברים', style: style)),
+            Expanded(flex: 2, child: Text(tr('נוצרה על ידי $creator', 'Created by $creator'), style: style)),
+            Expanded(child: Text(tr('$members חברים', '$members members'), style: style)),
             Expanded(
               child: Text(
                 created == null
@@ -179,7 +180,7 @@ class AdminStepGroupsScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                hidden ? 'מוסתרת' : 'פעילה',
+                hidden ? tr('מוסתרת', 'Hidden') : tr('פעילה', 'Active'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 12,
@@ -200,7 +201,7 @@ class AdminStepGroupsScreen extends ConsumerWidget {
                 if (ok) ref.invalidate(adminStepGroupsProvider);
               },
               child: Text(
-                hidden ? 'שחזור' : 'הסתרה',
+                hidden ? tr('שחזור', 'Restore') : tr('הסתרה', 'Hide'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
@@ -229,7 +230,7 @@ class _MembersDialog extends StatelessWidget {
           future: StepGroupsRepository().stats(id),
           builder: (context, snap) {
             if (snap.hasError) {
-              return Text('שגיאה בטעינת החברים: ${snap.error}', style: style);
+              return Text(tr('שגיאה בטעינת החברים: ${snap.error}', 'Error loading the members: ${snap.error}'), style: style);
             }
             if (!snap.hasData) {
               return const SizedBox(
@@ -243,10 +244,10 @@ class _MembersDialog extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Expanded(flex: 3, child: Text('חבר/ה', style: style.copyWith(color: AppColors.grayText))),
-                    Expanded(child: Text('היום', style: style.copyWith(color: AppColors.grayText))),
-                    Expanded(child: Text('השבוע', style: style.copyWith(color: AppColors.grayText))),
-                    Expanded(child: Text('החודש', style: style.copyWith(color: AppColors.grayText))),
+                    Expanded(flex: 3, child: Text(tr('חבר/ה', 'Member'), style: style.copyWith(color: AppColors.grayText))),
+                    Expanded(child: Text(tr('היום', 'Today'), style: style.copyWith(color: AppColors.grayText))),
+                    Expanded(child: Text(tr('השבוע', 'This week'), style: style.copyWith(color: AppColors.grayText))),
+                    Expanded(child: Text(tr('החודש', 'This month'), style: style.copyWith(color: AppColors.grayText))),
                   ],
                 ),
                 const Divider(),
@@ -257,7 +258,7 @@ class _MembersDialog extends StatelessWidget {
                       children: [
                         Expanded(
                           flex: 3,
-                          child: Text(m.isOwner ? '${m.name} (מנהל/ת)' : m.name, style: style),
+                          child: Text(m.isOwner ? tr('${m.name} (מנהל/ת)', '${m.name} (owner)') : m.name, style: style),
                         ),
                         Expanded(child: Text('${m.today}', style: style)),
                         Expanded(child: Text('${m.week}', style: style)),
@@ -273,7 +274,7 @@ class _MembersDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('סגירה', style: style),
+          child: Text(tr('סגירה', 'Close'), style: style),
         ),
       ],
     );

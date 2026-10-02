@@ -7,6 +7,7 @@ import '../../news/models/article_body.dart';
 import '../providers/admin_articles_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 class AdminArticlesScreen extends ConsumerStatefulWidget {
   const AdminArticlesScreen({super.key});
@@ -54,7 +55,7 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש כתבה...',
+                    hintText: tr('חיפוש כתבה...', 'Search articles...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
@@ -91,25 +92,25 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
+              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
                 setState(() => _statusFilter = '');
                 ref
                     .read(adminArticleListProvider.notifier)
                     .setStatusFilter(null);
               }),
-              _FilterChip('פורסם', _statusFilter == 'published', () {
+              _FilterChip(tr('פורסם', 'Published'), _statusFilter == 'published', () {
                 setState(() => _statusFilter = 'published');
                 ref
                     .read(adminArticleListProvider.notifier)
                     .setStatusFilter('published');
               }),
-              _FilterChip('טיוטה', _statusFilter == 'draft', () {
+              _FilterChip(tr('טיוטה', 'Draft'), _statusFilter == 'draft', () {
                 setState(() => _statusFilter = 'draft');
                 ref
                     .read(adminArticleListProvider.notifier)
                     .setStatusFilter('draft');
               }),
-              _FilterChip('ארכיון', _statusFilter == 'archived', () {
+              _FilterChip(tr('ארכיון', 'Archive'), _statusFilter == 'archived', () {
                 setState(() => _statusFilter = 'archived');
                 ref
                     .read(adminArticleListProvider.notifier)
@@ -122,8 +123,8 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
               if (articlesAsync.valueOrNull case final list?)
                 Text(
                   notifier.hasMore
-                      ? '${list.length} מתוך ${notifier.totalCount} כתבות'
-                      : '${notifier.totalCount} כתבות',
+                      ? tr('${list.length} מתוך ${notifier.totalCount} כתבות', '${list.length} of ${notifier.totalCount} articles')
+                      : tr('${notifier.totalCount} כתבות', '${notifier.totalCount} articles'),
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 13,
@@ -137,7 +138,7 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                   onPressed: () => _showArticleEditor(context, ref),
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(
-                    'כתבה חדשה',
+                    tr('כתבה חדשה', 'New article'),
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
@@ -172,7 +173,7 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'שגיאה בטעינת כתבות',
+                    tr('שגיאה בטעינת כתבות', 'Error loading articles'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.error,
@@ -190,7 +191,7 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                   TextButton(
                     onPressed: () =>
                         ref.read(adminArticleListProvider.notifier).load(),
-                    child: const Text('נסה שוב'),
+                    child: Text(tr('נסה שוב', 'Try again')),
                   ),
                 ],
               ),
@@ -208,7 +209,7 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין כתבות',
+                        tr('אין כתבות', 'No articles'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -259,7 +260,7 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
                                 )
                               : const Icon(Icons.expand_more, size: 18),
                           label: Text(
-                            'טען עוד (${notifier.totalCount - articles.length} נותרו)',
+                            tr('טען עוד (${notifier.totalCount - articles.length} נותרו)', 'Load more (${notifier.totalCount - articles.length} left)'),
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 14,
@@ -344,12 +345,12 @@ class _ArticleTable extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _Col('כותרת', flex: 4),
-              if (isWide) _Col('קטגוריה', flex: 2),
-              if (isWide) _Col('סטטוס', flex: 1),
-              if (isWide) _Col('צפיות', flex: 1),
+              _Col(tr('כותרת', 'Title'), flex: 4),
+              if (isWide) _Col(tr('קטגוריה', 'Category'), flex: 2),
+              if (isWide) _Col(tr('סטטוס', 'Status'), flex: 1),
+              if (isWide) _Col(tr('צפיות', 'Views'), flex: 1),
               _Col('SEO', flex: 1),
-              if (isWide) _Col('תאריך', flex: 2),
+              if (isWide) _Col(tr('תאריך', 'Date'), flex: 2),
               const SizedBox(width: 40),
             ],
           ),
@@ -421,7 +422,7 @@ class _ArticleTable extends StatelessWidget {
                               children: [
                                 if (isBreaking)
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 6),
+                                    padding: const EdgeInsetsDirectional.only(end: 6),
                                     child: Icon(
                                       Icons.bolt,
                                       size: 14,
@@ -430,7 +431,7 @@ class _ArticleTable extends StatelessWidget {
                                   ),
                                 if (isFeatured)
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 6),
+                                    padding: const EdgeInsetsDirectional.only(end: 6),
                                     child: Icon(
                                       Icons.star,
                                       size: 14,
@@ -551,7 +552,7 @@ class _ArticleTable extends StatelessWidget {
                           child: Text(
                             publishedAt != null
                                 ? _formatDate(publishedAt)
-                                : 'לא פורסם',
+                                : tr('לא פורסם', 'Not published'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 12,
@@ -570,7 +571,7 @@ class _ArticleTable extends StatelessWidget {
                           PopupMenuItem(
                             value: 'edit',
                             child: Text(
-                              'עריכה',
+                              tr('עריכה', 'Edit'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
@@ -581,7 +582,7 @@ class _ArticleTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'publish',
                               child: Text(
-                                'פרסם',
+                                tr('פרסם', 'Publish'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -592,7 +593,7 @@ class _ArticleTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'draft',
                               child: Text(
-                                'החזר לטיוטה',
+                                tr('החזר לטיוטה', 'Back to draft'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -603,7 +604,7 @@ class _ArticleTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'archive',
                               child: Text(
-                                'העבר לארכיון',
+                                tr('העבר לארכיון', 'Move to archive'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -816,7 +817,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 850, maxHeight: 750),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -836,7 +837,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת כתבה' : 'כתבה חדשה',
+                        _isEditing ? tr('עריכת כתבה', 'Edit article') : tr('כתבה חדשה', 'New article'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -874,11 +875,11 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                     labelColor: AppColors.turquoise,
                     unselectedLabelColor: AppColors.grayText,
                     indicatorColor: AppColors.turquoise,
-                    tabs: const [
-                      Tab(text: 'תוכן'),
-                      Tab(text: 'הגדרות'),
+                    tabs: [
+                      Tab(text: tr('תוכן', 'Content')),
+                      Tab(text: tr('הגדרות', 'Settings')),
                       Tab(text: 'SEO'),
-                      Tab(text: 'תצוגה מקדימה'),
+                      Tab(text: tr('תצוגה מקדימה', 'Preview')),
                     ],
                   ),
                 ),
@@ -912,7 +913,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                       ],
                       if (_isEditing)
                         Text(
-                          '${widget.article?['view_count'] ?? 0} צפיות',
+                          tr('${widget.article?['view_count'] ?? 0} צפיות', '${widget.article?['view_count'] ?? 0} views'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
@@ -923,7 +924,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -939,7 +940,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                             ),
                           ),
                           child: Text(
-                            'שמור טיוטה',
+                            tr('שמור טיוטה', 'Save draft'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 13,
@@ -966,7 +967,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור כתבה',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור כתבה', 'Create article'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -990,21 +991,21 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
       padding: const EdgeInsets.all(20),
       children: [
         _field(
-          'כותרת *',
+          tr('כותרת *', 'Title *'),
           _title,
-          validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
+          validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
         ),
-        _field('כותרת משנה', _subtitle),
+        _field(tr('כותרת משנה', 'Subtitle'), _subtitle),
         _field(
           'Slug *',
           _slug,
-          validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
+          validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
         ),
         _buildCategoryPicker(),
-        _field('תקציר', _excerpt, maxLines: 2),
+        _field(tr('תקציר', 'Summary'), _excerpt, maxLines: 2),
         // Uploaded to storage, or an address pasted as before.
         ImageUploadField(
-          label: 'תמונת כריכה',
+          label: tr('תמונת כריכה', 'Cover image'),
           controller: _coverImageUrl,
           folder: 'articles/cover',
         ),
@@ -1014,20 +1015,20 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
         // every save; a text box leaves it alone, and the preview tab shows
         // what the site will make of it.
         _field(
-          'תוכן *',
+          tr('תוכן *', 'Content *'),
           _body,
           maxLines: 12,
           helper:
-              'הטקסט נשמר בדיוק כפי שהוא, כולל תגיות HTML מהאתר הקודם. '
-              'פסקה חדשה: שורה ריקה. לשונית "תצוגה מקדימה" מראה איך האתר יציג אותו.',
-          validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
+              tr('הטקסט נשמר בדיוק כפי שהוא, כולל תגיות HTML מהאתר הקודם. '
+              'פסקה חדשה: שורה ריקה. לשונית "תצוגה מקדימה" מראה איך האתר יציג אותו.', 'The text is saved exactly as it is, including HTML tags from the old site. New paragraph: an empty line. The "Preview" tab shows how the site will display it.'),
+          validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
         ),
         Row(
           children: [
-            Expanded(child: _field('מקור', _source)),
+            Expanded(child: _field(tr('מקור', 'Source'), _source)),
             const SizedBox(width: 12),
             // `credit` is the byline the site prints under the title.
-            Expanded(child: _field('קרדיט / כותב', _credit)),
+            Expanded(child: _field(tr('קרדיט / כותב', 'Credit / author'), _credit)),
           ],
         ),
       ],
@@ -1038,7 +1039,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
   /// three, and a single-choice picker could only ever lose the others.
   Widget _buildCategoryPicker() {
     final label = Text(
-      'קטגוריות',
+      tr('קטגוריות', 'Categories'),
       style: TextStyle(
         fontFamily: AppFonts.rubik,
         fontSize: 12,
@@ -1058,7 +1059,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
               children: [
                 Expanded(
                   child: Text(
-                    'לא ניתן לטעון את הקטגוריות של הכתבה. שמירה לא תשנה אותן.',
+                    tr('לא ניתן לטעון את הקטגוריות של הכתבה. שמירה לא תשנה אותן.', 'Could not load the article\'s categories. Saving will not change them.'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 12,
@@ -1069,7 +1070,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                 TextButton(
                   onPressed: _loadCategories,
                   child: Text(
-                    'נסה שוב',
+                    tr('נסה שוב', 'Try again'),
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
                   ),
                 ),
@@ -1106,7 +1107,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
           const SizedBox(height: 6),
           if (categories.hasError)
             Text(
-              'לא ניתן לטעון את רשימת הקטגוריות.',
+              tr('לא ניתן לטעון את רשימת הקטגוריות.', 'Could not load the category list.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -1123,7 +1124,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                   _toggle(
                     c['is_active'] == true
                         ? c['name'] as String
-                        : '${c['name']} (לא פעילה)',
+                        : tr('${c['name']} (לא פעילה)', '${c['name']} (inactive)'),
                     _categoryIds.contains(c['id'] as String),
                     (v) => setState(() {
                       final id = c['id'] as String;
@@ -1134,7 +1135,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
               // shown, so that it is not removed without anyone seeing it.
               for (final id in _categoryIds.where((id) => !known.contains(id)))
                 _toggle(
-                  'קטגוריה לא מוכרת',
+                  tr('קטגוריה לא מוכרת', 'Unknown category'),
                   true,
                   (v) => setState(() => _categoryIds.remove(id)),
                 ),
@@ -1150,7 +1151,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'סטטוס',
+          tr('סטטוס', 'Status'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1170,12 +1171,12 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
           ),
           items: [
             for (final (value, label) in [
-              ('draft', 'טיוטה'),
-              ('published', 'פורסם'),
-              ('archived', 'ארכיון'),
+              ('draft', tr('טיוטה', 'Draft')),
+              ('published', tr('פורסם', 'Published')),
+              ('archived', tr('ארכיון', 'Archive')),
               // Only offered to an article already there; the trash screen
               // is where articles are sent to it.
-              if (_baseline['status'] == 'trash') ('trash', 'פח'),
+              if (_baseline['status'] == 'trash') ('trash', tr('פח', 'Trash')),
             ])
               DropdownMenuItem(
                 value: value,
@@ -1189,7 +1190,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
         ),
         const SizedBox(height: 16),
         Text(
-          'תאריך פרסום',
+          tr('תאריך פרסום', 'Publication date'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1213,7 +1214,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                 ),
                 child: Text(
                   _publishedAt == null
-                      ? 'ייקבע בפרסום הראשון'
+                      ? tr('ייקבע בפרסום הראשון', 'Set at first publication')
                       : _formatDateTime(_publishedAt!),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
@@ -1230,7 +1231,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
               onPressed: _pickPublishedAt,
               icon: const Icon(Icons.edit_calendar_outlined, size: 16),
               label: Text(
-                'שינוי',
+                tr('שינוי', 'Change'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
@@ -1238,8 +1239,8 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
         ),
         const SizedBox(height: 6),
         Text(
-          'התאריך נקבע בפרסום הראשון ונשאר קבוע, גם אחרי עריכה או פרסום מחדש. '
-          'הוא משתנה רק אם משנים אותו כאן.',
+          tr('התאריך נקבע בפרסום הראשון ונשאר קבוע, גם אחרי עריכה או פרסום מחדש. '
+          'הוא משתנה רק אם משנים אותו כאן.', 'The date is set at first publication and stays fixed, even after editing or republishing. It changes only if you change it here.'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 11,
@@ -1248,7 +1249,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
         ),
         const SizedBox(height: 16),
         Text(
-          'דגלים',
+          tr('דגלים', 'Flags'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1262,28 +1263,28 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
           runSpacing: 4,
           children: [
             _toggle(
-              'חדשות בזק',
+              tr('חדשות בזק', 'Breaking news'),
               _isBreaking,
               (v) => setState(() => _isBreaking = v),
             ),
             _toggle(
-              'מומלץ',
+              tr('מומלץ', 'Recommended'),
               _isFeatured,
               (v) => setState(() => _isFeatured = v),
             ),
-            _toggle('נעוץ', _isPinned, (v) => setState(() => _isPinned = v)),
+            _toggle(tr('נעוץ', 'Pinned'), _isPinned, (v) => setState(() => _isPinned = v)),
             _toggle(
-              'ממומן',
+              tr('ממומן', 'Sponsored'),
               _isSponsored,
               (v) => setState(() => _isSponsored = v),
             ),
             _toggle(
-              'לחברים בלבד',
+              tr('לחברים בלבד', 'Members only'),
               _isMembersOnly,
               (v) => setState(() => _isMembersOnly = v),
             ),
             _toggle(
-              'ראוי ל-Push',
+              tr('ראוי ל-Push', 'Push-worthy'),
               _pushWorthy,
               (v) => setState(() => _pushWorthy = v),
             ),
@@ -1297,6 +1298,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     final now = DateTime.now();
     final initial = _publishedAt ?? now;
     final date = await showDatePicker(
+      locale: adminLocale,
       context: context,
       initialDate: initial.isAfter(now) ? now : initial,
       firstDate: DateTime(2000),
@@ -1306,6 +1308,11 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     );
     if (date == null || !mounted) return;
     final time = await showTimePicker(
+      builder: (ctx, child) => Localizations.override(
+        context: ctx,
+        locale: adminLocale,
+        child: child,
+      ),
       context: context,
       initialTime: TimeOfDay.fromDateTime(initial),
     );
@@ -1384,8 +1391,8 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'תצוגה מקדימה של התוכן כפי שהאתר קורא אותו. העיצוב המלא '
-                'מופיע בעמוד הכתבה באתר.',
+                tr('תצוגה מקדימה של התוכן כפי שהאתר קורא אותו. העיצוב המלא '
+                'מופיע בעמוד הכתבה באתר.', 'A preview of the content as the site reads it. The full design is on the article page on the site.'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 12,
@@ -1424,7 +1431,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
             const SizedBox(height: 18),
             if (blocks.isEmpty)
               Text(
-                'אין תוכן',
+                tr('אין תוכן', 'No content'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 13,
@@ -1514,7 +1521,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          'התמונה לא נטענה: $url',
+          tr('התמונה לא נטענה: $url', 'The image did not load: $url'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 11,
@@ -1647,7 +1654,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('שגיאה: $e'),
+            content: Text(tr('שגיאה: $e', 'Error: $e')),
             backgroundColor: AppColors.error,
           ),
         );
@@ -1667,10 +1674,10 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'published' => ('פורסם', AppColors.success),
-      'draft' => ('טיוטה', AppColors.gold),
-      'archived' => ('ארכיון', AppColors.grayLight),
-      'trash' => ('פח', AppColors.error),
+      'published' => (tr('פורסם', 'Published'), AppColors.success),
+      'draft' => (tr('טיוטה', 'Draft'), AppColors.gold),
+      'archived' => (tr('ארכיון', 'Archive'), AppColors.grayLight),
+      'trash' => (tr('פח', 'Trash'), AppColors.error),
       _ => (status, AppColors.grayLight),
     };
     return Container(
@@ -1723,7 +1730,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsetsDirectional.only(end: 8),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

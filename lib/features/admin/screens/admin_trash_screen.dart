@@ -3,6 +3,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_trash_provider.dart';
+import '../admin_language.dart';
 
 class AdminTrashScreen extends ConsumerStatefulWidget {
   const AdminTrashScreen({super.key});
@@ -33,7 +34,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            '"${_title(item)}" שוחזר — ${trashStateLabels[target] ?? target}',
+            tr('"${_title(item)}" שוחזר — ${trashStateLabels[target] ?? target}', '"${_title(item)}" restored — ${trashStateLabels[target] ?? target}'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
         ),
@@ -42,7 +43,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'השחזור נכשל: $e',
+            tr('השחזור נכשל: $e', 'Restoring failed: $e'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           backgroundColor: AppColors.error,
@@ -91,7 +92,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
               Icon(Icons.restore_from_trash, size: 20, color: AppColors.navy),
               const SizedBox(width: 8),
               Text(
-                'סל מחזור',
+                tr('סל מחזור', 'Trash'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 15,
@@ -106,7 +107,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                   child: Row(
                     children: [
                       _FilterChip(
-                        'הכל',
+                        tr('הכל', 'All'),
                         _tableFilter.isEmpty,
                         () => _setTable(''),
                       ),
@@ -130,7 +131,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
               const SizedBox(width: 12),
               if (list != null)
                 Text(
-                  '${list.length} פריטים',
+                  tr('${list.length} פריטים', '${list.length} items'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -139,7 +140,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                 ),
               IconButton(
                 icon: const Icon(Icons.refresh, size: 18),
-                tooltip: 'רענון',
+                tooltip: tr('רענון', 'Refresh'),
                 onPressed: notifier.load,
               ),
             ],
@@ -153,7 +154,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             color: AppColors.error.withValues(alpha: 0.06),
             child: Text(
-              'לא ניתן היה לקרוא: ${notifier.failures.keys.map((t) => trashSources.firstWhere((s) => s.table == t).kind).join(', ')}',
+              tr('לא ניתן היה לקרוא: ${notifier.failures.keys.map((t) => trashSources.firstWhere((s) => s.table == t).kind).join(', ')}', 'Could not read: ${notifier.failures.keys.map((t) => trashSources.firstWhere((s) => s.table == t).kind).join(', ')}'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -168,7 +169,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                tr('שגיאה: $e', 'Error: $e'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -188,7 +189,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין פריטים שהוסרו',
+                        tr('אין פריטים שהוסרו', 'No removed items'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -216,11 +217,11 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                     ),
                     child: Row(
                       children: [
-                        _Col('פריט', flex: 4),
-                        _Col('סוג', flex: 2),
-                        _Col('מצב', flex: 1),
-                        if (isWide) _Col('שינוי אחרון', flex: 2),
-                        const SizedBox(width: 96),
+                        _Col(tr('פריט', 'Item'), flex: 4),
+                        _Col(tr('סוג', 'Type'), flex: 2),
+                        _Col(tr('מצב', 'Status'), flex: 1),
+                        if (isWide) _Col(tr('שינוי אחרון', 'Last change'), flex: 2),
+                        SizedBox(width: adminEnglish.value ? 112 : 96),
                       ],
                     ),
                   ),
@@ -286,7 +287,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                                   ),
                                 ),
                               SizedBox(
-                                width: 96,
+                                width: adminEnglish.value ? 112 : 96,
                                 child: Align(
                                   alignment: AlignmentDirectional.centerEnd,
                                   child: busy
@@ -306,7 +307,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                                             size: 16,
                                           ),
                                           label: Text(
-                                            'שחזור',
+                                            tr('שחזור', 'Restore'),
                                             style: TextStyle(
                                               fontFamily: AppFonts.rubik,
                                               fontSize: 12,
@@ -352,7 +353,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
@@ -450,13 +451,13 @@ class _HowThisWorksNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'הסרה במסכי הניהול אינה מוחקת: כתבה עוברת לארכיון, עסק מסומן '
+              tr('הסרה במסכי הניהול אינה מוחקת: כתבה עוברת לארכיון, עסק מסומן '
               'כסגור, אירוע מבוטל, קטגוריה או בלוק מושבתים. כאן מרוכזים כל '
               'הפריטים האלה, ו"שחזור" מחזיר כל אחד מהם. פריט חוזר למצב שהיה '
               'בו לפני ההסרה כשיומן הפעולות מתעד אותו; אחרת כתבה, עסק, אירוע '
               'והטבה חוזרים כטיוטה, מודעה, ביקורת ותגובה חוזרות לאישור, קמפיין '
               'והסכם חוזרים כמושהים, וכל השאר חוזר כפעיל. שום דבר כאן לא '
-              'נמחק אוטומטית.',
+              'נמחק אוטומטית.', 'Removing in the admin screens does not delete: an article moves to the archive, a business is marked closed, an event is cancelled, a category or block is disabled. All those items are gathered here, and "Restore" brings each one back. An item returns to the state it was in before removal when the activity log recorded it; otherwise an article, business, event and benefit return as drafts, a listing, review and comment return to pending, a campaign and agreement return as paused, and everything else returns as active. Nothing here is deleted automatically.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,

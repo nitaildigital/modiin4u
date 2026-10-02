@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_ad_placements_provider.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 class AdminAdPlacementsScreen extends ConsumerStatefulWidget {
   const AdminAdPlacementsScreen({super.key});
@@ -48,12 +49,12 @@ class _AdminAdPlacementsScreenState
                 ),
                 child: Row(
                   children: [
-                    _StatChip('סה״כ מיקומים', '${list.length}', AppColors.navy),
+                    _StatChip(tr('סה״כ מיקומים', 'Total placements'), '${list.length}', AppColors.navy),
                     const SizedBox(width: 16),
-                    _StatChip('פעילים', '$active', AppColors.success),
+                    _StatChip(tr('פעילים', 'Active'), '$active', AppColors.success),
                     const SizedBox(width: 16),
                     _StatChip(
-                      'באנרים באתר עכשיו',
+                      tr('באנרים באתר עכשיו', 'Banners on the site now'),
                       '$totalCampaigns',
                       AppColors.turquoise,
                     ),
@@ -79,7 +80,7 @@ class _AdminAdPlacementsScreenState
               Icon(Icons.ad_units, size: 20, color: AppColors.navy),
               const SizedBox(width: 8),
               Text(
-                'מיקומי פרסום',
+                tr('מיקומי פרסום', 'Ad placements'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 15,
@@ -93,7 +94,7 @@ class _AdminAdPlacementsScreenState
               // the list below show the error and a retry.
               if (asyncData.valueOrNull case final list?)
                 Text(
-                  '${list.length} מיקומים',
+                  tr('${list.length} מיקומים', '${list.length} placements'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -105,7 +106,7 @@ class _AdminAdPlacementsScreenState
                 onPressed: () => _showEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'מיקום חדש',
+                  tr('מיקום חדש', 'New placement'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -125,7 +126,7 @@ class _AdminAdPlacementsScreenState
           child: asyncData.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת מיקומי הפרסום',
+              message: tr('שגיאה בטעינת מיקומי הפרסום', 'Error loading the ad placements'),
               error: e,
               onRetry: () =>
                   ref.read(adminAdPlacementListProvider.notifier).load(),
@@ -143,7 +144,7 @@ class _AdminAdPlacementsScreenState
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין מיקומי פרסום',
+                        tr('אין מיקומי פרסום', 'No ad placements'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -170,12 +171,12 @@ class _AdminAdPlacementsScreenState
                     ),
                     child: Row(
                       children: [
-                        _Col('קוד', flex: 2),
-                        _Col('תיאור', flex: 3),
-                        if (isWide) _Col('גודל באתר', flex: 2),
-                        _Col('באנרים', flex: 1),
-                        _Col('באתר / סה״כ', flex: 1),
-                        _Col('סטטוס', flex: 1),
+                        _Col(tr('קוד', 'Code'), flex: 2),
+                        _Col(tr('תיאור', 'Description'), flex: 3),
+                        if (isWide) _Col(tr('גודל באתר', 'Size on the site'), flex: 2),
+                        _Col(tr('באנרים', 'Banners'), flex: 1),
+                        _Col(tr('באתר / סה״כ', 'On the site / total'), flex: 1),
+                        _Col(tr('סטטוס', 'Status'), flex: 1),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -319,7 +320,7 @@ class _AdminAdPlacementsScreenState
                                     PopupMenuItem(
                                       value: 'edit',
                                       child: Text(
-                                        'עריכה',
+                                        tr('עריכה', 'Edit'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -329,7 +330,7 @@ class _AdminAdPlacementsScreenState
                                     PopupMenuItem(
                                       value: 'toggle',
                                       child: Text(
-                                        isActive ? 'השבת' : 'הפעל',
+                                        isActive ? tr('השבת', 'Disable') : tr('הפעל', 'Activate'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -383,7 +384,7 @@ class _AdminAdPlacementsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'הפעולה נכשלה: ${_why(e)}',
+            tr('הפעולה נכשלה: ${_why(e)}', 'The action failed: ${_why(e)}'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           backgroundColor: AppColors.error,
@@ -467,7 +468,7 @@ class _PlacementEditorDialogState
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 550, maxHeight: 580),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -486,7 +487,7 @@ class _PlacementEditorDialogState
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת מיקום' : 'מיקום חדש',
+                        _isEditing ? tr('עריכת מיקום', 'Edit placement') : tr('מיקום חדש', 'New placement'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -515,59 +516,59 @@ class _PlacementEditorDialogState
                         // The website finds a slot by its code, so renaming
                         // one would quietly empty it on the site.
                         _buildField(
-                          'קוד מיקום',
+                          tr('קוד מיקום', 'Placement code'),
                           _code,
                           hint: 'HOME_TOP',
                           readOnly: _isEditing,
                           helper: _isEditing
-                              ? 'האתר מזהה את המיקום לפי הקוד, ולכן אי אפשר לשנות אותו'
+                              ? tr('האתר מזהה את המיקום לפי הקוד, ולכן אי אפשר לשנות אותו', 'The site identifies the placement by its code, so it cannot be changed')
                               : null,
                           validator: (v) =>
-                              v == null || v.isEmpty ? 'שדה חובה' : null,
+                              v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'תווית',
+                          tr('תווית', 'Label'),
                           _label,
-                          hint: 'ראש עמוד הבית',
+                          hint: tr('ראש עמוד הבית', 'Top of the home page'),
                           validator: (v) =>
-                              v == null || v.isEmpty ? 'שדה חובה' : null,
+                              v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'תיאור',
+                          tr('תיאור', 'Description'),
                           _description,
-                          hint: 'באנר ראשי מעל הפיד',
+                          hint: tr('באנר ראשי מעל הפיד', 'Main banner above the feed'),
                           maxLines: 2,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'מקסימום באנרים',
+                          tr('מקסימום באנרים', 'Maximum banners'),
                           _maxBanners,
                           hint: '1',
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          'גדלים מותרים',
+                          tr('גדלים מותרים', 'Allowed sizes'),
                           _allowedSizes,
                           hint: '728x90, 320x100',
                           helper: _isEditing
-                              ? 'מה שהאתר מציג כאן: ${placementSiteSizes[widget.placement!['code']] ?? 'המיקום לא מוצג באתר כרגע'}'
+                              ? tr('מה שהאתר מציג כאן: ${placementSiteSizes[widget.placement!['code']] ?? 'המיקום לא מוצג באתר כרגע'}', 'What the site shows here: ${placementSiteSizes[widget.placement!['code']] ?? 'the placement is not shown on the site right now'}')
                               : null,
                           validator: (v) {
                             try {
                               parseAllowedSizes(v ?? '');
                               return null;
                             } on FormatException catch (e) {
-                              return 'לא ברור: "${e.message}" — רוחב x גובה, מופרדים בפסיק';
+                              return tr('לא ברור: "${e.message}" — רוחב x גובה, מופרדים בפסיק', 'Unclear: "${e.message}" — width x height, separated by commas');
                             }
                           },
                         ),
                         const SizedBox(height: 14),
                         SwitchListTile(
                           title: Text(
-                            'פעיל',
+                            tr('פעיל', 'Active'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 14,
@@ -598,7 +599,7 @@ class _PlacementEditorDialogState
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'סגירה',
+                          tr('סגירה', 'Close'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -639,7 +640,7 @@ class _PlacementEditorDialogState
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'עדכון' : 'יצירה',
+                                _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 14,
@@ -763,7 +764,7 @@ class _PlacementEditorDialogState
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'השמירה נכשלה: ${_why(e)}';
+          _error = tr('השמירה נכשלה: ${_why(e)}', 'Saving failed: ${_why(e)}');
         });
       }
     }
@@ -842,8 +843,8 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'active' => ('פעיל', AppColors.success),
-      'inactive' => ('מושבת', AppColors.grayText),
+      'active' => (tr('פעיל', 'Active'), AppColors.success),
+      'inactive' => (tr('מושבת', 'Disabled'), AppColors.grayText),
       _ => (status, AppColors.grayText),
     };
     return Container(

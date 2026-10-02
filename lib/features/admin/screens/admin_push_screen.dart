@@ -8,24 +8,25 @@ import '../providers/admin_push_provider.dart';
 import '../providers/admin_realestate_provider.dart'
     show adminNeighborhoodOptionsProvider;
 import '../widgets/admin_form_pickers.dart';
+import '../admin_language.dart';
 
 /// `push_status`, the database enum, in the panel's words.
-const _statusLabels = {
-  'draft': 'טיוטה',
-  'scheduled': 'מתוזמן',
-  'sending': 'בשליחה',
-  'sent': 'נשלח',
-  'failed': 'נכשל',
-  'cancelled': 'בוטל',
+Map<String, String> get _statusLabels => {
+  'draft': tr('טיוטה', 'Draft'),
+  'scheduled': tr('מתוזמן', 'Scheduled'),
+  'sending': tr('בשליחה', 'Sending'),
+  'sent': tr('נשלח', 'Sent'),
+  'failed': tr('נכשל', 'Failed'),
+  'cancelled': tr('בוטל', 'Cancelled'),
 };
 
 /// The four topics a resident can opt in to — the `notify_*` switches on
 /// their profile.
-const _topics = {
-  'news': 'חדשות',
-  'deals': 'מבצעים',
-  'neighborhood': 'השכונה שלי',
-  'realestate': 'נדל״ן',
+Map<String, String> get _topics => {
+  'news': tr('חדשות', 'News'),
+  'deals': tr('מבצעים', 'Deals'),
+  'neighborhood': tr('השכונה שלי', 'My neighbourhood'),
+  'realestate': tr('נדל״ן', 'Real estate'),
 };
 
 class AdminPushScreen extends ConsumerStatefulWidget {
@@ -73,21 +74,21 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
             child: Row(
               children: [
                 _StatChip(
-                  'טיוטות',
+                  tr('טיוטות', 'Drafts'),
                   '${loaded.where((n) => n['status'] == 'draft').length}',
                   Icons.edit_note,
                   AppColors.gold,
                 ),
                 const SizedBox(width: 16),
                 _StatChip(
-                  'מתוזמנות',
+                  tr('מתוזמנות', 'Scheduled'),
                   '${loaded.where((n) => n['status'] == 'scheduled').length}',
                   Icons.schedule,
                   AppColors.midBlue,
                 ),
                 const SizedBox(width: 16),
                 _StatChip(
-                  'נשלחו',
+                  tr('נשלחו', 'Sent'),
                   '${loaded.where((n) => n['status'] == 'sent').length}',
                   Icons.send,
                   AppColors.turquoise,
@@ -116,7 +117,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש הודעה...',
+                    hintText: tr('חיפוש הודעה...', 'Search notifications...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -149,12 +150,12 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              for (final e in const {
-                '': 'הכל',
-                'draft': 'טיוטה',
-                'scheduled': 'מתוזמן',
-                'sent': 'נשלח',
-                'cancelled': 'בוטל',
+              for (final e in {
+                '': tr('הכל', 'All'),
+                'draft': tr('טיוטה', 'Draft'),
+                'scheduled': tr('מתוזמן', 'Scheduled'),
+                'sent': tr('נשלח', 'Sent'),
+                'cancelled': tr('בוטל', 'Cancelled'),
               }.entries)
                 _FilterChip(e.value, _statusFilter == e.key, () {
                   setState(() => _statusFilter = e.key);
@@ -165,7 +166,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
               const Spacer(),
               if (loaded != null)
                 Text(
-                  '${loaded.length} הודעות',
+                  tr('${loaded.length} הודעות', '${loaded.length} notifications'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -177,7 +178,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                 onPressed: () => _showPushEditor(context),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'הודעה חדשה',
+                  tr('הודעה חדשה', 'New notification'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -207,7 +208,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'שגיאה בטעינת הודעות: ${adminErrorText(e)}',
+                    tr('שגיאה בטעינת הודעות: ${adminErrorText(e)}', 'Error loading notifications: ${adminErrorText(e)}'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.error,
@@ -229,7 +230,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין הודעות',
+                        tr('אין הודעות', 'No notifications'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -273,38 +274,38 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
         try {
           await notifier.restoreToDraft(id);
         } catch (e) {
-          if (mounted) showAdminError(context, 'הפעולה נכשלה', e);
+          if (mounted) showAdminError(context, tr('הפעולה נכשלה', 'The action failed'), e);
         }
       case 'cancel':
         final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => Directionality(
-            textDirection: TextDirection.rtl,
+            textDirection: adminDir,
             child: AlertDialog(
               title: Text(
-                'ביטול הודעה',
+                tr('ביטול הודעה', 'Cancel notification'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               content: Text(
-                'לבטל את "${notification['title']}"? ההודעה תישאר ברשימה '
-                'תחת "בוטל", ו"החזר לטיוטה" בתפריט שלה מחזיר אותה.',
+                tr('לבטל את "${notification['title']}"? ההודעה תישאר ברשימה '
+                'תחת "בוטל", ו"החזר לטיוטה" בתפריט שלה מחזיר אותה.', 'Cancel "${notification['title']}"? The notification stays in the list under "Cancelled", and "Back to draft" in its menu brings it back.'),
                 style: TextStyle(fontFamily: AppFonts.rubik),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text(
-                    'חזרה',
+                    tr('חזרה', 'Back'),
                     style: TextStyle(fontFamily: AppFonts.rubik),
                   ),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: Text(
-                    'בטל הודעה',
+                    tr('בטל הודעה', 'Cancel notification'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.error,
@@ -319,7 +320,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
         try {
           await notifier.cancelNotification(id);
         } catch (e) {
-          if (mounted) showAdminError(context, 'הביטול נכשל', e);
+          if (mounted) showAdminError(context, tr('הביטול נכשל', 'Cancelling failed'), e);
         }
     }
   }
@@ -358,10 +359,10 @@ class _NotConnectedNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'שליחת התראות עדיין לא מחוברת. אפשר לכתוב הודעות ולשמור אותן '
+              tr('שליחת התראות עדיין לא מחוברת. אפשר לכתוב הודעות ולשמור אותן '
               'כטיוטה או כמתוזמנות, אבל שום הודעה לא נשלחת לטלפונים — גם '
               'לא הודעה מתוזמנת כשמגיע מועדה. כדי לחבר את השליחה נדרשים '
-              'מפתחות Firebase של האפליקציה (ולאייפון גם APNs של Apple).',
+              'מפתחות Firebase של האפליקציה (ולאייפון גם APNs של Apple).', 'Sending notifications is not connected yet. You can write notifications and save them as drafts or scheduled, but no notification is sent to phones — not even a scheduled one when its time comes. Connecting the sending needs the app\'s Firebase keys (and Apple\'s APNs for iPhone).'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -432,9 +433,9 @@ class _StatChip extends StatelessWidget {
 String _audienceLabel(Map<String, dynamic> n, Map<String, String> hoods) {
   final filter = n['audience_filter'] as Map?;
   return switch (n['audience_type'] as String? ?? 'all') {
-    'neighborhood' => 'שכונה: ${hoods[filter?['neighborhood_id']] ?? '—'}',
-    'topic' => 'נושא: ${_topics[filter?['topic']] ?? '—'}',
-    _ => 'כולם',
+    'neighborhood' => tr('שכונה: ${hoods[filter?['neighborhood_id']] ?? '—'}', 'Neighbourhood: ${hoods[filter?['neighborhood_id']] ?? '—'}'),
+    'topic' => tr('נושא: ${_topics[filter?['topic']] ?? '—'}', 'Topic: ${_topics[filter?['topic']] ?? '—'}'),
+    _ => tr('כולם', 'Everyone'),
   };
 }
 
@@ -468,12 +469,12 @@ class _PushTable extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _Col('כותרת', flex: 3),
-              _Col('קהל יעד', flex: 2),
-              _Col('סטטוס', flex: 1),
-              if (isWide) _Col('נמסרו', flex: 1),
-              if (isWide) _Col('נפתחו', flex: 1),
-              if (isWide) _Col('תאריך', flex: 2),
+              _Col(tr('כותרת', 'Title'), flex: 3),
+              _Col(tr('קהל יעד', 'Target audience'), flex: 2),
+              _Col(tr('סטטוס', 'Status'), flex: 1),
+              if (isWide) _Col(tr('נמסרו', 'Delivered'), flex: 1),
+              if (isWide) _Col(tr('נפתחו', 'Opened'), flex: 1),
+              if (isWide) _Col(tr('תאריך', 'Date'), flex: 2),
               const SizedBox(width: 40),
             ],
           ),
@@ -600,7 +601,7 @@ class _PushTable extends StatelessWidget {
                             sentAt != null
                                 ? _formatDate(sentAt)
                                 : scheduledAt != null
-                                ? 'מתוזמן: ${_formatDate(scheduledAt)}'
+                                ? tr('מתוזמן: ${_formatDate(scheduledAt)}', 'Scheduled: ${_formatDate(scheduledAt)}')
                                 : '—',
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
@@ -617,11 +618,11 @@ class _PushTable extends StatelessWidget {
                         ),
                         onSelected: (v) => onAction(v, n),
                         itemBuilder: (_) => [
-                          _item('edit', 'עריכה'),
+                          _item('edit', tr('עריכה', 'Edit')),
                           if (status == 'cancelled')
-                            _item('restore', 'החזר לטיוטה')
+                            _item('restore', tr('החזר לטיוטה', 'Back to draft'))
                           else if (status == 'draft' || status == 'scheduled')
-                            _item('cancel', 'בטל', color: AppColors.error),
+                            _item('cancel', tr('בטל', 'Cancel'), color: AppColors.error),
                         ],
                       ),
                     ],
@@ -763,6 +764,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     final now = DateTime.now();
     final start = _scheduledAt ?? now.add(const Duration(hours: 1));
     final date = await showDatePicker(
+      locale: adminLocale,
       context: context,
       initialDate: start.isBefore(now) ? now : start,
       firstDate: DateTime(now.year, now.month, now.day),
@@ -770,6 +772,11 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     );
     if (date == null || !mounted) return;
     final time = await showTimePicker(
+      builder: (ctx, child) => Localizations.override(
+        context: ctx,
+        locale: adminLocale,
+        child: child,
+      ),
       context: context,
       initialTime: TimeOfDay.fromDateTime(start),
     );
@@ -795,7 +802,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 650, maxHeight: 680),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -815,10 +822,10 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                     children: [
                       Text(
                         !_isEditing
-                            ? 'הודעה חדשה'
+                            ? tr('הודעה חדשה', 'New notification')
                             : _editable
-                            ? 'עריכת הודעה'
-                            : 'הודעה',
+                            ? tr('עריכת הודעה', 'Edit notification')
+                            : tr('הודעה', 'Notification'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -846,9 +853,9 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
-                            'ההודעה במצב "${_statusLabels[_original] ?? _original}" '
+                            tr('ההודעה במצב "${_statusLabels[_original] ?? _original}" '
                             'ולכן מוצגת לקריאה בלבד.'
-                            '${_original == 'cancelled' ? ' "החזר לטיוטה" בתפריט שלה מאפשר לערוך אותה שוב.' : ''}',
+                            '${_original == 'cancelled' ? ' "החזר לטיוטה" בתפריט שלה מאפשר לערוך אותה שוב.' : ''}', 'The notification is "${_statusLabels[_original] ?? _original}", so it is read-only.${_original == 'cancelled' ? ' "Back to draft" in its menu lets you edit it again.' : ''}'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 12,
@@ -857,20 +864,20 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                           ),
                         ),
                       _field(
-                        'כותרת *',
+                        tr('כותרת *', 'Title *'),
                         _title,
                         validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
                       _field(
-                        'תוכן ההודעה *',
+                        tr('תוכן ההודעה *', 'Notification text *'),
                         _body,
                         maxLines: 4,
                         validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
                       _field(
-                        'קישור תמונה',
+                        tr('קישור תמונה', 'Image link'),
                         _imageUrl,
                         hint: 'https://...',
                         onChanged: (_) => setState(() {}),
@@ -891,7 +898,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                'תמונה לא נמצאה',
+                                tr('תמונה לא נמצאה', 'Image not found'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 12,
@@ -904,34 +911,34 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                         const SizedBox(height: 12),
                       ],
                       _field(
-                        'קישור בתוך האפליקציה',
+                        tr('קישור בתוך האפליקציה', 'In-app link'),
                         _deepLink,
                         hint: '/event/…',
                       ),
                       const SizedBox(height: 4),
-                      _dropdown<String>('קהל יעד', _audience, const {
-                        'all': 'כולם',
-                        'neighborhood': 'לפי שכונה',
-                        'topic': 'מי שנרשם לנושא',
+                      _dropdown<String>(tr('קהל יעד', 'Target audience'), _audience, {
+                        'all': tr('כולם', 'Everyone'),
+                        'neighborhood': tr('לפי שכונה', 'By neighbourhood'),
+                        'topic': tr('מי שנרשם לנושא', 'Subscribers to the topic'),
                       }, (v) => _audience = v ?? 'all'),
                       if (_audience == 'neighborhood')
                         hoods == null
                             ? const LinearProgressIndicator(minHeight: 2)
-                            : _dropdown<String>('שכונה', _neighborhoodId, {
+                            : _dropdown<String>(tr('שכונה', 'Neighbourhood'), _neighborhoodId, {
                                 for (final h in hoods)
                                   h['id'] as String: h['name'] as String? ?? '',
                               }, (v) => _neighborhoodId = v),
                       if (_audience == 'topic')
                         _dropdown<String>(
-                          'נושא',
+                          tr('נושא', 'Topic'),
                           _topic,
                           _topics,
                           (v) => _topic = v ?? 'news',
                         ),
                       if (_editable)
-                        _dropdown<String>('מצב', _status, const {
-                          'draft': 'טיוטה',
-                          'scheduled': 'מתוזמן',
+                        _dropdown<String>(tr('מצב', 'Status'), _status, {
+                          'draft': tr('טיוטה', 'Draft'),
+                          'scheduled': tr('מתוזמן', 'Scheduled'),
                         }, (v) => _status = v ?? 'draft'),
                       if (_status == 'scheduled' && _editable)
                         Padding(
@@ -942,9 +949,9 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                             child: InputDecorator(
                               decoration:
                                   _decoration(
-                                    'מועד מתוכנן *',
+                                    tr('מועד מתוכנן *', 'Scheduled time *'),
                                     error: _scheduleMissing
-                                        ? 'יש לבחור מועד'
+                                        ? tr('יש לבחור מועד', 'A time must be chosen')
                                         : null,
                                   ).copyWith(
                                     suffixIcon: const Icon(
@@ -954,7 +961,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                                   ),
                               child: Text(
                                 _scheduledAt == null
-                                    ? 'בחירת תאריך ושעה'
+                                    ? tr('בחירת תאריך ושעה', 'Choose date and time')
                                     : _formatDate(
                                         _scheduledAt!.toIso8601String(),
                                       ),
@@ -981,7 +988,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                     children: [
                       Expanded(
                         child: Text(
-                          'נשמר בלבד — לא נשלח',
+                          tr('נשמר בלבד — לא נשלח', 'Saved only — not sent'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 11,
@@ -992,7 +999,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          _editable ? 'ביטול' : 'סגירה',
+                          _editable ? tr('ביטול', 'Cancel') : tr('סגירה', 'Close'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -1017,8 +1024,8 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                                 )
                               : Text(
                                   _status == 'scheduled'
-                                      ? 'שמור כמתוזמן'
-                                      : 'שמור כטיוטה',
+                                      ? tr('שמור כמתוזמן', 'Save as scheduled')
+                                      : tr('שמור כטיוטה', 'Save as draft'),
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 13,
@@ -1069,7 +1076,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     setState(() => _scheduleMissing = needsTime);
     if (!valid || needsTime) return;
     if (_audience == 'neighborhood' && _neighborhoodId == null) {
-      showAdminError(context, 'לא נשמר', 'יש לבחור שכונה');
+      showAdminError(context, tr('לא נשמר', 'Not saved'), tr('יש לבחור שכונה', 'A neighbourhood must be chosen'));
       return;
     }
     setState(() => _saving = true);
@@ -1104,7 +1111,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+      if (mounted) showAdminError(context, tr('השמירה נכשלה', 'Saving failed'), e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1176,7 +1183,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

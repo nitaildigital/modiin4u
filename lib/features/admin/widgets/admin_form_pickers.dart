@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_campaigns_provider.dart';
+import '../admin_language.dart';
 
 /// Pickers the commercial sections share — agreements, revenue — so a row
 /// points at a real business and a real team member rather than at a name
@@ -18,7 +19,7 @@ import '../providers/admin_campaigns_provider.dart';
 String adminErrorText(Object e) {
   final text = e is PostgrestException ? '${e.code} ${e.message}' : '$e';
   if (text.contains('23505') || text.contains('duplicate key')) {
-    return 'כבר קיים פריט עם אותו ערך (שם, מפתח או slug חייבים להיות ייחודיים)';
+    return tr('כבר קיים פריט עם אותו ערך (שם, מפתח או slug חייבים להיות ייחודיים)', 'An item with the same value already exists (name, key or slug must be unique)');
   }
   return e is PostgrestException ? e.message : '$e';
 }
@@ -89,7 +90,7 @@ class AdminBusinessField extends ConsumerWidget {
             error: errorText,
           ).copyWith(suffixIcon: const Icon(Icons.search, size: 18)),
           child: Text(
-            businessId == null ? 'בחירת עסק' : (name ?? '…'),
+            businessId == null ? tr('בחירת עסק', 'Choose a business') : (name ?? '…'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 13,
@@ -123,7 +124,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460, maxHeight: 560),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -132,7 +133,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                   autofocus: true,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש עסק לפי שם',
+                    hintText: tr('חיפוש עסק לפי שם', 'Search a business by name'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -153,7 +154,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Center(
                       child: Text(
-                        'לא ניתן לטעון עסקים: ${adminErrorText(e)}',
+                        tr('לא ניתן לטעון עסקים: ${adminErrorText(e)}', 'Could not load businesses: ${adminErrorText(e)}'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.error,
@@ -174,7 +175,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                       if (shown.isEmpty) {
                         return Center(
                           child: Text(
-                            'לא נמצא עסק',
+                            tr('לא נמצא עסק', 'No business found'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               color: AppColors.grayText,
@@ -240,19 +241,19 @@ class AdminSalespersonField extends ConsumerWidget {
     }
 
     final items = <String, String>{
-      '': 'ללא',
+      '': tr('ללא', 'None'),
       for (final a in team)
         if (a['is_active'] == true || a['id'] == value)
           a['id'] as String: nameOf(a),
     };
     if (value != null && !items.containsKey(value)) {
-      items[value!] = 'איש צוות שאינו ברשימה';
+      items[value!] = tr('איש צוות שאינו ברשימה', 'A team member not on the list');
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
         initialValue: value ?? '',
-        decoration: _decoration('איש מכירות'),
+        decoration: _decoration(tr('איש מכירות', 'Salesperson')),
         items: [
           for (final e in items.entries)
             DropdownMenuItem(
@@ -296,12 +297,13 @@ class AdminDateField extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: FormField<String>(
         initialValue: shown,
-        validator: (_) => required && shown == null ? 'שדה חובה' : null,
+        validator: (_) => required && shown == null ? tr('שדה חובה', 'Required field') : null,
         builder: (state) => InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: () async {
             final now = DateTime.now();
             final picked = await showDatePicker(
+              locale: adminLocale,
               context: context,
               initialDate: DateTime.tryParse(shown ?? '') ?? now,
               firstDate: DateTime(2020),
@@ -317,7 +319,7 @@ class AdminDateField extends StatelessWidget {
               suffixIcon: shown != null && !required
                   ? IconButton(
                       icon: const Icon(Icons.clear, size: 16),
-                      tooltip: 'ניקוי',
+                      tooltip: tr('ניקוי', 'Clear'),
                       onPressed: () {
                         onChanged(null);
                         state.didChange(null);
@@ -326,7 +328,7 @@ class AdminDateField extends StatelessWidget {
                   : const Icon(Icons.calendar_today, size: 16),
             ),
             child: Text(
-              shown ?? 'בחירת תאריך',
+              shown ?? tr('בחירת תאריך', 'Choose a date'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 13,

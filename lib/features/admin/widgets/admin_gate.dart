@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../admin_language.dart';
 
 /// Stands in front of the admin area.
 ///
@@ -68,7 +69,7 @@ class _NoAccess extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
@@ -93,7 +94,7 @@ class _NoAccess extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'אין לך גישה לאזור הניהול',
+                    tr('אין לך גישה לאזור הניהול', 'You do not have access to the admin area'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
@@ -117,7 +118,7 @@ class _NoAccess extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 32),
                       ),
                       child: Text(
-                        'חזרה לדף הבית',
+                        tr('חזרה לדף הבית', 'Back to the home page'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 14,

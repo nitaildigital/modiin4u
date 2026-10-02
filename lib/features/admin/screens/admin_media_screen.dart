@@ -11,6 +11,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_media_provider.dart';
 import '../providers/media_usage.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 // Sizes and dimensions are wrapped in a left-to-right isolate: inside a
 // Hebrew line "548×364" read as "364×548" and "47.5 KB" as "KB 47.5".
@@ -69,7 +70,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('הטעינה נכשלה: $e'),
+          content: Text(tr('הטעינה נכשלה: $e', 'Loading failed: $e')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -107,10 +108,10 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
               spacing: 12,
               runSpacing: 8,
               children: [
-                _StatChip('סה״כ קבצים', '${totals.files}', AppColors.turquoise),
-                _StatChip('תמונות', '${totals.images}', AppColors.midBlue),
+                _StatChip(tr('סה״כ קבצים', 'Total files'), '${totals.files}', AppColors.turquoise),
+                _StatChip(tr('תמונות', 'Photos'), '${totals.images}', AppColors.midBlue),
                 _StatChip(
-                  'נפח כולל',
+                  tr('נפח כולל', 'Total size'),
                   _formatSize(totals.bytes),
                   AppColors.gold,
                 ),
@@ -138,7 +139,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש לפי שם קובץ או טקסט חלופי',
+                    hintText: tr('חיפוש לפי שם קובץ או טקסט חלופי', 'Search by file name or alt text'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -175,7 +176,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
               ),
               const SizedBox(width: 12),
               if (isWide) ...[
-                _FilterChip('הכל', _mimeFilter.isEmpty, () => _setMime('')),
+                _FilterChip(tr('הכל', 'All'), _mimeFilter.isEmpty, () => _setMime('')),
                 _FilterChip(
                   'JPEG',
                   _mimeFilter == 'image/jpeg',
@@ -200,9 +201,9 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                       : Text(
                           notifier.hasMore
                               ? (isWide
-                                    ? '${loaded.length} מתוך ${notifier.totalCount} קבצים'
-                                    : '${loaded.length} מתוך ${notifier.totalCount}')
-                              : '${notifier.totalCount} קבצים',
+                                    ? tr('${loaded.length} מתוך ${notifier.totalCount} קבצים', '${loaded.length} of ${notifier.totalCount} files')
+                                    : tr('${loaded.length} מתוך ${notifier.totalCount}', '${loaded.length} of ${notifier.totalCount}'))
+                              : tr('${notifier.totalCount} קבצים', '${notifier.totalCount} files'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -220,7 +221,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                   color: AppColors.grayText,
                 ),
                 onPressed: () => setState(() => _gridView = !_gridView),
-                tooltip: _gridView ? 'תצוגת רשימה' : 'תצוגת גריד',
+                tooltip: _gridView ? tr('תצוגת רשימה', 'List view') : tr('תצוגת גריד', 'Grid view'),
               ),
               const SizedBox(width: 8),
               // The label goes on a phone, where the row has no room for it.
@@ -248,7 +249,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                     if (isWide) ...[
                       const SizedBox(width: 8),
                       Text(
-                        'העלאת קובץ',
+                        tr('העלאת קובץ', 'Upload a file'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 13,
@@ -267,7 +268,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
           child: asyncData.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת המדיה',
+              message: tr('שגיאה בטעינת המדיה', 'Error loading the media'),
               error: e,
               onRetry: notifier.load,
             ),
@@ -284,7 +285,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין קבצי מדיה',
+                        tr('אין קבצי מדיה', 'No media files'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -310,7 +311,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
                                 )
                               : const Icon(Icons.expand_more, size: 18),
                           label: Text(
-                            'טען עוד (${notifier.totalCount - list.length} נותרו)',
+                            tr('טען עוד (${notifier.totalCount - list.length} נותרו)', 'Load more (${notifier.totalCount - list.length} left)'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 14,
@@ -385,7 +386,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'הקובץ הוסר',
+            tr('הקובץ הוסר', 'File removed'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
         ),
@@ -423,7 +424,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
     try {
       picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     } catch (_) {
-      setState(() => _error = 'לא ניתן לפתוח את בוחר הקבצים');
+      setState(() => _error = tr('לא ניתן לפתוח את בוחר הקבצים', 'Could not open the file picker'));
       return;
     }
     if (picked == null) return;
@@ -431,7 +432,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
     // The bucket refuses anything over 10 MB, and the refusal reads as a
     // failure rather than as "too big".
     if (bytes.lengthInBytes > 10 * 1024 * 1024) {
-      setState(() => _error = 'הקובץ גדול מ-10MB');
+      setState(() => _error = tr('הקובץ גדול מ-10MB', 'The file is larger than 10MB'));
       return;
     }
     setState(() {
@@ -457,7 +458,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'הקובץ הועלה',
+            tr('הקובץ הועלה', 'File uploaded'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
         ),
@@ -466,7 +467,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = 'ההעלאה נכשלה: $e';
+          _error = tr('ההעלאה נכשלה: $e', 'The upload failed: $e');
         });
       }
     }
@@ -476,10 +477,10 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
   Widget build(BuildContext context) {
     final bytes = _bytes;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: AlertDialog(
         title: Text(
-          'העלאת קובץ',
+          tr('העלאת קובץ', 'Upload a file'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontWeight: FontWeight.w700,
@@ -516,7 +517,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'לחצו לבחירת תמונה (JPEG, PNG, WebP, GIF — עד 10MB)',
+                                tr('לחצו לבחירת תמונה (JPEG, PNG, WebP, GIF — עד 10MB)', 'Click to choose an image (JPEG, PNG, WebP, GIF — up to 10MB)'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -546,7 +547,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
                     TextButton(
                       onPressed: _busy ? null : _pick,
                       child: Text(
-                        'בחירת תמונה אחרת',
+                        tr('בחירת תמונה אחרת', 'Choose another image'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 12,
@@ -560,7 +561,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
               TextField(
                 controller: _alt,
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                decoration: _inputDecoration('טקסט חלופי (Alt) — לא חובה'),
+                decoration: _inputDecoration(tr('טקסט חלופי (Alt) — לא חובה', 'Alt text — optional')),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 10),
@@ -580,7 +581,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
           TextButton(
             onPressed: _busy ? null : () => Navigator.pop(context),
             child: Text(
-              'ביטול',
+              tr('ביטול', 'Cancel'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 color: AppColors.grayText,
@@ -605,7 +606,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
                       color: Colors.white,
                     ),
                   )
-                : Text('העלה', style: TextStyle(fontFamily: AppFonts.rubik)),
+                : Text(tr('העלה', 'Upload'), style: TextStyle(fontFamily: AppFonts.rubik)),
           ),
         ],
       ),
@@ -668,7 +669,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'השמירה נכשלה: $e';
+          _error = tr('השמירה נכשלה: $e', 'Saving failed: $e');
         });
       }
     }
@@ -688,7 +689,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
     ].where((s) => s.isNotEmpty).join(' · ');
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: AlertDialog(
         title: Text(
           m['file_name'] as String? ?? '',
@@ -749,7 +750,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
                         messenger.showSnackBar(
                           SnackBar(
                             content: Text(
-                              'הכתובת הועתקה',
+                              tr('הכתובת הועתקה', 'Address copied'),
                               style: TextStyle(fontFamily: AppFonts.rubik),
                             ),
                           ),
@@ -757,7 +758,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
                       },
                       icon: const Icon(Icons.copy, size: 14),
                       label: Text(
-                        'העתקת כתובת',
+                        tr('העתקת כתובת', 'Copy address'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 12,
@@ -770,11 +771,11 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
                 TextField(
                   controller: _alt,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: _inputDecoration('טקסט חלופי (Alt)'),
+                  decoration: _inputDecoration(tr('טקסט חלופי (Alt)', 'Alt text')),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'בשימוש ב',
+                  tr('בשימוש ב', 'Used in'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -816,7 +817,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
               color: AppColors.error,
             ),
             label: Text(
-              'הסרת הקובץ',
+              tr('הסרת הקובץ', 'Remove the file'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 color: AppColors.error,
@@ -826,7 +827,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
           TextButton(
             onPressed: _saving ? null : () => Navigator.pop(context),
             child: Text(
-              'ביטול',
+              tr('ביטול', 'Cancel'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 color: AppColors.grayText,
@@ -842,7 +843,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: Text('שמור', style: TextStyle(fontFamily: AppFonts.rubik)),
+            child: Text(tr('שמור', 'Save'), style: TextStyle(fontFamily: AppFonts.rubik)),
           ),
         ],
       ),
@@ -871,12 +872,12 @@ class _UsageList extends StatelessWidget {
     }
     if (snap.hasError) {
       return Text(
-        'לא ניתן לבדוק איפה הקובץ בשימוש: ${snap.error}',
+        tr('לא ניתן לבדוק איפה הקובץ בשימוש: ${snap.error}', 'Could not check where the file is used: ${snap.error}'),
         style: style.copyWith(color: AppColors.error),
       );
     }
     final uses = snap.data ?? const [];
-    if (uses.isEmpty) return Text('לא בשימוש באף מקום.', style: style);
+    if (uses.isEmpty) return Text(tr('לא בשימוש באף מקום.', 'Not used anywhere.'), style: style);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -938,7 +939,7 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = 'ההסרה נכשלה: $e';
+          _error = tr('ההסרה נכשלה: $e', 'Removing failed: $e');
         });
       }
     }
@@ -949,7 +950,7 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
     final name = widget.media['file_name'] as String? ?? '';
     final body = TextStyle(fontFamily: AppFonts.rubik, fontSize: 13);
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: FutureBuilder<List<MediaUse>>(
         future: _usage,
         builder: (context, snap) {
@@ -959,7 +960,7 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
           final inUse = checked && uses.isNotEmpty;
           return AlertDialog(
             title: Text(
-              inUse ? 'הקובץ בשימוש' : 'הסרת קובץ',
+              inUse ? tr('הקובץ בשימוש', 'The file is in use') : tr('הסרת קובץ', 'Remove file'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontWeight: FontWeight.w700,
@@ -973,13 +974,13 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!checked) ...[
-                    Text('בודקים איפה "$name" בשימוש…', style: body),
+                    Text(tr('בודקים איפה "$name" בשימוש…', 'Checking where "$name" is used…'), style: body),
                     const SizedBox(height: 10),
                     _UsageList(snap: snap),
                   ] else if (inUse) ...[
                     Text(
-                      '"$name" מוצג באתר ובאפליקציה ולכן לא יוסר מכאן — '
-                      'הסרה הייתה מורידה אותו מהמקומות האלה:',
+                      tr('"$name" מוצג באתר ובאפליקציה ולכן לא יוסר מכאן — '
+                      'הסרה הייתה מורידה אותו מהמקומות האלה:', '"$name" is shown on the site and in the app, so it will not be removed from here — removing it would take it off these places:'),
                       style: body,
                     ),
                     const SizedBox(height: 10),
@@ -991,8 +992,8 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'כדי להוריד תמונה מגלריה, פתחו את העסק או השכונה '
-                      'ובלשונית ״גלריה״ הסירו אותה ושמרו.',
+                      tr('כדי להוריד תמונה מגלריה, פתחו את העסק או השכונה '
+                      'ובלשונית ״גלריה״ הסירו אותה ושמרו.', 'To take a photo off a gallery, open the business or neighbourhood, remove it in the "Gallery" tab and save.'),
                       style: body.copyWith(
                         fontSize: 12,
                         color: AppColors.grayText,
@@ -1000,8 +1001,8 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
                     ),
                   ] else
                     Text(
-                      '"$name" אינו בשימוש באף מקום. ההסרה מוחקת את הקובץ '
-                      'לצמיתות ואי אפשר לשחזר אותו.',
+                      tr('"$name" אינו בשימוש באף מקום. ההסרה מוחקת את הקובץ '
+                      'לצמיתות ואי אפשר לשחזר אותו.', '"$name" is not used anywhere. Removing it deletes the file permanently and it cannot be restored.'),
                       style: body,
                     ),
                   if (_error != null) ...[
@@ -1021,7 +1022,7 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
               TextButton(
                 onPressed: _busy ? null : () => Navigator.pop(context, false),
                 child: Text(
-                  inUse ? 'סגור' : 'ביטול',
+                  inUse ? tr('סגור', 'Closed') : tr('ביטול', 'Cancel'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     color: AppColors.grayText,
@@ -1036,7 +1037,7 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
                     foregroundColor: Colors.white,
                   ),
                   child: Text(
-                    'הסרה לצמיתות',
+                    tr('הסרה לצמיתות', 'Remove permanently'),
                     style: TextStyle(fontFamily: AppFonts.rubik),
                   ),
                 ),
@@ -1097,7 +1098,7 @@ class _MediaCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     [
-                      if (galleries.isNotEmpty) 'גלריה',
+                      if (galleries.isNotEmpty) tr('גלריה', 'Gallery'),
                       if (media['size_bytes'] != null)
                         _formatSize((media['size_bytes'] as num).toInt()),
                       _dateOf(media['created_at']),
@@ -1173,7 +1174,7 @@ class _MediaRow extends StatelessWidget {
                   ),
                   if (galleries.isNotEmpty)
                     Text(
-                      'גלריה: ${galleries.join(', ')}',
+                      tr('גלריה: ${galleries.join(', ')}', 'Gallery: ${galleries.join(', ')}'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: small,
@@ -1212,7 +1213,7 @@ class _MediaRow extends StatelessWidget {
                 size: 18,
                 color: AppColors.error,
               ),
-              tooltip: 'הסרה',
+              tooltip: tr('הסרה', 'Remove'),
               onPressed: onRemove,
             ),
           ],
@@ -1277,7 +1278,7 @@ class _FilterChip extends StatelessWidget {
   const _FilterChip(this.label, this.selected, this.onTap);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 6),
+    padding: const EdgeInsetsDirectional.only(end: 6),
     child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),

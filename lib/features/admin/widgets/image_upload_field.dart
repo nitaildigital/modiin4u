@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/media_usage.dart';
+import '../admin_language.dart';
 
 /// Picks an image, uploads it, and hands back the public URL.
 ///
@@ -182,7 +183,7 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
         imageQuality: 85,
       );
     } catch (e) {
-      setState(() => _error = 'לא ניתן לפתוח את בוחר הקבצים');
+      setState(() => _error = tr('לא ניתן לפתוח את בוחר הקבצים', 'Could not open the file picker'));
       return;
     }
     if (picked == null) return;
@@ -196,7 +197,7 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
       if (bytes.lengthInBytes > 10 * 1024 * 1024) {
         setState(() {
           _busy = false;
-          _error = 'הקובץ גדול מ-10MB';
+          _error = tr('הקובץ גדול מ-10MB', 'The file is larger than 10MB');
         });
         return;
       }
@@ -232,7 +233,7 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'ההעלאה נכשלה. נסו שוב.';
+        _error = tr('ההעלאה נכשלה. נסו שוב.', 'The upload failed. Please try again.');
       });
     }
   }
@@ -292,7 +293,7 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
                     controller: widget.controller,
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
                     decoration: InputDecoration(
-                      hintText: 'כתובת התמונה',
+                      hintText: tr('כתובת התמונה', 'Image address'),
                       hintStyle: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontSize: 12,
@@ -321,7 +322,7 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
                               )
                             : const Icon(Icons.upload_outlined, size: 16),
                         label: Text(
-                          _busy ? 'מעלה…' : 'העלאת תמונה',
+                          _busy ? tr('מעלה…', 'Uploading…') : tr('העלאת תמונה', 'Upload an image'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
@@ -336,7 +337,7 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
                                   widget.controller.clear();
                                 }),
                           child: Text(
-                            'הסרה',
+                            tr('הסרה', 'Remove'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 12,

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_agreements_provider.dart';
 import '../widgets/admin_form_pickers.dart';
+import '../admin_language.dart';
 
 class AdminAgreementsScreen extends ConsumerStatefulWidget {
   const AdminAgreementsScreen({super.key});
@@ -73,18 +74,18 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                 child: Row(
                   children: [
                     _StatChip(
-                      'הכנסה חודשית משוערת',
+                      tr('הכנסה חודשית משוערת', 'Estimated monthly revenue'),
                       '₪${monthly.toStringAsFixed(0)}',
                       AppColors.turquoise,
                     ),
                     const SizedBox(width: 16),
                     _StatChip(
-                      'הסכמים פעילים',
+                      tr('הסכמים פעילים', 'Active agreements'),
                       '${active.length}',
                       AppColors.success,
                     ),
                     const SizedBox(width: 16),
-                    _StatChip('סה״כ הסכמים', '${list.length}', AppColors.navy),
+                    _StatChip(tr('סה״כ הסכמים', 'Total agreements'), '${list.length}', AppColors.navy),
                   ],
                 ),
               );
@@ -111,7 +112,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש לפי עסק...',
+                    hintText: tr('חיפוש לפי עסק...', 'Search by business...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -144,31 +145,31 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
+              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
                 setState(() => _statusFilter = '');
                 ref
                     .read(adminAgreementListProvider.notifier)
                     .setStatusFilter(null);
               }),
-              _FilterChip('פעיל', _statusFilter == 'active', () {
+              _FilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
                 setState(() => _statusFilter = 'active');
                 ref
                     .read(adminAgreementListProvider.notifier)
                     .setStatusFilter('active');
               }),
-              _FilterChip('מושהה', _statusFilter == 'paused', () {
+              _FilterChip(tr('מושהה', 'Paused'), _statusFilter == 'paused', () {
                 setState(() => _statusFilter = 'paused');
                 ref
                     .read(adminAgreementListProvider.notifier)
                     .setStatusFilter('paused');
               }),
-              _FilterChip('בוטל', _statusFilter == 'cancelled', () {
+              _FilterChip(tr('בוטל', 'Cancelled'), _statusFilter == 'cancelled', () {
                 setState(() => _statusFilter = 'cancelled');
                 ref
                     .read(adminAgreementListProvider.notifier)
                     .setStatusFilter('cancelled');
               }),
-              _FilterChip('פג תוקף', _statusFilter == 'expired', () {
+              _FilterChip(tr('פג תוקף', 'Expired'), _statusFilter == 'expired', () {
                 setState(() => _statusFilter = 'expired');
                 ref
                     .read(adminAgreementListProvider.notifier)
@@ -177,7 +178,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
               const Spacer(),
               if (loaded != null)
                 Text(
-                  '${loaded.length} הסכמים',
+                  tr('${loaded.length} הסכמים', '${loaded.length} agreements'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -189,7 +190,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                 onPressed: () => _showEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'הסכם חדש',
+                  tr('הסכם חדש', 'New agreement'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -210,7 +211,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה בטעינת ההסכמים: ${adminErrorText(e)}',
+                tr('שגיאה בטעינת ההסכמים: ${adminErrorText(e)}', 'Error loading the agreements: ${adminErrorText(e)}'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -230,7 +231,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין הסכמים',
+                        tr('אין הסכמים', 'No agreements'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -257,12 +258,12 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                     ),
                     child: Row(
                       children: [
-                        _Col('עסק', flex: 3),
-                        _Col('סוג', flex: 2),
-                        if (isWide) _Col('מחיר', flex: 1),
-                        if (isWide) _Col('מחזור', flex: 1),
-                        _Col('סטטוס', flex: 1),
-                        if (isWide) _Col('תקופה', flex: 2),
+                        _Col(tr('עסק', 'Business'), flex: 3),
+                        _Col(tr('סוג', 'Type'), flex: 2),
+                        if (isWide) _Col(tr('מחיר', 'Price'), flex: 1),
+                        if (isWide) _Col(tr('מחזור', 'Cycle'), flex: 1),
+                        _Col(tr('סטטוס', 'Status'), flex: 1),
+                        if (isWide) _Col(tr('תקופה', 'Period'), flex: 2),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -390,7 +391,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                                     PopupMenuItem(
                                       value: 'edit',
                                       child: Text(
-                                        'עריכה',
+                                        tr('עריכה', 'Edit'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -401,7 +402,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                                       PopupMenuItem(
                                         value: 'activate',
                                         child: Text(
-                                          'הפעל',
+                                          tr('הפעל', 'Activate'),
                                           style: TextStyle(
                                             fontFamily: AppFonts.rubik,
                                             fontSize: 13,
@@ -412,7 +413,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                                       PopupMenuItem(
                                         value: 'pause',
                                         child: Text(
-                                          'השהה',
+                                          tr('השהה', 'Pause'),
                                           style: TextStyle(
                                             fontFamily: AppFonts.rubik,
                                             fontSize: 13,
@@ -422,7 +423,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                                     PopupMenuItem(
                                       value: 'cancel',
                                       child: Text(
-                                        'בטל',
+                                        tr('בטל', 'Cancel'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -467,15 +468,15 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'ההסכם בוטל ונשמר ברשימה תחת "בוטל". "הפעל" בתפריט שלו מחזיר '
-              'אותו.',
+              tr('ההסכם בוטל ונשמר ברשימה תחת "בוטל". "הפעל" בתפריט שלו מחזיר '
+              'אותו.', 'The agreement was cancelled and kept in the list under "Cancelled". "Activate" in its menu brings it back.'),
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
           ),
         );
       }
     } catch (e) {
-      if (mounted) showAdminError(context, 'הפעולה נכשלה', e);
+      if (mounted) showAdminError(context, tr('הפעולה נכשלה', 'The action failed'), e);
     }
   }
 
@@ -492,21 +493,21 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
   }
 
   String _typeLabel(String t) => switch (t) {
-    'subscription' => 'מנוי',
-    'banner' => 'באנר',
+    'subscription' => tr('מנוי', 'Subscription'),
+    'banner' => tr('באנר', 'Banner'),
     'push' => 'Push',
-    'featured' => 'מומלץ',
-    'sponsored' => 'ממומן',
-    'custom' => 'מותאם',
+    'featured' => tr('מומלץ', 'Recommended'),
+    'sponsored' => tr('ממומן', 'Sponsored'),
+    'custom' => tr('מותאם', 'Custom'),
     _ => t,
   };
 
   String _cycleLabel(String c) => switch (c) {
-    'monthly' => 'חודשי',
-    'quarterly' => 'רבעוני',
-    'semi_annual' => 'חצי שנתי',
-    'annual' => 'שנתי',
-    'one_time' => 'חד פעמי',
+    'monthly' => tr('חודשי', 'Monthly'),
+    'quarterly' => tr('רבעוני', 'Quarterly'),
+    'semi_annual' => tr('חצי שנתי', 'Half-yearly'),
+    'annual' => tr('שנתי', 'Yearly'),
+    'one_time' => tr('חד פעמי', 'One-time'),
     _ => c,
   };
 }
@@ -548,28 +549,28 @@ class _AgreementEditorDialogState
 
   bool get _isEditing => widget.agreement != null;
 
-  static const _types = {
-    'subscription': 'מנוי',
-    'banner': 'באנר',
+  static Map<String, String> get _types => {
+    'subscription': tr('מנוי', 'Subscription'),
+    'banner': tr('באנר', 'Banner'),
     'push': 'Push',
-    'featured': 'מומלץ',
-    'sponsored': 'ממומן',
-    'custom': 'מותאם',
+    'featured': tr('מומלץ', 'Recommended'),
+    'sponsored': tr('ממומן', 'Sponsored'),
+    'custom': tr('מותאם', 'Custom'),
   };
 
-  static const _cycles = {
-    'monthly': 'חודשי',
-    'quarterly': 'רבעוני',
-    'semi_annual': 'חצי שנתי',
-    'annual': 'שנתי',
-    'one_time': 'חד פעמי',
+  static Map<String, String> get _cycles => {
+    'monthly': tr('חודשי', 'Monthly'),
+    'quarterly': tr('רבעוני', 'Quarterly'),
+    'semi_annual': tr('חצי שנתי', 'Half-yearly'),
+    'annual': tr('שנתי', 'Yearly'),
+    'one_time': tr('חד פעמי', 'One-time'),
   };
 
-  static const _statuses = {
-    'active': 'פעיל',
-    'paused': 'מושהה',
-    'cancelled': 'בוטל',
-    'expired': 'פג תוקף',
+  static Map<String, String> get _statuses => {
+    'active': tr('פעיל', 'Active'),
+    'paused': tr('מושהה', 'Paused'),
+    'cancelled': tr('בוטל', 'Cancelled'),
+    'expired': tr('פג תוקף', 'Expired'),
   };
 
   @override
@@ -650,10 +651,10 @@ class _AgreementEditorDialogState
 
   String? _number(String? v, {bool required = false, double? max}) {
     final t = (v ?? '').trim();
-    if (t.isEmpty) return required ? 'שדה חובה' : null;
+    if (t.isEmpty) return required ? tr('שדה חובה', 'Required field') : null;
     final n = double.tryParse(t);
-    if (n == null || n < 0) return 'מספר לא תקין';
-    if (max != null && n > max) return 'עד $max';
+    if (n == null || n < 0) return tr('מספר לא תקין', 'Invalid number');
+    if (max != null && n > max) return tr('עד $max', 'Up to $max');
     return null;
   }
 
@@ -665,7 +666,7 @@ class _AgreementEditorDialogState
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 650, maxHeight: 720),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -684,7 +685,7 @@ class _AgreementEditorDialogState
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת הסכם' : 'הסכם חדש',
+                        _isEditing ? tr('עריכת הסכם', 'Edit agreement') : tr('הסכם חדש', 'New agreement'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -709,10 +710,10 @@ class _AgreementEditorDialogState
                     padding: const EdgeInsets.all(20),
                     children: [
                       AdminBusinessField(
-                        label: 'עסק *',
+                        label: tr('עסק *', 'Business *'),
                         businessId: _businessId,
                         initialName: _businessName,
-                        errorText: _businessMissing ? 'שדה חובה' : null,
+                        errorText: _businessMissing ? tr('שדה חובה', 'Required field') : null,
                         onPicked: (b) => setState(() {
                           _businessId = b['id'] as String;
                           _businessName = b['name'] as String?;
@@ -720,18 +721,18 @@ class _AgreementEditorDialogState
                         }),
                       ),
                       _field(
-                        'שם הסכם *',
+                        tr('שם הסכם *', 'Agreement name *'),
                         _name,
                         validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
-                      _field('תיאור', _description, maxLines: 2),
+                      _field(tr('תיאור', 'Description'), _description, maxLines: 2),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
                             child: _dropdown(
-                              'סוג',
+                              tr('סוג', 'Type'),
                               _type,
                               _types,
                               (v) => _type = v,
@@ -740,7 +741,7 @@ class _AgreementEditorDialogState
                           const SizedBox(width: 12),
                           Expanded(
                             child: _dropdown(
-                              'מחזור חיוב',
+                              tr('מחזור חיוב', 'Billing cycle'),
                               _billingCycle,
                               _cycles,
                               (v) => _billingCycle = v,
@@ -753,7 +754,7 @@ class _AgreementEditorDialogState
                         children: [
                           Expanded(
                             child: _field(
-                              'מחיר (₪) *',
+                              tr('מחיר (₪) *', 'Price (₪) *'),
                               _price,
                               validator: (v) => _number(v, required: true),
                             ),
@@ -761,7 +762,7 @@ class _AgreementEditorDialogState
                           const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              'הנחה %',
+                              tr('הנחה %', 'Discount %'),
                               _discount,
                               validator: (v) => _number(v, max: 100),
                             ),
@@ -775,7 +776,7 @@ class _AgreementEditorDialogState
                         children: [
                           FilterChip(
                             label: Text(
-                              'כולל מע״מ',
+                              tr('כולל מע״מ', 'Including VAT'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 12,
@@ -795,7 +796,7 @@ class _AgreementEditorDialogState
                           ),
                           FilterChip(
                             label: Text(
-                              'חידוש אוטומטי',
+                              tr('חידוש אוטומטי', 'Auto-renew'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 12,
@@ -821,7 +822,7 @@ class _AgreementEditorDialogState
                         children: [
                           Expanded(
                             child: AdminDateField(
-                              label: 'תאריך התחלה *',
+                              label: tr('תאריך התחלה *', 'Start date *'),
                               value: _startDate,
                               required: true,
                               onChanged: (v) => setState(() => _startDate = v),
@@ -830,7 +831,7 @@ class _AgreementEditorDialogState
                           const SizedBox(width: 12),
                           Expanded(
                             child: AdminDateField(
-                              label: 'תאריך סיום',
+                              label: tr('תאריך סיום', 'End date'),
                               value: _endDate,
                               onChanged: (v) => setState(() => _endDate = v),
                             ),
@@ -838,19 +839,19 @@ class _AgreementEditorDialogState
                         ],
                       ),
                       _dropdown(
-                        'סטטוס',
+                        tr('סטטוס', 'Status'),
                         _status,
                         _statuses,
                         (v) => _status = v,
                       ),
                       const SizedBox(height: 12),
                       if (_status == 'cancelled')
-                        _field('סיבת ביטול', _cancelReason),
+                        _field(tr('סיבת ביטול', 'Cancellation reason'), _cancelReason),
                       AdminSalespersonField(
                         value: _salespersonId,
                         onChanged: (v) => setState(() => _salespersonId = v),
                       ),
-                      _field('הערות', _notes, maxLines: 2),
+                      _field(tr('הערות', 'Notes'), _notes, maxLines: 2),
                     ],
                   ),
                 ),
@@ -868,7 +869,7 @@ class _AgreementEditorDialogState
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -891,7 +892,7 @@ class _AgreementEditorDialogState
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור הסכם',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור הסכם', 'Create agreement'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -981,7 +982,7 @@ class _AgreementEditorDialogState
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+      if (mounted) showAdminError(context, tr('השמירה נכשלה', 'Saving failed'), e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1038,10 +1039,10 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'active' => ('פעיל', AppColors.success),
-      'paused' => ('מושהה', AppColors.gold),
-      'cancelled' => ('בוטל', AppColors.error),
-      'expired' => ('פג תוקף', AppColors.grayLight),
+      'active' => (tr('פעיל', 'Active'), AppColors.success),
+      'paused' => (tr('מושהה', 'Paused'), AppColors.gold),
+      'cancelled' => (tr('בוטל', 'Cancelled'), AppColors.error),
+      'expired' => (tr('פג תוקף', 'Expired'), AppColors.grayLight),
       _ => (status, AppColors.grayLight),
     };
     return Container(
@@ -1094,7 +1095,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

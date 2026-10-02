@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../admin_language.dart';
 
 // Form pieces the event and offer editors share: choosing a business, and
 // typing a date or a time with a picker beside it.
@@ -62,12 +63,12 @@ final adminBusinessOptionsProvider =
       ).map(AdminBusinessOption.fromJson).toList();
     });
 
-const _statusLabels = {
-  'active': 'פעיל',
-  'pending': 'ממתין',
-  'draft': 'טיוטה',
-  'suspended': 'מושהה',
-  'closed': 'סגור',
+Map<String, String> get _statusLabels => {
+  'active': tr('פעיל', 'Active'),
+  'pending': tr('ממתין', 'Pending'),
+  'draft': tr('טיוטה', 'Draft'),
+  'suspended': tr('מושהה', 'Paused'),
+  'closed': tr('סגור', 'Closed'),
 };
 
 /// Opens the searchable list and returns the business chosen, or null.
@@ -121,7 +122,7 @@ class AdminBusinessPickerField extends ConsumerWidget {
       key: ValueKey('biz-$label-$businessId'),
       initialValue: businessId,
       validator: (v) =>
-          required && (v == null || v.isEmpty) ? 'יש לבחור עסק' : null,
+          required && (v == null || v.isEmpty) ? tr('יש לבחור עסק', 'A business must be chosen') : null,
       builder: (field) {
         Future<void> pick() async {
           final chosen = await showAdminBusinessPicker(context);
@@ -152,7 +153,7 @@ class AdminBusinessPickerField extends ConsumerWidget {
                 children: [
                   if (!required && businessId != null)
                     IconButton(
-                      tooltip: 'ניקוי',
+                      tooltip: tr('ניקוי', 'Clear'),
                       icon: const Icon(Icons.close, size: 16),
                       onPressed: () {
                         field.didChange(null);
@@ -160,7 +161,7 @@ class AdminBusinessPickerField extends ConsumerWidget {
                       },
                     ),
                   IconButton(
-                    tooltip: 'בחירת עסק',
+                    tooltip: tr('בחירת עסק', 'Choose a business'),
                     icon: const Icon(Icons.storefront_outlined, size: 18),
                     onPressed: pick,
                   ),
@@ -171,7 +172,7 @@ class AdminBusinessPickerField extends ConsumerWidget {
               businessId == null
                   ? ''
                   : (name == null || name.isEmpty)
-                  ? 'עסק לא נמצא'
+                  ? tr('עסק לא נמצא', 'Business not found')
                   : current != null && !current.isActive
                   ? '$name (${_statusLabels[current.status] ?? current.status})'
                   : name,
@@ -205,7 +206,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520, maxHeight: 600),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Column(
             children: [
               Container(
@@ -220,7 +221,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                 child: Row(
                   children: [
                     Text(
-                      'בחירת עסק',
+                      tr('בחירת עסק', 'Choose a business'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontSize: 16,
@@ -246,7 +247,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                   autofocus: true,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש לפי שם או כתובת...',
+                    hintText: tr('חיפוש לפי שם או כתובת...', 'Search by name or address...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -267,7 +268,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                       const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(
                     child: Text(
-                      'שגיאה בטעינת עסקים: $e',
+                      tr('שגיאה בטעינת עסקים: $e', 'Error loading businesses: $e'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         color: AppColors.error,
@@ -288,7 +289,7 @@ class _BusinessPickerDialogState extends ConsumerState<_BusinessPickerDialog> {
                     if (list.isEmpty) {
                       return Center(
                         child: Text(
-                          'לא נמצאו עסקים',
+                          tr('לא נמצאו עסקים', 'No businesses found'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             color: AppColors.grayText,
@@ -413,6 +414,7 @@ class AdminDateField extends StatelessWidget {
     final now = DateTime.now();
     final current = parseAdminDate(controller.text);
     final picked = await showDatePicker(
+      locale: adminLocale,
       context: context,
       initialDate: current ?? now,
       firstDate: DateTime(now.year - 5),
@@ -431,15 +433,15 @@ class AdminDateField extends StatelessWidget {
       decoration: decoration.copyWith(
         hintText: decoration.hintText ?? 'YYYY-MM-DD',
         suffixIcon: IconButton(
-          tooltip: 'בחירת תאריך',
+          tooltip: tr('בחירת תאריך', 'Choose a date'),
           icon: const Icon(Icons.calendar_today_outlined, size: 16),
           onPressed: () => _pick(context),
         ),
       ),
       validator: (v) {
         final t = (v ?? '').trim();
-        if (t.isEmpty) return required ? 'שדה חובה' : null;
-        return parseAdminDate(t) == null ? 'תאריך בפורמט 2026-09-15' : null;
+        if (t.isEmpty) return required ? tr('שדה חובה', 'Required field') : null;
+        return parseAdminDate(t) == null ? tr('תאריך בפורמט 2026-09-15', 'Date in the format 2026-09-15') : null;
       },
     );
   }
@@ -467,9 +469,13 @@ class AdminTimeField extends StatelessWidget {
       initialTime: current == null
           ? const TimeOfDay(hour: 20, minute: 0)
           : TimeOfDay(hour: current.hour, minute: current.minute),
-      builder: (ctx, child) => MediaQuery(
-        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
+      builder: (ctx, child) => Localizations.override(
+        context: ctx,
+        locale: adminLocale,
+        child: MediaQuery(
+          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        ),
       ),
     );
     if (picked != null) {
@@ -487,7 +493,7 @@ class AdminTimeField extends StatelessWidget {
       decoration: decoration.copyWith(
         hintText: decoration.hintText ?? 'HH:MM',
         suffixIcon: IconButton(
-          tooltip: 'בחירת שעה',
+          tooltip: tr('בחירת שעה', 'Choose a time'),
           icon: const Icon(Icons.schedule, size: 16),
           onPressed: enabled ? () => _pick(context) : null,
         ),
@@ -495,8 +501,8 @@ class AdminTimeField extends StatelessWidget {
       validator: (v) {
         if (!enabled) return null;
         final t = (v ?? '').trim();
-        if (t.isEmpty) return required ? 'שדה חובה' : null;
-        return parseAdminTime(t) == null ? 'שעה בפורמט 20:00' : null;
+        if (t.isEmpty) return required ? tr('שדה חובה', 'Required field') : null;
+        return parseAdminTime(t) == null ? tr('שעה בפורמט 20:00', 'Time in the format 20:00') : null;
       },
     );
   }

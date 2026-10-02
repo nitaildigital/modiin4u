@@ -6,26 +6,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_revenue_provider.dart';
 import '../widgets/admin_form_pickers.dart';
+import '../admin_language.dart';
 
 /// `payment_status`, the database enum, in the panel's words.
-const _paymentStatuses = {
-  'pending': 'ממתין',
-  'paid': 'שולם',
-  'partial': 'שולם חלקית',
-  'overdue': 'באיחור',
-  'refunded': 'זיכוי',
-  'cancelled': 'בוטל',
+Map<String, String> get _paymentStatuses => {
+  'pending': tr('ממתין', 'Pending'),
+  'paid': tr('שולם', 'Paid'),
+  'partial': tr('שולם חלקית', 'Partially paid'),
+  'overdue': tr('באיחור', 'Overdue'),
+  'refunded': tr('זיכוי', 'Credit'),
+  'cancelled': tr('בוטל', 'Cancelled'),
 };
 
 /// `revenue_type` is free text; these are the words its migration lists,
 /// the same as an agreement's type.
-const _revenueTypes = {
-  'subscription': 'מנוי',
-  'banner': 'באנר',
+Map<String, String> get _revenueTypes => {
+  'subscription': tr('מנוי', 'Subscription'),
+  'banner': tr('באנר', 'Banner'),
   'push': 'Push',
-  'featured': 'מומלץ',
-  'sponsored': 'ממומן',
-  'custom': 'מותאם',
+  'featured': tr('מומלץ', 'Recommended'),
+  'sponsored': tr('ממומן', 'Sponsored'),
+  'custom': tr('מותאם', 'Custom'),
 };
 
 class AdminRevenueScreen extends ConsumerStatefulWidget {
@@ -109,25 +110,25 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                 child: Row(
                   children: [
                     _StatChip(
-                      'שולם החודש',
+                      tr('שולם החודש', 'Paid this month'),
                       '₪${monthPaid.toStringAsFixed(0)}',
                       AppColors.turquoise,
                     ),
                     const SizedBox(width: 14),
                     _StatChip(
-                      'ממתין לתשלום',
+                      tr('ממתין לתשלום', 'Awaiting payment'),
                       '₪${pending.toStringAsFixed(0)}',
                       AppColors.gold,
                     ),
                     const SizedBox(width: 14),
                     _StatChip(
-                      'באיחור',
+                      tr('באיחור', 'Overdue'),
                       '₪${overdue.toStringAsFixed(0)}',
                       AppColors.error,
                     ),
                     const SizedBox(width: 14),
                     _StatChip(
-                      'שולם השנה',
+                      tr('שולם השנה', 'Paid this year'),
                       '₪${yearPaid.toStringAsFixed(0)}',
                       AppColors.success,
                     ),
@@ -157,7 +158,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש לפי עסק / חשבונית...',
+                    hintText: tr('חיפוש לפי עסק / חשבונית...', 'Search by business / invoice...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -195,7 +196,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      for (final e in {'': 'הכל', ..._paymentStatuses}.entries)
+                      for (final e in {'': tr('הכל', 'All'), ..._paymentStatuses}.entries)
                         _FilterChip(e.value, _statusFilter == e.key, () {
                           setState(() => _statusFilter = e.key);
                           ref
@@ -209,7 +210,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               const SizedBox(width: 12),
               if (loaded != null)
                 Text(
-                  '${loaded.length} רשומות',
+                  tr('${loaded.length} רשומות', '${loaded.length} records'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -221,7 +222,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                 onPressed: () => _showEditor(),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'רשומה חדשה',
+                  tr('רשומה חדשה', 'New record'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -242,7 +243,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה בטעינת ההכנסות: ${adminErrorText(e)}',
+                tr('שגיאה בטעינת ההכנסות: ${adminErrorText(e)}', 'Error loading the revenue: ${adminErrorText(e)}'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -262,7 +263,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין רשומות',
+                        tr('אין רשומות', 'No records'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -289,12 +290,12 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                     ),
                     child: Row(
                       children: [
-                        _Col('עסק', flex: 3),
-                        _Col('סוג', flex: 1),
-                        _Col('סכום', flex: 1),
-                        if (isWide) _Col('חשבונית', flex: 2),
-                        _Col('סטטוס', flex: 1),
-                        if (isWide) _Col('לתשלום עד', flex: 1),
+                        _Col(tr('עסק', 'Business'), flex: 3),
+                        _Col(tr('סוג', 'Type'), flex: 1),
+                        _Col(tr('סכום', 'Amount'), flex: 1),
+                        if (isWide) _Col(tr('חשבונית', 'Invoice'), flex: 2),
+                        _Col(tr('סטטוס', 'Status'), flex: 1),
+                        if (isWide) _Col(tr('לתשלום עד', 'Payable by'), flex: 1),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -415,11 +416,11 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               ),
               onSelected: (v) => _action(v, t),
               itemBuilder: (_) => [
-                _menuItem('edit', 'עריכה'),
-                if (status != 'paid') _menuItem('paid', 'סמן כשולם'),
-                if (status != 'pending') _menuItem('pending', 'החזר לממתין'),
+                _menuItem('edit', tr('עריכה', 'Edit')),
+                if (status != 'paid') _menuItem('paid', tr('סמן כשולם', 'Mark as paid')),
+                if (status != 'pending') _menuItem('pending', tr('החזר לממתין', 'Back to pending')),
                 if (status != 'cancelled')
-                  _menuItem('cancelled', 'בטל', color: AppColors.error),
+                  _menuItem('cancelled', tr('בטל', 'Cancel'), color: AppColors.error),
               ],
             ),
           ],
@@ -454,14 +455,14 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'הרשומה סומנה כמבוטלת ונשמרה ברשימה. "החזר לממתין" בתפריט שלה '
-            'מחזיר אותה.',
+            tr('הרשומה סומנה כמבוטלת ונשמרה ברשימה. "החזר לממתין" בתפריט שלה '
+            'מחזיר אותה.', 'The record was marked cancelled and kept in the list. "Back to pending" in its menu brings it back.'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
         ),
       );
     } catch (e) {
-      if (mounted) showAdminError(context, 'הפעולה נכשלה', e);
+      if (mounted) showAdminError(context, tr('הפעולה נכשלה', 'The action failed'), e);
     }
   }
 
@@ -590,8 +591,8 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
 
   String? _number(String? v, {bool required = false}) {
     final t = (v ?? '').trim();
-    if (t.isEmpty) return required ? 'שדה חובה' : null;
-    return double.tryParse(t) == null ? 'מספר לא תקין' : null;
+    if (t.isEmpty) return required ? tr('שדה חובה', 'Required field') : null;
+    return double.tryParse(t) == null ? tr('מספר לא תקין', 'Invalid number') : null;
   }
 
   @override
@@ -602,7 +603,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 680),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -621,7 +622,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת רשומה' : 'רשומת הכנסה חדשה',
+                        _isEditing ? tr('עריכת רשומה', 'Edit record') : tr('רשומת הכנסה חדשה', 'New revenue record'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -646,10 +647,10 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                     padding: const EdgeInsets.all(20),
                     children: [
                       AdminBusinessField(
-                        label: 'עסק *',
+                        label: tr('עסק *', 'Business *'),
                         businessId: _businessId,
                         initialName: _businessName,
-                        errorText: _businessMissing ? 'שדה חובה' : null,
+                        errorText: _businessMissing ? tr('שדה חובה', 'Required field') : null,
                         onPicked: (b) => setState(() {
                           _businessId = b['id'] as String;
                           _businessName = b['name'] as String?;
@@ -657,17 +658,17 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                         }),
                       ),
                       _field(
-                        'תיאור *',
+                        tr('תיאור *', 'Description *'),
                         _description,
                         validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: _field(
-                              'סכום (₪) *',
+                              tr('סכום (₪) *', 'Amount (₪) *'),
                               _amount,
                               validator: (v) => _number(v, required: true),
                             ),
@@ -675,7 +676,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              'מתוכו מע״מ (₪)',
+                              tr('מתוכו מע״מ (₪)', 'Of which VAT (₪)'),
                               _vat,
                               validator: (v) => _number(v),
                             ),
@@ -687,7 +688,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                         children: [
                           Expanded(
                             child: _dropdown(
-                              'סוג',
+                              tr('סוג', 'Type'),
                               _type,
                               _revenueTypes,
                               (v) => _type = v,
@@ -696,7 +697,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _dropdown(
-                              'סטטוס תשלום',
+                              tr('סטטוס תשלום', 'Payment status'),
                               _status,
                               _paymentStatuses,
                               (v) => _status = v,
@@ -709,13 +710,13 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                         children: [
                           Expanded(
                             child: AdminDateField(
-                              label: 'לתשלום עד',
+                              label: tr('לתשלום עד', 'Payable by'),
                               value: _dueDate,
                               onChanged: (v) => setState(() => _dueDate = v),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Expanded(child: _field('מספר חשבונית', _invoice)),
+                          Expanded(child: _field(tr('מספר חשבונית', 'Invoice number'), _invoice)),
                         ],
                       ),
                       AdminSalespersonField(
@@ -739,7 +740,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -762,7 +763,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור רשומה',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור רשומה', 'Create record'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -812,7 +813,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+      if (mounted) showAdminError(context, tr('השמירה נכשלה', 'Saving failed'), e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -919,7 +920,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

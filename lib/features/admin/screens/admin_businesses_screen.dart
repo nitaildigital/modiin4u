@@ -9,6 +9,7 @@ import '../providers/admin_businesses_provider.dart';
 import '../widgets/admin_gallery_editor.dart';
 import '../widgets/admin_load_error.dart';
 import '../widgets/image_upload_field.dart';
+import '../admin_language.dart';
 
 class AdminBusinessesScreen extends ConsumerStatefulWidget {
   const AdminBusinessesScreen({super.key});
@@ -55,7 +56,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש עסק...',
+                    hintText: tr('חיפוש עסק...', 'Search businesses...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
@@ -94,32 +95,32 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
               const SizedBox(width: 12),
 
               // Status filter
-              _FilterChip('הכל', _statusFilter.isEmpty, () {
+              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
                 setState(() => _statusFilter = '');
                 ref
                     .read(adminBusinessListProvider.notifier)
                     .setStatusFilter(null);
               }),
-              _FilterChip('פעיל', _statusFilter == 'active', () {
+              _FilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
                 setState(() => _statusFilter = 'active');
                 ref
                     .read(adminBusinessListProvider.notifier)
                     .setStatusFilter('active');
               }),
-              _FilterChip('ממתין', _statusFilter == 'pending', () {
+              _FilterChip(tr('ממתין', 'Pending'), _statusFilter == 'pending', () {
                 setState(() => _statusFilter = 'pending');
                 ref
                     .read(adminBusinessListProvider.notifier)
                     .setStatusFilter('pending');
               }),
-              _FilterChip('מושהה', _statusFilter == 'suspended', () {
+              _FilterChip(tr('מושהה', 'Paused'), _statusFilter == 'suspended', () {
                 setState(() => _statusFilter = 'suspended');
                 ref
                     .read(adminBusinessListProvider.notifier)
                     .setStatusFilter('suspended');
               }),
               // Where a closed business is found again to be reopened.
-              _FilterChip('סגור', _statusFilter == 'closed', () {
+              _FilterChip(tr('סגור', 'Closed'), _statusFilter == 'closed', () {
                 setState(() => _statusFilter = 'closed');
                 ref
                     .read(adminBusinessListProvider.notifier)
@@ -133,7 +134,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
               // failed to load, and greyed the whole section until a reload.
               if (businessesAsync.valueOrNull case final list?)
                 Text(
-                  '${list.length} עסקים',
+                  tr('${list.length} עסקים', '${list.length} businesses'),
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 13,
@@ -149,7 +150,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
                   onPressed: () => _showBusinessEditor(context, ref),
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(
-                    'עסק חדש',
+                    tr('עסק חדש', 'New business'),
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
@@ -184,7 +185,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'שגיאה בטעינת עסקים',
+                    tr('שגיאה בטעינת עסקים', 'Error loading businesses'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.error,
@@ -203,7 +204,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
                   TextButton(
                     onPressed: () =>
                         ref.read(adminBusinessListProvider.notifier).load(),
-                    child: const Text('נסה שוב'),
+                    child: Text(tr('נסה שוב', 'Try again')),
                   ),
                 ],
               ),
@@ -221,7 +222,7 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין עסקים',
+                        tr('אין עסקים', 'No businesses'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -273,29 +274,29 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(
-              'סגירת עסק',
+              tr('סגירת עסק', 'Close business'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontWeight: FontWeight.w700,
               ),
             ),
             content: Text(
-              'לסמן את "${biz['name']}" כסגור? העסק ירד מהאפליקציה '
-              'וניתן יהיה להחזירו על ידי שינוי הסטטוס.',
+              tr('לסמן את "${biz['name']}" כסגור? העסק ירד מהאפליקציה '
+              'וניתן יהיה להחזירו על ידי שינוי הסטטוס.', 'Mark "${biz['name']}" as closed? The business will leave the app, and it can be brought back by changing its status.'),
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
                 child: Text(
-                  'ביטול',
+                  tr('ביטול', 'Cancel'),
                   style: TextStyle(fontFamily: AppFonts.rubik),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child: Text(
-                  'סמן כסגור',
+                  tr('סמן כסגור', 'Mark as closed'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     color: AppColors.error,
@@ -358,12 +359,12 @@ class _BusinessTable extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _Col('עסק', flex: 3),
-              if (isWide) _Col('קטגוריה', flex: 2),
-              _Col('שכונה', flex: 2),
-              _Col('סטטוס', flex: 1),
-              if (isWide) _Col('דירוג', flex: 1),
-              if (isWide) _Col('ביקורות', flex: 1),
+              _Col(tr('עסק', 'Business'), flex: 3),
+              if (isWide) _Col(tr('קטגוריה', 'Category'), flex: 2),
+              _Col(tr('שכונה', 'Neighbourhood'), flex: 2),
+              _Col(tr('סטטוס', 'Status'), flex: 1),
+              if (isWide) _Col(tr('דירוג', 'Rating'), flex: 1),
+              if (isWide) _Col(tr('ביקורות', 'Reviews'), flex: 1),
               const SizedBox(width: 40),
             ],
           ),
@@ -456,7 +457,7 @@ class _BusinessTable extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
-                                      'פארק',
+                                      tr('פארק', 'Park'),
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 11,
@@ -572,7 +573,7 @@ class _BusinessTable extends StatelessWidget {
                           PopupMenuItem(
                             value: 'edit',
                             child: Text(
-                              'עריכה',
+                              tr('עריכה', 'Edit'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
@@ -583,7 +584,7 @@ class _BusinessTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'activate',
                               child: Text(
-                                status == 'closed' ? 'פתיחה מחדש' : 'אשר',
+                                status == 'closed' ? tr('פתיחה מחדש', 'Reopen') : tr('אשר', 'Confirm'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -594,7 +595,7 @@ class _BusinessTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'suspend',
                               child: Text(
-                                'השהה',
+                                tr('השהה', 'Pause'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -605,7 +606,7 @@ class _BusinessTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'delete',
                               child: Text(
-                                'סגירת העסק',
+                                tr('סגירת העסק', 'Closing the business'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -656,11 +657,11 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'active' => ('פעיל', AppColors.success),
-      'pending' => ('ממתין', AppColors.gold),
-      'suspended' => ('מושהה', AppColors.error),
-      'closed' => ('סגור', AppColors.grayLight),
-      'draft' => ('טיוטה', AppColors.grayLight),
+      'active' => (tr('פעיל', 'Active'), AppColors.success),
+      'pending' => (tr('ממתין', 'Pending'), AppColors.gold),
+      'suspended' => (tr('מושהה', 'Paused'), AppColors.error),
+      'closed' => (tr('סגור', 'Closed'), AppColors.grayLight),
+      'draft' => (tr('טיוטה', 'Draft'), AppColors.grayLight),
       _ => (status, AppColors.grayLight),
     };
 
@@ -692,7 +693,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsetsDirectional.only(end: 8),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),
@@ -864,7 +865,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'כל שורה היא פריט. \u05f4קטגוריה\u05f4 היא הכותרת שמעליו — למשל \u05f4ראשונות\u05f4.',
+          tr('כל שורה היא פריט. \u05f4קטגוריה\u05f4 היא הכותרת שמעליו — למשל \u05f4ראשונות\u05f4.', 'Each line is an item. "Category" is the heading above it — for example "Starters".'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 12,
@@ -896,7 +897,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           ),
           icon: const Icon(Icons.add, size: 18),
           label: Text(
-            'הוספת פריט',
+            tr('הוספת פריט', 'Add item'),
             style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           ),
         ),
@@ -1034,7 +1035,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 800, maxHeight: 700),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -1054,7 +1055,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת עסק' : 'עסק חדש',
+                        _isEditing ? tr('עריכת עסק', 'Edit business') : tr('עסק חדש', 'New business'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -1092,12 +1093,12 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                     labelColor: AppColors.turquoise,
                     unselectedLabelColor: AppColors.grayText,
                     indicatorColor: AppColors.turquoise,
-                    tabs: const [
-                      Tab(text: 'פרטים'),
-                      Tab(text: 'גלריה'),
-                      Tab(text: 'שעות פתיחה'),
-                      Tab(text: 'תפריט'),
-                      Tab(text: 'מאפיינים'),
+                    tabs: [
+                      Tab(text: tr('פרטים', 'Details')),
+                      Tab(text: tr('גלריה', 'Gallery')),
+                      Tab(text: tr('שעות פתיחה', 'Opening hours')),
+                      Tab(text: tr('תפריט', 'Menu')),
+                      Tab(text: tr('מאפיינים', 'Features')),
                       Tab(text: 'SEO'),
                     ],
                   ),
@@ -1154,7 +1155,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -1177,7 +1178,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור עסק',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור עסק', 'Create business'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -1203,7 +1204,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'סוג',
+          tr('סוג', 'Type'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1213,9 +1214,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         ),
         const SizedBox(height: 8),
         SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: 'business', label: Text('עסק')),
-            ButtonSegment(value: 'park', label: Text('פארק')),
+          segments: [
+            ButtonSegment(value: 'business', label: Text(tr('עסק', 'Business'))),
+            ButtonSegment(value: 'park', label: Text(tr('פארק', 'Park'))),
           ],
           selected: {_kind},
           onSelectionChanged: (v) => setState(() => _kind = v.first),
@@ -1223,8 +1224,8 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         if (_kind == 'park') ...[
           const SizedBox(height: 6),
           Text(
-            'פארק מוצג בעמוד העירייה ← פארקים, ולא במדריך העסקים. בדף הפארק '
-            'אין טלפון, אתר או תפריט; נשמרים תיאור, תמונות, ביקורות ומיקום.',
+            tr('פארק מוצג בעמוד העירייה ← פארקים, ולא במדריך העסקים. בדף הפארק '
+            'אין טלפון, אתר או תפריט; נשמרים תיאור, תמונות, ביקורות ומיקום.', 'A park is shown on the Municipal page → Parks, not in the business directory. A park page has no phone, website or menu; description, photos, reviews and location are kept.'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 12,
@@ -1234,16 +1235,16 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         ],
         const SizedBox(height: 16),
         _field(
-          _kind == 'park' ? 'שם הפארק *' : 'שם עסק *',
+          _kind == 'park' ? tr('שם הפארק *', 'Park name *') : tr('שם עסק *', 'Business name *'),
           _name,
-          validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
+          validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
         ),
-        _field('Slug (כתובת הדף — ריק ייווצר מהשם)', _slug),
-        _field('תיאור קצר (מוצג בכרטיס)', _shortDesc, maxLines: 2),
-        _field('אודות (מוצג בדף העסק)', _fullDesc, maxLines: 6),
+        _field(tr('Slug (כתובת הדף — ריק ייווצר מהשם)', 'Slug (the page address — left empty, it is made from the name)'), _slug),
+        _field(tr('תיאור קצר (מוצג בכרטיס)', 'Short description (shown on the card)'), _shortDesc, maxLines: 2),
+        _field(tr('אודות (מוצג בדף העסק)', 'About (shown on the business page)'), _fullDesc, maxLines: 6),
         const SizedBox(height: 16),
         Text(
-          'תמונות',
+          tr('תמונות', 'Photos'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1258,19 +1259,19 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         // photographs already on the WordPress site keep working.
         const SizedBox(height: 4),
         ImageUploadField(
-          label: 'לוגו',
+          label: tr('לוגו', 'Logo'),
           controller: _logoUrl,
           folder: 'businesses/logo',
         ),
         const SizedBox(height: 14),
         ImageUploadField(
-          label: 'תמונת כריכה',
+          label: tr('תמונת כריכה', 'Cover image'),
           controller: _coverUrl,
           folder: 'businesses/cover',
         ),
         const SizedBox(height: 6),
         Text(
-          'תמונות נוספות מנוהלות בלשונית ״גלריה״.',
+          tr('תמונות נוספות מנוהלות בלשונית ״גלריה״.', 'More photos are managed in the "Gallery" tab.'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 12,
@@ -1280,7 +1281,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         if (_kind != 'park') ...[
         const SizedBox(height: 16),
         Text(
-          'קשר',
+          tr('קשר', 'Contact'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1291,23 +1292,23 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: _field('טלפון', _phone)),
+            Expanded(child: _field(tr('טלפון', 'Phone'), _phone)),
             const SizedBox(width: 12),
             Expanded(child: _field('WhatsApp', _whatsapp)),
           ],
         ),
         Row(
           children: [
-            Expanded(child: _field('אימייל', _email)),
+            Expanded(child: _field(tr('אימייל', 'Email'), _email)),
             const SizedBox(width: 12),
-            Expanded(child: _field('אתר', _website)),
+            Expanded(child: _field(tr('אתר', 'Website'), _website)),
           ],
         ),
         _field('Instagram', _instagram),
         ],
         const SizedBox(height: 16),
         Text(
-          'סיווג',
+          tr('סיווג', 'Classification'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1319,7 +1320,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         _categoryPicker(),
         const SizedBox(height: 16),
         Text(
-          'מיקום',
+          tr('מיקום', 'Location'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1329,9 +1330,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         ),
         const SizedBox(height: 8),
         _field(
-          'כתובת *',
+          tr('כתובת *', 'Address *'),
           _address,
-          validator: (v) => v == null || v.isEmpty ? 'שדה חובה' : null,
+          validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
         ),
         neighborhoods.when(
           loading: () => const LinearProgressIndicator(),
@@ -1339,7 +1340,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           data: (hoods) => DropdownButtonFormField<String>(
             value: _neighborhoodId,
             decoration: InputDecoration(
-              labelText: 'שכונה',
+              labelText: tr('שכונה', 'Neighbourhood'),
               labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -1376,7 +1377,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         ),
         const SizedBox(height: 16),
         Text(
-          'סטטוס',
+          tr('סטטוס', 'Status'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1398,35 +1399,35 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
             DropdownMenuItem(
               value: 'draft',
               child: Text(
-                'טיוטה',
+                tr('טיוטה', 'Draft'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
             DropdownMenuItem(
               value: 'pending',
               child: Text(
-                'ממתין לאישור',
+                tr('ממתין לאישור', 'Pending approval'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
             DropdownMenuItem(
               value: 'active',
               child: Text(
-                'פעיל',
+                tr('פעיל', 'Active'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
             DropdownMenuItem(
               value: 'suspended',
               child: Text(
-                'מושהה',
+                tr('מושהה', 'Paused'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
             DropdownMenuItem(
               value: 'closed',
               child: Text(
-                'סגור',
+                tr('סגור', 'Closed'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
@@ -1442,7 +1443,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'כשרות',
+          tr('כשרות', 'Kosher'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1464,28 +1465,28 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
             DropdownMenuItem(
               value: 'none',
               child: Text(
-                'ללא',
+                tr('ללא', 'None'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
             DropdownMenuItem(
               value: 'rabbanut',
               child: Text(
-                'רבנות',
+                tr('רבנות', 'Rabbinate'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
             DropdownMenuItem(
               value: 'mehadrin',
               child: Text(
-                'מהדרין',
+                tr('מהדרין', 'Mehadrin'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
             DropdownMenuItem(
               value: 'badatz',
               child: Text(
-                'בד״ץ',
+                tr('בד״ץ', 'Badatz'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
@@ -1495,7 +1496,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
             DropdownMenuItem(
               value: 'other',
               child: Text(
-                'כשר (אחר)',
+                tr('כשר (אחר)', 'Kosher (other)'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
@@ -1504,7 +1505,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         ),
         const SizedBox(height: 12),
         Text(
-          'רמת מחיר',
+          tr('רמת מחיר', 'Price level'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1563,7 +1564,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         ),
         const SizedBox(height: 16),
         Text(
-          'מאפיינים',
+          tr('מאפיינים', 'Features'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1577,7 +1578,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           runSpacing: 4,
           children: [
             _toggle(
-              'משלוחים',
+              tr('משלוחים', 'Delivery'),
               _hasDelivery,
               (v) => setState(() => _hasDelivery = v),
             ),
@@ -1587,33 +1588,33 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
               (v) => setState(() => _hasTakeaway = v),
             ),
             _toggle(
-              'ישיבה בחוץ',
+              tr('ישיבה בחוץ', 'Outdoor seating'),
               _hasOutdoor,
               (v) => setState(() => _hasOutdoor = v),
             ),
             _toggle(
-              'נגיש',
+              tr('נגיש', 'Accessible'),
               _isAccessible,
               (v) => setState(() => _isAccessible = v),
             ),
             _toggle(
-              'חניה',
+              tr('חניה', 'Parking'),
               _hasParking,
               (v) => setState(() => _hasParking = v),
             ),
             _toggle(
-              'ידידותי לחיות',
+              tr('ידידותי לחיות', 'Pet friendly'),
               _petFriendly,
               (v) => setState(() => _petFriendly = v),
             ),
             _toggle(
-              'ידידותי לילדים',
+              tr('ידידותי לילדים', 'Kid friendly'),
               _kidFriendly,
               (v) => setState(() => _kidFriendly = v),
             ),
             _toggle('Wi-Fi', _hasWifi, (v) => setState(() => _hasWifi = v)),
             _toggle(
-              'פתוח בשבת',
+              tr('פתוח בשבת', 'Open on Shabbat'),
               _openOnShabbat,
               (v) => setState(() => _openOnShabbat = v),
             ),
@@ -1621,7 +1622,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         ),
         const SizedBox(height: 16),
         Text(
-          'קידום',
+          tr('קידום', 'Promotion'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -1638,17 +1639,17 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           runSpacing: 4,
           children: [
             _toggle(
-              'מומלץ (תמיד בדף הבית)',
+              tr('מומלץ (תמיד בדף הבית)', 'Recommended (always on the home page)'),
               _isRecommended,
               (v) => setState(() => _isRecommended = v),
             ),
             _toggle(
-              'מקודם / Featured',
+              tr('מקודם / Featured', 'Featured'),
               _isFeatured,
               (v) => setState(() => _isFeatured = v),
             ),
             _toggle(
-              'מאומת / Verified',
+              tr('מאומת / Verified', 'Verified'),
               _isVerified,
               (v) => setState(() => _isVerified = v),
             ),
@@ -1659,7 +1660,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           children: [
             Expanded(
               child: _field(
-                'קידום מתאריך (YYYY-MM-DD)',
+                tr('קידום מתאריך (YYYY-MM-DD)', 'Promoted from (YYYY-MM-DD)'),
                 _featuredStart,
                 validator: _dateValidator,
               ),
@@ -1667,7 +1668,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
             const SizedBox(width: 12),
             Expanded(
               child: _field(
-                'קידום עד תאריך (כולל)',
+                tr('קידום עד תאריך (כולל)', 'Promoted until (inclusive)'),
                 _featuredEnd,
                 validator: _dateValidator,
               ),
@@ -1675,7 +1676,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           ],
         ),
         Text(
-          'ריק = ללא הגבלה. התאריכים חלים על ״מקודם״ בלבד.',
+          tr('ריק = ללא הגבלה. התאריכים חלים על ״מקודם״ בלבד.', 'Empty = no limit. The dates apply to "Featured" only.'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 12,
@@ -1742,7 +1743,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         _field('OG Description', _ogDesc, maxLines: 3),
         // The site also falls back to this picture when there is no cover.
         ImageUploadField(
-          label: 'תמונת שיתוף (OG)',
+          label: tr('תמונת שיתוף (OG)', 'Share image (OG)'),
           controller: _ogImageUrl,
           folder: 'businesses/og',
         ),
@@ -1797,14 +1798,14 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   // Held as the week the person sees it, Monday first. The table's 0 = Sunday
   // is converted in the provider, so nothing here has to think about it.
 
-  static const _dayNames = {
-    DateTime.monday: 'שני',
-    DateTime.tuesday: 'שלישי',
-    DateTime.wednesday: 'רביעי',
-    DateTime.thursday: 'חמישי',
-    DateTime.friday: 'שישי',
-    DateTime.saturday: 'שבת',
-    DateTime.sunday: 'ראשון',
+  static Map<int, String> get _dayNames => {
+    DateTime.monday: tr('שני', 'Monday'),
+    DateTime.tuesday: tr('שלישי', 'Tuesday'),
+    DateTime.wednesday: tr('רביעי', 'Wednesday'),
+    DateTime.thursday: tr('חמישי', 'Thursday'),
+    DateTime.friday: tr('שישי', 'Friday'),
+    DateTime.saturday: tr('שבת', 'Saturday'),
+    DateTime.sunday: tr('ראשון', 'Sunday'),
   };
 
   final Map<int, TextEditingController> _openCtl = {};
@@ -1849,7 +1850,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         child: LinearProgressIndicator(),
       ),
       error: (_, _) => Text(
-        'לא ניתן לטעון קטגוריות',
+        tr('לא ניתן לטעון קטגוריות', 'Could not load categories'),
         style: TextStyle(
           fontFamily: AppFonts.rubik,
           fontSize: 12,
@@ -1887,7 +1888,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'קטגוריות',
+              tr('קטגוריות', 'Categories'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -2021,7 +2022,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'השאירו ריק אם השעות אינן ידועות. יום ללא שעות לא יוצג באפליקציה.',
+          tr('השאירו ריק אם השעות אינן ידועות. יום ללא שעות לא יוצג באפליקציה.', 'Leave empty if the hours are not known. A day without hours is not shown in the app.'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 12,
@@ -2041,14 +2042,14 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           ),
           child: Row(
             children: [
-              Expanded(child: _timeField(_bulkOpen, 'פתיחה', enabled: true)),
+              Expanded(child: _timeField(_bulkOpen, tr('פתיחה', 'Opens'), enabled: true)),
               const SizedBox(width: 8),
-              Expanded(child: _timeField(_bulkClose, 'סגירה', enabled: true)),
+              Expanded(child: _timeField(_bulkClose, tr('סגירה', 'Closes'), enabled: true)),
               const SizedBox(width: 10),
               TextButton(
                 onPressed: () => _applyToAll(DateTime.monday, DateTime.sunday),
                 child: Text(
-                  'החל על כל השבוע',
+                  tr('החל על כל השבוע', 'Apply to the whole week'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
                 ),
               ),
@@ -2056,7 +2057,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                 onPressed: () =>
                     _applyToAll(DateTime.sunday, DateTime.thursday),
                 child: Text(
-                  'א׳–ה׳ בלבד',
+                  tr('א׳–ה׳ בלבד', 'Sun–Thu only'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
                 ),
               ),
@@ -2084,7 +2085,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                 Expanded(
                   child: _timeField(
                     _openCtl[day]!,
-                    'פתיחה',
+                    tr('פתיחה', 'Opens'),
                     enabled: !(_dayClosed[day] ?? false),
                   ),
                 ),
@@ -2092,13 +2093,13 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
                 Expanded(
                   child: _timeField(
                     _closeCtl[day]!,
-                    'סגירה',
+                    tr('סגירה', 'Closes'),
                     enabled: !(_dayClosed[day] ?? false),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'סגור',
+                  tr('סגור', 'Closed'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 12,
@@ -2194,13 +2195,13 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     // details tab brought forward when one is missing.
     if (_name.text.trim().isEmpty || _address.text.trim().isEmpty) {
       _tabs.animateTo(0);
-      setState(() => _error = 'שם העסק והכתובת הם שדות חובה (לשונית פרטים).');
+      setState(() => _error = tr('שם העסק והכתובת הם שדות חובה (לשונית פרטים).', 'The business name and address are required (Details tab).'));
       return;
     }
     if (_dateValidator(_featuredStart.text) != null ||
         _dateValidator(_featuredEnd.text) != null) {
       _tabs.animateTo(4);
-      setState(() => _error = 'תאריכי הקידום צריכים להיות בפורמט YYYY-MM-DD.');
+      setState(() => _error = tr('תאריכי הקידום צריכים להיות בפורמט YYYY-MM-DD.', 'The promotion dates must be in the format YYYY-MM-DD.'));
       return;
     }
     final badDay = [
@@ -2217,7 +2218,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       _tabs.animateTo(2);
       setState(
         () => _error =
-            'שעה לא תקינה ביום ${badDay.join(', ')} — HH:MM, למשל 09:00.',
+            tr('שעה לא תקינה ביום ${badDay.join(', ')} — HH:MM, למשל 09:00.', 'Invalid time on ${badDay.join(', ')} — HH:MM, for example 09:00.'),
       );
       return;
     }
@@ -2312,7 +2313,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
 
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) setState(() => _error = 'השמירה נכשלה: ${_errorText(e)}');
+      if (mounted) setState(() => _error = tr('השמירה נכשלה: ${_errorText(e)}', 'Saving failed: ${_errorText(e)}'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -2323,13 +2324,13 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   static String _errorText(Object e) {
     if (e is PostgrestException) {
       return switch (e.code) {
-        '23505' => 'כתובת ה-Slug כבר בשימוש אצל עסק אחר',
-        '23502' => 'חסר שדה חובה (${e.message})',
-        '42501' => 'אין הרשאה לשמור — האם המשתמש מוגדר כמנהל?',
+        '23505' => tr('כתובת ה-Slug כבר בשימוש אצל עסק אחר', 'The slug is already used by another business'),
+        '23502' => tr('חסר שדה חובה (${e.message})', 'A required field is missing (${e.message})'),
+        '42501' => tr('אין הרשאה לשמור — האם המשתמש מוגדר כמנהל?', 'No permission to save — is this user set up as an admin?'),
         _ => e.message,
       };
     }
-    if (e is StorageException) return 'העלאת תמונה נכשלה (${e.message})';
+    if (e is StorageException) return tr('העלאת תמונה נכשלה (${e.message})', 'Image upload failed (${e.message})');
     return '$e';
   }
 }
@@ -2374,7 +2375,7 @@ class _MenuItemRow extends StatelessWidget {
           Expanded(
             flex: 2,
             child: _small(
-              'קטגוריה',
+              tr('קטגוריה', 'Category'),
               item['section'] as String? ?? '',
               (v) => onChanged({...item, 'section': v.isEmpty ? null : v}),
             ),
@@ -2383,7 +2384,7 @@ class _MenuItemRow extends StatelessWidget {
           Expanded(
             flex: 3,
             child: _small(
-              'שם *',
+              tr('שם *', 'Name *'),
               item['name'] as String? ?? '',
               (v) => onChanged({...item, 'name': v}),
             ),
@@ -2392,7 +2393,7 @@ class _MenuItemRow extends StatelessWidget {
           Expanded(
             flex: 2,
             child: _small(
-              'מחיר ₪',
+              tr('מחיר ₪', 'Price ₪'),
               // Stored in agorot; shown in shekels.
               agorot == null
                   ? ''
@@ -2414,7 +2415,7 @@ class _MenuItemRow extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.close, size: 18, color: AppColors.error),
             onPressed: onRemove,
-            tooltip: 'הסרה',
+            tooltip: tr('הסרה', 'Remove'),
           ),
         ],
       ),

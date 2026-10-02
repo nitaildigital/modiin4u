@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart'
 import '../../../core/supabase/supabase_config.dart';
 import 'admin_table_notifier.dart';
 import 'media_usage.dart';
+import '../admin_language.dart';
 
 /// The media library, on the live table.
 ///
@@ -358,5 +359,5 @@ class MediaInUse implements Exception {
   const MediaInUse(this.uses);
 
   @override
-  String toString() => 'הקובץ בשימוש ($uses) ולא הוסר';
+  String toString() => tr('הקובץ בשימוש ($uses) ולא הוסר', 'The file is in use ($uses) and was not removed');
 }

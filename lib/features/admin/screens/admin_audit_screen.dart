@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_audit_provider.dart';
 import '../providers/admin_trash_provider.dart' show trashStateLabels;
+import '../admin_language.dart';
 
 class AdminAuditScreen extends ConsumerStatefulWidget {
   const AdminAuditScreen({super.key});
@@ -56,7 +57,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש ביומן...',
+                    hintText: tr('חיפוש ביומן...', 'Search the log...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -87,7 +88,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _actionFilter.isEmpty, () => _setAction('')),
+              _FilterChip(tr('הכל', 'All'), _actionFilter.isEmpty, () => _setAction('')),
               for (final action in const [
                 'create',
                 'update',
@@ -106,7 +107,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
               const Spacer(),
               if (loaded != null)
                 Text(
-                  '${loaded.length} רשומות',
+                  tr('${loaded.length} רשומות', '${loaded.length} records'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -123,7 +124,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                tr('שגיאה: $e', 'Error: $e'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -143,7 +144,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין רשומות ביומן',
+                        tr('אין רשומות ביומן', 'No log entries'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -314,7 +315,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                                       const SizedBox(width: 6),
                                       Text(
                                         adminName.isEmpty
-                                            ? 'מנהל שהוסר'
+                                            ? tr('מנהל שהוסר', 'A removed admin')
                                             : adminName,
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
@@ -413,11 +414,11 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
       final to = _value(after[key]);
       final from = before.containsKey(key) ? _value(before[key]) : null;
       final name = switch (key) {
-        'status' => 'סטטוס',
-        'is_active' => 'פעיל',
-        _ => 'מפורסם',
+        'status' => tr('סטטוס', 'Status'),
+        'is_active' => tr('פעיל', 'Active'),
+        _ => tr('מפורסם', 'Published'),
       };
-      parts.add(from == null ? '$name: $to' : '$name: $from ← $to');
+      parts.add(from == null ? '$name: $to' : '$name: $from ${tr('←', '→')} $to');
     }
     final fields = after['fields'] is List
         ? [
@@ -425,15 +426,15 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
               if (!const {'status', 'is_active', 'published'}.contains(f)) '$f',
           ]
         : const <String>[];
-    if (fields.isNotEmpty) parts.add('שדות: ${fields.join(', ')}');
+    if (fields.isNotEmpty) parts.add(tr('שדות: ${fields.join(', ')}', 'Fields: ${fields.join(', ')}'));
     return parts.join(' · ');
   }
 
   // In Hebrew, so the arrow between old and new reads right to left with
   // the rest of the line; a Latin run would lay it out backwards.
   String _value(Object? v) => switch (v) {
-    true => 'כן',
-    false => 'לא',
+    true => tr('כן', 'Yes'),
+    false => tr('לא', 'No'),
     null => '—',
     _ => trashStateLabels['$v'] ?? '$v',
   };
@@ -442,9 +443,9 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     try {
       final d = DateTime.parse(iso);
       final diff = DateTime.now().difference(d);
-      if (diff.inMinutes < 60) return 'לפני ${diff.inMinutes} דקות';
-      if (diff.inHours < 24) return 'לפני ${diff.inHours} שעות';
-      if (diff.inDays < 7) return 'לפני ${diff.inDays} ימים';
+      if (diff.inMinutes < 60) return tr('לפני ${diff.inMinutes} דקות', '${diff.inMinutes} minutes ago');
+      if (diff.inHours < 24) return tr('לפני ${diff.inHours} שעות', '${diff.inHours} hours ago');
+      if (diff.inDays < 7) return tr('לפני ${diff.inDays} ימים', '${diff.inDays} days ago');
       return '${d.day}/${d.month}/${d.year}';
     } catch (_) {
       return iso;
@@ -459,7 +460,7 @@ class _FilterChip extends StatelessWidget {
   const _FilterChip(this.label, this.selected, this.onTap);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 6),
+    padding: const EdgeInsetsDirectional.only(end: 6),
     child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),

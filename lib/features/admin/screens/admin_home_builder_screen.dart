@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_home_builder_provider.dart';
+import '../admin_language.dart';
 
 class AdminHomeBuilderScreen extends ConsumerStatefulWidget {
   const AdminHomeBuilderScreen({super.key});
@@ -48,13 +49,13 @@ class _AdminHomeBuilderScreenState
                 ),
                 child: Row(
                   children: [
-                    _StatChip('סה״כ בלוקים', '${list.length}', AppColors.navy),
+                    _StatChip(tr('סה״כ בלוקים', 'Total blocks'), '${list.length}', AppColors.navy),
                     const SizedBox(width: 16),
-                    _StatChip('פעילים', '$active', AppColors.success),
+                    _StatChip(tr('פעילים', 'Active'), '$active', AppColors.success),
                     const SizedBox(width: 16),
-                    _StatChip('מפורסמים', '$published', AppColors.turquoise),
+                    _StatChip(tr('מפורסמים', 'Published'), '$published', AppColors.turquoise),
                     const SizedBox(width: 16),
-                    _StatChip('טיוטות', '$drafts', AppColors.gold),
+                    _StatChip(tr('טיוטות', 'Drafts'), '$drafts', AppColors.gold),
                   ],
                 ),
               );
@@ -77,7 +78,7 @@ class _AdminHomeBuilderScreenState
               Icon(Icons.dashboard_customize, size: 20, color: AppColors.navy),
               const SizedBox(width: 8),
               Text(
-                'בונה מסך הבית',
+                tr('בונה מסך הבית', 'Home screen builder'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 15,
@@ -90,7 +91,7 @@ class _AdminHomeBuilderScreenState
                 onPressed: _publishAll,
                 icon: const Icon(Icons.publish, size: 16),
                 label: Text(
-                  'פרסם הכל',
+                  tr('פרסם הכל', 'Publish all'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -107,7 +108,7 @@ class _AdminHomeBuilderScreenState
                 onPressed: () => _showEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'בלוק חדש',
+                  tr('בלוק חדש', 'New block'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -128,7 +129,7 @@ class _AdminHomeBuilderScreenState
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                tr('שגיאה: $e', 'Error: $e'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -148,7 +149,7 @@ class _AdminHomeBuilderScreenState
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין בלוקים',
+                        tr('אין בלוקים', 'No blocks'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -292,7 +293,7 @@ class _AdminHomeBuilderScreenState
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    'מפורסם',
+                                    tr('מפורסם', 'Published'),
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 10,
@@ -312,7 +313,7 @@ class _AdminHomeBuilderScreenState
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    'טיוטה',
+                                    tr('טיוטה', 'Draft'),
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 10,
@@ -324,7 +325,7 @@ class _AdminHomeBuilderScreenState
                             if (isWide && b['audience'] != null) ...[
                               const SizedBox(width: 12),
                               Text(
-                                'קהל: ${b['audience']}',
+                                tr('קהל: ${b['audience']}', 'Audience: ${b['audience']}'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 10,
@@ -358,7 +359,7 @@ class _AdminHomeBuilderScreenState
                               PopupMenuItem(
                                 value: 'edit',
                                 child: Text(
-                                  'עריכה',
+                                  tr('עריכה', 'Edit'),
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 13,
@@ -369,7 +370,7 @@ class _AdminHomeBuilderScreenState
                                 PopupMenuItem(
                                   value: 'deactivate',
                                   child: Text(
-                                    'הסרה מהאתר (השבתה)',
+                                    tr('הסרה מהאתר (השבתה)', 'Take off the site (disable)'),
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 13,
@@ -434,13 +435,13 @@ class _AdminHomeBuilderScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '"${_blockHeadline(b)}" הוסר מהאתר ונשמר כאן כמושבת. '
-                'המתג בשורה שלו מחזיר אותו.',
+                tr('"${_blockHeadline(b)}" הוסר מהאתר ונשמר כאן כמושבת. '
+                'המתג בשורה שלו מחזיר אותו.', '"${_blockHeadline(b)}" was taken off the site and kept here as disabled. The switch on its row brings it back.'),
                 style: TextStyle(fontFamily: AppFonts.rubik),
               ),
               duration: const Duration(seconds: 6),
               action: SnackBarAction(
-                label: 'ביטול',
+                label: tr('ביטול', 'Cancel'),
                 onPressed: () => _run(() => notifier.toggleActive(id)),
               ),
             ),
@@ -452,10 +453,10 @@ class _AdminHomeBuilderScreenState
   /// Publishing every block is not undoable one by one, so it asks first.
   Future<void> _publishAll() async {
     final ok = await _confirm(
-      'לפרסם את כל הבלוקים?',
-      'כל בלוק פעיל שעדיין לא פורסם יפורסם עכשיו — כולל טיוטות של הודעות, '
-          'שיופיעו באתר. אפשר גם לפרסם בלוק אחד מתוך העריכה שלו.',
-      'פרסום הכל',
+      tr('לפרסם את כל הבלוקים?', 'Publish all blocks?'),
+      tr('כל בלוק פעיל שעדיין לא פורסם יפורסם עכשיו — כולל טיוטות של הודעות, '
+          'שיופיעו באתר. אפשר גם לפרסם בלוק אחד מתוך העריכה שלו.', 'Every active block not yet published will be published now — including notice drafts, which will appear on the site. You can also publish one block from its editor.'),
+      tr('פרסום הכל', 'Publish all'),
     );
     if (ok) {
       await _run(
@@ -475,7 +476,7 @@ class _AdminHomeBuilderScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'הפעולה נכשלה: ${_why(e)}',
+            tr('הפעולה נכשלה: ${_why(e)}', 'The action failed: ${_why(e)}'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           backgroundColor: AppColors.error,
@@ -489,7 +490,7 @@ class _AdminHomeBuilderScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: adminDir,
         child: AlertDialog(
           title: Text(
             title,
@@ -502,7 +503,7 @@ class _AdminHomeBuilderScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('חזרה', style: TextStyle(fontFamily: AppFonts.rubik)),
+              child: Text(tr('חזרה', 'Back'), style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
@@ -651,7 +652,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 700, maxHeight: 860),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -670,7 +671,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת בלוק' : 'בלוק חדש',
+                        _isEditing ? tr('עריכת בלוק', 'Edit block') : tr('בלוק חדש', 'New block'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -697,7 +698,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildDropdown(
-                          'סוג בלוק',
+                          tr('סוג בלוק', 'Block type'),
                           _blockType,
                           {
                             ...homeBlockTypes,
@@ -708,11 +709,11 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                         ),
                         const SizedBox(height: 14),
                         _buildField(
-                          _isAlert ? 'שם פנימי' : 'כותרת',
+                          _isAlert ? tr('שם פנימי', 'Internal name') : tr('כותרת', 'Title'),
                           _title,
-                          hint: _isAlert ? 'עדכון תנועה' : 'עסקים מומלצים',
+                          hint: _isAlert ? tr('עדכון תנועה', 'Traffic update') : tr('עסקים מומלצים', 'Recommended businesses'),
                           helper: _isAlert
-                              ? 'מופיע ברשימה כאן; באתר הוא משמש כתווית רק כשאין תווית למטה'
+                              ? tr('מופיע ברשימה כאן; באתר הוא משמש כתווית רק כשאין תווית למטה', 'Shown in the list here; on the site it is used as the label only when there is no label below')
                               : null,
                         ),
                         const SizedBox(height: 14),
@@ -722,9 +723,9 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                           children: [
                             Expanded(
                               child: _buildDateField(
-                                'מוצג מ-',
+                                tr('מוצג מ-', 'Shown from'),
                                 _startAt,
-                                empty: 'מיד',
+                                empty: tr('מיד', 'Immediately'),
                                 onPick: (d) => setState(
                                   () => _startAt = DateTime(
                                     d.year,
@@ -738,9 +739,9 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildDateField(
-                                'מוצג עד (כולל היום הזה)',
+                                tr('מוצג עד (כולל היום הזה)', 'Shown until (including that day)'),
                                 _endAt,
-                                empty: 'ללא סיום',
+                                empty: tr('ללא סיום', 'No end'),
                                 onPick: (d) => setState(
                                   () => _endAt = DateTime(
                                     d.year,
@@ -761,16 +762,16 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                           children: [
                             Expanded(
                               child: _buildField(
-                                'סדר',
+                                tr('סדר', 'Order'),
                                 _sortOrder,
                                 hint: '0',
-                                helper: 'מספר נמוך מופיע קודם',
+                                helper: tr('מספר נמוך מופיע קודם', 'A lower number appears first'),
                                 keyboardType: TextInputType.number,
                                 validator: (v) {
                                   final t = (v ?? '').trim();
                                   if (t.isEmpty) return null;
                                   return int.tryParse(t) == null
-                                      ? 'מספר שלם'
+                                      ? tr('מספר שלם', 'A whole number')
                                       : null;
                                 },
                               ),
@@ -778,12 +779,12 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildDropdown(
-                                'קהל יעד',
+                                tr('קהל יעד', 'Target audience'),
                                 _audience,
                                 {
-                                  'all': 'כולם',
-                                  'new': 'משתמשים חדשים',
-                                  'returning': 'חוזרים',
+                                  'all': tr('כולם', 'Everyone'),
+                                  'new': tr('משתמשים חדשים', 'New users'),
+                                  'returning': tr('חוזרים', 'Returning'),
                                   if (!const {
                                     'all',
                                     'new',
@@ -800,7 +801,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(
-                            'פעיל',
+                            tr('פעיל', 'Active'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 14,
@@ -813,14 +814,14 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(
-                            'מפורסם באתר',
+                            tr('מפורסם באתר', 'Published on the site'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 14,
                             ),
                           ),
                           subtitle: Text(
-                            'כבוי = טיוטה שרק כאן רואים',
+                            tr('כבוי = טיוטה שרק כאן רואים', 'Off = a draft only seen here'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 11,
@@ -837,9 +838,9 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                         ] else ...[
                           const SizedBox(height: 8),
                           Text(
-                            'האתר והאפליקציה עדיין לא קוראים בלוק מסוג זה — '
+                            tr('האתר והאפליקציה עדיין לא קוראים בלוק מסוג זה — '
                             'הוא נשמר כאן לסידור בלבד. מה שמוצג באתר מתוך הבונה '
-                            'הוא ההודעה ("הודעה באתר").',
+                            'הוא ההודעה ("הודעה באתר").', 'The site and the app do not read this kind of block yet — it is kept here for ordering only. What the site shows from the builder is the notice ("Site notice").'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 12,
@@ -868,7 +869,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'סגירה',
+                          tr('סגירה', 'Close'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -909,7 +910,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'עדכון' : 'יצירה',
+                                _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 14,
@@ -931,7 +932,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
   // ─── The notice ───
 
   List<Widget> _alertFields() {
-    String? required(String? v) => (v ?? '').trim().isEmpty ? 'שדה חובה' : null;
+    String? required(String? v) => (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null;
     return [
       _NoticePreview(
         label: _labelHe.text.trim().isNotEmpty
@@ -941,7 +942,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
         link: _url.text.trim().isEmpty
             ? null
             : (_linkLabelHe.text.trim().isEmpty
-                  ? 'לפרטים'
+                  ? tr('לפרטים', 'Details')
                   : _linkLabelHe.text.trim()),
       ),
       const SizedBox(height: 14),
@@ -950,9 +951,9 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
         children: [
           Expanded(
             child: _buildField(
-              'תווית מודגשת (עברית)',
+              tr('תווית מודגשת (עברית)', 'Highlighted label (Hebrew)'),
               _labelHe,
-              hint: 'עדכון תנועה',
+              hint: tr('עדכון תנועה', 'Traffic update'),
             ),
           ),
           const SizedBox(width: 12),
@@ -968,9 +969,9 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
       ),
       const SizedBox(height: 14),
       _buildField(
-        'ההודעה (עברית)',
+        tr('ההודעה (עברית)', 'The message (Hebrew)'),
         _messageHe,
-        hint: 'עבודות בכביש ברחוב בגין — צפויים עיכובים באזור',
+        hint: tr('עבודות בכביש ברחוב בגין — צפויים עיכובים באזור', 'Roadworks on Begin Street — delays expected in the area'),
         maxLines: 2,
         validator: required,
       ),
@@ -979,23 +980,23 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
         'Message (English)',
         _messageEn,
         hint: 'Road work on Begin St. - expect delays in the area',
-        helper: 'האתר מוצג גם באנגלית; זה הנוסח שם',
+        helper: tr('האתר מוצג גם באנגלית; זה הנוסח שם', 'The site is also shown in English; this is the wording there'),
         maxLines: 2,
         ltr: true,
         validator: required,
       ),
       const SizedBox(height: 14),
       _buildField(
-        'קישור "לפרטים"',
+        tr('קישור "לפרטים"', '"Details" link'),
         _url,
-        hint: '/news  או  https://…',
-        helper: 'עמוד באתר (מתחיל ב-/) או כתובת מלאה. ריק = בלי קישור "לפרטים"',
+        hint: tr('/news  או  https://…', '/news  or  https://…'),
+        helper: tr('עמוד באתר (מתחיל ב-/) או כתובת מלאה. ריק = בלי קישור "לפרטים"', 'A page on the site (starting with /) or a full address. Empty = no "Details" link'),
         ltr: true,
         validator: (v) {
           final t = (v ?? '').trim();
           if (t.isEmpty) return null;
           return _normalizeLink(t) == null
-              ? 'כתובת לא תקינה — /news או https://example.co.il'
+              ? tr('כתובת לא תקינה — /news או https://example.co.il', 'Invalid address — /news or https://example.co.il')
               : null;
         },
       ),
@@ -1005,9 +1006,9 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
         children: [
           Expanded(
             child: _buildField(
-              'נוסח הקישור (עברית)',
+              tr('נוסח הקישור (עברית)', 'Link wording (Hebrew)'),
               _linkLabelHe,
-              hint: 'לפרטים',
+              hint: tr('לפרטים', 'Details'),
             ),
           ),
           const SizedBox(width: 12),
@@ -1030,14 +1031,14 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
   String _siteHint() {
     final now = DateTime.now();
     final reasons = <String>[
-      if (!_published) 'לא מפורסם (טיוטה)',
-      if (!_isActive) 'מושבת',
+      if (!_published) tr('לא מפורסם (טיוטה)', 'Not published (draft)'),
+      if (!_isActive) tr('מושבת', 'Disabled'),
       if (_startAt != null && _startAt!.isAfter(now))
-        'יתחיל ב-${_fmtDate(_startAt!)}',
-      if (_endAt != null && !_endAt!.isAfter(now)) 'תאריך הסיום עבר',
+        tr('יתחיל ב-${_fmtDate(_startAt!)}', 'Starts on ${_fmtDate(_startAt!)}'),
+      if (_endAt != null && !_endAt!.isAfter(now)) tr('תאריך הסיום עבר', 'The end date has passed'),
     ];
     if (reasons.isNotEmpty) {
-      return 'לא יוצג באתר עכשיו: ${reasons.join(' · ')}.';
+      return tr('לא יוצג באתר עכשיו: ${reasons.join(' · ')}.', 'Not shown on the site now: ${reasons.join(' · ')}.');
     }
 
     final order = _orderToSave;
@@ -1053,12 +1054,12 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
         )
         .toList();
     if (others.isNotEmpty) {
-      return 'לא יוצג: באתר מוצגת הודעה אחת בלבד, והודעה אחרת '
+      return tr('לא יוצג: באתר מוצגת הודעה אחת בלבד, והודעה אחרת '
           '("${others.first['title'] ?? ''}") קודמת לה בסדר. '
-          'השביתו אותה או תנו להודעה הזו מספר סדר נמוך יותר.';
+          'השביתו אותה או תנו להודעה הזו מספר סדר נמוך יותר.', 'Not shown: the site shows only one notice, and another notice ("${others.first['title'] ?? ''}") comes before it in the order. Disable it or give this notice a lower order number.');
     }
-    final until = _endAt == null ? '' : ' עד ${_fmtDate(_endAt!)}';
-    return 'תוצג בעמוד הבית של האתר$until.';
+    final until = _endAt == null ? '' : tr(' עד ${_fmtDate(_endAt!)}', ' to ${_fmtDate(_endAt!)}');
+    return tr('תוצג בעמוד הבית של האתר$until.', 'Will be shown on the site\'s home page$until.');
   }
 
   /// The order as it will be saved: as typed, else the row's own, else the
@@ -1098,7 +1099,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
   /// own yet — `items_count`, `placement` and the like.
   Widget _configField() {
     return _buildField(
-      'הגדרות (JSON)',
+      tr('הגדרות (JSON)', 'Settings (JSON)'),
       _configJson,
       hint: '{"items_count": 4}',
       maxLines: 5,
@@ -1107,9 +1108,9 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
         final t = (v ?? '').trim();
         if (t.isEmpty) return null;
         try {
-          return jsonDecode(t) is Map ? null : 'צריך להיות אובייקט {…}';
+          return jsonDecode(t) is Map ? null : tr('צריך להיות אובייקט {…}', 'Must be an object {…}');
         } on FormatException {
-          return 'JSON לא תקין';
+          return tr('JSON לא תקין', 'Invalid JSON');
         }
       },
     );
@@ -1121,7 +1122,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
     setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
     if (_startAt != null && _endAt != null && !_endAt!.isAfter(_startAt!)) {
-      setState(() => _error = 'תאריך הסיום חייב להיות אחרי תאריך ההתחלה');
+      setState(() => _error = tr('תאריך הסיום חייב להיות אחרי תאריך ההתחלה', 'The end date must be after the start date'));
       return;
     }
 
@@ -1189,7 +1190,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'השמירה נכשלה: ${_why(e)}';
+          _error = tr('השמירה נכשלה: ${_why(e)}', 'Saving failed: ${_why(e)}');
         });
       }
     }
@@ -1287,6 +1288,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
         onTap: () async {
           final now = DateTime.now();
           final picked = await showDatePicker(
+            locale: adminLocale,
             context: context,
             initialDate: value ?? now,
             firstDate: DateTime(now.year - 2),
@@ -1299,7 +1301,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
             suffixIcon: value == null
                 ? const Icon(Icons.calendar_today_outlined, size: 16)
                 : IconButton(
-                    tooltip: 'ניקוי',
+                    tooltip: tr('ניקוי', 'Clear'),
                     icon: const Icon(Icons.close, size: 18),
                     onPressed: onClear,
                   ),
@@ -1423,7 +1425,7 @@ class _NoticeHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final live = text.startsWith('תוצג');
+    final live = text.startsWith(tr('תוצג', 'Will be shown'));
     final color = live ? AppColors.success : AppColors.gold;
     return Container(
       width: double.infinity,

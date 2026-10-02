@@ -7,6 +7,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../site_pages/widgets/site_page_body.dart';
 import '../providers/admin_site_pages_provider.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 /// עמודי מידע — About Us and the Accessibility Statement.
 ///
@@ -44,8 +45,8 @@ class AdminSitePagesScreen extends ConsumerWidget {
             ),
           ),
           child: Text(
-            'העמודים שהקישורים בתחתית האתר מובילים אליהם. עמוד שלא פורסם '
-            'מציג לגולשים "תוכן העמוד יפורסם בקרוב".',
+            tr('העמודים שהקישורים בתחתית האתר מובילים אליהם. עמוד שלא פורסם '
+            'מציג לגולשים "תוכן העמוד יפורסם בקרוב".', 'The pages the links at the bottom of the site lead to. An unpublished page shows visitors "The page content will be published soon".'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 13,
@@ -57,7 +58,7 @@ class AdminSitePagesScreen extends ConsumerWidget {
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת עמודי המידע',
+              message: tr('שגיאה בטעינת עמודי המידע', 'Error loading the info pages'),
               error: e,
               onRetry: () => ref.read(adminSitePagesProvider.notifier).load(),
             ),
@@ -67,7 +68,7 @@ class AdminSitePagesScreen extends ConsumerWidget {
                 // has not run on this database.
                 return Center(
                   child: Text(
-                    'לא נמצאו עמודים — יש להריץ את מיגרציה 00037.',
+                    tr('לא נמצאו עמודים — יש להריץ את מיגרציה 00037.', 'No pages found — migration 00037 must be run.'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.grayText,
@@ -150,7 +151,7 @@ class _PageCard extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         _StatusPill(
-                          published ? 'מפורסם' : 'לא מפורסם',
+                          published ? tr('מפורסם', 'Published') : tr('לא מפורסם', 'Not published'),
                           published ? AppColors.success : AppColors.grayLight,
                         ),
                       ],
@@ -158,10 +159,10 @@ class _PageCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       [
-                        'עברית: ${hasHe ? 'נכתב' : 'ריק'}',
-                        'אנגלית: ${hasEn ? 'נכתב' : 'ריק'}',
+                        tr('עברית: ${hasHe ? 'נכתב' : 'ריק'}', 'Hebrew: ${hasHe ? 'written' : 'empty'}'),
+                        tr('אנגלית: ${hasEn ? 'נכתב' : 'ריק'}', 'English: ${hasEn ? 'written' : 'empty'}'),
                         if (updated != null)
-                          'עודכן ${updated.day}.${updated.month}.${updated.year}',
+                          tr('עודכן ${updated.day}.${updated.month}.${updated.year}', 'Updated ${updated.day}.${updated.month}.${updated.year}'),
                       ].join('  ·  '),
                       style: small,
                     ),
@@ -184,10 +185,10 @@ class _PageCard extends ConsumerWidget {
                     ? _openEditor(context)
                     : _setPublished(context, ref, !published),
                 itemBuilder: (_) => [
-                  _menuItem('edit', 'עריכה'),
+                  _menuItem('edit', tr('עריכה', 'Edit')),
                   // Unpublishing is how a page comes down; the same menu
                   // puts it back.
-                  _menuItem('toggle', published ? 'הסרה מפרסום' : 'פרסום'),
+                  _menuItem('toggle', published ? tr('הסרה מפרסום', 'Unpublish') : tr('פרסום', 'Publish')),
                 ],
               ),
             ],
@@ -216,7 +217,7 @@ class _PageCard extends ConsumerWidget {
           .read(adminSitePagesProvider.notifier)
           .setPublished(page['id'] as String, published);
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('העדכון נכשל: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('העדכון נכשל: $e', 'The update failed: $e'))));
     }
   }
 
@@ -296,7 +297,7 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
           maxHeight: 820,
         ),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Column(
             children: [
               _header(wide),
@@ -331,7 +332,7 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
       child: Row(
         children: [
           Text(
-            'עריכת עמוד: $title',
+            tr('עריכת עמוד: $title', 'Edit page: $title'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 16,
@@ -344,7 +345,7 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
             TextButton(
               onPressed: () => setState(() => _showPreview = !_showPreview),
               child: Text(
-                _showPreview ? 'חזרה לעריכה' : 'תצוגה מקדימה',
+                _showPreview ? tr('חזרה לעריכה', 'Back to editing') : tr('תצוגה מקדימה', 'Preview'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 13,
@@ -379,27 +380,27 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'עיצוב פשוט: שורה שמתחילה ב-"# " או "## " היא כותרת, שורה '
+            tr('עיצוב פשוט: שורה שמתחילה ב-"# " או "## " היא כותרת, שורה '
             'שמתחילה ב-"- " היא סעיף ברשימה, ושורה ריקה פותחת פסקה חדשה. '
             'כתובות אתר ודוא״ל הופכות לקישורים.\n'
-            'אם אחת השפות ריקה, האתר מציג לקוראיה את השפה השנייה.',
+            'אם אחת השפות ריקה, האתר מציג לקוראיה את השפה השנייה.', 'Simple formatting: a line starting with "# " or "## " is a heading, a line starting with "- " is a list item, and an empty line starts a new paragraph. Web and email addresses become links.\nIf one language is empty, the site shows its readers the other language.'),
             style: hint,
           ),
         ),
-        _field('כותרת בעברית', _titleHe),
-        _field('תוכן בעברית', _bodyHe, maxLines: 12),
+        _field(tr('כותרת בעברית', 'Hebrew title'), _titleHe),
+        _field(tr('תוכן בעברית', 'Hebrew content'), _bodyHe, maxLines: 12),
         const SizedBox(height: 8),
-        _field('כותרת באנגלית', _titleEn, ltr: true),
-        _field('תוכן באנגלית', _bodyEn, maxLines: 12, ltr: true),
+        _field(tr('כותרת באנגלית', 'English title'), _titleEn, ltr: true),
+        _field(tr('תוכן באנגלית', 'English content'), _bodyEn, maxLines: 12, ltr: true),
         SwitchListTile(
           title: Text(
-            'מפורסם באתר',
+            tr('מפורסם באתר', 'Published on the site'),
             style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
           ),
           subtitle: Text(
             _published
-                ? 'הגולשים רואים את העמוד.'
-                : 'הגולשים רואים "תוכן העמוד יפורסם בקרוב".',
+                ? tr('הגולשים רואים את העמוד.', 'Visitors see the page.')
+                : tr('הגולשים רואים "תוכן העמוד יפורסם בקרוב".', 'Visitors see "The page content will be published soon".'),
             style: hint,
           ),
           value: _published,
@@ -426,7 +427,7 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
             child: Row(
               children: [
                 Text(
-                  'תצוגה מקדימה',
+                  tr('תצוגה מקדימה', 'Preview'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -435,7 +436,7 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
                   ),
                 ),
                 const Spacer(),
-                _LangChip('עברית', hebrew, () {
+                _LangChip(tr('עברית', 'Hebrew'), hebrew, () {
                   setState(() => _previewHebrew = true);
                 }),
                 _LangChip('English', !hebrew, () {
@@ -458,12 +459,12 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
                   child: body.isEmpty
                       ? Text(
                           hebrew
-                              ? 'התוכן בעברית ריק — קוראי העברית יראו את '
+                              ? tr('התוכן בעברית ריק — קוראי העברית יראו את '
                                     'האנגלית, ואם גם היא ריקה, את ההודעה '
-                                    '"תוכן העמוד יפורסם בקרוב".'
-                              : 'התוכן באנגלית ריק — קוראי האנגלית יראו את '
+                                    '"תוכן העמוד יפורסם בקרוב".', 'The Hebrew content is empty — Hebrew readers will see the English, and if that is empty too, the message "The page content will be published soon".')
+                              : tr('התוכן באנגלית ריק — קוראי האנגלית יראו את '
                                     'העברית, ואם גם היא ריקה, את ההודעה '
-                                    '"תוכן העמוד יפורסם בקרוב".',
+                                    '"תוכן העמוד יפורסם בקרוב".', 'The English content is empty — English readers will see the Hebrew, and if that is empty too, the message "The page content will be published soon".'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -527,7 +528,7 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
             const Spacer(),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik)),
+            child: Text(tr('ביטול', 'Cancel'), style: TextStyle(fontFamily: AppFonts.rubik)),
           ),
           const SizedBox(width: 8),
           FilledButton(
@@ -548,7 +549,7 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
                     ),
                   )
                 : Text(
-                    'שמור',
+                    tr('שמור', 'Save'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -612,8 +613,8 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
       if (mounted) {
         setState(
           () => _error = switch (e) {
-            PostgrestException(:final message) => 'השמירה נכשלה: $message',
-            _ => 'השמירה נכשלה: $e',
+            PostgrestException(:final message) => tr('השמירה נכשלה: $message', 'Saving failed: $message'),
+            _ => tr('השמירה נכשלה: $e', 'Saving failed: $e'),
           },
         );
       }
@@ -660,7 +661,7 @@ class _LangChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsetsDirectional.only(start: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

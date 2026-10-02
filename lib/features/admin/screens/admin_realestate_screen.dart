@@ -6,6 +6,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_realestate_provider.dart';
 import '../widgets/admin_listing_photos_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 class AdminRealEstateScreen extends ConsumerStatefulWidget {
   const AdminRealEstateScreen({super.key});
@@ -54,7 +55,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש כתובת / שכונה...',
+                    hintText: tr('חיפוש כתובת / שכונה...', 'Search address / neighbourhood...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -90,7 +91,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
 
               // Type filters
               _FilterChip(
-                'הכל',
+                tr('הכל', 'All'),
                 _typeFilter.isEmpty && _statusFilter.isEmpty,
                 () {
                   setState(() {
@@ -105,7 +106,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                       .setStatusFilter(null);
                 },
               ),
-              _FilterChip('השכרה', _typeFilter == 'rent', () {
+              _FilterChip(tr('השכרה', 'Rent'), _typeFilter == 'rent', () {
                 setState(() {
                   _typeFilter = 'rent';
                   _statusFilter = '';
@@ -117,7 +118,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                     .read(adminListingListProvider.notifier)
                     .setStatusFilter(null);
               }),
-              _FilterChip('מכירה', _typeFilter == 'sale', () {
+              _FilterChip(tr('מכירה', 'Sale'), _typeFilter == 'sale', () {
                 setState(() {
                   _typeFilter = 'sale';
                   _statusFilter = '';
@@ -137,13 +138,13 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 8),
                   color: AppColors.border,
                 ),
-                _FilterChip('פעיל', _statusFilter == 'active', () {
+                _FilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
                   setState(() => _statusFilter = 'active');
                   ref
                       .read(adminListingListProvider.notifier)
                       .setStatusFilter('active');
                 }),
-                _FilterChip('ממתין', _statusFilter == 'pending', () {
+                _FilterChip(tr('ממתין', 'Pending'), _statusFilter == 'pending', () {
                   setState(() => _statusFilter = 'pending');
                   ref
                       .read(adminListingListProvider.notifier)
@@ -157,7 +158,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
               // the list below show the error and a retry.
               if (listingsAsync.valueOrNull case final list?)
                 Text(
-                  '${list.length} נכסים',
+                  tr('${list.length} נכסים', '${list.length} properties'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -169,7 +170,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                 onPressed: () => _showListingEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'נכס חדש',
+                  tr('נכס חדש', 'New property'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -199,7 +200,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'שגיאה בטעינת נכסים',
+                    tr('שגיאה בטעינת נכסים', 'Error loading properties'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.error,
@@ -217,7 +218,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                   TextButton(
                     onPressed: () =>
                         ref.read(adminListingListProvider.notifier).load(),
-                    child: const Text('נסה שוב'),
+                    child: Text(tr('נסה שוב', 'Try again')),
                   ),
                 ],
               ),
@@ -235,7 +236,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין נכסים',
+                        tr('אין נכסים', 'No properties'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -285,22 +286,22 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(
-              'מחיקת נכס',
+              tr('מחיקת נכס', 'Delete property'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontWeight: FontWeight.w700,
               ),
             ),
             content: Text(
-              'להסיר את "${listing['address']}"? המודעה תרד מהאפליקציה '
-              'וניתן יהיה להחזירה על ידי שינוי הסטטוס.',
+              tr('להסיר את "${listing['address']}"? המודעה תרד מהאפליקציה '
+              'וניתן יהיה להחזירה על ידי שינוי הסטטוס.', 'Remove "${listing['address']}"? The listing will leave the app, and it can be brought back by changing its status.'),
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
-                  'ביטול',
+                  tr('ביטול', 'Cancel'),
                   style: TextStyle(fontFamily: AppFonts.rubik),
                 ),
               ),
@@ -310,7 +311,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
                   runAdminAction(context, () => notifier.deleteListing(id));
                 },
                 child: Text(
-                  'מחק',
+                  tr('מחק', 'Delete'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     color: AppColors.error,
@@ -367,14 +368,14 @@ class _ListingTable extends StatelessWidget {
           child: Row(
             children: [
               const SizedBox(width: 62),
-              _Col('כתובת', flex: 3),
-              _Col('שכונה', flex: 2),
-              _Col('סוג', flex: 1),
-              _Col('חדרים', flex: 1),
-              if (isWide) _Col('מ״ר', flex: 1),
-              _Col('מחיר', flex: 2),
-              _Col('סטטוס', flex: 1),
-              if (isWide) _Col('צפיות', flex: 1),
+              _Col(tr('כתובת', 'Address'), flex: 3),
+              _Col(tr('שכונה', 'Neighbourhood'), flex: 2),
+              _Col(tr('סוג', 'Type'), flex: 1),
+              _Col(tr('חדרים', 'Rooms'), flex: 1),
+              if (isWide) _Col(tr('מ״ר', 'sqm'), flex: 1),
+              _Col(tr('מחיר', 'Price'), flex: 2),
+              _Col(tr('סטטוס', 'Status'), flex: 1),
+              if (isWide) _Col(tr('צפיות', 'Views'), flex: 1),
               const SizedBox(width: 40),
             ],
           ),
@@ -424,7 +425,7 @@ class _ListingTable extends StatelessWidget {
                               children: [
                                 if (isFeatured)
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 4),
+                                    padding: const EdgeInsetsDirectional.only(end: 4),
                                     child: Icon(
                                       Icons.star,
                                       size: 14,
@@ -447,7 +448,7 @@ class _ListingTable extends StatelessWidget {
                             ),
                             if (isBroker)
                               Text(
-                                'מתווך',
+                                tr('מתווך', 'Agent'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 10,
@@ -530,7 +531,7 @@ class _ListingTable extends StatelessWidget {
                           PopupMenuItem(
                             value: 'edit',
                             child: Text(
-                              'עריכה',
+                              tr('עריכה', 'Edit'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
@@ -541,7 +542,7 @@ class _ListingTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'approve',
                               child: Text(
-                                'אישור ופרסום',
+                                tr('אישור ופרסום', 'Approve and publish'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -552,7 +553,7 @@ class _ListingTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'reject',
                               child: Text(
-                                'דחייה',
+                                tr('דחייה', 'Reject'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -565,7 +566,7 @@ class _ListingTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'activate',
                               child: Text(
-                                'הפעל',
+                                tr('הפעל', 'Activate'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -576,7 +577,7 @@ class _ListingTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'sold',
                               child: Text(
-                                kind == 'rent' ? 'סמן כהושכר' : 'סמן כנמכר',
+                                kind == 'rent' ? tr('סמן כהושכר', 'Mark as rented') : tr('סמן כנמכר', 'Mark as sold'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -587,7 +588,7 @@ class _ListingTable extends StatelessWidget {
                             PopupMenuItem(
                               value: 'expire',
                               child: Text(
-                                'סמן כפג תוקף',
+                                tr('סמן כפג תוקף', 'Mark as expired'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -602,7 +603,7 @@ class _ListingTable extends StatelessWidget {
                               value: 'delete',
                               child: Text(
                                 // The row is not removed; it becomes status = 'removed'.
-                                'הסר',
+                                tr('הסר', 'Remove'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -628,7 +629,7 @@ class _ListingTable extends StatelessWidget {
       return '₪${(price / 1000000).toStringAsFixed(1)}M';
     }
     if (price >= 1000) {
-      return '₪${_numberFormat(price)}${type == 'rent' ? '/חודש' : ''}';
+      return tr('₪${_numberFormat(price)}${type == 'rent' ? '/חודש' : ''}', '₪${_numberFormat(price)}${type == 'rent' ? '/month' : ''}');
     }
     return '₪$price';
   }
@@ -800,7 +801,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760, maxHeight: 760),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -819,7 +820,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת נכס' : 'נכס חדש',
+                        _isEditing ? tr('עריכת נכס', 'Edit property') : tr('נכס חדש', 'New property'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -847,20 +848,20 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                       // `title` is NOT NULL on the table and the form never
                       // collected it, so even a corrected save would have failed.
                       _field(
-                        'כותרת *',
+                        tr('כותרת *', 'Title *'),
                         _title,
                         validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                            v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
                       Row(
                         children: [
                           Expanded(
                             child: _dropdown<String>(
-                              label: 'סוג מודעה *',
+                              label: tr('סוג מודעה *', 'Listing type *'),
                               value: _kind,
-                              items: const [
-                                ('rent', 'השכרה'),
-                                ('sale', 'מכירה'),
+                              items: [
+                                ('rent', tr('השכרה', 'Rent')),
+                                ('sale', tr('מכירה', 'Sale')),
                               ],
                               onChanged: (v) => setState(() => _kind = v!),
                             ),
@@ -869,14 +870,14 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                           Expanded(
                             child: _field(
                               _kind == 'rent'
-                                  ? 'מחיר לחודש (₪) *'
-                                  : 'מחיר (₪) *',
+                                  ? tr('מחיר לחודש (₪) *', 'Monthly price (₪) *')
+                                  : tr('מחיר (₪) *', 'Price (₪) *'),
                               _price,
                               hint: _kind == 'rent' ? '6000' : '2500000',
                               validator: (v) {
-                                if (v == null || v.isEmpty) return 'שדה חובה';
+                                if (v == null || v.isEmpty) return tr('שדה חובה', 'Required field');
                                 return int.tryParse(v) == null
-                                    ? 'מספר שלם, בלי פסיקים'
+                                    ? tr('מספר שלם, בלי פסיקים', 'A whole number, without commas')
                                     : null;
                               },
                             ),
@@ -887,16 +888,16 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                         children: [
                           Expanded(
                             child: _dropdown<String>(
-                              label: 'סוג נכס',
+                              label: tr('סוג נכס', 'Property type'),
                               value: _propertyType,
-                              items: const [
-                                ('apartment', 'דירה'),
-                                ('penthouse', 'פנטהאוז'),
-                                ('garden', 'דירת גן'),
-                                ('duplex', 'דופלקס'),
-                                ('villa', 'וילה'),
-                                ('studio', 'סטודיו'),
-                                ('other', 'אחר'),
+                              items: [
+                                ('apartment', tr('דירה', 'Apartment')),
+                                ('penthouse', tr('פנטהאוז', 'Penthouse')),
+                                ('garden', tr('דירת גן', 'Garden apartment')),
+                                ('duplex', tr('דופלקס', 'Duplex')),
+                                ('villa', tr('וילה', 'Villa')),
+                                ('studio', tr('סטודיו', 'Studio')),
+                                ('other', tr('אחר', 'Other')),
                               ],
                               onChanged: (v) =>
                                   setState(() => _propertyType = v!),
@@ -907,8 +908,8 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                           // picked rather than typed — a typed name matched nothing.
                           Expanded(
                             child: _optionsDropdown(
-                              label: 'שכונה',
-                              none: 'ללא שכונה',
+                              label: tr('שכונה', 'Neighbourhood'),
+                              none: tr('ללא שכונה', 'No neighbourhood'),
                               value: _neighborhoodId,
                               options: ref.watch(
                                 adminNeighborhoodOptionsProvider,
@@ -921,16 +922,16 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                         ],
                       ),
                       _field(
-                        'כתובת *',
+                        tr('כתובת *', 'Address *'),
                         _address,
                         validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                            v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
                       Row(
                         children: [
                           Expanded(
                             child: _field(
-                              'חדרים',
+                              tr('חדרים', 'Rooms'),
                               _rooms,
                               hint: '4.5',
                               validator: _number(),
@@ -939,7 +940,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              'חדרי רחצה',
+                              tr('חדרי רחצה', 'Bathrooms'),
                               _bathrooms,
                               hint: '2',
                               validator: _number(whole: true),
@@ -948,7 +949,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              'מ״ר',
+                              tr('מ״ר', 'sqm'),
                               _sqm,
                               hint: '110',
                               validator: _number(whole: true),
@@ -960,7 +961,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                         children: [
                           Expanded(
                             child: _field(
-                              'קומה',
+                              tr('קומה', 'Floor'),
                               _floor,
                               hint: '3',
                               validator: _number(whole: true),
@@ -969,7 +970,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              'סה״כ קומות',
+                              tr('סה״כ קומות', 'Total floors'),
                               _totalFloors,
                               hint: '6',
                               validator: _number(whole: true),
@@ -979,7 +980,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                           Expanded(child: _availableFromField()),
                         ],
                       ),
-                      _field('תיאור', _description, maxLines: 4),
+                      _field(tr('תיאור', 'Description'), _description, maxLines: 4),
                       const SizedBox(height: 4),
                       AdminListingPhotosField(
                         photos: _photos,
@@ -987,11 +988,11 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                         onUploaded: _uploaded.add,
                       ),
                       const SizedBox(height: 20),
-                      _heading('מיקום במפה'),
+                      _heading(tr('מיקום במפה', 'Location on the map')),
                       const SizedBox(height: 4),
                       Text(
-                        'המפה בעמוד הנכס מוצגת רק כששני השדות מלאים. '
-                        'ב-Google Maps: קליק ימני על הנקודה, והמספרים הראשונים שמופיעים הם קו הרוחב וקו האורך.',
+                        tr('המפה בעמוד הנכס מוצגת רק כששני השדות מלאים. '
+                        'ב-Google Maps: קליק ימני על הנקודה, והמספרים הראשונים שמופיעים הם קו הרוחב וקו האורך.', 'The map on the property page is shown only when both fields are filled. In Google Maps: right-click the spot, and the first numbers shown are the latitude and longitude.'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 11,
@@ -1003,7 +1004,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                         children: [
                           Expanded(
                             child: _field(
-                              'קו רוחב (latitude)',
+                              tr('קו רוחב (latitude)', 'Latitude'),
                               _latitude,
                               hint: '31.8969',
                               ltr: true,
@@ -1013,7 +1014,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              'קו אורך (longitude)',
+                              tr('קו אורך (longitude)', 'Longitude'),
                               _longitude,
                               hint: '35.0104',
                               ltr: true,
@@ -1023,10 +1024,10 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      _heading('פרטי קשר'),
+                      _heading(tr('פרטי קשר', 'Contact details')),
                       const SizedBox(height: 4),
                       Text(
-                        'כשנבחר סוכן, עמוד הנכס מציג את פרטי הסוכן; אחרת את השם והטלפון שכאן.',
+                        tr('כשנבחר סוכן, עמוד הנכס מציג את פרטי הסוכן; אחרת את השם והטלפון שכאן.', 'When an agent is chosen, the property page shows the agent\'s details; otherwise the name and phone here.'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 11,
@@ -1035,8 +1036,8 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                       ),
                       const SizedBox(height: 8),
                       _optionsDropdown(
-                        label: 'סוכן',
-                        none: 'ללא סוכן',
+                        label: tr('סוכן', 'Agent'),
+                        none: tr('ללא סוכן', 'No agent'),
                         value: _agentId,
                         options: ref.watch(realEstateAgentsProvider),
                         labelOf: (a) => [
@@ -1048,74 +1049,74 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                       ),
                       Row(
                         children: [
-                          Expanded(child: _field('שם', _contactName)),
+                          Expanded(child: _field(tr('שם', 'Name'), _contactName)),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: _field('טלפון', _contactPhone, ltr: true),
+                            child: _field(tr('טלפון', 'Phone'), _contactPhone, ltr: true),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      _heading('מאפיינים'),
+                      _heading(tr('מאפיינים', 'Features')),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
                         children: [
                           _toggle(
-                            'חניה',
+                            tr('חניה', 'Parking'),
                             _hasParking,
                             (v) => setState(() => _hasParking = v),
                           ),
                           _toggle(
-                            'מעלית',
+                            tr('מעלית', 'Elevator'),
                             _hasElevator,
                             (v) => setState(() => _hasElevator = v),
                           ),
                           _toggle(
-                            'מרפסת',
+                            tr('מרפסת', 'Balcony'),
                             _hasBalcony,
                             (v) => setState(() => _hasBalcony = v),
                           ),
                           _toggle(
-                            'מחסן',
+                            tr('מחסן', 'Storage room'),
                             _hasStorage,
                             (v) => setState(() => _hasStorage = v),
                           ),
                           _toggle(
-                            'ממ״ד',
+                            tr('ממ״ד', 'Safe room'),
                             _hasMamad,
                             (v) => setState(() => _hasMamad = v),
                           ),
                           _toggle(
-                            'מרוהט',
+                            tr('מרוהט', 'Furnished'),
                             _isFurnished,
                             (v) => setState(() => _isFurnished = v),
                           ),
                           _toggle(
-                            'נגיש',
+                            tr('נגיש', 'Accessible'),
                             _isAccessible,
                             (v) => setState(() => _isAccessible = v),
                           ),
                           _toggle(
-                            'משופץ',
+                            tr('משופץ', 'Renovated'),
                             _isRenovated,
                             (v) => setState(() => _isRenovated = v),
                           ),
                           _toggle(
-                            'מתווך',
+                            tr('מתווך', 'Agent'),
                             _isBroker,
                             (v) => setState(() => _isBroker = v),
                           ),
                           _toggle(
-                            'מומלץ',
+                            tr('מומלץ', 'Recommended'),
                             _isFeatured,
                             (v) => setState(() => _isFeatured = v),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      _heading('סטטוס'),
+                      _heading(tr('סטטוס', 'Status')),
                       const SizedBox(height: 8),
                       // Every status the table knows, so a listing that is
                       // `removed` or a rental marked `sold` opens showing
@@ -1124,13 +1125,13 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                         value: _status,
                         items: [
                           if (_baseline['status'] == 'draft')
-                            ('draft', 'טיוטה'),
-                          ('pending', 'ממתין לאישור'),
-                          ('active', 'פעיל — מוצג באתר'),
-                          ('sold', 'נמכר'),
-                          ('rented', 'הושכר'),
-                          ('expired', 'פג תוקף'),
-                          ('removed', 'הוסר'),
+                            ('draft', tr('טיוטה', 'Draft')),
+                          ('pending', tr('ממתין לאישור', 'Pending approval')),
+                          ('active', tr('פעיל — מוצג באתר', 'Active — shown on the site')),
+                          ('sold', tr('נמכר', 'Sold')),
+                          ('rented', tr('הושכר', 'Rented')),
+                          ('expired', tr('פג תוקף', 'Expired')),
+                          ('removed', tr('הוסר', 'Removed')),
                         ],
                         onChanged: (v) => setState(() => _status = v!),
                       ),
@@ -1152,7 +1153,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                       TextButton(
                         onPressed: _saving ? null : _close,
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -1175,7 +1176,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור נכס',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור נכס', 'Create property'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -1260,7 +1261,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
     final rows = options.valueOrNull ?? const <Map<String, dynamic>>[];
     final known = {for (final r in rows) r['id'] as String};
     return _dropdown<String?>(
-      label: options.hasError ? '$label (הרשימה לא נטענה)' : label,
+      label: options.hasError ? tr('$label (הרשימה לא נטענה)', '$label (the list did not load)') : label,
       value: value,
       items: [
         (null, none),
@@ -1268,9 +1269,9 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
           if (r['is_active'] != false || r['id'] == value)
             (
               r['id'] as String,
-              r['is_active'] == false ? '${labelOf(r)} (לא פעיל)' : labelOf(r),
+              r['is_active'] == false ? tr('${labelOf(r)} (לא פעיל)', '${labelOf(r)} (inactive)') : labelOf(r),
             ),
-        if (value != null && !known.contains(value)) (value, 'לא מוכר'),
+        if (value != null && !known.contains(value)) (value, tr('לא מוכר', 'Unknown')),
       ],
       onChanged: onChanged,
     );
@@ -1284,6 +1285,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
         onTap: () async {
           final now = DateTime.now();
           final picked = await showDatePicker(
+            locale: adminLocale,
             context: context,
             initialDate: d ?? now,
             firstDate: DateTime(now.year - 2),
@@ -1292,17 +1294,17 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
           if (picked != null) setState(() => _availableFrom = picked);
         },
         child: InputDecorator(
-          decoration: _decoration('כניסה מ-').copyWith(
+          decoration: _decoration(tr('כניסה מ-', 'Move-in from')).copyWith(
             suffixIcon: d == null
                 ? const Icon(Icons.calendar_today_outlined, size: 16)
                 : IconButton(
-                    tooltip: 'ניקוי',
+                    tooltip: tr('ניקוי', 'Clear'),
                     icon: const Icon(Icons.close, size: 16),
                     onPressed: () => setState(() => _availableFrom = null),
                   ),
           ),
           child: Text(
-            d == null ? 'מיידי / לא צוין' : '${d.day}/${d.month}/${d.year}',
+            d == null ? tr('מיידי / לא צוין', 'Immediate / not specified') : '${d.day}/${d.month}/${d.year}',
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 13,
@@ -1319,17 +1321,17 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
     final ok = whole
         ? int.tryParse(v.trim()) != null
         : num.tryParse(v.trim()) != null;
-    return ok ? null : (whole ? 'מספר שלם' : 'מספר');
+    return ok ? null : (whole ? tr('מספר שלם', 'A whole number') : tr('מספר', 'Number'));
   };
 
   FormFieldValidator<String> _coordinate(double limit) => (v) {
     if (v == null || v.trim().isEmpty) {
       // One without the other draws no map, which would read as a bug.
       final other = limit == 90 ? _longitude.text : _latitude.text;
-      return other.trim().isEmpty ? null : 'יש למלא את שני השדות';
+      return other.trim().isEmpty ? null : tr('יש למלא את שני השדות', 'Both fields must be filled');
     }
     final n = double.tryParse(v.trim());
-    return n == null || n.abs() > limit ? 'מספר בין ‎-$limit ל-$limit' : null;
+    return n == null || n.abs() > limit ? tr('מספר בין ‎-$limit ל-$limit', 'A number between ‎-$limit and $limit') : null;
   };
 
   Widget _field(
@@ -1461,7 +1463,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('שגיאה: $e'),
+            content: Text(tr('שגיאה: $e', 'Error: $e')),
             backgroundColor: AppColors.error,
           ),
         );
@@ -1481,13 +1483,13 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'active' => ('פעיל', AppColors.success),
-      'pending' => ('ממתין', AppColors.gold),
-      'sold' => ('נמכר', AppColors.midBlue),
-      'rented' => ('הושכר', AppColors.midBlue),
-      'expired' => ('פג תוקף', AppColors.grayLight),
-      'removed' => ('הוסר', AppColors.error),
-      'draft' => ('טיוטה', AppColors.grayLight),
+      'active' => (tr('פעיל', 'Active'), AppColors.success),
+      'pending' => (tr('ממתין', 'Pending'), AppColors.gold),
+      'sold' => (tr('נמכר', 'Sold'), AppColors.midBlue),
+      'rented' => (tr('הושכר', 'Rented'), AppColors.midBlue),
+      'expired' => (tr('פג תוקף', 'Expired'), AppColors.grayLight),
+      'removed' => (tr('הוסר', 'Removed'), AppColors.error),
+      'draft' => (tr('טיוטה', 'Draft'), AppColors.grayLight),
       _ => (status, AppColors.grayLight),
     };
     return Container(
@@ -1516,8 +1518,8 @@ class _TypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (type) {
-      'rent' => ('השכרה', AppColors.turquoise),
-      'sale' => ('מכירה', AppColors.midBlue),
+      'rent' => (tr('השכרה', 'Rent'), AppColors.turquoise),
+      'sale' => (tr('מכירה', 'Sale'), AppColors.midBlue),
       _ => (type, AppColors.grayLight),
     };
     return Container(
@@ -1570,7 +1572,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

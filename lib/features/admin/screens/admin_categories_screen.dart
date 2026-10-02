@@ -7,6 +7,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_categories_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../admin_language.dart';
 
 class AdminCategoriesScreen extends ConsumerStatefulWidget {
   const AdminCategoriesScreen({super.key});
@@ -54,7 +55,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש קטגוריה...',
+                    hintText: tr('חיפוש קטגוריה...', 'Search categories...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -87,25 +88,25 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _FilterChip('הכל', _scopeFilter.isEmpty, () {
+              _FilterChip(tr('הכל', 'All'), _scopeFilter.isEmpty, () {
                 setState(() => _scopeFilter = '');
                 ref
                     .read(adminCategoryListProvider.notifier)
                     .setScopeFilter(null);
               }),
-              _FilterChip('עסקים', _scopeFilter == 'business', () {
+              _FilterChip(tr('עסקים', 'Businesses'), _scopeFilter == 'business', () {
                 setState(() => _scopeFilter = 'business');
                 ref
                     .read(adminCategoryListProvider.notifier)
                     .setScopeFilter('business');
               }),
-              _FilterChip('כתבות', _scopeFilter == 'article', () {
+              _FilterChip(tr('כתבות', 'Articles'), _scopeFilter == 'article', () {
                 setState(() => _scopeFilter = 'article');
                 ref
                     .read(adminCategoryListProvider.notifier)
                     .setScopeFilter('article');
               }),
-              _FilterChip('אירועים', _scopeFilter == 'event', () {
+              _FilterChip(tr('אירועים', 'Events'), _scopeFilter == 'event', () {
                 setState(() => _scopeFilter = 'event');
                 ref
                     .read(adminCategoryListProvider.notifier)
@@ -117,7 +118,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
               // the list below show the error and a retry.
               if (async.valueOrNull case final list?)
                 Text(
-                  '${list.length} קטגוריות',
+                  tr('${list.length} קטגוריות', '${list.length} categories'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -129,7 +130,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                 onPressed: () => _showEditor(context, ref),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'קטגוריה חדשה',
+                  tr('קטגוריה חדשה', 'New category'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: FilledButton.styleFrom(
@@ -149,7 +150,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => AdminLoadError(
-              message: 'שגיאה בטעינת הקטגוריות',
+              message: tr('שגיאה בטעינת הקטגוריות', 'Error loading the categories'),
               error: e,
               onRetry: () =>
                   ref.read(adminCategoryListProvider.notifier).load(),
@@ -158,7 +159,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
               if (categories.isEmpty) {
                 return Center(
                   child: Text(
-                    'אין קטגוריות',
+                    tr('אין קטגוריות', 'No categories'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.grayText,
@@ -183,11 +184,11 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                     ),
                     child: Row(
                       children: [
-                        _Col('שם', flex: 3),
-                        _Col('scope', flex: 1),
-                        if (isWide) _Col('פריטים', flex: 1),
-                        if (isWide) _Col('סדר', flex: 1),
-                        _Col('סטטוס', flex: 1),
+                        _Col(tr('שם', 'Name'), flex: 3),
+                        _Col(tr('שיוך', 'Scope'), flex: 1),
+                        if (isWide) _Col(tr('פריטים', 'Items'), flex: 1),
+                        if (isWide) _Col(tr('סדר', 'Order'), flex: 1),
+                        _Col(tr('סטטוס', 'Status'), flex: 1),
                         const SizedBox(width: 40),
                       ],
                     ),
@@ -296,7 +297,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                 Expanded(
                                   flex: 1,
                                   child: _StatusPill(
-                                    active ? 'פעיל' : 'מושבת',
+                                    active ? tr('פעיל', 'Active') : tr('מושבת', 'Disabled'),
                                     active
                                         ? AppColors.success
                                         : AppColors.grayLight,
@@ -313,7 +314,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                     PopupMenuItem(
                                       value: 'edit',
                                       child: Text(
-                                        'עריכה',
+                                        tr('עריכה', 'Edit'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -323,7 +324,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                     PopupMenuItem(
                                       value: 'toggle',
                                       child: Text(
-                                        active ? 'השבת' : 'הפעל',
+                                        active ? tr('השבת', 'Disable') : tr('הפעל', 'Activate'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.rubik,
                                           fontSize: 13,
@@ -463,7 +464,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 550, maxHeight: 650),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -482,7 +483,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת קטגוריה' : 'קטגוריה חדשה',
+                        _isEditing ? tr('עריכת קטגוריה', 'Edit category') : tr('קטגוריה חדשה', 'New category'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -507,23 +508,23 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                     padding: const EdgeInsets.all(20),
                     children: [
                       _field(
-                        'שם *',
+                        tr('שם *', 'Name *'),
                         _name,
                         validator: (v) =>
-                            v == null || v.isEmpty ? 'שדה חובה' : null,
+                            v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
-                      _field('Slug (ריק ייווצר מהשם)', _slug),
-                      _field('אייקון (אמוג\'י)', _icon),
-                      _field('תיאור', _description, maxLines: 2),
+                      _field(tr('Slug (ריק ייווצר מהשם)', 'Slug (left empty, it is made from the name)'), _slug),
+                      _field(tr('אייקון (אמוג\'י)', 'Icon (emoji)'), _icon),
+                      _field(tr('תיאור', 'Description'), _description, maxLines: 2),
                       // The picture on the site's category tiles — nine of
                       // them have one, and there was no way to set it here.
                       ImageUploadField(
-                        label: 'תמונה',
+                        label: tr('תמונה', 'Image'),
                         controller: _imageUrl,
                         folder: 'categories',
                       ),
                       const SizedBox(height: 14),
-                      _field('סדר מיון', _sortOrder),
+                      _field(tr('סדר מיון', 'Sort order'), _sortOrder),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         value: _scope,
@@ -545,7 +546,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                           DropdownMenuItem(
                             value: 'business',
                             child: Text(
-                              'עסקים',
+                              tr('עסקים', 'Businesses'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
@@ -555,7 +556,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                           DropdownMenuItem(
                             value: 'article',
                             child: Text(
-                              'כתבות',
+                              tr('כתבות', 'Articles'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
@@ -565,7 +566,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                           DropdownMenuItem(
                             value: 'event',
                             child: Text(
-                              'אירועים',
+                              tr('אירועים', 'Events'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
@@ -582,7 +583,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                       DropdownButtonFormField<String?>(
                         value: _parentId,
                         decoration: InputDecoration(
-                          labelText: 'קטגוריית אב',
+                          labelText: tr('קטגוריית אב', 'Parent category'),
                           labelStyle: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -599,7 +600,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                           DropdownMenuItem(
                             value: null,
                             child: Text(
-                              '— ללא (קטגוריה ראשית) —',
+                              tr('— ללא (קטגוריה ראשית) —', '— None (main category) —'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
@@ -641,7 +642,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                         Padding(
                           padding: const EdgeInsets.only(top: 6),
                           child: Text(
-                            'לקטגוריה זו יש תתי־קטגוריות, ולכן היא נשארת ראשית.',
+                            tr('לקטגוריה זו יש תתי־קטגוריות, ולכן היא נשארת ראשית.', 'This category has subcategories, so it stays a main category.'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 12,
@@ -652,7 +653,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                       const SizedBox(height: 12),
                       SwitchListTile(
                         title: Text(
-                          'פעיל',
+                          tr('פעיל', 'Active'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 14,
@@ -694,7 +695,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'ביטול',
+                          tr('ביטול', 'Cancel'),
                           style: TextStyle(fontFamily: AppFonts.rubik),
                         ),
                       ),
@@ -717,7 +718,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור קטגוריה',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור קטגוריה', 'Create category'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -804,8 +805,8 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
       if (mounted) {
         setState(
           () => _error = e is PostgrestException && e.code == '23505'
-              ? 'השמירה נכשלה: ה-Slug כבר בשימוש בקטגוריה אחרת באותו תחום'
-              : 'השמירה נכשלה: ${e is PostgrestException ? e.message : e}',
+              ? tr('השמירה נכשלה: ה-Slug כבר בשימוש בקטגוריה אחרת באותו תחום', 'Saving failed: the slug is already used by another category in the same scope')
+              : tr('השמירה נכשלה: ${e is PostgrestException ? e.message : e}', 'Saving failed: ${e is PostgrestException ? e.message : e}'),
         );
       }
     } finally {
@@ -823,9 +824,9 @@ class _ScopePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (scope) {
-      'business' => ('עסקים', AppColors.turquoise),
-      'article' => ('כתבות', AppColors.success),
-      'event' => ('אירועים', AppColors.gold),
+      'business' => (tr('עסקים', 'Businesses'), AppColors.turquoise),
+      'article' => (tr('כתבות', 'Articles'), AppColors.success),
+      'event' => (tr('אירועים', 'Events'), AppColors.gold),
       _ => (scope, AppColors.grayLight),
     };
     return Container(
@@ -904,7 +905,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

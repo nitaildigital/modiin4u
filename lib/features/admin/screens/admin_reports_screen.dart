@@ -3,6 +3,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_reports_provider.dart';
+import '../admin_language.dart';
 
 class AdminReportsScreen extends ConsumerStatefulWidget {
   const AdminReportsScreen({super.key});
@@ -43,7 +44,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'הפעולה נכשלה: $e',
+            tr('הפעולה נכשלה: $e', 'The action failed: $e'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           backgroundColor: AppColors.error,
@@ -87,13 +88,13 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                 ),
                 child: Row(
                   children: [
-                    _StatChip('פתוחים', '$open', AppColors.error),
+                    _StatChip(tr('פתוחים', 'Open'), '$open', AppColors.error),
                     const SizedBox(width: 12),
-                    _StatChip('בטיפול', '$investigating', AppColors.gold),
+                    _StatChip(tr('בטיפול', 'In progress'), '$investigating', AppColors.gold),
                     const SizedBox(width: 12),
-                    _StatChip('נפתרו', '$resolved', AppColors.success),
+                    _StatChip(tr('נפתרו', 'Resolved'), '$resolved', AppColors.success),
                     const SizedBox(width: 12),
-                    _StatChip('סה״כ', '${list.length}', AppColors.turquoise),
+                    _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.turquoise),
                   ],
                 ),
               );
@@ -117,46 +118,46 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
           ),
           child: Row(
             children: [
-              _FilterChip('הכל', _statusFilter.isEmpty, () => _setStatus('')),
+              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _setStatus('')),
               _FilterChip(
-                'פתוח',
+                tr('פתוח', 'Open'),
                 _statusFilter == 'open',
                 () => _setStatus('open'),
               ),
               _FilterChip(
-                'בטיפול',
+                tr('בטיפול', 'In progress'),
                 _statusFilter == 'reviewed',
                 () => _setStatus('reviewed'),
               ),
               _FilterChip(
-                'נפתר',
+                tr('נפתר', 'Resolved'),
                 _statusFilter == 'resolved',
                 () => _setStatus('resolved'),
               ),
               _FilterChip(
-                'נדחה',
+                tr('נדחה', 'Rejected'),
                 _statusFilter == 'dismissed',
                 () => _setStatus('dismissed'),
               ),
               if (isWide) ...[
                 const SizedBox(width: 16),
                 _FilterChip(
-                  'עסקים',
+                  tr('עסקים', 'Businesses'),
                   _entityFilter == 'business',
                   () => _toggleEntity('business'),
                 ),
                 _FilterChip(
-                  'ביקורות',
+                  tr('ביקורות', 'Reviews'),
                   _entityFilter == 'review',
                   () => _toggleEntity('review'),
                 ),
                 _FilterChip(
-                  'תגובות',
+                  tr('תגובות', 'Comments'),
                   _entityFilter == 'comment',
                   () => _toggleEntity('comment'),
                 ),
                 _FilterChip(
-                  'משתמשים',
+                  tr('משתמשים', 'Users'),
                   _entityFilter == 'user',
                   () => _toggleEntity('user'),
                 ),
@@ -164,7 +165,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
               const Spacer(),
               if (loaded != null)
                 Text(
-                  '${loaded.length} דיווחים',
+                  tr('${loaded.length} דיווחים', '${loaded.length} reports'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -181,7 +182,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                tr('שגיאה: $e', 'Error: $e'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -201,7 +202,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין דיווחים',
+                        tr('אין דיווחים', 'No reports'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -228,11 +229,11 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                     ),
                     child: Row(
                       children: [
-                        _Col('סיבה', flex: 2),
-                        _Col('פריט', flex: 3),
-                        _Col('מדווח', flex: 2),
-                        _Col('סטטוס', flex: 1),
-                        if (isWide) _Col('תאריך', flex: 1),
+                        _Col(tr('סיבה', 'Reason'), flex: 2),
+                        _Col(tr('פריט', 'Item'), flex: 3),
+                        _Col(tr('מדווח', 'Reporter'), flex: 2),
+                        _Col(tr('סטטוס', 'Status'), flex: 1),
+                        if (isWide) _Col(tr('תאריך', 'Date'), flex: 1),
                         const SizedBox(width: 110),
                       ],
                     ),
@@ -383,10 +384,10 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                       _IconAction(
                                         Icons.search,
                                         AppColors.gold,
-                                        'סמן בטיפול',
+                                        tr('סמן בטיפול', 'Mark in progress'),
                                         () => _run(
                                           () => notifier.markReviewed(id),
-                                          'הדיווח סומן בטיפול',
+                                          tr('הדיווח סומן בטיפול', 'Report marked in progress'),
                                         ),
                                       ),
                                     if (status == 'open' ||
@@ -394,19 +395,19 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                       _IconAction(
                                         Icons.check,
                                         AppColors.success,
-                                        'סמן כנפתר',
+                                        tr('סמן כנפתר', 'Mark as resolved'),
                                         () => _run(
-                                          () => notifier.resolve(id, 'טופל'),
-                                          'הדיווח נסגר כנפתר',
+                                          () => notifier.resolve(id, tr('טופל', 'Resolved')),
+                                          tr('הדיווח נסגר כנפתר', 'Report closed as resolved'),
                                         ),
                                       ),
                                       _IconAction(
                                         Icons.close,
                                         AppColors.grayLight,
-                                        'דחה',
+                                        tr('דחה', 'Reject'),
                                         () => _run(
                                           () => notifier.dismiss(id),
-                                          'הדיווח נדחה',
+                                          tr('הדיווח נדחה', 'Report rejected'),
                                         ),
                                       ),
                                     ],
@@ -415,10 +416,10 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                       _IconAction(
                                         Icons.undo,
                                         AppColors.turquoise,
-                                        'פתח מחדש',
+                                        tr('פתח מחדש', 'Reopen'),
                                         () => _run(
                                           () => notifier.reopen(id),
-                                          'הדיווח נפתח מחדש',
+                                          tr('הדיווח נפתח מחדש', 'Report reopened'),
                                         ),
                                       ),
                                   ],
@@ -441,12 +442,12 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
 
   // The `report_reason` enum's values (migration 00001).
   String _reasonLabel(String r) => switch (r) {
-    'spam' => 'ספאם',
-    'offensive' => 'תוכן פוגעני',
-    'fake' => 'תוכן מזויף',
-    'personal_info' => 'מידע אישי',
-    'harassment' => 'הטרדה',
-    'other' => 'אחר',
+    'spam' => tr('ספאם', 'Spam'),
+    'offensive' => tr('תוכן פוגעני', 'Offensive content'),
+    'fake' => tr('תוכן מזויף', 'Fake content'),
+    'personal_info' => tr('מידע אישי', 'Personal information'),
+    'harassment' => tr('הטרדה', 'Harassment'),
+    'other' => tr('אחר', 'Other'),
     _ => r,
   };
   IconData _reasonIcon(String r) => switch (r) {
@@ -458,11 +459,11 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
     _ => Icons.flag,
   };
   String _entityLabel(String t) => switch (t) {
-    'business' => 'עסק',
-    'review' => 'ביקורת',
-    'comment' => 'תגובה',
-    'article' => 'כתבה',
-    'user' => 'משתמש',
+    'business' => tr('עסק', 'Business'),
+    'review' => tr('ביקורת', 'Review'),
+    'comment' => tr('תגובה', 'Comment'),
+    'article' => tr('כתבה', 'Article'),
+    'user' => tr('משתמש', 'User'),
     _ => t,
   };
   IconData _entityIcon(String t) => switch (t) {
@@ -489,10 +490,10 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'open' => ('פתוח', AppColors.error),
-      'reviewed' => ('בטיפול', AppColors.gold),
-      'resolved' => ('נפתר', AppColors.success),
-      'dismissed' => ('נדחה', AppColors.grayLight),
+      'open' => (tr('פתוח', 'Open'), AppColors.error),
+      'reviewed' => (tr('בטיפול', 'In progress'), AppColors.gold),
+      'resolved' => (tr('נפתר', 'Resolved'), AppColors.success),
+      'dismissed' => (tr('נדחה', 'Rejected'), AppColors.grayLight),
       _ => (status, AppColors.grayLight),
     };
     return Container(
@@ -550,8 +551,8 @@ class _NothingWritesThisNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'עדיין אין באתר או באפליקציה כפתור לדיווח על תוכן, ולכן הרשימה '
-              'תתמלא רק כשיתווסף אחד.',
+              tr('עדיין אין באתר או באפליקציה כפתור לדיווח על תוכן, ולכן הרשימה '
+              'תתמלא רק כשיתווסף אחד.', 'The site and the app have no button for reporting content yet, so the list will fill only once one is added.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -629,7 +630,7 @@ class _FilterChip extends StatelessWidget {
   const _FilterChip(this.label, this.selected, this.onTap);
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 6),
+    padding: const EdgeInsetsDirectional.only(end: 6),
     child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),

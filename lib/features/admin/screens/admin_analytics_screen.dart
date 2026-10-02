@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_analytics_provider.dart';
+import '../admin_language.dart';
 
 /// The Analytics section, on what the database can actually be asked.
 ///
@@ -72,10 +73,10 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen>
             indicatorColor: AppColors.midBlue,
             indicatorWeight: 2.5,
             labelPadding: const EdgeInsets.symmetric(horizontal: 20),
-            tabs: const [
-              Tab(text: 'נתוני מערכת'),
-              Tab(text: 'ביצועי תוכן'),
-              Tab(text: 'פרסום והכנסות'),
+            tabs: [
+              Tab(text: tr('נתוני מערכת', 'System data')),
+              Tab(text: tr('ביצועי תוכן', 'Content performance')),
+              Tab(text: tr('פרסום והכנסות', 'Advertising & revenue')),
             ],
           ),
         ),
@@ -110,8 +111,8 @@ class _SystemDataTab extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       children: [
         _TabHeader(
-          title: 'נתוני מערכת',
-          subtitle: 'כל מספר כאן הוא ספירת שורות בטבלה, בזמן הטעינה.',
+          title: tr('נתוני מערכת', 'System data'),
+          subtitle: tr('כל מספר כאן הוא ספירת שורות בטבלה, בזמן הטעינה.', 'Every number here is a count of rows in a table, at load time.'),
           onRefresh: () {
             ref.invalidate(adminRowCountsProvider);
             ref.invalidate(adminPublishingCadenceProvider);
@@ -125,74 +126,74 @@ class _SystemDataTab extends ConsumerWidget {
           data: (c) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const _GroupHeading('תוכן במערכת'),
+              _GroupHeading(tr('תוכן במערכת', 'Content in the system')),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: [
                   _StatCard(
-                    label: 'כתבות',
+                    label: tr('כתבות', 'Articles'),
                     value: _int(c['articles']),
                     source: 'articles',
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'כתבות שפורסמו',
+                    label: tr('כתבות שפורסמו', 'Articles published'),
                     value: _int(c['articles_published']),
                     source: "articles · status = 'published'",
                     color: AppColors.success,
                   ),
                   _StatCard(
-                    label: 'טיוטות',
+                    label: tr('טיוטות', 'Drafts'),
                     value: _int(c['articles_draft']),
                     source: "articles · status = 'draft'",
                     color: AppColors.gold,
                   ),
                   _StatCard(
-                    label: 'עסקים',
+                    label: tr('עסקים', 'Businesses'),
                     value: _int(c['businesses']),
                     source: 'businesses',
                     color: AppColors.midBlue,
                   ),
                   _StatCard(
-                    label: 'עסקים פעילים',
+                    label: tr('עסקים פעילים', 'Active businesses'),
                     value: _int(c['businesses_active']),
                     source: "businesses · status = 'active'",
                     color: AppColors.success,
                   ),
                   _StatCard(
-                    label: 'עסקים ממתינים',
+                    label: tr('עסקים ממתינים', 'Pending businesses'),
                     value: _int(c['businesses_pending']),
                     source: "businesses · status = 'pending'",
                     color: AppColors.gold,
                   ),
                   _StatCard(
-                    label: 'אירועים',
+                    label: tr('אירועים', 'Events'),
                     value: _int(c['events']),
                     source: 'events',
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'אירועים עתידיים',
+                    label: tr('אירועים עתידיים', 'Upcoming events'),
                     value: _int(c['events_upcoming']),
-                    source: 'events · start_date ≥ היום',
+                    source: tr('events · start_date ≥ היום', 'events · start_date ≥ today'),
                     color: AppColors.midBlue,
                   ),
                   _StatCard(
-                    label: 'מודעות נדל״ן',
+                    label: tr('מודעות נדל״ן', 'Real estate listings'),
                     value: _int(c['listings']),
                     source: 'listings',
                     color: AppColors.navy,
                   ),
                   _StatCard(
-                    label: 'שכונות',
+                    label: tr('שכונות', 'Neighbourhoods'),
                     value: _int(c['neighborhoods']),
                     source: 'neighborhoods',
                     color: AppColors.navy,
                   ),
                   _StatCard(
-                    label: 'קטגוריות',
+                    label: tr('קטגוריות', 'Categories'),
                     value: _int(c['categories']),
                     source: 'categories',
                     color: AppColors.navy,
@@ -201,26 +202,26 @@ class _SystemDataTab extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
-              const _GroupHeading('תושבים רשומים'),
+              _GroupHeading(tr('תושבים רשומים', 'Registered residents')),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: [
                   _StatCard(
-                    label: 'תושבים רשומים',
+                    label: tr('תושבים רשומים', 'Registered residents'),
                     value: _int(c['residents']),
                     source: 'profiles',
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'מאומתים',
+                    label: tr('מאומתים', 'Verified'),
                     value: _int(c['residents_verified']),
                     source: 'profiles · is_verified',
                     color: AppColors.success,
                   ),
                   _StatCard(
-                    label: 'אישרו התראות',
+                    label: tr('אישרו התראות', 'Allowed notifications'),
                     value: _int(c['residents_push_on']),
                     source: 'profiles · push_enabled',
                     color: AppColors.midBlue,
@@ -229,38 +230,38 @@ class _SystemDataTab extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
-              const _GroupHeading('מה שהתושבים הוסיפו'),
+              _GroupHeading(tr('מה שהתושבים הוסיפו', 'What residents added')),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: [
                   _StatCard(
-                    label: 'ביקורות',
+                    label: tr('ביקורות', 'Reviews'),
                     value: _int(c['reviews']),
                     source: 'reviews',
                     color: AppColors.gold,
                   ),
                   _StatCard(
-                    label: 'תגובות',
+                    label: tr('תגובות', 'Comments'),
                     value: _int(c['comments']),
                     source: 'comments',
                     color: AppColors.gold,
                   ),
                   _StatCard(
-                    label: 'שמירות למועדפים',
+                    label: tr('שמירות למועדפים', 'Saves to favourites'),
                     value: _int(c['favorites']),
                     source: 'favorites',
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'מבצעים',
+                    label: tr('מבצעים', 'Deals'),
                     value: _int(c['offers']),
                     source: 'offers',
                     color: AppColors.midBlue,
                   ),
                   _StatCard(
-                    label: 'מימושי מבצע',
+                    label: tr('מימושי מבצע', 'Deal redemptions'),
                     value: _int(c['offer_claims']),
                     source: 'offer_claims',
                     color: AppColors.midBlue,
@@ -276,18 +277,18 @@ class _SystemDataTab extends ConsumerWidget {
           loading: () => const _LoadingPanel(),
           error: (e, _) => _ErrorPanel(error: e),
           data: (months) => months.isEmpty
-              ? const _NoteCard(
-                  title: 'קצב פרסום',
+              ? _NoteCard(
+                  title: tr('קצב פרסום', 'Publishing rate'),
                   lines: [
-                    'אין כתבות עם תאריך פרסום, ולכן אין ממה לבנות את הגרף.',
+                    tr('אין כתבות עם תאריך פרסום, ולכן אין ממה לבנות את הגרף.', 'No articles with a publication date, so there is nothing to build the chart from.'),
                   ],
                 )
               : _CardShell(
                   title:
-                      'כתבות שפורסמו לחודש — ${months.length} החודשים האחרונים',
+                      tr('כתבות שפורסמו לחודש — ${months.length} החודשים האחרונים', 'Articles published per month — the last ${months.length} months'),
                   footnote:
-                      'נספר מ-articles.published_at. זהו קצב הפרסום של '
-                      'המערכת, ולא מדד לצפיות או למעורבות.',
+                      tr('נספר מ-articles.published_at. זהו קצב הפרסום של '
+                      'המערכת, ולא מדד לצפיות או למעורבות.', 'Counted from articles.published_at. This is the system\'s publishing rate, not a measure of views or engagement.'),
                   child: SizedBox(
                     height: 240,
                     child: Padding(
@@ -304,26 +305,26 @@ class _SystemDataTab extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
 
-        const _NoteCard(
-          title: 'מה עוד לא נמדד',
+        _NoteCard(
+          title: tr('מה עוד לא נמדד', 'What is not measured yet'),
           lines: [
-            'הנתונים בעמוד זה נקראים ישירות מהטבלאות. למדידת התנהגות — סשנים, '
+            tr('הנתונים בעמוד זה נקראים ישירות מהטבלאות. למדידת התנהגות — סשנים, '
                 'צפיות בעמודים, זמן שהייה ושימור — נדרשת שכבת מדידה שאינה '
                 'קיימת: אין טבלת אנליטיקה במסד הנתונים, ואף מסך באפליקציה '
-                'אינו כותב אירועי שימוש.',
-            'משתמשים פעילים כרגע, סשנים וצפיות בעמודים — דורשים טבלת אירועי '
-                'שימוש, או חיבור ל-Google Analytics / Firebase.',
-            'זמן שהייה ממוצע, Bounce Rate, מסכים לסשן ושימור (Retention) — '
-                'נגזרים מאותם אירועים, ולכן תלויים באותו חיבור.',
-            'פילוח לפי מכשיר וגרסת אפליקציה — העמודות device_os ו-app_version '
+                'אינו כותב אירועי שימוש.', 'The data on this page is read directly from the tables. Measuring behaviour — sessions, page views, time on site and retention — needs a measurement layer that does not exist: there is no analytics table in the database, and no screen in the app writes usage events.'),
+            tr('משתמשים פעילים כרגע, סשנים וצפיות בעמודים — דורשים טבלת אירועי '
+                'שימוש, או חיבור ל-Google Analytics / Firebase.', 'Users active right now, sessions and page views — need a usage-events table, or a connection to Google Analytics / Firebase.'),
+            tr('זמן שהייה ממוצע, Bounce Rate, מסכים לסשן ושימור (Retention) — '
+                'נגזרים מאותם אירועים, ולכן תלויים באותו חיבור.', 'Average time on site, bounce rate, screens per session and retention — derived from the same events, so they depend on the same connection.'),
+            tr('פילוח לפי מכשיר וגרסת אפליקציה — העמודות device_os ו-app_version '
                 'קיימות ב-profiles אך ריקות; יתמלאו כשהאפליקציה תדווח עליהן '
-                'בהתחברות.',
-            'מסירה ופתיחה של התראות Push — דורשות שליחה בפועל דרך Firebase '
+                'בהתחברות.', 'Breakdown by device and app version — the device_os and app_version columns exist in profiles but are empty; they fill once the app reports them at sign-in.'),
+            tr('מסירה ופתיחה של התראות Push — דורשות שליחה בפועל דרך Firebase '
                 'ו-APNs ורישום מסירה. כרגע קמפיין נשמר ונכנס לתור אך אינו '
-                'נשלח, ואין יומן שליחות.',
-            'ערוצי רכישה, גיל ופילוח דמוגרפי — אין עמודות כאלה במסד הנתונים.',
-            'הקלקות לטלפון, לוואטסאפ ולניווט בעמוד עסק, וכן חיפושים ושאילתות '
-                'ללא תוצאות — דורשים רישום הקלקה וחיפוש; אין טבלאות כאלה.',
+                'נשלח, ואין יומן שליחות.', 'Delivering and opening push notifications — needs actual sending through Firebase and APNs, and delivery logging. Right now a campaign is saved and queued but not sent, and there is no send log.'),
+            tr('ערוצי רכישה, גיל ופילוח דמוגרפי — אין עמודות כאלה במסד הנתונים.', 'Acquisition channels, age and demographic breakdown — there are no such columns in the database.'),
+            tr('הקלקות לטלפון, לוואטסאפ ולניווט בעמוד עסק, וכן חיפושים ושאילתות '
+                'ללא תוצאות — דורשים רישום הקלקה וחיפוש; אין טבלאות כאלה.', 'Taps on phone, WhatsApp and navigation on a business page, and searches with no results — need click and search logging; there are no such tables.'),
           ],
         ),
         const SizedBox(height: 30),
@@ -413,7 +414,7 @@ class _SystemDataTab extends ConsumerWidget {
       barTouchData: BarTouchData(
         touchTooltipData: BarTouchTooltipData(
           getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
-            '${months[group.x]['month']}\n${rod.toY.toInt()} כתבות',
+            tr('${months[group.x]['month']}\n${rod.toY.toInt()} כתבות', '${months[group.x]['month']}\n${rod.toY.toInt()} articles'),
             TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 12,
@@ -443,10 +444,10 @@ class _ContentTab extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       children: [
         _TabHeader(
-          title: 'ביצועי תוכן',
+          title: tr('ביצועי תוכן', 'Content performance'),
           subtitle:
-              'צפיות, שיתופים ושמירות הן העמודות שהטבלאות נושאות. '
-              'הן מצטברות מאז הפרסום — אין בהן חלוקה לפי תאריך.',
+              tr('צפיות, שיתופים ושמירות הן העמודות שהטבלאות נושאות. '
+              'הן מצטברות מאז הפרסום — אין בהן חלוקה לפי תאריך.', 'Views, shares and saves are the columns the tables carry. They accumulate since publication — there is no breakdown by date.'),
           onRefresh: () {
             ref.invalidate(adminContentReachProvider);
             ref.invalidate(adminCatalogueBreakdownProvider);
@@ -465,39 +466,39 @@ class _ContentTab extends ConsumerWidget {
                 runSpacing: 12,
                 children: [
                   _StatCard(
-                    label: 'צפיות בכתבות',
+                    label: tr('צפיות בכתבות', 'Article views'),
                     value: r.articleViews,
-                    source: 'סכום articles.view_count',
+                    source: tr('סכום articles.view_count', 'Sum of articles.view_count'),
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'שיתופי כתבות',
+                    label: tr('שיתופי כתבות', 'Article shares'),
                     value: r.articleShares,
-                    source: 'סכום articles.share_count',
+                    source: tr('סכום articles.share_count', 'Sum of articles.share_count'),
                     color: AppColors.gold,
                   ),
                   _StatCard(
-                    label: 'שמירות כתבות',
+                    label: tr('שמירות כתבות', 'Article saves'),
                     value: r.articleSaves,
-                    source: 'סכום articles.save_count',
+                    source: tr('סכום articles.save_count', 'Sum of articles.save_count'),
                     color: AppColors.midBlue,
                   ),
                   _StatCard(
-                    label: 'צפיות באירועים',
+                    label: tr('צפיות באירועים', 'Event views'),
                     value: r.eventViews,
-                    source: 'סכום events.view_count',
+                    source: tr('סכום events.view_count', 'Sum of events.view_count'),
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'הרשמות לאירועים',
+                    label: tr('הרשמות לאירועים', 'Event registrations'),
                     value: r.eventRsvps,
-                    source: 'סכום events.rsvp_count',
+                    source: tr('סכום events.rsvp_count', 'Sum of events.rsvp_count'),
                     color: AppColors.success,
                   ),
                   _StatCard(
-                    label: 'הוספות ליומן',
+                    label: tr('הוספות ליומן', 'Calendar adds'),
                     value: r.eventCalendarAdds,
-                    source: 'סכום events.calendar_adds',
+                    source: tr('סכום events.calendar_adds', 'Sum of events.calendar_adds'),
                     color: AppColors.navy,
                   ),
                 ],
@@ -505,18 +506,18 @@ class _ContentTab extends ConsumerWidget {
               const SizedBox(height: 24),
 
               _CardShell(
-                title: 'הכתבות הנצפות ביותר',
+                title: tr('הכתבות הנצפות ביותר', 'Most viewed articles'),
                 footnote:
-                    '${_fmtInt(r.articlesWithViews)} מתוך '
+                    tr('${_fmtInt(r.articlesWithViews)} מתוך '
                     '${_fmtInt(r.articleTotal)} כתבות נושאות ספירת צפיות '
-                    'שאינה אפס, ולכן זהו הדירוג של אותן כתבות בלבד.',
+                    'שאינה אפס, ולכן זהו הדירוג של אותן כתבות בלבד.', '${_fmtInt(r.articlesWithViews)} of ${_fmtInt(r.articleTotal)} articles have a non-zero view count, so this ranks those articles only.'),
                 child: r.articlesWithViews == 0
-                    ? const _InlineEmpty(
-                        'אף כתבה לא נצפתה עדיין — כל הערכים בעמודה '
-                        'view_count הם אפס.',
+                    ? _InlineEmpty(
+                        tr('אף כתבה לא נצפתה עדיין — כל הערכים בעמודה '
+                        'view_count הם אפס.', 'No article has been viewed yet — every value in the view_count column is zero.'),
                       )
                     : _RankedTable(
-                        headers: const ['כתבה', 'צפיות', 'שיתופים', 'שמירות'],
+                        headers: [tr('כתבה', 'Article'), tr('צפיות', 'Views'), tr('שיתופים', 'Shares'), tr('שמירות', 'Saves')],
                         rows: [
                           for (final a in r.topArticles)
                             if (((a['view_count'] as num?) ?? 0) > 0)
@@ -532,23 +533,23 @@ class _ContentTab extends ConsumerWidget {
               const SizedBox(height: 16),
 
               _CardShell(
-                title: 'האירועים הנצפים ביותר',
+                title: tr('האירועים הנצפים ביותר', 'Most viewed events'),
                 footnote:
-                    '${_fmtInt(r.eventsWithViews)} מתוך '
+                    tr('${_fmtInt(r.eventsWithViews)} מתוך '
                     '${_fmtInt(r.eventTotal)} אירועים נושאים ספירת צפיות '
-                    'שאינה אפס.',
+                    'שאינה אפס.', '${_fmtInt(r.eventsWithViews)} of ${_fmtInt(r.eventTotal)} events have a non-zero view count.'),
                 child: r.eventsWithViews == 0
-                    ? const _InlineEmpty(
-                        'אף אירוע לא נצפה עדיין — כל הערכים בעמודה '
-                        'view_count הם אפס.',
+                    ? _InlineEmpty(
+                        tr('אף אירוע לא נצפה עדיין — כל הערכים בעמודה '
+                        'view_count הם אפס.', 'No event has been viewed yet — every value in the view_count column is zero.'),
                       )
                     : _RankedTable(
-                        headers: const [
-                          'אירוע',
-                          'צפיות',
-                          'הרשמות',
-                          'שיתופים',
-                          'יומן',
+                        headers: [
+                          tr('אירוע', 'Event'),
+                          tr('צפיות', 'Views'),
+                          tr('הרשמות', 'Registrations'),
+                          tr('שיתופים', 'Shares'),
+                          tr('יומן', 'Log'),
                         ],
                         rows: [
                           for (final e in r.topEvents)
@@ -573,12 +574,12 @@ class _ContentTab extends ConsumerWidget {
           error: (e, _) => _ErrorPanel(error: e),
           data: (b) {
             final categories = _CardShell(
-              title: 'עסקים לפי קטגוריה',
+              title: tr('עסקים לפי קטגוריה', 'Businesses by category'),
               footnote:
-                  'נספר מקישורי entity_categories עבור entity_type = '
-                  "'business'. עסק יכול להיות משויך ליותר מקטגוריה אחת.",
+                  tr('נספר מקישורי entity_categories עבור entity_type = '
+                  "'business'. עסק יכול להיות משויך ליותר מקטגוריה אחת.", 'Counted from entity_categories links where entity_type = \'business\'. A business can be assigned to more than one category.'),
               child: b.byCategory.isEmpty
-                  ? const _InlineEmpty('אין שיוכי קטגוריה לעסקים.')
+                  ? _InlineEmpty(tr('אין שיוכי קטגוריה לעסקים.', 'No businesses are assigned to categories.'))
                   : _BarList(
                       rows: b.byCategory,
                       largest: _largest(b.byCategory),
@@ -586,14 +587,14 @@ class _ContentTab extends ConsumerWidget {
                     ),
             );
             final neighborhoods = _CardShell(
-              title: 'עסקים לפי שכונה',
+              title: tr('עסקים לפי שכונה', 'Businesses by neighbourhood'),
               footnote:
-                  'נספר מ-businesses.neighborhood_id. '
+                  tr('נספר מ-businesses.neighborhood_id. '
                   '${_fmtInt(b.withoutNeighborhood)} מתוך '
                   '${_fmtInt(b.businessTotal)} עסקים ללא שכונה, ולכן אינם '
-                  'מופיעים בפילוח.',
+                  'מופיעים בפילוח.', 'Counted from businesses.neighborhood_id. ${_fmtInt(b.withoutNeighborhood)} of ${_fmtInt(b.businessTotal)} businesses have no neighbourhood, so they do not appear in the breakdown.'),
               child: b.byNeighborhood.isEmpty
-                  ? const _InlineEmpty('אף עסק אינו משויך לשכונה.')
+                  ? _InlineEmpty(tr('אף עסק אינו משויך לשכונה.', 'No business is assigned to a neighbourhood.'))
                   : _BarList(
                       rows: b.byNeighborhood,
                       largest: _largest(b.byNeighborhood),
@@ -635,13 +636,13 @@ class _AdvertisingTab extends ConsumerWidget {
   const _AdvertisingTab();
 
   /// The `revenue_type` values the commerce migration defines, in Hebrew.
-  static const _revenueTypes = {
-    'subscription': 'מנויים',
-    'banner': 'באנרים',
-    'push': 'התראות ממומנות',
-    'featured': 'עסק מקודם',
-    'sponsored': 'תוכן ממומן',
-    'custom': 'אחר',
+  static Map<String, String> get _revenueTypes => {
+    'subscription': tr('מנויים', 'Subscriptions'),
+    'banner': tr('באנרים', 'Banners'),
+    'push': tr('התראות ממומנות', 'Sponsored notifications'),
+    'featured': tr('עסק מקודם', 'Promoted business'),
+    'sponsored': tr('תוכן ממומן', 'Sponsored content'),
+    'custom': tr('אחר', 'Other'),
   };
 
   @override
@@ -653,10 +654,10 @@ class _AdvertisingTab extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       children: [
         _TabHeader(
-          title: 'פרסום והכנסות',
+          title: tr('פרסום והכנסות', 'Advertising & revenue'),
           subtitle:
-              'סכומי העמודות בטבלאות campaigns ו-revenue_transactions, '
-              'כפי שהן כרגע.',
+              tr('סכומי העמודות בטבלאות campaigns ו-revenue_transactions, '
+              'כפי שהן כרגע.', 'Column totals in the campaigns and revenue_transactions tables, as they are now.'),
           onRefresh: () {
             ref.invalidate(adminCampaignPerformanceProvider);
             ref.invalidate(adminRevenueSummaryProvider);
@@ -664,7 +665,7 @@ class _AdvertisingTab extends ConsumerWidget {
         ),
         const SizedBox(height: 20),
 
-        const _GroupHeading('קמפיינים'),
+        _GroupHeading(tr('קמפיינים', 'Campaigns')),
         const SizedBox(height: 10),
         campaigns.when(
           loading: () => const _LoadingPanel(),
@@ -677,39 +678,39 @@ class _AdvertisingTab extends ConsumerWidget {
                 runSpacing: 12,
                 children: [
                   _StatCard(
-                    label: 'קמפיינים',
+                    label: tr('קמפיינים', 'Campaigns'),
                     value: c.campaigns,
                     source: 'campaigns',
                     color: AppColors.midBlue,
                   ),
                   _StatCard(
-                    label: 'קמפיינים פעילים',
+                    label: tr('קמפיינים פעילים', 'Active campaigns'),
                     value: c.byStatus['active'] ?? 0,
                     source: "campaigns · status = 'active'",
                     color: AppColors.success,
                   ),
                   _StatCard(
-                    label: 'חשיפות',
+                    label: tr('חשיפות', 'Impressions'),
                     value: c.impressions,
-                    source: 'סכום impressions',
+                    source: tr('סכום impressions', 'Sum of impressions'),
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'חשיפות ייחודיות',
+                    label: tr('חשיפות ייחודיות', 'Unique impressions'),
                     value: c.uniqueImpressions,
-                    source: 'סכום unique_impressions',
+                    source: tr('סכום unique_impressions', 'Sum of unique_impressions'),
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'הקלקות',
+                    label: tr('הקלקות', 'Clicks'),
                     value: c.clicks,
-                    source: 'סכום clicks',
+                    source: tr('סכום clicks', 'Sum of clicks'),
                     color: AppColors.gold,
                   ),
                   _StatCard(
-                    label: 'המרות',
+                    label: tr('המרות', 'Conversions'),
                     value: c.conversions,
-                    source: 'סכום conversions',
+                    source: tr('סכום conversions', 'Sum of conversions'),
                     color: AppColors.success,
                   ),
                   // A rate over zero impressions is unknown, not zero per
@@ -718,7 +719,7 @@ class _AdvertisingTab extends ConsumerWidget {
                     label: 'CTR',
                     text: c.ctr == null ? '—' : '${c.ctr!.toStringAsFixed(2)}%',
                     source: c.ctr == null
-                        ? 'אין חשיפות, ולכן אין יחס להציג'
+                        ? tr('אין חשיפות, ולכן אין יחס להציג', 'No impressions, so there is no ratio to show')
                         : 'clicks ÷ impressions',
                     color: AppColors.navy,
                   ),
@@ -726,17 +727,17 @@ class _AdvertisingTab extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _CardShell(
-                title: 'קמפיינים לפי מיקום פרסום',
+                title: tr('קמפיינים לפי מיקום פרסום', 'Campaigns by ad placement'),
                 footnote: c.impressions == 0
-                    ? 'עמודות impressions ו-clicks בטבלת campaigns מתעדכנות '
+                    ? tr('עמודות impressions ו-clicks בטבלת campaigns מתעדכנות '
                           'רק על ידי מערכת הגשה שמדווחת חשיפה והקלקה. אין '
                           'כרגע מי שיכתוב אליהן, ולכן הן אפס — אלה אינם '
-                          'ביצועים חלשים אלא מדידה שטרם חוברה.'
-                    : 'נספר מ-campaigns.placement_id מול ad_placements.',
+                          'ביצועים חלשים אלא מדידה שטרם חוברה.', 'The impressions and clicks columns in the campaigns table are updated only by an ad server that reports impressions and clicks. Nothing writes to them yet, so they are zero — this is not weak performance but measurement that is not connected yet.')
+                    : tr('נספר מ-campaigns.placement_id מול ad_placements.', 'Counted from campaigns.placement_id against ad_placements.'),
                 child: c.placements.isEmpty
-                    ? const _InlineEmpty('אין מיקומי פרסום מוגדרים.')
+                    ? _InlineEmpty(tr('אין מיקומי פרסום מוגדרים.', 'No ad placements defined.'))
                     : _RankedTable(
-                        headers: const ['מיקום', 'קמפיינים'],
+                        headers: [tr('מיקום', 'Location'), tr('קמפיינים', 'Campaigns')],
                         rows: [
                           for (final p in c.placements)
                             [
@@ -751,7 +752,7 @@ class _AdvertisingTab extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
 
-        const _GroupHeading('הכנסות'),
+        _GroupHeading(tr('הכנסות', 'Revenue')),
         const SizedBox(height: 10),
         revenue.when(
           loading: () => const _LoadingPanel(),
@@ -764,37 +765,37 @@ class _AdvertisingTab extends ConsumerWidget {
                 runSpacing: 12,
                 children: [
                   _StatCard.text(
-                    label: 'סך הכל רשום',
+                    label: tr('סך הכל רשום', 'Total registered'),
                     text: _fmtMoney(r.total),
-                    source: 'סכום revenue_transactions · amount',
+                    source: tr('סכום revenue_transactions · amount', 'Sum of revenue_transactions · amount'),
                     color: AppColors.navy,
                   ),
                   _StatCard.text(
-                    label: 'שולם',
+                    label: tr('שולם', 'Paid'),
                     text: _fmtMoney(r.paid),
                     source: "payment_status = 'paid'",
                     color: AppColors.success,
                   ),
                   _StatCard.text(
-                    label: 'לתשלום',
+                    label: tr('לתשלום', 'Payable'),
                     text: _fmtMoney(r.outstanding),
                     source: 'pending · partial · overdue',
                     color: AppColors.gold,
                   ),
                   _StatCard.text(
-                    label: 'נרשם החודש',
+                    label: tr('נרשם החודש', 'Registered this month'),
                     text: _fmtMoney(r.thisMonth),
-                    source: 'created_at בחודש הנוכחי',
+                    source: tr('created_at בחודש הנוכחי', 'created_at in the current month'),
                     color: AppColors.turquoise,
                   ),
                   _StatCard(
-                    label: 'תנועות',
+                    label: tr('תנועות', 'Transactions'),
                     value: r.transactions,
                     source: 'revenue_transactions',
                     color: AppColors.midBlue,
                   ),
                   _StatCard(
-                    label: 'מנויים פעילים',
+                    label: tr('מנויים פעילים', 'Active subscriptions'),
                     value: r.activeSubscriptions,
                     source: "subscriptions · status = 'active'",
                     color: AppColors.success,
@@ -803,15 +804,15 @@ class _AdvertisingTab extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _CardShell(
-                title: 'הכנסות לפי סוג',
+                title: tr('הכנסות לפי סוג', 'Revenue by type'),
                 footnote: r.transactions == 0
-                    ? 'אין תנועות הכנסה במסד הנתונים. הן נוצרות במדור '
-                          '"הכנסות" בתפריט הצד, ומשם יתמלא הפילוח הזה.'
-                    : 'נספר מ-revenue_transactions.revenue_type.',
+                    ? tr('אין תנועות הכנסה במסד הנתונים. הן נוצרות במדור '
+                          '"הכנסות" בתפריט הצד, ומשם יתמלא הפילוח הזה.', 'No revenue entries in the database. They are created in the "Revenue" section of the side menu, and this breakdown fills from there.')
+                    : tr('נספר מ-revenue_transactions.revenue_type.', 'Counted from revenue_transactions.revenue_type.'),
                 child: r.byType.isEmpty
-                    ? const _InlineEmpty(
-                        'טרם נרשמה תנועת הכנסה אחת — הסכום הוא אפס, ולא '
-                        'אומדן.',
+                    ? _InlineEmpty(
+                        tr('טרם נרשמה תנועת הכנסה אחת — הסכום הוא אפס, ולא '
+                        'אומדן.', 'No revenue entry has been recorded yet — the total is zero, not an estimate.'),
                       )
                     : Column(
                         children: [
@@ -888,7 +889,7 @@ class _TabHeader extends StatelessWidget {
           onPressed: onRefresh,
           icon: const Icon(Icons.refresh, size: 18),
           label: Text(
-            'רענן',
+            tr('רענן', 'Refresh'),
             style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
           ),
         ),
@@ -1382,7 +1383,7 @@ class _ErrorPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'לא הצלחנו לקרוא את הנתונים',
+            tr('לא הצלחנו לקרוא את הנתונים', 'We could not read the data'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 14,

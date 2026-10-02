@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../municipal/models/municipal_place.dart';
 import '../providers/admin_municipal_places_provider.dart';
+import '../admin_language.dart';
 
 /// מוסדות עירוניים — what the Municipal page's service tiles list.
 ///
@@ -66,7 +67,7 @@ class _AdminMunicipalPlacesScreenState
                       controller: _searchController,
                       style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'חיפוש לפי שם, כתובת או טלפון...',
+                        hintText: tr('חיפוש לפי שם, כתובת או טלפון...', 'Search by name, address or phone...'),
                         hintStyle: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 13,
@@ -91,22 +92,22 @@ class _AdminMunicipalPlacesScreenState
                     ),
                   ),
                   const SizedBox(width: 12),
-                  _FilterChip('הכל', _activeFilter.isEmpty, () {
+                  _FilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () {
                     setState(() => _activeFilter = '');
                     _notifier.setActiveFilter(null);
                   }),
-                  _FilterChip('מוצג', _activeFilter == 'active', () {
+                  _FilterChip(tr('מוצג', 'Shown'), _activeFilter == 'active', () {
                     setState(() => _activeFilter = 'active');
                     _notifier.setActiveFilter('active');
                   }),
-                  _FilterChip('מוסתר', _activeFilter == 'inactive', () {
+                  _FilterChip(tr('מוסתר', 'Hidden'), _activeFilter == 'inactive', () {
                     setState(() => _activeFilter = 'inactive');
                     _notifier.setActiveFilter('inactive');
                   }),
                   const Spacer(),
                   if (count != null)
                     Text(
-                      '$count רשומות',
+                      tr('$count רשומות', '$count records'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontSize: 13,
@@ -118,7 +119,7 @@ class _AdminMunicipalPlacesScreenState
                     onPressed: () => _showEditor(),
                     icon: const Icon(Icons.add, size: 18),
                     label: Text(
-                      'רשומה חדשה',
+                      tr('רשומה חדשה', 'New record'),
                       style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                     ),
                     style: FilledButton.styleFrom(
@@ -136,12 +137,12 @@ class _AdminMunicipalPlacesScreenState
                 spacing: 0,
                 runSpacing: 6,
                 children: [
-                  _FilterChip('כל הקטגוריות', _category.isEmpty, () {
+                  _FilterChip(tr('כל הקטגוריות', 'All categories'), _category.isEmpty, () {
                     setState(() => _category = '');
                     _notifier.setCategory(null);
                   }),
                   for (final e in kMunicipalCategories.entries)
-                    _FilterChip(e.value.he, _category == e.key, () {
+                    _FilterChip(tr(e.value.he, e.value.en), _category == e.key, () {
                       setState(() => _category = e.key);
                       _notifier.setCategory(e.key);
                     }),
@@ -157,7 +158,7 @@ class _AdminMunicipalPlacesScreenState
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה: $e',
+                tr('שגיאה: $e', 'Error: $e'),
                 style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error),
               ),
             ),
@@ -165,7 +166,7 @@ class _AdminMunicipalPlacesScreenState
               if (rows.isEmpty) {
                 return Center(
                   child: Text(
-                    'אין רשומות. רשומה שנוספה כאן מופיעה באריח המתאים בעמוד העירייה.',
+                    tr('אין רשומות. רשומה שנוספה כאן מופיעה באריח המתאים בעמוד העירייה.', 'No records. A record added here appears on the matching tile of the Municipal page.'),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       color: AppColors.grayText,
@@ -190,7 +191,10 @@ class _AdminMunicipalPlacesScreenState
 
   Widget _buildRow(Map<String, dynamic> p, bool isWide) {
     final active = p['is_active'] as bool? ?? true;
-    final category = kMunicipalCategories[p['category']]?.he ?? '';
+    final category = switch (kMunicipalCategories[p['category']]) {
+      final c? => tr(c.he, c.en),
+      null => '',
+    };
     final source = p['source'] as String? ?? 'panel';
     final small = TextStyle(
       fontFamily: AppFonts.rubik,
@@ -238,25 +242,25 @@ class _AdminMunicipalPlacesScreenState
                 flex: 1,
                 child: Text(
                   switch (source) {
-                    'panel' => 'הוזן בפאנל',
-                    'national' => 'מספר ארצי',
+                    'panel' => tr('הוזן בפאנל', 'Entered in the panel'),
+                    'national' => tr('מספר ארצי', 'National number'),
                     'osm' => 'OpenStreetMap',
-                    'gov' => 'מידע ממשלתי',
+                    'gov' => tr('מידע ממשלתי', 'Government information'),
                     _ => source,
                   },
                   style: small.copyWith(color: AppColors.grayLight),
                 ),
               ),
             _StatusPill(
-              active ? 'מוצג' : 'מוסתר',
+              active ? tr('מוצג', 'Shown') : tr('מוסתר', 'Hidden'),
               active ? AppColors.success : AppColors.grayLight,
             ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
               onSelected: (v) => v == 'edit' ? _showEditor(place: p) : _toggle(p),
               itemBuilder: (_) => [
-                _menuItem('edit', 'עריכה'),
-                _menuItem('toggle', active ? 'הסתרה' : 'הצגה מחדש'),
+                _menuItem('edit', tr('עריכה', 'Edit')),
+                _menuItem('toggle', active ? tr('הסתרה', 'Hide') : tr('הצגה מחדש', 'Show again')),
               ],
             ),
           ],
@@ -276,7 +280,7 @@ class _AdminMunicipalPlacesScreenState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('העדכון נכשל: $e')),
+        SnackBar(content: Text(tr('העדכון נכשל: $e', 'The update failed: $e'))),
       );
     }
   }
@@ -370,7 +374,7 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 720),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: adminDir,
           child: Form(
             key: _formKey,
             child: Column(
@@ -384,7 +388,7 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                   child: Row(
                     children: [
                       Text(
-                        _isEditing ? 'עריכת רשומה' : 'רשומה חדשה',
+                        _isEditing ? tr('עריכת רשומה', 'Edit record') : tr('רשומה חדשה', 'New record'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           fontSize: 16,
@@ -409,7 +413,7 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                         child: DropdownButtonFormField<String>(
                           initialValue: _category,
                           decoration: InputDecoration(
-                            labelText: 'קטגוריה *',
+                            labelText: tr('קטגוריה *', 'Category *'),
                             labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -418,7 +422,7 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                               DropdownMenuItem(
                                 value: e.key,
                                 child: Text(
-                                  e.value.he,
+                                  tr(e.value.he, e.value.en),
                                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                                 ),
                               ),
@@ -427,16 +431,16 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                         ),
                       ),
                       _field(
-                        'שם *',
+                        tr('שם *', 'Name *'),
                         _name,
                         validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'שדה חובה' : null,
+                            v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
-                      _field('שם באנגלית (לאפליקציה באנגלית)', _nameEn),
-                      _field('כתובת', _address),
-                      _field('טלפון', _phone, ltr: true),
+                      _field(tr('שם באנגלית (לאפליקציה באנגלית)', 'English name (for the app in English)'), _nameEn),
+                      _field(tr('כתובת', 'Address'), _address),
+                      _field(tr('טלפון', 'Phone'), _phone, ltr: true),
                       _field(
-                        'קואורדינטות',
+                        tr('קואורדינטות', 'Coordinates'),
                         _coordinates,
                         hint: '31.8928, 35.0104',
                         ltr: true,
@@ -444,15 +448,15 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                           final t = v?.trim() ?? '';
                           if (t.isEmpty) return null;
                           return _parseCoordinates(t) == null
-                              ? 'קו רוחב, קו אורך — למשל 31.8928, 35.0104 — או ריק'
+                              ? tr('קו רוחב, קו אורך — למשל 31.8928, 35.0104 — או ריק', 'Latitude, longitude — for example 31.8928, 35.0104 — or empty')
                               : null;
                         },
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 14),
                         child: Text(
-                          'לא חובה (למספר חירום אין מיקום). בגוגל מפות: לחיצה ימנית '
-                          'על המקום, ולחיצה על המספרים שבראש התפריט מעתיקה אותם.',
+                          tr('לא חובה (למספר חירום אין מיקום). בגוגל מפות: לחיצה ימנית '
+                          'על המקום, ולחיצה על המספרים שבראש התפריט מעתיקה אותם.', 'Optional (an emergency number has no location). In Google Maps: right-click the place, and clicking the numbers at the top of the menu copies them.'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
@@ -460,11 +464,11 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                           ),
                         ),
                       ),
-                      _field('הערות (שעות, זרם, מגזר וכו׳)', _notes, maxLines: 3),
-                      _field('סדר מיון', _sortOrder, ltr: true),
+                      _field(tr('הערות (שעות, זרם, מגזר וכו׳)', 'Notes (hours, stream, sector, etc.)'), _notes, maxLines: 3),
+                      _field(tr('סדר מיון', 'Sort order'), _sortOrder, ltr: true),
                       SwitchListTile(
                         title: Text(
-                          'מוצג באתר ובאפליקציה',
+                          tr('מוצג באתר ובאפליקציה', 'Shown on the site and in the app'),
                           style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                         ),
                         value: _isActive,
@@ -499,7 +503,7 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                         const Spacer(),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text('ביטול', style: TextStyle(fontFamily: AppFonts.rubik)),
+                        child: Text(tr('ביטול', 'Cancel'), style: TextStyle(fontFamily: AppFonts.rubik)),
                       ),
                       const SizedBox(width: 8),
                       FilledButton(
@@ -520,7 +524,7 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'שמור' : 'צור רשומה',
+                                _isEditing ? tr('שמור', 'Save') : tr('צור רשומה', 'Create record'),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -599,8 +603,8 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
       if (mounted) {
         setState(
           () => _error = e is PostgrestException
-              ? 'השמירה נכשלה: ${e.message}'
-              : 'השמירה נכשלה: $e',
+              ? tr('השמירה נכשלה: ${e.message}', 'Saving failed: ${e.message}')
+              : tr('השמירה נכשלה: $e', 'Saving failed: $e'),
         );
       }
     } finally {
@@ -646,7 +650,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

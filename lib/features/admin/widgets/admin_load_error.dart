@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../admin_language.dart';
 
 /// What a section shows in place of its list when the list failed to load:
 /// what failed, the database's own reason, and a way to try again without
@@ -51,7 +52,7 @@ class AdminLoadError extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh, size: 18),
               label: Text(
-                'נסה שוב',
+                tr('נסה שוב', 'Try again'),
                 style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
               ),
             ),
@@ -81,7 +82,7 @@ Future<bool> runAdminAction(
     messenger.showSnackBar(
       SnackBar(
         content: Text(
-          'הפעולה נכשלה: $e',
+          tr('הפעולה נכשלה: $e', 'The action failed: $e'),
           style: TextStyle(fontFamily: AppFonts.rubik),
         ),
         backgroundColor: AppColors.error,

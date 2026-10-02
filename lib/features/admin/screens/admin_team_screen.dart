@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_team_provider.dart';
 import '../widgets/admin_form_pickers.dart';
+import '../admin_language.dart';
 
 class AdminTeamScreen extends ConsumerStatefulWidget {
   const AdminTeamScreen({super.key});
@@ -56,7 +57,7 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש לפי שם או אימייל...',
+                    hintText: tr('חיפוש לפי שם או אימייל...', 'Search by name or email...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -95,7 +96,7 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
               const Spacer(),
               if (count != null)
                 Text(
-                  '$count חברי צוות',
+                  tr('$count חברי צוות', '$count team members'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -107,7 +108,7 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
                 onPressed: () => _showGrant(context),
                 icon: const Icon(Icons.person_add, size: 18),
                 label: Text(
-                  'הוספת חבר צוות',
+                  tr('הוספת חבר צוות', 'Add team member'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -132,7 +133,7 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה בטעינת הצוות: ${adminErrorText(e)}',
+                tr('שגיאה בטעינת הצוות: ${adminErrorText(e)}', 'Error loading the team: ${adminErrorText(e)}'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -152,7 +153,7 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין חברי צוות',
+                        tr('אין חברי צוות', 'No team members'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -193,7 +194,7 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
           .read(adminTeamProvider.notifier)
           .setMemberActive(member, active);
     } catch (e) {
-      if (mounted) showAdminError(context, 'לא בוצע', e);
+      if (mounted) showAdminError(context, tr('לא בוצע', 'Not done'), e);
     }
   }
 
@@ -235,7 +236,7 @@ class _RolePicker extends ConsumerWidget {
     return roles.when(
       loading: () => const LinearProgressIndicator(minHeight: 2),
       error: (e, _) => Text(
-        'לא ניתן לטעון תפקידים: ${adminErrorText(e)}',
+        tr('לא ניתן לטעון תפקידים: ${adminErrorText(e)}', 'Could not load roles: ${adminErrorText(e)}'),
         style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error),
       ),
       data: (list) => DropdownButtonFormField<String>(
@@ -245,13 +246,13 @@ class _RolePicker extends ConsumerWidget {
           fontSize: 14,
           color: AppColors.navy,
         ),
-        decoration: _fieldDecoration('תפקיד'),
+        decoration: _fieldDecoration(tr('תפקיד', 'Role')),
         items: [
           for (final r in list)
             DropdownMenuItem(
               value: r['id'] as String,
               child: Text(
-                r['label'] as String? ?? r['name'] as String,
+                _roleLabel(r),
                 style: TextStyle(fontFamily: AppFonts.rubik),
               ),
             ),
@@ -283,10 +284,10 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
     };
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: AlertDialog(
         title: Text(
-          'הוספת חבר צוות',
+          tr('הוספת חבר צוות', 'Add team member'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontWeight: FontWeight.w700,
@@ -300,8 +301,8 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'אפשר להוסיף רק מי שכבר נרשם לאפליקציה. מי שעוד לא נרשם — '
-                'יירשם קודם, ואז יופיע כאן.',
+                tr('אפשר להוסיף רק מי שכבר נרשם לאפליקציה. מי שעוד לא נרשם — '
+                'יירשם קודם, ואז יופיע כאן.', 'Only people already registered in the app can be added. Anyone not registered yet signs up first, then appears here.'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 12,
@@ -313,7 +314,7 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
               profiles.when(
                 loading: () => const LinearProgressIndicator(minHeight: 2),
                 error: (e, _) => Text(
-                  'לא ניתן לטעון משתמשים: ${adminErrorText(e)}',
+                  tr('לא ניתן לטעון משתמשים: ${adminErrorText(e)}', 'Could not load users: ${adminErrorText(e)}'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     color: AppColors.error,
@@ -326,7 +327,7 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
                   ];
                   if (options.isEmpty) {
                     return Text(
-                      'כל המשתמשים הרשומים כבר בצוות.',
+                      tr('כל המשתמשים הרשומים כבר בצוות.', 'Every registered user is already on the team.'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         color: AppColors.grayText,
@@ -336,7 +337,7 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
                   return DropdownButtonFormField<String>(
                     initialValue: _profileId,
                     isExpanded: true,
-                    decoration: _fieldDecoration('משתמש'),
+                    decoration: _fieldDecoration(tr('משתמש', 'User')),
                     items: [
                       for (final p in options)
                         DropdownMenuItem(
@@ -368,7 +369,7 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'ביטול',
+              tr('ביטול', 'Cancel'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 color: AppColors.grayText,
@@ -386,7 +387,7 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: Text('הוסף', style: TextStyle(fontFamily: AppFonts.rubik)),
+            child: Text(tr('הוסף', 'Add'), style: TextStyle(fontFamily: AppFonts.rubik)),
           ),
         ],
       ),
@@ -401,7 +402,7 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
           .grant(profileId: _profileId!, roleId: _roleId!);
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) showAdminError(context, 'ההוספה נכשלה', e);
+      if (mounted) showAdminError(context, tr('ההוספה נכשלה', 'Adding failed'), e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -425,10 +426,10 @@ class _RoleDialogState extends ConsumerState<_RoleDialog> {
     final isSelf =
         widget.member['profile_id'] == AdminTeamNotifier.currentProfileId;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: AlertDialog(
         title: Text(
-          'עריכת חבר צוות',
+          tr('עריכת חבר צוות', 'Edit team member'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontWeight: FontWeight.w700,
@@ -460,8 +461,8 @@ class _RoleDialogState extends ConsumerState<_RoleDialog> {
               ),
               const SizedBox(height: 6),
               Text(
-                'השם והאימייל שייכים לחשבון של המשתמש, והוא מעדכן אותם '
-                'באפליקציה.',
+                tr('השם והאימייל שייכים לחשבון של המשתמש, והוא מעדכן אותם '
+                'באפליקציה.', 'The name and email belong to the user\'s account, and they update them in the app.'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 11,
@@ -471,7 +472,7 @@ class _RoleDialogState extends ConsumerState<_RoleDialog> {
               const SizedBox(height: 14),
               if (isSelf)
                 Text(
-                  'זה החשבון שלך — את התפקיד שלך יכול לשנות רק מנהל ראשי אחר.',
+                  tr('זה החשבון שלך — את התפקיד שלך יכול לשנות רק מנהל ראשי אחר.', 'This is your account — only another super admin can change your role.'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 12,
@@ -490,7 +491,7 @@ class _RoleDialogState extends ConsumerState<_RoleDialog> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              isSelf ? 'סגירה' : 'ביטול',
+              isSelf ? tr('סגירה', 'Close') : tr('ביטול', 'Cancel'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 color: AppColors.grayText,
@@ -507,7 +508,7 @@ class _RoleDialogState extends ConsumerState<_RoleDialog> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text('שמור', style: TextStyle(fontFamily: AppFonts.rubik)),
+              child: Text(tr('שמור', 'Save'), style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
         ],
       ),
@@ -522,7 +523,7 @@ class _RoleDialogState extends ConsumerState<_RoleDialog> {
           .changeRole(widget.member, _roleId!);
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+      if (mounted) showAdminError(context, tr('השמירה נכשלה', 'Saving failed'), e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -546,7 +547,7 @@ class _TeamCard extends StatelessWidget {
     final isActive = member['is_active'] as bool? ?? true;
     final role = member['admin_roles'] as Map?;
     final roleName = role?['name'] as String? ?? '';
-    final roleLabel = role?['label'] as String? ?? roleName;
+    final roleLabel = role == null ? roleName : _roleLabel(role);
     final profile = member['profiles'] as Map?;
     final name = (profile?['full_name'] as String? ?? '').trim();
     final email = profile?['email'] as String? ?? '';
@@ -585,7 +586,7 @@ class _TeamCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        isSelf ? '$name (את/ה)' : name,
+                        isSelf ? tr('$name (את/ה)', '$name (you)') : name,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
@@ -615,7 +616,7 @@ class _TeamCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          isActive ? roleLabel : '$roleLabel · מושבת',
+                          isActive ? roleLabel : tr('$roleLabel · מושבת', '$roleLabel · disabled'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 11,
@@ -632,7 +633,7 @@ class _TeamCard extends StatelessWidget {
                 // greyed switch read as "off", so it says so in words.
                 if (isSelf)
                   Tooltip(
-                    message: 'אי אפשר להשבית את עצמך',
+                    message: tr('אי אפשר להשבית את עצמך', 'You cannot disable yourself'),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -643,7 +644,7 @@ class _TeamCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'פעיל',
+                          tr('פעיל', 'Active'),
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
@@ -655,7 +656,7 @@ class _TeamCard extends StatelessWidget {
                   )
                 else
                   Tooltip(
-                    message: isActive ? 'השבתת גישה' : 'החזרת גישה',
+                    message: isActive ? tr('השבתת גישה', 'Disable access') : tr('החזרת גישה', 'Restore access'),
                     child: Switch(
                       value: isActive,
                       onChanged: onToggle,
@@ -680,4 +681,23 @@ class _TeamCard extends StatelessWidget {
     'finance' => AppColors.turquoise,
     _ => AppColors.grayLight,
   };
+}
+
+/// The roles' names in English. `admin_roles` holds them in Hebrew only, and
+/// the eight roles are the system's own, so the panel names them by code.
+const _roleNamesEn = {
+  'super_admin': 'Super admin',
+  'content_editor': 'Content editor',
+  'business_mgr': 'Business manager',
+  'sales': 'Sales',
+  'moderator': 'Moderator',
+  'finance': 'Finance',
+  'support': 'Support',
+  'analyst': 'Analyst',
+};
+
+String _roleLabel(Map role) {
+  final name = role['name'] as String? ?? '';
+  final he = role['label'] as String? ?? name;
+  return tr(he, _roleNamesEn[name] ?? name);
 }

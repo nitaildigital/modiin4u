@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_tags_provider.dart';
 import '../widgets/admin_form_pickers.dart';
+import '../admin_language.dart';
 
 class AdminTagsScreen extends ConsumerStatefulWidget {
   const AdminTagsScreen({super.key});
@@ -60,7 +61,7 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                   controller: _searchController,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'חיפוש תגית...',
+                    hintText: tr('חיפוש תגית...', 'Search tags...'),
                     hintStyle: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 13,
@@ -97,18 +98,18 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              _SortChip('שם', _sortBy == 'name', () {
+              _SortChip(tr('שם', 'Name'), _sortBy == 'name', () {
                 setState(() => _sortBy = 'name');
                 ref.read(adminTagListProvider.notifier).setSortBy('name');
               }),
-              _SortChip('שימוש', _sortBy == 'usage', () {
+              _SortChip(tr('שימוש', 'Usage'), _sortBy == 'usage', () {
                 setState(() => _sortBy = 'usage');
                 ref.read(adminTagListProvider.notifier).setSortBy('usage');
               }),
               const Spacer(),
               if (asyncData.valueOrNull case final l?)
                 Text(
-                  '${l.length} תגיות',
+                  tr('${l.length} תגיות', '${l.length} tags'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 13,
@@ -120,7 +121,7 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                 onPressed: () => _showEditor(context, null),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'תגית חדשה',
+                  tr('תגית חדשה', 'New tag'),
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -145,7 +146,7 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
               child: Text(
-                'שגיאה בטעינת התגיות: ${adminErrorText(e)}',
+                tr('שגיאה בטעינת התגיות: ${adminErrorText(e)}', 'Error loading the tags: ${adminErrorText(e)}'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.error,
@@ -165,7 +166,7 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'אין תגיות',
+                        tr('אין תגיות', 'No tags'),
                         style: TextStyle(
                           fontFamily: AppFonts.rubik,
                           color: AppColors.grayText,
@@ -215,10 +216,10 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: adminDir,
         child: AlertDialog(
           title: Text(
-            'מחיקת תגית',
+            tr('מחיקת תגית', 'Delete tag'),
             style: TextStyle(
               fontFamily: AppFonts.rubik,
               fontWeight: FontWeight.w700,
@@ -228,15 +229,15 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
           content: Text(
             // Tags have no hidden state to fall back on, so this one is
             // permanent, and it says so.
-            'למחוק את התגית "${tag['name']}" לצמיתות? '
-            '${usage == 0 ? 'היא לא מוצמדת לשום פריט.' : 'היא תוסר גם מ-$usage פריטים שמוצמדת אליהם.'}',
+            tr('למחוק את התגית "${tag['name']}" לצמיתות? '
+            '${usage == 0 ? 'היא לא מוצמדת לשום פריט.' : 'היא תוסר גם מ-$usage פריטים שמוצמדת אליהם.'}', 'Delete the tag "${tag['name']}" permanently? ${usage == 0 ? 'It is not attached to any item.' : 'It will also be removed from the $usage items it is attached to.'}'),
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(
-                'ביטול',
+                tr('ביטול', 'Cancel'),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   color: AppColors.grayText,
@@ -252,7 +253,7 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text('מחק', style: TextStyle(fontFamily: AppFonts.rubik)),
+              child: Text(tr('מחק', 'Delete'), style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
           ],
         ),
@@ -264,7 +265,7 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
           .read(adminTagListProvider.notifier)
           .deleteTag(tag['id'] as String);
     } catch (e) {
-      if (context.mounted) showAdminError(context, 'המחיקה נכשלה', e);
+      if (context.mounted) showAdminError(context, tr('המחיקה נכשלה', 'Deleting failed'), e);
     }
   }
 }
@@ -291,9 +292,9 @@ class _NotShownNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'התגיות נשמרות כאן, אך עדיין אינן מוצגות באתר או באפליקציה, '
+              tr('התגיות נשמרות כאן, אך עדיין אינן מוצגות באתר או באפליקציה, '
               'ואף עסק או כתבה אינם מתויגים בהן. הצגת תגיות למשתמשים היא '
-              'פיתוח נפרד.',
+              'פיתוח נפרד.', 'Tags are saved here, but they are not shown on the site or in the app yet, and no business or article is tagged with them. Showing tags to users is separate development.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -375,7 +376,7 @@ class _TagEditorDialogState extends ConsumerState<_TagEditorDialog> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       // `name` and `slug` are both unique, so a duplicate is the usual cause.
-      if (mounted) showAdminError(context, 'השמירה נכשלה', e);
+      if (mounted) showAdminError(context, tr('השמירה נכשלה', 'Saving failed'), e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -385,10 +386,10 @@ class _TagEditorDialogState extends ConsumerState<_TagEditorDialog> {
   Widget build(BuildContext context) {
     final existing = widget.existing;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: adminDir,
       child: AlertDialog(
         title: Text(
-          existing == null ? 'תגית חדשה' : 'עריכת תגית',
+          existing == null ? tr('תגית חדשה', 'New tag') : tr('עריכת תגית', 'Edit tag'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontWeight: FontWeight.w700,
@@ -405,15 +406,15 @@ class _TagEditorDialogState extends ConsumerState<_TagEditorDialog> {
                 TextFormField(
                   controller: _name,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: _decoration('שם'),
+                  decoration: _decoration(tr('שם', 'Name')),
                   validator: (v) =>
-                      (v ?? '').trim().isEmpty ? 'שדה חובה' : null,
+                      (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
                   controller: _slug,
                   style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: _decoration('Slug', hint: 'ריק — ייווצר מהשם'),
+                  decoration: _decoration('Slug', hint: tr('ריק — ייווצר מהשם', 'Empty — made from the name')),
                 ),
               ],
             ),
@@ -423,7 +424,7 @@ class _TagEditorDialogState extends ConsumerState<_TagEditorDialog> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'ביטול',
+              tr('ביטול', 'Cancel'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 color: AppColors.grayText,
@@ -440,7 +441,7 @@ class _TagEditorDialogState extends ConsumerState<_TagEditorDialog> {
               ),
             ),
             child: Text(
-              existing == null ? 'צור' : 'שמור',
+              existing == null ? tr('צור', 'Create') : tr('שמור', 'Save'),
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
           ),
@@ -526,7 +527,7 @@ class _SortChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsetsDirectional.only(end: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),

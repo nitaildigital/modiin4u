@@ -1,4 +1,5 @@
 import '../../../core/supabase/supabase_config.dart';
+import '../admin_language.dart';
 
 /// One place a stored file is shown: a row, and the column that holds its
 /// address.
@@ -24,44 +25,44 @@ class MediaUse {
   String describe() {
     final where = source == 'entity_media'
         ? switch (column.split(':').first) {
-            'business' => 'גלריה של עסק',
-            'neighborhood' => 'גלריה של שכונה',
-            final other => 'גלריה ($other)',
+            'business' => tr('גלריה של עסק', 'Business gallery'),
+            'neighborhood' => tr('גלריה של שכונה', 'Neighbourhood gallery'),
+            final other => tr('גלריה ($other)', 'Gallery ($other)'),
           }
         : '${_tables[source] ?? source} · ${_columns[column] ?? column}';
     final name = (label ?? '').trim();
     return name.isEmpty ? where : '$where · $name';
   }
 
-  static const _tables = {
-    'businesses': 'עסקים',
-    'articles': 'כתבות',
-    'events': 'אירועים',
-    'offers': 'מבצעים',
-    'campaigns': 'קמפיינים',
-    'categories': 'קטגוריות',
-    'neighborhoods': 'שכונות',
-    'listings': 'נדל״ן',
-    'real_estate_agents': 'סוכנים',
-    'parking_lots': 'חניונים',
-    'media': 'ספריית המדיה',
-    'profiles': 'פרופילים',
+  static Map<String, String> get _tables => {
+    'businesses': tr('עסקים', 'Businesses'),
+    'articles': tr('כתבות', 'Articles'),
+    'events': tr('אירועים', 'Events'),
+    'offers': tr('מבצעים', 'Deals'),
+    'campaigns': tr('קמפיינים', 'Campaigns'),
+    'categories': tr('קטגוריות', 'Categories'),
+    'neighborhoods': tr('שכונות', 'Neighbourhoods'),
+    'listings': tr('נדל״ן', 'Real estate'),
+    'real_estate_agents': tr('סוכנים', 'Agents'),
+    'parking_lots': tr('חניונים', 'Car parks'),
+    'media': tr('ספריית המדיה', 'Media library'),
+    'profiles': tr('פרופילים', 'Profiles'),
   };
 
-  static const _columns = {
-    'logo_url': 'לוגו',
-    'cover_url': 'תמונת כריכה',
-    'og_image_url': 'תמונת שיתוף',
-    'og_image': 'תמונת שיתוף',
-    'featured_image': 'תמונת כריכה',
-    'body': 'בתוך הטקסט',
-    'image_url': 'תמונה',
-    'gallery': 'גלריה',
-    'desktop_image': 'תמונה למחשב',
-    'mobile_image': 'תמונה לנייד',
-    'photo_url': 'תמונה',
-    'avatar_url': 'תמונת פרופיל',
-    'url': 'קובץ',
+  static Map<String, String> get _columns => {
+    'logo_url': tr('לוגו', 'Logo'),
+    'cover_url': tr('תמונת כריכה', 'Cover image'),
+    'og_image_url': tr('תמונת שיתוף', 'Share image'),
+    'og_image': tr('תמונת שיתוף', 'Share image'),
+    'featured_image': tr('תמונת כריכה', 'Cover image'),
+    'body': tr('בתוך הטקסט', 'Inside the text'),
+    'image_url': tr('תמונה', 'Image'),
+    'gallery': tr('גלריה', 'Gallery'),
+    'desktop_image': tr('תמונה למחשב', 'Desktop image'),
+    'mobile_image': tr('תמונה לנייד', 'Mobile image'),
+    'photo_url': tr('תמונה', 'Image'),
+    'avatar_url': tr('תמונת פרופיל', 'Profile photo'),
+    'url': tr('קובץ', 'File'),
   };
 }
 

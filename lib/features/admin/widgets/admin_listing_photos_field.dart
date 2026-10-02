@@ -6,6 +6,7 @@ import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../admin_language.dart';
 
 /// A listing's photos, in the order the listing page shows them.
 ///
@@ -93,11 +94,11 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
     final url = _url.text.trim();
     final uri = Uri.tryParse(url);
     if (uri == null || !uri.hasScheme || !uri.scheme.startsWith('http')) {
-      setState(() => _error = 'כתובת לא תקינה');
+      setState(() => _error = tr('כתובת לא תקינה', 'Invalid address'));
       return;
     }
     if (_photos.contains(url)) {
-      setState(() => _error = 'התמונה כבר ברשימה');
+      setState(() => _error = tr('התמונה כבר ברשימה', 'The image is already in the list'));
       return;
     }
     setState(() => _error = null);
@@ -115,7 +116,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
         imageQuality: 85,
       );
     } catch (_) {
-      setState(() => _error = 'לא ניתן לפתוח את בוחר הקבצים');
+      setState(() => _error = tr('לא ניתן לפתוח את בוחר הקבצים', 'Could not open the file picker'));
       return;
     }
     if (picked.isEmpty) return;
@@ -159,8 +160,8 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
     setState(() {
       _busy = false;
       _error = [
-        if (tooBig > 0) '$tooBig קבצים גדולים מ-10MB ולא הועלו',
-        if (failed > 0) '$failed העלאות נכשלו. נסו שוב.',
+        if (tooBig > 0) tr('$tooBig קבצים גדולים מ-10MB ולא הועלו', '$tooBig files are larger than 10MB and were not uploaded'),
+        if (failed > 0) tr('$failed העלאות נכשלו. נסו שוב.', '$failed uploads failed. Please try again.'),
       ].join(' · ');
       if (_error!.isEmpty) _error = null;
     });
@@ -190,7 +191,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'תמונות (${_photos.length})',
+          tr('תמונות (${_photos.length})', 'Photos (${_photos.length})'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 14,
@@ -200,7 +201,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
         ),
         const SizedBox(height: 4),
         Text(
-          'הראשונה היא תמונת השער — בכרטיס ובראש עמוד הנכס. החצים משנים את הסדר.',
+          tr('הראשונה היא תמונת השער — בכרטיס ובראש עמוד הנכס. החצים משנים את הסדר.', 'The first one is the cover photo — on the card and at the top of the property page. The arrows change the order.'),
           style: small.copyWith(fontSize: 11, color: AppColors.grayText),
         ),
         const SizedBox(height: 8),
@@ -214,7 +215,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
               border: Border.all(color: AppColors.border),
             ),
             child: Text(
-              'אין תמונות',
+              tr('אין תמונות', 'No photos'),
               style: small.copyWith(color: AppColors.grayLight),
             ),
           )
@@ -236,7 +237,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add_photo_alternate_outlined, size: 16),
-              label: Text(_busy ? 'מעלה…' : 'העלאת תמונות', style: small),
+              label: Text(_busy ? tr('מעלה…', 'Uploading…') : tr('העלאת תמונות', 'Upload photos'), style: small),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -246,7 +247,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
                 textDirection: TextDirection.ltr,
                 onSubmitted: (_) => _addUrl(),
                 decoration: InputDecoration(
-                  hintText: 'או הדביקו כתובת של תמונה',
+                  hintText: tr('או הדביקו כתובת של תמונה', 'or paste an image address'),
                   hintStyle: small.copyWith(color: AppColors.adminTextLight),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
@@ -259,7 +260,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
             ),
             TextButton(
               onPressed: _busy ? null : _addUrl,
-              child: Text('הוספה', style: small),
+              child: Text(tr('הוספה', 'Add'), style: small),
             ),
           ],
         ),
@@ -327,7 +328,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      'שער',
+                      tr('שער', 'Cover'),
                       style: TextStyle(
                         fontFamily: AppFonts.rubik,
                         fontSize: 10,
@@ -347,18 +348,18 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
               // is where an earlier photo sits.
               action(
                 Icons.chevron_left,
-                'הזזה קדימה',
+                tr('הזזה קדימה', 'Move earlier'),
                 i == 0 ? null : () => _move(i, i - 1),
               ),
               action(
                 Icons.star_outline,
-                'קביעה כתמונת שער',
+                tr('קביעה כתמונת שער', 'Set as cover photo'),
                 isCover ? null : () => _move(i, 0),
               ),
-              action(Icons.delete_outline, 'הסרה', () => _remove(i)),
+              action(Icons.delete_outline, tr('הסרה', 'Remove'), () => _remove(i)),
               action(
                 Icons.chevron_right,
-                'הזזה אחורה',
+                tr('הזזה אחורה', 'Move later'),
                 i == _photos.length - 1 ? null : () => _move(i, i + 1),
               ),
             ],
