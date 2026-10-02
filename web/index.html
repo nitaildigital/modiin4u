@@ -36,6 +36,41 @@
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 </head>
 <body>
+  <!-- PersonaAI Chat Widget — the client's, with his settings. Not on the
+       admin panel, where the bubble would sit over the panel's buttons; on
+       the phone-width layout it is raised above the bottom menu. -->
+  <script>
+    if (!/^\/(admin|login)/.test(location.pathname)) {
+      window.PersonaAI = {
+        businessId: "25ea67c7-94cd-4771-8f71-1d530bc7b2a1",
+        position: "bottom-right",
+        primaryColor: "#5B21E6",
+        offsetBottom: window.innerWidth <= 1100 ? 92 : 20,
+        offsetSide: 20
+      };
+      var personaAiScript = document.createElement('script');
+      personaAiScript.src = 'https://personaai.me/widget.js';
+      personaAiScript.async = true;
+      // The widget then loads the business's saved settings (20 px from the
+      // bottom), which replace the page's and put the bubble over the phone
+      // layout's bottom menu. It has no "ready" signal, so the raised
+      // offset is applied again for a while after it loads, and on resize.
+      personaAiScript.onload = function () {
+        function place() {
+          if (window.PersonaAI && window.PersonaAI.setOffsetBottom) {
+            window.PersonaAI.setOffsetBottom(window.innerWidth <= 1100 ? 92 : 20);
+          }
+        }
+        var tries = 0;
+        var timer = setInterval(function () {
+          place();
+          if (++tries >= 30) clearInterval(timer);
+        }, 500);
+        window.addEventListener('resize', place);
+      };
+      document.head.appendChild(personaAiScript);
+    }
+  </script>
   <script src="flutter_bootstrap.js" async=""></script>
 
 
