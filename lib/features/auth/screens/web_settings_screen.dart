@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/providers/theme_provider.dart';
+import '../../../core/push/push_service.dart';
+import '../../../core/push/push_settings.dart';
+import '../../../core/push/push_switch.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
@@ -165,7 +168,7 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
                             children: [
                               _buildHeader(),
                               const SizedBox(height: 32),
-                              _buildNotificationsCard(prefs, signedIn, set),
+                              _buildNotificationsCard(),
                               const SizedBox(height: 20),
                               _buildAccessCard(prefs, signedIn, set),
                               const SizedBox(height: 20),
@@ -270,43 +273,58 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
     );
   }
 
-  Widget _buildNotificationsCard(
-    NotificationPreferences prefs,
-    bool signedIn,
-    void Function(NotificationPreferences) set,
-  ) {
+  /// The browser's own notification choices (lib/core/push), kept in the
+  /// browser and needing no account. Turning the first switch on is what
+  /// asks the browser for permission — browsers only allow that from a tap.
+  Widget _buildNotificationsCard() {
+    final s = ref.watch(pushSettingsProvider);
+    final push = ref.read(pushServiceProvider);
+    void set(PushSettings next) => ref.read(pushSettingsProvider.notifier).update(next);
+    final on = s.enabled;
+    final hood = ref.watch(pushNeighborhoodNameProvider).valueOrNull;
+
     return _buildCard(
       title: _t('Notifications', 'התראות'),
       children: [
-        // Signed out there is no row to write a choice to, so the switches say
-        // so rather than appearing to remember anything.
-        if (!signedIn)
-          _SignInPrompt(
-            label: _t(
-              'Sign in to save your preferences.',
-              'התחברו כדי לשמור את ההעדפות שלכם.',
-            ),
-            actionLabel: _t('Sign In', 'התחברות'),
-            onTap: () => context.push('/login'),
+        ValueListenableBuilder<bool?>(
+          valueListenable: push.allowed,
+          builder: (context, allowed, _) => _ToggleRow(
+            icon: Icons.notifications_active_outlined,
+            label: _t('Receive notifications', 'קבלת התראות'),
+            // A browser that was refused will not ask again; only its own
+            // site settings can undo that.
+            subtitle: on && allowed == false
+                ? _t('Blocked in this browser\'s site settings.',
+                    'חסומות בהגדרות האתר בדפדפן.')
+                : _t('The master switch for everything below.',
+                    'המפסק הראשי לכל מה שמופיע מתחת.'),
+            value: on && allowed != false,
+            onChanged: (v) => setPushEnabled(ref, v),
           ),
-        _ToggleRow(
-          icon: Icons.notifications_active_outlined,
-          label: _t('Receive notifications', 'קבלת התראות'),
-          subtitle: _t(
-            'The master switch for everything below.',
-            'המפסק הראשי לכל מה שמופיע מתחת.',
-          ),
-          value: prefs.pushEnabled,
-          enabled: signedIn,
-          onChanged: (v) => set(prefs.copyWith(pushEnabled: v)),
         ),
         _ToggleRow(
           icon: Icons.newspaper_outlined,
           label: _t('News', 'חדשות'),
-          subtitle: _t('Headlines from around the city.', 'כתבות מכל העיר.'),
-          value: prefs.news,
-          enabled: signedIn && prefs.pushEnabled,
-          onChanged: (v) => set(prefs.copyWith(news: v)),
+          subtitle: _t('Each new article.', 'כל כתבה חדשה.'),
+          value: s.news,
+          enabled: on,
+          onChanged: (v) => set(s.copyWith(news: v)),
+        ),
+        _ToggleRow(
+          icon: Icons.event_outlined,
+          label: _t('Events', 'אירועים'),
+          subtitle: _t('Each new event in the city.', 'כל אירוע חדש בעיר.'),
+          value: s.events,
+          enabled: on,
+          onChanged: (v) => set(s.copyWith(events: v)),
+        ),
+        _ToggleRow(
+          icon: Icons.storefront_outlined,
+          label: _t('New businesses', 'עסקים חדשים'),
+          subtitle: _t('When a new business opens.', 'כשעסק חדש נפתח.'),
+          value: s.businesses,
+          enabled: on,
+          onChanged: (v) => set(s.copyWith(businesses: v)),
         ),
         _ToggleRow(
           icon: Icons.local_offer_outlined,
@@ -315,9 +333,17 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
             'Offers from local businesses.',
             'הצעות מעסקים מקומיים.',
           ),
-          value: prefs.deals,
-          enabled: signedIn && prefs.pushEnabled,
-          onChanged: (v) => set(prefs.copyWith(deals: v)),
+          value: s.deals,
+          enabled: on,
+          onChanged: (v) => set(s.copyWith(deals: v)),
+        ),
+        _ToggleRow(
+          icon: Icons.apartment_outlined,
+          label: _t('Real estate', 'נדל״ן'),
+          subtitle: _t('Apartments and property news.', 'דירות ועדכוני נדל״ן.'),
+          value: s.realestate,
+          enabled: on,
+          onChanged: (v) => set(s.copyWith(realestate: v)),
         ),
         _ToggleRow(
           icon: Icons.location_on_outlined,
@@ -326,9 +352,18 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
             'What happens where you live.',
             'מה קורה במקום שבו אתם גרים.',
           ),
-          value: prefs.neighborhood,
-          enabled: signedIn && prefs.pushEnabled,
-          onChanged: (v) => set(prefs.copyWith(neighborhood: v)),
+          value: s.neighborhood,
+          enabled: on,
+          onChanged: (v) => set(s.copyWith(neighborhood: v)),
+        ),
+        _ActionRow(
+          icon: Icons.map_outlined,
+          label: '${_t('Neighbourhood', 'שכונה')}: '
+              '${hood ?? _t('not chosen', 'לא נבחרה')}',
+          onTap: () async {
+            final id = await pickPushNeighborhood(context, current: s.neighborhoodId);
+            if (id != null) set(ref.read(pushSettingsProvider).copyWith(neighborhoodId: id));
+          },
           isLast: true,
         ),
       ],
@@ -343,6 +378,17 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
     return _buildCard(
       title: _t('Access', 'הרשאות'),
       children: [
+        // Signed out there is no row to write a choice to, so the switches say
+        // so rather than appearing to remember anything.
+        if (!signedIn)
+          _SignInPrompt(
+            label: _t(
+              'Sign in to save your preferences.',
+              'התחברו כדי לשמור את ההעדפות שלכם.',
+            ),
+            actionLabel: _t('Sign In', 'התחברות'),
+            onTap: () => context.push('/login'),
+          ),
         _ToggleRow(
           icon: Icons.my_location_outlined,
           label: _t('Location', 'מיקום'),

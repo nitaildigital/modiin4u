@@ -676,6 +676,12 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
   bool _isFree = false;
   bool _isSoldOut = false;
   bool _isFeatured = false;
+  /// "Send a notification when published" (`notify_on_publish`,
+  /// migration 00045). On for a new row; a row from before notifications
+  /// existed opens with it off. Ticking it on a row that is already live and
+  /// was never announced sends one; clearing it before the notification
+  /// goes out cancels it.
+  bool _notifyOnPublish = true;
   String? _businessId;
 
   /// The categories in the order picked; the first is the primary. Null until
@@ -738,6 +744,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     _isFree = e?['is_free'] as bool? ?? false;
     _isSoldOut = e?['is_sold_out'] as bool? ?? false;
     _isFeatured = e?['is_featured'] as bool? ?? false;
+    _notifyOnPublish = e == null || (e['notify_on_publish'] as bool? ?? false);
     _businessId = e?['business_id'] as String?;
 
     if (e == null) {
@@ -1173,6 +1180,11 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                             _isFeatured,
                             (v) => setState(() => _isFeatured = v),
                           ),
+                          _toggle(
+                            tr('לשלוח התראה בפרסום', 'Send a notification when published'),
+                            _notifyOnPublish,
+                            (v) => setState(() => _notifyOnPublish = v),
+                          ),
                         ],
                       ),
                     ],
@@ -1532,6 +1544,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       'business_id': _businessId,
       'status': _status,
       'is_featured': _isFeatured,
+      'notify_on_publish': _notifyOnPublish,
       // Stamped the first time it goes out, and never moved after: the site's
       // "Newest" sort reads it.
       if (_status == 'published' && publishedAt == null)

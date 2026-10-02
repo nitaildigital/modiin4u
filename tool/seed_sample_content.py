@@ -825,6 +825,8 @@ class Seeder:
                 'is_free': price is None,
                 'price': price,
                 'status': 'published',
+                # Sample content: never announced to real devices (00045).
+                'notify_on_publish': False,
                 'is_featured': featured,
                 'rsvp_count': interested,
                 'published_at': self.iso(dt.timedelta(0)),

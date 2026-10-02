@@ -2202,6 +2202,108 @@ and gives every gesture to the chat; closed with the chat's × or Back.
 Checked on a OnePlus 6T (Android 9): the box stays above the keyboard, a
 reply shows whole above it, older messages scroll, and × returns to the app.
 
+### Push notifications: devices, automatic sends, the bell — 2 October
+
+What the client was told, and answered (2 Oct): anyone who installs the app
+or allows notifications on the website gets them, without an account; each
+device chooses its topics, a neighbourhood and its language; every new
+article, event or business is sent automatically to the people who chose that
+topic; deals and the rest stay manual; the panel shows how many it went to
+and how many opened it; the bell keeps what was sent. He asked for English
+for those who chose it, and asked about "viewed" and "converted" — we said
+viewed cannot be measured honestly, and asked whether a conversion means a
+call, directions or the website after opening. **Waiting on his answer.**
+
+- **Delivery:** Firebase Cloud Messaging for all three — Android, iPhone
+  (Firebase passes it to Apple's APNs) and browsers. One sender,
+  `supabase/functions/push-dispatch`, an Edge Function using Firebase's HTTP
+  v1 API with a service-account key. One request per device, 50 at a time,
+  so each device gets its own language and a dead token is found and switched
+  off (`is_active = false`) rather than retried for ever.
+- **When it sends:** pg_cron runs every minute, asks the database whether
+  any campaign is due, and only then calls the function with a secret header
+  (the vault's `push_dispatch_secret`). "Send now" in the panel is a campaign
+  scheduled for this moment, so it goes out within a minute and asks first,
+  with the number of devices. `push_claim_due` marks campaigns `sending`
+  before sending so two runs never send one twice; one stuck in `sending` for
+  30 minutes is marked failed, not resent, because some devices may have it.
+  An automatic one more than six hours late is marked failed too — "new
+  article" by then is not news, and without this a sender that was down (or
+  not yet deployed when 00045 ran) would release them all at once. Manual
+  ones the client timed still go.
+- **Devices, not profiles (migration 00045):** `push_devices`, one row per
+  installation or browser, keyed by its token, with the master switch, six
+  topics (news, events, businesses, deals, real estate, neighbourhood), a
+  neighbourhood and `he`/`en`. Written only through `register_push_device`,
+  which anyone may call — holding the token is being the device; residents
+  cannot read the table. 00016's `device_tokens` (keyed to a profile, never
+  written) is dropped while empty. The `notify_*`/`push_enabled` columns it
+  put on `profiles` are no longer read; Settings keeps location and health on
+  the profile, and notifications on the device (`lib/core/push/`), so they
+  work signed out.
+- **Automatic sends:** `notify_on_publish` on articles, events and
+  businesses, shown in each panel form as "Send a notification when
+  published". On for new rows; rows already live when the column was added
+  start with it off (they are not new, and an archived one put back must not
+  announce itself), drafts and rows awaiting review with it on. Going live
+  queues a campaign **five minutes ahead** so a slip can be cancelled in the
+  panel; until it goes, it follows the row — a new title changes its text,
+  clearing the box or taking the row down cancels it. Once sent, the row keeps
+  `push_campaign_id` and is never announced again. Ticking the box on a live
+  row that was never announced sends one. Events already over are not
+  announced. The article form's "Push-worthy" toggle (`push_worthy`, which
+  nothing read) became this box.
+- **Wording:** the automatic ones say "כתבה חדשה / New article", "אירוע חדש /
+  New event" (with the date), "עסק חדש בעיר / New in town" as the title, and
+  the item's own name — in Hebrew, as written — as the text. Manual ones have
+  optional English fields; empty, an English device gets the Hebrew.
+- **Counts:** `sent_count` is how many devices Firebase accepted it for, shown
+  as "Sent to" — not "delivered", which Firebase does not report. Opens go to
+  `push_events` once per device per campaign (`record_push_event`): the app
+  records the tap, the website the `?push=<id>` its notification opens with.
+  The table also takes `call`, `directions` and `website` for conversions,
+  unused until the client confirms that is what he means.
+- **The bell:** `push_feed` — what was sent in the last 60 days that this
+  device's choices match; a browser that has not allowed notifications sees
+  what went to everyone or a topic, never a single neighbourhood's.
+- **Asking permission:** the app asks once, the first time it reaches the
+  home screen; after a refusal the Settings switch opens the phone's settings.
+  A browser is never asked unprompted — only from the bell page's "Turn on" or
+  the Settings switch, both taps. A notification arriving while the app is
+  open shows as a banner over it (`PushHost`), since phones leave that to the
+  app.
+- **Android:** a "general" channel named התראות / Notifications (so the
+  phone's settings do not say "Miscellaneous"), a white bell as the
+  status-bar icon until the client supplies a one-colour logo, tinted turquoise.
+- **Replies (added the same day, at the client's request):** when a reply
+  to a review is approved, the review's author gets "תגובה חדשה לביקורת שלך /
+  New reply to your review" and everyone else with an approved reply in that
+  conversation gets "תגובה חדשה בשיחה / New reply in a conversation you're
+  in" — never the writer. The text is the writer's name and the reply; it
+  opens the business. Sent at once (approving was the deliberate step), only
+  when it is approved, never twice. To reach one person, a device now
+  records who is signed in on it (`push_devices.profile_id`, from the
+  session, cleared at sign-out); the audience is `profiles`, so it is in no
+  one else's bell, and the panel's list leaves these out. Settings has a
+  "Replies to my reviews" switch (app only — the website has no resident
+  accounts).
+- **Import scripts** set `notify_on_publish = false`, so re-running an import
+  never announces hundreds of old rows.
+- **Not done yet:** the Firebase project and keys (the client's), the APNs key
+  (Apple access), the iOS Notification Service Extension that shows a
+  picture in an iPhone notification (Android and browsers show it already),
+  conversions, and the website's notification on iPhone, which Apple allows
+  only for a site added to the home screen.
+- **Checked:** the migration and a full lifecycle (draft → publish → queued →
+  retitled → unticked/cancelled → ticked again → audience → claimed → opened
+  twice, counted once → bell per device → republished, not re-announced →
+  past event not announced) ran on the live database inside one transaction
+  that was rolled back; nothing remained. Replies the same way: pending
+  sends nothing, approval tells the author, a third reply tells the author
+  and the earlier replier but not its writer, the author's own reply tells
+  the others, re-saving sends nothing, only the author's bell shows it,
+  signing out unlinks the device. Not yet applied.
+
 ### The admin panel in English or Hebrew — 2 October
 
 The client asked for a setting in the panel to switch it between Hebrew and
@@ -2831,14 +2933,15 @@ offering the wrong one — which fails as `Permission denied
       switches dim and say why rather than pretending to remember. Four
       switches flipped quickly are four state changes and one write, not four
       writes racing each other to the same row
-- [x] **E1b** Migration `00016_notification_preferences.sql` — **not yet run.**
+- [x] **E1b** Migration `00016_notification_preferences.sql` — run; its
+      profile columns and `device_tokens` were replaced by 00045's devices.
       Adds the four topic columns to `profiles` and a `device_tokens` table:
       there was nowhere to record a device, so a push campaign had no one to
       send to. Booleans rather than one jsonb column, so an audience can be
       narrowed with an ordinary indexed WHERE
-- [ ] **E1c** Actual delivery — Firebase/APNs credentials, registering the
-      token on sign-in, and the admin side that composes a campaign. Blocked
-      the same way Google Maps is: it needs keys from the client
+- [ ] **E1c** Actual delivery — built 2 Oct (00045, `push-dispatch`,
+      `lib/core/push/`; see "Push notifications" above). Waiting on the
+      Firebase project's keys and Apple access, then a device test
 - [ ] **E1** **Notifications and access** — client priority. The screens
       (`admin_push_screen.dart`, `admin_team_screen.dart`) and the tables
       (`push_campaigns`, `push_automations`, `admin_roles`,

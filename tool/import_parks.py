@@ -259,6 +259,8 @@ def main():
         about = (r['text'] + '\n\n' + SOURCE_LINE).strip()
         created = db('POST', 'businesses', {
             'kind': 'park', 'status': 'active',
+            # Imported, not newly published: no push notification (00045).
+            'notify_on_publish': False,
             'name': r['name'], 'slug': r['slug'],
             'short_description': r['hood'],
             'full_description': about,

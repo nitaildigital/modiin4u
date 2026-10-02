@@ -267,6 +267,8 @@ def apply_or_plan(apply):
                 'logo_url': photo,
                 'cover_url': photo,
                 'status': 'active',
+                # Imported, not newly published: no push notification (00045).
+                'notify_on_publish': False,
                 'is_verified': True,
                 'canonical_url': p['link'],
             }

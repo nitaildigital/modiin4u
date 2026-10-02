@@ -44,6 +44,10 @@ class AdminTableNotifier
   /// paging, because the tables sort and filter in place.
   final int limit;
 
+  /// Rows the section never lists, as column → value: kept out in the query
+  /// itself, so the counts leave them out too.
+  final Map<String, Object> excluded;
+
   /// How many rows the table holds in total, which is not the same as how
   /// many were fetched. `articles` has 669 rows against a 500 limit, so the
   /// panel said "500 articles" and the oldest 169 could not be reached or
@@ -77,6 +81,7 @@ class AdminTableNotifier
     this.hasStatus = true,
     this.softDeleteStatus,
     this.limit = 500,
+    this.excluded = const {},
   }) : super(const AsyncValue.loading()) {
     _window = limit;
     load();
@@ -99,6 +104,9 @@ class AdminTableNotifier
       }
       for (final f in _filters.entries) {
         query = query.eq(f.key, f.value);
+      }
+      for (final f in excluded.entries) {
+        query = query.neq(f.key, f.value);
       }
       if (_search != null && _search!.trim().isNotEmpty) {
         // Commas and brackets are the grammar of `or`, so inside the text

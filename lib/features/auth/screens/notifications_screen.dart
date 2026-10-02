@@ -1,32 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_fonts.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../widgets/m_account_widgets.dart' show mTr;
+import '../widgets/push_feed_list.dart';
 import 'web_notifications_screen.dart';
 import '../../../l10n/app_localizations.dart';
 
-class NotificationsScreen extends StatefulWidget {
+/// The bell: the notifications sent so far that this device would have
+/// received (`push_feed`, migration 00045), newest first.
+///
+/// This screen once opened with six notifications written into its source —
+/// an offer nobody had made, a property "matching your search" with
+/// `listings` empty, an event the reader was told they had confirmed. What
+/// it lists now is only what the panel actually sent.
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  /// Empty, and it stays empty until there is a table behind it.
-  ///
-  /// This screen opened with six notifications written into the source: a
-  /// 20% offer from פיצה פרגו, a new four-room property "matching your
-  /// search" at ₪2,450,000, a street-food festival tomorrow that told the
-  /// reader **"you confirmed you were coming"**, fifty points awarded for a
-  /// review, and roadworks on a named street. Nobody had offered, listed,
-  /// RSVP'd, earned or announced any of it.
-  ///
-  /// The schema has `admin_notifications` and nothing for residents, so
-  /// there is no source to read. The bell in the header opens this from
-  /// every screen in the app.
-  final List<_NotificationItem> _notifications = const [];
-
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   /// Said plainly. An empty scroll area reads as a screen that failed to
   /// load, and this one has not failed — there is nothing yet.
   Widget _buildEmptyState() {
@@ -96,128 +92,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ),
         ),
-        body: _notifications.isEmpty
-            ? _buildEmptyState()
-            : ListView.separated(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          itemCount: _notifications.length,
-          separatorBuilder: (_, __) =>
-              const Divider(color: AppColors.border, height: 1, indent: 76),
-          itemBuilder: (context, index) {
-            final n = _notifications[index];
-            return InkWell(
-              onTap: () {
-                if (n.isNew) {
-                  setState(() {
-                    _notifications[index] = _NotificationItem(
-                      icon: n.icon,
-                      title: n.title,
-                      body: n.body,
-                      time: n.time,
-                      isNew: false,
-                      route: n.route,
-                    );
-                  });
-                }
-                context.push(n.route);
-              },
-              child: Container(
-                color: n.isNew
-                    ? AppColors.turquoise.withValues(alpha: 0.03)
-                    : null,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 14,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: context.surfaceDim,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(n.icon, size: 22, color: AppColors.turquoise),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  n.title,
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubik,
-                                    fontSize: 14,
-                                    fontWeight: n.isNew
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    color: context.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              if (n.isNew)
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.turquoise,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            n.body,
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 13,
-                              color: AppColors.grayMeta,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            n.time,
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 12,
-                              color: AppColors.grayLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+        body: Column(
+          children: [
+            PushTurnOnCard(
+              title: mTr(context, 'Get a notification when something new is published',
+                  'קבלו התראה כשמתפרסם משהו חדש'),
+              action: mTr(context, 'Turn on', 'הפעלה'),
+            ),
+            Expanded(
+              child: PushFeedList(
+                languageCode: ref.watch(localeProvider).languageCode,
+                empty: _buildEmptyState(),
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
-}
-
-class _NotificationItem {
-  final IconData icon;
-  final String title;
-  final String body;
-  final String time;
-  final bool isNew;
-  final String route;
-
-  const _NotificationItem({
-    required this.icon,
-    required this.title,
-    required this.body,
-    required this.time,
-    required this.isNew,
-    required this.route,
-  });
 }

@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_push_provider.dart';
 import '../providers/admin_realestate_provider.dart'
     show adminNeighborhoodOptionsProvider;
 import '../widgets/admin_form_pickers.dart';
+import '../widgets/image_upload_field.dart';
+import '../widgets/push_destination_field.dart';
 import '../admin_language.dart';
 
 /// `push_status`, the database enum, in the panel's words.
@@ -20,12 +23,14 @@ Map<String, String> get _statusLabels => {
   'cancelled': tr('בוטל', 'Cancelled'),
 };
 
-/// The four topics a resident can opt in to — the `notify_*` switches on
-/// their profile.
+/// The topics a device can opt in to in the app's Settings — the
+/// `notify_*` switches on `push_devices` (migration 00045). News, events and
+/// businesses are also what the automatic notifications go to.
 Map<String, String> get _topics => {
   'news': tr('חדשות', 'News'),
+  'events': tr('אירועים', 'Events'),
+  'businesses': tr('עסקים חדשים', 'New businesses'),
   'deals': tr('מבצעים', 'Deals'),
-  'neighborhood': tr('השכונה שלי', 'My neighbourhood'),
   'realestate': tr('נדל״ן', 'Real estate'),
 };
 
@@ -55,9 +60,7 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
 
     return Column(
       children: [
-        // Said before anything else: the screen looks like it sends, and
-        // it does not.
-        const _NotConnectedNote(),
+        const _HowItWorksNote(),
 
         // ─── Stats Row ───
         if (loaded != null)
@@ -337,9 +340,10 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
   }
 }
 
-/// Sending is not connected, said where the client will read it.
-class _NotConnectedNote extends StatelessWidget {
-  const _NotConnectedNote();
+/// When things go out, said where the client will read it — above all that
+/// new articles, events and businesses send themselves.
+class _HowItWorksNote extends StatelessWidget {
+  const _HowItWorksNote();
 
   @override
   Widget build(BuildContext context) {
@@ -347,22 +351,23 @@ class _NotConnectedNote extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.1),
+        color: AppColors.turquoise.withValues(alpha: 0.08),
         border: Border(
-          bottom: BorderSide(color: AppColors.gold.withValues(alpha: 0.4)),
+          bottom: BorderSide(color: AppColors.turquoise.withValues(alpha: 0.3)),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, size: 18, color: AppColors.gold),
+          const Icon(Icons.info_outline, size: 18, color: AppColors.turquoise),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              tr('שליחת התראות עדיין לא מחוברת. אפשר לכתוב הודעות ולשמור אותן '
-              'כטיוטה או כמתוזמנות, אבל שום הודעה לא נשלחת לטלפונים — גם '
-              'לא הודעה מתוזמנת כשמגיע מועדה. כדי לחבר את השליחה נדרשים '
-              'מפתחות Firebase של האפליקציה (ולאייפון גם APNs של Apple).', 'Sending notifications is not connected yet. You can write notifications and save them as drafts or scheduled, but no notification is sent to phones — not even a scheduled one when its time comes. Connecting the sending needs the app\'s Firebase keys (and Apple\'s APNs for iPhone).'),
+              tr('הודעה נשלחת עד דקה אחרי המועד שלה. כתבה, אירוע או עסק חדש '
+              'שמתפרסמים נשלחים אוטומטית חמש דקות אחרי הפרסום למי שבחר בנושא, '
+              'אלא אם הורדתם את הסימון "לשלוח התראה" בטופס שלהם — ועד שהיא '
+              'יוצאת, אפשר לבטל אותה כאן. "נפתחו" סופר כל מכשיר פעם אחת.',
+              'A notification goes out within a minute of its time. A new article, event or business is sent automatically five minutes after it is published to everyone who chose that topic, unless you cleared "Send a notification" in its form — and until it goes out, you can cancel it here. "Opened" counts each device once.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -435,6 +440,7 @@ String _audienceLabel(Map<String, dynamic> n, Map<String, String> hoods) {
   return switch (n['audience_type'] as String? ?? 'all') {
     'neighborhood' => tr('שכונה: ${hoods[filter?['neighborhood_id']] ?? '—'}', 'Neighbourhood: ${hoods[filter?['neighborhood_id']] ?? '—'}'),
     'topic' => tr('נושא: ${_topics[filter?['topic']] ?? '—'}', 'Topic: ${_topics[filter?['topic']] ?? '—'}'),
+    'device' => tr('מכשיר בדיקה', 'Test device'),
     _ => tr('כולם', 'Everyone'),
   };
 }
@@ -472,7 +478,7 @@ class _PushTable extends StatelessWidget {
               _Col(tr('כותרת', 'Title'), flex: 3),
               _Col(tr('קהל יעד', 'Target audience'), flex: 2),
               _Col(tr('סטטוס', 'Status'), flex: 1),
-              if (isWide) _Col(tr('נמסרו', 'Delivered'), flex: 1),
+              if (isWide) _Col(tr('נשלחו אל', 'Sent to'), flex: 1),
               if (isWide) _Col(tr('נפתחו', 'Opened'), flex: 1),
               if (isWide) _Col(tr('תאריך', 'Date'), flex: 2),
               const SizedBox(width: 40),
@@ -489,7 +495,9 @@ class _PushTable extends StatelessWidget {
             itemBuilder: (_, i) {
               final n = notifications[i];
               final status = n['status'] as String? ?? 'draft';
-              final delivered = n['delivered_count'] as int? ?? 0;
+              // Devices Firebase accepted it for — "about", as the client was
+              // told: an accepted message is not proof it was seen.
+              final delivered = n['sent_count'] as int? ?? 0;
               final opened = n['opened_count'] as int? ?? 0;
               final sentAt = n['sent_at'] as String?;
               final scheduledAt = n['scheduled_at'] as String?;
@@ -553,6 +561,16 @@ class _PushTable extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            if (n['source_type'] != null)
+                              Text(
+                                tr('אוטומטית', 'Automatic'),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.turquoise,
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -585,7 +603,7 @@ class _PushTable extends StatelessWidget {
                           flex: 1,
                           child: Text(
                             delivered > 0
-                                ? '${(opened / delivered * 100).toInt()}%'
+                                ? '$opened (${(opened / delivered * 100).round()}%)'
                                 : '—',
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
@@ -673,12 +691,15 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
 
   late final TextEditingController _title;
   late final TextEditingController _body;
+  late final TextEditingController _titleEn;
+  late final TextEditingController _bodyEn;
   late final TextEditingController _imageUrl;
-  late final TextEditingController _deepLink;
+  String? _deepLink;
 
-  /// What the form may set. Sent, sending and failed belong to the sender
-  /// that does not exist yet; a campaign in one of those is shown, not
-  /// edited back into a draft by accident.
+  /// What the form may set: a draft, now, or a time. "Now" is saved as
+  /// scheduled for this moment, which the sender picks up within a minute.
+  /// Sent, sending and failed belong to the sender; a campaign in one of
+  /// those is shown, not edited back into a draft by accident.
   String _status = 'draft';
   String _audience = 'all';
   String? _neighborhoodId;
@@ -697,8 +718,10 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     final n = widget.notification;
     _title = TextEditingController(text: n?['title'] as String? ?? '');
     _body = TextEditingController(text: n?['body'] as String? ?? '');
+    _titleEn = TextEditingController(text: n?['title_en'] as String? ?? '');
+    _bodyEn = TextEditingController(text: n?['body_en'] as String? ?? '');
     _imageUrl = TextEditingController(text: n?['image_url'] as String? ?? '');
-    _deepLink = TextEditingController(text: n?['deep_link'] as String? ?? '');
+    _deepLink = n?['deep_link'] as String?;
     if (_original == 'scheduled') _status = 'scheduled';
     final audience = n?['audience_type'] as String?;
     if (audience == 'neighborhood' || audience == 'topic') {
@@ -717,8 +740,9 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
   void dispose() {
     _title.dispose();
     _body.dispose();
+    _titleEn.dispose();
+    _bodyEn.dispose();
     _imageUrl.dispose();
-    _deepLink.dispose();
     super.dispose();
   }
 
@@ -876,13 +900,25 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                         validator: (v) =>
                             v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
+                      // English is optional: a device set to English gets
+                      // it, and the Hebrew when it is left empty.
+                      _sectionLabel(tr('באנגלית (לא חובה)', 'In English (optional)')),
+                      _field(tr('כותרת באנגלית', 'Title in English'), _titleEn),
                       _field(
-                        tr('קישור תמונה', 'Image link'),
-                        _imageUrl,
-                        hint: 'https://...',
-                        onChanged: (_) => setState(() {}),
+                        tr('תוכן באנגלית', 'Text in English'),
+                        _bodyEn,
+                        maxLines: 3,
                       ),
-                      if (_imageUrl.text.trim().isNotEmpty) ...[
+                      if (_editable)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: ImageUploadField(
+                            label: tr('תמונה (לא חובה)', 'Image (optional)'),
+                            controller: _imageUrl,
+                            folder: 'push',
+                          ),
+                        )
+                      else if (_imageUrl.text.trim().isNotEmpty) ...[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
@@ -890,30 +926,15 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                             height: 120,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              height: 60,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceLight,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                tr('תמונה לא נמצאה', 'Image not found'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                  color: AppColors.grayLight,
-                                ),
-                              ),
-                            ),
+                            errorBuilder: (_, _, _) => const SizedBox.shrink(),
                           ),
                         ),
                         const SizedBox(height: 12),
                       ],
-                      _field(
-                        tr('קישור בתוך האפליקציה', 'In-app link'),
-                        _deepLink,
-                        hint: '/event/…',
+                      PushDestinationField(
+                        value: _deepLink,
+                        enabled: _editable,
+                        onChanged: (v) => _deepLink = v,
                       ),
                       const SizedBox(height: 4),
                       _dropdown<String>(tr('קהל יעד', 'Target audience'), _audience, {
@@ -935,10 +956,12 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                           _topics,
                           (v) => _topic = v ?? 'news',
                         ),
+                      if (_editable) _AudienceEstimate(type: _audience, filter: _audienceFilter),
                       if (_editable)
-                        _dropdown<String>(tr('מצב', 'Status'), _status, {
-                          'draft': tr('טיוטה', 'Draft'),
-                          'scheduled': tr('מתוזמן', 'Scheduled'),
+                        _dropdown<String>(tr('שליחה', 'Sending'), _status, {
+                          'draft': tr('טיוטה — לא לשלוח עדיין', 'Draft — do not send yet'),
+                          'now': tr('לשלוח עכשיו', 'Send now'),
+                          'scheduled': tr('לתזמן', 'Schedule'),
                         }, (v) => _status = v ?? 'draft'),
                       if (_status == 'scheduled' && _editable)
                         Padding(
@@ -988,7 +1011,13 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                     children: [
                       Expanded(
                         child: Text(
-                          tr('נשמר בלבד — לא נשלח', 'Saved only — not sent'),
+                          !_editable
+                              ? ''
+                              : switch (_status) {
+                                  'now' => tr('יוצאת תוך דקה', 'Goes out within a minute'),
+                                  'scheduled' => tr('יוצאת במועד שנקבע', 'Goes out at the time set'),
+                                  _ => tr('נשמרת בלבד — לא נשלחת', 'Saved only — not sent'),
+                                },
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 11,
@@ -1023,9 +1052,11 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                                   ),
                                 )
                               : Text(
-                                  _status == 'scheduled'
-                                      ? tr('שמור כמתוזמן', 'Save as scheduled')
-                                      : tr('שמור כטיוטה', 'Save as draft'),
+                                  switch (_status) {
+                                    'now' => tr('שלח עכשיו', 'Send now'),
+                                    'scheduled' => tr('שמור כמתוזמן', 'Save as scheduled'),
+                                    _ => tr('שמור כטיוטה', 'Save as draft'),
+                                  },
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
                                     fontSize: 13,
@@ -1070,6 +1101,59 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
   String? _text(TextEditingController c) =>
       c.text.trim().isEmpty ? null : c.text.trim();
 
+  Map<String, dynamic>? get _audienceFilter => switch (_audience) {
+    'neighborhood' => {'neighborhood_id': _neighborhoodId},
+    'topic' => {'topic': _topic},
+    _ => null,
+  };
+
+  Widget _sectionLabel(String text) => Padding(
+    padding: const EdgeInsets.only(top: 4, bottom: 8),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontFamily: AppFonts.rubik,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: AppColors.grayText,
+      ),
+    ),
+  );
+
+  /// "Send now" cannot be taken back after the minute is up, so it asks
+  /// first, with how many devices it is about to reach.
+  Future<bool> _confirmSendNow() async {
+    int? reach;
+    try {
+      reach = await SupabaseConfig.client.rpc(
+        'push_audience_size',
+        params: {'p_audience_type': _audience, 'p_audience_filter': _audienceFilter},
+      ) as int?;
+    } catch (_) {}
+    if (!mounted) return false;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: adminDir,
+        child: AlertDialog(
+          title: Text(tr('לשלוח עכשיו?', 'Send now?'), style: TextStyle(fontFamily: AppFonts.rubik)),
+          content: Text(
+            reach == null
+                ? tr('ההודעה תצא תוך דקה.', 'The notification goes out within a minute.')
+                : tr('ההודעה תצא תוך דקה לכ-$reach מכשירים.',
+                    'The notification goes out within a minute to about $reach devices.'),
+            style: TextStyle(fontFamily: AppFonts.rubik),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('חזרה', 'Back'))),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('שלח', 'Send'))),
+          ],
+        ),
+      ),
+    );
+    return ok == true;
+  }
+
   Future<void> _save() async {
     final valid = _formKey.currentState!.validate();
     final needsTime = _status == 'scheduled' && _scheduledAt == null;
@@ -1079,24 +1163,26 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
       showAdminError(context, tr('לא נשמר', 'Not saved'), tr('יש לבחור שכונה', 'A neighbourhood must be chosen'));
       return;
     }
+    if (_status == 'now' && !await _confirmSendNow()) return;
     setState(() => _saving = true);
 
-    // Never `sent`, never `sent_at`: nothing sends yet.
+    // Never `sent` or `sent_at`: those are the sender's to write once it has
+    // sent (supabase/functions/push-dispatch).
     final fields = <String, dynamic>{
       'title': _title.text.trim(),
       'body': _body.text.trim(),
+      'title_en': _text(_titleEn),
+      'body_en': _text(_bodyEn),
       'image_url': _text(_imageUrl),
-      'deep_link': _text(_deepLink),
-      'status': _status,
-      'scheduled_at': _status == 'scheduled'
-          ? _scheduledAt!.toUtc().toIso8601String()
-          : null,
-      'audience_type': _audience,
-      'audience_filter': switch (_audience) {
-        'neighborhood' => {'neighborhood_id': _neighborhoodId},
-        'topic' => {'topic': _topic},
+      'deep_link': _deepLink,
+      'status': _status == 'draft' ? 'draft' : 'scheduled',
+      'scheduled_at': switch (_status) {
+        'now' => DateTime.now().toUtc().toIso8601String(),
+        'scheduled' => _scheduledAt!.toUtc().toIso8601String(),
         _ => null,
       },
+      'audience_type': _audience,
+      'audience_filter': _audienceFilter,
     };
 
     try {
@@ -1223,5 +1309,51 @@ class _Debouncer {
   void run(VoidCallback action) {
     _timer?.cancel();
     _timer = Timer(Duration(milliseconds: milliseconds), action);
+  }
+}
+
+
+/// About how many devices the audience reaches right now — devices that
+/// allowed notifications, kept them on and chose this topic or neighbourhood.
+class _AudienceEstimate extends StatefulWidget {
+  final String type;
+  final Map<String, dynamic>? filter;
+  const _AudienceEstimate({required this.type, required this.filter});
+
+  @override
+  State<_AudienceEstimate> createState() => _AudienceEstimateState();
+}
+
+class _AudienceEstimateState extends State<_AudienceEstimate> {
+  Future<int?>? _count;
+  String _key = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final key = '${widget.type}|${widget.filter}';
+    if (key != _key) {
+      _key = key;
+      _count = SupabaseConfig.client
+          .rpc('push_audience_size', params: {
+            'p_audience_type': widget.type,
+            'p_audience_filter': widget.filter,
+          })
+          .then((v) => v as int?)
+          .catchError((_) => null);
+    }
+    return FutureBuilder<int?>(
+      future: _count,
+      builder: (context, snap) {
+        final n = snap.data;
+        if (n == null) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            tr('מגיעה כרגע לכ-$n מכשירים', 'Reaches about $n devices right now'),
+            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
+          ),
+        );
+      },
+    );
   }
 }

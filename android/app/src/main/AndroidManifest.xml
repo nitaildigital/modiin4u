@@ -27,10 +27,26 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
 
+    <!-- Push notifications. From Android 13 the app asks for this once;
+         before it, notifications were allowed by default. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <application
         android:label="Modiin4U"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- A push that arrives while the app is closed is drawn by Firebase,
+             which reads these: the status-bar silhouette, its tint, and the
+             channel MainActivity creates. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notification"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_tint"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="general"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

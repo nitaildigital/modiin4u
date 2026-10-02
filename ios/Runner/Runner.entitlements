@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Push notifications, through Firebase. "development" is what a debug
+	     build signs with; an App Store or TestFlight export signs the same
+	     key as "production" on its own. -->
+	<key>aps-environment</key>
+	<string>development</string>
 	<!-- Step group invitations open the app from https://<site>/join/<code>:
 	     the interim secure address until app.modiin4u.co.il is live, and the
 	     domain. Each site serves /.well-known/apple-app-site-association

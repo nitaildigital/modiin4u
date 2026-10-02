@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/providers/locale_provider.dart';
+import '../../../core/push/push_service.dart';
+import '../../../core/push/push_settings.dart';
+import '../../../core/push/push_switch.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../../l10n/app_localizations.dart';
@@ -121,6 +124,123 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  /// The device's notification choices (lib/core/push): the master switch,
+  /// the topics sent automatically (news, events, businesses), the ones the
+  /// client sends by hand (deals, real estate), and a neighbourhood.
+  List<Widget> _pushRows(
+    BuildContext context,
+    Widget Function({
+      String? svg,
+      IconData? icon,
+      required String title,
+      required String subtitle,
+      required bool value,
+      required bool enabled,
+      required ValueChanged<bool> onChanged,
+    }) toggle,
+  ) {
+    final l = L.of(context);
+    final s = ref.watch(pushSettingsProvider);
+    final allowed = ref.read(pushServiceProvider).allowed;
+    void set(PushSettings next) => ref.read(pushSettingsProvider.notifier).update(next);
+    final on = s.enabled;
+    final hood = ref.watch(pushNeighborhoodNameProvider).valueOrNull;
+
+    return [
+      ValueListenableBuilder<bool?>(
+        valueListenable: allowed,
+        builder: (context, isAllowed, _) => toggle(
+          svg: 'assets/icons/m_account_c_bell.svg',
+          title: mTr(context, 'Push Notifications', 'התראות פוש'),
+          // Refused in the phone's settings, the switch alone cannot bring
+          // them back; saying so beats a switch that seems to do nothing.
+          subtitle: on && isAllowed == false
+              ? mTr(context, 'Blocked in the phone\'s settings — tap to allow',
+                  'חסומות בהגדרות הטלפון — הקישו כדי לאפשר')
+              : mTr(context, 'Manage push notification preferences',
+                  'ניהול העדפות התראות פוש'),
+          value: on && isAllowed != false,
+          enabled: true,
+          onChanged: (v) => setPushEnabled(ref, v),
+        ),
+      ),
+      toggle(
+        icon: IconsaxPlusLinear.document_text,
+        title: l.notifyNews,
+        subtitle: mTr(context, 'Each new article', 'כל כתבה חדשה'),
+        value: s.news,
+        enabled: on,
+        onChanged: (v) => set(s.copyWith(news: v)),
+      ),
+      toggle(
+        icon: IconsaxPlusLinear.calendar_1,
+        title: mTr(context, 'Events', 'אירועים'),
+        subtitle: mTr(context, 'Each new event in the city', 'כל אירוע חדש בעיר'),
+        value: s.events,
+        enabled: on,
+        onChanged: (v) => set(s.copyWith(events: v)),
+      ),
+      toggle(
+        icon: IconsaxPlusLinear.shop,
+        title: mTr(context, 'New businesses', 'עסקים חדשים'),
+        subtitle: mTr(context, 'When a new business opens', 'כשעסק חדש נפתח'),
+        value: s.businesses,
+        enabled: on,
+        onChanged: (v) => set(s.copyWith(businesses: v)),
+      ),
+      toggle(
+        icon: IconsaxPlusLinear.discount_shape,
+        title: l.notifyDeals,
+        subtitle: l.notifyDealsHint,
+        value: s.deals,
+        enabled: on,
+        onChanged: (v) => set(s.copyWith(deals: v)),
+      ),
+      toggle(
+        icon: IconsaxPlusLinear.building,
+        title: mTr(context, 'Real estate', 'נדל״ן'),
+        subtitle: mTr(context, 'Apartments and property news', 'דירות ועדכוני נדל״ן'),
+        value: s.realestate,
+        enabled: on,
+        onChanged: (v) => set(s.copyWith(realestate: v)),
+      ),
+      toggle(
+        icon: IconsaxPlusLinear.location,
+        title: l.notifyNeighborhood,
+        subtitle: l.notifyNeighborhoodHint,
+        value: s.neighborhood,
+        enabled: on,
+        onChanged: (v) => set(s.copyWith(neighborhood: v)),
+      ),
+      // Replies reach only the person signed in, so signed out it says so.
+      toggle(
+        icon: IconsaxPlusLinear.messages_2,
+        title: mTr(context, 'Replies to my reviews', 'תגובות לביקורות שלי'),
+        subtitle: ref.watch(isLoggedInProvider)
+            ? mTr(context, 'When someone replies in a conversation you\'re in',
+                'כשמישהו מגיב בשיחה שאתם חלק ממנה')
+            : mTr(context, 'Sign in to get these', 'יש להתחבר כדי לקבל אותן'),
+        value: s.replies,
+        enabled: on,
+        onChanged: (v) => set(s.copyWith(replies: v)),
+      ),
+      MSettingsRow(
+        leading: const MIconCircle(icon: IconsaxPlusLinear.map_1),
+        title: mTr(context, 'My neighbourhood', 'השכונה שלי'),
+        subtitle: mTr(context, 'Which neighbourhood\'s updates you get',
+            'על איזו שכונה לקבל עדכונים'),
+        value: hood ?? mTr(context, 'Not chosen', 'לא נבחרה'),
+        enabled: on && s.neighborhood,
+        onTap: on && s.neighborhood
+            ? () async {
+                final id = await pickPushNeighborhood(context, current: s.neighborhoodId);
+                if (id != null) set(ref.read(pushSettingsProvider).copyWith(neighborhoodId: id));
+              }
+            : null,
+      ),
+    ];
+  }
+
   /// The phone layout, to the mobile "Settings" frame: grey section labels
   /// over white bordered cards. The design shows one push switch; the topic
   /// and access switches the app already had sit in the same cards, so no
@@ -171,55 +291,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   30 + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
+                  MSection(
+                    label: l.notifications,
+                    children: _pushRows(context, toggle),
+                  ),
+                  gap,
+
                   // Signed out there is no row to write a choice to, so the
-                  // switches say so rather than appearing to remember anything.
+                  // access switches below say so rather than appearing to
+                  // remember anything. Notifications above are the device's
+                  // and need no account.
                   if (!signedIn) ...[
                     _SignInPrompt(onTap: () => context.push('/login')),
                     const SizedBox(height: 12),
                   ],
-
-                  MSection(
-                    label: l.notifications,
-                    children: [
-                      toggle(
-                        svg: 'assets/icons/m_account_c_bell.svg',
-                        title: mTr(context, 'Push Notifications', 'התראות פוש'),
-                        subtitle: mTr(
-                          context,
-                          'Manage push notification preferences',
-                          'ניהול העדפות התראות פוש',
-                        ),
-                        value: prefs.pushEnabled,
-                        enabled: signedIn,
-                        onChanged: (v) => set(prefs.copyWith(pushEnabled: v)),
-                      ),
-                      toggle(
-                        icon: IconsaxPlusLinear.document_text,
-                        title: l.notifyNews,
-                        subtitle: l.notifyNewsHint,
-                        value: prefs.news,
-                        enabled: signedIn && prefs.pushEnabled,
-                        onChanged: (v) => set(prefs.copyWith(news: v)),
-                      ),
-                      toggle(
-                        icon: IconsaxPlusLinear.discount_shape,
-                        title: l.notifyDeals,
-                        subtitle: l.notifyDealsHint,
-                        value: prefs.deals,
-                        enabled: signedIn && prefs.pushEnabled,
-                        onChanged: (v) => set(prefs.copyWith(deals: v)),
-                      ),
-                      toggle(
-                        icon: IconsaxPlusLinear.location,
-                        title: l.notifyNeighborhood,
-                        subtitle: l.notifyNeighborhoodHint,
-                        value: prefs.neighborhood,
-                        enabled: signedIn && prefs.pushEnabled,
-                        onChanged: (v) => set(prefs.copyWith(neighborhood: v)),
-                      ),
-                    ],
-                  ),
-                  gap,
 
                   MSection(
                     label: l.account,

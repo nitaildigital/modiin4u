@@ -809,6 +809,12 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   bool _isRecommended = false;
   bool _isVerified = false;
   bool _noindex = false;
+  /// "Send a notification when it goes live" (`notify_on_publish`,
+  /// migration 00045). On for a new row; a row from before notifications
+  /// existed opens with it off. Ticking it on a row that is already live and
+  /// was never announced sends one; clearing it before the notification
+  /// goes out cancels it.
+  bool _notifyOnPublish = true;
 
   bool get _isEditing => widget.business != null;
 
@@ -985,6 +991,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     _isFeatured = b?['is_featured'] as bool? ?? false;
     _isRecommended = b?['is_recommended'] as bool? ?? false;
     _isVerified = b?['is_verified'] as bool? ?? false;
+    _notifyOnPublish = b == null || (b['notify_on_publish'] as bool? ?? false);
     _noindex = b?['noindex'] as bool? ?? false;
   }
 
@@ -1653,6 +1660,11 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
               _isVerified,
               (v) => setState(() => _isVerified = v),
             ),
+            _toggle(
+              tr('לשלוח התראה כשהעסק עולה', 'Send a notification when it goes live'),
+              _notifyOnPublish,
+              (v) => setState(() => _notifyOnPublish = v),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -2262,6 +2274,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
       'open_on_shabbat': _openOnShabbat,
       'is_featured': _isFeatured,
       'is_recommended': _isRecommended,
+      'notify_on_publish': _notifyOnPublish,
       'featured_start': _dateForColumn(_featuredStart.text, endOfDay: false),
       'featured_end': _dateForColumn(_featuredEnd.text, endOfDay: true),
       'is_verified': _isVerified,

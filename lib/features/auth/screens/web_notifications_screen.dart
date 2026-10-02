@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../widgets/push_feed_list.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Notifications — desktop
 //
-// Deliberately one empty state in a reading column.
-//
-// The schema has `admin_notifications` and nothing for residents, so there
-// is no source to read and nothing to list. Six notifications were once
-// written into the phone screen's source — an offer nobody had made, an
-// event the reader was told they had confirmed — and they were removed. This
-// page does not bring them back at a wider width, and there is no "mark all
-// as read" for a list with nothing in it.
+// The notifications sent so far, in a reading column, as on the phone
+// (`push_feed`). A browser that has not allowed notifications sees what went
+// to everyone or to a topic, under the button that allows them — the one
+// place a visitor can, since browsers only ask from a tap.
 //
 // The width it gains goes to the chrome: the bell in every header opens this
 // page, and on a laptop it used to open a 430px column in an empty window.
@@ -29,15 +27,15 @@ const _kIconGrey = Color(0xFF6D6D6D);
 
 const _kColumnWidth = 720.0;
 
-class WebNotificationsContent extends StatefulWidget {
+class WebNotificationsContent extends ConsumerStatefulWidget {
   const WebNotificationsContent({super.key});
 
   @override
-  State<WebNotificationsContent> createState() =>
+  ConsumerState<WebNotificationsContent> createState() =>
       _WebNotificationsContentState();
 }
 
-class _WebNotificationsContentState extends State<WebNotificationsContent>
+class _WebNotificationsContentState extends ConsumerState<WebNotificationsContent>
     with WebLanguageState<WebNotificationsContent> {
   /// The phone screen is written in Hebrew only. Here the one sentence it
   /// says exists in both, so the page follows the navbar's toggle like every
@@ -82,8 +80,20 @@ class _WebNotificationsContentState extends State<WebNotificationsContent>
                                   height: 1.2,
                                 ),
                               ),
-                              const SizedBox(height: 32),
-                              _buildEmptyState(),
+                              const SizedBox(height: 16),
+                              PushTurnOnCard(
+                                title: _t(
+                                  'Get a notification in this browser when something new is published.',
+                                  'קבלו התראה בדפדפן הזה כשמתפרסם משהו חדש.',
+                                ),
+                                action: _t('Turn on', 'הפעלה'),
+                              ),
+                              const SizedBox(height: 16),
+                              PushFeedList(
+                                languageCode: _isHebrew ? 'he' : 'en',
+                                empty: _buildEmptyState(),
+                                shrinkWrap: true,
+                              ),
                             ],
                           ),
                         ),

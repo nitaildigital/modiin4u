@@ -50,6 +50,12 @@
 	<string>$(MAPS_API_KEY)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Modiin4U needs camera access to take photos of your apartment listing.</string>
+	<!-- Lets Firebase hand the app a push's data and a refreshed token while
+	     it is in the background, as firebase_messaging asks. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Modiin4U reads your steps, walking distance and active calories from Apple Health to show your daily activity and share your step totals with the groups you join.</string>
 	<key>NSHealthUpdateUsageDescription</key>

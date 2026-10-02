@@ -10,6 +10,7 @@ import 'core/router/app_router.dart';
 import 'core/supabase/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/locale_provider.dart';
+import 'core/push/push_host.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/page_title/page_title.dart';
@@ -139,6 +140,9 @@ class Modiin4uApp extends ConsumerWidget {
         darkTheme: AppTheme.dark,
         themeMode: themeMode,
         routerConfig: appRouter,
+        // Push notifications: taps open their page, and one that arrives
+        // while the app is open shows as a banner over it.
+        builder: (context, child) => PushHost(child: child ?? const SizedBox.shrink()),
 
         // ─── Language ───
         //

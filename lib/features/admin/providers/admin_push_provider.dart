@@ -5,21 +5,18 @@ import 'admin_table_notifier.dart';
 
 /// Push campaigns, on `push_campaigns`.
 ///
-/// Composing and scheduling one works. **Sending does not**: that needs the
-/// client's Firebase (and, for iPhones, APNs) credentials, which have not
-/// been supplied, and nothing registers device tokens yet. So a campaign is
-/// saved as a draft or as scheduled and stays that way — the panel never
-/// marks one sent. It used to: "send now" wrote `status = 'sent'` and a
-/// `sent_at` while nothing left the building, alongside an invented
-/// recipient count (5,400 or 1,200) and columns the table does not have
-/// (`type`, `target_audience`, `target_value`, `read_count`,
-/// `total_recipients`), so the insert was refused anyway.
+/// The panel saves a campaign as a draft or scheduled (now, or for a time);
+/// `supabase/functions/push-dispatch` sends it when it is due and writes
+/// `sent`, `sent_at` and the counts. The panel never marks one sent itself.
 ///
 /// Who a campaign is for is `audience_type` plus `audience_filter`:
-/// everyone, one neighbourhood (`{"neighborhood_id": …}`), or the residents
-/// who opted in to one topic (`{"topic": "news"}` and so on — the four
-/// `notify_*` switches on `profiles`). Whatever does the sending, once it
-/// exists, reads those.
+/// everyone, one neighbourhood (`{"neighborhood_id": …}`), or the devices
+/// that opted in to one topic (`{"topic": "news"}` and so on — the
+/// `notify_*` switches on `push_devices`, migration 00045).
+///
+/// The notifications sent to one person when someone replies to them
+/// (`audience_type = 'profiles'`) are left out: one per approved reply would
+/// bury the client's own campaigns, and they are not his to edit.
 ///
 /// Cancelling marks the row `cancelled` (migration 00035 added the word to
 /// `push_status`); it can be put back to draft.
@@ -39,6 +36,7 @@ class AdminPushListNotifier extends AdminTableNotifier {
         columns: '*, businesses(id, name)',
         orderBy: 'created_at',
         softDeleteStatus: 'cancelled',
+        excluded: const {'audience_type': 'profiles'},
       );
 
   // Written directly rather than through [create] and [update]: those drop

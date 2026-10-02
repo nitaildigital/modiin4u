@@ -222,8 +222,9 @@ cannot approve their own content or change bans and points.
   are saved in place; the businesses list is no longer cut at 500.
 - *Municipal service tiles:* built 30 Sep — the panel's "מוסדות עירוניים" (`municipal_places`), parking ("חניונים") and parks (a business set to "פארק"); see PLAN.md.
 - *Decisions:* media files and tags are deleted permanently (only when unused,
-  after a warning) because neither table has a hidden flag; push sending needs
-  the client's Firebase keys; nothing on the site creates comments or reports
+  after a warning) because neither table has a hidden flag; push sending is
+  built (2 Oct, PLAN.md "Push notifications") and waits on the client's
+  Firebase keys and migration 00045; nothing on the site creates comments or reports
   yet, so those queues stay empty.
 - *Website side:* admin replies to reviews (`admin_response`) are saved but not
   shown on the business page yet (label chosen: "תגובת העסק" / "Response from
@@ -238,9 +239,15 @@ cannot approve their own content or change bans and points.
    include, a DMARC record.
 3. Text for "About Us" and the "Accessibility Statement" (legally required in
    Israel); footer links open the help page until then.
-4. Firebase keys (push), Apple developer access for signing.
+4. Firebase keys (push), Apple developer access for signing and the APNs
+   key. Then: `flutterfire configure`, the web config in
+   `web/firebase-messaging-sw.js` and the VAPID key in
+   `lib/core/push/push_config.dart`, migration 00045, and
+   `tool/setup_push.py --service-account <key.json>`.
 5. The step counter behaviour; which category filter fails.
 6. Wording for the review-reply label.
+7. Push conversions: does "converted" mean a call, directions or the website
+   after opening the notification?
 
 ## Waiting on Arvindra's decisions
 

@@ -62,6 +62,11 @@ dependencies:
   health: ^13.3.1
   webview_flutter: ^4.13.1
   android_intent_plus: ^6.1.0
+  # Push notifications on Android, iPhone and the website
+  # (lib/core/push/). The project's keys are in lib/firebase_options.dart,
+  # written by `flutterfire configure`.
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
 
 dev_dependencies:
   flutter_test:

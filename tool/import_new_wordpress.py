@@ -334,6 +334,8 @@ def main():
         row = db('POST', 'articles', {
             'title': n['title'], 'slug': n['slug'], 'body': body, 'excerpt': n['excerpt'],
             'featured_image': image, 'og_image': image, 'status': 'published',
+            # Imported, not newly published: no push notification (00045).
+            'notify_on_publish': False,
             'canonical_url': n['link'], 'published_at': n['published_at'],
             'seo_title': n['seo_title'], 'meta_description': n['meta_description'],
         })[0]
@@ -349,6 +351,8 @@ def main():
         image = upload(b['image']) if b['image'] else None
         row = db('POST', 'businesses', {
             'name': b['name'], 'slug': b['slug'], 'kind': 'business', 'status': 'active',
+            # Imported, not newly published: no push notification (00045).
+            'notify_on_publish': False,
             'short_description': b['subtitle'], 'full_description': b['about'],
             'phone': b['phone'], 'website': b['website'], 'address': b['address'],
             'latitude': b['latitude'], 'longitude': b['longitude'],

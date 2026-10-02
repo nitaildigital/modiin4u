@@ -694,7 +694,12 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
   bool _isPinned = false;
   bool _isSponsored = false;
   bool _isMembersOnly = false;
-  bool _pushWorthy = false;
+  /// "Send a notification when published" (`notify_on_publish`,
+  /// migration 00045). On for a new row; a row from before notifications
+  /// existed opens with it off. Ticking it on a row that is already live and
+  /// was never announced sends one; clearing it before the notification
+  /// goes out cancels it.
+  bool _notifyOnPublish = true;
   bool _noindex = false;
   bool _nofollow = false;
 
@@ -746,7 +751,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     _isPinned = a?['is_pinned'] as bool? ?? false;
     _isSponsored = a?['is_sponsored'] as bool? ?? false;
     _isMembersOnly = a?['is_members_only'] as bool? ?? false;
-    _pushWorthy = a?['push_worthy'] as bool? ?? false;
+    _notifyOnPublish = a == null || (a['notify_on_publish'] as bool? ?? false);
     _noindex = a?['noindex'] as bool? ?? false;
     _nofollow = a?['nofollow'] as bool? ?? false;
 
@@ -1283,10 +1288,11 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
               _isMembersOnly,
               (v) => setState(() => _isMembersOnly = v),
             ),
+            // Replaces "Push-worthy" (`push_worthy`), which nothing read.
             _toggle(
-              tr('ראוי ל-Push', 'Push-worthy'),
-              _pushWorthy,
-              (v) => setState(() => _pushWorthy = v),
+              tr('לשלוח התראה בפרסום', 'Send a notification when published'),
+              _notifyOnPublish,
+              (v) => setState(() => _notifyOnPublish = v),
             ),
           ],
         ),
@@ -1594,7 +1600,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
       'is_pinned': _isPinned,
       'is_sponsored': _isSponsored,
       'is_members_only': _isMembersOnly,
-      'push_worthy': _pushWorthy,
+      'notify_on_publish': _notifyOnPublish,
       'seo_title': text(_seoTitle),
       'meta_description': text(_metaDesc),
       'meta_keywords': text(_metaKeywords),

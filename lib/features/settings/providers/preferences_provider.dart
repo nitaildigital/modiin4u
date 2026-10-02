@@ -7,7 +7,7 @@ import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/notification_preferences.dart';
 
-/// The signed-in person's notification and access choices.
+/// The signed-in person's access choices (location, health data).
 ///
 /// Null until they are read, so the screen can tell "not loaded yet" from
 /// "loaded, and everything is off".
@@ -20,8 +20,8 @@ class PreferencesNotifier extends StateNotifier<NotificationPreferences?> {
   final SupabaseClient _client = SupabaseConfig.client;
   final Ref _ref;
 
-  /// Toggling four switches quickly should be four state changes and one
-  /// write, not four writes racing each other to the same row.
+  /// Toggling switches quickly should be several state changes and one
+  /// write, not several writes racing each other to the same row.
   Timer? _pending;
 
   PreferencesNotifier(this._ref) : super(null) {
@@ -46,10 +46,7 @@ class PreferencesNotifier extends StateNotifier<NotificationPreferences?> {
     try {
       final row = await _client
           .from('profiles')
-          .select(
-            'push_enabled, notify_news, notify_deals, notify_neighborhood, '
-            'notify_realestate, location_enabled, health_enabled',
-          )
+          .select('location_enabled, health_enabled')
           .eq('id', profileId)
           .maybeSingle();
 
@@ -58,8 +55,7 @@ class PreferencesNotifier extends StateNotifier<NotificationPreferences?> {
           ? const NotificationPreferences()
           : NotificationPreferences.fromJson(row);
     } catch (_) {
-      // Migration 00016 adds the topic columns. Without it the select fails,
-      // and the defaults keep the screen usable rather than empty.
+      // The defaults keep the screen usable rather than empty.
       if (mounted) state = const NotificationPreferences();
     }
   }

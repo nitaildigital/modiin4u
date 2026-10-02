@@ -69,3 +69,8 @@ package-lock.json
 # into storage and come out again with --undo before launch; 5 MB of
 # throwaway pictures do not belong in the history.
 /tool/sample_content/
+
+# Firebase's service-account key, which push-dispatch sends with. It goes
+# into the function's environment through tool/setup_push.py, never into git.
+/firebase-service-account.json
+*-firebase-adminsdk-*.json
