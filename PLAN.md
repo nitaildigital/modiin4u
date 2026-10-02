@@ -2158,9 +2158,10 @@ works both ways, at once, and survives a restart. Fixed in the same pass:
 Checked on the Android emulator in English: home, businesses, a category and
 a business, map, news and an article, municipal, parking, Shabbat and
 holidays, restaurants, events and an event, real estate, deals and a deal,
-side menu, settings; and Hebrew → English → Hebrew from Settings. Not opened
-(the emulator stopped answering): step counter, help, sign-in, favourites —
-the code scan found no Hebrew-only text in them. Seen on the way, not
+side menu, settings; and Hebrew → English → Hebrew from Settings. On the
+OnePlus 6T in English, after the emulator stopped answering: step counter
+(both tabs), favourites, help, sign-in and sign-up — all English, and the
+step counter opened at once (its "not responding" was the emulator's). Seen on the way, not
 language: the deals page's category row overflows by 6 px on the 7-inch
 emulator.
 
