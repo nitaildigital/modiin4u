@@ -27,6 +27,8 @@ class AdminSitePagesScreen extends ConsumerWidget {
     'about': '/about',
     'accessibility': '/accessibility',
     'terms': '/terms',
+    'privacy': '/privacy',
+    'delete-account': '/delete-account',
   };
 
   @override

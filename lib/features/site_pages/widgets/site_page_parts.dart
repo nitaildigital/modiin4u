@@ -9,6 +9,8 @@ import '../../../l10n/app_localizations.dart';
 String sitePageFallbackTitle(L l, String slug) => switch (slug) {
   'accessibility' => l.sitePageAccessibilityTitle,
   'terms' => l.sitePageTermsTitle,
+  'privacy' => l.privacyPolicy,
+  'delete-account' => l.deleteAccount,
   _ => l.sitePageAboutTitle,
 };
 

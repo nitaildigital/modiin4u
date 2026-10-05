@@ -653,7 +653,7 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent>
                     TextSpan(
                       text: _t('Privacy Policy', 'מדיניות הפרטיות'),
                       recognizer: TapGestureRecognizer()
-                        ..onTap = () => context.push('/terms'),
+                        ..onTap = () => context.push('/privacy'),
                       style: TextStyle(
                         fontFamily: AppFonts.inter,
                         fontSize: 14,

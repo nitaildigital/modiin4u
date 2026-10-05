@@ -615,6 +615,22 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/search',
       parentNavigatorKey: _rootNavigatorKey,
+    // The lawyer's Privacy Policy, apart from the Terms of Use since 5 Oct.
+    GoRoute(
+      path: '/privacy',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) =>
+          _slideTransition(const SitePageScreen(slug: 'privacy'), state),
+    ),
+    // How to delete an account, with or without the app: the address the
+    // Terms and the Privacy Policy give, and the page Google Play asks for.
+    // Not app-only — someone without the app must be able to open it.
+    GoRoute(
+      path: '/delete-account',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) =>
+          _slideTransition(const SitePageScreen(slug: 'delete-account'), state),
+    ),
       builder: (context, state) {
         final query = state.uri.queryParameters['q'] ?? '';
         return SearchResultsScreen(query: query);

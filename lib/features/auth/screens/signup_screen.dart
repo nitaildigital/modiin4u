@@ -510,7 +510,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                         text: l.privacyPolicy,
                                         recognizer: TapGestureRecognizer()
                                           ..onTap = () =>
-                                              context.push('/terms'),
+                                              context.push('/privacy'),
                                         style: TextStyle(
                                           fontFamily: AppFonts.inter,
                                           fontSize: 14,

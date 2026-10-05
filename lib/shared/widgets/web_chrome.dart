@@ -1071,7 +1071,7 @@ class WebFooter extends StatelessWidget {
                         _FooterLink(
                           label: _t('Privacy Policy', 'מדיניות פרטיות'),
                           style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBorder),
-                          onTap: () => context.go('/terms'),
+                          onTap: () => context.go('/privacy'),
                         ),
                       ],
                     ),
@@ -1117,7 +1117,7 @@ class WebFooter extends StatelessWidget {
     (_t('Home', 'בית'), '/'),
     (_t('About Us', 'אודותינו'), '/about'),
     (_t('Contact Us', 'צור קשר'), 'mailto:$kContactEmail'),
-    (_t('Privacy Policy', 'מדיניות פרטיות'), '/terms'),
+    (_t('Privacy Policy', 'מדיניות פרטיות'), '/privacy'),
     (_t('Terms of Use', 'תנאי שימוש'), '/terms'),
     (_t('Accessibility Statement', 'הצהרת נגישות'), '/accessibility'),
   ];
