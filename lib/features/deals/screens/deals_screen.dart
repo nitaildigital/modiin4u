@@ -265,7 +265,11 @@ class _MobileDealsContentState extends ConsumerState<_MobileDealsContent> {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 114,
+            // The circle, the gaps and two lines of 14 px text, at the size
+            // the phone draws text. A fixed 114 fitted the design's Inter,
+            // but Hebrew names fall back to a taller face, and a larger text
+            // setting grows them again: the row overflowed by 6 px.
+            height: 64 + 12 + 4 + 2 * MediaQuery.textScalerOf(context).scale(14 * 1.5),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
