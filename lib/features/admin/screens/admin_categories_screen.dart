@@ -411,6 +411,19 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
   String? _parentId;
   bool _isActive = true;
 
+  /// "Show in menus" (`in_menus`, migration 00047): off for the old site's
+  /// lists that came back as categories, whose pages live at their old
+  /// addresses but which are not categories to browse by.
+  bool _inMenus = true;
+
+  /// Whether the database has the column yet; until 00047 runs the field is
+  /// neither shown nor saved, so a save cannot fail on it.
+  bool get _hasInMenus =>
+      widget.category?.containsKey('in_menus') ??
+      (ref.read(adminCategoryListProvider).valueOrNull?.firstOrNull
+              ?.containsKey('in_menus') ??
+          false);
+
   bool get _isEditing => widget.category != null;
 
   @override
@@ -430,6 +443,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
     _scope = c?['scope'] as String? ?? 'business';
     _parentId = c?['parent_id'] as String?;
     _isActive = c?['is_active'] as bool? ?? true;
+    _inMenus = c?['in_menus'] as bool? ?? true;
   }
 
   @override
@@ -664,6 +678,31 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                         activeColor: AppColors.turquoise,
                         contentPadding: EdgeInsets.zero,
                       ),
+                      if (_scope == 'business' && _hasInMenus)
+                        SwitchListTile(
+                          title: Text(
+                            tr('מוצג בתפריטים', 'Shown in menus'),
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            tr(
+                              'כבוי: לעמוד יש כתובת משלו, אך הוא לא מופיע ברשימות הקטגוריות',
+                              'Off: the page keeps its address but is left out of category lists',
+                            ),
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 12,
+                              color: AppColors.adminTextLight,
+                            ),
+                          ),
+                          value: _inMenus,
+                          onChanged: (v) => setState(() => _inMenus = v),
+                          activeColor: AppColors.turquoise,
+                          contentPadding: EdgeInsets.zero,
+                        ),
                     ],
                   ),
                 ),
@@ -789,6 +828,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
       'scope': _scope,
       'parent_id': _parentId,
       'is_active': _isActive,
+      if (_hasInMenus) 'in_menus': _scope != 'business' || _inMenus,
     };
 
     try {

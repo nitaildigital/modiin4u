@@ -131,10 +131,17 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent>
       ref.watch(_categoryLinksProvider).valueOrNull ?? const {};
 
   /// The directory's categories, busiest first, with the number of businesses
-  /// actually linked to each.
+  /// actually linked to each: the main ones, or every one once expanded.
+  ///
+  /// Before the old site's 63 categories came back (5 Oct) the eight cards
+  /// were all categories; now sub-categories such as "מסעדות כשרות" (38)
+  /// would push the main ones off the first row, so they wait for "All
+  /// categories". Lists kept out of the menus are never cards.
   List<_Category> get _categories {
     final counts = ref.watch(businessCountsByCategoryProvider).valueOrNull ?? const {};
-    final all = _categoriesById.values.toList()
+    final all = _categoriesById.values
+        .where((c) => c.inMenus && (_allCategories || c.parentId == null))
+        .toList()
       ..sort((a, b) => (counts[b.id] ?? 0).compareTo(counts[a.id] ?? 0));
     return [
       for (final (i, c) in all.indexed)
@@ -148,6 +155,10 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent>
         ),
     ];
   }
+
+  /// How many cards "All categories" opens to: every category in the menus.
+  int get _allCategoryCount =>
+      _categoriesById.values.where((c) => c.inMenus).length;
 
   /// The eight cards above the fold, or all of them once expanded.
   List<_Category> get _visibleCategories {
@@ -443,7 +454,7 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent>
                     ),
                   ),
                 ),
-                if (all.length > 8) ...[
+                if (_allCategoryCount > 8) ...[
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
@@ -464,8 +475,8 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent>
                             _allCategories
                                 ? _t('Show fewer', 'הצג פחות')
                                 : _t(
-                                    'All ${all.length} categories',
-                                    'כל ${all.length} הקטגוריות',
+                                    'All $_allCategoryCount categories',
+                                    'כל $_allCategoryCount הקטגוריות',
                                   ),
                             style: TextStyle(
                               fontFamily: AppFonts.inter,

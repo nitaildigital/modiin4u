@@ -164,13 +164,14 @@ Future<void> askForNearby(WidgetRef ref) async {
   ref.invalidate(nearbyBusinessesProvider);
 }
 
-/// Top-level business categories, in the order the admin set.
+/// Top-level business categories, in the order the admin set — those that
+/// belong in the menus.
 final businessCategoriesProvider = FutureProvider<List<BusinessCategory>>((
   ref,
 ) async {
   final rows = await ref.watch(businessRepositoryProvider).fetchCategories();
   return rows
-      .where((r) => r['parent_id'] == null)
+      .where((r) => r['parent_id'] == null && r['in_menus'] != false)
       .map(BusinessCategory.fromJson)
       .toList();
 });
@@ -263,6 +264,11 @@ class BusinessCategory {
   final int sortOrder;
   final String? imageUrl;
 
+  /// Off for the old site's lists that came back as categories — "עסקים
+  /// באתר", the wartime lists, "פתוח בשבת" (migration 00047): their pages
+  /// keep their old addresses, but they are not categories to browse by.
+  final bool inMenus;
+
   const BusinessCategory({
     required this.id,
     required this.name,
@@ -270,6 +276,7 @@ class BusinessCategory {
     this.parentId,
     this.sortOrder = 0,
     this.imageUrl,
+    this.inMenus = true,
   });
 
   factory BusinessCategory.fromJson(Map<String, dynamic> json) {
@@ -280,6 +287,8 @@ class BusinessCategory {
       parentId: json['parent_id'] as String?,
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
       imageUrl: json['image_url'] as String?,
+      // Absent before 00047 runs: every category was in the menus then.
+      inMenus: json['in_menus'] as bool? ?? true,
     );
   }
 }

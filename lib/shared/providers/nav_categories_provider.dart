@@ -24,15 +24,25 @@ class NavCategory {
 /// an embedded table is what PostgREST answers with rather than the rows.
 final navCategoriesProvider =
     FutureProvider.family<List<NavCategory>, String>((ref, scope) async {
+      // `*` rather than naming `in_menus`, which a database without 00047
+      // does not have.
       final rows = await SupabaseConfig.client
           .from('categories')
-          .select('id, name, entity_categories(count)')
+          .select('*, entity_categories(count)')
           .eq('scope', scope)
           .eq('is_active', true)
           .order('sort_order', ascending: true);
 
       final out = <NavCategory>[];
       for (final r in List<Map<String, dynamic>>.from(rows)) {
+        // Businesses: the main categories only. With the old site's 63
+        // categories back (5 Oct) the menu listed some 80 names in columns
+        // with no end, running off the screen; the sub-categories are a
+        // click further, on each one's page and in the directory.
+        if (scope == 'business' &&
+            (r['parent_id'] != null || r['in_menus'] == false)) {
+          continue;
+        }
         final embed = r['entity_categories'];
         final count = embed is List && embed.isNotEmpty
             ? (embed.first['count'] as int? ?? 0)
