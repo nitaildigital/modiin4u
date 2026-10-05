@@ -2188,6 +2188,37 @@ Status: ✅ done and tested · 🟡 built, waiting on a step · ⬜ not started 
 | 31 | His admin password is `123456789` | ⏸ | He changes it before launch |
 | 32 | Four August drafts set to notify on publish (two articles, an event, a business) | ⬜ | Delete with the sample data on content-migration day |
 
+**Business owners and jobs — approved 5 Oct, 19:21.** The client approved
+them for now ("Approved, plz ask Kamal start design"), with the launch on 7 or
+8 Oct, and sent his jobs specification (24–28). Kamal is designing in Figma;
+everything that does not depend on the design is built first, the screens
+when the Figma comes.
+
+His decisions: owner accounts both ways — he creates them in the panel, or
+the owner signs up and asks for their business and he approves — with full
+control from the panel; owners' edits and deals go live at once; the setup
+fee is collected by him, outside the system; applying for a job by call,
+WhatsApp, e-mail or a short form, as the owner chooses per job.
+
+| # | Part | Needs the design | State |
+|---|---|---|---|
+| O1 | Owner requests and approval: a request for a business, approve / reject in the panel, assign or remove an owner directly | No | 🟡 written: 00051 (`business_owner_requests`, `admin_decide_owner_request`, `admin_assign_business_owner`, `admin_remove_business_owner`) — not run |
+| O2 | An owner writes their own business's hours, menu, photos and deals (deals live at once; not featured or sponsored) | No | 🟡 written: 00051 (owner rules, `offers_owner_guard`, uploads under `businesses/<id>/`) — not run |
+| O3 | An owner reads their own business's statistics (00048's functions, owner allowed) | No | 🟡 written: 00051 — not run |
+| O4 | The panel creating a login for an owner who has none: an invitation by e-mail from a server function (the service key cannot be in the panel) | No | ⬜ function `owner-invite` |
+| O5 | The owner area on the website: sign-in, my business, edit, deals, statistics, jobs | **Yes** | ⏸ Figma |
+| J1 | Jobs: the job, its statuses (draft, active, expired, closed/filled), expiry, renewal, duplicating; apply by call / WhatsApp / e-mail / form | No | 🟡 written: 00052 (`jobs`, live while active and unexpired; categories with scope 'job') — renewal and duplicating are the screens' — not run |
+| J2 | Applications and candidates: statuses (new, viewed, contact, interview, suitable, unsuitable, accepted, archived), notes, reminders; the CV in private storage, seen only by that job's owner and the panel | No | 🟡 written: 00052 (`job_applications` via `apply_for_job` — with or without an account, once per person; private `cvs` bucket, `can_read_cv`) — not run |
+| J3 | Saved jobs, "my applications", job alerts | No | 🟡 written: 00052 (`favorites` type 'job', `job_alerts`) — not run |
+| J4 | Per-job statistics: views, applications, conversion, saves, shares, clicks | No | 🟡 written: 00052 (`job_events`, `record_job_event`, `job_stats`) — not run |
+| J5 | Featured, boost, push to the relevant audience | Partly | ⬜ the push session's campaigns, a new topic |
+| J6 | The jobs pages for residents (list with filters, job page, apply, my applications) and the owner's job management | **Yes** | ⏸ Figma |
+
+To ask him: where owners work (the website is assumed — the owner area sits
+beside the panel); how long an applicant's CV and form answers are kept after
+a job closes (personal data, and the privacy policy must say so); whether a
+job needs his approval before it is public (the deals do not).
+
 **Audit, 5 Oct: what should be saved and is not.** The whole app, site and
 panel against the database (59 tables; 20 never written by the code).
 
