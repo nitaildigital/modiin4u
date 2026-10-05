@@ -9,7 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/supabase/supabase_config.dart';
 
-import '../../../core/constants/neighborhoods.dart';
+import '../../../shared/providers/neighborhood_names_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
@@ -47,6 +47,10 @@ class WebEditProfileContent extends ConsumerStatefulWidget {
 
 class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
     with WebLanguageState<WebEditProfileContent> {
+  /// The database's neighbourhoods; empty while they load.
+  List<String> get _neighborhoodNames =>
+      ref.watch(neighborhoodNamesProvider).valueOrNull ?? const [];
+
   bool get _isHebrew => webIsHebrew.value;
 
   late TextEditingController _nameController;
@@ -443,7 +447,7 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
                 child: _buildDropdownField(
                   label: _t('Neighborhood', 'שכונה'),
                   value: _selectedNeighborhood,
-                  options: neighborhoods.map((n) => n.name).toList(),
+                  options: _neighborhoodNames,
                   onChanged: (val) =>
                       setState(() => _selectedNeighborhood = val),
                 ),

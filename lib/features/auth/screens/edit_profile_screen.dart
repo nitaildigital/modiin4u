@@ -11,7 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../../../core/supabase/supabase_config.dart';
-import '../../../core/constants/neighborhoods.dart';
+import '../../../shared/providers/neighborhood_names_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
@@ -29,6 +29,10 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  /// The database's neighbourhoods; empty while they load.
+  List<String> get _neighborhoodNames =>
+      ref.watch(neighborhoodNamesProvider).valueOrNull ?? const [];
+
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -333,7 +337,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         _buildDropdownField(
                           label: l.neighborhood,
                           value: _selectedNeighborhood,
-                          options: neighborhoods.map((n) => n.name).toList(),
+                          options: _neighborhoodNames,
                           onChanged: (val) =>
                               setState(() => _selectedNeighborhood = val),
                         ),

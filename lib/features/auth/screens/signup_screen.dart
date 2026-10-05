@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 import '../../../core/theme/app_colors.dart';
-import '../../../core/constants/neighborhoods.dart';
+import '../../../shared/providers/neighborhood_names_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
@@ -21,6 +21,10 @@ class SignUpScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
+  /// The database's neighbourhoods; empty while they load.
+  List<String> get _neighborhoodNames =>
+      ref.watch(neighborhoodNamesProvider).valueOrNull ?? const [];
+
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -82,6 +86,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               if (_phoneController.text.trim().isNotEmpty)
                 'phone': _phoneController.text.trim(),
               'is_broker': _accountType == AccountType.broker,
+              // With the account rather than after it: an address still to
+              // be confirmed gives no session to write them with, and they
+              // were lost (00049 keeps them).
+              'neighborhood': ?_selectedNeighborhood,
+              'family_status': ?_familyStatus,
+              'has_pet': ?_hasPet,
+              'date_of_birth': ?_dateOfBirth?.toIso8601String().split('T').first,
             },
           );
       if (!mounted) return;
@@ -329,13 +340,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         _buildDropdownField(
                           label: l.neighborhood,
                           hint: l.selectNeighborhood,
-                          value: _selectedNeighborhood,
-                          items: neighborhoods
+                          value: _neighborhoodNames.contains(_selectedNeighborhood)
+                              ? _selectedNeighborhood
+                              : null,
+                          items: _neighborhoodNames
                               .map(
                                 (n) => DropdownMenuItem(
-                                  value: n.name,
+                                  value: n,
                                   child: Text(
-                                    n.displayName,
+                                    n,
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 14,

@@ -483,8 +483,17 @@ class _MobileDealDetailContent extends ConsumerWidget {
         context,
         e.message == 'already-claimed' ? l.alreadyClaimed : l.signInToClaim,
       );
-    } catch (_) {
-      if (context.mounted) _toast(context, l.errCouldNotSave);
+    } catch (e) {
+      if (!context.mounted) return;
+      // The database refuses a claim once the deal's last one is gone
+      // (00049) — someone may have taken it since the page opened.
+      _toast(
+        context,
+        '$e'.contains('offer-full')
+            ? mDealsT(context, 'This offer has been fully claimed', 'ההטבה נוצלה במלואה')
+            : l.errCouldNotSave,
+      );
+      if ('$e'.contains('offer-full')) ref.invalidate(offerByIdProvider(offer.id));
     }
   }
 
