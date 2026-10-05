@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "643935084045",
+    "project_id": "modiin4u-a895f",
+    "storage_bucket": "modiin4u-a895f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:643935084045:android:0a7427a56e6c5c4c017f44",
+        "android_client_info": {
+          "package_name": "il.co.modiin4u.modiin4u"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVU4DHGN3PvwtS6ZJJWqrPdsRriFXm4JY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyApDcCTRUx62nIwqjr3mzIbgNRkiHqwrOY</string>
+	<key>GCM_SENDER_ID</key>
+	<string>643935084045</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>il.co.modiin4u.modiin4u</string>
+	<key>PROJECT_ID</key>
+	<string>modiin4u-a895f</string>
+	<key>STORAGE_BUCKET</key>
+	<string>modiin4u-a895f.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:643935084045:ios:ec507536ca74e8cf017f44</string>
+</dict>
+</plist>
