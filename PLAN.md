@@ -2126,7 +2126,7 @@ Status: ✅ done and tested · 🟡 built, waiting on a step · ⬜ not started 
 |---|---|---|---|
 | 1 | Firebase access | ✅ | — (accepted 2 Oct; project `modiin4u-a895f`) |
 | 2 | Google Play access | ✅ | — (accepted 2 Oct) |
-| 3 | Legal texts | 🟡 | His lawyer's Terms and Privacy Policy came 5 Oct. **In the panel as unpublished drafts, as written** (`tool/import_legal_docs.py`; the old WordPress text kept in `tool/legal_docs_registry.json` for `--undo`): Terms in 'terms', the Privacy Policy in a new 'privacy' row. Still carry ~60 template brackets and notes: he and the lawyer finish them in the panel and publish. Tell the lawyer note **b**. No English versions |
+| 3 | Legal texts | ⏸ | His lawyer's Terms and Privacy Policy came 5 Oct. **In the panel as unpublished drafts, as written** (`tool/import_legal_docs.py`; the old WordPress text kept in `tool/legal_docs_registry.json` for `--undo`): Terms in 'terms', the Privacy Policy in a new 'privacy' row. Still carry ~60 template brackets and notes: he and the lawyer finish them in the panel and publish. Tell the lawyer note **b**. No English versions |
 | 4 | Michael: launch-day SEO steps | ⏸ | No answer yet. Domain move (`tool/enable_domain.sh`), redirects, `SEO_LIVE=1`, Search Console |
 | 5 | Admin roles: "limit roles" | 🟡 | Panel done and tested (note **c**). The database still lets any admin write any table: a migration. Our proposed split (main / content / business editor) was not confirmed in words. **The rights are rows in `admin_role_permissions` that the panel cannot edit** (the Team section assigns roles only): a rights editor is still to build. As stored, Business editor has no Categories — Content editor does — unlike our proposal; his call |
 | 6 | The old site's 63 categories, each its own page "for SEO" | ✅ not live (5 Oct) | Built: migration 00047, `tool/import_old_categories.py` (60 new under the nearest main category, 3 existing, 4 lists kept out of the menus, 394 business links), navbar and directory grid show main categories. Run 00047, then the import, then `build_seo_pages.py --write-redirects`, then test |
@@ -2155,11 +2155,11 @@ Status: ✅ done and tested · 🟡 built, waiting on a step · ⬜ not started 
 
 | # | Point | Status | What is left |
 |---|---|---|---|
-| 16 | English for devices set to English (automatic ones: English wording, Hebrew title) | ⏸ | The other session: 00045 is live; Firebase config in progress |
-| 17 | Automatic for new articles, events and businesses, by topic, with a "send a notification" box | ⏸ | Queuing tested on the database (2 Oct); sending not yet |
-| 18 | Deals and perks manual, sent now or scheduled | ⏸ | The other session |
-| 19 | Per notification: opened, roughly how many it went to; conversions = opened then called / directions / website | ⏸ | The other session; "viewed" not shown (not measurable on iPhone) |
-| 20 | iPhone and the website | ⏸ | iPhone needs the APNs key from his Apple account |
+| 16 | English for devices set to English (automatic ones: English wording, Hebrew title) | ✅ (5 Oct) | The other session: tested on Android, iPhone and Chrome — see "Push notifications switched on and tested — 5 October" |
+| 17 | Automatic for new articles, events and businesses, by topic, with a "send a notification" box | ✅ (5 Oct) | A real automatic "New article" sent and received on publishing |
+| 18 | Deals and perks manual, sent now or scheduled | ✅ (5 Oct) | A campaign to everyone with a picture, from the panel |
+| 19 | Per notification: opened, roughly how many it went to; conversions = opened then called / directions / website | 🟡 | "Opened" counted once per device. **Left:** conversions, to the client's definition |
+| 20 | iPhone and the website | 🟡 | iPhone app done (APNs key uploaded, pictures too). **Left:** the website deploy, and the website on iPhone, which needs the deployed https site |
 
 **Statistics for each business page (2 Oct)**
 
@@ -2236,9 +2236,14 @@ with the old ones); the phone-width site opens in Hebrew and has no language
 switch; near-duplicate restaurant sub-categories from the old site, which he
 can switch off in the panel.
 
-**Order:** with no migration needed — 12, then 23 (built now, tested after
-00048). After the migrations (00046, 00047, 00048): import the categories,
-test 6, 21–22 and 29. When the Figma comes: 9–11. After launch: 24–28.
+**Order (updated 5 Oct, evening):** without a migration — 38 (Report), 40
+(save articles), 41 (ban reason), 43 (remove `/new-listing`), and a user's
+own step history by week and month. One migration for 13–15, 37, 39 and
+leaderboards by date range (same function as the winner). When the Figma
+comes: 9–11. Launch: deploy the website and new app builds; copy the old
+images on the server (7) before the domain moves (4); remove sample data (32)
+and the two leftover temporary admins (`tmp-admin-13b4a620`,
+`tmp-admin-5391a625`); his password (31). After launch: 24–28, 42.
 
 Notes:
 
