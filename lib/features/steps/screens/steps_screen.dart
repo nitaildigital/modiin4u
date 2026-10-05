@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'dart:math';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -13,6 +14,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../../deals/widgets/m_deals_sections.dart' show MDealsBanner;
 import '../../auth/providers/auth_provider.dart';
 import '../models/step_entry.dart';
 import '../providers/steps_providers.dart';
@@ -136,6 +138,9 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                         if (_groups)
                           const StepGroupsTab()
                         else ...[
+                          // The client's banners for the section, from the
+                          // panel's campaigns (5 Oct); nothing when none runs.
+                          const MDealsBanner(code: 'STEPS_TOP', inset: 0, bottom: 16),
                           _buildTodayProgress(),
                           const SizedBox(height: 16),
 
@@ -148,6 +153,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                             const SizedBox(height: 16),
                           ],
 
+                          const MDealsBanner(code: 'STEPS_INLINE', inset: 0, bottom: 16),
                           _buildLeaderboard(),
                         ],
                         const SizedBox(height: 32),
@@ -797,7 +803,8 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
     final participants = challenge['challenge_participants'];
     final progress = participants is List && participants.isNotEmpty
         ? ((participants.first as Map)['progress'] as num?)?.toInt()
-        : null;
+        // Nothing writes a participant row: their steps since it began.
+        : ref.watch(myChallengeStepsProvider).valueOrNull;
     final fraction = (goal == null || goal <= 0 || progress == null)
         ? null
         : (progress / goal).clamp(0.0, 1.0);
@@ -941,7 +948,8 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                 child: SizedBox(
                   height: 5,
                   child: LinearProgressIndicator(
-                    value: fraction,
+                    // Empty rather than a spinning bar when there is no number.
+                    value: fraction ?? 0,
                     backgroundColor: const Color(0xFFE7E7E7),
                     valueColor: const AlwaysStoppedAnimation<Color>(
                       Color(0xFFFFC107),
@@ -1022,6 +1030,27 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
               color: const Color(0xFF6D6D6D),
             ),
           ),
+          // Which days the ranking counts: the week, or since the
+          // competition began.
+          if (ref.watch(leaderboardWindowProvider).valueOrNull
+              case final window?) ...[
+            const SizedBox(height: 4),
+            Text(
+              window.since == null
+                  ? (Localizations.localeOf(context).languageCode == 'he'
+                        ? '7 הימים האחרונים'
+                        : 'Last 7 days')
+                  : (Localizations.localeOf(context).languageCode == 'he'
+                        ? 'מאז ${window.since!.day} ב${l.monthLong(window.since!.month)}'
+                        : 'Since ${window.since!.day} ${l.monthLong(window.since!.month)}'),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.midBlue,
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
 
           // Tab toggle

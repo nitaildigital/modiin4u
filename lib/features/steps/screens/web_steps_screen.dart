@@ -7,6 +7,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/web_banner_row.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/step_entry.dart';
@@ -135,9 +136,13 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
                   children: [
                     const SizedBox(height: 48),
                     _buildHeader(),
+                    // The client's banners for the section, from the
+                    // panel's campaigns (5 Oct); nothing when none runs.
+                    const WebBannerRow(code: 'STEPS_TOP', top: 32),
                     const SizedBox(height: 32),
                     _buildTodayBand(),
                     _buildChallengeBand(),
+                    const WebBannerRow(code: 'STEPS_INLINE', top: 24),
                     const SizedBox(height: 24),
                     _buildColumns(),
                     const SizedBox(height: 100),
@@ -412,7 +417,8 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
     final participants = challenge['challenge_participants'];
     final progress = participants is List && participants.isNotEmpty
         ? ((participants.first as Map)['progress'] as num?)?.toInt()
-        : null;
+        // Nothing writes a participant row: their steps since it began.
+        : ref.watch(myChallengeStepsProvider).valueOrNull;
     final fraction = (goal == null || goal <= 0 || progress == null)
         ? null
         : (progress / goal).clamp(0.0, 1.0);
@@ -802,6 +808,26 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
               color: _kGreyText,
             ),
           ),
+          // Which days the ranking counts: the week, or since the
+          // competition began.
+          if (ref.watch(leaderboardWindowProvider).valueOrNull
+              case final window?) ...[
+            const SizedBox(height: 4),
+            Text(
+              window.since == null
+                  ? _t('Last 7 days', '7 הימים האחרונים')
+                  : _t(
+                      'Since ${window.since!.day} ${_monthsEn[window.since!.month - 1]}',
+                      'מאז ${window.since!.day} ב${_monthsHe[window.since!.month - 1]}',
+                    ),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.midBlue,
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           ...rows,
         ],

@@ -16,8 +16,20 @@ import 'm_deal_card.dart';
 /// under it. These are the campaigns booked for the `DEALS_TOP` slot — the
 /// same ones the desktop page shows — and until one is sold there is no box
 /// at all rather than an empty one.
+///
+/// Other phone pages use it for their own slot by [code] — the step
+/// counter's STEPS_TOP and STEPS_INLINE (5 Oct) — where the page's own side
+/// margins already apply, so [inset] is zero there.
 class MDealsBanner extends ConsumerStatefulWidget {
-  const MDealsBanner({super.key});
+  final String code;
+  final double inset;
+  final double bottom;
+  const MDealsBanner({
+    super.key,
+    this.code = 'DEALS_TOP',
+    this.inset = 16,
+    this.bottom = 24,
+  });
 
   @override
   ConsumerState<MDealsBanner> createState() => _MDealsBannerState();
@@ -36,16 +48,16 @@ class _MDealsBannerState extends ConsumerState<MDealsBanner> {
   @override
   Widget build(BuildContext context) {
     final banners =
-        ref.watch(activeBannersProvider('DEALS_TOP')).valueOrNull ??
+        ref.watch(activeBannersProvider(widget.code)).valueOrNull ??
         const <SiteBanner>[];
     if (banners.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.only(bottom: widget.bottom),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: widget.inset),
             child: SizedBox(
               height: 200,
               child: PageView.builder(

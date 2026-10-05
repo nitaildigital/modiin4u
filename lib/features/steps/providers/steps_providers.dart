@@ -293,6 +293,49 @@ final myActivityDaysProvider = Provider.family<List<StepEntry>, int>((
   ];
 });
 
+/// The days the leaderboards count: the last seven, or — while a challenge
+/// runs — every day since it started, so the client's monthly city
+/// competition (5 Oct) ranks the month so far. [since] is the first day
+/// counted, null for the rolling week.
+///
+/// The ranking functions take a number of days ending today (00043), so a
+/// challenge is counted from its start to today. Naming a winner once it has
+/// ended needs the days between its start and its end, which they cannot
+/// take: that is a migration of its own.
+final leaderboardWindowProvider =
+    FutureProvider<({int days, DateTime? since})>((ref) async {
+      final challenge = await ref.watch(activeChallengeProvider.future);
+      final start = DateTime.tryParse(
+        challenge?['start_at'] as String? ?? '',
+      )?.toLocal();
+      if (start == null) return (days: 7, since: null);
+      final now = DateTime.now();
+      // Calendar days, in UTC so a change of clock does not lose one.
+      final first = DateTime.utc(start.year, start.month, start.day);
+      final today = DateTime.utc(now.year, now.month, now.day);
+      final days = today.difference(first).inDays + 1;
+      if (days < 1) return (days: 7, since: null);
+      return (days: days.clamp(1, 62), since: first);
+    });
+
+/// This person's steps in the running challenge: every day since it
+/// started, as the leaderboards count them. Null when signed out or when no
+/// challenge runs.
+///
+/// The challenge card read `challenge_participants.progress`, which nothing
+/// in the app writes — so it said "—" and its bar spun as if loading for
+/// ever. In the city competition everyone with step counting on takes part,
+/// so their own steps are their progress.
+final myChallengeStepsProvider = FutureProvider<int?>((ref) async {
+  if (ref.watch(authProvider) == null) return null;
+  final window = await ref.watch(leaderboardWindowProvider.future);
+  if (window.since == null) return null;
+  final days = await ref
+      .watch(stepsRepositoryProvider)
+      .fetchMyDays(window.days);
+  return days.fold<int>(0, (sum, d) => sum + d.steps);
+});
+
 /// The city ranking. Empty when signed out — the functions are only granted
 /// to signed-in callers, because these are other people's figures.
 final peopleLeaderboardProvider = FutureProvider<List<PersonRanking>>((
@@ -300,14 +343,20 @@ final peopleLeaderboardProvider = FutureProvider<List<PersonRanking>>((
 ) async {
   final user = ref.watch(authProvider);
   if (user == null) return const [];
-  return ref.watch(stepsRepositoryProvider).fetchPeopleLeaderboard();
+  final window = await ref.watch(leaderboardWindowProvider.future);
+  return ref
+      .watch(stepsRepositoryProvider)
+      .fetchPeopleLeaderboard(days: window.days);
 });
 
 final neighborhoodLeaderboardProvider =
     FutureProvider<List<NeighborhoodRanking>>((ref) async {
       final user = ref.watch(authProvider);
       if (user == null) return const [];
-      return ref.watch(stepsRepositoryProvider).fetchNeighborhoodLeaderboard();
+      final window = await ref.watch(leaderboardWindowProvider.future);
+      return ref
+          .watch(stepsRepositoryProvider)
+          .fetchNeighborhoodLeaderboard(days: window.days);
     });
 
 /// The challenge running now, if there is one.
