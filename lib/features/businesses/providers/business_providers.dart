@@ -227,7 +227,9 @@ final businessPrimaryCategoryProvider =
         final chosen = <String, BusinessCategory>{};
         for (final link in links) {
           final category = byId[link['category_id']];
-          if (category == null) continue;
+          // The old site's lists kept out of the menus ("עסקים באתר",
+          // "פתוח בשבת") are not what a business is; they never label it.
+          if (category == null || !category.inMenus) continue;
           final id = link['entity_id'] as String;
           final have = chosen[id];
           if (have == null || (have.parentId == null && category.parentId != null)) {

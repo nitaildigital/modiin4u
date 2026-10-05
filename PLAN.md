@@ -2129,7 +2129,7 @@ Status: ✅ done and tested · 🟡 built, waiting on a step · ⬜ not started 
 | 3 | Legal texts | 🟡 | His lawyer's Terms and Privacy Policy came 5 Oct. **In the panel as unpublished drafts, as written** (`tool/import_legal_docs.py`; the old WordPress text kept in `tool/legal_docs_registry.json` for `--undo`): Terms in 'terms', the Privacy Policy in a new 'privacy' row. Still carry ~60 template brackets and notes: he and the lawyer finish them in the panel and publish. Tell the lawyer note **b**. No English versions |
 | 4 | Michael: launch-day SEO steps | ⏸ | No answer yet. Domain move (`tool/enable_domain.sh`), redirects, `SEO_LIVE=1`, Search Console |
 | 5 | Admin roles: "limit roles" | 🟡 | Panel done and tested (note **c**). The database still lets any admin write any table: a migration. Our proposed split (main / content / business editor) was not confirmed in words. **The rights are rows in `admin_role_permissions` that the panel cannot edit** (the Team section assigns roles only): a rights editor is still to build. As stored, Business editor has no Categories — Content editor does — unlike our proposal; his call |
-| 6 | The old site's 63 categories, each its own page "for SEO" | 🟡 | Built: migration 00047, `tool/import_old_categories.py` (60 new under the nearest main category, 3 existing, 4 lists kept out of the menus, 394 business links), navbar and directory grid show main categories. Run 00047, then the import, then `build_seo_pages.py --write-redirects`, then test |
+| 6 | The old site's 63 categories, each its own page "for SEO" | ✅ not live (5 Oct) | Built: migration 00047, `tool/import_old_categories.py` (60 new under the nearest main category, 3 existing, 4 lists kept out of the menus, 394 business links), navbar and directory grid show main categories. Run 00047, then the import, then `build_seo_pages.py --write-redirects`, then test |
 | 7 | Copy the old site's images (Google Images) | 🟡 | `tool/copy_wp_uploads.py` tested here; must run **on the server before the domain moves**; the nginx change goes up with `enable_domain.sh` (note **j**) |
 | 8 | PersonaAI: the "Ask" button's icon and gradient → then: the Ask button opens the chat, no bubble | ✅ not live | Done and tested on the web (1440, 390 px) and the OnePlus (note **a**). Deploy and a new app build. The typed question cannot be passed into the chat (PersonaAI has no way) |
 
@@ -2165,9 +2165,9 @@ Status: ✅ done and tested · 🟡 built, waiting on a step · ⬜ not started 
 
 | # | Point | Status | What is left |
 |---|---|---|---|
-| 21 | Views in total and by day, week and month | 🟡 | Recording built (migration 00048, note **h**); run 00048 and test. **Counting must start before launch** — there is no history |
-| 22 | Clicks: phone, website, WhatsApp, directions, share, Instagram | 🟡 | Same |
-| 23 | The statistics in the panel | 🟡 | **Built 5 Oct.** Businesses → ⋮ → Statistics opens a window: day (30 days) / week (12, from Sunday) / month (12); totals (views, unique visitors, each button that was used), a bar chart of views, and a table per period (`business_stats_dialog.dart`, reading `business_stats` and the new `business_stats_totals` in 00048 — unique visitors cannot be added up period by period). Checked in a local build as a temporary admin: the menu item and the window open, and before 00048 it says the statistics come with the database update. **The numbers and chart are tested after 00048.** The most-viewed list across businesses (`business_stats_top`) is not on screen yet |
+| 21 | Views in total and by day, week and month | ✅ not live (5 Oct) | Recording built (migration 00048, note **h**); run 00048 and test. **Counting must start before launch** — there is no history |
+| 22 | Clicks: phone, website, WhatsApp, directions, share, Instagram | ✅ not live (5 Oct) | Same |
+| 23 | The statistics in the panel | ✅ not live (5 Oct) | **Built 5 Oct.** Businesses → ⋮ → Statistics opens a window: day (30 days) / week (12, from Sunday) / month (12); totals (views, unique visitors, each button that was used), a bar chart of views, and a table per period (`business_stats_dialog.dart`, reading `business_stats` and the new `business_stats_totals` in 00048 — unique visitors cannot be added up period by period). Checked in a local build as a temporary admin: the menu item and the window open, and before 00048 it says the statistics come with the database update. **The numbers and chart are tested after 00048.** The most-viewed list across businesses (`business_stats_top`) is not on screen yet |
 
 **Business owners and job openings — the second update, after launch**
 
@@ -2183,10 +2183,53 @@ Status: ✅ done and tested · 🟡 built, waiting on a step · ⬜ not started 
 
 | # | Point | Status | What is left |
 |---|---|---|---|
-| 29 | `/delete-account`, which both legal texts give and Google Play requires; a separate Privacy Policy page | 🟡 | Built: migration 00046, routes, footer and sign-up links to `/privacy`, a draft page he reviews and publishes. Deleting an account tested with a throwaway user who had uploaded a file. Run 00046 |
+| 29 | `/delete-account`, which both legal texts give and Google Play requires; a separate Privacy Policy page | ✅ not live (5 Oct); the client publishes the Delete Account text in the panel | Built: migration 00046, routes, footer and sign-up links to `/privacy`, a draft page he reviews and publishes. Deleting an account tested with a throwaway user who had uploaded a file. Run 00046 |
 | 30 | Deals page: category labels cut off on phones | ✅ not live | The row's height follows the phone's text size; checked on the OnePlus |
 | 31 | His admin password is `123456789` | ⏸ | He changes it before launch |
 | 32 | Four August drafts set to notify on publish (two articles, an event, a business) | ⬜ | Delete with the sample data on content-migration day |
+
+**Audit, 5 Oct: what should be saved and is not.** The whole app, site and
+panel against the database (59 tables; 20 never written by the code).
+
+| # | Point | Status | What is left |
+|---|---|---|---|
+| 33 | The phone typed at sign-up was lost: the profile trigger copied the account's own (empty) phone, not what the form sent | ✅ | 00049 reads it from the sign-up data, and puts back the phones already lost from what those people typed |
+| 34 | Neighbourhood, family status, pet, date of birth lost when sign-up needs the address confirmed (no session to write with) | ✅ | Both sign-up forms now send them with the account; 00049 keeps them |
+| 35 | **The neighbourhood was never saved for anyone**: sign-up and Edit Profile offered a list of their own in English ("Modiin Center"…) that matched none of the database's Hebrew names, so the lookup found nothing and said nothing | ✅ not live | All four forms list the database's neighbourhoods (`neighborhoodNamesProvider`); the English list is deleted. Checked on the OnePlus: Edit Profile → נופים → saved in `profiles.neighborhood_id`. Works now, before 00049 |
+| 36 | A deal's `claim_count` never moved: `max_claims` never enforced, the panel showed 0 claims | ✅ | 00049: claims added or removed change the count (and redeem_count); a claim on a full deal is refused, the offer row locked while checked; counts set from the claims there are. The deal page says "fully claimed" when refused |
+| 37 | Competition progress, completion, winner, reward points | ⬜ | The competition migration (13–15) |
+| 38 | No "Report" on reviews, businesses, listings; the panel's Reports always empty — the legal texts promise it | ⬜ | Button + insert into `reports` |
+| 39 | Article views never counted; "most viewed" shows imported numbers | ⬜ | Same recording as businesses (00048) |
+| 40 | No save button on articles; Favourites' News tab always empty | ⬜ | |
+| 41 | A ban keeps no reason and no history row | ⬜ | |
+| 42 | Medium: points and levels never move; views and shares of events, deals, apartments not counted; banner impressions and clicks not recorded; apartments get no published or expiry date and no rejection reason; terms acceptance not recorded (date, version); last login and app version never saved; role rights not editable in the panel; review replies, hiding a step group and merging tags write no history; panel settings (maintenance mode…) not connected; no admin alerts for new pending items | ⬜ | After launch, in that order of weight |
+| 43 | `/new-listing` saves nothing — but nothing opens it; the real form is `/add-apartment` | ⬜ | Delete the screen and route |
+
+**Tested after 00046–00049 and the category import (5 Oct, 16:45–17:15).**
+- Sign-up, as the app sends it, with confirmation pending (no session): the
+  profile kept phone, neighbourhood (נופים), family status, pet and birth
+  date. Test user deleted.
+- Claims: a deal with one place — the first claim counted (1), the second
+  refused ("offer-full"), removing the claim brought it back to 0. Deal and
+  users deleted.
+- Statistics on JAPAN-JAPAN: on the website a view, then a reload that did
+  not count again, website, call and directions; in the app (OnePlus) a view,
+  call, website, share and directions. All recorded with web/app and an
+  anonymous visitor id; a visitor reads nothing from the table and is refused
+  the totals. The panel's window: views 3, unique visitors 3, call 2, website
+  2, directions 2, share 1, by day, week (from Sunday 4.10) and month. The 10
+  test events and the temporary admin removed.
+- Pages: `/delete-account` and `/privacy` open and say the content is coming
+  (drafts until he publishes). Old addresses `/business-cat/sushi`,
+  `/business-cat/ברים`, `/business-cat/open-on-saturday` open their own
+  category with the old site's businesses (6, 10, 11). The navbar menu and the
+  directory grid show the 10 main categories.
+- Found and fixed: a business on one of the four lists showed the list's name
+  ("עסקים באתר") as its category on the cards; lists kept out of the menus no
+  longer label a business.
+- Not mine, left alone: another session's temporary admin
+  `tmp-admin-13b4a620` (15:55) is still active, and the 30 Sep one
+  `tmp-admin-5391a625`.
 
 **To raise with him:** English names for the business categories (some 85
 with the old ones); the phone-width site opens in Hebrew and has no language
