@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cached_network_image/cached_network_image.dart';
+import '../repositories/business_stats.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_icons.dart';
 import 'package:flutter/material.dart';
@@ -70,8 +71,15 @@ class _BusinessDetailContentState
     extends ConsumerState<_BusinessDetailContent> {
   Business get business => widget.business;
 
+  @override
+  void initState() {
+    super.initState();
+    BusinessStats.record(business.id, BusinessStat.view);
+  }
+
   /// Share, from the control on the photograph.
   void _shareBusiness() {
+    BusinessStats.record(business.id, BusinessStat.share);
     Share.share(
       [
         business.name,
@@ -587,12 +595,15 @@ class _BusinessDetailContentState
     final l = L.of(context);
 
     final direction = GestureDetector(
-      onTap: () => launchUrl(
-        Uri.parse(
-          'https://waze.com/ul?ll=${business.latitude},'
-          '${business.longitude}&navigate=yes',
-        ),
-      ),
+      onTap: () {
+        BusinessStats.record(business.id, BusinessStat.directions);
+        launchUrl(
+          Uri.parse(
+            'https://waze.com/ul?ll=${business.latitude},'
+            '${business.longitude}&navigate=yes',
+          ),
+        );
+      },
       child: Container(
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -642,7 +653,10 @@ class _BusinessDetailContentState
             color: AppColors.turquoise,
             onTap: business.phone == null
                 ? null
-                : () => launchUrl(Uri.parse('tel:${business.phone}')),
+                : () {
+                    BusinessStats.record(business.id, BusinessStat.call);
+                    launchUrl(Uri.parse('tel:${business.phone}'));
+                  },
           ),
           const SizedBox(width: 12),
           _OutlineCircleButton(
@@ -650,7 +664,10 @@ class _BusinessDetailContentState
             color: AppColors.turquoise,
             onTap: business.website == null
                 ? null
-                : () => launchUrl(Uri.parse(business.website!)),
+                : () {
+                    BusinessStats.record(business.id, BusinessStat.website);
+                    launchUrl(Uri.parse(business.website!));
+                  },
           ),
           ],
           if (business.instagram != null && !business.isPark) ...[
@@ -658,7 +675,10 @@ class _BusinessDetailContentState
             _OutlineCircleButton(
               icon: IconsaxPlusLinear.instagram,
               color: AppColors.turquoise,
-              onTap: () => launchUrl(Uri.parse(business.instagram!)),
+              onTap: () {
+                BusinessStats.record(business.id, BusinessStat.instagram);
+                launchUrl(Uri.parse(business.instagram!));
+              },
             ),
           ],
         ],

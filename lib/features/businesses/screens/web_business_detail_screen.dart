@@ -7,6 +7,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../repositories/business_stats.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
@@ -75,6 +76,12 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
 
   Business get b => widget.business;
   String _t(String en, String he) => _isHebrew ? he : en;
+
+  @override
+  void initState() {
+    super.initState();
+    BusinessStats.record(b.id, BusinessStat.view);
+  }
 
   @override
   void dispose() {
@@ -674,8 +681,11 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                   initialCenter: LatLng(b.latitude, b.longitude),
                   initialZoom: 15,
                   interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
-                  onTap: (_, _) => launchUrl(Uri.parse(
-                      'https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}')),
+                  onTap: (_, _) {
+                    BusinessStats.record(b.id, BusinessStat.directions);
+                    launchUrl(Uri.parse(
+                        'https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}'));
+                  },
                 ),
                 children: [
                   const WebMapTiles(),
@@ -760,7 +770,10 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
               value: shown(website),
               valueColor: AppColors.midBlue,
               trailing: SvgPicture.asset('$_kAsset/external.svg', width: 16, height: 16),
-              onTap: () => launchUrl(link(website)),
+              onTap: () {
+                BusinessStats.record(b.id, BusinessStat.website);
+                launchUrl(link(website));
+              },
             ),
           if (website.isNotEmpty && phone.isNotEmpty) const SizedBox(height: 20),
           // The number is on the page; the tap offers it to copy or dial
@@ -771,7 +784,10 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                 icon: '$_kAsset/call.svg',
                 label: _t('Call', 'טלפון'),
                 value: phone,
-                onTap: () => showWebContactMenu(anchor, isHebrew: _isHebrew, phone: phone),
+                onTap: () {
+                  BusinessStats.record(b.id, BusinessStat.call);
+                  showWebContactMenu(anchor, isHebrew: _isHebrew, phone: phone);
+                },
               ),
             ),
           // Five businesses carry a WhatsApp number the page never showed.
@@ -782,6 +798,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
               label: 'WhatsApp',
               value: whatsapp,
               onTap: () {
+                BusinessStats.record(b.id, BusinessStat.whatsapp);
                 var digits = whatsapp.replaceAll(RegExp(r'\D'), '');
                 if (digits.startsWith('0')) digits = '972${digits.substring(1)}';
                 launchUrl(Uri.parse('https://wa.me/$digits'), webOnlyWindowName: '_blank');

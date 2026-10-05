@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart'
     show PostgrestException, StorageException;
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_businesses_provider.dart';
+import '../widgets/business_stats_dialog.dart';
 import '../widgets/admin_gallery_editor.dart';
 import '../widgets/admin_load_error.dart';
 import '../widgets/image_upload_field.dart';
@@ -259,6 +260,8 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
     switch (action) {
       case 'edit':
         _showBusinessEditor(context, ref, business: biz);
+      case 'stats':
+        showBusinessStats(context, id, biz['name'] as String? ?? '');
       case 'activate':
         await runAdminAction(
           context,
@@ -574,6 +577,17 @@ class _BusinessTable extends StatelessWidget {
                             value: 'edit',
                             child: Text(
                               tr('עריכה', 'Edit'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          // Views and clicks on the business's page (00048).
+                          PopupMenuItem(
+                            value: 'stats',
+                            child: Text(
+                              tr('סטטיסטיקות', 'Statistics'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
