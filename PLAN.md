@@ -2432,6 +2432,53 @@ call, directions or the website after opening. **Waiting on his answer.**
   the others, re-saving sends nothing, only the author's bell shows it,
   signing out unlinks the device. Not yet applied.
 
+### Push notifications switched on and tested — 5 October
+
+Firebase project **modiin4u-a895f** (the client's): Android, iOS and web apps
+registered with `flutterfire configure`; the web config in
+`web/firebase-messaging-sw.js`, the web push key in
+`lib/core/push/push_config.dart`; the Admin SDK key in the function's
+environment through `tool/setup_push.py` (the key file is gitignored); the
+APNs key uploaded in Firebase by Harshit. Migration 00045 applied.
+
+- **Tested end to end** from the admin panel and from the database, on the
+  OnePlus 6T (Android 9), an iPhone 8 (iOS 16.7) and Chrome: app closed, in
+  the background and open (banner); tap opens the right page, an outside
+  link opens the browser; "Opened" counted once; bell lists per device;
+  Settings switches saved; a campaign to everyone with a picture; a real
+  automatic "New article" on publishing (test article deleted after); a real
+  "New reply to your review" (test users, review and reply deleted after);
+  the website with a tab open and with none.
+- **Fixed on the way:** the panel's push list failed after 00045 —
+  `businesses.push_campaign_id` made the `push_campaigns`↔`businesses` join
+  ambiguous, so it names `push_campaigns_business_id_fkey`; the bell had no
+  way in for a signed-out app user (now in the ☰ menu); the website sent
+  `/notifications` home (it was on the account-only list, and it is where a
+  visitor turns notifications on); opened notifications still counted unread
+  (opened ids are kept per device); Android drops a notification picture over
+  1 MB, so the sender asks Supabase for an 800 px copy of our own pictures;
+  outside links no longer get our `?push=` parameter.
+- **Unread:** each device remembers when its bell was last opened; newer and
+  not opened is unread. Shown as a dot on the app's ☰, a count on its
+  Notifications row, a count on the website's navbar bell, and a tint in the
+  list. The website has the bell in the navbar, "Get notifications" in the
+  footer and התראות in the phone-width menu.
+- **Asking permission (iOS can ask only once, ever):** our own sheet over
+  onboarding ("Stay up to date") — "Not now" leaves the system question
+  unused, and the home tabs ask it then; a refusal of the system question
+  gets one note, once, pointing to the phone's settings. The old "asked"
+  flag is gone — it said "asked" for a question iOS had never shown. Token
+  fetching on iOS waits up to 30 s for Apple and retries on resume.
+- **iOS pictures:** a Notification Service Extension (`ios/ImageNotification`,
+  bundle `il.co.modiin4u.modiin4u.ImageNotification`, no pods) downloads
+  `fcm_options.image` and attaches it. Its version comes from Flutter's
+  Generated.xcconfig so it always matches the app's. The embed phase sits
+  before "Thin Binary" to avoid Xcode's dependency cycle.
+- **Dashboard:** "Allowed notifications" counted `profiles.push_enabled`,
+  which nothing writes now; it counts enabled devices instead.
+- **Still open:** conversions (the client's definition), the website deploy,
+  and the website on iPhone (needs the deployed https site).
+
 ### The admin panel in English or Hebrew — 2 October
 
 The client asked for a setting in the panel to switch it between Hebrew and
