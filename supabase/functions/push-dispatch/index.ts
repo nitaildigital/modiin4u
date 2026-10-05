@@ -136,12 +136,15 @@ function message(c: Campaign, r: Recipient) {
   const body = (english && c.body_en?.trim()) || c.body;
   const link = c.deep_link ?? "";
 
-  // Where a browser opens it: the page itself for an app path, the address
-  // for an outside link, with the campaign so the site can count the open.
-  const page = link.startsWith("/") ? siteUrl + link : link || siteUrl + "/";
-  const webLink = page + (page.includes("?") ? "&" : "?") + "push=" + c.id;
+  // Where a browser opens it: the site's own page for an app path, with
+  // the campaign so the site can count the open; an outside address as it
+  // is, since another site cannot count it and should not be handed our
+  // parameter.
+  const webLink = link.startsWith("/")
+    ? siteUrl + link + (link.includes("?") ? "&" : "?") + "push=" + c.id
+    : link || siteUrl + "/?push=" + c.id;
 
-  const image = c.image_url ?? undefined;
+  const image = c.image_url ? notificationImage(c.image_url) : undefined;
   return {
     token: r.token,
     notification: { title, body, ...(image ? { image } : {}) },
@@ -160,6 +163,17 @@ function message(c: Campaign, r: Recipient) {
       fcm_options: { link: webLink },
     },
   };
+}
+
+/// Android shows a notification's picture only under 1 MB, and drops it
+/// silently above — a phone photo uploaded in the panel easily is. A picture
+/// in our own storage is asked for through Supabase's resizing, 800 px wide,
+/// which is plenty for a notification and well under the limit. Pictures
+/// from elsewhere (the imported WordPress ones) are passed on as they are.
+function notificationImage(url: string): string {
+  const own = url.match(/^(https:\/\/[^/]+)\/storage\/v1\/object\/public\/(.+)$/);
+  if (!own) return url;
+  return `${own[1]}/storage/v1/render/image/public/${own[2]}?width=800&resize=contain&quality=75`;
 }
 
 type Outcome = "ok" | "gone" | "error";
