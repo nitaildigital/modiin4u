@@ -136,6 +136,7 @@ class _PushHostState extends ConsumerState<PushHost> {
   void _show(PushMessage message) {
     // It is in the bell now; the badges should count it.
     ref.invalidate(pushFeedProvider);
+    if (!message.inAppBanner) return;
     _bannerTimer?.cancel();
     setState(() => _banner = message);
     _bannerTimer = Timer(const Duration(seconds: 6), _dismiss);

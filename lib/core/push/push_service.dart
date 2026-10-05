@@ -90,8 +90,19 @@ class PushService {
     _ready = true;
 
     final messaging = FirebaseMessaging.instance;
+    // An iPhone draws its own banner while the app is open, as other apps'
+    // do, and keeps it in the notification list; asked for here. Android
+    // draws nothing while the app is open, so there the app shows its own.
+    final iPhone = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+    if (iPhone) {
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
     FirebaseMessaging.onMessage.listen(
-      (m) => foreground.add(PushMessage.from(m)),
+      (m) => foreground.add(PushMessage.from(m, inAppBanner: !iPhone)),
     );
     FirebaseMessaging.onMessageOpenedApp.listen(
       (m) => open(PushMessage.from(m)),
@@ -333,17 +344,24 @@ class PushMessage {
   final String title;
   final String body;
 
+  /// Whether the app draws its own banner for it — not where the phone
+  /// already showed one.
+  final bool inAppBanner;
+
   const PushMessage({
+    this.inAppBanner = true,
     this.campaignId,
     this.link,
     this.title = '',
     this.body = '',
   });
 
-  factory PushMessage.from(RemoteMessage m) => PushMessage(
-    campaignId: m.data['campaign_id'] as String?,
-    link: m.data['link'] as String?,
-    title: m.notification?.title ?? '',
-    body: m.notification?.body ?? '',
-  );
+  factory PushMessage.from(RemoteMessage m, {bool inAppBanner = true}) =>
+      PushMessage(
+        inAppBanner: inAppBanner,
+        campaignId: m.data['campaign_id'] as String?,
+        link: m.data['link'] as String?,
+        title: m.notification?.title ?? '',
+        body: m.notification?.body ?? '',
+      );
 }
