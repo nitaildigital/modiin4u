@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_analytics_provider.dart';
+import '../providers/admin_permissions_provider.dart';
 import '../admin_language.dart';
 
 /// The Analytics section, on what the database can actually be asked.
@@ -647,6 +648,18 @@ class _AdvertisingTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Revenue is the main admin's and the roles given it, not a content
+    // editor's; the overview is everyone's, so the tab says so instead.
+    final perms = ref.watch(adminPermissionsProvider).valueOrNull ?? AdminPermissions.all;
+    if (!perms.canView('revenue')) {
+      return Center(
+        child: Text(
+          tr('אין לתפקיד שלך גישה לנתוני פרסום והכנסות', "Your role doesn't include advertising and revenue"),
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 15, color: AppColors.adminTextMedium),
+        ),
+      );
+    }
     final campaigns = ref.watch(adminCampaignPerformanceProvider);
     final revenue = ref.watch(adminRevenueSummaryProvider);
 

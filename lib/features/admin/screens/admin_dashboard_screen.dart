@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/admin_businesses_provider.dart';
 import '../providers/admin_data_provider.dart';
+import '../providers/admin_permissions_provider.dart';
 import 'admin_businesses_screen.dart';
 import 'admin_articles_screen.dart';
 import 'admin_events_screen.dart';
@@ -87,6 +88,28 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     (tr('הגדרות', 'Settings'), IconsaxPlusLinear.setting_2),
   ];
 
+  /// The permission module ([AdminPermissions]) behind each of [_sections],
+  /// in the same order; null for what every administrator has. Sections
+  /// with no module of their own go with the nearest one: real estate, car
+  /// parks, municipal places and agents with businesses; tags and
+  /// neighbourhoods with categories; information pages with articles (the
+  /// content editor's "pages"); challenges, the trash, the home page and
+  /// flags with settings, which is the main admin's.
+  static const _sectionModules = <String?>[
+    null, 'users', //
+    'businesses', 'articles', 'events', 'businesses', 'businesses',
+    'businesses', 'businesses', //
+    'categories', 'categories', 'categories', 'media', //
+    'offers', 'revenue', 'revenue', 'campaigns', 'campaigns', //
+    'moderation', 'moderation', 'moderation', 'push', 'settings', //
+    'users', 'audit', 'settings', 'settings', 'settings', 'articles', null,
+  ];
+
+  /// Whether the signed-in administrator's role may open section [i].
+  bool _canOpen(int i) => (ref.watch(adminPermissionsProvider).valueOrNull ??
+          AdminPermissions.all)
+      .canView(_sectionModules[i]);
+
   /// Where the settings pane sits in [_sections] — the top bar's gear jumps
   /// here rather than doing nothing, which is what it used to do.
   static const _settingsSection = 29;
@@ -153,6 +176,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           selected: _selectedSection,
                           onSelect: (i) => setState(() => _selectedSection = i),
                           sectionGroups: _sectionGroups,
+                          visible: _canOpen,
                         ),
                         Expanded(
                           child: Container(
@@ -188,9 +212,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                               vertical: 8,
                             ),
                             itemCount: _sections.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 8),
+                            separatorBuilder: (_, index) => _canOpen(index)
+                                ? const SizedBox(width: 8)
+                                : const SizedBox.shrink(),
                             itemBuilder: (context, index) {
+                              if (!_canOpen(index)) return const SizedBox.shrink();
                               final (label, icon) = _sections[index];
                               final sel = index == _selectedSection;
                               return GestureDetector(
@@ -256,6 +282,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Widget _buildSection() {
+    if (!_canOpen(_selectedSection)) return const _NoAccess();
     return switch (_selectedSection) {
       0 => const AdminAnalyticsScreen(),
       1 => const _UsersSection(),
@@ -289,6 +316,44 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       29 => const _SettingsSection(),
       _ => const SizedBox(),
     };
+  }
+}
+
+/// A section the administrator's role does not include — reached only by a
+/// link that skips the sidebar, since the sidebar leaves it out.
+class _NoAccess extends StatelessWidget {
+  const _NoAccess();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(IconsaxPlusLinear.lock, size: 40, color: AppColors.adminTextLight),
+            const SizedBox(height: 12),
+            Text(
+              tr('אין לתפקיד שלך גישה לחלק הזה', "Your role doesn't include this section"),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppColors.adminTextMedium,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              tr('מנהל ראשי יכול לשנות זאת בצוות ניהול', 'A main admin can change this under Admin team'),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: AppColors.adminTextLight),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -446,10 +511,15 @@ class _Sidebar extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final Map<int, String> sectionGroups;
 
+  /// Whether section i is the role's to open; the others are left out, and
+  /// so is a heading with nothing under it.
+  final bool Function(int i) visible;
+
   const _Sidebar({
     required this.sections,
     required this.selected,
     required this.onSelect,
+    required this.visible,
     this.sectionGroups = const {},
   });
 
@@ -457,14 +527,17 @@ class _Sidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     // Build flat list of widgets: group headers + section tiles
     final items = <Widget>[];
+    String? heading;
     for (int i = 0; i < sections.length; i++) {
-      if (sectionGroups.containsKey(i)) {
-        if (i > 0) items.add(const SizedBox(height: 16));
+      if (sectionGroups.containsKey(i)) heading = sectionGroups[i];
+      if (!visible(i)) continue;
+      if (heading != null) {
+        if (items.isNotEmpty) items.add(const SizedBox(height: 16));
         items.add(
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Text(
-              sectionGroups[i]!,
+              heading,
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 11,
@@ -476,6 +549,7 @@ class _Sidebar extends StatelessWidget {
           ),
         );
         items.add(const SizedBox(height: 4));
+        heading = null;
       }
       final (label, icon) = sections[i];
       final sel = i == selected;
