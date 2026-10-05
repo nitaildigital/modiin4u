@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/personaai_chat_button.dart';
 import '../../../shared/providers/banners_provider.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
@@ -349,7 +350,9 @@ class _WebHomeContentState extends ConsumerState<WebHomeContent> with WebLanguag
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
-              onTap: _onSearch,
+              // Ask: the client's PersonaAI chat (5 Oct), in place of the
+              // widget's floating bubble. Enter in the field still searches.
+              onTap: () => openPersonaAiChat(context),
               child: Container(
                 height: 46,
                 padding: const EdgeInsets.symmetric(horizontal: 40),

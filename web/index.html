@@ -32,19 +32,29 @@
   <style>
     html { height: 100% }
     body { margin: 0; min-height: 100%; background-color: #ffffff; }
+    /* PersonaAI's own bubble, its glow, its greeting and its pop-ups: the
+       home page's "Ask" button opens the chat instead (the client, 5 Oct). */
+    /* `html body` outranks the widget's own `#…{display:flex !important}`,
+       which it adds after this. */
+    html body #personaai-chat-button,
+    html body #personaai-anim-layer,
+    html body #personaai-welcome-bubble,
+    html body #personaai-proactive-bubble { display: none !important; }
   </style>
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 </head>
 <body>
   <!-- PersonaAI Chat Widget — the client's, with his settings. Not on the
-       admin panel, where the bubble would sit over the panel's buttons; on
-       the phone-width layout it is raised above the bottom menu. -->
+       admin panel. Its bubble is hidden (the style above): the home page's
+       "Ask" button opens the chat through PersonaAI.open(). On the
+       phone-width layout the chat window is raised above the bottom menu. -->
   <script>
     if (!/^\/(admin|login)/.test(location.pathname)) {
       window.PersonaAI = {
         businessId: "25ea67c7-94cd-4771-8f71-1d530bc7b2a1",
         position: "bottom-right",
         primaryColor: "#5B21E6",
+        showWelcomeBubble: false,
         offsetBottom: window.innerWidth <= 1100 ? 92 : 20,
         offsetSide: 20
       };

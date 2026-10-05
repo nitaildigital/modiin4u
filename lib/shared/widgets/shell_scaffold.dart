@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../core/theme/app_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../core/theme/app_colors.dart';
 import '../../l10n/app_localizations.dart';
-import 'personaai_chat_button.dart';
 
 class ShellScaffold extends StatelessWidget {
   final Widget child;
@@ -35,21 +33,9 @@ class ShellScaffold extends StatelessWidget {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        // The client's PersonaAI chat bubble, bottom right as his widget
-        // sets it (the website loads the widget itself). Not over the Map
-        // tab, whose place card fills the foot of the screen.
-        body: kIsWeb || currentIndex == 2
-            ? child
-            : Stack(
-                children: [
-                  child,
-                  const Positioned(
-                    right: 20,
-                    bottom: 20,
-                    child: PersonaAiChatButton(),
-                  ),
-                ],
-              ),
+        // No floating chat bubble: since 5 Oct the home page's "Ask" button
+        // opens the client's PersonaAI chat (his request).
+        body: child,
         // Padded for the system navigation bar; without it the labels sit
         // under the gesture pill or the three-button bar on some devices.
         bottomNavigationBar: isWide

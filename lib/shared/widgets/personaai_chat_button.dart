@@ -1,15 +1,19 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// The client's PersonaAI chat, in the app.
+import '../personaai/personaai_web.dart';
+
+/// The client's PersonaAI chat, opened by the home page's "Ask" button.
 ///
-/// On the website the client's own widget script draws the chat bubble
-/// (web/index.html). The app is not a web page and cannot run that script,
-/// so it draws the same bubble — the logo in his colour, bottom right — and
-/// opens the chat page the widget itself loads inside the app, in a sheet
+/// On the website the client's own widget script draws the chat (web/
+/// index.html). The app is not a web page and cannot run that script, so it
+/// opens the chat page the widget itself loads, inside the app, on a screen
 /// of its own. It opened in the phone's browser at first, with Chrome's bar
 /// and the personaai.me address, which read as being sent out of the app.
+/// Until 5 Oct a floating bubble opened it; the client asked for the "Ask"
+/// button instead.
 const _kBusinessId = '25ea67c7-94cd-4771-8f71-1d530bc7b2a1';
 const _kColor = Color(0xFF5B21E6);
 
@@ -18,33 +22,18 @@ final _chatUri = Uri.parse(
   '?businessId=$_kBusinessId&color=%235B21E6',
 );
 
-class PersonaAiChatButton extends StatelessWidget {
-  const PersonaAiChatButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: _kColor,
-      shape: const CircleBorder(),
-      elevation: 6,
-      shadowColor: const Color(0x55000000),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: () => showPersonaAiChat(context),
-        // The site's logo in the circle, as the website's bubble shows it.
-        child: Padding(
-          padding: const EdgeInsets.all(3),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/images/app_icon.png',
-              width: 54,
-              height: 54,
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-      ),
-    );
+/// The home page's "Ask" button: the client's PersonaAI chat.
+///
+/// On the website the widget's own window opens (its floating bubble is
+/// hidden, web/index.html); should the script not have loaded, the chat page
+/// opens in a new tab. In the app, the chat's screen.
+void openPersonaAiChat(BuildContext context) {
+  if (!kIsWeb) {
+    showPersonaAiChat(context);
+    return;
+  }
+  if (!openPersonaAiWidget()) {
+    launchUrl(_chatUri, webOnlyWindowName: '_blank');
   }
 }
 

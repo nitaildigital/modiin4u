@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_mobile_menu.dart';
+import '../../../shared/widgets/personaai_chat_button.dart';
 import '../../../shared/widgets/app_side_menu.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
@@ -302,9 +303,11 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                           ),
                         ),
                       ),
-                      // Ask button
+                      // Ask: the client's PersonaAI chat (5 Oct), which
+                      // replaced the floating bubble. Enter in the field
+                      // still searches the site.
                       GestureDetector(
-                        onTap: _onSearch,
+                        onTap: () => openPersonaAiChat(context),
                         child: Container(
                           margin: const EdgeInsets.all(5),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
