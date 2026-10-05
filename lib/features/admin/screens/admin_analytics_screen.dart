@@ -222,9 +222,9 @@ class _SystemDataTab extends ConsumerWidget {
                     color: AppColors.success,
                   ),
                   _StatCard(
-                    label: tr('אישרו התראות', 'Allowed notifications'),
+                    label: tr('מכשירים עם התראות', 'Devices with notifications'),
                     value: _int(c['residents_push_on']),
-                    source: 'profiles · push_enabled',
+                    source: 'push_devices · enabled',
                     color: AppColors.midBlue,
                   ),
                 ],

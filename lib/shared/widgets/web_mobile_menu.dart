@@ -58,6 +58,8 @@ class _MenuSheet extends StatelessWidget {
       (t('Real Estate', 'נדל״ן'), IconsaxPlusLinear.building_3, '/realestate'),
       (t('Map', 'מפה'), IconsaxPlusLinear.map_1, '/map'),
       (t('Municipal', 'עירייה'), IconsaxPlusLinear.bank, '/municipal'),
+      // Where a visitor turns notifications on and reads them.
+      (t('Notifications', 'התראות'), IconsaxPlusLinear.notification, '/notifications'),
     ];
 
     return Align(

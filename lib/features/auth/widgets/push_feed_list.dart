@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/push/push_feed.dart';
 import '../../../core/push/push_service.dart';
 import '../../../core/push/push_switch.dart';
+import '../../../core/push/push_unread.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
@@ -24,16 +25,22 @@ class PushFeedList extends ConsumerWidget {
   /// page.
   final bool shrinkWrap;
 
+  /// When the bell was last opened before this visit; what was sent after it
+  /// is marked unread. Null marks nothing.
+  final DateTime? unreadAfter;
+
   const PushFeedList({
     super.key,
     required this.languageCode,
     required this.empty,
     this.shrinkWrap = false,
+    this.unreadAfter,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(pushFeedProvider);
+    final opened = ref.watch(pushOpenedProvider);
     return feed.when(
       loading: () => const Padding(
         padding: EdgeInsets.all(48),
@@ -53,7 +60,11 @@ class PushFeedList extends ConsumerWidget {
           itemCount: items.length,
           separatorBuilder: (_, _) =>
               const Divider(color: AppColors.border, height: 1, indent: 76),
-          itemBuilder: (context, i) => _FeedRow(item: items[i], languageCode: languageCode),
+          itemBuilder: (context, i) => _FeedRow(
+            item: items[i],
+            languageCode: languageCode,
+            unread: isPushUnread(items[i], unreadAfter, opened),
+          ),
         );
         if (shrinkWrap) return list;
         return RefreshIndicator(
@@ -68,14 +79,20 @@ class PushFeedList extends ConsumerWidget {
 class _FeedRow extends StatelessWidget {
   final PushFeedItem item;
   final String languageCode;
+  final bool unread;
 
-  const _FeedRow({required this.item, required this.languageCode});
+  const _FeedRow({
+    required this.item,
+    required this.languageCode,
+    this.unread = false,
+  });
 
   /// The time today, the date before that.
   String _when() {
     final now = DateTime.now();
     final t = item.sentAt;
-    final today = t.year == now.year && t.month == now.month && t.day == now.day;
+    final today =
+        t.year == now.year && t.month == now.month && t.day == now.day;
     return DateFormat(today ? 'HH:mm' : 'd.M.yyyy').format(t);
   }
 
@@ -96,70 +113,92 @@ class _FeedRow extends StatelessWidget {
     final body = item.bodyFor(languageCode);
     return InkWell(
       onTap: item.link == null ? null : () => _open(context),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            item.imageUrl != null
-                ? NetworkPhoto(
-                    url: item.imageUrl,
-                    width: 44,
-                    height: 44,
-                    radius: BorderRadius.circular(12),
-                    icon: IconsaxPlusLinear.notification,
-                  )
-                : Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: context.surfaceDim,
-                      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        // Unread: a light tint and a dot, as the bell's own badge counted it.
+        color: unread ? AppColors.turquoise.withValues(alpha: 0.06) : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              item.imageUrl != null
+                  ? NetworkPhoto(
+                      url: item.imageUrl,
+                      width: 44,
+                      height: 44,
+                      radius: BorderRadius.circular(12),
+                      icon: IconsaxPlusLinear.notification,
+                    )
+                  : Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: context.surfaceDim,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        IconsaxPlusLinear.notification,
+                        size: 22,
+                        color: AppColors.turquoise,
+                      ),
                     ),
-                    child: const Icon(
-                      IconsaxPlusLinear.notification,
-                      size: 22,
-                      color: AppColors.turquoise,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 14,
+                              fontWeight: unread
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (unread)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsetsDirectional.only(start: 8),
+                            decoration: const BoxDecoration(
+                              color: AppColors.turquoise,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: context.textPrimary,
-                    ),
-                  ),
-                  if (body.isNotEmpty) ...[
-                    const SizedBox(height: 2),
+                    if (body.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        body,
+                        style: const TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 13,
+                          color: AppColors.grayMeta,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
                     Text(
-                      body,
+                      _when(),
                       style: const TextStyle(
                         fontFamily: AppFonts.rubik,
-                        fontSize: 13,
-                        color: AppColors.grayMeta,
+                        fontSize: 12,
+                        color: AppColors.grayLight,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 4),
-                  Text(
-                    _when(),
-                    style: const TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 12,
-                      color: AppColors.grayLight,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -192,12 +231,18 @@ class PushTurnOnCard extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              const Icon(IconsaxPlusLinear.notification, color: AppColors.turquoise),
+              const Icon(
+                IconsaxPlusLinear.notification,
+                color: AppColors.turquoise,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                  style: const TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 14,
+                  ),
                 ),
               ),
               TextButton(
@@ -205,7 +250,10 @@ class PushTurnOnCard extends ConsumerWidget {
                   await setPushEnabled(ref, true);
                   ref.invalidate(pushFeedProvider);
                 },
-                child: Text(action, style: const TextStyle(fontFamily: AppFonts.rubik)),
+                child: Text(
+                  action,
+                  style: const TextStyle(fontFamily: AppFonts.rubik),
+                ),
               ),
             ],
           ),

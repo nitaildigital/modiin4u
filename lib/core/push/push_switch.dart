@@ -11,7 +11,9 @@ import 'push_settings.dart';
 /// browser may be asked, because it is a tap.
 Future<void> setPushEnabled(WidgetRef ref, bool on) async {
   final settings = ref.read(pushSettingsProvider);
-  await ref.read(pushSettingsProvider.notifier).update(settings.copyWith(enabled: on));
+  await ref
+      .read(pushSettingsProvider.notifier)
+      .update(settings.copyWith(enabled: on));
   if (!on) return;
   final push = ref.read(pushServiceProvider);
   if (!push.isAvailable || push.allowed.value == true) return;
@@ -30,7 +32,9 @@ Future<String?> pickPushNeighborhood(BuildContext context, {String? current}) {
         final hoods = ref.watch(activeNeighborhoodsProvider);
         return SafeArea(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.7),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+            ),
             child: hoods.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(32),
@@ -42,8 +46,13 @@ Future<String?> pickPushNeighborhood(BuildContext context, {String? current}) {
                 children: [
                   for (final n in list)
                     ListTile(
-                      title: Text(n.name, style: const TextStyle(fontFamily: AppFonts.rubik)),
-                      trailing: n.id == current ? const Icon(Icons.check) : null,
+                      title: Text(
+                        n.name,
+                        style: const TextStyle(fontFamily: AppFonts.rubik),
+                      ),
+                      trailing: n.id == current
+                          ? const Icon(Icons.check)
+                          : null,
                       onTap: () => Navigator.pop(context, n.id),
                     ),
                 ],
@@ -57,7 +66,9 @@ Future<String?> pickPushNeighborhood(BuildContext context, {String? current}) {
 }
 
 /// The chosen neighbourhood's name, for the row that opens the picker.
-final pushNeighborhoodNameProvider = FutureProvider.autoDispose<String?>((ref) async {
+final pushNeighborhoodNameProvider = FutureProvider.autoDispose<String?>((
+  ref,
+) async {
   final id = ref.watch(pushSettingsProvider.select((s) => s.neighborhoodId));
   if (id == null) return null;
   final hood = await ref.watch(neighborhoodByIdProvider(id).future);

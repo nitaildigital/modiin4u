@@ -33,7 +33,7 @@ class AdminPushListNotifier extends AdminTableNotifier {
     : super(
         table: 'push_campaigns',
         searchColumns: const ['title', 'body'],
-        columns: '*, businesses(id, name)',
+        columns: '*, businesses!push_campaigns_business_id_fkey(id, name)',
         orderBy: 'created_at',
         softDeleteStatus: 'cancelled',
         excluded: const {'audience_type': 'profiles'},

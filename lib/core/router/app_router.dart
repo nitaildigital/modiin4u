@@ -114,6 +114,10 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 /// The resident's own pages — an account, or something posted from one.
+///
+/// Not `/notifications`: notifications need no account, and on the website
+/// that page is where a visitor turns them on — a browser only asks from a
+/// click — and sees what was sent.
 const _appOnlyPaths = {
   '/onboarding',
   '/signup',
@@ -122,7 +126,6 @@ const _appOnlyPaths = {
   '/change-password',
   '/favorites',
   '/settings',
-  '/notifications',
   '/my-apartments',
   '/add-apartment',
   '/new-listing',
@@ -612,9 +615,6 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) =>
           _slideTransition(const SitePageScreen(slug: 'accessibility'), state),
     ),
-    GoRoute(
-      path: '/search',
-      parentNavigatorKey: _rootNavigatorKey,
     // The lawyer's Privacy Policy, apart from the Terms of Use since 5 Oct.
     GoRoute(
       path: '/privacy',
@@ -631,6 +631,9 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) =>
           _slideTransition(const SitePageScreen(slug: 'delete-account'), state),
     ),
+    GoRoute(
+      path: '/search',
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final query = state.uri.queryParameters['q'] ?? '';
         return SearchResultsScreen(query: query);

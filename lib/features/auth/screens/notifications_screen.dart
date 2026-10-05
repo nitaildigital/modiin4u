@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/locale_provider.dart';
+import '../../../core/push/push_feed.dart';
+import '../../../core/push/push_unread.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/m_account_widgets.dart' show mTr;
@@ -23,6 +25,21 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  /// What was unread when the bell was opened. Read before it is marked seen,
+  /// so this visit still shows which ones are new; the badges clear at once.
+  late final DateTime? _seenBefore = ref.read(pushSeenProvider);
+
+  @override
+  void initState() {
+    super.initState();
+    // After the first frame: a provider may not change while widgets build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(pushFeedProvider);
+      ref.read(pushSeenProvider.notifier).markSeen();
+    });
+  }
+
   /// Said plainly. An empty scroll area reads as a screen that failed to
   /// load, and this one has not failed — there is nothing yet.
   Widget _buildEmptyState() {
@@ -70,7 +87,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) {
-          return const WebNotificationsContent();
+          return WebNotificationsContent(unreadAfter: _seenBefore);
         }
         return _buildMobile(context);
       },
@@ -103,6 +120,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               child: PushFeedList(
                 languageCode: ref.watch(localeProvider).languageCode,
                 empty: _buildEmptyState(),
+                unreadAfter: _seenBefore,
               ),
             ),
           ],

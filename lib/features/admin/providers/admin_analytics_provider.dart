@@ -40,7 +40,10 @@ final adminRowCountsProvider = FutureProvider<Map<String, int>>((ref) async {
   final results = await Future.wait([
     _countRows('profiles'),
     _countRows('profiles', column: 'is_verified', equals: true),
-    _countRows('profiles', column: 'push_enabled', equals: true),
+    // Phones and browsers that can be sent a notification now — devices,
+    // not accounts, since notifications need none (migration 00045). The
+    // profile's `push_enabled` it used to count is no longer written.
+    _countPushDevices(),
     _countRows('businesses'),
     _countRows('businesses', column: 'status', equals: 'active'),
     _countRows('businesses', column: 'status', equals: 'pending'),
@@ -86,6 +89,17 @@ final adminRowCountsProvider = FutureProvider<Map<String, int>>((ref) async {
 ///
 /// `gte` is separate from `equals` because the only range this file asks for
 /// is "events that have not happened yet".
+Future<int> _countPushDevices() async {
+  final res = await SupabaseConfig.client
+      .from('push_devices')
+      .select('id')
+      .eq('enabled', true)
+      .eq('is_active', true)
+      .limit(1)
+      .count(CountOption.exact);
+  return res.count;
+}
+
 Future<int> _countRows(
   String table, {
   String? column,

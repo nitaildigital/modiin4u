@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import '../../core/push/push_unread.dart';
 import '../../core/theme/app_fonts.dart';
 import '../../features/auth/models/user_model.dart';
 import '../../features/auth/providers/auth_provider.dart';
@@ -17,6 +18,8 @@ import 'network_photo.dart';
 /// Counter, My Apartments, Settings and Logout. The client asked for the
 /// profile, support and the step counter to be reachable from the ☰; the
 /// header opens the profile, and Help & Support sits after Settings.
+/// Notifications, after Favorites, is ours: the bell the client was promised
+/// has nowhere else to live on the phone.
 ///
 /// This is the app's menu. A phone browser keeps the site's own menu
 /// (`showWebMobileMenu`), where nobody signs in.
@@ -117,6 +120,16 @@ class _SideMenuPanel extends ConsumerWidget {
                     label: l.favorites,
                     onTap: () => _go(context, '/favorites'),
                   ),
+                  // The notifications sent so far (the bell). The design has
+                  // no bell on the phone's home screen, and Profile — the
+                  // only other way there — needs an account, which
+                  // notifications do not.
+                  _MenuRow(
+                    icon: IconsaxPlusLinear.notification,
+                    label: l.notifications,
+                    count: ref.watch(pushUnreadCountProvider),
+                    onTap: () => _go(context, '/notifications'),
+                  ),
                   _MenuRow(
                     svg: 'assets/icons/m_menu_steps.svg',
                     label: l.stepCounter,
@@ -189,7 +202,10 @@ class _ProfileHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              GestureDetector(onTap: onProfile, child: _Avatar(user: user)),
+              GestureDetector(
+                onTap: onProfile,
+                child: _Avatar(user: user),
+              ),
               GestureDetector(
                 onTap: onEdit,
                 child: Container(
@@ -409,12 +425,16 @@ class _MenuRow extends StatelessWidget {
   final bool chevron;
   final VoidCallback onTap;
 
+  /// Unread notifications, as a red count before the chevron; 0 shows none.
+  final int count;
+
   const _MenuRow({
     this.svg,
     this.icon,
     required this.label,
     this.chevron = true,
     required this.onTap,
+    this.count = 0,
   });
 
   @override
@@ -445,6 +465,10 @@ class _MenuRow extends StatelessWidget {
                 ),
               ),
             ),
+            if (count > 0) ...[
+              PushCountPill(count: count),
+              const SizedBox(width: 12),
+            ],
             if (chevron)
               // The chevron points onward: right in English, left in Hebrew.
               Transform.flip(

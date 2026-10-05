@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/push/push_unread.dart';
 import '../../../core/theme/app_fonts.dart';
-import '../../../shared/widgets/web_mobile_menu.dart';
 import '../../../shared/widgets/personaai_chat_button.dart';
+import '../../../shared/widgets/web_mobile_menu.dart';
 import '../../../shared/widgets/app_side_menu.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
@@ -364,7 +365,14 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
               onTap: () => kIsWeb ? showWebMobileMenu(context) : showAppSideMenu(context),
               child: Padding(
                 padding: const EdgeInsets.all(8),
-                child: SvgPicture.asset('assets/icons/m_home_menu.svg', width: 24, height: 24),
+                // A dot while notifications wait unread — the bell is in the menu.
+                child: Consumer(
+                  builder: (context, ref, _) => PushCountBadge(
+                    count: ref.watch(pushUnreadCountProvider),
+                    dotOnly: true,
+                    child: SvgPicture.asset('assets/icons/m_home_menu.svg', width: 24, height: 24),
+                  ),
+                ),
               ),
             ),
           ),

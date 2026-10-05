@@ -28,7 +28,10 @@ const _kIconGrey = Color(0xFF6D6D6D);
 const _kColumnWidth = 720.0;
 
 class WebNotificationsContent extends ConsumerStatefulWidget {
-  const WebNotificationsContent({super.key});
+  /// From the bell page that holds this: what was unread when it opened.
+  final DateTime? unreadAfter;
+
+  const WebNotificationsContent({super.key, this.unreadAfter});
 
   @override
   ConsumerState<WebNotificationsContent> createState() =>
@@ -93,6 +96,7 @@ class _WebNotificationsContentState extends ConsumerState<WebNotificationsConten
                                 languageCode: _isHebrew ? 'he' : 'en',
                                 empty: _buildEmptyState(),
                                 shrinkWrap: true,
+                                unreadAfter: widget.unreadAfter,
                               ),
                             ],
                           ),

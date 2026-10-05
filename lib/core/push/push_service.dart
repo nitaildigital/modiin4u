@@ -4,7 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart' show openAppSettings;
+import 'package:permission_handler/permission_handler.dart'
+    show openAppSettings;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -14,6 +15,7 @@ import '../providers/locale_provider.dart';
 import '../supabase/supabase_config.dart';
 import 'push_config.dart';
 import 'push_settings.dart';
+import 'push_unread.dart';
 
 /// Push notifications on this device: Firebase, the permission, the token,
 /// and what happens when one is tapped.
@@ -33,7 +35,6 @@ class PushService {
   final Ref _ref;
 
   static const _tokenKey = 'push_token';
-  static const _askedKey = 'push_asked';
 
   bool _started = false;
   bool _ready = false;
@@ -73,20 +74,28 @@ class PushService {
     _started = true;
 
     try {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
     } catch (e) {
       debugPrint('Push notifications off: $e');
       return;
     }
     if (kIsWeb && webPushVapidKey.isEmpty) {
-      debugPrint('Push notifications off on the web: no VAPID key in push_config.dart');
+      debugPrint(
+        'Push notifications off on the web: no VAPID key in push_config.dart',
+      );
       return;
     }
     _ready = true;
 
     final messaging = FirebaseMessaging.instance;
-    FirebaseMessaging.onMessage.listen((m) => foreground.add(PushMessage.from(m)));
-    FirebaseMessaging.onMessageOpenedApp.listen((m) => open(PushMessage.from(m)));
+    FirebaseMessaging.onMessage.listen(
+      (m) => foreground.add(PushMessage.from(m)),
+    );
+    FirebaseMessaging.onMessageOpenedApp.listen(
+      (m) => open(PushMessage.from(m)),
+    );
     if (!kIsWeb) {
       final initial = await messaging.getInitialMessage();
       if (initial != null) open(PushMessage.from(initial));
@@ -121,16 +130,34 @@ class PushService {
   /// switch in Settings asks again. A browser is never asked unprompted —
   /// browsers hold that against a site — only from a tap.
   Future<void> askOnce() async {
-    if (!_ready || kIsWeb || allowed.value == true) return;
+    if (!_ready || kIsWeb || allowed.value == true || _asking) return;
+    // The phone's own answer decides: asked only while it has never been
+    // asked. After "Don't Allow" the phone does not show the question again
+    // anyway; the Settings switch then leads to the phone's settings. A flag
+    // of our own once said "asked" for a question that never appeared.
+    final status = (await FirebaseMessaging.instance.getNotificationSettings())
+        .authorizationStatus;
+    if (status != AuthorizationStatus.notDetermined) return;
+    _asking = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      if (prefs.getBool(_askedKey) == true) return;
-      await prefs.setBool(_askedKey, true);
-    } catch (_) {
-      return;
+      await requestPermission();
+    } finally {
+      _asking = false;
     }
-    await requestPermission();
   }
+
+  bool _asking = false;
+
+  /// The phone's answer so far; null where Firebase is not set up.
+  Future<AuthorizationStatus?> permissionStatus() async {
+    if (!_ready) return null;
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    return settings.authorizationStatus;
+  }
+
+  /// The app's page in the phone's settings — the only way back after a
+  /// "Don't Allow".
+  Future<void> openPhoneSettings() => openAppSettings();
 
   /// Shows the system's "allow notifications?" and, if allowed, registers.
   /// Returns whether notifications are allowed afterwards. Once someone has
@@ -159,7 +186,12 @@ class PushService {
   /// A tapped notification: counted, then opened — a page in the app, or an
   /// outside address in the browser.
   Future<void> open(PushMessage message) async {
-    if (message.campaignId != null) unawaited(_record(message.campaignId!));
+    if (message.campaignId != null) {
+      unawaited(_record(message.campaignId!));
+      unawaited(
+        _ref.read(pushOpenedProvider.notifier).add(message.campaignId!),
+      );
+    }
     final link = message.link;
     if (link == null || link.isEmpty) return;
     if (link.startsWith('/')) {
@@ -173,28 +205,61 @@ class PushService {
   }
 
   bool _granted(AuthorizationStatus s) =>
-      s == AuthorizationStatus.authorized || s == AuthorizationStatus.provisional;
+      s == AuthorizationStatus.authorized ||
+      s == AuthorizationStatus.provisional;
+
+  /// For a device that allowed notifications but has no token yet: Apple's
+  /// part can arrive after the first attempt gave up, so coming back to the
+  /// app tries again.
+  Future<void> retryIfMissing() async {
+    if (!_ready || _token != null || allowed.value != true) return;
+    await _fetchToken();
+  }
+
+  bool _fetching = false;
 
   Future<void> _fetchToken() async {
+    if (_fetching) return;
+    _fetching = true;
+    try {
+      await _fetchTokenOnce();
+    } finally {
+      _fetching = false;
+    }
+  }
+
+  Future<void> _fetchTokenOnce() async {
     final messaging = FirebaseMessaging.instance;
     String? token;
-    // On an iPhone, Firebase's token waits on Apple's, which can take a
-    // moment after permission is granted.
-    for (var attempt = 0; attempt < 5 && token == null; attempt++) {
+    var apnsMissing = false;
+    // On an iPhone, Firebase's token waits on Apple's, which can take a while
+    // after permission is granted — half a minute on a first install.
+    for (var attempt = 0; attempt < 15 && token == null; attempt++) {
       try {
         if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
           if (await messaging.getAPNSToken() == null) {
+            apnsMissing = true;
             await Future.delayed(const Duration(seconds: 2));
             continue;
           }
         }
-        token = await messaging.getToken(vapidKey: kIsWeb ? webPushVapidKey : null);
+        token = await messaging.getToken(
+          vapidKey: kIsWeb ? webPushVapidKey : null,
+        );
       } catch (e) {
         debugPrint('Push token: $e');
         await Future.delayed(const Duration(seconds: 2));
       }
     }
-    if (token == null) return;
+    if (token == null) {
+      debugPrint(
+        apnsMissing
+            ? 'Push: no APNs token from Apple yet; will try again on resume'
+            : 'Push: no Firebase token yet; will try again on resume',
+      );
+      return;
+    }
+    debugPrint('Push: registered this device');
     _token = token;
     await _saveToken(token);
     await _sync();
@@ -218,21 +283,24 @@ class PushService {
     if (token == null) return;
     final s = _ref.read(pushSettingsProvider);
     try {
-      await SupabaseConfig.client.rpc('register_push_device', params: {
-        'p_token': token,
-        'p_platform': _platform,
-        'p_locale': _ref.read(localeProvider).languageCode,
-        'p_enabled': s.enabled,
-        'p_news': s.news,
-        'p_events': s.events,
-        'p_businesses': s.businesses,
-        'p_deals': s.deals,
-        'p_realestate': s.realestate,
-        'p_neighborhood': s.neighborhood,
-        'p_neighborhood_id': s.neighborhoodId,
-        'p_app_version': null,
-        'p_replies': s.replies,
-      });
+      await SupabaseConfig.client.rpc(
+        'register_push_device',
+        params: {
+          'p_token': token,
+          'p_platform': _platform,
+          'p_locale': _ref.read(localeProvider).languageCode,
+          'p_enabled': s.enabled,
+          'p_news': s.news,
+          'p_events': s.events,
+          'p_businesses': s.businesses,
+          'p_deals': s.deals,
+          'p_realestate': s.realestate,
+          'p_neighborhood': s.neighborhood,
+          'p_neighborhood_id': s.neighborhoodId,
+          'p_app_version': null,
+          'p_replies': s.replies,
+        },
+      );
     } catch (e) {
       // The next change, start or token refresh tries again.
       debugPrint('Push registration: $e');
@@ -243,11 +311,10 @@ class PushService {
     final token = await this.token();
     if (token == null) return;
     try {
-      await SupabaseConfig.client.rpc('record_push_event', params: {
-        'p_campaign': campaignId,
-        'p_token': token,
-        'p_kind': 'open',
-      });
+      await SupabaseConfig.client.rpc(
+        'record_push_event',
+        params: {'p_campaign': campaignId, 'p_token': token, 'p_kind': 'open'},
+      );
     } catch (_) {
       // An uncounted open is better than a failed one.
     }
@@ -266,7 +333,12 @@ class PushMessage {
   final String title;
   final String body;
 
-  const PushMessage({this.campaignId, this.link, this.title = '', this.body = ''});
+  const PushMessage({
+    this.campaignId,
+    this.link,
+    this.title = '',
+    this.body = '',
+  });
 
   factory PushMessage.from(RemoteMessage m) => PushMessage(
     campaignId: m.data['campaign_id'] as String?,

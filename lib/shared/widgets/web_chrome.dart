@@ -8,6 +8,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/push/push_unread.dart';
 import '../../core/theme/app_colors.dart';
 import '../providers/banners_provider.dart';
 import '../providers/nav_categories_provider.dart';
@@ -222,6 +223,41 @@ Widget _logo(BuildContext context, {double width = 90, double height = 48}) {
       ),
     ),
   );
+}
+
+/// The bell beside the language switch, in its round outline, with the
+/// unread count over it. The design has no bell; the client was promised
+/// notifications on the website, and a browser asks only from a click.
+class _BellButton extends ConsumerWidget {
+  final bool isHebrew;
+  final VoidCallback onTap;
+  const _BellButton({required this.isHebrew, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Tooltip(
+      message: isHebrew ? 'התראות' : 'Notifications',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: onTap,
+          child: PushCountBadge(
+            count: ref.watch(pushUnreadCountProvider),
+            child: Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: _kBorder),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(IconsaxPlusLinear.notification, size: 18, color: AppColors.midBlue),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// The design has no language switch; the site has two languages. It sits
@@ -516,11 +552,15 @@ class _WebNavbarState extends ConsumerState<WebNavbar> {
     );
   }
 
-  /// Contact Us at the far left, the language switch beside it.
+  /// Contact Us at the far left, the language switch beside it, and the
+  /// bell — the page where a visitor turns notifications on and reads them,
+  /// with a count of the unread.
   Widget _contact() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        _BellButton(isHebrew: isHebrew, onTap: () => _go('/notifications')),
+        const SizedBox(width: 10),
         _LanguageToggle(isHebrew: isHebrew, onTap: widget.onToggleLanguage),
         const SizedBox(width: 12),
         MouseRegion(
@@ -1117,6 +1157,7 @@ class WebFooter extends StatelessWidget {
     (_t('Home', 'בית'), '/'),
     (_t('About Us', 'אודותינו'), '/about'),
     (_t('Contact Us', 'צור קשר'), 'mailto:$kContactEmail'),
+    (_t('Get notifications', 'קבלת התראות'), '/notifications'),
     (_t('Privacy Policy', 'מדיניות פרטיות'), '/privacy'),
     (_t('Terms of Use', 'תנאי שימוש'), '/terms'),
     (_t('Accessibility Statement', 'הצהרת נגישות'), '/accessibility'),
