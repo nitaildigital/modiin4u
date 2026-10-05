@@ -30,6 +30,8 @@ import '../../realestate/screens/my_apartments_screen.dart' show formatShekels;
 import '../../news/models/article.dart';
 import '../../news/providers/news_providers.dart';
 import 'web_home_screen.dart';
+import '../providers/home_web_providers.dart' show homeNoticeProvider;
+import 'package:url_launcher/url_launcher.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 
@@ -58,6 +60,9 @@ class _MobileHomeContent extends ConsumerStatefulWidget {
 
 class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   final _searchController = TextEditingController();
+
+  /// The site notice closed with its ×, until the next visit.
+  String? _dismissedNotice;
 
   @override
   void dispose() {
@@ -92,6 +97,10 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
       children: [
         // ── Gradient header ──
         _buildHeader(topPadding),
+
+        // The panel's site notice (Home builder → alert), which only the
+        // desktop home showed.
+        _buildNotice(),
 
         const SizedBox(height: 22),
 
@@ -157,7 +166,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
         const SizedBox(height: 32),
 
         // ── Deal Near You ──
-        if ((ref.watch(offersProvider).valueOrNull ?? const []).isNotEmpty) ...[
+        if ((ref.watch(activeOffersProvider).valueOrNull ?? const <Offer>[]).any((o) => !o.hasExpired)) ...[
           _SectionHeader(title: l.dealsNearYou, onSeeAll: () => context.goOrPush('/deals')),
           const SizedBox(height: 12),
           _buildDealImages(),
@@ -384,6 +393,79 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // ─────────────────────────────────────────────
   // Category icons (Restaurants, Events, Real Estate, Deals)
   // ─────────────────────────────────────────────
+  Widget _buildNotice() {
+    final notice = ref.watch(homeNoticeProvider).valueOrNull;
+    if (notice == null || notice.id == _dismissedNotice) return const SizedBox.shrink();
+    final he = Localizations.localeOf(context).languageCode == 'he';
+    final label = notice.label(he);
+    final message = notice.message(he);
+    final link = notice.link;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 6, 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF5E1),
+          border: Border.all(color: const Color(0xFFFFD89A)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Icon(IconsaxPlusLinear.notification, size: 18, color: Color(0xFFDC7600)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(children: [
+                      if (label != null)
+                        TextSpan(
+                          text: message == null ? label : '${label.endsWith(':') ? label : '$label:'} ',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      if (message != null) TextSpan(text: message),
+                    ]),
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, height: 1.4, color: Colors.black),
+                  ),
+                  if (link != null) ...[
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      onTap: () => link.startsWith('/')
+                          ? context.push(link)
+                          : launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication),
+                      child: Text(
+                        notice.linkLabel(he) ?? (he ? 'לפרטים' : 'View details'),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.midBlue,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppColors.midBlue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: he ? 'סגירה' : 'Close',
+              icon: const Icon(Icons.close_rounded, size: 18),
+              onPressed: () => setState(() => _dismissedNotice = notice.id),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCategoryRow() {
     // The frame's four shortcuts, each a 48px tinted circle drawn in the
     // design, with its name under it.
@@ -452,7 +534,11 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   /// Pizzas", "Buy 1 Get 1 Free" and "Summer Special", tapping through to
   /// `/deal/demo_0..2` — ids that cannot resolve. They came from nowhere.
   Widget _buildDealImages() {
-    final offers = ref.watch(offersProvider).valueOrNull ?? const <Offer>[];
+    // Every live deal, whatever the Deals tab is filtered to, and none whose
+    // time is up: an expired deal stays 'active' until the panel changes it.
+    final offers = (ref.watch(activeOffersProvider).valueOrNull ?? const <Offer>[])
+        .where((o) => !o.hasExpired)
+        .toList();
     if (offers.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(

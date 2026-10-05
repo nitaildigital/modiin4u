@@ -63,11 +63,11 @@ class AdminGate extends ConsumerWidget {
   }
 }
 
-class _NoAccess extends StatelessWidget {
+class _NoAccess extends ConsumerWidget {
   const _NoAccess();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Directionality(
       textDirection: adminDir,
       child: Scaffold(
@@ -125,6 +125,20 @@ class _NoAccess extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Someone signed in as a resident (say, after confirming
+                  // an e-mail in this browser) had no way to the admin
+                  // account but to clear the browser.
+                  TextButton(
+                    onPressed: () async {
+                      await ref.read(authProvider.notifier).logout();
+                      if (context.mounted) context.go('/login');
+                    },
+                    child: Text(
+                      tr('כניסה עם חשבון אחר', 'Sign in with another account'),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.midBlue),
                     ),
                   ),
                 ],

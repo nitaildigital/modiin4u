@@ -14,6 +14,7 @@ import 'web_business_list_screen.dart';
 import '../../../shared/providers/nav_categories_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../restaurants/providers/restaurant_providers.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Businesses in one category, or all of them when [categoryId] is null.
 class BusinessListScreen extends ConsumerWidget {
@@ -403,7 +404,7 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
                                 : IconsaxPlusLinear.arrow_left,
                             color: Colors.black,
                           ),
-                          onPressed: () => context.pop(),
+                          onPressed: () => context.back('/businesses'),
                         ),
                       ),
                       Padding(

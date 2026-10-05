@@ -73,6 +73,19 @@ const shellDestinations = {
 };
 
 extension AppNavigation on BuildContext {
+  /// Back one page — or, when there is none to go back to, to [fallback].
+  ///
+  /// A page opened straight from an address (a Google result on a phone, a
+  /// shared link, the website's ☰ menu) is the only page on the stack, and
+  /// `pop` there throws: the back arrow did nothing and there was no way out.
+  void back([String fallback = '/']) {
+    if (canPop()) {
+      pop();
+    } else {
+      go(fallback);
+    }
+  }
+
   /// Switches tab for a shell destination, pushes for anything else.
   void goOrPush(String location) {
     if (shellDestinations.contains(location.split('?').first)) {
@@ -164,6 +177,7 @@ final appRouter = GoRouter(
     }
     return null;
   },
+  errorBuilder: (context, state) => const PageNotFound(),
   routes: [
     GoRoute(
       path: '/splash',
@@ -333,7 +347,8 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/events',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const EventsScreen(),
+      builder: (context, state) =>
+          EventsScreen(category: state.uri.queryParameters['category']),
     ),
     GoRoute(
       path: '/events-map',

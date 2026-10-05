@@ -13,6 +13,7 @@ import '../models/article.dart';
 import '../providers/news_providers.dart';
 import '../widgets/m_article_parts.dart';
 import 'web_article_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// News article detail – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News Detail web layout;
@@ -59,7 +60,7 @@ class _MobileArticleContent extends ConsumerWidget {
                 alignment: AlignmentDirectional.centerStart,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: _CircleButton(onTap: () => context.pop()),
+                  child: _CircleButton(onTap: () => context.back('/news')),
                 ),
               ),
               Expanded(
@@ -161,7 +162,7 @@ class _Hero extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 7, 12, 12),
               child: Align(
                 alignment: AlignmentDirectional.topStart,
-                child: _CircleButton(onTap: () => context.pop()),
+                child: _CircleButton(onTap: () => context.back('/news')),
               ),
             ),
           ),

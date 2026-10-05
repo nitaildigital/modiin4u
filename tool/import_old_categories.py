@@ -98,6 +98,14 @@ def plain(markup):
 
 def undo():
     reg = json.load(open(REGISTRY, encoding='utf-8'))
+    # The SEO map as it was, so its addresses redirect again.
+    if reg.get('url_map'):
+        with open(URL_MAP, 'w', encoding='utf-8-sig', newline='') as f:
+            f.write(reg['url_map'])
+        print('url_map.csv restored — run: python3 tool/build_seo_pages.py --write-redirects')
+    else:
+        print('url_map.csv: this registry predates its backup — restore it from git '
+              '(git log -- tool/seo/url_map.csv, the commit before the import)')
     for link in reg['links']:
         db('DELETE', 'entity_categories?entity_type=eq.business'
                      f'&entity_id=eq.{link["entity_id"]}&category_id=eq.{link["category_id"]}')
@@ -177,7 +185,8 @@ def main():
         print('dry run: pass --apply to write')
         return
 
-    registry = {'categories': [], 'links': []}
+    registry = {'categories': [], 'links': [],
+                'url_map': open(URL_MAP, encoding='utf-8-sig').read()}
     try:
         for category, members, old_path in new_categories:
             made = db('POST', 'categories', category, prefer='return=representation')[0]

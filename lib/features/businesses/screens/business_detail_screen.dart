@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../../shared/widgets/sign_in_action.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../repositories/business_stats.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -24,6 +25,7 @@ import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../../shared/widgets/network_photo.dart';
 import 'web_business_detail_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../shared/widgets/web_chrome.dart' show WebFooter, WebNavbar, webIsHebrew;
 import '../repositories/business_repository.dart' show BusinessNotFound;
 
@@ -287,7 +289,7 @@ class _BusinessDetailContentState
             top: topPadding + 7,
             child: _CircleButton(
               icon: AppIcons.back,
-              onTap: () => context.pop(),
+              onTap: () => context.back('/businesses'),
             ),
           ),
 
@@ -597,10 +599,16 @@ class _BusinessDetailContentState
     final direction = GestureDetector(
       onTap: () {
         BusinessStats.record(business.id, BusinessStat.directions);
+        // A business with no location on record has 0,0 for one: Waze went
+        // to the Gulf of Guinea. Then it searches the address instead.
+        final hasPlace = business.latitude != 0 || business.longitude != 0;
+        final address = business.address.trim();
         launchUrl(
           Uri.parse(
-            'https://waze.com/ul?ll=${business.latitude},'
-            '${business.longitude}&navigate=yes',
+            hasPlace
+                ? 'https://waze.com/ul?ll=${business.latitude},'
+                      '${business.longitude}&navigate=yes'
+                : 'https://waze.com/ul?q=${Uri.encodeComponent('$address, מודיעין')}&navigate=yes',
           ),
         );
       },
@@ -669,6 +677,23 @@ class _BusinessDetailContentState
                     launchUrl(Uri.parse(business.website!));
                   },
           ),
+          ],
+          // WhatsApp, which the website showed and the phone did not.
+          if ((business.whatsapp?.trim().isNotEmpty ?? false) && !business.isPark) ...[
+            const SizedBox(width: 12),
+            _OutlineCircleButton(
+              icon: IconsaxPlusLinear.messages_2,
+              color: AppColors.turquoise,
+              onTap: () {
+                BusinessStats.record(business.id, BusinessStat.whatsapp);
+                var digits = business.whatsapp!.replaceAll(RegExp(r'\D'), '');
+                if (digits.startsWith('0')) digits = '972${digits.substring(1)}';
+                launchUrl(
+                  Uri.parse('https://wa.me/$digits'),
+                  mode: LaunchMode.externalApplication,
+                );
+              },
+            ),
           ],
           if (business.instagram != null && !business.isPark) ...[
             const SizedBox(width: 12),
@@ -936,7 +961,7 @@ class _BusinessDetailContentState
       return;
     }
     if (ref.read(authProvider) == null) {
-      _reviewToast(l.signInToReview, error: true);
+      _reviewToast(l.signInToReview, error: true, signIn: true);
       return;
     }
 
@@ -981,7 +1006,7 @@ class _BusinessDetailContentState
   Future<void> _replyTo(String reviewId) async {
     final l = L.of(context);
     if (ref.read(authProvider) == null) {
-      _reviewToast(l.signInToReply, error: true);
+      _reviewToast(l.signInToReply, error: true, signIn: true);
       return;
     }
     final text = await showModalBottomSheet<String>(
@@ -1014,10 +1039,11 @@ class _BusinessDetailContentState
     }
   }
 
-  void _reviewToast(String message, {bool error = false}) {
+  void _reviewToast(String message, {bool error = false, bool signIn = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        action: signIn ? signInAction(context) : null,
         backgroundColor: error ? AppColors.error : AppColors.midBlue,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

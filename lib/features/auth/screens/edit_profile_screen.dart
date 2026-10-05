@@ -17,6 +17,7 @@ import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
 import 'web_edit_profile_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Edit Profile screen – avatar with camera overlay, form fields
 /// (name, email, phone, neighborhood, family status, pet, DOB),
@@ -158,7 +159,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             hasPet: _hasPet,
             dateOfBirth: _dateOfBirth,
           );
-      if (mounted) context.pop();
+      if (mounted) context.back('/');
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -321,7 +322,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         const SizedBox(height: 20),
 
                         // Email
-                        _buildTextField(l.email, _emailController),
+                        // The sign-in address: shown, not edited here. It was editable and never
+                        // saved — changing it needs its own confirmation e-mail.
+                        _buildTextField(l.email, _emailController, readOnly: true),
                         const SizedBox(height: 20),
 
                         // Phone
@@ -435,6 +438,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     TextEditingController controller, {
     String? placeholder,
     TextInputType? keyboardType,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,6 +463,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
+            readOnly: readOnly,
+            enabled: !readOnly,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 14,

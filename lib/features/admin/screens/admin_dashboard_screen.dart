@@ -1,6 +1,7 @@
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
@@ -37,6 +38,7 @@ import 'admin_agents_screen.dart';
 import 'admin_analytics_screen.dart';
 import 'admin_site_pages_screen.dart';
 import '../admin_language.dart';
+import '../../../shared/providers/app_settings_provider.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -106,9 +108,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   ];
 
   /// Whether the signed-in administrator's role may open section [i].
-  bool _canOpen(int i) => (ref.watch(adminPermissionsProvider).valueOrNull ??
-          AdminPermissions.all)
-      .canView(_sectionModules[i]);
+  bool _canOpen(int i) =>
+      AdminPermissions.of(ref.watch(adminPermissionsProvider))
+          .canView(_sectionModules[i]);
 
   /// Where the settings pane sits in [_sections] — the top bar's gear jumps
   /// here rather than doing nothing, which is what it used to do.
@@ -437,8 +439,39 @@ class _AdminTopBar extends ConsumerWidget {
           const SizedBox(width: 16),
           // The signed-in administrator, rather than the initials of the one
           // invented person this panel used to be built around.
-          Tooltip(
-            message: signedIn?.name ?? tr('לא מחובר', 'Not connected'),
+          // A menu on it: the panel had no way to sign out, and on the
+          // website /profile and /settings lead home, so neither did the site.
+          PopupMenuButton<String>(
+            tooltip: signedIn?.name ?? tr('לא מחובר', 'Not connected'),
+            position: PopupMenuPosition.under,
+            onSelected: (v) async {
+              if (v != 'out') return;
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) context.go('/login');
+            },
+            itemBuilder: (_) => [
+              if (signedIn != null)
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Text(
+                    '${signedIn.name}\n${signedIn.email}',
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextMedium),
+                  ),
+                ),
+              PopupMenuItem<String>(
+                value: 'out',
+                child: Row(
+                  children: [
+                    const Icon(IconsaxPlusLinear.logout, size: 18, color: AppColors.error),
+                    const SizedBox(width: 8),
+                    Text(
+                      tr('התנתקות', 'Sign out'),
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.error),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             child: Container(
               width: 36,
               height: 36,
@@ -931,12 +964,65 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
           _showProfileDialog(context, ref, profile: row);
         }
       case 'ban':
-        _run(
-          () =>
-              ref.read(adminProfilesProvider.notifier).setBanned(id, !isBanned),
-          isBanned ? tr('החסימה בוטלה', 'Unblocked') : tr('המשתמש נחסם', 'User blocked'),
-        );
+        if (isBanned) {
+          _run(
+            () => ref.read(adminProfilesProvider.notifier).setBanned(id, false),
+            tr('החסימה בוטלה', 'Unblocked'),
+          );
+        } else {
+          _askBanReason(id);
+        }
     }
+  }
+
+  /// Blocking asks why, so the reason stays with the account and the log.
+  Future<void> _askBanReason(String id) async {
+    final reason = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: adminDir,
+        child: AlertDialog(
+          title: Text(tr('חסימת משתמש', 'Block user'), style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 17)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tr('המשתמש לא יוכל לכתוב ביקורות ותגובות, לפרסם, לממש הטבות או להירשם לאירועים.',
+                   'They will not be able to review, comment, post, claim deals or RSVP.'),
+                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.adminTextMedium),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reason,
+                autofocus: true,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: tr('סיבה (לא חובה)', 'Reason (optional)'),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('ביטול', 'Cancel'))),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr('חסום', 'Block')),
+            ),
+          ],
+        ),
+      ),
+    );
+    final text = reason.text;
+    reason.dispose();
+    if (ok != true || !mounted) return;
+    _run(
+      () => ref.read(adminProfilesProvider.notifier).setBanned(id, true, reason: text),
+      tr('המשתמש נחסם', 'User blocked'),
+    );
   }
 
   /// Runs a write and says what happened.
@@ -1018,6 +1104,29 @@ class _SettingsSection extends StatelessWidget {
           SupabaseConfig.supabaseUrl,
           IconsaxPlusLinear.cloud,
         ),
+        // Kept in `app_settings`. The store links appear on the website's
+        // step-group invitation once they are filled in; until the app is in
+        // the stores they stay empty and the page offers none.
+        _EditableSetting(
+          settingKey: AppSettingKeys.androidStoreUrl,
+          label: tr('קישור ל-Google Play', 'Google Play link'),
+          hint: 'https://play.google.com/store/apps/details?id=…',
+          icon: IconsaxPlusLinear.mobile,
+        ),
+        _EditableSetting(
+          settingKey: AppSettingKeys.iosStoreUrl,
+          label: tr('קישור ל-App Store', 'App Store link'),
+          hint: 'https://apps.apple.com/app/…',
+          icon: IconsaxPlusLinear.mobile,
+        ),
+        _EditableSetting(
+          settingKey: AppSettingKeys.jobApplicationsKeepDays,
+          label: tr('ימים לשמירת מועמדויות אחרי סגירת משרה',
+              'Days to keep applications after a job closes'),
+          hint: '2',
+          icon: IconsaxPlusLinear.briefcase,
+          number: true,
+        ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
@@ -1040,9 +1149,8 @@ class _SettingsSection extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  tr('הגדרות הניתנות לעריכה — התראות Push, מצב תחזוקה, מפתחות API — '
-                  'אינן מחוברות לטבלה. הן יופיעו כאן כשיהיה להן מקום לשמור אליו '
-                  '(app_settings ריקה).', 'Editable settings — push notifications, maintenance mode, API keys — are not connected to a table. They will appear here once they have somewhere to be saved (app_settings is empty).'),
+                  tr('מצב תחזוקה ומפתחות API אינם נקראים מכאן: הם יופיעו כאן '
+                  'כשהאפליקציה תקרא אותם.', 'Maintenance mode and API keys are not read from here; they will appear once the app reads them.'),
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 13,
@@ -1134,6 +1242,138 @@ class _LanguageTile extends StatelessWidget {
               selectedForegroundColor: AppColors.midBlue,
               textStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One `app_settings` value the panel edits: a link, or a whole number.
+class _EditableSetting extends ConsumerStatefulWidget {
+  final String settingKey;
+  final String label;
+  final String hint;
+  final IconData icon;
+  final bool number;
+  const _EditableSetting({
+    required this.settingKey,
+    required this.label,
+    required this.hint,
+    required this.icon,
+    this.number = false,
+  });
+
+  @override
+  ConsumerState<_EditableSetting> createState() => _EditableSettingState();
+}
+
+class _EditableSettingState extends ConsumerState<_EditableSetting> {
+  final _controller = TextEditingController();
+  bool _loaded = false;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final text = _controller.text.trim();
+    final Object? value;
+    if (widget.number) {
+      final n = int.tryParse(text);
+      if (n == null || n < 0 || n > 365) {
+        _say(tr('מספר ימים בין 0 ל-365', 'A number of days from 0 to 365'));
+        return;
+      }
+      value = n;
+    } else {
+      if (text.isNotEmpty && !text.startsWith('https://')) {
+        _say(tr('קישור שמתחיל ב-https://', 'A link starting with https://'));
+        return;
+      }
+      value = text;
+    }
+    setState(() => _saving = true);
+    try {
+      await SupabaseConfig.client
+          .from('app_settings')
+          .upsert({'key': widget.settingKey, 'value': value}, onConflict: 'key');
+      ref.invalidate(appSettingsProvider);
+      _say(tr('נשמר', 'Saved'));
+    } catch (_) {
+      _say(tr('השמירה נכשלה', 'Could not save'));
+    }
+    if (mounted) setState(() => _saving = false);
+  }
+
+  void _say(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(appSettingsProvider).valueOrNull;
+    if (!_loaded && settings != null) {
+      _loaded = true;
+      final v = settings[widget.settingKey];
+      _controller.text = v == null ? '' : '$v';
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.midBlue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(widget.icon, size: 20, color: AppColors.midBlue),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: AppColors.adminTextDark,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _controller,
+                  enabled: settings != null,
+                  keyboardType: widget.number ? TextInputType.number : TextInputType.url,
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: widget.hint,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          FilledButton(
+            onPressed: _saving || settings == null ? null : _save,
+            child: Text(tr('שמירה', 'Save')),
           ),
         ],
       ),

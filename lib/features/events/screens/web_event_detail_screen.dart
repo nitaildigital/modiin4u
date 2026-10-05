@@ -14,6 +14,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../../../shared/widgets/web_share_menu.dart';
+import '../event_calendar.dart';
 import '../models/event.dart';
 import '../models/event_category.dart';
 import '../models/event_labels.dart';
@@ -679,6 +680,17 @@ class _WebEventDetailContentState extends ConsumerState<WebEventDetailContent>
             width: double.infinity,
             child: Builder(builder: (b) => _outlineButton('assets/web/events/share20.svg', _t('Share', 'שיתוף'), () => _share(event, b))),
           ),
+          if (event.startDate != null) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: _outlineButton(
+                'assets/web/events/det_date.svg',
+                _t('Add to calendar', 'הוספה ליומן'),
+                () => addEventToCalendar(event, details: Uri.base.toString()),
+              ),
+            ),
+          ],
           // A row of four attendee faces sat below, with "124 people
           // interested" beside it. Nothing names who is coming — the owner
           // policy on `event_attendees` lets a reader see only their own row —

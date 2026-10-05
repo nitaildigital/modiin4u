@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../auth/keep_signed_in.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../core/supabase/supabase_config.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -36,7 +39,20 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2200));
     if (!mounted) return;
     final prefs = await SharedPreferences.getInstance();
-    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+    // Someone signed in has been through onboarding, whichever way they left
+    // it. Only "Skip" used to set the flag, so a resident who signed in from
+    // it was shown onboarding again on every launch; it is set now, so a
+    // later sign-out does not bring it back either.
+    var signedIn = SupabaseConfig.client.auth.currentSession != null;
+    // "Remember me" left unticked at sign-in: this start ends that session.
+    if (signedIn && !keepSignedIn(prefs)) {
+      try {
+        await SupabaseConfig.client.auth.signOut();
+      } catch (_) {}
+      signedIn = false;
+    }
+    if (signedIn) await prefs.setBool('has_seen_onboarding', true);
+    final hasSeenOnboarding = signedIn || (prefs.getBool('has_seen_onboarding') ?? false);
     if (!mounted) return;
     if (hasSeenOnboarding) {
       context.go('/');

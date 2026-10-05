@@ -11,6 +11,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../providers/parking_providers.dart';
 import '../widgets/parking_widgets.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web Parking — the city's car parks, on a map beside their list
@@ -119,7 +120,7 @@ class _WebParkingContentState extends ConsumerState<WebParkingContent>
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () =>
-                    context.canPop() ? context.pop() : context.go('/municipal'),
+                    context.canPop() ? context.back('/municipal') : context.go('/municipal'),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

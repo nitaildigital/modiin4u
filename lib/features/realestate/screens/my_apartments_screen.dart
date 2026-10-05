@@ -10,6 +10,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../auth/widgets/m_account_widgets.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
+import '../widgets/my_listing_menu.dart';
 import 'web_my_apartments_screen.dart';
 
 /// My Apartments – what this person has posted, with its status.
@@ -324,13 +325,27 @@ class _ListingCard extends StatelessWidget {
   /// posted, plus a draft kept to finish later; the rest are treated as
   /// still being looked at rather than given a colour that would claim
   /// something untrue.
-  ({String text, Color fg, Color bg}) _status(L l) => switch (listing.status) {
+  ({String text, Color fg, Color bg}) _status(BuildContext context, L l) => switch (listing.status) {
     ListingStatus.active => (
       text: l.statusApproved,
       fg: const Color(0xFF0E7E4B),
       bg: const Color(0xFFE3F6EB),
     ),
-    ListingStatus.removed || ListingStatus.expired => (
+    // Marked by its owner (00055); both leave the site.
+    ListingStatus.sold || ListingStatus.rented => (
+      text: listing.status == ListingStatus.sold
+          ? mTr(context, 'Sold', 'נמכר')
+          : mTr(context, 'Rented', 'הושכר'),
+      fg: _grey,
+      bg: const Color(0xFFF1F1F1),
+    ),
+    // An expired listing was approved and ran its time; it was not rejected.
+    ListingStatus.expired => (
+      text: mTr(context, 'Expired', 'פג תוקף'),
+      fg: _grey,
+      bg: const Color(0xFFF1F1F1),
+    ),
+    ListingStatus.removed => (
       text: l.statusRejected,
       fg: const Color(0xFFCB3E3C),
       bg: const Color(0xFFFCE9E9),
@@ -352,7 +367,7 @@ class _ListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final status = _status(l);
+    final status = _status(context, l);
     final price = listing.effectivePrice;
     final place = listing.address ?? listing.neighborhoodName;
     final isDraft = listing.status == ListingStatus.draft;
@@ -499,31 +514,11 @@ class _ListingCard extends StatelessWidget {
               ),
             ),
 
-            // ── Kebab: the one thing to do with this listing ──
-            PopupMenuButton<bool>(
-              padding: EdgeInsets.zero,
-              tooltip: '',
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: const BorderSide(color: _hairline),
-              ),
-              onSelected: (_) => onOpen(),
-              itemBuilder: (_) => [
-                PopupMenuItem<bool>(
-                  value: true,
-                  height: 40,
-                  child: Text(
-                    isDraft ? l.continueEditing : l.viewFullDetails,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: _navy,
-                    ),
-                  ),
-                ),
-              ],
+            // ── Kebab: open, and the owner's actions ──
+            MyListingMenu(
+              listing: listing,
+              openLabel: isDraft ? l.continueEditing : l.viewFullDetails,
+              onOpen: onOpen,
               child: SvgPicture.asset(
                 'assets/icons/m_realestate_kebab.svg',
                 width: 20,

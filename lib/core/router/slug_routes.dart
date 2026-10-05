@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../supabase/supabase_config.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_fonts.dart';
+import '../../shared/widgets/web_chrome.dart' show webIsHebrew;
 
 /// The old WordPress site's addresses, served as they were.
 ///
@@ -42,7 +43,11 @@ final slugRowProvider =
           .from(key.kind.table)
           .select(key.kind.columns)
           .eq('slug', key.slug);
-      if (key.kind.scope != null) query = query.eq('scope', key.kind.scope!);
+      // A category the panel removed (switched off) is gone from the site,
+      // its old address included.
+      if (key.kind.scope != null) {
+        query = query.eq('scope', key.kind.scope!).eq('is_active', true);
+      }
       final rows = List<Map<String, dynamic>>.from(await query.limit(1));
       if (rows.isEmpty) return null;
       final r = rows.first;
@@ -81,18 +86,25 @@ class SlugPage extends ConsumerWidget {
         backgroundColor: Colors.white,
         body: Center(child: CircularProgressIndicator()),
       ),
-      error: (_, _) => const _NotFound(),
-      data: (r) => r == null ? const _NotFound() : builder(r),
+      error: (_, _) => const PageNotFound(),
+      data: (r) => r == null ? const PageNotFound() : builder(r),
     );
   }
 }
 
-class _NotFound extends StatelessWidget {
-  const _NotFound();
+/// "Page not found", with the way home: for a slug no row has, and for any
+/// address the site has no page for (the router's error page), which showed
+/// go_router's own grey error text.
+class PageNotFound extends StatelessWidget {
+  const PageNotFound({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final hebrew = Localizations.localeOf(context).languageCode == 'he';
+    // The desktop site's language is the navbar's; the phone layout's is
+    // the app's locale.
+    final hebrew = MediaQuery.sizeOf(context).width > 1100
+        ? webIsHebrew.value
+        : Localizations.localeOf(context).languageCode == 'he';
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(

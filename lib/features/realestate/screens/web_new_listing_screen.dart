@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web New Listing — desktop layout for /new-listing
@@ -174,7 +175,7 @@ class _WebNewListingContentState extends ConsumerState<WebNewListingContent>
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () =>
-            context.canPop() ? context.pop() : context.go('/realestate'),
+            context.canPop() ? context.back('/realestate') : context.go('/realestate'),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -740,7 +741,7 @@ class _WebNewListingContentState extends ConsumerState<WebNewListingContent>
               onPressed: () {
                 Navigator.pop(ctx);
                 if (context.canPop()) {
-                  context.pop();
+                  context.back('/realestate');
                 } else {
                   context.go('/realestate');
                 }

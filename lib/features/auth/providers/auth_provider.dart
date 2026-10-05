@@ -203,6 +203,10 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   // ── The profile row ──
 
   Future<void> _loadProfile(User user) async {
+    // The read takes a moment; a sign-out in the meantime (the splash ending
+    // a session "Remember me" did not keep) must not be undone by its answer
+    // arriving afterwards and putting the account back on screen.
+    bool current() => mounted && _client.auth.currentUser?.id == user.id;
     try {
       final row = await _client
           .from('profiles')
@@ -214,13 +218,13 @@ class AuthNotifier extends StateNotifier<UserModel?> {
         // The trigger in migration 00015 creates this row. If that migration
         // has not run, fall back to what the session already tells us so the
         // app is usable rather than stuck on a spinner.
-        if (mounted) state = _fromSession(user);
+        if (current()) state = _fromSession(user);
         return;
       }
-      if (mounted)
-        state = _fromRow(row, user, isAdmin: await _isAdmin(user.id));
+      final isAdmin = await _isAdmin(user.id);
+      if (current()) state = _fromRow(row, user, isAdmin: isAdmin);
     } catch (_) {
-      if (mounted) state = _fromSession(user);
+      if (current()) state = _fromSession(user);
     }
   }
 

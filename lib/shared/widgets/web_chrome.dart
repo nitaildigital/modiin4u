@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/push/push_unread.dart';
 import '../../core/theme/app_colors.dart';
+import '../providers/app_settings_provider.dart';
 import '../providers/banners_provider.dart';
 import '../providers/nav_categories_provider.dart';
 
@@ -1161,6 +1162,8 @@ class WebFooter extends StatelessWidget {
     (_t('Privacy Policy', 'מדיניות פרטיות'), '/privacy'),
     (_t('Terms of Use', 'תנאי שימוש'), '/terms'),
     (_t('Accessibility Statement', 'הצהרת נגישות'), '/accessibility'),
+    // How to delete an app account without the app — Google Play asks for it.
+    (_t('Delete account', 'מחיקת חשבון'), '/delete-account'),
   ];
 
   List<(String, String)> get _exploreLinks => [
@@ -1288,11 +1291,22 @@ class WebFooter extends StatelessWidget {
     );
   }
 
-  /// White store badges, 120 × 40, as drawn. The app is not in either store
-  /// yet, so they are pictures of where it will be rather than links.
-  Widget _buildApps() {
-    Widget badge({required Widget glyph, required Widget content}) {
-      return Container(
+  /// White store badges, 120 × 40, as drawn. Each links to its store once the
+  /// panel has the address (Settings, `app_settings`); until the app is in
+  /// the stores they are pictures of where it will be.
+  Widget _buildApps() => Consumer(
+    builder: (context, ref, _) {
+      final settings = ref.watch(appSettingsProvider).valueOrNull ?? const {};
+      return _buildAppBadges(
+        ios: storeUrl(settings, AppSettingKeys.iosStoreUrl),
+        android: storeUrl(settings, AppSettingKeys.androidStoreUrl),
+      );
+    },
+  );
+
+  Widget _buildAppBadges({String? ios, String? android}) {
+    Widget badge({required Widget glyph, required Widget content, String? url}) {
+      final drawn = Container(
         width: 120,
         height: 40,
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6)),
@@ -1308,6 +1322,14 @@ class WebFooter extends StatelessWidget {
           ),
         ),
       );
+      if (url == null) return drawn;
+      return MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => launchUrl(Uri.parse(url), webOnlyWindowName: '_blank'),
+          child: drawn,
+        ),
+      );
     }
 
     return Column(
@@ -1316,6 +1338,7 @@ class WebFooter extends StatelessWidget {
         Text(_t('Download Our App', 'הורידו את האפליקציה'), style: _heading()),
         const SizedBox(height: 20),
         badge(
+          url: ios,
           glyph: SvgPicture.asset('assets/icons/footer/apple.svg', width: 20, height: 24),
           content: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1328,6 +1351,7 @@ class WebFooter extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         badge(
+          url: android,
           glyph: SvgPicture.asset('assets/icons/footer/playstore.svg', width: 21, height: 24),
           content: Column(
             mainAxisAlignment: MainAxisAlignment.center,

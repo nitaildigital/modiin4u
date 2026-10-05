@@ -28,6 +28,15 @@ class AdminPermissions {
   /// the panel opens as it always did rather than flickering empty.
   static const all = AdminPermissions._(null, 'super_admin');
 
+  /// Nothing but the overview and settings: what the panel shows when the
+  /// role could not be read. It fails closed — a limited admin must not see
+  /// every section because a request failed.
+  static const none = AdminPermissions._({}, null);
+
+  /// The rights to draw with: all while loading, none on an error.
+  static AdminPermissions of(AsyncValue<AdminPermissions> value) =>
+      value.hasError ? none : (value.valueOrNull ?? all);
+
   bool get isMainAdmin => _modules == null;
 
   /// Whether a section built on [module] may be opened. A null module is a

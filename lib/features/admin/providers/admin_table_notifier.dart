@@ -326,7 +326,7 @@ class AdminWriteRefused implements Exception {
 /// a switch — and say what was done. For every other column the log keeps
 /// only the name: it records that a phone number or a price changed, not the
 /// number itself.
-const auditValueColumns = {'status', 'is_active', 'published'};
+const auditValueColumns = {'status', 'is_active', 'published', 'is_banned', 'ban_reason'};
 
 /// The `audit_action` a change amounts to, from what it writes.
 String auditActionFor(Map<String, dynamic> fields) {

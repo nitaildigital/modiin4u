@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_fonts.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../widgets/m_account_widgets.dart';
 import 'web_change_language_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Change Language screen – search bar, list of languages with flag
 /// emoji + radio buttons, and a midBlue "Save" pill button.
@@ -50,7 +50,7 @@ class _ChangeLanguageScreenState extends ConsumerState<ChangeLanguageScreen> {
     ref
         .read(localeProvider.notifier)
         .setLocale(supportedLocales.firstWhere((l) => l.languageCode == code));
-    context.pop();
+    context.back('/');
   }
 
   List<_LanguageItem> get _filtered {

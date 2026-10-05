@@ -11,6 +11,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../../settings/models/notification_preferences.dart';
 import '../../settings/providers/preferences_provider.dart';
+import '../../businesses/providers/business_providers.dart' show enableLocation;
 import '../providers/auth_provider.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -398,7 +399,11 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
           ),
           value: prefs.locationEnabled,
           enabled: signedIn,
-          onChanged: (v) => set(prefs.copyWith(locationEnabled: v)),
+          // On asks the phone for location; refused, the switch stays off.
+          onChanged: (v) async {
+            final on = v && await enableLocation(ref);
+            set(prefs.copyWith(locationEnabled: on));
+          },
         ),
         _ToggleRow(
           icon: Icons.directions_walk_outlined,

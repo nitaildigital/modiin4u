@@ -16,6 +16,7 @@ import '../providers/news_providers.dart';
 import '../widgets/m_article_parts.dart';
 import 'web_news_screen.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// News feed – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News web layout; narrower windows
@@ -98,7 +99,7 @@ class _MobileNewsContent extends ConsumerWidget {
                           bottom: 0,
                           child: IconButton(
                             icon: const Icon(Icons.arrow_back, size: 22, color: Colors.black),
-                            onPressed: () => context.pop(),
+                            onPressed: () => context.back('/news'),
                           ),
                         ),
                     ],

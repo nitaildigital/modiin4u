@@ -164,6 +164,20 @@ Future<void> askForNearby(WidgetRef ref) async {
   ref.invalidate(nearbyBusinessesProvider);
 }
 
+/// Settings → Location turned on: asks the phone, as the home row's "show
+/// what is near me" does, and says whether it was allowed. The switch was
+/// saved and read by nothing.
+Future<bool> enableLocation(WidgetRef ref) async {
+  if (!locationIsAskable) return false;
+  var allowed = LocationPermission.denied;
+  try {
+    allowed = await Geolocator.requestPermission();
+  } catch (_) {}
+  ref.invalidate(nearbyBusinessesProvider);
+  return allowed == LocationPermission.always ||
+      allowed == LocationPermission.whileInUse;
+}
+
 /// Top-level business categories, in the order the admin set — those that
 /// belong in the menus.
 final businessCategoriesProvider = FutureProvider<List<BusinessCategory>>((

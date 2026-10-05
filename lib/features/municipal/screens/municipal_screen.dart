@@ -30,8 +30,17 @@ class MunicipalScreen extends StatelessWidget {
 
 /// Municipal screen – city services hub with quick-info cards
 /// (Shabbat & Parking) and a 3×3 service category grid.
-class _MobileMunicipalContent extends StatelessWidget {
+class _MobileMunicipalContent extends StatefulWidget {
   const _MobileMunicipalContent();
+
+  @override
+  State<_MobileMunicipalContent> createState() => _MobileMunicipalContentState();
+}
+
+class _MobileMunicipalContentState extends State<_MobileMunicipalContent> {
+  /// The search bar was a picture of one: it narrows the services by name
+  /// now, as the desktop page's does.
+  String _query = '';
 
   // ── Service grid items ──
   /// Eight of these nine have no destination yet, and tapping them did
@@ -102,13 +111,24 @@ class _MobileMunicipalContent extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          l.searchMunicipal,
+                        child: TextField(
+                          onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+                          textInputAction: TextInputAction.search,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF6D6D6D),
+                            color: Colors.black,
+                          ),
+                          decoration: InputDecoration(
+                            isCollapsed: true,
+                            border: InputBorder.none,
+                            hintText: l.searchMunicipal,
+                            hintStyle: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF6D6D6D),
+                            ),
                           ),
                         ),
                       ),
@@ -185,9 +205,10 @@ class _MobileMunicipalContent extends StatelessWidget {
                               crossAxisSpacing: 8,
                               mainAxisExtent: 120,
                             ),
-                        children: _servicesFor(
-                          l,
-                        ).map((s) => _ServiceCard(service: s)).toList(),
+                        children: _servicesFor(l)
+                            .where((s) => _query.isEmpty || s.label.toLowerCase().contains(_query))
+                            .map((s) => _ServiceCard(service: s))
+                            .toList(),
                       ),
                       const SizedBox(height: 40),
                     ],

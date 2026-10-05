@@ -50,11 +50,14 @@ values (
 - המועדפים
 - האירועים שסימנתם שאתם מגיעים אליהם
 - נתוני הצעדים והשתתפות בקבוצות צעדים
-- הגדרות ההתראות
+- ההטבות שמימשתם
+- המועמדויות למשרות ששלחתם
 
 ## מה לא נמחק אוטומטית
 
 מודעות נדל"ן שפרסמתם נשארות באתר גם אחרי מחיקת החשבון. כדי להסיר אותן, ציינו זאת בדוא"ל ונסיר אותן.
+
+ההתראות שייכות למכשיר ולא לחשבון: כדי להפסיק לקבל אותן, כבו אותן בהגדרות האפליקציה או הסירו אותה.
 
 לפרטים נוספים ראו את מדיניות הפרטיות.$he$,
   $en$You can delete your Modiin4u account at any time.
@@ -77,11 +80,14 @@ Send an e-mail to modiin4uoffice@gmail.com from the address you signed up with, 
 - Your favourites
 - The events you marked as going to
 - Your step data and your step group memberships
-- Your notification settings
+- The deals you claimed
+- The job applications you sent
 
 ## What is not deleted automatically
 
 Property listings you posted stay on the site after the account is deleted. To have them removed, say so in your e-mail and we will remove them.
+
+Notifications belong to the device, not the account: to stop them, turn them off in the app's settings or uninstall it.
 
 For more details, see the Privacy Policy.$en$
 )

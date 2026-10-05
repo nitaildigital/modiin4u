@@ -7,6 +7,7 @@ import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web Change Language — desktop
@@ -62,7 +63,7 @@ class _WebChangeLanguageContentState extends ConsumerState<WebChangeLanguageCont
 
   /// A browser tab opened straight on /change-language has nothing to pop
   /// back to, so it falls back to the page the row lives on.
-  void _back() => context.canPop() ? context.pop() : context.go('/settings');
+  void _back() => context.canPop() ? context.back('/') : context.go('/settings');
 
   @override
   Widget build(BuildContext context) {

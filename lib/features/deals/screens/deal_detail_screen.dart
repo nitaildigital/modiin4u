@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../../shared/widgets/sign_in_action.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:share_plus/share_plus.dart';
+import '../../../shared/widgets/web_share_menu.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
@@ -19,6 +22,7 @@ import '../providers/offer_providers.dart';
 import '../widgets/m_deal_card.dart';
 import '../widgets/m_deal_detail_parts.dart';
 import 'web_deal_detail_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// One deal.
 ///
@@ -94,10 +98,31 @@ class _MobileDealDetailContent extends ConsumerWidget {
     ],
   );
 
+  /// The share sheet on a device (the words: the app has no address of its
+  /// own to send); the site's share menu with this page's address in a
+  /// browser. Deals had no Share at all.
+  static Future<void> _shareDeal(BuildContext anchor, Offer offer) async {
+    final message = [offer.name, offer.businessName]
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .join(' — ');
+    if (!kIsWeb) {
+      await Share.share(message, subject: offer.name);
+      return;
+    }
+    await showWebShareMenu(
+      anchor,
+      title: offer.name,
+      link: Uri.base.toString(),
+      message: message,
+      isHebrew: Localizations.localeOf(anchor).languageCode == 'he',
+    );
+  }
+
   static Widget _backButton(BuildContext context) {
     final rtl = Directionality.of(context) == TextDirection.rtl;
     return GestureDetector(
-      onTap: () => context.canPop() ? context.pop() : context.go('/deals'),
+      onTap: () => context.canPop() ? context.back('/deals') : context.go('/deals'),
       child: Transform.flip(
         flipX: rtl,
         child: SvgPicture.asset('$kMDealIcon/m_deals_back.svg', width: 40, height: 40),
@@ -182,6 +207,23 @@ class _MobileDealDetailContent extends ConsumerWidget {
           ),
 
           PositionedDirectional(start: 12, top: top + 7, child: _backButton(context)),
+
+          // Share, beside the heart (or in its place where there is none).
+          PositionedDirectional(
+            end: !kIsWeb && businessId != null ? 64 : 12,
+            top: top + 7,
+            child: Builder(
+              builder: (anchor) => GestureDetector(
+                onTap: () => _shareDeal(anchor, offer),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(IconsaxPlusLinear.export_1, size: 20, color: Color(0xFF3D3D3D)),
+                ),
+              ),
+            ),
+          ),
 
           // The heart keeps the business in the person's saved places —
           // favourites have no kind for an offer — and needs an account, so
@@ -432,7 +474,7 @@ class _MobileDealDetailContent extends ConsumerWidget {
           ),
         ),
     ];
-    if (kIsWeb && secondary.isEmpty) return const SizedBox.shrink();
+    if (kIsWeb && secondary.isEmpty && offer.hasExpired) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -450,13 +492,29 @@ class _MobileDealDetailContent extends ConsumerWidget {
               MDealActionButton(
                 icon: 'm_deals_redeem.svg',
                 filled: true,
-                enabled: canClaim,
+                // Once claimed, the button shows the code again: it was
+                // shown once, in a dialog, and closing that before reaching
+                // the till lost it.
+                enabled: canClaim || (alreadyClaimed && !offer.hasExpired),
                 label: offer.hasExpired
                     ? l.offerExpired
                     : alreadyClaimed
-                    ? l.offerClaimed
+                    ? mDealsT(context, 'Show my code', 'הצגת הקוד שלי')
                     : mDealsT(context, 'Redeem Deal', 'מימוש המבצע'),
-                onTap: () => _claim(context, ref, l, offer),
+                onTap: () => alreadyClaimed
+                    ? _showCode(context, l, offer)
+                    : _claim(context, ref, l, offer),
+              ),
+            // At phone width on the website there are no accounts to claim
+            // with; say where it can be claimed rather than drop the button.
+            if (kIsWeb && !offer.hasExpired)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  mDealsT(context, 'Claim it in the Modiin4u app', 'למימוש — באפליקציית מודיעין בשבילך'),
+                  textAlign: TextAlign.center,
+                  style: mDealsInter(14, color: kMDealsGrey),
+                ),
               ),
             if (!kIsWeb && secondary.isNotEmpty) const SizedBox(height: 16),
             if (secondary.isNotEmpty) Row(children: secondary),
@@ -482,6 +540,7 @@ class _MobileDealDetailContent extends ConsumerWidget {
       _toast(
         context,
         e.message == 'already-claimed' ? l.alreadyClaimed : l.signInToClaim,
+        signIn: e.message != 'already-claimed',
       );
     } catch (e) {
       if (!context.mounted) return;
@@ -574,10 +633,11 @@ class _MobileDealDetailContent extends ConsumerWidget {
     );
   }
 
-  static void _toast(BuildContext context, String message) {
+  static void _toast(BuildContext context, String message, {bool signIn = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        action: signIn ? signInAction(context) : null,
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -614,7 +674,7 @@ class _HeartButton extends ConsumerWidget {
               .read(favoritesProvider.notifier)
               .toggle(FavoriteKind.business, businessId);
           if (!ok && context.mounted) {
-            _MobileDealDetailContent._toast(context, l.signInToSave);
+            _MobileDealDetailContent._toast(context, l.signInToSave, signIn: true);
           }
         } catch (_) {
           if (context.mounted) {

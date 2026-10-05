@@ -6,11 +6,11 @@ import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/theme/app_fonts.dart';
-import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../widgets/m_account_widgets.dart';
 import 'web_change_password_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Change Password screen – lock illustration, subtitle,
 /// three password fields (current, new, confirm) with visibility
@@ -55,7 +55,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           );
       if (!mounted) return;
       _toast(l.passwordChanged);
-      context.pop();
+      context.back('/');
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);

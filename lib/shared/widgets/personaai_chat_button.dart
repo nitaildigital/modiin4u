@@ -68,6 +68,10 @@ class _ChatSheetState extends State<_ChatSheet> {
   late final WebViewController _web;
   bool _loading = true;
 
+  /// The page did not load — offline, say. The spinner used to turn for ever,
+  /// with no × to leave by, since the chat draws its own.
+  bool _failed = false;
+
   @override
   void initState() {
     super.initState();
@@ -98,6 +102,14 @@ class _ChatSheetState extends State<_ChatSheet> {
             );
             if (mounted) setState(() => _loading = false);
           },
+          onWebResourceError: (error) {
+            if (error.isForMainFrame != false && mounted) {
+              setState(() {
+                _loading = false;
+                _failed = true;
+              });
+            }
+          },
           // The chat stays in the sheet; a link it gives — a business's
           // site, WhatsApp, a phone number — opens where it belongs.
           onNavigationRequest: (request) {
@@ -113,13 +125,58 @@ class _ChatSheetState extends State<_ChatSheet> {
       ..loadRequest(_chatUri);
   }
 
+  void _retry() {
+    setState(() {
+      _failed = false;
+      _loading = true;
+    });
+    _web.loadRequest(_chatUri);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // The chat draws its own header (logo, name, ×).
+    final he = Localizations.localeOf(context).languageCode == 'he';
+    // The chat draws its own header (logo, name, ×); until it is there — or
+    // when it could not load — this screen gives its own way out.
     return Stack(
       children: [
-        WebViewWidget(controller: _web),
+        if (!_failed) WebViewWidget(controller: _web),
         if (_loading) const Center(child: CircularProgressIndicator(color: _kColor)),
+        if (_failed)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.wifi_off_rounded, size: 40, color: Color(0xFF6D6D6D)),
+                  const SizedBox(height: 12),
+                  Text(
+                    he ? 'לא הצלחנו לפתוח את הצ\'אט. בדקו את החיבור לאינטרנט.'
+                        : 'The chat could not be opened. Check your internet connection.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 15, color: Color(0xFF3D3D3D)),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: _kColor),
+                    onPressed: _retry,
+                    child: Text(he ? 'נסו שוב' : 'Try again'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (_loading || _failed)
+          PositionedDirectional(
+            top: 8,
+            end: 8,
+            child: IconButton(
+              tooltip: he ? 'סגירה' : 'Close',
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
       ],
     );
   }

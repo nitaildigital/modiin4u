@@ -14,6 +14,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../providers/auth_provider.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web Edit Profile — desktop profile form
@@ -232,7 +233,7 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
   /// to, so it goes to the profile page instead.
   void _leave() {
     if (context.canPop()) {
-      context.pop();
+      context.back('/');
     } else {
       context.go('/profile');
     }
@@ -426,7 +427,7 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
               ),
               const SizedBox(width: _kFieldGap),
               Expanded(
-                child: _buildTextField(_t('Email', 'אימייל'), _emailController),
+                child: _buildTextField(_t('Email', 'אימייל'), _emailController, readOnly: true),
               ),
             ],
           ),
@@ -571,6 +572,7 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
     TextEditingController controller, {
     String? placeholder,
     TextInputType? keyboardType,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -586,6 +588,8 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
+            readOnly: readOnly,
+            enabled: !readOnly,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 14,

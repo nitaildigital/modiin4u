@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/sign_in_action.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
+import '../../auth/providers/auth_provider.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -15,6 +17,7 @@ import '../../auth/widgets/m_account_widgets.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 import 'web_add_apartment_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Add Apartment – multi-step form wizard.
 /// Step 1: Basic Information (listing type, property type, title, price,
@@ -39,7 +42,7 @@ class AddApartmentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth > 1100) return const WebAddApartmentContent();
+        if (constraints.maxWidth > 1100) return WebAddApartmentContent(draftId: draftId);
         return _MobileAddApartmentContent(draftId: draftId);
       },
     );
@@ -76,6 +79,10 @@ class _MobileAddApartmentContentState
 
   // ── Step 2 ──
   final _description = TextEditingController();
+  // Who buyers call. The form never asked, so an approved resident's listing
+  // had no Contact button at all.
+  final _contactName = TextEditingController();
+  final _contactPhone = TextEditingController();
   final _area = TextEditingController();
   int? _floor;
   int? _totalFloors;
@@ -106,6 +113,10 @@ class _MobileAddApartmentContentState
   @override
   void initState() {
     super.initState();
+    // The poster's own name and phone to start with; they can change them.
+    final me = ref.read(authProvider);
+    _contactName.text = me?.name ?? '';
+    _contactPhone.text = me?.phone ?? '';
     if (widget.draftId != null) _loadDraft(widget.draftId!);
   }
 
@@ -137,6 +148,8 @@ class _MobileAddApartmentContentState
       _rooms = d.rooms;
       _bathrooms = d.bathrooms;
       _description.text = d.description ?? '';
+      _contactName.text = d.contactName ?? _contactName.text;
+      _contactPhone.text = d.contactPhone ?? _contactPhone.text;
       _area.text = d.sqm?.toString() ?? '';
       _floor = d.floor;
       _totalFloors = d.totalFloors;
@@ -181,7 +194,7 @@ class _MobileAddApartmentContentState
     final uid = SupabaseConfig.client.auth.currentUser?.id;
     if (uid == null) {
       setState(() => _uploading = false);
-      _toast(l.signInToPostListing, error: true);
+      _toast(l.signInToPostListing, error: true, signIn: true);
       return;
     }
 
@@ -251,6 +264,8 @@ class _MobileAddApartmentContentState
     _price.dispose();
     _address.dispose();
     _description.dispose();
+    _contactName.dispose();
+    _contactPhone.dispose();
     _area.dispose();
     super.dispose();
   }
@@ -291,6 +306,8 @@ class _MobileAddApartmentContentState
           pricePerMonth: isRent ? price : null,
           address: _address.text.trim().isEmpty ? null : _address.text.trim(),
           neighborhoodId: _neighborhoodId,
+          contactName: _contactName.text.trim().isEmpty ? null : _contactName.text.trim(),
+          contactPhone: _contactPhone.text.trim().isEmpty ? null : _contactPhone.text.trim(),
           hasParking: _amenities.contains(_Amenity.parking),
           hasElevator: _amenities.contains(_Amenity.elevator),
           hasStorage: _amenities.contains(_Amenity.storage),
@@ -334,7 +351,7 @@ class _MobileAddApartmentContentState
     } on StateError {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(l.signInToPostListing, error: true);
+      _toast(l.signInToPostListing, error: true, signIn: true);
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -369,7 +386,7 @@ class _MobileAddApartmentContentState
     } on StateError {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(l.signInToPostListing, error: true);
+      _toast(l.signInToPostListing, error: true, signIn: true);
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -377,10 +394,11 @@ class _MobileAddApartmentContentState
     }
   }
 
-  void _toast(String message, {bool error = false}) {
+  void _toast(String message, {bool error = false, bool signIn = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        action: signIn ? signInAction(context) : null,
         backgroundColor: error ? AppColors.error : null,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -395,7 +413,7 @@ class _MobileAddApartmentContentState
     } else if (_currentStep > 0) {
       setState(() => _currentStep--);
     } else {
-      context.pop();
+      context.back('/realestate');
     }
   }
 
@@ -642,6 +660,24 @@ class _MobileAddApartmentContentState
       _FormCard(
         label: l.address,
         child: _InputRow(controller: _address, placeholder: l.enterAddress),
+      ),
+      const SizedBox(height: 16),
+
+      // ── Contact ──
+      //
+      // Filled from the profile; the listing page's Contact button calls it.
+      _FormCard(
+        label: l.fullName,
+        child: _InputRow(controller: _contactName, placeholder: l.fullName),
+      ),
+      const SizedBox(height: 16),
+      _FormCard(
+        label: l.phone,
+        child: _InputRow(
+          controller: _contactPhone,
+          placeholder: l.phone,
+          keyboardType: TextInputType.phone,
+        ),
       ),
       const SizedBox(height: 16),
 

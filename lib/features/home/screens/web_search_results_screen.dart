@@ -68,6 +68,8 @@ class _WebSearchResultsContentState extends ConsumerState<WebSearchResultsConten
         'עסק' => plural ? _t('Businesses', 'עסקים') : _t('Business', 'עסק'),
         'אירוע' => plural ? _t('Events', 'אירועים') : _t('Event', 'אירוע'),
         'חדשות' => _t('News', 'חדשות'),
+        'הטבה' => plural ? _t('Deals', 'הטבות') : _t('Deal', 'הטבה'),
+        'נדל״ן' => _t('Real estate', 'נדל״ן'),
         _ => category,
       };
 

@@ -13,6 +13,7 @@ import '../../../shared/widgets/web_chrome.dart';
 import '../../auth/widgets/m_account_widgets.dart' show MBackArrow;
 import '../providers/parking_providers.dart';
 import '../services/google_place.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 import '../widgets/parking_widgets.dart' show showNavigationChoice;
 
 const _kPin = 'assets/web/map/pin_parking.svg';
@@ -64,7 +65,7 @@ class _PhoneParkingDetail extends ConsumerWidget {
         leading: Center(
           child: MBackArrow(
             color: _kHeading,
-            onTap: () => context.canPop() ? context.pop() : context.go('/parking'),
+            onTap: () => context.canPop() ? context.back('/municipal') : context.go('/parking'),
           ),
         ),
         leadingWidth: 56,
@@ -182,7 +183,7 @@ class _ParkingDetailBody extends ConsumerWidget {
       children: [
         if (showBack) ...[
           TextButton.icon(
-            onPressed: () => context.canPop() ? context.pop() : context.go('/parking'),
+            onPressed: () => context.canPop() ? context.back('/municipal') : context.go('/parking'),
             icon: Icon(
               Directionality.of(context) == TextDirection.rtl
                   ? IconsaxPlusLinear.arrow_right_3

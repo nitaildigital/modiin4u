@@ -13,10 +13,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_map_tiles.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../shared/widgets/web_share_menu.dart';
 import '../models/listing.dart';
 import '../providers/detail_providers.dart';
 import '../providers/listing_providers.dart';
 import '../widgets/web_detail_parts.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 import 'my_apartments_screen.dart' show formatShekels;
 
 // ═══════════════════════════════════════════════════════════
@@ -154,7 +156,7 @@ class _WebListingDetailContentState extends ConsumerState<WebListingDetailConten
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () => context.canPop() ? context.pop() : context.go('/realestate'),
+                  onTap: () => context.canPop() ? context.back('/realestate') : context.go('/realestate'),
                   child: Transform.flip(
                     flipX: _isHebrew,
                     child: SvgPicture.asset('$kDetailAsset/detail_back.svg', width: 24, height: 24),
@@ -756,6 +758,35 @@ class _WebListingDetailContentState extends ConsumerState<WebListingDetailConten
               ),
             ),
           ],
+          // Listings had no Share; the site's menu, with this page's address.
+          const SizedBox(height: 12),
+          Builder(
+            builder: (anchor) => MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => showWebShareMenu(
+                  anchor,
+                  title: l.title,
+                  link: Uri.base.toString(),
+                  message: l.title,
+                  isHebrew: _isHebrew,
+                ),
+                child: Container(
+                  width: double.infinity,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.midBlue),
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    _t('Share', 'שיתוף'),
+                    style: detailInter(16, weight: FontWeight.w500, color: AppColors.midBlue, height: 1.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

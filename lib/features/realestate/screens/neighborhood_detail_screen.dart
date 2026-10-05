@@ -54,12 +54,12 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, _) => _Message(
               text: L.of(context).couldNotLoadNeighborhood,
-              onBack: () => context.pop(),
+              onBack: () => context.back('/realestate'),
             ),
             data: (n) => n == null
                 ? _Message(
                     text: L.of(context).neighborhoodNotFound,
-                    onBack: () => context.pop(),
+                    onBack: () => context.back('/realestate'),
                   )
                 : _buildBody(context, ref, n),
           ),
@@ -714,7 +714,7 @@ class _NeighborhoodPhotosState extends ConsumerState<_NeighborhoodPhotos> {
                 start: 12,
                 top: 51,
                 child: GestureDetector(
-                  onTap: () => context.pop(),
+                  onTap: () => context.back('/realestate'),
                   child: Container(
                     width: 40,
                     height: 40,

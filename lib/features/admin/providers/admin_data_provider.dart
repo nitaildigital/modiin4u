@@ -79,11 +79,21 @@ class AdminProfilesNotifier extends AdminTableNotifier {
   /// This is the panel's only way of removing a resident: `profiles.id`
   /// points at `auth.users`, and deleting the row would take their reviews
   /// and comments with it while leaving the account able to sign in again.
-  Future<void> setBanned(String id, bool banned) async {
-    await SupabaseConfig.client
-        .from('profiles')
-        .update({'is_banned': banned, if (!banned) 'ban_reason': null})
-        .eq('id', id);
+  ///
+  /// The reason is kept on the profile and both go in the activity log —
+  /// a block used to leave neither, so nobody could later say why.
+  Future<void> setBanned(String id, bool banned, {String? reason}) async {
+    final fields = {
+      'is_banned': banned,
+      'ban_reason': banned ? (reason?.trim().isEmpty ?? true ? null : reason!.trim()) : null,
+    };
+    await SupabaseConfig.client.from('profiles').update(fields).eq('id', id);
+    await recordAdminAction(
+      action: banned ? 'ban' : 'unban',
+      table: 'profiles',
+      rowId: id,
+      fields: fields,
+    );
     await load();
   }
 }

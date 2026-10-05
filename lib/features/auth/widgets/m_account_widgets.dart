@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Shared pieces of the phone account screens (Profile, Settings, Help,
 /// Edit Profile …), built to the mobile Figma frames: white page, a back
@@ -40,7 +41,7 @@ class MBackArrow extends StatelessWidget {
           onTap ??
           () {
             if (context.canPop()) {
-              context.pop();
+              context.back('/');
             } else {
               context.go('/');
             }

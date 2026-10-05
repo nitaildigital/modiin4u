@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../keep_signed_in.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
 import 'web_login_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
-  bool _rememberMe = false;
+  bool _rememberMe = true;
   bool _isLoading = false;
 
   @override
@@ -55,6 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             email: _emailController.text,
             password: _passwordController.text,
           );
+      await saveKeepSignedIn(_rememberMe);
       if (!mounted) return;
       // Back to whatever sent us here, or home.
       final next = GoRouterState.of(context).uri.queryParameters['next'];
@@ -221,6 +225,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              // In the app only: read when the app starts; a
+                              // browser keeps its session either way.
+                              if (!kIsWeb)
                               GestureDetector(
                                 onTap: () =>
                                     setState(() => _rememberMe = !_rememberMe),
@@ -316,11 +323,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        // Don't have an account? Sign Up
+                        // Don't have an account? Sign Up — in the app only:
+                        // the website's /login is for the panel's admins, and
+                        // its /signup sends a browser home (accounts are the
+                        // app's).
+                        if (!kIsWeb)
                         Center(
                           child: GestureDetector(
                             onTap: () {
-                              context.pop();
+                              context.back('/');
                               context.push('/signup');
                             },
                             child: Row(

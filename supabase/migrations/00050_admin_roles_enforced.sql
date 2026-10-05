@@ -97,7 +97,9 @@ begin
       ('categories',             'categories'),
       ('tags',                   'categories'),
       ('neighborhoods',          'categories'),
-      ('media',                  'media'),
+      -- The library, and the galleries of businesses, articles and events,
+      -- which add and remove library rows as they go.
+      ('media',                  'media|businesses|articles|events|categories'),
       ('offers',                 'offers'),
       ('commercial_agreements',  'revenue'),
       ('revenue_transactions',   'revenue'),

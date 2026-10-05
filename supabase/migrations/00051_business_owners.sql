@@ -26,7 +26,9 @@
 -- ============================================================
 
 -- ─── Is this business the caller's? ───
-create or replace function public.owns_business(p_business uuid)
+-- 00013 made it with this parameter name, and a function's parameter cannot
+-- be renamed in place; it keeps it.
+create or replace function public.owns_business(p_business_id uuid)
 returns boolean
 language sql
 stable
@@ -34,7 +36,7 @@ security definer
 set search_path = public
 as $$
   select auth.uid() is not null and exists (
-    select 1 from businesses where id = p_business and owner_id = auth.uid()
+    select 1 from businesses where id = p_business_id and owner_id = auth.uid()
   );
 $$;
 
@@ -108,15 +110,27 @@ create policy owner_requests_withdraw on public.business_owner_requests
 -- Each needs an administrator whose role may edit businesses (00050), and
 -- writes the activity log like every panel action.
 
-create or replace function public.admin_assign_business_owner(p_business uuid, p_profile uuid)
+-- A business that already has another owner is not handed over silently:
+-- the panel must ask to replace them (p_replace).
+create or replace function public.admin_assign_business_owner(
+  p_business uuid,
+  p_profile  uuid,
+  p_replace  boolean default false
+)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_current uuid;
 begin
   if not is_admin() or not admin_may('businesses', 'edit') then
     raise exception 'not allowed' using errcode = '42501';
+  end if;
+  select owner_id into v_current from businesses where id = p_business for update;
+  if v_current is not null and v_current <> p_profile and not p_replace then
+    raise exception 'business-has-owner' using errcode = 'P0001';
   end if;
   update businesses set owner_id = p_profile where id = p_business;
   insert into audit_logs (admin_id, action, entity_type, entity_id, after_data)
@@ -148,7 +162,8 @@ $$;
 create or replace function public.admin_decide_owner_request(
   p_request uuid,
   p_approve boolean,
-  p_reason  text default null
+  p_reason  text default null,
+  p_replace boolean default false
 )
 returns void
 language plpgsql
@@ -165,6 +180,11 @@ begin
   if r.id is null or r.status <> 'pending' then
     raise exception 'request is not pending';
   end if;
+  -- Assigning first, so a business that already has an owner stops the
+  -- approval before anything is written.
+  if p_approve then
+    perform admin_assign_business_owner(r.business_id, r.profile_id, p_replace);
+  end if;
 
   update business_owner_requests
      set status = case when p_approve then 'approved' else 'rejected' end,
@@ -174,7 +194,6 @@ begin
    where id = p_request;
 
   if p_approve then
-    perform admin_assign_business_owner(r.business_id, r.profile_id);
     -- Anyone else waiting for the same business is told it went elsewhere.
     update business_owner_requests
        set status = 'rejected', reason = 'assigned to another owner',
@@ -184,12 +203,12 @@ begin
 end;
 $$;
 
-revoke all on function public.admin_assign_business_owner(uuid, uuid) from public;
-revoke all on function public.admin_remove_business_owner(uuid) from public;
-revoke all on function public.admin_decide_owner_request(uuid, boolean, text) from public;
-grant execute on function public.admin_assign_business_owner(uuid, uuid) to authenticated;
+revoke all on function public.admin_assign_business_owner(uuid, uuid, boolean) from public, anon;
+revoke all on function public.admin_remove_business_owner(uuid) from public, anon;
+revoke all on function public.admin_decide_owner_request(uuid, boolean, text, boolean) from public, anon;
+grant execute on function public.admin_assign_business_owner(uuid, uuid, boolean) to authenticated;
 grant execute on function public.admin_remove_business_owner(uuid) to authenticated;
-grant execute on function public.admin_decide_owner_request(uuid, boolean, text) to authenticated;
+grant execute on function public.admin_decide_owner_request(uuid, boolean, text, boolean) to authenticated;
 
 -- ─── 3. What an owner may change on their business ───
 
@@ -214,9 +233,17 @@ drop policy if exists offers_owner_read on public.offers;
 create policy offers_owner_read on public.offers
   for select to authenticated using (public.owns_business(business_id));
 
+-- Add and edit; not delete — a deleted deal takes residents' claims with it,
+-- and removal stays reversible: an owner ends a deal by its status.
 drop policy if exists offers_owner_write on public.offers;
-create policy offers_owner_write on public.offers
-  for all to authenticated
+drop policy if exists offers_owner_insert on public.offers;
+create policy offers_owner_insert on public.offers
+  for insert to authenticated
+  with check (public.owns_business(business_id));
+
+drop policy if exists offers_owner_update on public.offers;
+create policy offers_owner_update on public.offers
+  for update to authenticated
   using (public.owns_business(business_id))
   with check (public.owns_business(business_id));
 
@@ -255,6 +282,36 @@ drop trigger if exists offers_owner_guard on public.offers;
 create trigger offers_owner_guard
   before insert or update on public.offers
   for each row execute function public.offers_owner_guard();
+
+-- A business's notification columns (00045) are the panel's and the
+-- trigger's: an owner writing them could queue city-wide pushes at will, or
+-- point the row at another campaign. 00033's guard predates them.
+create or replace function public.businesses_push_guard()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if not is_resident_write() then
+    return new;
+  end if;
+  if tg_op = 'INSERT' then
+    new.notify_on_publish := false;
+    new.push_campaign_id := null;
+  else
+    new.notify_on_publish := old.notify_on_publish;
+    new.push_campaign_id := old.push_campaign_id;
+  end if;
+  return new;
+end;
+$$;
+
+-- Named to run before 00045's `businesses_queue_push` (triggers run in name
+-- order), so the push trigger sees the kept values.
+drop trigger if exists businesses_a_push_guard on public.businesses;
+create trigger businesses_a_push_guard
+  before insert or update on public.businesses
+  for each row execute function public.businesses_push_guard();
 
 -- Photos: the media rows they upload, and links from their business to them.
 drop policy if exists media_owner_insert on public.media;

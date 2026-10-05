@@ -202,8 +202,16 @@ class _WebBusinessesContentState extends ConsumerState<WebBusinessesContent>
 
   List<_Business> get _visibleBusinesses {
     final q = _query.toLowerCase();
+    // A main category shows its sub-categories' businesses too.
+    final selected = _selectedCategory == null
+        ? null
+        : {
+            _selectedCategory!,
+            for (final c in _categoriesById.values)
+              if (c.parentId == _selectedCategory) c.id,
+          };
     return _businesses.where((b) {
-      if (_selectedCategory != null && !b.categoryIds.contains(_selectedCategory)) {
+      if (selected != null && !b.categoryIds.any(selected.contains)) {
         return false;
       }
       if (_selectedFilter >= 0 && !_matchesFilter(b, _selectedFilter)) return false;

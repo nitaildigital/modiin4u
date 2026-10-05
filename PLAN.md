@@ -2214,10 +2214,25 @@ WhatsApp, e-mail or a short form, as the owner chooses per job.
 | J5 | Featured, boost, push to the relevant audience | Partly | ⬜ the push session's campaigns, a new topic |
 | J6 | The jobs pages for residents (list with filters, job page, apply, my applications) and the owner's job management | **Yes** | ⏸ Figma |
 
-To ask him: where owners work (the website is assumed — the owner area sits
-beside the panel); how long an applicant's CV and form answers are kept after
-a job closes (personal data, and the privacy policy must say so); whether a
-job needs his approval before it is public (the deals do not).
+His answers, 5 Oct evening (through Harshit): a job goes live at once, no
+approval, like deals; applications are deleted **2 days** after their job
+closes or expires, the number of days his to change in the panel
+(`app_settings.job_applications_keep_days`, the nightly
+`purge_closed_job_applications`, 00052). The business keeps a CV only through
+the application, so it loses access with it; the file is the applicant's.
+
+**Where owners work — the project's own rule says otherwise, to settle.** On
+28 Sep the client decided that accounts belong to the app: the website has no
+resident sign-in, and `/login` there is for administrators only (CLAUDE.md;
+the router's app-only list). The app's user model already names a
+`businessOwner` role, unused. So either the owner area is on the website —
+an exception to that rule, owners signing in at `/login` like staff, beside
+the panel, at desk-sized screens for job and candidate management — or it is
+in the app, which keeps the rule but puts candidate management on a phone.
+Recommended: the website, with the client's explicit OK. It also decides
+applying on the website: without accounts there, a visitor applies by the
+form or call / WhatsApp / e-mail, but cannot attach a CV (a CV needs an
+account, to keep it private).
 
 **Audit, 5 Oct: what should be saved and is not.** The whole app, site and
 panel against the database (59 tables; 20 never written by the code).
@@ -2261,6 +2276,104 @@ panel against the database (59 tables; 20 never written by the code).
 - Not mine, left alone: another session's temporary admin
   `tmp-admin-13b4a620` (15:55) is still active, and the 30 Sep one
   `tmp-admin-5391a625`.
+
+**Flow audit, 5 Oct evening** (every journey traced in the code; the top
+ones checked again by hand). F-numbers for tracking.
+
+| # | Journey | Problem | Severity | State |
+|---|---|---|---|---|
+| F1 | App start | The splash checks only "seen onboarding", never sign-in; signing in from onboarding does not set it, so a signed-in resident sees onboarding on every launch | High | ⬜ |
+| F2 | Phone layout | Back arrows call `pop()` with nothing to pop when a page is opened directly (a Google result on a phone, the ☰ menu): business, category, article, listing, neighbourhood, restaurants, events map — the only way out does nothing | High | ⬜ |
+| F3 | Deals | The claim code shows once, in a dialog; afterwards the button says "Claimed" and there is no "my deals" — close it before the till and the code is lost | High | ⬜ |
+| F4 | Post an apartment | Neither form asks for a contact name or phone; an approved resident listing has no Contact | High | ⬜ |
+| F5 | Website, phone width | The ☰ menu has no Terms, Privacy, Accessibility (legally required), About or language switch; there is no footer at that width | High | ⬜ |
+| F6 | Panel | No sign-out anywhere; a non-admin session in the browser can only go home | High | ⬜ |
+| F7 | Panel → Users → Block | `is_banned` is enforced only on the leaderboards: a blocked resident still reviews, replies, posts, claims, RSVPs | High | ⬜ |
+| F8 | Sign-up | The confirmation e-mail lands on the website home with no "confirmed — go back to the app and sign in" | Medium | ⬜ |
+| F9 | Edit profile | The e-mail field is editable but never saved | Medium | ⬜ |
+| F10 | App settings | No link to Privacy, Accessibility or About | Medium | ⬜ |
+| F11 | Business page, phone | No WhatsApp (the desktop has it); directions go to 0,0 when the business has no location | Medium | ⬜ |
+| F12 | Business page, desktop | No menu, Share or Instagram (the phone has them) | Medium | ⬜ |
+| F13 | Category pages | A parent category lists only businesses linked to it directly, not its sub-categories' (deals do walk the tree) — matters more with the 60 restored sub-categories | Medium | ⬜ |
+| F14 | My apartments | Once sent for review, a listing cannot be edited, withdrawn, marked sold or deleted; "expired" reads "Rejected" | Medium | ⬜ |
+| F15 | Real estate, phone width | `/apartments-sale` and `/apartments-rent` show "Mobile version coming soon" (English only) | Medium | ⬜ |
+| F16 | Step groups on the web | The invitation page offers only "Open in app" — no store links anywhere in the code | Medium | ⬜ |
+| F17 | Ask (app) | The in-app chat has no load-error state and no close button of its own: offline, the spinner never ends | Medium | ⬜ |
+| F18 | Website footer | No Delete-account link (Google Play wants it reachable) | Medium | ⬜ |
+| F19 | `/login` | Shows "Sign Up" (redirects home on the web); the phone version's back throws when opened directly | Medium | ⬜ |
+| F20 | Panel | Review replies (`admin_response`) are saved and shown nowhere; home builder: 14 of 15 block types drawn nowhere, the alert only on the desktop home | Medium | ⬜ |
+| F21 | Events | No add-to-calendar | Medium | ⬜ |
+| F22 | Low | dark mode not kept; location switch read by nothing; "sign in to review / RSVP" toast without a sign-in action; no error page for unknown addresses; search skips deals, listings, parks and includes past events; desktop map has no car parks; card clicks not counted in statistics; phone home shows expired deals; deal at phone width drops Redeem silently; no Share on listings and deals; phone events ignore `?category=`; phone listing offers only a call; municipal search bar cannot be typed in; `/steps` on the web says "sign in"; "Remember me" does nothing; a deactivated category still opens by address; an admin browsing sees drafts as live | Low | ⬜ |
+
+**Flow audit fixes, 5 Oct (evening).** F1–F21 fixed; F22 all but two.
+Tested in a local website build and on the OnePlus (results below); test
+rows made for it and deleted after.
+
+- **F1** The splash goes home when a session exists, and marks onboarding seen.
+- **F2** `context.back(fallback)` (app_router.dart) replaces all 46 `pop()`s
+  outside the panel: back with nothing to go back to goes to the section's
+  list, or home.
+- **F3** A claimed deal's button reads "Show my code"; the Deals tab has "My
+  deals". On the website the deal says it is claimed in the app (not on an
+  ended deal).
+- **F4** Both post forms ask for a contact name and phone, filled from the
+  profile.
+- **F5** The phone-width ☰ menu has About, Terms, Privacy, Accessibility,
+  Delete account and a language switch (it sets the app's locale; setting
+  only the desktop flag did nothing when it already held that value).
+- **F6** The panel's avatar has Sign out; "no access" offers another account.
+- **F7** Block asks for a reason, writes it and the audit row; 00054 makes the
+  block stop every resident write (restrictive rules, and triggers where a
+  function writes). **Not run yet.**
+- **F8** The confirmation link on the website signs the browser out again and
+  says "confirmed — sign in in the app".
+- **F9** The e-mail field is read-only. **F10** Settings link Privacy,
+  Accessibility, About.
+- **F11** Phone business page: WhatsApp; directions by address when the
+  business has no location.
+- **F12** Desktop business page: the menu, Instagram and Share.
+- **F13** A main category includes its sub-categories' businesses, on both
+  layouts and in the card counts (Professionals 16 → 22).
+- **F14** My Apartments: a menu on each card — edit (back to a draft, then
+  the form; goes back for review), take down (to drafts), mark sold/rented,
+  delete. "Expired" no longer reads "Rejected"; sold, rented and draft have
+  their own labels. The desktop form now reopens drafts. Sold/rented needs
+  **00055** (the column guard refused them). Not run yet.
+- **F15** `/apartments-sale` and `/apartments-rent` at phone width open the
+  Real Estate tab on sale or rent.
+- **F16** Store links are panel settings (Settings → Google Play / App Store
+  link, `app_settings`); the invitation page and the footer badges use them
+  and show nothing / stay pictures until they are filled. The same screen
+  edits `job_applications_keep_days`.
+- **F17** The in-app chat shows an error with Try again when it cannot load,
+  and a × of its own until the chat's appears.
+- **F18** Footer: Delete account. **F19** `/login` in a browser has no Sign Up
+  or Remember me.
+- **F20** Review replies stay hidden — the client's answer of 30 September,
+  not a bug. The site notice now shows on the phone home too; the panel marks
+  the block types nothing draws ("not shown on the site").
+- **F21** Add to calendar on both event pages (Google Calendar's new-event
+  link; no end time means it ends when it starts, nothing invented).
+- **F22** Dark mode kept on the device. Location switch: turning it on asks
+  the phone and refreshes "near you". "Sign in" on every sign-in message (app
+  only). An unknown address shows "Page not found" in the page's language.
+  Search finds deals and listings and skips events already over. Phone home:
+  only live deals, whatever the Deals tab is filtered to. Share on listings
+  and deals (both layouts). Phone events open on `?category=`. Phone listing
+  Contact offers call, WhatsApp and e-mail. The municipal search filters the
+  services. The website's `/steps` says the tables are in the app. Remember
+  me works in the app (unticked, the next start signs out; ticked by
+  default). A switched-off category no longer opens by address.
+  Left: car parks on the desktop map (needs the design's pin and card), and
+  card clicks (a click opens the page, which already counts a view). An admin
+  sees drafts only by their direct address — lists filter by status.
+
+Content the site shows that the panel cannot edit: contact phone and e-mail,
+social links, footer About text, home hero and its blocks, Help FAQ,
+Municipal tiles, onboarding copy. Panel fields nothing reads: `home_blocks`
+other than the alert, `feature_flags`, most `remote_config`, `tags`,
+`reviews.admin_response`, `profiles.is_verified` / `points` /
+`location_enabled`.
 
 **To raise with him:** English names for the business categories (some 85
 with the old ones); the phone-width site opens in Hebrew and has no language

@@ -11,6 +11,7 @@ import '../providers/offer_providers.dart';
 import '../widgets/m_deal_card.dart';
 import '../widgets/m_deals_sections.dart';
 import 'web_deals_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Deals – responsive wrapper.
 class DealsScreen extends StatelessWidget {
@@ -115,6 +116,10 @@ class _MobileDealsContentState extends ConsumerState<_MobileDealsContent> {
                   // row of zeroes.
                   _buildCategoryRow(l),
 
+                  // The deals this resident claimed and can still use: the
+                  // way back to a code, which was shown once and then lost.
+                  _buildMyDeals(offers.valueOrNull ?? const <Offer>[]),
+
                   Padding(
                     key: _listKey,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -204,7 +209,7 @@ class _MobileDealsContentState extends ConsumerState<_MobileDealsContent> {
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () =>
-                        context.canPop() ? context.pop() : context.go('/'),
+                        context.canPop() ? context.back('/deals') : context.go('/'),
                     child: Transform.flip(
                       flipX: rtl,
                       child: const Icon(
@@ -290,6 +295,39 @@ class _MobileDealsContentState extends ConsumerState<_MobileDealsContent> {
                   }),
                 );
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMyDeals(List<Offer> all) {
+    final claimed =
+        ref.watch(myClaimedOfferIdsProvider).valueOrNull ?? const <String>{};
+    final mine = [
+      for (final o in all)
+        if (claimed.contains(o.id) && !o.hasExpired) o,
+    ];
+    if (mine.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              mDealsT(context, 'My deals', 'ההטבות שלי'),
+              style: _sectionTitle,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [for (final o in mine) MDealCard(offer: o)],
             ),
           ),
         ],

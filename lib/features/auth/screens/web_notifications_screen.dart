@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../widgets/push_feed_list.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web Notifications — desktop
@@ -122,7 +123,7 @@ class _WebNotificationsContentState extends ConsumerState<WebNotificationsConten
         // The bell opens this page from anywhere, so back goes wherever the
         // reader came from — and to the home page if they opened the URL
         // directly and there is nothing to pop.
-        onTap: () => context.canPop() ? context.pop() : context.go('/'),
+        onTap: () => context.canPop() ? context.back('/') : context.go('/'),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

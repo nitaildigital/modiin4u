@@ -8,6 +8,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/listing.dart';
+import '../widgets/my_listing_menu.dart';
 import '../providers/listing_providers.dart';
 import 'my_apartments_screen.dart' show formatShekels;
 
@@ -309,7 +310,12 @@ class _WebMyApartmentsContentState extends ConsumerState<WebMyApartmentsContent>
                               'Price on request',
                               'מחיר לפי בקשה',
                             ),
-                            onTap: () => context.push('/listing/${l.id}'),
+                            // A draft goes back into the form, as on the phone.
+                            onTap: () => context.push(
+                              l.status == ListingStatus.draft
+                                  ? '/add-apartment?draft=${l.id}'
+                                  : '/listing/${l.id}',
+                            ),
                           ),
                         ),
                       )
@@ -386,7 +392,23 @@ class _WebMyApartmentsContentState extends ConsumerState<WebMyApartmentsContent>
           fg: const Color(0xFF0E7E4B),
           bg: const Color(0xFFE3F6EB),
         ),
-        ListingStatus.removed || ListingStatus.expired => (
+        ListingStatus.sold || ListingStatus.rented => (
+          text: status == ListingStatus.sold ? _t('Sold', 'נמכר') : _t('Rented', 'הושכר'),
+          fg: const Color(0xFF6D6D6D),
+          bg: const Color(0xFFF1F1F1),
+        ),
+        // An expired listing was approved and ran its time; it was not rejected.
+        ListingStatus.expired => (
+          text: _t('Expired', 'פג תוקף'),
+          fg: const Color(0xFF6D6D6D),
+          bg: const Color(0xFFF1F1F1),
+        ),
+        ListingStatus.draft => (
+          text: _t('Draft', 'טיוטה'),
+          fg: const Color(0xFF6D6D6D),
+          bg: const Color(0xFFF1F1F1),
+        ),
+        ListingStatus.removed => (
           text: _t('Rejected', 'נדחה'),
           fg: const Color(0xFFCB3E3C),
           bg: const Color(0xFFFCE9E9),
@@ -627,6 +649,11 @@ class _ListingCardState extends State<_ListingCard> {
                             ),
                           ),
                         ),
+                      ),
+                      PositionedDirectional(
+                        end: 12,
+                        top: 12,
+                        child: MyListingMenu(listing: l),
                       ),
                     ],
                   ),

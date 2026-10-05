@@ -10,6 +10,7 @@ import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
 import 'web_signup_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 enum AccountType { resident, broker }
 
@@ -102,7 +103,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       if (!signedIn) {
         setState(() => _isLoading = false);
         await _showCheckEmail(l);
-        if (mounted) context.pop();
+        if (mounted) context.back('/');
         return;
       }
 
@@ -579,7 +580,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         Center(
                           child: GestureDetector(
                             onTap: () {
-                              context.pop();
+                              context.back('/');
                               context.push('/login');
                             },
                             child: Row(

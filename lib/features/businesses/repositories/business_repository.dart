@@ -50,42 +50,61 @@ class BusinessRepository {
   }
 
   /// Business ids linked to a category, named by its id or its slug — the
-  /// site links Professionals as `/businesses/category/services`.
+  /// site links Professionals as `/businesses/category/services`. A main
+  /// category includes the businesses filed only under one of its
+  /// sub-categories, as the old site's category pages did.
   Future<List<String>> fetchBusinessIdsInCategory(String categoryIdOrSlug) async {
-    var categoryId = categoryIdOrSlug;
-    if (!_uuid.hasMatch(categoryId)) {
-      final row = await _client
-          .from('categories')
-          .select('id')
-          .eq('scope', 'business')
-          .eq('slug', categoryIdOrSlug)
-          .maybeSingle();
-      if (row == null) return const [];
-      categoryId = row['id'] as String;
-    }
+    // A category the panel switched off lists nothing, by id or by address.
+    final row = await _client
+        .from('categories')
+        .select('id')
+        .eq('scope', 'business')
+        .eq('is_active', true)
+        .eq(_uuid.hasMatch(categoryIdOrSlug) ? 'id' : 'slug', categoryIdOrSlug)
+        .maybeSingle();
+    if (row == null) return const [];
+    final categoryId = row['id'] as String;
+    final children = await _client
+        .from('categories')
+        .select('id')
+        .eq('parent_id', categoryId)
+        .eq('is_active', true);
     final data = await _client
         .from('entity_categories')
         .select('entity_id')
         .eq('entity_type', 'business')
-        .eq('category_id', categoryId);
-    return List<Map<String, dynamic>>.from(
-      data,
-    ).map((r) => r['entity_id'] as String).toList();
+        .inFilter('category_id', [
+          categoryId,
+          for (final c in List<Map<String, dynamic>>.from(children)) c['id'] as String,
+        ]);
+    return {
+      for (final r in List<Map<String, dynamic>>.from(data)) r['entity_id'] as String,
+    }.toList();
   }
 
-  /// How many businesses sit in each category, keyed by category id.
+  /// How many businesses sit in each category, keyed by category id. A main
+  /// category counts its sub-categories' businesses too, each once, so the
+  /// number on its card matches the list it opens.
   Future<Map<String, int>> fetchCategoryCounts() async {
     final data = await _client
         .from('entity_categories')
-        .select('category_id')
+        .select('entity_id, category_id')
         .eq('entity_type', 'business');
+    final categories = await _client.from('categories').select('id, parent_id');
+    final parentOf = {
+      for (final c in List<Map<String, dynamic>>.from(categories))
+        c['id'] as String: c['parent_id'] as String?,
+    };
 
-    final counts = <String, int>{};
+    final members = <String, Set<String>>{};
     for (final row in List<Map<String, dynamic>>.from(data)) {
+      final business = row['entity_id'] as String;
       final id = row['category_id'] as String;
-      counts[id] = (counts[id] ?? 0) + 1;
+      members.putIfAbsent(id, () => {}).add(business);
+      final parent = parentOf[id];
+      if (parent != null) members.putIfAbsent(parent, () => {}).add(business);
     }
-    return counts;
+    return {for (final e in members.entries) e.key: e.value.length};
   }
 
   /// Every business-to-category link, as `{entity_id, category_id}`.

@@ -14,6 +14,7 @@ import '../providers/restaurant_providers.dart';
 import 'web_restaurants_screen.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Restaurants discovery screen — responsive wrapper.
 /// Desktop (> 1100px) renders the full web layout; mobile keeps the app UI.
@@ -215,7 +216,7 @@ class _MobileRestaurantsContentState
                 children: [
                   const SizedBox(width: 16),
                   GestureDetector(
-                    onTap: () => context.pop(),
+                    onTap: () => context.back('/'),
                     child: const Icon(
                       AppIcons.back,
                       size: 24,

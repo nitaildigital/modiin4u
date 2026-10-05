@@ -17,6 +17,7 @@ import '../providers/event_providers.dart';
 import '../widgets/m_event_card.dart' show mEventsIsHebrew;
 import 'web_events_map_screen.dart';
 import '../../../shared/widgets/app_map.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// The events map.
 ///
@@ -236,7 +237,7 @@ class _MobileEventsMapContentState
                 bottom: 16,
                 child: Center(
                   child: GestureDetector(
-                    onTap: () => context.pop(),
+                    onTap: () => context.back('/events'),
                     child: Container(
                       height: 40,
                       padding: const EdgeInsets.symmetric(horizontal: 24),

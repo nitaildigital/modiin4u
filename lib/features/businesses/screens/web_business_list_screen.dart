@@ -8,6 +8,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/business.dart';
 import '../providers/business_providers.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 import 'web_businesses_screen.dart' show WebBusinessGrid;
 
 // ═══════════════════════════════════════════════════════════
@@ -145,7 +146,7 @@ class _WebBusinessListContentState extends ConsumerState<WebBusinessListContent>
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () => context.canPop()
-                      ? context.pop()
+                      ? context.back('/businesses')
                       : context.go(widget.parks ? '/municipal' : '/businesses'),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

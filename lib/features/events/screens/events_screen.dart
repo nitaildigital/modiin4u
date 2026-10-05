@@ -16,17 +16,21 @@ import '../../../core/theme/app_colors.dart';
 import '../models/event_labels.dart';
 import '../widgets/m_event_card.dart';
 import '../widgets/m_event_categories.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Events – responsive wrapper.
 class EventsScreen extends StatelessWidget {
-  const EventsScreen({super.key});
+  /// `?category=` — `free` or a category slug, as the desktop page's circles
+  /// link; the phone layout ignored it and always opened on All.
+  final String? category;
+  const EventsScreen({super.key, this.category});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) return const WebEventsContent();
-        return const _MobileEventsContent();
+        return _MobileEventsContent(initialFilter: category);
       },
     );
   }
@@ -36,7 +40,8 @@ class EventsScreen extends StatelessWidget {
 /// Modiin", the search pill, the category circles, then the event cards and
 /// a floating "View on Map".
 class _MobileEventsContent extends ConsumerStatefulWidget {
-  const _MobileEventsContent();
+  final String? initialFilter;
+  const _MobileEventsContent({this.initialFilter});
 
   @override
   ConsumerState<_MobileEventsContent> createState() =>
@@ -48,7 +53,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
   Timer? _debounce;
 
   /// The circle the list is narrowed to: `all`, `free` or a category slug.
-  String _filter = 'all';
+  late String _filter = (widget.initialFilter ?? '').isEmpty ? 'all' : widget.initialFilter!;
 
   @override
   void initState() {
@@ -262,7 +267,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
               children: [
                 const SizedBox(width: 15),
                 GestureDetector(
-                  onTap: () => context.canPop() ? context.pop() : context.go('/'),
+                  onTap: () => context.canPop() ? context.back('/events') : context.go('/'),
                   // The arrow points the way back: right in Hebrew.
                   child: Transform.flip(
                     flipX: Directionality.of(context) == TextDirection.rtl,

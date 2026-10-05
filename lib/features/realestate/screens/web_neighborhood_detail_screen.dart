@@ -10,6 +10,7 @@ import '../models/listing.dart';
 import '../providers/detail_providers.dart';
 import '../providers/neighborhood_providers.dart';
 import '../widgets/web_detail_parts.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web Neighborhood Detail — desktop layout for /neighborhood/:id
@@ -186,7 +187,7 @@ class _WebNeighborhoodDetailContentState extends ConsumerState<WebNeighborhoodDe
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () => context.canPop() ? context.pop() : context.go('/realestate'),
+                  onTap: () => context.canPop() ? context.back('/realestate') : context.go('/realestate'),
                   child: Transform.flip(
                     flipX: _isHebrew,
                     child: SvgPicture.asset('$kDetailAsset/detail_back.svg', width: 24, height: 24),

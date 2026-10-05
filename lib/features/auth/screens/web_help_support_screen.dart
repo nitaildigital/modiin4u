@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web Help & Support — desktop
@@ -95,7 +96,7 @@ class _WebHelpSupportContentState extends State<WebHelpSupportContent>
 
   // The website has no Settings page (accounts are the app's), so with no
   // page to go back to this goes home rather than to a redirect.
-  void _back() => context.canPop() ? context.pop() : context.go('/');
+  void _back() => context.canPop() ? context.back('/') : context.go('/');
 
   @override
   Widget build(BuildContext context) {

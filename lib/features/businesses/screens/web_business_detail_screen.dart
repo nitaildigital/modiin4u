@@ -7,6 +7,8 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../shared/widgets/web_share_menu.dart';
+import '../models/menu_item.dart' as menu_item;
 import '../repositories/business_stats.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -360,9 +362,13 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
     final about = (b.about ?? b.description ?? '').trim();
     final highlights = _highlights();
 
+    final menu = ref.watch(businessMenuProvider(b.id)).valueOrNull ?? const [];
+
     final sections = <Widget>[
       if (about.isNotEmpty) _buildAbout(about),
       if (highlights.isNotEmpty) _buildHighlights(highlights),
+      // The menu the panel keeps: the phone page showed it, this one did not.
+      if (menu.isNotEmpty) _buildMenu(menu),
       if (gallery.isNotEmpty) _buildGallery(gallery),
       _buildReviews(reviews),
     ];
@@ -379,6 +385,53 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
   }
 
   Widget _title(String text) => Text(text, style: _display(24));
+
+  /// The menu, by its sections in the panel's order: name, description, price.
+  Widget _buildMenu(List<menu_item.MenuItem> items) {
+    final bySection = <String, List<menu_item.MenuItem>>{};
+    for (final i in items.where((i) => i.isAvailable)) {
+      bySection.putIfAbsent(i.section?.trim().isNotEmpty == true ? i.section!.trim() : '', () => []).add(i);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _title(_t('Menu', 'תפריט')),
+        for (final e in bySection.entries) ...[
+          if (e.key.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Text(e.key, style: _inter(18, weight: FontWeight.w600)),
+          ],
+          const SizedBox(height: 8),
+          for (final i in e.value)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kLine))),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(i.name, style: _inter(16, weight: FontWeight.w500)),
+                        if ((i.description ?? '').trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(i.description!.trim(), style: _inter(14, color: _kMuted)),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (i.priceLabel != null) ...[
+                    const SizedBox(width: 16),
+                    Text(i.priceLabel!, style: _inter(16, weight: FontWeight.w600)),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ],
+    );
+  }
 
   Widget _buildAbout(String about) {
     final paragraphs = about.split(RegExp(r'\n\s*\n')).map((p) => p.trim()).where((p) => p.isNotEmpty).toList();
@@ -749,7 +802,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
     final whatsapp = (b.whatsapp ?? '').trim();
     // A park has no contact details to offer (the client's rule for parks).
     if (b.isPark) return const SizedBox.shrink();
-    if (website.isEmpty && phone.isEmpty && whatsapp.isEmpty) return const SizedBox.shrink();
+    final instagram = (b.instagram ?? '').trim();
 
     String shown(String url) => url.replaceFirst(RegExp(r'^https?://(www\.)?'), '').replaceFirst(RegExp(r'/$'), '');
     Uri link(String url) => Uri.parse(url.startsWith('http') ? url : 'https://$url');
@@ -804,6 +857,39 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                 launchUrl(Uri.parse('https://wa.me/$digits'), webOnlyWindowName: '_blank');
               },
             ),
+          // Instagram and Share, which the phone page had and this one did not.
+          if (instagram.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _InfoRow(
+              icon: '$_kAsset/website.svg',
+              label: 'Instagram',
+              value: shown(instagram),
+              valueColor: AppColors.midBlue,
+              trailing: SvgPicture.asset('$_kAsset/external.svg', width: 16, height: 16),
+              onTap: () {
+                BusinessStats.record(b.id, BusinessStat.instagram);
+                launchUrl(link(instagram), webOnlyWindowName: '_blank');
+              },
+            ),
+          ],
+          const SizedBox(height: 20),
+          Builder(
+            builder: (anchor) => _InfoRow(
+              icon: 'assets/web/news/stat_share.svg',
+              label: _t('Share', 'שיתוף'),
+              value: _t('Send this page', 'שלחו את העמוד'),
+              onTap: () {
+                BusinessStats.record(b.id, BusinessStat.share);
+                showWebShareMenu(
+                  anchor,
+                  title: b.name,
+                  link: Uri.base.toString(),
+                  isHebrew: _isHebrew,
+                  message: b.name,
+                );
+              },
+            ),
+          ),
         ],
       ),
     );

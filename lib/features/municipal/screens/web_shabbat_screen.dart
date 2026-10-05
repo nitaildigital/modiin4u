@@ -9,6 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../providers/shabbat_providers.dart';
 import '../widgets/shabbat_widgets.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Shabbat & Holidays — desktop
@@ -36,7 +37,7 @@ class _WebShabbatContentState extends ConsumerState<WebShabbatContent>
   static final _he = lookupL(const Locale('he'));
   L get _l => _isHebrew ? _he : _en;
 
-  void _back() => context.canPop() ? context.pop() : context.go('/municipal');
+  void _back() => context.canPop() ? context.back('/municipal') : context.go('/municipal');
 
   @override
   Widget build(BuildContext context) {

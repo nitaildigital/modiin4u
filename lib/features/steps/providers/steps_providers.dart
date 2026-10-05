@@ -230,6 +230,11 @@ class StepCounter extends StateNotifier<StepState> {
       await _ref.read(stepsRepositoryProvider).recordDays(days);
       _ref.invalidate(myStepWeekProvider);
       _ref.invalidate(myStepMonthProvider);
+      // The challenge card and the rankings count the same days, so they
+      // follow the walk too rather than the figure at opening.
+      _ref.invalidate(myChallengeStepsProvider);
+      _ref.invalidate(peopleLeaderboardProvider);
+      _ref.invalidate(neighborhoodLeaderboardProvider);
     } catch (_) {
       // Offline: the next minute tries again with the same or a higher
       // figure, and the day keeps its highest.
@@ -315,7 +320,8 @@ final leaderboardWindowProvider =
       final today = DateTime.utc(now.year, now.month, now.day);
       final days = today.difference(first).inDays + 1;
       if (days < 1) return (days: 7, since: null);
-      return (days: days.clamp(1, 62), since: first);
+      // Every day since the start, as the caption says — no cap.
+      return (days: days, since: first);
     });
 
 /// This person's steps in the running challenge: every day since it

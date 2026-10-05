@@ -190,5 +190,8 @@ String _kindLabel(BuildContext context, SearchHit hit) {
   if (hit.route.startsWith('/business')) return l.business;
   if (hit.route.startsWith('/event')) return l.event;
   if (hit.route.startsWith('/article')) return l.news;
+  final he = Localizations.localeOf(context).languageCode == 'he';
+  if (hit.route.startsWith('/deal')) return he ? 'הטבה' : 'Deal';
+  if (hit.route.startsWith('/listing')) return he ? 'נדל״ן' : 'Real estate';
   return hit.category;
 }

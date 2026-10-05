@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../keep_signed_in.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -42,7 +44,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent>
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
-  bool _rememberMe = false;
+  bool _rememberMe = true;
   bool _isLoading = false;
 
   @override
@@ -77,6 +79,7 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent>
             email: _emailController.text,
             password: _passwordController.text,
           );
+      await saveKeepSignedIn(_rememberMe);
       if (!mounted) return;
       // Back to whatever sent us here, or home.
       final next = GoRouterState.of(context).uri.queryParameters['next'];
@@ -341,6 +344,9 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // In the app only: it is read when the app starts (splash), and
+              // a browser keeps its session either way.
+              if (!kIsWeb)
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
@@ -435,7 +441,10 @@ class _WebLoginContentState extends ConsumerState<WebLoginContent>
                     ),
             ),
           ),
-          const SizedBox(height: 24),
+          // Sign Up in the app only: in a browser /login is the panel's, and
+          // /signup sends it home (accounts are the app's).
+          if (!kIsWeb) const SizedBox(height: 24),
+          if (!kIsWeb)
           Center(
             child: MouseRegion(
               cursor: SystemMouseCursors.click,

@@ -650,7 +650,7 @@ class _AdvertisingTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Revenue is the main admin's and the roles given it, not a content
     // editor's; the overview is everyone's, so the tab says so instead.
-    final perms = ref.watch(adminPermissionsProvider).valueOrNull ?? AdminPermissions.all;
+    final perms = AdminPermissions.of(ref.watch(adminPermissionsProvider));
     if (!perms.canView('revenue')) {
       return Center(
         child: Text(

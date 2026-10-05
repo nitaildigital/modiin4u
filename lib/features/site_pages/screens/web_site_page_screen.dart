@@ -10,6 +10,7 @@ import '../../../shared/widgets/web_chrome.dart';
 import '../providers/site_page_provider.dart';
 import '../widgets/site_page_body.dart';
 import '../widgets/site_page_parts.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web information page — desktop (About Us, Accessibility Statement)
@@ -45,7 +46,7 @@ class _WebSitePageContentState extends ConsumerState<WebSitePageContent>
   static final _he = lookupL(const Locale('he'));
   L _lFor(bool hebrew) => hebrew ? _he : _en;
 
-  void _back() => context.canPop() ? context.pop() : context.go('/');
+  void _back() => context.canPop() ? context.back('/') : context.go('/');
 
   @override
   Widget build(BuildContext context) {

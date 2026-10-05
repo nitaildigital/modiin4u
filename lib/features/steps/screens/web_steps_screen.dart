@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -835,15 +836,20 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
     );
   }
 
+  /// The tables are for members (00043). A browser cannot sign in — accounts
+  /// are the app's — so there it points to the app instead of saying "sign
+  /// in", which led nowhere.
+  String _signInNote() => kIsWeb
+      ? _t('The leaderboards are in the Modiin4u app', 'הטבלאות נמצאות באפליקציית מודיעין בשבילך')
+      : _t('Sign in to see the leaderboard', 'התחברו כדי לראות את הטבלה');
+
   /// The neighbourhood table, from `steps_leaderboard_neighborhoods`, which
   /// only counts people who turned the health-data switch on.
   List<Widget> _buildNeighborhoodRows() {
     final user = ref.watch(authProvider);
     if (user == null) {
       return [
-        _note(
-          _t('Sign in to see the leaderboard', 'התחברו כדי לראות את הטבלה'),
-        ),
+        _note(_signInNote()),
       ];
     }
 
@@ -892,9 +898,7 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
     final user = ref.watch(authProvider);
     if (user == null) {
       return [
-        _note(
-          _t('Sign in to see the leaderboard', 'התחברו כדי לראות את הטבלה'),
-        ),
+        _note(_signInNote()),
       ];
     }
 

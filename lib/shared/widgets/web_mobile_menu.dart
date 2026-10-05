@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/providers/locale_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_fonts.dart';
 import '../../l10n/app_localizations.dart';
@@ -60,6 +62,16 @@ class _MenuSheet extends StatelessWidget {
       (t('Municipal', 'עירייה'), IconsaxPlusLinear.bank, '/municipal'),
       // Where a visitor turns notifications on and reads them.
       (t('Notifications', 'התראות'), IconsaxPlusLinear.notification, '/notifications'),
+    ];
+    // The footer's pages: at this width there is no footer, so the menu is
+    // the only way to them — the Accessibility Statement must be reachable
+    // from every page, and Google Play asks for the deletion page.
+    final pages = <(String, String)>[
+      (t('About Us', 'אודותינו'), '/about'),
+      (t('Terms of Use', 'תנאי שימוש'), '/terms'),
+      (t('Privacy Policy', 'מדיניות פרטיות'), '/privacy'),
+      (t('Accessibility Statement', 'הצהרת נגישות'), '/accessibility'),
+      (t('Delete account', 'מחיקת חשבון'), '/delete-account'),
     ];
 
     return Align(
@@ -120,10 +132,56 @@ class _MenuSheet extends StatelessWidget {
                             context.go(route);
                           },
                         ),
+                      const Divider(height: 24),
+                      for (final (label, route) in pages)
+                        ListTile(
+                          dense: true,
+                          title: Text(
+                            label,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 14,
+                              color: const Color(0xFF555555),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go(route);
+                          },
+                        ),
                     ],
                   ),
                 ),
                 const Divider(height: 1),
+                // The language switch: the desktop navbar's EN / עב, which
+                // this width had no way to reach.
+                ListTile(
+                  leading: const Icon(
+                    IconsaxPlusLinear.global,
+                    color: AppColors.midBlue,
+                    size: 22,
+                  ),
+                  title: Text(
+                    hebrew ? 'English' : 'עברית',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 16,
+                      color: const Color(0xFF1F1F1F),
+                    ),
+                  ),
+                  // The phone-width pages follow the app's locale; main.dart
+                  // keeps the desktop pages' flag in step with it. Setting
+                  // only the flag did nothing when it already held the value.
+                  onTap: () {
+                    final container = ProviderScope.containerOf(context);
+                    Navigator.pop(context);
+                    container.read(localeProvider.notifier).setLocale(
+                      supportedLocales.firstWhere(
+                        (l) => l.languageCode == (hebrew ? 'en' : 'he'),
+                      ),
+                    );
+                  },
+                ),
                 ListTile(
                   leading: const Icon(
                     IconsaxPlusLinear.sms,

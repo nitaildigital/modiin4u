@@ -5,6 +5,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
+import '../../auth/providers/auth_provider.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -12,6 +13,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web Add Apartment — desktop layout for /add-apartment
@@ -51,7 +53,10 @@ enum _Amenity {
 }
 
 class WebAddApartmentContent extends ConsumerStatefulWidget {
-  const WebAddApartmentContent({super.key});
+  /// A draft to reopen — one saved earlier, or a listing its owner chose to
+  /// edit from My Apartments, which makes it a draft first.
+  final String? draftId;
+  const WebAddApartmentContent({super.key, this.draftId});
 
   @override
   ConsumerState<WebAddApartmentContent> createState() =>
@@ -71,6 +76,9 @@ class _WebAddApartmentContentState extends ConsumerState<WebAddApartmentContent>
   final _title = TextEditingController();
   final _price = TextEditingController();
   final _address = TextEditingController();
+  // Who buyers call (the form never asked; a listing had no Contact).
+  final _contactName = TextEditingController();
+  final _contactPhone = TextEditingController();
   String? _neighborhoodId;
   double? _rooms;
   int? _bathrooms;
@@ -93,8 +101,66 @@ class _WebAddApartmentContentState extends ConsumerState<WebAddApartmentContent>
 
   bool _saving = false;
 
+  /// The draft this form writes over, so sending it does not add a second
+  /// listing.
+  String? _draftId;
+
+  @override
+  void initState() {
+    super.initState();
+    final me = ref.read(authProvider);
+    _contactName.text = me?.name ?? '';
+    _contactPhone.text = me?.phone ?? '';
+    if (widget.draftId != null) _loadDraft(widget.draftId!);
+  }
+
+  /// Fills the form from a draft, as the phone form does. Anything that is no
+  /// longer a draft is not reopened.
+  Future<void> _loadDraft(String id) async {
+    Listing? d;
+    try {
+      d = await ref.read(listingRepositoryProvider).fetchById(id);
+    } catch (_) {
+      d = null;
+    }
+    if (!mounted || d == null || d.status != ListingStatus.draft) return;
+    final draft = d;
+    setState(() {
+      _draftId = draft.id;
+      _kind = draft.kind;
+      _propertyType = draft.propertyType;
+      _title.text = draft.title;
+      final price = draft.effectivePrice;
+      if (price != null) _price.text = '$price';
+      _address.text = draft.address ?? '';
+      _neighborhoodId = draft.neighborhoodId;
+      _rooms = draft.rooms;
+      _bathrooms = draft.bathrooms;
+      _description.text = draft.description ?? '';
+      _contactName.text = draft.contactName ?? _contactName.text;
+      _contactPhone.text = draft.contactPhone ?? _contactPhone.text;
+      _area.text = draft.sqm?.toString() ?? '';
+      _floor = draft.floor;
+      _totalFloors = draft.totalFloors;
+      _amenities
+        ..clear()
+        ..addAll([
+          if (draft.hasBalcony) _Amenity.balcony,
+          if (draft.hasParking) _Amenity.parking,
+          if (draft.hasElevator) _Amenity.elevator,
+          if (draft.hasStorage) _Amenity.storage,
+          if (draft.hasMamad) _Amenity.mamad,
+        ]);
+      _photos
+        ..clear()
+        ..addAll([if (draft.coverUrl != null) draft.coverUrl!, ...draft.gallery]);
+    });
+  }
+
   @override
   void dispose() {
+    _contactName.dispose();
+    _contactPhone.dispose();
     _title.dispose();
     _price.dispose();
     _address.dispose();
@@ -245,6 +311,7 @@ class _WebAddApartmentContentState extends ConsumerState<WebAddApartmentContent>
       await ref
           .read(listingRepositoryProvider)
           .create(
+            draftId: _draftId,
             title: _title.text.trim(),
             description: _description.text.trim().isEmpty
                 ? null
@@ -261,6 +328,8 @@ class _WebAddApartmentContentState extends ConsumerState<WebAddApartmentContent>
             price: isRent ? null : price,
             pricePerMonth: isRent ? price : null,
             address: _address.text.trim().isEmpty ? null : _address.text.trim(),
+            contactName: _contactName.text.trim().isEmpty ? null : _contactName.text.trim(),
+            contactPhone: _contactPhone.text.trim().isEmpty ? null : _contactPhone.text.trim(),
             neighborhoodId: _neighborhoodId,
             hasParking: _amenities.contains(_Amenity.parking),
             hasElevator: _amenities.contains(_Amenity.elevator),
@@ -379,7 +448,7 @@ class _WebAddApartmentContentState extends ConsumerState<WebAddApartmentContent>
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () =>
-            context.canPop() ? context.pop() : context.go('/my-apartments'),
+            context.canPop() ? context.back('/realestate') : context.go('/my-apartments'),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -553,6 +622,21 @@ class _WebAddApartmentContentState extends ConsumerState<WebAddApartmentContent>
             placeholder: _t('Enter address', 'הזינו כתובת'),
           ),
         ),
+        const SizedBox(height: 20),
+        _fieldRow([
+          _FieldCard(
+            label: _t('Contact name', 'שם איש קשר'),
+            child: _TextRow(controller: _contactName, placeholder: _t('Full name', 'שם מלא')),
+          ),
+          _FieldCard(
+            label: _t('Contact phone', 'טלפון ליצירת קשר'),
+            child: _TextRow(
+              controller: _contactPhone,
+              placeholder: _t('Phone', 'טלפון'),
+              keyboardType: TextInputType.phone,
+            ),
+          ),
+        ]),
         const SizedBox(height: 20),
         _fieldRow([
           // The label follows the listing type, because the number means a

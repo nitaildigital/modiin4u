@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../../shared/widgets/sign_in_action.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:share_plus/share_plus.dart';
@@ -20,9 +21,11 @@ import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../../shared/widgets/app_map.dart';
 import '../../../shared/widgets/web_share_menu.dart';
+import '../event_calendar.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/event_labels.dart';
 import '../widgets/m_event_card.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Event detail screen — responsive wrapper.
 /// Desktop (> 1100px) renders the web detail layout; mobile keeps the app UI.
@@ -189,7 +192,7 @@ class _MobileEventDetailContentState
             start: 12,
             top: top,
             child: _circleButton(
-              onTap: () => context.canPop() ? context.pop() : context.go('/events'),
+              onTap: () => context.canPop() ? context.back('/events') : context.go('/events'),
               child: Transform.flip(
                 flipX: Directionality.of(context) == TextDirection.rtl,
                 child: const Icon(
@@ -200,6 +203,16 @@ class _MobileEventDetailContentState
               ),
             ),
           ),
+          // Add to calendar, when the event has a date.
+          if (start != null)
+            PositionedDirectional(
+              end: 124,
+              top: top,
+              child: _circleButton(
+                onTap: () => addEventToCalendar(event),
+                child: const Icon(IconsaxPlusLinear.calendar_add, size: 20, color: _grey900),
+              ),
+            ),
           PositionedDirectional(
             end: 68,
             top: top,
@@ -803,7 +816,7 @@ class _MobileEventDetailContentState
   Future<void> _toggleRsvp(Event event, bool signedIn, bool attending) async {
     final l = L.of(context);
     if (!signedIn) {
-      _rsvpToast(l.signInToRsvp);
+      _rsvpToast(l.signInToRsvp, signIn: true);
       return;
     }
 
@@ -825,10 +838,11 @@ class _MobileEventDetailContentState
     }
   }
 
-  void _rsvpToast(String message) {
+  void _rsvpToast(String message, {bool signIn = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: const TextStyle(fontFamily: AppFonts.inter)),
+        action: signIn ? signInAction(context) : null,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

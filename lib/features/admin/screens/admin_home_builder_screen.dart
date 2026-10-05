@@ -272,6 +272,18 @@ class _AdminHomeBuilderScreenState
                                 ),
                               ),
                             ),
+                            // Kept here, but no screen draws this kind yet.
+                            if (!homeBlockTypesShown.contains(blockType)) ...[
+                              const SizedBox(width: 6),
+                              Text(
+                                tr('לא מוצג באתר', 'Not shown on the site'),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 10,
+                                  color: AppColors.adminTextLight,
+                                ),
+                              ),
+                            ],
                             const SizedBox(width: 8),
                             Text(
                               'v$version',
@@ -707,6 +719,18 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                           },
                           (v) => setState(() => _blockType = v!),
                         ),
+                        if (!homeBlockTypesShown.contains(_blockType)) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            tr('האתר והאפליקציה עדיין לא מציגים בלוק מסוג זה; הוא נשמר כאן בלבד.',
+                                'The site and the app do not show this kind of block yet; it is only kept here.'),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 12,
+                              color: AppColors.adminTextLight,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 14),
                         _buildField(
                           _isAlert ? tr('שם פנימי', 'Internal name') : tr('כותרת', 'Title'),

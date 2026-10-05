@@ -28,10 +28,14 @@
 --   * job_events — views and clicks, as business_events (00048), with
 --     `job_stats` for the owner and the panel.
 --
--- Open with the client, so not decided here: how long applications and CVs
--- are kept after a job closes (the privacy policy must say), and whether a
--- job needs his approval before it is public (deals do not; jobs go live as
--- the owner sets them, like deals, until he says otherwise).
+-- The client's answers (5 Oct): a job goes live as the owner sets it, with
+-- no approval, like deals. Applications are deleted two days after their job
+-- closes or expires; the number of days is his to change in the panel
+-- (`app_settings`, key `job_applications_keep_days`). A CV file is the
+-- applicant's own, in their folder, reused for the next application; when
+-- the application goes, the business loses access to it (`can_read_cv`
+-- reads through the application), and the file itself goes when the
+-- applicant removes it or deletes their account.
 --
 -- Safe to run more than once.
 -- ============================================================
@@ -78,6 +82,7 @@ create table if not exists public.jobs (
                    check (status in ('draft', 'active', 'expired', 'closed')),
   published_at     timestamptz,
   expires_at       timestamptz,
+  closed_at        timestamptz,      -- when it stopped taking applications
 
   -- The panel's, not the owner's.
   is_featured      boolean not null default false,
@@ -113,6 +118,15 @@ begin
   new.updated_at := now();
   if new.status = 'active' and (tg_op = 'INSERT' or old.status is distinct from 'active') then
     new.published_at := coalesce(new.published_at, now());
+  end if;
+  -- Open again (active or back to draft): the retention clock stops.
+  if new.status in ('active', 'draft') then
+    new.closed_at := null;
+  end if;
+  -- The retention clock (section 6) starts when it closes.
+  if new.status in ('closed', 'expired')
+     and (tg_op = 'INSERT' or old.status not in ('closed', 'expired')) then
+    new.closed_at := now();
   end if;
   if tg_op = 'INSERT' then
     new.created_by := coalesce(new.created_by, auth.uid());
@@ -150,9 +164,17 @@ create policy jobs_read on public.jobs
     or is_admin()
   );
 
+-- Add and edit; not delete — a deleted job takes its applications with it.
+-- An owner ends a job by closing it; the panel can delete.
 drop policy if exists jobs_owner_write on public.jobs;
-create policy jobs_owner_write on public.jobs
-  for all to authenticated
+drop policy if exists jobs_owner_insert on public.jobs;
+create policy jobs_owner_insert on public.jobs
+  for insert to authenticated
+  with check (public.owns_business(business_id));
+
+drop policy if exists jobs_owner_update on public.jobs;
+create policy jobs_owner_update on public.jobs
+  for update to authenticated
   using (public.owns_business(business_id))
   with check (public.owns_business(business_id));
 
@@ -167,7 +189,9 @@ create policy jobs_admin_write on public.jobs
 create table if not exists public.job_applications (
   id          uuid primary key default gen_random_uuid(),
   job_id      uuid not null references public.jobs(id) on delete cascade,
-  profile_id  uuid references public.profiles(id) on delete set null,
+  -- An applicant who deletes their account takes their applications with
+  -- them, as the Delete Account page promises.
+  profile_id  uuid references public.profiles(id) on delete cascade,
   full_name   text not null,
   phone       text,
   email       text,
@@ -450,13 +474,68 @@ $$;
 
 revoke all on function public.apply_for_job(uuid, text, text, text, text, text, text) from public;
 revoke all on function public.record_job_event(uuid, text, text, text) from public;
-revoke all on function public.job_stats(uuid) from public;
+revoke all on function public.job_stats(uuid) from public, anon;
 revoke all on function public.can_read_cv(text) from public;
 grant execute on function public.apply_for_job(uuid, text, text, text, text, text, text) to anon, authenticated;
 grant execute on function public.record_job_event(uuid, text, text, text) to anon, authenticated;
 grant execute on function public.job_stats(uuid) to authenticated;
 grant execute on function public.can_read_cv(text) to authenticated;
 
--- ─── 6. Job categories, kept in the panel ───
+-- ─── 6. Applications are kept two days after their job closes ───
+--
+-- A job stops taking applications when it is closed or expired by status,
+-- or when its expiry date passes. Every night its applications older than
+-- that by `job_applications_keep_days` (2 unless the panel says otherwise)
+-- are deleted: the applicant's name, phone, e-mail, message and the link to
+-- their CV. Until then the business and the panel still see them.
+
+insert into public.app_settings (key, value)
+values ('job_applications_keep_days', '2'::jsonb)
+on conflict (key) do nothing;
+
+create or replace function public.purge_closed_job_applications()
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_days int;
+  v_count int;
+begin
+  -- A whole number of days; anything else in the setting means the default,
+  -- never a purge that fails every night.
+  select case when (value #>> '{}') ~ '^\d{1,3}$' then (value #>> '{}')::int end
+    into v_days
+    from app_settings where key = 'job_applications_keep_days';
+  v_days := coalesce(v_days, 2);
+
+  delete from job_applications a
+   using jobs j
+   where j.id = a.job_id
+     and coalesce(
+           j.closed_at,
+           case when j.expires_at is not null and j.expires_at <= now() then j.expires_at end
+         ) < now() - make_interval(days => v_days);
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+revoke all on function public.purge_closed_job_applications() from public, anon, authenticated;
+
+create extension if not exists pg_cron;
+
+select cron.unschedule('purge-closed-job-applications')
+ where exists (select 1 from cron.job where jobname = 'purge-closed-job-applications');
+
+-- 00:30 UTC: 02:30–03:30 in Modi'in.
+select cron.schedule(
+  'purge-closed-job-applications',
+  '30 0 * * *',
+  $job$ select public.purge_closed_job_applications(); $job$
+);
+
+-- ─── 7. Job categories, kept in the panel ───
 -- The specification's dedicated lists are flags on the job (youth, students,
 -- no experience, shifts); the trades are categories the client adds.

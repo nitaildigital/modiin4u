@@ -40,6 +40,10 @@ Map<String, String> get homeBlockTypes => <String, String>{
   'weather': tr('מזג אוויר', 'Weather'),
 };
 
+/// The kinds of block a screen draws today. The rest are kept and arranged
+/// here but shown nowhere, and the panel says so on the row and in the form.
+const homeBlockTypesShown = {'alert'};
+
 class AdminHomeBuilderNotifier extends AdminTableNotifier {
   AdminHomeBuilderNotifier()
     : super(

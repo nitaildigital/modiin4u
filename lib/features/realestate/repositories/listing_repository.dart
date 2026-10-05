@@ -202,4 +202,13 @@ class ListingRepository {
 
   Future<void> deleteById(String id) =>
       _client.from('listings').delete().eq('id', id);
+
+  /// The owner's own status changes from My Apartments: back to a draft (to
+  /// take it down, or to change it and send it again), or sold / rented once
+  /// it is live. The database allows nothing else (00033, 00055).
+  Future<void> setOwnStatus(String id, ListingStatus status) => _client
+      .from('listings')
+      .update({'status': status.name})
+      .eq('id', id)
+      .eq('owner_id', _client.auth.currentUser!.id);
 }

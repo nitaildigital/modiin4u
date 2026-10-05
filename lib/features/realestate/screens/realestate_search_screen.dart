@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_fonts.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../models/listing.dart';
+import '../providers/listing_providers.dart';
 import 'web_realestate_search_screen.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Real Estate Search Screen — wrapper with responsive layout
-// Web-only page; mobile falls back to the app's own flows.
+// Web-only page; at phone width it opens the phone Real Estate page.
 // ═══════════════════════════════════════════════════════════
 
 class RealEstateSearchScreen extends StatelessWidget {
@@ -27,44 +30,40 @@ class RealEstateSearchScreen extends StatelessWidget {
             initialQuery: initialQuery,
           );
         }
-        return _MobilePlaceholder(listingType: listingType);
+        return _MobileRedirect(listingType: listingType);
       },
     );
   }
 }
 
-class _MobilePlaceholder extends StatelessWidget {
+/// At phone width these addresses (the old site's, and the website's links)
+/// showed "Mobile version coming soon", in English. The phone Real Estate
+/// page already lists sale or rent: it opens there on the right tab.
+class _MobileRedirect extends ConsumerStatefulWidget {
   final String listingType;
-  const _MobilePlaceholder({required this.listingType});
+  const _MobileRedirect({required this.listingType});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          listingType == 'rent' ? 'Apartments For Rent' : 'Apartments For Sale',
-          style: TextStyle(
-            fontFamily: AppFonts.nunito,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.navy,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Text(
-          'Mobile version coming soon',
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 16,
-            color: const Color(0xFF5F5E5A),
-          ),
-        ),
-      ),
-    );
+  ConsumerState<_MobileRedirect> createState() => _MobileRedirectState();
+}
+
+class _MobileRedirectState extends ConsumerState<_MobileRedirect> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final f = ref.read(listingFilterProvider);
+      ref.read(listingFilterProvider.notifier).state = f.copyWith(
+        kind: widget.listingType == 'rent' ? ListingKind.rent : ListingKind.sale,
+      );
+      context.go('/realestate');
+    });
   }
+
+  @override
+  Widget build(BuildContext context) => const Scaffold(
+    backgroundColor: Colors.white,
+    body: Center(child: CircularProgressIndicator()),
+  );
 }

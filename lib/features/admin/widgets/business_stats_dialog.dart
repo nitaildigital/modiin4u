@@ -88,6 +88,29 @@ class _BusinessStatsDialogState extends State<_BusinessStatsDialog> {
     _stats = _load();
   });
 
+  /// Every period of the range, oldest first — empty ones too, so the chart
+  /// keeps its time axis: two busy days a month apart are not drawn side by
+  /// side. Weeks start on Sunday and months on the 1st, as the database
+  /// groups them.
+  List<DateTime> get _allPeriods {
+    final (from, to) = _range;
+    DateTime start(DateTime d) => switch (_bucket) {
+      _Bucket.day => DateTime(d.year, d.month, d.day),
+      _Bucket.week => DateTime(d.year, d.month, d.day - d.weekday % 7),
+      _Bucket.month => DateTime(d.year, d.month),
+    };
+    final out = <DateTime>[];
+    for (var p = start(from); !p.isAfter(to);) {
+      out.add(p);
+      p = switch (_bucket) {
+        _Bucket.day => DateTime(p.year, p.month, p.day + 1),
+        _Bucket.week => DateTime(p.year, p.month, p.day + 7),
+        _Bucket.month => DateTime(p.year, p.month + 1),
+      };
+    }
+    return out;
+  }
+
   /// "5.10" for a day or a week's Sunday, "10.2026" for a month.
   String _label(DateTime d) =>
       _bucket == _Bucket.month ? '${d.month}.${d.year}' : '${d.day}.${d.month}';
@@ -226,7 +249,7 @@ class _BusinessStatsDialogState extends State<_BusinessStatsDialog> {
   }
 
   BarChartData _chart(_Stats s) {
-    final periods = s.periods;
+    final periods = _allPeriods;
     final top = periods.fold<int>(0, (m, p) => s.at(p, 'view') > m ? s.at(p, 'view') : m);
     final step = top <= 10 ? 2.0 : top <= 50 ? 10.0 : top <= 200 ? 50.0 : 100.0;
     return BarChartData(
@@ -327,7 +350,7 @@ class _Stats {
   factory _Stats.from(List<Map<String, dynamic>> rows, List<Map<String, dynamic>> totals) {
     final byPeriod = <DateTime, Map<String, (int, int)>>{};
     for (final r in rows) {
-      final p = DateTime.parse(r['period'] as String);
+      final p = _day(DateTime.parse(r['period'] as String));
       byPeriod.putIfAbsent(p, () => {})[r['kind'] as String] =
           ((r['total'] as num).toInt(), (r['visitors'] as num).toInt());
     }
@@ -344,6 +367,10 @@ class _Stats {
 
   int total(String kind) => _totals[kind]?.$1 ?? 0;
   int visitors(String kind) => _totals[kind]?.$2 ?? 0;
-  int at(DateTime p, String kind) => _byPeriod[p]?[kind]?.$1 ?? 0;
-  int visitorsAt(DateTime p) => _byPeriod[p]?['view']?.$2 ?? 0;
+  int at(DateTime p, String kind) => _byPeriod[_day(p)]?[kind]?.$1 ?? 0;
+  int visitorsAt(DateTime p) => _byPeriod[_day(p)]?['view']?.$2 ?? 0;
+
+  /// The database sends dates without a time; the chart's periods are local
+  /// midnights — the same day either way.
+  static DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
 }

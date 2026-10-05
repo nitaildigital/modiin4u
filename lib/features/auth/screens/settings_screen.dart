@@ -14,6 +14,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
 import '../../settings/models/notification_preferences.dart';
 import '../../settings/providers/preferences_provider.dart';
+import '../../businesses/providers/business_providers.dart' show enableLocation;
 import 'web_settings_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -380,8 +381,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         subtitle: l.accessLocationHint,
                         value: prefs.locationEnabled,
                         enabled: signedIn,
-                        onChanged: (v) =>
-                            set(prefs.copyWith(locationEnabled: v)),
+                        // On asks the phone for location; refused, the switch stays off.
+                        onChanged: (v) async {
+                          final on = v && await enableLocation(ref);
+                          set(prefs.copyWith(locationEnabled: on));
+                        },
                       ),
                       toggle(
                         icon: IconsaxPlusLinear.activity,
@@ -425,6 +429,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           'קריאת התנאים וההגבלות',
                         ),
                         onTap: () => context.push('/terms'),
+                      ),
+                      // The other pages the website's footer links: the app
+                      // reached only Terms (Privacy only from sign-up).
+                      MSettingsRow(
+                        leading: const MIconCircle(
+                          svg: 'assets/icons/m_account_c_terms.svg',
+                        ),
+                        title: mTr(context, 'Privacy Policy', 'מדיניות פרטיות'),
+                        subtitle: mTr(context, 'How your information is used', 'איך המידע שלכם נשמר ומשמש'),
+                        onTap: () => context.push('/privacy'),
+                      ),
+                      MSettingsRow(
+                        leading: const MIconCircle(
+                          svg: 'assets/icons/m_account_c_terms.svg',
+                        ),
+                        title: mTr(context, 'Accessibility Statement', 'הצהרת נגישות'),
+                        subtitle: mTr(context, 'Accessibility of the app and the website', 'נגישות האפליקציה והאתר'),
+                        onTap: () => context.push('/accessibility'),
+                      ),
+                      MSettingsRow(
+                        leading: const MIconCircle(
+                          svg: 'assets/icons/m_account_c_terms.svg',
+                        ),
+                        title: mTr(context, 'About Modiin4u', 'אודות מודיעין בשבילך'),
+                        subtitle: mTr(context, 'Who we are', 'מי אנחנו'),
+                        onTap: () => context.push('/about'),
                       ),
                     ],
                   ),

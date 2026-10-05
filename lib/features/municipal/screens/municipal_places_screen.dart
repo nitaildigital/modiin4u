@@ -11,6 +11,7 @@ import '../../auth/widgets/m_account_widgets.dart';
 import '../models/municipal_place.dart';
 import '../providers/municipal_places_providers.dart';
 import '../widgets/municipal_place_widgets.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// One of the Municipal page's service tiles, at /municipal/<section>:
 /// Public Institutions, Health, Education, Transportation or Emergency.
@@ -246,7 +247,7 @@ class _MunicipalPlacesScreenState extends ConsumerState<MunicipalPlacesScreen>
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
                                   onTap: () => context.canPop()
-                                      ? context.pop()
+                                      ? context.back('/municipal')
                                       : context.go('/municipal'),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,

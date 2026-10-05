@@ -17,6 +17,7 @@ import '../models/listing.dart';
 import '../providers/listing_providers.dart';
 import '../widgets/m_price_text.dart';
 import 'web_realestate_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// The Real Estate tab.
 ///
@@ -195,7 +196,7 @@ class _MobileRealEstateContentState
                                 PositionedDirectional(
                                   start: 15,
                                   child: GestureDetector(
-                                    onTap: () => context.pop(),
+                                    onTap: () => context.back('/realestate'),
                                     child: const Icon(
                                       Icons.arrow_back,
                                       size: 24,

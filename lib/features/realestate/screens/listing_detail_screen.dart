@@ -7,6 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:share_plus/share_plus.dart';
+import '../../../shared/widgets/web_share_menu.dart';
+import '../providers/detail_providers.dart';
+import 'my_apartments_screen.dart' show formatShekels;
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../l10n/app_localizations.dart';
@@ -18,6 +22,7 @@ import '../providers/listing_providers.dart';
 import '../widgets/m_price_text.dart';
 import 'web_listing_detail_screen.dart';
 import '../../../shared/widgets/app_map.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// One apartment listing.
 ///
@@ -103,7 +108,7 @@ class _MobileListingDetailContentState
         top: 51,
         child: _CircleButton(
           icon: AppIcons.back,
-          onTap: () => context.pop(),
+          onTap: () => context.back('/realestate'),
         ),
       ),
     ],
@@ -304,7 +309,7 @@ class _MobileListingDetailContentState
             top: 51,
             child: _CircleButton(
               icon: AppIcons.back,
-              onTap: () => context.pop(),
+              onTap: () => context.back('/realestate'),
             ),
           ),
 
@@ -313,6 +318,17 @@ class _MobileListingDetailContentState
           // The button draws its own white circle, and nothing on the
           // website, where saving is not offered — the empty circle that
           // stood there on a phone-width browser is gone with it.
+          // Share, beside the heart in the app and in its place on the web.
+          PositionedDirectional(
+            end: kIsWeb ? 12 : 64,
+            top: 51,
+            child: Builder(
+              builder: (anchor) => _CircleButton(
+                icon: IconsaxPlusLinear.export_1,
+                onTap: () => _share(anchor, listing),
+              ),
+            ),
+          ),
           if (!kIsWeb)
             PositionedDirectional(
               end: 12,
@@ -367,6 +383,76 @@ class _MobileListingDetailContentState
         }),
       ),
     );
+  }
+
+  /// The share sheet on a device — the words, as the event page shares —
+  /// and the site's share menu with this page's address in a browser.
+  Future<void> _share(BuildContext anchor, Listing listing) async {
+    final price = listing.effectivePrice;
+    final message = [
+      listing.title,
+      if (price != null) formatShekels(price),
+      listing.address ?? listing.neighborhoodName,
+    ].whereType<String>().where((s) => s.isNotEmpty).join('\n');
+    if (!kIsWeb) {
+      await Share.share(message, subject: listing.title);
+      return;
+    }
+    await showWebShareMenu(
+      anchor,
+      title: listing.title,
+      link: Uri.base.toString(),
+      message: message,
+      isHebrew: Localizations.localeOf(context).languageCode == 'he',
+    );
+  }
+
+  /// Call, WhatsApp or e-mail, as the desktop page offers: "Contact" only
+  /// dialled, and an agent's WhatsApp and e-mail were not offered at all.
+  Future<void> _contact(Listing listing) async {
+    final agent = listing.agentId == null
+        ? null
+        : await ref.read(listingAgentContactProvider(listing.agentId!).future);
+    if (!mounted) return;
+    final phone = agent?.phone ?? listing.contactDisplayPhone;
+    final whatsapp = agent?.whatsapp ?? phone;
+    final email = agent?.email;
+    String? wa(String raw) {
+      var digits = raw.replaceAll(RegExp(r'\D'), '');
+      if (digits.startsWith('0')) digits = '972${digits.substring(1)}';
+      return digits.length >= 9 ? digits : null;
+    }
+
+    final options = <({IconData icon, String label, Uri uri})>[
+      if (phone != null)
+        (icon: IconsaxPlusLinear.call, label: phone, uri: Uri(scheme: 'tel', path: phone.replaceAll(RegExp(r'[^\d+]'), ''))),
+      if (whatsapp != null && wa(whatsapp) != null)
+        (icon: IconsaxPlusLinear.message, label: 'WhatsApp', uri: Uri.parse('https://wa.me/${wa(whatsapp)}')),
+      if (email != null) (icon: IconsaxPlusLinear.sms, label: email, uri: Uri(scheme: 'mailto', path: email)),
+    ];
+    if (options.isEmpty) return;
+    if (options.length == 1) {
+      await launchUrl(options.first.uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    final chosen = await showModalBottomSheet<Uri>(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final o in options)
+              ListTile(
+                leading: Icon(o.icon, color: const Color(0xFF123A72)),
+                title: Text(o.label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 15)),
+                onTap: () => Navigator.pop(sheet, o.uri),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (chosen != null) await launchUrl(chosen, mode: LaunchMode.externalApplication);
   }
 
   // ───────────────────────────────────────────────
@@ -441,9 +527,9 @@ class _MobileListingDetailContentState
                     ],
                   ),
                 ),
-                if (phone != null)
+                if (phone != null || listing.agentId != null)
                   GestureDetector(
-                    onTap: () => launchPhone(phone),
+                    onTap: () => _contact(listing),
                     child: Container(
                       height: 37,
                       padding: const EdgeInsets.symmetric(horizontal: 18),

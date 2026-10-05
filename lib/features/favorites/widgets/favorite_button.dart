@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../../shared/widgets/sign_in_action.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -53,10 +53,9 @@ class FavoriteButton extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          action: SnackBarAction(
-            label: L.of(context).signIn,
-            onPressed: () => context.push('/login'),
-          ),
+          // Back to this page after signing in; none on the website, where
+          // accounts are the app's.
+          action: signInAction(context),
         ),
       );
     } catch (_) {

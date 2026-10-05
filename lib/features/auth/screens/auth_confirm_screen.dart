@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -32,7 +33,7 @@ class AuthConfirmScreen extends ConsumerStatefulWidget {
   ConsumerState<AuthConfirmScreen> createState() => _AuthConfirmScreenState();
 }
 
-enum _Stage { working, failed }
+enum _Stage { working, failed, confirmed }
 
 class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
   _Stage _stage = _Stage.working;
@@ -73,6 +74,14 @@ class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
     if (type == OtpType.recovery) {
       ref.read(passwordResetPendingProvider.notifier).state = true;
       context.go('/reset-password');
+    } else if (kIsWeb) {
+      // A resident confirms their address from the e-mail, which opens the
+      // website — where residents have no accounts. They were dropped on the
+      // home page, signed in, with no word that it had worked. Now the page
+      // says so and sends them back to the app; the website session is
+      // ended rather than left open.
+      await SupabaseConfig.client.auth.signOut();
+      if (mounted) setState(() => _stage = _Stage.confirmed);
     } else {
       context.go('/');
     }
@@ -93,7 +102,11 @@ class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
             constraints: const BoxConstraints(maxWidth: 420),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: failed ? _buildFailed(context) : _buildWorking(),
+              child: failed
+                  ? _buildFailed(context)
+                  : _stage == _Stage.confirmed
+                  ? _buildConfirmed(context)
+                  : _buildWorking(),
             ),
           ),
         ),
@@ -118,6 +131,43 @@ class _AuthConfirmScreenState extends ConsumerState<AuthConfirmScreen> {
             fontFamily: AppFonts.rubik,
             fontSize: 16,
             color: const Color(0xFF6D6D6D),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConfirmed(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 88,
+          height: 88,
+          decoration: BoxDecoration(
+            color: AppColors.success.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.check_rounded, size: 44, color: AppColors.success),
+        ),
+        const SizedBox(height: 28),
+        Text(
+          L.of(context).emailConfirmedWeb,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: AppFonts.rubik,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 28),
+        TextButton(
+          onPressed: () => context.go('/'),
+          child: Text(
+            Localizations.localeOf(context).languageCode == 'he' ? 'לאתר' : 'Go to the website',
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.midBlue),
           ),
         ),
       ],

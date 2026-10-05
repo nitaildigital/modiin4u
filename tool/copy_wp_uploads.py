@@ -59,7 +59,12 @@ def media_files():
                 continue
             urls.add(src)
             folder = src.rsplit('/', 1)[0]
-            for size in ((m.get('media_details') or {}).get('sizes') or {}).values():
+            details = m.get('media_details') or {}
+            # A big upload is served as "-scaled"; the full-size original
+            # beside it is the address some links and Google Images keep.
+            if details.get('original_image'):
+                urls.add(f"{folder}/{details['original_image']}")
+            for size in (details.get('sizes') or {}).values():
                 name = size.get('file')
                 if name:
                     urls.add(f'{folder}/{name}')

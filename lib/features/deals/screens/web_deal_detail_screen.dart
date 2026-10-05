@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../shared/widgets/web_share_menu.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/offer.dart';
 import '../providers/offer_providers.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 // ═══════════════════════════════════════════════════════════
 // Web Deal Detail — /deal/:id
@@ -173,7 +175,7 @@ class _WebDealDetailContentState extends ConsumerState<WebDealDetailContent>
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: () => context.canPop() ? context.pop() : context.go('/deals'),
+        onTap: () => context.canPop() ? context.back('/deals') : context.go('/deals'),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -360,6 +362,8 @@ class _WebDealDetailContentState extends ConsumerState<WebDealDetailContent>
           const SizedBox(height: 28),
           // Where the deal is claimed, in place of a button the site cannot
           // honour: claiming needs an account, and accounts are in the app.
+          // Not once it has ended.
+          if (!offer.hasExpired)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -405,6 +409,21 @@ class _WebDealDetailContentState extends ConsumerState<WebDealDetailContent>
               ),
             ),
           ],
+          // Deals had no Share; the site's menu, with this page's address.
+          const SizedBox(height: 12),
+          Builder(
+            builder: (anchor) => _PillButton(
+              label: _t('Share', 'שיתוף'),
+              filled: false,
+              onTap: () => showWebShareMenu(
+                anchor,
+                title: offer.name,
+                link: Uri.base.toString(),
+                message: [offer.name, offer.businessName].whereType<String>().join(' — '),
+                isHebrew: _isHebrew,
+              ),
+            ),
+          ),
         ],
       ),
     );

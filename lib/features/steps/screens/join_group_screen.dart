@@ -11,9 +11,11 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/widgets/m_account_widgets.dart' show MBackArrow;
+import '../../../shared/providers/app_settings_provider.dart';
 import '../models/step_group.dart';
 import '../providers/step_groups_providers.dart';
 import '../widgets/step_groups_tab.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// Where an invitation lands: `/join/<code>`.
 ///
@@ -88,7 +90,7 @@ class _PhoneJoinPage extends StatelessWidget {
 /// behind — the Step Counter's groups (the website's home in a browser).
 void _leave(BuildContext context) {
   if (context.canPop()) {
-    context.pop();
+    context.back('/steps');
   } else {
     context.go(kIsWeb ? '/' : '/steps?tab=groups');
   }
@@ -334,7 +336,33 @@ class _InvitationCardState extends ConsumerState<_InvitationCard> {
         color: const Color(0xFF6D6D6D),
       ),
     ),
+    // Someone without the app had no way to get it from here. The links are
+    // the panel's (Settings), shown once it has them.
+    ..._storeLinks(),
   ];
+
+  List<Widget> _storeLinks() {
+    final settings = ref.watch(appSettingsProvider).valueOrNull ?? const {};
+    final android = storeUrl(settings, AppSettingKeys.androidStoreUrl);
+    final ios = storeUrl(settings, AppSettingKeys.iosStoreUrl);
+    if (android == null && ios == null) return const [];
+    void open(String url) => launchUrl(Uri.parse(url), webOnlyWindowName: '_blank');
+    return [
+      const SizedBox(height: 14),
+      Text(
+        // In the card's own language (the desktop page passes it in).
+        l.localeName.startsWith('he') ? 'אין לכם את האפליקציה?' : "Don't have the app?",
+        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: const Color(0xFF3D3D3D)),
+      ),
+      Wrap(
+        alignment: WrapAlignment.center,
+        children: [
+          if (android != null) _textButton('Google Play', () => open(android)),
+          if (ios != null) _textButton('App Store', () => open(ios)),
+        ],
+      ),
+    ];
+  }
 
   Widget _button(String label, VoidCallback? onTap, {bool busy = false}) =>
       SizedBox(

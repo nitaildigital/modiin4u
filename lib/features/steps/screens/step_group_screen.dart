@@ -14,6 +14,7 @@ import '../models/step_group.dart';
 import '../providers/step_groups_providers.dart';
 import '../services/health_steps.dart' show dateKey;
 import '../widgets/step_groups_tab.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 const _border = Color(0xFFE7E7E7);
 const _muted = Color(0xFF6D6D6D);
@@ -50,7 +51,7 @@ class _StepGroupScreenState extends ConsumerState<StepGroupScreen> {
   String get _id => widget.groupId;
 
   void _back() =>
-      context.canPop() ? context.pop() : context.go('/steps?tab=groups');
+      context.canPop() ? context.back('/steps') : context.go('/steps?tab=groups');
 
   Future<void> _refresh() async {
     ref.invalidate(stepGroupProvider(_id));

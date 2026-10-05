@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'web_new_listing_screen.dart';
+import '../../../core/router/app_router.dart' show AppNavigation;
 
 class NewListingScreen extends StatelessWidget {
   const NewListingScreen({super.key});
@@ -635,7 +636,7 @@ class _MobileNewListingContentState
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                context.pop();
+                context.back('/realestate');
               },
               child: Text(
                 'אישור',
