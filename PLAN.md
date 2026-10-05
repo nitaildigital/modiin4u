@@ -2111,6 +2111,134 @@ Not checked:
 - real Health Connect step data: the emulator has none;
 - signing in from the join screen.
 
+### The client's feedback, 2–5 October: the tracker
+
+Launch: the evening of 7 October, 8 October at the latest (our message, 5
+Oct). Push notifications are another session's (00045, `lib/core/push/`).
+Each finished task gets a Jira title and description.
+
+Status: ✅ done and tested · 🟡 built, waiting on a step · ⬜ not started ·
+⏸ waiting on someone else. "Live" means deployed to 45.93.94.49.
+
+**Access and launch (our message of 2 Oct)**
+
+| # | Point | Status | What is left |
+|---|---|---|---|
+| 1 | Firebase access | ✅ | — (accepted 2 Oct; project `modiin4u-a895f`) |
+| 2 | Google Play access | ✅ | — (accepted 2 Oct) |
+| 3 | Legal texts | 🟡 | His lawyer's Terms and Privacy Policy came 5 Oct. **In the panel as unpublished drafts, as written** (`tool/import_legal_docs.py`; the old WordPress text kept in `tool/legal_docs_registry.json` for `--undo`): Terms in 'terms', the Privacy Policy in a new 'privacy' row. Still carry ~60 template brackets and notes: he and the lawyer finish them in the panel and publish. Tell the lawyer note **b**. No English versions |
+| 4 | Michael: launch-day SEO steps | ⏸ | No answer yet. Domain move (`tool/enable_domain.sh`), redirects, `SEO_LIVE=1`, Search Console |
+| 5 | Admin roles: "limit roles" | 🟡 | Panel done and tested (note **c**). The database still lets any admin write any table: a migration. Our proposed split (main / content / business editor) was not confirmed in words. **The rights are rows in `admin_role_permissions` that the panel cannot edit** (the Team section assigns roles only): a rights editor is still to build. As stored, Business editor has no Categories — Content editor does — unlike our proposal; his call |
+| 6 | The old site's 63 categories, each its own page "for SEO" | 🟡 | Built: migration 00047, `tool/import_old_categories.py` (60 new under the nearest main category, 3 existing, 4 lists kept out of the menus, 394 business links), navbar and directory grid show main categories. Run 00047, then the import, then `build_seo_pages.py --write-redirects`, then test |
+| 7 | Copy the old site's images (Google Images) | 🟡 | `tool/copy_wp_uploads.py` tested here; must run **on the server before the domain moves**; the nginx change goes up with `enable_domain.sh` (note **j**) |
+| 8 | PersonaAI: the "Ask" button's icon and gradient → then: the Ask button opens the chat, no bubble | ✅ not live | Done and tested on the web (1440, 390 px) and the OnePlus (note **a**). Deploy and a new app build. The typed question cannot be passed into the chat (PersonaAI has no way) |
+
+**The admin panel (5 Oct)**
+
+| # | Point | Status | What is left |
+|---|---|---|---|
+| 9 | Rich text in articles and listings: bold and other formatting, images inside the text, links | ⏸ | Waiting for the Figma link (from Harshit) |
+| 10 | Adding and editing an article or a business made quicker and clearer | ⏸ | Same |
+| 11 | The look of PersonaAI's CRM (crm.personaai.me/dashboard) in our colours | ⏸ | Same |
+
+**Monthly city step competition (5 Oct)**
+
+| # | Point | Status | What is left |
+|---|---|---|---|
+| 12 | Ad banners placed in the step section, managed in the panel | ✅ not live | Two placements added (rows, 5 Oct): **STEPS_TOP** (under the title) and **STEPS_INLINE** (above the leaderboards). He books banners into them in the panel's Campaigns like any other slot. Phone: the Deals carousel (`MDealsBanner`, now by slot code); website: `WebBannerRow`. Nothing drawn when no campaign runs. Checked with two temporary campaigns on the OnePlus and at 1440 px; removed after |
+| 15b | End-to-end test, 5 Oct: a challenge made in the panel, one walker who reached the goal, one who did not | ✅ tested | Made in the panel (name, description, goal 10,000, 100 reward points, 20 Sep – 31 Oct). On the OnePlus: the walker with 13,000 saw "13000 / 10000 · 100%", the one with 3,500 "3500 / 10000 · 35%"; city ranking 1. 13,000, 2. 3,500 "Since 20 September". Then ended in the panel (end date 4 Oct): the card disappears and the leaderboards go back to the last 7 days. **Found:** there is **no prize anywhere** (no field in the form; the card's prize row prints the challenge's name); **no winner** is named or kept when it ends; reaching the goal shows no "completed"; the **reward points are neither shown nor given**; "View Challenge" does nothing; the panel counts "0 participants" (it counts `challenge_participants`, which nothing writes) and still labels an ended challenge "Active". Prize and winner are 13–15's migration; test data removed |
+| 13 | A main banner for the prize, with the prize's details, managed in the panel | ⬜ | `challenges` has no prize fields: a migration, the panel form, the banner on the steps pages |
+| 14 | The competition's terms, on their own page or section | ⬜ | Same migration (or an information page per competition) |
+| 15 | A monthly city-wide competition: everyone who joins, the most steps wins | 🟡 | **Ranking done 5 Oct, not live.** While a challenge runs (panel → Challenges), both leaderboards count every day since it started (`leaderboardWindowProvider`); otherwise the last 7 days; each card now says which ("Since 23 September" / "Last 7 days"). Checked on the website and on the OnePlus 6T signed in as a test user: both tabs read "Since 23 September", 9,000 steps against 4,000 for the week; test data removed. Found on the phone and fixed: the challenge card read `challenge_participants.progress`, which nothing writes, so it said "—" and its bar spun as if loading; it now shows the person's own steps since the start (`myChallengeStepsProvider`) — "9000 / 100000 · 9%". **Left:** naming the winner after it ends (the functions count days up to today, so a fixed start-to-end range is a migration); everyone with step counting on takes part — no separate joining |
+
+**Push notifications (2 Oct) — the other session**
+
+| # | Point | Status | What is left |
+|---|---|---|---|
+| 16 | English for devices set to English (automatic ones: English wording, Hebrew title) | ⏸ | The other session: 00045 is live; Firebase config in progress |
+| 17 | Automatic for new articles, events and businesses, by topic, with a "send a notification" box | ⏸ | Queuing tested on the database (2 Oct); sending not yet |
+| 18 | Deals and perks manual, sent now or scheduled | ⏸ | The other session |
+| 19 | Per notification: opened, roughly how many it went to; conversions = opened then called / directions / website | ⏸ | The other session; "viewed" not shown (not measurable on iPhone) |
+| 20 | iPhone and the website | ⏸ | iPhone needs the APNs key from his Apple account |
+
+**Statistics for each business page (2 Oct)**
+
+| # | Point | Status | What is left |
+|---|---|---|---|
+| 21 | Views in total and by day, week and month | 🟡 | Recording built (migration 00048, note **h**); run 00048 and test. **Counting must start before launch** — there is no history |
+| 22 | Clicks: phone, website, WhatsApp, directions, share, Instagram | 🟡 | Same |
+| 23 | The statistics in the panel | 🟡 | **Built 5 Oct.** Businesses → ⋮ → Statistics opens a window: day (30 days) / week (12, from Sunday) / month (12); totals (views, unique visitors, each button that was used), a bar chart of views, and a table per period (`business_stats_dialog.dart`, reading `business_stats` and the new `business_stats_totals` in 00048 — unique visitors cannot be added up period by period). Checked in a local build as a temporary admin: the menu item and the window open, and before 00048 it says the statistics come with the database update. **The numbers and chart are tested after 00048.** The most-viewed list across businesses (`business_stats_top`) is not on screen yet |
+
+**Business owners and job openings — the second update, after launch**
+
+| # | Point | Status | What is left |
+|---|---|---|---|
+| 24 | Owner accounts: he creates them, or the owner signs up and he approves; full control from the panel | ⏸ | Kamal's designs |
+| 25 | An owner sees his business's statistics, edits its page, publishes deals; live at once, no approval | ⏸ | Kamal's designs; the statistics (21–23) first |
+| 26 | Setup fee for his team building the page | ⏸ | Not in the system for now: he collects it himself; no payment in the app |
+| 27 | Jobs, from his specification: owners post (title, category, place, type, scope, description, requirements, experience, salary optional, hours, contact, image); statuses draft / active / expired / filled; expiry, renewal, duplicating; candidates with statuses (new … archived), notes, reminders, contact; per-job statistics; featured / boost / push | ⏸ | Kamal's designs |
+| 28 | Jobs for residents: a jobs page with search and filters (category, type, area, salary, hours, experience, youth, students, no experience, shifts), a job page (apply, save, share), CV, one-click apply, saved jobs and "my applications", alerts, dedicated categories | ⏸ | Kamal's designs. Applying: the owner chooses call, WhatsApp, e-mail and/or a short form. A CV and a form mean storing applicants' personal data: who sees it and how long it is kept, to decide |
+
+**Found along the way (5 Oct)**
+
+| # | Point | Status | What is left |
+|---|---|---|---|
+| 29 | `/delete-account`, which both legal texts give and Google Play requires; a separate Privacy Policy page | 🟡 | Built: migration 00046, routes, footer and sign-up links to `/privacy`, a draft page he reviews and publishes. Deleting an account tested with a throwaway user who had uploaded a file. Run 00046 |
+| 30 | Deals page: category labels cut off on phones | ✅ not live | The row's height follows the phone's text size; checked on the OnePlus |
+| 31 | His admin password is `123456789` | ⏸ | He changes it before launch |
+| 32 | Four August drafts set to notify on publish (two articles, an event, a business) | ⬜ | Delete with the sample data on content-migration day |
+
+**To raise with him:** English names for the business categories (some 85
+with the old ones); the phone-width site opens in Hebrew and has no language
+switch; near-duplicate restaurant sub-categories from the old site, which he
+can switch off in the panel.
+
+**Order:** with no migration needed — 12, then 23 (built now, tested after
+00048). After the migrations (00046, 00047, 00048): import the categories,
+test 6, 21–22 and 29. When the Figma comes: 9–11. After launch: 24–28.
+
+Notes:
+
+- **a** — The home page's Ask button (desktop site, and the phone layout the
+  app and narrow browsers share) opens the chat: on the web through the
+  widget's `PersonaAI.open()` (`lib/shared/personaai/`; the chat page in a
+  new tab should the script not load), in the app the in-app chat screen.
+  The widget's bubble, glow, greeting and pop-ups are hidden by CSS in
+  web/index.html (`html body #…`, to outrank the widget's own `!important`).
+  Typing and Enter still search the site.
+- **b** — For the lawyer: sign-up is by e-mail and password only; the
+  database is Supabase in India (`ap-south-1`), not the US or EU the draft
+  assumes; push is Firebase, e-mail Brevo, maps Google; the AI is PersonaAI
+  (its retention and training terms from PersonaAI); the step counter reads
+  Health Connect / Apple Health; location with permission; no analytics or
+  crash reporting. The drafts promise a "Report" button and blocking users,
+  which do not exist. The old WordPress text (in the panel as a draft) covers
+  none of the app and is not enough for the stores.
+- **c** — Each panel section is tied to a module of
+  `admin_role_permissions` (`_sectionModules`, admin_dashboard_screen.dart)
+  and shows only for a role that may 'view' it; empty headings go; a section
+  reached another way says the role lacks it; the overview's revenue tab
+  likewise. The main admin sees everything. Checked with a temporary admin as
+  content editor (sidebar, overview's revenue tab, Settings, and the phone-width
+  chip row), business editor, moderator and main admin; removed after.
+  Found and fixed: four roles (moderator, support, finance, analyst) had no
+  rights at all, so they would have opened an empty panel; they now have the
+  rights their names imply — moderator: reviews, comments, reports; support:
+  users and those; finance: agreements and revenue; analyst: the activity log
+  — 10 rows, their ids in `tool/role_defaults_registry.json`. Actions inside a
+  section are not split by role.
+- **h** — `business_events`, written only through `record_business_event`
+  (a view counted once per visitor per business per 30 minutes), read only by
+  admins through `business_stats` (day, week or month, Israel's dates) and
+  `business_stats_top`. A random visitor id per browser or phone, nothing
+  about the person. Until 00048 runs the calls fail quietly.
+- **j** — `tool/copy_wp_uploads.py` reads the media library (2,072 items,
+  13,470 files with their sizes, 2 GB or more) and copies each file to
+  `/var/www/modiin4u-uploads` under its decoded name, eight at a time,
+  resumable; nginx serves `/wp-content/uploads/` from there, outside the web
+  build; a file never copied is a 404. Tried on 32 files, Hebrew names
+  included.
+
 ### English on the website stopped halfway — 2 October
 
 "Why is the website not fully English when English is selected?"
