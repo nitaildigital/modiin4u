@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/cupertino.dart' show CupertinoPage;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/home/screens/home_screen.dart';
@@ -98,7 +100,16 @@ extension AppNavigation on BuildContext {
 
 /// The phone's slide in from the side; in a browser, a quick fade instead —
 /// a website swaps its pages in place (see `appPageTransitions`).
-CustomTransitionPage<void> _slideTransition(Widget child, GoRouterState state) {
+///
+/// On an iPhone, Apple's own page: it slides in from the side a Hebrew
+/// page starts on, and it can be swiped back from that edge. The custom
+/// slide below has no back gesture, so on iPhone the only way out of a
+/// page was its arrow — which scrolls away with the header on a long
+/// business page. Found testing on the simulator, 5 Oct.
+Page<void> _slideTransition(Widget child, GoRouterState state) {
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+    return CupertinoPage(key: state.pageKey, child: child);
+  }
   if (kIsWeb) {
     return CustomTransitionPage(
       key: state.pageKey,
