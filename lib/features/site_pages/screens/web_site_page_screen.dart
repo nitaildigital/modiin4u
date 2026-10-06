@@ -152,6 +152,10 @@ class _WebSitePageContentState extends ConsumerState<WebSitePageContent>
           _title(sitePageFallbackTitle(l, widget.slug)),
           const SizedBox(height: 40),
           SitePageComingSoon(message: l.sitePageComingSoon),
+          if (widget.slug == 'delete-account') ...[
+            const SizedBox(height: 32),
+            SiteDeletionRequestButton(hebrew: _isHebrew),
+          ],
         ],
       );
     }
@@ -190,6 +194,10 @@ class _WebSitePageContentState extends ConsumerState<WebSitePageContent>
             ],
             const SizedBox(height: 40),
             SitePageBody(text: page.body(contentHebrew)),
+            if (widget.slug == 'delete-account') ...[
+              const SizedBox(height: 40),
+              SiteDeletionRequestButton(hebrew: contentHebrew),
+            ],
           ],
         ),
       ),

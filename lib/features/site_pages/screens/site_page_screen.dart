@@ -88,12 +88,19 @@ class SitePageScreen extends ConsumerWidget {
                         MediaQuery.paddingOf(context).bottom + 24,
                       ),
                       children: [
-                        if (contentHebrew == null)
+                        if (contentHebrew == null) ...[
                           SitePageComingSoon(
                             message: l.sitePageComingSoon,
                             fontSize: 14,
-                          )
-                        else
+                          ),
+                          if (slug == 'delete-account') ...[
+                            const SizedBox(height: 24),
+                            SiteDeletionRequestButton(
+                              hebrew: wantHebrew,
+                              fontSize: 14,
+                            ),
+                          ],
+                        ] else
                           // Laid out in the language it was written in,
                           // which is the other one when the client has
                           // written only that.
@@ -124,6 +131,13 @@ class SitePageScreen extends ConsumerWidget {
                                   fontSize: 14,
                                   lineHeight: 1.6,
                                 ),
+                                if (slug == 'delete-account') ...[
+                                  const SizedBox(height: 28),
+                                  SiteDeletionRequestButton(
+                                    hebrew: contentHebrew,
+                                    fontSize: 14,
+                                  ),
+                                ],
                               ],
                             ),
                           ),

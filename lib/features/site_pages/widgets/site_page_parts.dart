@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/web_chrome.dart' show kContactEmail;
 
 /// The page's name while there is no published text to take it from — the
 /// same names the footer links print.
@@ -63,6 +66,74 @@ class SitePageComingSoon extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The one link on /delete-account that asks for an account to be deleted:
+/// an e-mail to the office with the subject the page's own text tells people
+/// to use. Google Play wants a way to ask for deletion without the app, and
+/// someone who has uninstalled it can tap this rather than copy an address.
+///
+/// Shown whether or not the client has published the page's text — the
+/// request has to work before the words around it are final.
+class SiteDeletionRequestButton extends StatelessWidget {
+  final bool hebrew;
+  final double fontSize;
+
+  const SiteDeletionRequestButton({
+    super.key,
+    required this.hebrew,
+    this.fontSize = 16,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    String t(String en, String he) => hebrew ? he : en;
+    // Encoded by hand: Uri's queryParameters writes spaces as "+", which
+    // some mail apps put in the subject line as they are.
+    final subject = Uri.encodeComponent(t('Delete my account', 'מחיקת חשבון'));
+    final mail = Uri.parse('mailto:$kContactEmail?subject=$subject');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: fontSize * 3.125,
+          child: ElevatedButton.icon(
+            onPressed: () => launchUrl(mail),
+            icon: Icon(IconsaxPlusLinear.trash, size: fontSize * 1.25),
+            label: Text(
+              t('Request account deletion', 'בקשה למחיקת חשבון'),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.midBlue,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: fontSize * 1.75),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(50),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ),
+        SizedBox(height: fontSize * 0.6),
+        // The address under the button, for someone whose browser has no
+        // mail app to open.
+        SelectableText(
+          t('Or write to $kContactEmail', 'או כתבו אל $kContactEmail'),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: fontSize * 0.875,
+            color: const Color(0xFF6D6D6D),
+          ),
+        ),
+      ],
     );
   }
 }

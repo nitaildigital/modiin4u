@@ -1114,6 +1114,14 @@ class WebFooter extends StatelessWidget {
                           style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBorder),
                           onTap: () => context.go('/privacy'),
                         ),
+                        Text('  |  ', style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBorder)),
+                        // Beside the Privacy Policy, where someone looking
+                        // for how to remove their data reads first.
+                        _FooterLink(
+                          label: _t('Delete account', 'מחיקת חשבון'),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kBorder),
+                          onTap: () => context.go('/delete-account'),
+                        ),
                       ],
                     ),
                   ],
