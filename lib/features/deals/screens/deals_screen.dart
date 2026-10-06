@@ -134,9 +134,12 @@ class _MobileDealsContentState extends ConsumerState<_MobileDealsContent> {
                     ),
                     error: (_, _) => _empty(l),
                     data: (list) {
+                      // A deal stays 'active' after its end date until the
+                      // panel changes it; one that has ended is not offered.
+                      final live = list.where((o) => !o.hasExpired).toList();
                       final shown = _business == null
-                          ? list
-                          : list.where((o) => o.businessId == _business).toList();
+                          ? live
+                          : live.where((o) => o.businessId == _business).toList();
                       return shown.isEmpty ? _empty(l) : _buildDealCards(shown, l);
                     },
                   ),
@@ -303,11 +306,11 @@ class _MobileDealsContentState extends ConsumerState<_MobileDealsContent> {
   }
 
   Widget _buildMyDeals(List<Offer> all) {
-    final claimed =
-        ref.watch(myClaimedOfferIdsProvider).valueOrNull ?? const <String>{};
+    // Vouchers still to use: a used one has done its job.
+    final claims = ref.watch(myClaimsProvider).valueOrNull ?? const {};
     final mine = [
       for (final o in all)
-        if (claimed.contains(o.id) && !o.hasExpired) o,
+        if (claims[o.id] != null && !claims[o.id]!.redeemed && !o.hasExpired) o,
     ];
     if (mine.isEmpty) return const SizedBox.shrink();
     return Padding(

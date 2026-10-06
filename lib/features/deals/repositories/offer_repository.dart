@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../models/my_claim.dart';
 import '../models/offer.dart';
 
 /// Reads `offers`, and records a claim against one.
@@ -145,6 +146,40 @@ class OfferRepository {
   }
 
   /// The offers this person has already claimed, as offer ids.
+  /// This person's claims, as vouchers — keyed by the deal. All columns
+  /// rather than a list, so it reads the same before 00056 adds `code`.
+  Future<Map<String, MyClaim>> fetchMyClaimList(String profileId) async {
+    final rows = await _client
+        .from('offer_claims')
+        .select()
+        .eq('profile_id', profileId)
+        .order('created_at', ascending: false);
+    final out = <String, MyClaim>{};
+    for (final r in List<Map<String, dynamic>>.from(rows)) {
+      final claim = MyClaim.fromJson(r);
+      out.putIfAbsent(claim.offerId, () => claim);
+    }
+    return out;
+  }
+
+  /// "Use now" at the till: marks the claim used, once (00056). Throws a
+  /// [StateError] with 'claim-used', 'offer-ended' or 'unavailable' (the
+  /// function is not on this database yet).
+  Future<DateTime> redeem(String claimId) async {
+    try {
+      final at = await _client.rpc('redeem_my_claim', params: {'p_claim': claimId});
+      return DateTime.tryParse('$at')?.toLocal() ?? DateTime.now();
+    } on PostgrestException catch (e) {
+      for (final reason in const ['claim-used', 'offer-ended', 'account-blocked']) {
+        if (e.message.contains(reason)) throw StateError(reason);
+      }
+      if (e.code == 'PGRST202' || e.message.contains('redeem_my_claim')) {
+        throw StateError('unavailable');
+      }
+      rethrow;
+    }
+  }
+
   Future<Set<String>> fetchMyClaims(String profileId) async {
     final rows = await _client
         .from('offer_claims')

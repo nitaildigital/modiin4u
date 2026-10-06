@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../businesses/providers/business_providers.dart';
+import '../models/my_claim.dart';
 import '../models/offer.dart';
 import '../repositories/offer_repository.dart';
 
@@ -36,12 +37,17 @@ final offerCategoriesProvider = FutureProvider<List<BusinessCategory>>((
   return all.where((c) => (counts[c.id] ?? 0) > 0).toList();
 });
 
-/// Offers this person has claimed. Empty when signed out, so the screen can
-/// offer to sign in rather than show a failure.
-final myClaimedOfferIdsProvider = FutureProvider<Set<String>>((ref) async {
+/// This person's claims, keyed by deal: their vouchers, used or not. Empty
+/// when signed out, so the screen can offer to sign in rather than fail.
+final myClaimsProvider = FutureProvider<Map<String, MyClaim>>((ref) async {
   final user = ref.watch(authProvider);
   if (user == null) return const {};
-  return ref.watch(offerRepositoryProvider).fetchMyClaims(user.id);
+  return ref.watch(offerRepositoryProvider).fetchMyClaimList(user.id);
+});
+
+/// Offers this person has claimed.
+final myClaimedOfferIdsProvider = FutureProvider<Set<String>>((ref) async {
+  return (await ref.watch(myClaimsProvider.future)).keys.toSet();
 });
 
 /// Every active offer, unfiltered. The desktop page draws its category

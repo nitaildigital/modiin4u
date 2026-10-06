@@ -31,6 +31,7 @@ Map<String, String> get auditTableLabels => <String, String>{
   'tags': tr('תגית', 'Tag'),
   'media': tr('מדיה', 'Media'),
   'home_blocks': tr('בלוק בדף הבית', 'Home page block'),
+  'offer_claims': tr('שובר מבצע', 'Deal voucher'),
   'ad_placements': tr('מיקום פרסום', 'Ad placement'),
   'campaigns': tr('קמפיין', 'Campaign'),
   'push_campaigns': tr('הודעת פוש', 'Push notification'),

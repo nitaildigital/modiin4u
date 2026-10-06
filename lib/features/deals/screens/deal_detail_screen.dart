@@ -21,6 +21,7 @@ import '../models/offer.dart';
 import '../providers/offer_providers.dart';
 import '../widgets/m_deal_card.dart';
 import '../widgets/m_deal_detail_parts.dart';
+import 'deal_voucher_screen.dart';
 import 'web_deal_detail_screen.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 
@@ -443,9 +444,9 @@ class _MobileDealDetailContent extends ConsumerWidget {
     L l,
     Offer offer,
   ) {
-    final claimed =
-        ref.watch(myClaimedOfferIdsProvider).valueOrNull ?? const <String>{};
-    final alreadyClaimed = claimed.contains(offer.id);
+    final myClaim = ref.watch(myClaimsProvider).valueOrNull?[offer.id];
+    final alreadyClaimed = myClaim != null;
+    final used = myClaim?.redeemed ?? false;
     final canClaim = offer.isClaimable && !alreadyClaimed;
     final address = offer.businessAddress;
     final businessId = offer.businessId;
@@ -495,11 +496,15 @@ class _MobileDealDetailContent extends ConsumerWidget {
                 // Once claimed, the button shows the code again: it was
                 // shown once, in a dialog, and closing that before reaching
                 // the till lost it.
-                enabled: canClaim || (alreadyClaimed && !offer.hasExpired),
-                label: offer.hasExpired
-                    ? l.offerExpired
+                // Once claimed, the voucher; once used, it says so — the
+                // voucher still opens, to show when.
+                enabled: canClaim || alreadyClaimed,
+                label: used
+                    ? mDealsT(context, 'Used — view voucher', 'מומש — לצפייה בשובר')
                     : alreadyClaimed
-                    ? mDealsT(context, 'Show my code', 'הצגת הקוד שלי')
+                    ? mDealsT(context, 'Show my voucher', 'הצגת השובר שלי')
+                    : offer.hasExpired
+                    ? l.offerExpired
                     : mDealsT(context, 'Redeem Deal', 'מימוש המבצע'),
                 onTap: () => alreadyClaimed
                     ? _showCode(context, l, offer)
@@ -532,7 +537,8 @@ class _MobileDealDetailContent extends ConsumerWidget {
   ) async {
     try {
       await ref.read(offerRepositoryProvider).claim(offer);
-      ref.invalidate(myClaimedOfferIdsProvider);
+      ref.invalidate(myClaimsProvider);
+      await ref.read(myClaimsProvider.future);
       if (!context.mounted) return;
       _showCode(context, l, offer);
     } on StateError catch (e) {
@@ -556,82 +562,9 @@ class _MobileDealDetailContent extends ConsumerWidget {
     }
   }
 
-  /// What a claim hands over: the offer's own code, where it has one. The
-  /// design draws no state for this, so it is the page's own pieces — the
-  /// display face, the pale blue tint, the pill button.
-  void _showCode(BuildContext context, L l, Offer offer) {
-    final code = offer.code?.trim();
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l.offerClaimed,
-                textAlign: TextAlign.center,
-                style: mDealsDisplay(22, color: AppColors.midBlue),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                offer.name,
-                textAlign: TextAlign.center,
-                style: mDealsInter(14, color: kMDealsMuted, height: 1.4),
-              ),
-              if (code != null && code.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF3FB),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: SelectableText(
-                    code,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2,
-                      color: AppColors.midBlue,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l.showThisCode,
-                  textAlign: TextAlign.center,
-                  style: mDealsInter(12, color: kMDealsMuted),
-                ),
-              ],
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: () => Navigator.pop(ctx),
-                child: Container(
-                  height: 44,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.midBlue,
-                    borderRadius: BorderRadius.circular(60),
-                  ),
-                  child: Text(
-                    l.close,
-                    style: mDealsInter(14, weight: FontWeight.w500, color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  /// The voucher: the claim's own code, and "Use now" at the till.
+  void _showCode(BuildContext context, L l, Offer offer) =>
+      DealVoucherScreen.open(context, offer);
 
   static void _toast(BuildContext context, String message, {bool signIn = false}) {
     ScaffoldMessenger.of(context).showSnackBar(

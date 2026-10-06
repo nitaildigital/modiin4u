@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../deals/models/offer.dart' show offerBadge;
+import '../../../core/supabase/supabase_config.dart';
 import '../providers/admin_offers_provider.dart';
+import '../providers/admin_table_notifier.dart' show recordAdminAction;
 import '../widgets/admin_events_form_fields.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
@@ -57,6 +59,10 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                 0,
                 (s, o) => s + ((o['claim_count'] as num?)?.toInt() ?? 0),
               );
+              final totalUsed = list.fold<int>(
+                0,
+                (s, o) => s + ((o['redeem_count'] as num?)?.toInt() ?? 0),
+              );
               final featured = list
                   .where((o) => o['is_featured'] == true)
                   .length;
@@ -77,10 +83,18 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                   children: [
                     _StatChip(tr('מבצעים פעילים', 'Active deals'), '$active', AppColors.success),
                     const SizedBox(width: 16),
+                    // "מימושים" counted claims; claimed and used are two
+                    // numbers now that a voucher can be used (00056).
                     _StatChip(
-                      tr('סה״כ מימושים', 'Total redemptions'),
+                      tr('סה״כ נלקחו', 'Total claimed'),
                       '$totalClaims',
                       AppColors.turquoise,
+                    ),
+                    const SizedBox(width: 16),
+                    _StatChip(
+                      tr('סה״כ מומשו', 'Total used'),
+                      '$totalUsed',
+                      AppColors.success,
                     ),
                     const SizedBox(width: 16),
                     _StatChip(tr('מומלצים', 'Recommended'), '$featured', AppColors.gold),
@@ -250,7 +264,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                         _Col(tr('מבצע', 'Deal'), flex: 3),
                         _Col(tr('עסק', 'Business'), flex: 2),
                         if (isWide) _Col(tr('תגית באתר', 'Tag on the site'), flex: 1),
-                        if (isWide) _Col(tr('מימושים', 'Redemptions'), flex: 1),
+                        if (isWide) _Col(tr('נלקחו · מומשו', 'Claimed · used'), flex: 1),
                         if (isWide) _Col(tr('בתוקף עד', 'Valid until'), flex: 1),
                         _Col(tr('סטטוס', 'Status'), flex: 1),
                         const SizedBox(width: 40),
@@ -273,6 +287,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                             ? biz['name'] as String? ?? ''
                             : '';
                         final claims = (o['claim_count'] as num?)?.toInt() ?? 0;
+                        final used = (o['redeem_count'] as num?)?.toInt() ?? 0;
                         final maxClaims = (o['max_claims'] as num?)?.toInt();
                         final isFeatured = o['is_featured'] as bool? ?? false;
                         final residentsOnly = o['audience'] == 'verified';
@@ -377,9 +392,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                   Expanded(
                                     flex: 1,
                                     child: Text(
-                                      maxClaims != null
-                                          ? '$claims / $maxClaims'
-                                          : '$claims',
+                                      '${maxClaims != null ? '$claims / $maxClaims' : '$claims'} · $used',
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
                                         fontSize: 13,
@@ -422,6 +435,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                   onSelected: (v) => _handleAction(v, o),
                                   itemBuilder: (_) => [
                                     _menuItem('edit', tr('עריכה', 'Edit')),
+                                    _menuItem('claims', tr('שוברים שנלקחו', 'Claimed vouchers')),
                                     if (status != 'active')
                                       _menuItem('activate', tr('הפעל', 'Activate')),
                                     // One item: "end" and "delete" both set
@@ -487,9 +501,39 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
         _showEditor(context, offer: o);
       case 'activate':
         _run(() => notifier.updateStatus(id, 'active'));
+      case 'claims':
+        // The claimed and used counts change in the dialog; the row and the
+        // totals behind it read again once it closes.
+        showDialog<void>(
+          context: context,
+          builder: (_) => _ClaimsDialog(offerId: id, offerName: o['name'] as String? ?? ''),
+        ).then((_) => notifier.load());
       case 'expire':
-        _run(() => notifier.deleteOffer(id));
+        _confirmEnd(id, o['name'] as String? ?? '');
     }
+  }
+
+  /// Ending took effect on the tap, with nothing to stop a slip; it is
+  /// undone with "הפעל", but by then residents have lost the deal.
+  Future<void> _confirmEnd(String id, String name) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('לסיים את המבצע?', 'End this deal?')),
+        content: Text(tr(
+          '"$name" יוסר מהאתר ומהאפליקציה. אפשר להפעיל אותו שוב מאוחר יותר.',
+          '"$name" leaves the site and the app. It can be activated again later.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('ביטול', 'Cancel'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('סיום מבצע', 'End deal'), style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) _run(() => ref.read(adminOfferListProvider.notifier).deleteOffer(id));
   }
 
   void _showEditor(BuildContext context, {Map<String, dynamic>? offer}) {
@@ -1339,4 +1383,148 @@ class _Debouncer {
   }
 
   void cancel() => _timer?.cancel();
+}
+
+/// The vouchers taken for one deal: who, their code, when, and whether it was
+/// used. The office can mark one used (a business that phoned it in) or undo
+/// a slip; the counts follow (00049).
+class _ClaimsDialog extends StatefulWidget {
+  final String offerId;
+  final String offerName;
+  const _ClaimsDialog({required this.offerId, required this.offerName});
+
+  @override
+  State<_ClaimsDialog> createState() => _ClaimsDialogState();
+}
+
+class _ClaimsDialogState extends State<_ClaimsDialog> {
+  late Future<List<Map<String, dynamic>>> _rows = _load();
+
+  Future<List<Map<String, dynamic>>> _load() async {
+    final rows = await SupabaseConfig.client
+        .from('offer_claims')
+        .select('*, profiles(full_name, phone)')
+        .eq('offer_id', widget.offerId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  Future<void> _setUsed(Map<String, dynamic> c, bool used) async {
+    final id = c['id'] as String;
+    final fields = {
+      'redeemed': used,
+      'redeemed_at': used ? DateTime.now().toUtc().toIso8601String() : null,
+    };
+    try {
+      await SupabaseConfig.client.from('offer_claims').update(fields).eq('id', id);
+      await recordAdminAction(
+        // `audit_action` has no "redeem"; the fields say which way.
+        action: 'update',
+        table: 'offer_claims',
+        rowId: id,
+        fields: fields,
+        label: widget.offerName,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('השמירה נכשלה', 'Could not save'))),
+        );
+      }
+    }
+    if (mounted) setState(() => _rows = _load());
+  }
+
+  String _when(String? iso) {
+    final d = DateTime.tryParse(iso ?? '')?.toLocal();
+    if (d == null) return '—';
+    return '${formatAdminDate(d)} ${formatAdminTime(d.hour, d.minute)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    TextStyle cell([Color? c, FontWeight? w]) =>
+        TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: c, fontWeight: w);
+    return Dialog(
+      backgroundColor: Colors.white,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 620),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${tr('שוברים', 'Vouchers')} — ${widget.offerName}',
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _rows,
+                  builder: (context, snap) {
+                    if (snap.hasError) {
+                      return Center(child: Text(tr('לא ניתן לטעון', 'Could not load'), style: cell()));
+                    }
+                    if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                    final rows = snap.data!;
+                    if (rows.isEmpty) {
+                      return Center(child: Text(tr('אף אחד עוד לא לקח את המבצע', 'Nobody has claimed this deal yet'), style: cell(AppColors.grayText)));
+                    }
+                    return ListView.separated(
+                      itemCount: rows.length,
+                      separatorBuilder: (_, _) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4)),
+                      itemBuilder: (_, i) {
+                        final c = rows[i];
+                        final p = c['profiles'] is Map ? c['profiles'] as Map : const {};
+                        final used = c['redeemed'] == true;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text((p['full_name'] as String?) ?? tr('חשבון שנמחק', 'Deleted account'), style: cell(null, FontWeight.w600)),
+                                    if ((p['phone'] as String? ?? '').isNotEmpty)
+                                      Text(p['phone'] as String, textDirection: TextDirection.ltr, style: cell(AppColors.grayText)),
+                                  ],
+                                ),
+                              ),
+                              Expanded(flex: 2, child: Text((c['code'] as String?) ?? '—', style: cell(AppColors.navy, FontWeight.w700))),
+                              Expanded(flex: 3, child: Text('${tr('נלקח', 'Claimed')} ${_when(c['created_at'] as String?)}', style: cell(AppColors.grayText))),
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  used ? '${tr('מומש', 'Used')} ${_when(c['redeemed_at'] as String?)}' : tr('טרם מומש', 'Not used yet'),
+                                  style: cell(used ? AppColors.success : AppColors.grayText, used ? FontWeight.w600 : null),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => _setUsed(c, !used),
+                                child: Text(used ? tr('ביטול מימוש', 'Undo') : tr('סימון כמומש', 'Mark used'), style: cell(used ? AppColors.error : AppColors.turquoise)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
