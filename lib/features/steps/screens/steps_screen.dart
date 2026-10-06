@@ -19,6 +19,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/step_entry.dart';
 import '../providers/steps_providers.dart';
 import '../services/health_steps.dart';
+import '../widgets/challenge_prize.dart';
 import '../widgets/step_groups_tab.dart';
 import 'web_steps_screen.dart';
 
@@ -39,6 +40,7 @@ class StepsScreen extends ConsumerStatefulWidget {
 }
 
 class _StepsScreenState extends ConsumerState<StepsScreen> {
+  bool get _hebrew => Localizations.localeOf(context).languageCode == 'he';
   int _leaderboardTab = 0; // 0 = Neighborhood, 1 = City
   late bool _groups = widget.groupsTab && !kIsWeb;
   bool _month = false;
@@ -141,6 +143,18 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                           // The client's banners for the section, from the
                           // panel's campaigns (5 Oct); nothing when none runs.
                           const MDealsBanner(code: 'STEPS_TOP', inset: 0, bottom: 16),
+                          // The competition and its prize, when one runs.
+                          if (ref.watch(activeChallengeProvider).valueOrNull
+                              case final challenge?)
+                            if (challengePrize(challenge, _hebrew) != null) ...[
+                              ChallengePrizeBanner(
+                                challenge: challenge,
+                                hebrew: _hebrew,
+                                myId: ref.watch(authProvider)?.id,
+                                onShowWin: () => showChallengeWin(context, challenge, hebrew: _hebrew, force: true),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
                           _buildTodayProgress(),
                           const SizedBox(height: 16),
 
@@ -874,12 +888,12 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                     // Prize row
                     Row(
                       children: [
-                        // A "Prize: ₪500 Shopping Voucher" line sat beside
-                        // this. `challenges` records no prize.
+                        // The prize from the panel (00058); the name where
+                        // the challenge has none.
                         const Text('🏅', style: TextStyle(fontSize: 16)),
                         const SizedBox(width: 8),
                         Text(
-                          name,
+                          challengePrize(challenge, _hebrew) ?? name,
                           style: TextStyle(
                             fontFamily: AppFonts.inter,
                             fontSize: 12,

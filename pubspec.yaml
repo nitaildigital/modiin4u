@@ -67,6 +67,7 @@ dependencies:
   # written by `flutterfire configure`.
   firebase_core: ^4.15.0
   firebase_messaging: ^16.7.0
+  lottie: ^3.3.3
 
 dev_dependencies:
   flutter_test:
@@ -121,6 +122,9 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    # The step competition's win: falling confetti and a trophy, free LottieFiles
+    # animations (Lottie Simple License).
+    - assets/lottie/
     # Asset folders are not recursive: each one the web design draws from is
     # listed on its own.
     - assets/icons/footer/

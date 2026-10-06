@@ -2377,6 +2377,80 @@ lists ended deals under "Popular"; a business or My Apartments changed in the
 panel shows the old version in the app until it restarts; the business page
 shows a greyed website button when there is none.
 
+**Deals, the whole way through — 6 Oct.** Tested panel → website → app: a
+deal made in the panel shows at once on both; claiming worked, but stopped at
+"Offer claimed" with the deal's one code (none of the 12 live deals has one),
+and nothing could mark a claim used — the resident is barred (00033), the
+business has no screen, the panel had no button — so every deal showed 0
+used and the panel's "מימושים" counted claims. The client chose (6 Oct): the
+resident slides "Use now" in front of the staff.
+- **00056** (**not run yet**): each claim gets its own six-character code
+  (no 0/O, 1/I/L); `redeem_my_claim` marks the caller's own claim used, once,
+  while the deal is live and in its dates; the count follows (00049).
+- **App:** claiming opens the voucher (`deal_voucher_screen.dart`): business,
+  deal, the claim's code (the deal's own until 00056 runs), name, when
+  claimed, valid until, a running clock so staff see the live app, and
+  "Slide to use now". Used, it says when; the deal page reads "Used — view
+  voucher"; My deals lists only vouchers still to use. Before 00056 the
+  slide says "not available yet".
+- **Panel:** "נלקחו · מומשו" (claimed · used) per deal and in the totals; a
+  row's "שוברים שנלקחו" lists who claimed, their code, when, and used or not,
+  with "Mark used" / "Undo" for a business that phones in (audited); "End
+  deal" asks first.
+- Tested on the phone and in the panel: claim → voucher → panel "Mark used"
+  → the app shows Used with the time. The slide itself waits for 00056.
+- Also from this test: the home rows' "Try again" no longer overflows
+  offline (compact `ErrorRetry`); sign-in gives up after 20 s with "no
+  connection"; ended deals left the phone Deals list; the overview cards'
+  table names moved to a hover tooltip; an account deleted elsewhere is
+  signed out on the phone at the next start (it stayed signed in).
+
+**A broker, the whole way through — 6 Oct.** A test broker posted a rental in
+the app (all three steps), the panel approved it, and it showed on the
+website and in the app. Fixed: a broker's listing was saved as a private one
+(`is_broker` never sent by either post form), so "Via Broker" never showed
+on a broker's own listing; "/ In the month" read as "/ month" (six places);
+the Municipal search field drew a grey box inside its pill; the parking
+card's arrow pointed backwards in English. Also found: making a test business
+as active sent a real "New in town" push to two phones (deleted from the
+history); a business or article removed after its push stays in everyone's
+notifications, linking to nothing — for the push work.
+Seen, not fixed: the broker type is self-declared at sign-up and nothing
+guards the flag after; the panel's listing row shows the address, not the
+title or who posted it; approving sets no publish or expiry date, so
+listings never expire; a resident's typed address is never placed on the
+map; neighbourhood names are Hebrew in English; "Floor 0" in the app where
+the site says "Ground Floor"; the sample events still carry invented
+"interested" counts (on the sample-data removal item).
+
+**Resident and broker side by side — 6 Oct.** Two phones at once: a resident
+in Hebrew (Realme), a broker in English (OnePlus). Same results for both:
+badge, listing draft (the resident's private, the broker's "Via Broker" —
+the 6 Oct fix holds), the same deal claimed at the same moment (2 of 2, both
+vouchers), the same event RSVP'd and cancelled, a review each (pending).
+Fixed: **00059** (not run; renumbered from 00057, which another change took) — two RSVPs at the same moment were counted as
+one (the recount ran before the other's row committed; the event row is now
+locked first); the Hebrew voucher printed "15:39 ,6.10.2026"; the Hebrew
+rating stars touched and their motion lines ran into each other. Seen, not
+fixed: after sending a review the page shows the empty rating box and "No
+reviews yet" — nothing says yours is waiting; the voucher code is the same
+for everyone until 00056 runs.
+
+**Steps, winner, reviews and replies on two phones — 6 Oct.** Resident (Realme,
+Hebrew) and broker (OnePlus, English). Steps: each one's week, the challenge
+card (24,000 / 20,000 · 100% and 15,000 · 75%) and the city ranking agree on
+both, each highlighting their own row. Ending the challenge: the card goes and
+the tables return to "Last 7 days" — **no winner, no prize, no "completed"**,
+as found 5 Oct (13–15, 37 still to build). Reviews: written in the app,
+approved in the panel, shown on both with stars, the 4.0 average and the
+breakdown. Replies: written, pending (the writer sees "awaiting approval"),
+approved, shown; the notifications went to the right person only — "New reply
+to your review" to the review's author, "תגובה חדשה בשיחה" to the earlier
+replier, never to the writer — within a minute. Fixed: a notification opened
+over a business page still open underneath showed the thread from before the
+approval (the reviews are read again now, `push_host.dart`); the panel's
+Comments note still said the app had nowhere to write one.
+
 Content the site shows that the panel cannot edit: contact phone and e-mail,
 social links, footer About text, home hero and its blocks, Help FAQ,
 Municipal tiles, onboarding copy. Panel fields nothing reads: `home_blocks`

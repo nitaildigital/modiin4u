@@ -13,6 +13,7 @@ import '../../../shared/widgets/web_chrome.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/step_entry.dart';
 import '../providers/steps_providers.dart';
+import '../widgets/challenge_prize.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Step Counter — desktop layout for /steps
@@ -430,7 +431,7 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
             '${_thousands(progress)} / ${_thousands(goal)} צעדים',
           );
 
-    return Padding(
+    final band = Padding(
       padding: const EdgeInsets.only(top: 24),
       child: WebSection(
         child: Container(
@@ -539,6 +540,19 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
           ),
         ),
       ),
+    );
+    // The competition's prize above it, when it has one (00058).
+    if (challengePrize(challenge, _isHebrew) == null) return band;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: WebSection(
+            child: ChallengePrizeBanner(challenge: challenge, hebrew: _isHebrew),
+          ),
+        ),
+        band,
+      ],
     );
   }
 

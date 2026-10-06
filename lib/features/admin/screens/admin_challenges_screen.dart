@@ -199,6 +199,15 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                       color: AppColors.navy,
                     ),
                   ),
+                  // Named by the database, the first to reach the goal (00058).
+                  if ((c['winner_name'] as String?)?.isNotEmpty ?? false) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      tr('🏆 זוכה: ${c['winner_name']}', '🏆 Winner: ${c['winner_name']}') +
+                          ((c['won_steps'] as num?) == null ? '' : tr(' · ${c['won_steps']} צעדים', ' · ${c['won_steps']} steps')),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.success),
+                    ),
+                  ],
                   if ((c['description'] as String?)?.isNotEmpty ?? false) ...[
                     const SizedBox(height: 2),
                     Text(
@@ -332,6 +341,11 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
   late final TextEditingController _description;
   late final TextEditingController _goal;
   late final TextEditingController _reward;
+  // The prize, as the client words it — on the banner and in the win
+  // message (00058).
+  late final TextEditingController _prize;
+  late final TextEditingController _prizeEn;
+  bool _perDay = false;
   DateTime? _startAt;
   DateTime? _endAt;
   bool _isActive = true;
@@ -351,6 +365,9 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
     _reward = TextEditingController(
       text: (c?['reward_points'] as num?)?.toString() ?? '',
     );
+    _prize = TextEditingController(text: c?['prize'] as String? ?? '');
+    _prizeEn = TextEditingController(text: c?['prize_en'] as String? ?? '');
+    _perDay = c?['goal_per_day'] as bool? ?? false;
     _startAt = DateTime.tryParse(c?['start_at'] as String? ?? '');
     _endAt = DateTime.tryParse(c?['end_at'] as String? ?? '');
     _isActive = c?['is_active'] as bool? ?? true;
@@ -362,6 +379,8 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
     _description.dispose();
     _goal.dispose();
     _reward.dispose();
+    _prize.dispose();
+    _prizeEn.dispose();
     super.dispose();
   }
 
@@ -400,6 +419,9 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
           : _description.text.trim(),
       'goal': int.tryParse(_goal.text.trim()),
       'reward_points': int.tryParse(_reward.text.trim()) ?? 0,
+      'prize': _prize.text.trim().isEmpty ? null : _prize.text.trim(),
+      'prize_en': _prizeEn.text.trim().isEmpty ? null : _prizeEn.text.trim(),
+      'goal_per_day': _perDay,
       'challenge_type': 'steps',
       'start_at': _startAt!.toIso8601String(),
       // Inclusive of the closing day: a challenge ending on the 30th should
@@ -516,6 +538,39 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                           ),
                         ),
                       ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _field(
+                            tr('פרס', 'Prize (Hebrew)'),
+                            _prize,
+                            hint: tr('לדוגמה: שובר בשווי 500 ₪', 'e.g. שובר בשווי 500 ₪'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _field(
+                            tr('פרס (אנגלית)', 'Prize (English)'),
+                            _prizeEn,
+                            hint: 'e.g. a ₪500 voucher',
+                          ),
+                        ),
+                      ],
+                    ),
+                    SwitchListTile(
+                      value: _perDay,
+                      onChanged: (v) => setState(() => _perDay = v),
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        tr('היעד ביום אחד', 'Goal in a single day'),
+                        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        tr('הראשון שמגיע ליעד ביום אחד זוכה. כבוי: הצעדים מצטברים מתחילת האתגר.',
+                            'The first to reach the goal in one day wins. Off: steps add up from the start.'),
+                        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
+                      ),
                     ),
                     Row(
                       children: [

@@ -233,6 +233,9 @@ class StepCounter extends StateNotifier<StepState> {
       // The challenge card and the rankings count the same days, so they
       // follow the walk too rather than the figure at opening.
       _ref.invalidate(myChallengeStepsProvider);
+      // A save can make someone the winner (00058); the challenge is read
+      // again so the banner and the win message follow at once.
+      _ref.invalidate(activeChallengeProvider);
       _ref.invalidate(peopleLeaderboardProvider);
       _ref.invalidate(neighborhoodLeaderboardProvider);
     } catch (_) {
@@ -334,6 +337,15 @@ final leaderboardWindowProvider =
 /// so their own steps are their progress.
 final myChallengeStepsProvider = FutureProvider<int?>((ref) async {
   if (ref.watch(authProvider) == null) return null;
+  // A goal in a single day (00058) counts today only: what is saved, or the
+  // phone's own count if it is ahead.
+  final challenge = await ref.watch(activeChallengeProvider.future);
+  if (challenge?['goal_per_day'] == true) {
+    final week = await ref.watch(myStepWeekProvider.future);
+    final saved = week.isEmpty ? 0 : week.last.steps;
+    final live = ref.watch(stepCounterProvider.select((s) => s.today)) ?? 0;
+    return saved > live ? saved : live;
+  }
   final window = await ref.watch(leaderboardWindowProvider.future);
   if (window.since == null) return null;
   final days = await ref

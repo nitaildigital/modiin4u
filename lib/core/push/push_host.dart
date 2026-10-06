@@ -7,6 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../features/businesses/providers/business_providers.dart'
+    show businessReviewsProvider, reviewRepliesProvider;
+import '../../features/auth/providers/auth_provider.dart';
+import '../../features/steps/providers/steps_providers.dart' show activeChallengeProvider;
+import '../../features/steps/widgets/challenge_prize.dart' show showChallengeWin;
+import '../providers/locale_provider.dart';
 import '../router/app_router.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_fonts.dart';
@@ -49,6 +55,27 @@ class _PushHostState extends ConsumerState<PushHost> {
       },
     );
     _push.start().then((_) => _onRoute());
+    // The step competition's win message (00058), wherever the winner is
+    // when their steps are saved: the challenge is read again after every
+    // save, and names them. Once per challenge (showChallengeWin keeps it).
+    if (!kIsWeb) {
+      ref.listenManual(activeChallengeProvider, (_, next) => _maybeShowWin(next.valueOrNull));
+      ref.listenManual(authProvider, (_, _) => _maybeShowWin(ref.read(activeChallengeProvider).valueOrNull));
+    }
+  }
+
+  void _maybeShowWin(Map<String, dynamic>? challenge) {
+    final me = ref.read(authProvider);
+    if (challenge == null || me == null || challenge['winner_id'] != me.id) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = appRouter.routerDelegate.navigatorKey.currentContext;
+      if (context == null || !context.mounted || !_inApp) return;
+      showChallengeWin(
+        context,
+        challenge,
+        hebrew: ref.read(localeProvider).languageCode == 'he',
+      );
+    });
   }
 
   @override
@@ -130,6 +157,14 @@ class _PushHostState extends ConsumerState<PushHost> {
     final link = _push.pendingLink.value;
     if (link == null || !_inApp) return;
     _push.pendingLink.value = null;
+    // A reply notification leads to the business: its reviews and replies
+    // are read again, or a page still open underneath showed them as they
+    // were before the reply was approved.
+    final business = RegExp(r'^/business/([^/?#]+)').firstMatch(link)?.group(1);
+    if (business != null) {
+      ref.invalidate(businessReviewsProvider(business));
+      ref.invalidate(reviewRepliesProvider(business));
+    }
     appRouter.push(link);
   }
 
