@@ -349,8 +349,33 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   /// Removes the account and everything keyed to it, then signs out. Required
   /// by both app stores, and asked for by the client.
   Future<void> deleteAccount() async {
+    await _removeProfilePhotos();
     await _client.rpc('delete_own_account');
     await _client.auth.signOut();
     state = null;
+  }
+
+  /// Profile photographs are files in storage, which deleting the account's
+  /// rows does not reach — they stayed at their public address after the
+  /// account was gone, though /delete-account says no personal data is kept.
+  /// Every upload is a new file (edit_profile_screen), so the whole folder
+  /// goes, not just the current photograph.
+  ///
+  /// Done first, while the session still owns `avatars/<id>/` (00026). A
+  /// failure here does not stop the deletion: the account is what the person
+  /// asked to remove, and a leftover file is the lesser harm.
+  Future<void> _removeProfilePhotos() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return;
+    try {
+      final folder = 'avatars/$uid';
+      final files = await _client.storage
+          .from('media')
+          .list(path: folder, searchOptions: const SearchOptions(limit: 1000));
+      if (files.isEmpty) return;
+      await _client.storage
+          .from('media')
+          .remove([for (final f in files) '$folder/${f.name}']);
+    } catch (_) {}
   }
 }
