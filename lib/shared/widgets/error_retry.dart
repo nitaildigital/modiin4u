@@ -8,32 +8,37 @@ class ErrorRetry extends StatelessWidget {
   final String? message;
   final VoidCallback? onRetry;
 
-  const ErrorRetry({super.key, this.message, this.onRetry});
+  /// Smaller, for a row of fixed height (the home page's card rows), where
+  /// the full size ran out of room and cut the button off.
+  final bool compact;
+
+  const ErrorRetry({super.key, this.message, this.onRetry, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final circle = compact ? 48.0 : 80.0;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(compact ? 8 : 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: circle,
+              height: circle,
               decoration: BoxDecoration(
                 color: AppColors.error.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.wifi_off_rounded, size: 36, color: AppColors.error),
+              child: Icon(Icons.wifi_off_rounded, size: compact ? 24 : 36, color: AppColors.error),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: compact ? 10 : 20),
             Text(message ?? l.somethingWentWrong, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.navy), textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(l.checkConnection, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: AppColors.grayMeta), textAlign: TextAlign.center),
             if (onRetry != null) ...[
-              const SizedBox(height: 24),
+              SizedBox(height: compact ? 12 : 24),
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh, size: 18),

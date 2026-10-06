@@ -262,7 +262,7 @@ class _SystemDataTab extends ConsumerWidget {
                     color: AppColors.midBlue,
                   ),
                   _StatCard(
-                    label: tr('מימושי מבצע', 'Deal redemptions'),
+                    label: tr('מבצעים שנלקחו', 'Deals claimed'),
                     value: _int(c['offer_claims']),
                     source: 'offer_claims',
                     color: AppColors.midBlue,
@@ -1011,11 +1011,13 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // Which table a number counts is there on hover: printed under every
+    // number, `'businesses · status = 'active` read as code to the client.
+    return Tooltip(
+      message: source,
+      child: Container(
       width: 200,
-      // Fixed, so that a source line long enough to take two lines does not
-      // make its card taller than the ones beside it in the same row.
-      height: 136,
+      height: 108,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1060,21 +1062,8 @@ class _StatCard extends StatelessWidget {
               color: AppColors.adminTextDark,
             ),
           ),
-          const SizedBox(height: 6),
-          Expanded(
-            child: Text(
-              source,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 11,
-                height: 1.4,
-                color: AppColors.adminTextLight,
-              ),
-            ),
-          ),
         ],
+      ),
       ),
     );
   }

@@ -787,7 +787,7 @@ class _ProviderRow<T> extends ConsumerWidget {
               separatorBuilder: (_, _) => SizedBox(width: gap),
               itemBuilder: (_, _) => skeleton(),
             ),
-            error: (_, _) => ErrorRetry(onRetry: () => ref.invalidate(provider as ProviderOrFamily)),
+            error: (_, _) => ErrorRetry(compact: true, onRetry: () => ref.invalidate(provider as ProviderOrFamily)),
             data: (items) => items.isEmpty
                 ? const SizedBox.shrink()
                 : ListView.separated(

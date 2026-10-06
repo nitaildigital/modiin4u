@@ -41,8 +41,7 @@ final authRestoringProvider = StateProvider<bool>((ref) => true);
 /// the failure is not a rate limit, and the message is then shown as it came.
 String? resendWaitSeconds(Object error) {
   if (error is! AuthException) return null;
-  final rateLimited =
-      error.statusCode == '429' || error.code == 'over_email_send_rate_limit';
+  final rateLimited = error.statusCode == '429' || error.code == 'over_email_send_rate_limit';
   if (!rateLimited) return null;
   return RegExp(r'(\d+)\s*second').firstMatch(error.message)?.group(1) ?? '';
 }
@@ -76,9 +75,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       // Arriving from a reset link signs the person in. The app has to stop
       // and ask for the new password rather than carrying on as normal.
       if (event.event == AuthChangeEvent.passwordRecovery) {
-        Future.microtask(
-          () => _ref.read(passwordResetPendingProvider.notifier).state = true,
-        );
+        Future.microtask(() => _ref.read(passwordResetPendingProvider.notifier).state = true);
       }
 
       final user = event.session?.user;
@@ -120,10 +117,12 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   // asks for a password and a confirmation.
 
   Future<void> signIn({required String email, required String password}) async {
-    await _client.auth.signInWithPassword(
-      email: email.trim(),
-      password: password,
-    );
+    // With no connection the request can hang for a minute or more with the
+    // button spinning; after 20 seconds the screen says it is the network
+    // (its message check reads "network").
+    await _client.auth
+        .signInWithPassword(email: email.trim(), password: password)
+        .timeout(const Duration(seconds: 20), onTimeout: () => throw Exception('network timeout'));
   }
 
   /// Creates the account.
@@ -134,11 +133,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   /// Returns true when a session came back. It does not when the project
   /// requires the address to be confirmed first, and the screen then says to
   /// check the email rather than pretending to be signed in.
-  Future<bool> signUp({
-    required String email,
-    required String password,
-    Map<String, dynamic>? data,
-  }) async {
+  Future<bool> signUp({required String email, required String password, Map<String, dynamic>? data}) async {
     final res = await _client.auth.signUp(
       email: email.trim(),
       password: password,
@@ -153,19 +148,12 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   /// Someone who signs up and loses the email is otherwise stuck: they cannot
   /// sign in, and signing up again with the same address is refused.
   Future<void> resendConfirmation(String email) {
-    return _client.auth.resend(
-      type: OtpType.signup,
-      email: email.trim(),
-      emailRedirectTo: redirectUrl,
-    );
+    return _client.auth.resend(type: OtpType.signup, email: email.trim(), emailRedirectTo: redirectUrl);
   }
 
   /// Sends the "forgot password" email.
   Future<void> sendPasswordReset(String email) {
-    return _client.auth.resetPasswordForEmail(
-      email.trim(),
-      redirectTo: redirectUrl,
-    );
+    return _client.auth.resetPasswordForEmail(email.trim(), redirectTo: redirectUrl);
   }
 
   /// Sets a new password after following a reset link.
@@ -181,17 +169,11 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   /// Supabase has no "check the old one" step, so the screen verifies it by
   /// signing in with it first — otherwise a borrowed unlocked phone could
   /// change the password without knowing it.
-  Future<void> changePassword({
-    required String currentPassword,
-    required String newPassword,
-  }) async {
+  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
     final email = _client.auth.currentUser?.email;
     if (email == null) throw AuthException('not signed in');
 
-    await _client.auth.signInWithPassword(
-      email: email,
-      password: currentPassword,
-    );
+    await _client.auth.signInWithPassword(email: email, password: currentPassword);
     await _client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
@@ -208,13 +190,17 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     // arriving afterwards and putting the account back on screen.
     bool current() => mounted && _client.auth.currentUser?.id == user.id;
     try {
-      final row = await _client
-          .from('profiles')
-          .select('*, neighborhoods(name)')
-          .eq('id', user.id)
-          .maybeSingle();
+      final row = await _client.from('profiles').select('*, neighborhoods(name)').eq('id', user.id).maybeSingle();
 
       if (row == null) {
+        // No profile can mean the account was deleted — from the panel, or
+        // on a deletion request — while this phone kept its session, which
+        // stays valid for up to an hour and showed the deleted account as
+        // signed in. Asked, the server says so, and the session goes.
+        if (await _accountGone()) {
+          await _client.auth.signOut();
+          return;
+        }
         // The trigger in migration 00015 creates this row. If that migration
         // has not run, fall back to what the session already tells us so the
         // app is usable rather than stuck on a spinner.
@@ -225,6 +211,20 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       if (current()) state = _fromRow(row, user, isAdmin: isAdmin);
     } catch (_) {
       if (current()) state = _fromSession(user);
+    }
+  }
+
+  /// Whether the server no longer knows this session's account. Only a clear
+  /// answer counts: no connection is not a deleted account.
+  Future<bool> _accountGone() async {
+    try {
+      await _client.auth.getUser();
+      return false;
+    } on AuthException catch (e) {
+      final code = e.statusCode ?? '';
+      return code == '403' || code == '404' || e.code == 'user_not_found';
+    } catch (_) {
+      return false;
     }
   }
 
@@ -251,11 +251,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     createdAt: DateTime.tryParse(user.createdAt) ?? DateTime.now(),
   );
 
-  UserModel _fromRow(
-    Map<String, dynamic> row,
-    User user, {
-    required bool isAdmin,
-  }) {
+  UserModel _fromRow(Map<String, dynamic> row, User user, {required bool isAdmin}) {
     final hood = row['neighborhoods'];
     return UserModel(
       id: user.id,
@@ -273,9 +269,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       hasPet: row['has_pet'] as bool?,
       dateOfBirth: DateTime.tryParse(row['date_of_birth'] as String? ?? ''),
       role: isAdmin ? UserRole.admin : UserRole.user,
-      createdAt:
-          DateTime.tryParse(row['created_at'] as String? ?? '') ??
-          DateTime.now(),
+      createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
       lastLoginAt: DateTime.tryParse(row['last_login_at'] as String? ?? ''),
     );
   }
@@ -329,16 +323,9 @@ class AuthNotifier extends StateNotifier<UserModel?> {
 
   Future<void> _setNeighborhood(String profileId, String name) async {
     try {
-      final row = await _client
-          .from('neighborhoods')
-          .select('id')
-          .eq('name', name)
-          .maybeSingle();
+      final row = await _client.from('neighborhoods').select('id').eq('name', name).maybeSingle();
       if (row == null) return;
-      await _client
-          .from('profiles')
-          .update({'neighborhood_id': row['id']})
-          .eq('id', profileId);
+      await _client.from('profiles').update({'neighborhood_id': row['id']}).eq('id', profileId);
     } catch (_) {
       // Leave the stored value alone rather than clearing it.
     }
@@ -373,9 +360,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
           .from('media')
           .list(path: folder, searchOptions: const SearchOptions(limit: 1000));
       if (files.isEmpty) return;
-      await _client.storage
-          .from('media')
-          .remove([for (final f in files) '$folder/${f.name}']);
+      await _client.storage.from('media').remove([for (final f in files) '$folder/${f.name}']);
     } catch (_) {}
   }
 }
