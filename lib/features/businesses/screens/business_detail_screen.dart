@@ -1098,8 +1098,13 @@ class _BusinessDetailContentState
                       _showReviewForm = true;
                     });
                   },
+                  // The gap and the star's motion lines follow the reading
+                  // direction: set on the right, the last two stars touched
+                  // in Hebrew, their lines running into each other.
                   child: Padding(
-                    padding: EdgeInsets.only(right: i < 4 ? 12 : 0),
+                    padding: EdgeInsetsDirectional.only(end: i < 4 ? 12 : 0),
+                    child: Transform.flip(
+                    flipX: Directionality.of(context) == TextDirection.rtl,
                     child: Icon(
                       _userRating >= starIndex
                           ? IconsaxPlusBold.star_1
@@ -1108,6 +1113,7 @@ class _BusinessDetailContentState
                       color: _userRating >= starIndex
                           ? const Color(0xFFFFC107)
                           : const Color(0xFFBDBDBD),
+                    ),
                     ),
                   ),
                 );

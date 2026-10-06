@@ -481,8 +481,9 @@ class _NothingWritesThisNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              tr('עדיין אין באתר או באפליקציה מקום לכתוב תגובה, ולכן הרשימה '
-              'תתמלא רק כשיתווסף אחד.', 'The site and the app have no place to write a comment yet, so the list will fill only once one is added.'),
+              // Out of date since replies to reviews came (00039).
+              tr('תושבים כותבים כאן תגובות לביקורות מהאפליקציה. תגובה מופיעה '
+              'רק לאחר אישור, וכותב הביקורת מקבל התראה.', 'Residents reply to reviews from the app. A reply appears only once approved, and the review\'s author is notified.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
