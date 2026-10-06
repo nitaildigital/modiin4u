@@ -44,7 +44,13 @@ class ChallengePrizeBanner extends StatelessWidget {
 
     final goal = (challenge['goal'] as num?)?.toInt() ?? 0;
     final perDay = challenge['goal_per_day'] == true;
-    final end = DateTime.tryParse(challenge['end_at'] as String? ?? '')?.toLocal();
+    // The last day as Israel's calendar has it: the panel saves the end at
+    // 23:59 there, which a phone set to a zone further east read as the next
+    // day ("Until 1.11" for a competition ending on the 31st). Israel is
+    // UTC+2 or +3; +2 keeps 23:59 on its own day either way.
+    final end = DateTime.tryParse(challenge['end_at'] as String? ?? '')
+        ?.toUtc()
+        .add(const Duration(hours: 2));
     final winner = (challenge['winner_name'] as String?)?.trim();
     final iWon = myId != null && challenge['winner_id'] == myId;
 

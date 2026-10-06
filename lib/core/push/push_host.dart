@@ -59,7 +59,13 @@ class _PushHostState extends ConsumerState<PushHost> {
     // when their steps are saved: the challenge is read again after every
     // save, and names them. Once per challenge (showChallengeWin keeps it).
     if (!kIsWeb) {
-      ref.listenManual(activeChallengeProvider, (_, next) => _maybeShowWin(next.valueOrNull));
+      // `fireImmediately`: also for the value already there — a win named
+      // while the app was closed is shown at the next start, on any page.
+      ref.listenManual(
+        activeChallengeProvider,
+        (_, next) => _maybeShowWin(next.valueOrNull),
+        fireImmediately: true,
+      );
       ref.listenManual(authProvider, (_, _) => _maybeShowWin(ref.read(activeChallengeProvider).valueOrNull));
     }
   }
@@ -103,6 +109,8 @@ class _PushHostState extends ConsumerState<PushHost> {
     }
     if (!_inApp) return;
     _openPending();
+    // A win found while the splash was up waits for the first page.
+    if (!kIsWeb) _maybeShowWin(ref.read(activeChallengeProvider).valueOrNull);
     // Asked on the app's own pages — the tabs — not over sign-in or a form.
     if (shellDestinations.contains(path)) _askOnHome();
   }
