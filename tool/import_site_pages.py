@@ -168,4 +168,5 @@ def main():
         print('registry:', os.path.relpath(REGISTRY, ROOT))
 
 
-main()
+if __name__ == '__main__':
+    main()
