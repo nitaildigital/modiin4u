@@ -115,8 +115,14 @@ class MEventCategoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The circle, the label and the count, with the text grown by the
+    // phone's text-size setting and a few pixels spare. A flat 114 was the
+    // sum to the pixel, and on iPhone the Hebrew labels fall back to a
+    // system font whose lines run a little taller — the count drew the
+    // overflow stripes 2px below the row.
+    final line = MediaQuery.textScalerOf(context).scale(14) * 1.21;
     return SizedBox(
-      height: 114,
+      height: 64 + 12 + line + 4 + line + 6,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: circles.length,

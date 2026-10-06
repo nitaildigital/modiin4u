@@ -234,7 +234,7 @@ class _Section extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 232,
+          height: MNewsCard.heightFor(context),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),

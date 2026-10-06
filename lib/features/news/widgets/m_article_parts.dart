@@ -342,7 +342,7 @@ class MRelatedNews extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 232,
+          height: MNewsCard.heightFor(context),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -374,6 +374,20 @@ class MNewsCard extends StatelessWidget {
     this.width = 250,
     this.imageHeight = 150,
   });
+
+  /// How tall a card is, for the horizontal strips that must fix their
+  /// height: the photo, two lines of headline, the date and the gaps, with
+  /// the text grown by the phone's text-size setting. The strips were a
+  /// flat 232, five pixels short of the card even at the normal size, so
+  /// every card drew the overflow stripes on iPhone.
+  static double heightFor(BuildContext context, {double imageHeight = 150}) {
+    final scale = MediaQuery.textScalerOf(context);
+    final headline = scale.scale(16) * 1.2 * 2;
+    // The date sets no line height of its own, and on iPhone its Hebrew
+    // falls back to a system font whose lines run about 1.6 times the size.
+    final date = scale.scale(14) * 1.75 > 16 ? scale.scale(14) * 1.75 : 16.0;
+    return imageHeight + 12 + headline + 12 + date + 2;
+  }
 
   @override
   Widget build(BuildContext context) {
