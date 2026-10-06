@@ -97,6 +97,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   /// neighbourhoods with categories; information pages with articles (the
   /// content editor's "pages"); challenges, the trash, the home page and
   /// flags with settings, which is the main admin's.
+  ///
+  /// The admin team is 'team', a module no role holds, so only the main
+  /// admin sees it. It went with 'users', and support — who has users — saw
+  /// every administrator's name and e-mail, with switches and an add button
+  /// the database refuses them (the team tables are main-admin-only, 00042).
   static const _sectionModules = <String?>[
     null, 'users', //
     'businesses', 'articles', 'events', 'businesses', 'businesses',
@@ -104,7 +109,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     'categories', 'categories', 'categories', 'media', //
     'offers', 'revenue', 'revenue', 'campaigns', 'campaigns', //
     'moderation', 'moderation', 'moderation', 'push', 'settings', //
-    'users', 'audit', 'settings', 'settings', 'settings', 'articles', null,
+    'team', 'audit', 'settings', 'settings', 'settings', 'articles', null,
   ];
 
   /// Whether the signed-in administrator's role may open section [i].
