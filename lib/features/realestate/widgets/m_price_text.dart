@@ -7,7 +7,7 @@ import '../screens/my_apartments_screen.dart' show formatShekels;
 
 /// A listing card's price as the phone design sets it: the amount in the
 /// rounded face, and for a rental the "per month" part smaller and grey
-/// beside it ("₪7,500 / In the month").
+/// beside it ("₪7,500 / month").
 ///
 /// The suffix is taken from the same localised string the rest of the app
 /// uses, so both languages keep their own wording.

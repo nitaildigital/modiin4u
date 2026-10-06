@@ -276,7 +276,7 @@ class _WebListingDetailContentState extends ConsumerState<WebListingDetailConten
               ),
               if (l.kind == ListingKind.rent) ...[
                 const SizedBox(width: 8),
-                Text(_t('/ In the month', '/ לחודש'), style: detailInter(16, color: kDetailGrey)),
+                Text(_t('/ month', '/ לחודש'), style: detailInter(16, color: kDetailGrey)),
               ],
             ],
           ),

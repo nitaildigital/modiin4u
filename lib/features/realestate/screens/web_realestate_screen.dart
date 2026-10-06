@@ -1419,7 +1419,7 @@ class _ListingCardState extends State<_ListingCard> {
                                       const SizedBox(width: 8),
                                       Flexible(
                                         child: Text(
-                                          _t('/ In the month', '/ לחודש'),
+                                          _t('/ month', '/ לחודש'),
                                           style: TextStyle(
                                             fontFamily: AppFonts.inter,
                                             fontSize: 14,

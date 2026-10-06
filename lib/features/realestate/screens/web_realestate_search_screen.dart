@@ -1055,7 +1055,7 @@ class _WebRealEstateSearchContentState extends ConsumerState<WebRealEstateSearch
                                 if (price != null && _isRent) ...[
                                   const SizedBox(width: 8),
                                   Text(
-                                    _t('/ In the month', '/ לחודש'),
+                                    _t('/ month', '/ לחודש'),
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 14,

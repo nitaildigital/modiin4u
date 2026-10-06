@@ -121,7 +121,11 @@ class _MobileMunicipalContentState extends State<_MobileMunicipalContent> {
                           ),
                           decoration: InputDecoration(
                             isCollapsed: true,
+                            // The theme fills fields grey; the pill is the box.
+                            filled: false,
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
                             hintText: l.searchMunicipal,
                             hintStyle: TextStyle(
                               fontFamily: AppFonts.inter,
@@ -437,10 +441,14 @@ class _ParkingCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: _TwoLineTitle(l.parkingInModiin)),
-                  const Icon(
-                    IconsaxPlusLinear.arrow_left_2,
+                  // Points onward in the reading direction: it pointed left,
+                  // backwards, in English.
+                  Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? IconsaxPlusLinear.arrow_left_2
+                        : IconsaxPlusLinear.arrow_right_3,
                     size: 16,
-                    color: Color(0xFF0A1230),
+                    color: const Color(0xFF0A1230),
                   ),
                 ],
               ),

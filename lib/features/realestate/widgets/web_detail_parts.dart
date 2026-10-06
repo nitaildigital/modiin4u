@@ -692,7 +692,7 @@ class _DetailListingCardState extends State<DetailListingCard> {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          _t('/ In the month', '/ לחודש'),
+                          _t('/ month', '/ לחודש'),
                           style: detailInter(14, color: kDetailGrey),
                           overflow: TextOverflow.ellipsis,
                         ),

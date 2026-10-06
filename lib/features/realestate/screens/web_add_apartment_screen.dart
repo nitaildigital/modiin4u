@@ -312,6 +312,9 @@ class _WebAddApartmentContentState extends ConsumerState<WebAddApartmentContent>
           .read(listingRepositoryProvider)
           .create(
             draftId: _draftId,
+            // A broker's listing says so ("Via Broker"); the form never
+            // passed it, so every broker listing read as a private one.
+            isBroker: ref.read(authProvider)?.isBroker ?? false,
             title: _title.text.trim(),
             description: _description.text.trim().isEmpty
                 ? null

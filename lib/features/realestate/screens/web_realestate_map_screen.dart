@@ -620,7 +620,7 @@ class _PropertyRow extends StatelessWidget {
                             child: Text(
                               l.kind == ListingKind.rent
                                   ? _t(
-                                      '${formatShekels(price)} / In the month',
+                                      '${formatShekels(price)} / month',
                                       '${formatShekels(price)} לחודש',
                                     )
                                   : formatShekels(price),

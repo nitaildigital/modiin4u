@@ -620,7 +620,7 @@ WebMapSlideData webListingSlideData(Listing l, {required bool isHebrew}) {
     headline: price == null
         ? t('Price on request', 'מחיר לפי בקשה')
         : formatShekels(price),
-    perMonth: price != null && isRent ? t('/ In the month', '/ לחודש') : null,
+    perMonth: price != null && isRent ? t('/ month', '/ לחודש') : null,
     tag: isRent ? t('FOR RENT', 'להשכרה') : t('FOR SALE', 'למכירה'),
     facts: [
       if (l.rooms != null)
