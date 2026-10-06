@@ -385,7 +385,10 @@ final neighborhoodLeaderboardProvider =
 final activeChallengeProvider = FutureProvider<Map<String, dynamic>?>((
   ref,
 ) async {
-  final now = DateTime.now().toIso8601String();
+  // In UTC, with its zone. The phone's local time carries no zone, and the
+  // database reads one without a zone as UTC — in Israel the competition
+  // appeared three hours before it began and was gone for its last three.
+  final now = DateTime.now().toUtc().toIso8601String();
   final rows = await SupabaseConfig.client
       .from('challenges')
       .select('*, challenge_participants(progress, completed)')
