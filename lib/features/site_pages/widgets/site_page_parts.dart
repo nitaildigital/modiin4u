@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/web_chrome.dart' show kContactEmail;
 
 /// The page's name while there is no published text to take it from — the
@@ -75,9 +77,16 @@ class SitePageComingSoon extends StatelessWidget {
 /// to use. Google Play wants a way to ask for deletion without the app, and
 /// someone who has uninstalled it can tap this rather than copy an address.
 ///
+/// The message says which account. Signed in (the app, where the page is
+/// reachable too), it carries the account's name, e-mail, phone and id, so
+/// the office knows exactly which one without asking back. Signed out — the
+/// website, where residents do not sign in (accounts are the app's) — it is
+/// a short form with those lines to fill in, sent from the address the
+/// account was made with.
+///
 /// Shown whether or not the client has published the page's text — the
 /// request has to work before the words around it are final.
-class SiteDeletionRequestButton extends StatelessWidget {
+class SiteDeletionRequestButton extends ConsumerWidget {
   final bool hebrew;
   final double fontSize;
 
@@ -88,12 +97,33 @@ class SiteDeletionRequestButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     String t(String en, String he) => hebrew ? he : en;
+    final me = ref.watch(authProvider);
+    String line(String en, String he, String value) => '${t(en, he)}: $value';
+    final body = [
+      t('Please delete my Modiin4u account.', 'אבקש למחוק את החשבון שלי במודיעין בשבילך.'),
+      '',
+      if (me != null) ...[
+        line('Name', 'שם', me.name),
+        line('E-mail', 'אימייל', me.email),
+        if (me.phone.trim().isNotEmpty) line('Phone', 'טלפון', me.phone),
+        line('Account ID', 'מזהה חשבון', me.id),
+      ] else ...[
+        line('Name', 'שם', ''),
+        line('E-mail I signed up with', 'האימייל שאיתו נרשמתי', ''),
+        line('Phone', 'טלפון', ''),
+        '',
+        t('(Please send this from the e-mail address you signed up with.)',
+            '(נא לשלוח מכתובת האימייל שאיתה נרשמתם.)'),
+      ],
+    ].join('\r\n');
     // Encoded by hand: Uri's queryParameters writes spaces as "+", which
     // some mail apps put in the subject line as they are.
     final subject = Uri.encodeComponent(t('Delete my account', 'מחיקת חשבון'));
-    final mail = Uri.parse('mailto:$kContactEmail?subject=$subject');
+    final mail = Uri.parse(
+      'mailto:$kContactEmail?subject=$subject&body=${Uri.encodeComponent(body)}',
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
