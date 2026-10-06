@@ -397,6 +397,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          // iOS autocorrects an address like any word — "tmp-…" became
+          // "Tom-…" on the simulator, and the sign-in failed.
+          autocorrect: keyboardType != TextInputType.emailAddress,
+          enableSuggestions: keyboardType != TextInputType.emailAddress,
           enabled: enabled,
           autofocus: autofocus,
           obscureText: isPassword && _obscurePassword,

@@ -738,6 +738,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          // iOS autocorrects an address like any word — "tmp-…" became
+          // "Tom-…" on the simulator, and the sign-in failed.
+          autocorrect: keyboardType != TextInputType.emailAddress,
+          enableSuggestions: keyboardType != TextInputType.emailAddress,
           obscureText: isPassword && obscure,
           style: TextStyle(
             fontFamily: AppFonts.inter,
