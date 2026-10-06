@@ -2368,6 +2368,15 @@ rows made for it and deleted after.
   card clicks (a click opens the page, which already counts a view). An admin
   sees drafts only by their direct address — lists filter by status.
 
+Found and fixed while testing on the phone: Add to calendar sent 00:00 (the
+date column without the time, which is kept apart as Israel's clock) — it now
+sends the times with Israel's zone named; and a sign-out at start could be
+undone on screen by the profile read finishing afterwards (auth_provider now
+checks the session is still that user's). Seen, not fixed: the Deals tab
+lists ended deals under "Popular"; a business or My Apartments changed in the
+panel shows the old version in the app until it restarts; the business page
+shows a greyed website button when there is none.
+
 Content the site shows that the panel cannot edit: contact phone and e-mail,
 social links, footer About text, home hero and its blocks, Help FAQ,
 Municipal tiles, onboarding copy. Panel fields nothing reads: `home_blocks`
