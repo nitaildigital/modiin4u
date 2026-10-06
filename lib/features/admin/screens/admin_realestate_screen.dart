@@ -684,6 +684,8 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
   String _status = 'pending';
   DateTime? _availableFrom;
   bool _isBroker = false;
+  /// "Send a notification when approved" (00060).
+  bool _notify = true;
   bool _hasParking = false;
   bool _hasElevator = false;
   bool _hasBalcony = false;
@@ -748,6 +750,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
     _propertyType = l?['property_type'] as String? ?? 'apartment';
     _status = l?['status'] as String? ?? 'pending';
     _isBroker = l?['is_broker'] as bool? ?? false;
+    _notify = l == null || (l['notify_on_publish'] as bool? ?? false);
     _hasParking = l?['has_parking'] as bool? ?? false;
     _hasElevator = l?['has_elevator'] as bool? ?? false;
     _hasBalcony = l?['has_balcony'] as bool? ?? false;
@@ -1113,6 +1116,11 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                             _isFeatured,
                             (v) => setState(() => _isFeatured = v),
                           ),
+                          _toggle(
+                            tr('לשלוח התראה באישור', 'Send a notification when approved'),
+                            _notify,
+                            (v) => setState(() => _notify = v),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -1407,6 +1415,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
       'gallery': _photos.length > 1 ? _photos.sublist(1) : const <String>[],
       'status': _status,
       'is_broker': _isBroker,
+      'notify_on_publish': _notify,
       'has_parking': _hasParking,
       'has_elevator': _hasElevator,
       'has_balcony': _hasBalcony,

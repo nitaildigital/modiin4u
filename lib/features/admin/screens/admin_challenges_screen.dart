@@ -346,6 +346,8 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
   late final TextEditingController _prize;
   late final TextEditingController _prizeEn;
   bool _perDay = false;
+  /// "Notify everyone when it starts" (00060).
+  bool _notify = true;
   DateTime? _startAt;
   DateTime? _endAt;
   bool _isActive = true;
@@ -368,6 +370,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
     _prize = TextEditingController(text: c?['prize'] as String? ?? '');
     _prizeEn = TextEditingController(text: c?['prize_en'] as String? ?? '');
     _perDay = c?['goal_per_day'] as bool? ?? false;
+    _notify = c == null || (c['notify_on_publish'] as bool? ?? false);
     _startAt = DateTime.tryParse(c?['start_at'] as String? ?? '');
     _endAt = DateTime.tryParse(c?['end_at'] as String? ?? '');
     _isActive = c?['is_active'] as bool? ?? true;
@@ -422,6 +425,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
       'prize': _prize.text.trim().isEmpty ? null : _prize.text.trim(),
       'prize_en': _prizeEn.text.trim().isEmpty ? null : _prizeEn.text.trim(),
       'goal_per_day': _perDay,
+      'notify_on_publish': _notify,
       'challenge_type': 'steps',
       'start_at': _startAt!.toIso8601String(),
       // Inclusive of the closing day: a challenge ending on the 30th should
@@ -569,6 +573,19 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                       subtitle: Text(
                         tr('הראשון שמגיע ליעד ביום אחד זוכה. כבוי: הצעדים מצטברים מתחילת האתגר.',
                             'The first to reach the goal in one day wins. Off: steps add up from the start.'),
+                        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
+                      ),
+                    ),
+                    SwitchListTile(
+                      value: _notify,
+                      onChanged: (v) => setState(() => _notify = v),
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        tr('לשלוח התראה לכולם כשהתחרות מתחילה', 'Notify everyone when it starts'),
+                        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        tr('הזוכה וכל השאר מקבלים התראה כשיש זוכה.', 'The winner and everyone else are notified when there is a winner.'),
                         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
                       ),
                     ),

@@ -106,7 +106,11 @@ class AdminTableNotifier
         query = query.eq(f.key, f.value);
       }
       for (final f in excluded.entries) {
-        query = query.neq(f.key, f.value);
+        // A list leaves out several values at once.
+        final v = f.value;
+        query = v is List
+            ? query.not(f.key, 'in', '(${v.join(',')})')
+            : query.neq(f.key, v);
       }
       if (_search != null && _search!.trim().isNotEmpty) {
         // Commas and brackets are the grammar of `or`, so inside the text

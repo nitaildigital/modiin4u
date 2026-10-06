@@ -441,6 +441,7 @@ String _audienceLabel(Map<String, dynamic> n, Map<String, String> hoods) {
     'neighborhood' => tr('שכונה: ${hoods[filter?['neighborhood_id']] ?? '—'}', 'Neighbourhood: ${hoods[filter?['neighborhood_id']] ?? '—'}'),
     'topic' => tr('נושא: ${_topics[filter?['topic']] ?? '—'}', 'Topic: ${_topics[filter?['topic']] ?? '—'}'),
     'device' => tr('מכשיר בדיקה', 'Test device'),
+    'all_but' => tr('כולם חוץ מהזוכה', 'Everyone but the winner'),
     _ => tr('כולם', 'Everyone'),
   };
 }

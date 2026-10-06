@@ -576,6 +576,9 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
   String _status = 'draft';
   String _audience = 'all';
   bool _isFeatured = false;
+  /// "Send a notification when it goes live" (00060): on for a new deal, off
+  /// for one from before; clearing it in the five minutes cancels it.
+  bool _notify = true;
 
   bool get _isEditing => widget.offer != null;
 
@@ -639,6 +642,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     _audience = o?['audience'] as String? ?? 'all';
     if (!_audiences.containsKey(_audience)) _audience = 'all';
     _isFeatured = o?['is_featured'] as bool? ?? false;
+    _notify = o == null || (o['notify_on_publish'] as bool? ?? false);
   }
 
   @override
@@ -914,6 +918,15 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                           activeThumbColor: AppColors.gold,
                           onChanged: (v) => setState(() => _isFeatured = v),
                         ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            tr('לשלוח התראה כשהמבצע עולה', 'Send a notification when it goes live'),
+                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+                          ),
+                          value: _notify,
+                          onChanged: (v) => setState(() => _notify = v),
+                        ),
                       ],
                     ),
                   ),
@@ -1140,6 +1153,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
       'audience': _audience,
       'status': _status,
       'is_featured': _isFeatured,
+      'notify_on_publish': _notify,
     };
 
     setState(() => _saving = true);

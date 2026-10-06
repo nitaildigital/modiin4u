@@ -36,7 +36,8 @@ class AdminPushListNotifier extends AdminTableNotifier {
         columns: '*, businesses!push_campaigns_business_id_fkey(id, name)',
         orderBy: 'created_at',
         softDeleteStatus: 'cancelled',
-        excluded: const {'audience_type': 'profiles'},
+        // A winner's own "You won" (`person`, 00060) is theirs, as replies are.
+        excluded: const {'audience_type': ['profiles', 'person']},
       );
 
   // Written directly rather than through [create] and [update]: those drop
