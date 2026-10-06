@@ -1,5 +1,7 @@
-import 'package:flutter/foundation.dart' show kIsWeb, setEquals;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb, setEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 import 'package:latlong2/latlong.dart';
@@ -122,10 +124,35 @@ class _AppMapState extends State<AppMap> {
   static const _style =
       '[{"featureType":"poi.business","stylers":[{"visibility":"off"}]}]';
 
+  /// Whether the iPhone build was given a Google Maps key (AppDelegate),
+  /// asked once. Google's SDK closes the app when a map opens without one,
+  /// so until the answer is yes an iPhone draws the website's renderer: the
+  /// pins on the map's plain background, as the website shows them without
+  /// its key (WebMapTiles) — no other provider's map, as the client asked.
+  /// Null while the question is out.
+  static bool? _iosHasKey;
+  static Future<bool>? _iosKeyQuestion;
+
+  static bool get _isIos =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+  /// The website's renderer: always in a browser, and on an iPhone that
+  /// has no Google key.
+  bool get _flutterMapDraws => kIsWeb || (_isIos && _iosHasKey != true);
+
   @override
   void initState() {
     super.initState();
     widget.controller?._map = this;
+    if (_isIos && _iosHasKey == null) {
+      _iosKeyQuestion ??= const MethodChannel('modiin4u/maps')
+          .invokeMethod<bool>('hasKey')
+          .then((v) => _iosHasKey = v ?? false)
+          .catchError((_) => _iosHasKey = false);
+      _iosKeyQuestion!.then((_) {
+        if (mounted) setState(() {});
+      });
+    }
   }
 
   @override
@@ -144,7 +171,7 @@ class _AppMapState extends State<AppMap> {
   }
 
   void _moveTo(LatLng p, double zoom) {
-    if (kIsWeb) {
+    if (_flutterMapDraws) {
       _flutterMap.move(p, zoom);
     } else {
       _google?.animateCamera(
@@ -205,7 +232,14 @@ class _AppMapState extends State<AppMap> {
   }
 
   @override
-  Widget build(BuildContext context) => kIsWeb ? _web() : _app();
+  Widget build(BuildContext context) {
+    // A moment's plain background on an iPhone while it is asked whether it
+    // has a key, rather than opening Google's map and closing the app.
+    if (_isIos && _iosHasKey == null) {
+      return const ColoredBox(color: Color(0xFFF9F5ED));
+    }
+    return _flutterMapDraws ? _web() : _app();
+  }
 
   Widget _app() {
     // Redraw when the pins on the map or the chosen one change.
