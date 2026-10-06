@@ -2451,6 +2451,20 @@ over a business page still open underneath showed the thread from before the
 approval (the reviews are read again now, `push_host.dart`); the panel's
 Comments note still said the app had nowhere to write one.
 
+**Notifications for what the panel adds, and for a competition's winner — 6 Oct.**
+00060: a deal going live (topic Deals), a property approved (Real estate), a
+competition switched on (everyone, at its start), and on a win "You won the
+competition!" with the prize to the winner only, "The competition has a winner"
+to everyone else. The panel's deal, property and competition forms have the
+"send a notification" switch; an owner's deal is never announced. Tested on two
+phones: all five arrived, in each phone's language, to the right people (deal
+4, property 2 — only those with Real estate on, competition 4, win 1, result 3).
+Also found and fixed in testing: the win popup only showed if the challenge
+changed after the app opened (it now checks at start and on each page), the
+banner's end date read a day late on a phone in another time zone, and
+**00061** — deleting a notification outright re-queued it for its row (the
+foreign key's update looked like an edit), for 00045's too.
+
 Content the site shows that the panel cannot edit: contact phone and e-mail,
 social links, footer About text, home hero and its blocks, Help FAQ,
 Municipal tiles, onboarding copy. Panel fields nothing reads: `home_blocks`
