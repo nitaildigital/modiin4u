@@ -15,6 +15,16 @@ val localProperties = Properties().apply {
     if (file.exists()) file.inputStream().use { load(it) }
 }
 
+// The release keystore's details, in android/key.properties (git ignores it
+// and the .jks): storeFile, storePassword, keyAlias, keyPassword. Without the
+// file, release builds are signed with the debug key as before — fine for
+// testing, refused by Play.
+val keyProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val hasReleaseKey = keyProperties.getProperty("storeFile") != null
+
 android {
     namespace = "il.co.modiin4u.modiin4u"
     compileSdk = flutter.compileSdkVersion
@@ -48,13 +58,20 @@ android {
             localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = file(keyProperties.getProperty("storeFile"))
+                storePassword = keyProperties.getProperty("storePassword")
+                keyAlias = keyProperties.getProperty("keyAlias")
+                keyPassword = keyProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Replace with your release keystore before Play Store upload:
-            //   1. Generate keystore: keytool -genkey -v -keystore ~/modiin4u-release.jks ...
-            //   2. Create android/key.properties with storeFile, storePassword, keyAlias, keyPassword
-            //   3. Load it here and reference the release signingConfig
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
 
             // Minification & shrinking for smaller APK
             isMinifyEnabled = true
