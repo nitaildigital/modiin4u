@@ -13,15 +13,37 @@ import '../models/article.dart';
 import '../providers/news_providers.dart';
 import '../widgets/m_article_parts.dart';
 import 'web_article_screen.dart';
+import '../../businesses/repositories/business_stats.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// News article detail – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News Detail web layout;
 /// narrower windows get the phone layout from the mobile Figma frame.
-class ArticleScreen extends StatelessWidget {
+class ArticleScreen extends StatefulWidget {
   final String articleId;
 
   const ArticleScreen({super.key, required this.articleId});
+
+  @override
+  State<ArticleScreen> createState() => _ArticleScreenState();
+}
+
+class _ArticleScreenState extends State<ArticleScreen> {
+  String get articleId => widget.articleId;
+
+  // Views were never counted, so "most viewed" ranked WordPress's numbers
+  // (00066). Once per page opened, on either layout.
+  @override
+  void initState() {
+    super.initState();
+    BusinessStats.recordArticleView(articleId);
+  }
+
+  @override
+  void didUpdateWidget(ArticleScreen old) {
+    super.didUpdateWidget(old);
+    if (old.articleId != articleId) BusinessStats.recordArticleView(articleId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,9 +116,9 @@ class _MobileArticleContent extends ConsumerWidget {
 // ═══════════════════════════════════════════════
 // Figma "News Detail" (556:10027): the 260 photo with the back button, the
 // category and views, the headline and date over a rule, the body, then
-// "More Related News". The design's "12 Comments" thread and the Comments /
-// Save cells of the bar are not drawn: articles have no comments or saves in
-// the app.
+// "More Related News". The design's "12 Comments" thread and the bar's
+// Comments cell are not drawn: articles have no comments in the app. Save is
+// (MArticleBottomBar), to Favourites → News.
 // ═══════════════════════════════════════════════
 class _ArticleView extends ConsumerWidget {
   final Article article;

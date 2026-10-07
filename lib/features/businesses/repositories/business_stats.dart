@@ -46,9 +46,28 @@ class BusinessStats {
     }
   }();
 
+  /// The same random id, for the other pages that count visits (articles).
+  static Future<String> visitorId() => _visitorId();
+
   static String _randomId() {
     final r = Random.secure();
     return List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  /// Counts a view of [articleId] (00066), in the background, as a business
+  /// view is: once per visitor per article per half hour, by the database.
+  static void recordArticleView(String articleId) {
+    () async {
+      try {
+        await SupabaseConfig.client.rpc('record_article_view', params: {
+          'p_article': articleId,
+          'p_platform': kIsWeb ? 'web' : 'app',
+          'p_visitor': await _visitorId(),
+        });
+      } catch (e) {
+        debugPrint('Article view not recorded: $e');
+      }
+    }();
   }
 
   /// Records [stat] for [businessId], in the background.

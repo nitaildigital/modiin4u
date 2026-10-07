@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/supabase/supabase_config.dart';
+import '../providers/admin_permissions_provider.dart';
 import '../providers/admin_team_provider.dart';
 import '../widgets/admin_form_pickers.dart';
 import '../admin_language.dart';
@@ -104,6 +106,21 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
                   ),
                 ),
               const SizedBox(width: 12),
+              // What each role may do: the main admin's alone (00066).
+              if (AdminPermissions.of(ref.watch(adminPermissionsProvider)).isMainAdmin) ...[
+                OutlinedButton.icon(
+                  onPressed: () => showDialog(
+                    context: context,
+                    builder: (_) => const _RoleRightsDialog(),
+                  ),
+                  icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
+                  label: Text(
+                    tr('תפקידים והרשאות', 'Roles & rights'),
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
               ElevatedButton.icon(
                 onPressed: () => _showGrant(context),
                 icon: const Icon(Icons.person_add, size: 18),
@@ -701,3 +718,267 @@ String _roleLabel(Map role) {
   final he = role['label'] as String? ?? name;
   return tr(he, _roleNamesEn[name] ?? name);
 }
+
+/// Roles & rights: what each role may do, section by section.
+///
+/// The client asked to limit roles (2 Oct). The rights were rows in
+/// `admin_role_permissions` that only the database could change; since 00050
+/// the database enforces them and the panel shows each administrator only
+/// the sections their role may view. This is where the main admin changes
+/// them. The main admin's own role is not here: it may do everything,
+/// whatever the rows say, so it can never be locked out.
+class _RoleRightsDialog extends ConsumerStatefulWidget {
+  const _RoleRightsDialog();
+
+  @override
+  ConsumerState<_RoleRightsDialog> createState() => _RoleRightsDialogState();
+}
+
+class _RoleRightsDialogState extends ConsumerState<_RoleRightsDialog> {
+  /// The panel's sections by module — the same modules the sidebar and
+  /// 00050's rules use.
+  static List<(String, String)> get _modules => [
+    ('articles', tr('כתבות ועמודי מידע', 'Articles and info pages')),
+    ('events', tr('אירועים', 'Events')),
+    ('businesses', tr('עסקים, נדל״ן, חניונים ומוסדות', 'Businesses, real estate, car parks, places')),
+    ('categories', tr('קטגוריות, תגיות ושכונות', 'Categories, tags, neighbourhoods')),
+    ('media', tr('מדיה', 'Media')),
+    ('offers', tr('מבצעים', 'Deals')),
+    ('campaigns', tr('קמפיינים ומיקומי פרסום', 'Campaigns and ad slots')),
+    ('revenue', tr('הסכמים והכנסות', 'Agreements and revenue')),
+    ('moderation', tr('ביקורות, תגובות ודיווחים', 'Reviews, comments, reports')),
+    ('push', tr('התראות Push', 'Push notifications')),
+    ('users', tr('משתמשים', 'Users')),
+    ('audit', tr('יומן פעולות', 'Activity log')),
+    ('settings', tr('הגדרות, אתגרים ובונה דף הבית', 'Settings, challenges, home builder')),
+  ];
+
+  static List<(String, String)> get _actions => [
+    ('view', tr('צפייה', 'View')),
+    ('create', tr('יצירה', 'Create')),
+    ('edit', tr('עריכה', 'Edit')),
+    ('delete', tr('מחיקה', 'Delete')),
+  ];
+
+  String? _roleId;
+
+  /// module → action → allowed, as loaded and as changed.
+  Map<String, Map<String, bool>> _saved = {};
+  Map<String, Map<String, bool>> _rights = {};
+  bool _loading = false;
+  bool _saving = false;
+  String? _error;
+
+  Future<void> _load(String roleId) async {
+    setState(() {
+      _roleId = roleId;
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final rows = await SupabaseConfig.client
+          .from('admin_role_permissions')
+          .select('module, action, allowed')
+          .eq('role_id', roleId);
+      final rights = <String, Map<String, bool>>{};
+      for (final r in List<Map<String, dynamic>>.from(rows)) {
+        rights.putIfAbsent(r['module'] as String, () => {})[r['action'] as String] =
+            r['allowed'] == true;
+      }
+      if (!mounted) return;
+      setState(() {
+        _saved = {for (final e in rights.entries) e.key: {...e.value}};
+        _rights = rights;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = adminErrorText(e);
+      });
+    }
+  }
+
+  bool _allowed(String module, String action) => _rights[module]?[action] ?? false;
+
+  void _set(String module, String action, bool on) {
+    setState(() {
+      final m = _rights.putIfAbsent(module, () => {});
+      m[action] = on;
+      // Creating, editing or deleting in a section the role cannot open
+      // means nothing; opening one is implied by any of them.
+      if (on && action != 'view') m['view'] = true;
+      if (!on && action == 'view') {
+        for (final a in ['create', 'edit', 'delete']) {
+          if (m.containsKey(a)) m[a] = false;
+        }
+      }
+    });
+  }
+
+  bool get _changed {
+    for (final (module, _) in _modules) {
+      for (final (action, _) in _actions) {
+        if ((_saved[module]?[action] ?? false) != _allowed(module, action)) return true;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _save() async {
+    final roleId = _roleId;
+    if (roleId == null) return;
+    setState(() => _saving = true);
+    try {
+      final rows = [
+        for (final (module, _) in _modules)
+          for (final (action, _) in _actions)
+            if ((_saved[module]?[action] ?? false) != _allowed(module, action))
+              {
+                'role_id': roleId,
+                'module': module,
+                'action': action,
+                'allowed': _allowed(module, action),
+              },
+      ];
+      if (rows.isNotEmpty) {
+        await SupabaseConfig.client
+            .from('admin_role_permissions')
+            .upsert(rows, onConflict: 'role_id,module,action');
+      }
+      if (!mounted) return;
+      setState(() {
+        _saved = {for (final e in _rights.entries) e.key: {...e.value}};
+        _saving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('ההרשאות נשמרו', 'Rights saved'))),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showAdminError(context, tr('השמירה נכשלה', 'Could not save'), e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final roles = (ref.watch(adminRolesProvider).valueOrNull ?? const [])
+        .where((r) => r['name'] != 'super_admin')
+        .toList();
+
+    return Dialog(
+      insetPadding: const EdgeInsets.all(24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 720),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                tr('תפקידים והרשאות', 'Roles & rights'),
+                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.navy),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                tr('מה כל תפקיד רשאי לעשות. המנהל הראשי רשאי הכול תמיד. שינוי חל בכניסה הבאה של חבר הצוות לניהול.',
+                    'What each role may do. The super admin may always do everything. A change applies the next time the team member opens the panel.'),
+                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _roleId,
+                decoration: InputDecoration(labelText: tr('תפקיד', 'Role')),
+                items: [
+                  for (final r in roles)
+                    DropdownMenuItem(
+                      value: r['id'] as String,
+                      child: Text(_roleLabel(r), style: TextStyle(fontFamily: AppFonts.rubik)),
+                    ),
+                ],
+                onChanged: _saving
+                    ? null
+                    : (v) {
+                        if (v != null) _load(v);
+                      },
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: _roleId == null
+                    ? Center(
+                        child: Text(
+                          tr('בחרו תפקיד', 'Choose a role'),
+                          style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayText),
+                        ),
+                      )
+                    : _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                    ? Center(child: Text(_error!, style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error)))
+                    : SingleChildScrollView(
+                        child: Table(
+                          columnWidths: const {0: FlexColumnWidth(3)},
+                          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                          children: [
+                            TableRow(
+                              decoration: BoxDecoration(
+                                border: Border(bottom: BorderSide(color: AppColors.border)),
+                              ),
+                              children: [
+                                const SizedBox(),
+                                for (final (_, label) in _actions)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    child: Text(
+                                      label,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            for (final (module, label) in _modules)
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13)),
+                                  ),
+                                  for (final (action, _) in _actions)
+                                    Center(
+                                      child: Checkbox(
+                                        value: _allowed(module, action),
+                                        onChanged: _saving ? null : (v) => _set(module, action, v ?? false),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(tr('סגירה', 'Close')),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: _saving || !_changed ? null : _save,
+                    child: Text(tr('שמירה', 'Save')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

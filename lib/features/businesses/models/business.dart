@@ -60,7 +60,12 @@ class Business {
   final String? whatsapp;
   final String? email;
   final String address;
-  final String neighborhood;
+
+  /// Hebrew, and English where the panel has one (00066); [neighborhood] is
+  /// the reader's.
+  final String neighborhoodHe;
+  final String? neighborhoodEn;
+  String get neighborhood => localName(neighborhoodHe, neighborhoodEn);
 
   /// The joined row's id, so a screen can link to the neighbourhood page.
   /// Null where the business is not filed under one.
@@ -105,7 +110,8 @@ class Business {
     this.whatsapp,
     this.email,
     required this.address,
-    required this.neighborhood,
+    required String neighborhood,
+    this.neighborhoodEn,
     this.neighborhoodId,
     required this.latitude,
     required this.longitude,
@@ -128,6 +134,7 @@ class Business {
     this.ownerId,
     DateTime? createdAt,
   }) : nameHe = name,
+       neighborhoodHe = neighborhood,
        createdAt = createdAt ?? DateTime.now();
 
   Business copyWith({
@@ -180,7 +187,8 @@ class Business {
       whatsapp: whatsapp ?? this.whatsapp,
       email: email ?? this.email,
       address: address ?? this.address,
-      neighborhood: neighborhood ?? this.neighborhood,
+      neighborhood: neighborhood ?? neighborhoodHe,
+      neighborhoodEn: neighborhood == null ? neighborhoodEn : null,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -280,6 +288,9 @@ class Business {
       email: json['email'] as String?,
       address: (json['address'] as String?) ?? '',
       neighborhood: neighborhoodName,
+      neighborhoodEn: joinedNeighborhood is Map<String, dynamic>
+          ? joinedNeighborhood['name_en'] as String?
+          : null,
       neighborhoodId: neighborhoodId,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,

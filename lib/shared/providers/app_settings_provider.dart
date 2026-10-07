@@ -25,6 +25,10 @@ abstract final class AppSettingKeys {
   /// How many open reports hide a review or a reply until someone looks
   /// (00064). 0, or never set, nothing hides itself.
   static const reportsAutoHideAt = 'reports_auto_hide_at';
+
+  /// How many days an approved listing stays up (00066). 0, or never set,
+  /// it never expires.
+  static const listingsExpireDays = 'listings_expire_days';
 }
 
 /// A store link, only when the panel has given an https address.

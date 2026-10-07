@@ -891,25 +891,29 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                         color: const Color(0xFF454545),
                       ),
                     ),
-                    const SizedBox(height: 11),
-                    // Prize row
-                    Row(
-                      children: [
-                        // The prize from the panel (00058); the name where
-                        // the challenge has none.
-                        const Text('🏅', style: TextStyle(fontSize: 16)),
-                        const SizedBox(width: 8),
-                        Text(
-                          challengePrize(challenge, _hebrew) ?? name,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF454545),
+                    // Prize row — the prize from the panel (00058), and
+                    // nothing when the challenge has none: it repeated the
+                    // challenge's name, already the line above.
+                    if (challengePrize(challenge, _hebrew) case final prize?) ...[
+                      const SizedBox(height: 11),
+                      Row(
+                        children: [
+                          const Text('🏅', style: TextStyle(fontSize: 16)),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              prize,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: const Color(0xFF454545),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -293,8 +293,8 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
               ),
             ),
             content: Text(
-              tr('להסיר את "${listing['address']}"? המודעה תרד מהאפליקציה '
-              'וניתן יהיה להחזירה על ידי שינוי הסטטוס.', 'Remove "${listing['address']}"? The listing will leave the app, and it can be brought back by changing its status.'),
+              tr('להסיר את "${_listingTitle(listing)}"? המודעה תרד מהאפליקציה '
+              'וניתן יהיה להחזירה על ידי שינוי הסטטוס.', 'Remove "${_listingTitle(listing)}"? The listing will leave the app, and it can be brought back by changing its status.'),
               style: TextStyle(fontFamily: AppFonts.rubik),
             ),
             actions: [
@@ -432,9 +432,12 @@ class _ListingTable extends StatelessWidget {
                                       color: AppColors.gold,
                                     ),
                                   ),
+                                // The title, as residents see it; the row
+                                // showed only the address, so two flats in
+                                // one building looked the same.
                                 Flexible(
                                   child: Text(
-                                    l['address'] as String? ?? '',
+                                    _listingTitle(l),
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
                                       fontSize: 14,
@@ -446,6 +449,18 @@ class _ListingTable extends StatelessWidget {
                                 ),
                               ],
                             ),
+                            // Where, and who posted it.
+                            if (_listingSubline(l).isNotEmpty)
+                              Text(
+                                _listingSubline(l),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 11,
+                                  color: AppColors.grayText,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             if (isBroker)
                               Text(
                                 tr('מתווך', 'Agent'),
@@ -1622,4 +1637,21 @@ class _Debouncer {
       Duration(milliseconds: milliseconds),
     ).then((_) => action());
   }
+}
+
+/// A listing's title, or its address when it has none.
+String _listingTitle(Map<String, dynamic> l) {
+  final title = (l['title'] as String?)?.trim() ?? '';
+  return title.isNotEmpty ? title : (l['address'] as String?)?.trim() ?? '';
+}
+
+/// The address (when the title is not already it) and the poster's name.
+String _listingSubline(Map<String, dynamic> l) {
+  final title = (l['title'] as String?)?.trim() ?? '';
+  final address = (l['address'] as String?)?.trim() ?? '';
+  final owner = ((l['owner'] as Map?)?['full_name'] as String?)?.trim() ?? '';
+  return [
+    if (title.isNotEmpty && address.isNotEmpty) address,
+    if (owner.isNotEmpty) owner,
+  ].join(' · ');
 }

@@ -11,6 +11,58 @@ import '../providers/favorite_providers.dart';
 import '../repositories/favorite_repository.dart';
 import '../../../l10n/app_localizations.dart';
 
+/// Saves or unsaves [id] for the signed-in resident, and says why when it
+/// cannot: no account (with Sign in), a blocked account, or a failure. The
+/// heart and the article's Save use it alike.
+Future<void> toggleFavorite(
+  BuildContext context,
+  WidgetRef ref,
+  FavoriteKind kind,
+  String id,
+) async {
+  try {
+    final signedIn = await ref
+        .read(favoritesProvider.notifier)
+        .toggle(kind, id);
+    if (signedIn || !context.mounted) return;
+
+    // Saving needs an account, so offer one rather than doing nothing.
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          L.of(context).signInToSave,
+          style: TextStyle(fontFamily: AppFonts.rubik),
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        // Back to this page after signing in; none on the website, where
+        // accounts are the app's.
+        action: signInAction(context),
+      ),
+    );
+  } catch (e) {
+    final blocked = await refusedAsBlocked(e);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          blocked ? accountBlockedMessage(context) : L.of(context).errCouldNotSave,
+          style: TextStyle(fontFamily: AppFonts.rubik),
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+}
+
 /// The heart on a card, saving to the `favorites` table.
 ///
 /// Every card drew its own white circle with a heart in it and nothing behind
@@ -34,50 +86,6 @@ class FavoriteButton extends ConsumerWidget {
     this.color = AppColors.midBlue,
   });
 
-  Future<void> _toggle(BuildContext context, WidgetRef ref) async {
-    try {
-      final signedIn = await ref
-          .read(favoritesProvider.notifier)
-          .toggle(kind, id);
-      if (signedIn || !context.mounted) return;
-
-      // Saving needs an account, so offer one rather than doing nothing.
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            L.of(context).signInToSave,
-            style: TextStyle(fontFamily: AppFonts.rubik),
-          ),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          // Back to this page after signing in; none on the website, where
-          // accounts are the app's.
-          action: signInAction(context),
-        ),
-      );
-    } catch (e) {
-      final blocked = await refusedAsBlocked(e);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            blocked ? accountBlockedMessage(context) : L.of(context).errCouldNotSave,
-            style: TextStyle(fontFamily: AppFonts.rubik),
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Saving needs an account, and accounts belong to the app. In a browser
@@ -88,7 +96,7 @@ class FavoriteButton extends ConsumerWidget {
     final saved = ref.watch(isFavoriteProvider((kind: kind, id: id)));
 
     return GestureDetector(
-      onTap: () => _toggle(context, ref),
+      onTap: () => toggleFavorite(context, ref, kind, id),
       // The circle is small, so the tap target is widened past the paint.
       behavior: HitTestBehavior.opaque,
       child: Container(

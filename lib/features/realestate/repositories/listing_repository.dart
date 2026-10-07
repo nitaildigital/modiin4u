@@ -17,7 +17,7 @@ class ListingRepository {
   /// must still come back.
   static const _select = '''
     *,
-    neighborhoods(id, name, description),
+    neighborhoods(id, name, name_en, description),
     real_estate_agents(id, name, agency, phone, photo_url)
   ''';
 

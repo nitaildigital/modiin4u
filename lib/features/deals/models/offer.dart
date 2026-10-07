@@ -104,7 +104,7 @@ class Offer {
       businessLogo: bizText('logo_url'),
       businessCoverUrl: bizText('cover_url'),
       businessNeighborhood: hood is Map && (hood['name'] as String?)?.trim().isNotEmpty == true
-          ? hood['name'] as String
+          ? localName(hood['name'] as String, hood['name_en'] as String?)
           : null,
       startAt: DateTime.tryParse(json['start_at'] as String? ?? ''),
       endAt: DateTime.tryParse(json['end_at'] as String? ?? ''),

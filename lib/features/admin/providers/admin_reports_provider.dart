@@ -57,6 +57,20 @@ class AdminReportsNotifier extends AdminTableNotifier {
         .update({'status': 'hidden'})
         .eq('id', entityId);
     await _close(id, 'resolved', 'הוסתר · Hidden');
+    // Every other open report on the same item is answered by this too, and
+    // each reporter is told (00066).
+    await SupabaseConfig.client
+        .from('reports')
+        .update({
+          'status': 'resolved',
+          'resolved_at': DateTime.now().toUtc().toIso8601String(),
+          'resolved_by': SupabaseConfig.client.auth.currentUser?.id,
+          'resolution': 'הוסתר · Hidden',
+        })
+        .eq('entity_type', entityType)
+        .eq('entity_id', entityId)
+        .inFilter('status', ['open', 'reviewed']);
+    await load();
   }
 
   /// Opens a closed report again.

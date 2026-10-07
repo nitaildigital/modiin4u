@@ -24,7 +24,7 @@ class BusinessRepository {
 
     var query = _client.from('businesses').select('''
       *,
-      neighborhoods!businesses_neighborhood_id_fkey(id, name, slug)
+      neighborhoods!businesses_neighborhood_id_fkey(id, name, name_en, slug)
     ''');
 
     if (status != null && status.isNotEmpty) {
@@ -134,7 +134,7 @@ class BusinessRepository {
         .from('businesses')
         .select('''
       *,
-      neighborhoods!businesses_neighborhood_id_fkey(id, name, slug),
+      neighborhoods!businesses_neighborhood_id_fkey(id, name, name_en, slug),
       business_hours(*)
     ''')
         .eq(isId ? 'id' : 'slug', key)

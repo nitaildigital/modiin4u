@@ -385,6 +385,15 @@ class _NeighborhoodEditorDialogState
   bool _saving = false;
 
   late final TextEditingController _name;
+  late final TextEditingController _nameEn;
+
+  /// Whether the database has `name_en` yet; until 00066 runs the field is
+  /// neither shown nor saved, so a save cannot fail on it.
+  bool get _hasNameEn =>
+      widget.neighborhood?.containsKey('name_en') ??
+      (ref.read(adminNeighborhoodListProvider).valueOrNull?.firstOrNull
+              ?.containsKey('name_en') ??
+          false);
   late final TextEditingController _slug;
   late final TextEditingController _description;
   late final TextEditingController _sortOrder;
@@ -411,6 +420,7 @@ class _NeighborhoodEditorDialogState
     super.initState();
     final n = widget.neighborhood;
     _name = TextEditingController(text: n?['name'] as String? ?? '');
+    _nameEn = TextEditingController(text: n?['name_en'] as String? ?? '');
     _slug = TextEditingController(text: n?['slug'] as String? ?? '');
     _description = TextEditingController(
       text: n?['description'] as String? ?? '',
@@ -426,6 +436,7 @@ class _NeighborhoodEditorDialogState
   @override
   void dispose() {
     _name.dispose();
+    _nameEn.dispose();
     _slug.dispose();
     _description.dispose();
     _sortOrder.dispose();
@@ -491,6 +502,10 @@ class _NeighborhoodEditorDialogState
                         validator: (v) =>
                             v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
+                      // What the site and the app show with English chosen;
+                      // empty, they show the Hebrew name.
+                      if (_hasNameEn)
+                        _field(tr('שם באנגלית', 'Name in English'), _nameEn),
                       _field(tr('Slug (ריק ייווצר מהשם)', 'Slug (left empty, it is made from the name)'), _slug),
                       _field(tr('תיאור', 'Description'), _description, maxLines: 8),
                       // How the neighbourhood page splits it, so the client
@@ -650,6 +665,8 @@ class _NeighborhoodEditorDialogState
     // save — new or edited — was refused for it.
     final fields = <String, dynamic>{
       'name': _name.text.trim(),
+      if (_hasNameEn)
+        'name_en': _nameEn.text.trim().isEmpty ? null : _nameEn.text.trim(),
       'slug': _slug.text.trim(),
       'description': _description.text.trim().isEmpty
           ? null

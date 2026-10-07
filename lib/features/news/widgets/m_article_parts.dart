@@ -1,5 +1,7 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -8,6 +10,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../../favorites/providers/favorite_providers.dart';
+import '../../favorites/repositories/favorite_repository.dart';
+import '../../favorites/widgets/favorite_button.dart' show toggleFavorite;
 import '../models/article.dart';
 import '../models/article_body.dart';
 import '../../../l10n/app_localizations.dart';
@@ -443,13 +448,19 @@ class MNewsCard extends StatelessWidget {
 /// The design's bar holds comments, shares and Save. Articles have no
 /// comments in the app and no way to save one, so only Share is drawn; its
 /// count shows once a share has been counted.
-class MArticleBottomBar extends StatelessWidget {
+class MArticleBottomBar extends ConsumerWidget {
   final Article article;
   final VoidCallback onShare;
   const MArticleBottomBar({super.key, required this.article, required this.onShare});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The design's Save cell: the article goes to Favourites → News, whose
+    // tab was always empty because nothing could save one. The app only —
+    // saving needs an account.
+    final saved = ref.watch(
+      isFavoriteProvider((kind: FavoriteKind.article, id: article.id)),
+    );
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -479,6 +490,32 @@ class MArticleBottomBar extends StatelessWidget {
                 ),
               ),
             ),
+            if (!kIsWeb)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => toggleFavorite(context, ref, FavoriteKind.article, article.id),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    child: Row(
+                      children: [
+                        Icon(
+                          saved ? IconsaxPlusBold.archive_tick : IconsaxPlusLinear.archive_add,
+                          size: 20,
+                          color: saved ? AppColors.midBlue : Colors.black,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          Localizations.localeOf(context).languageCode == 'he'
+                              ? (saved ? 'נשמר' : 'שמירה')
+                              : (saved ? 'Saved' : 'Save'),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: Colors.black),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

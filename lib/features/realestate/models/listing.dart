@@ -1,3 +1,4 @@
+import '../../../core/providers/content_language.dart';
 /// An apartment listing, as the `listings` table stores it.
 ///
 /// The real-estate screens were built against hardcoded values — the same
@@ -44,7 +45,12 @@ class Listing {
 
   final String? address;
   final String? neighborhoodId;
-  final String? neighborhoodName;
+  /// Hebrew, and English where the panel has one (00066).
+  final String? neighborhoodNameHe;
+  final String? neighborhoodNameEn;
+  String? get neighborhoodName => neighborhoodNameHe == null
+      ? null
+      : localName(neighborhoodNameHe!, neighborhoodNameEn);
 
   /// Written by the client in the admin panel. The listing page had a
   /// paragraph about Moriah hardcoded into it and showed it whatever the
@@ -101,7 +107,8 @@ class Listing {
     this.pricePerMonth,
     this.address,
     this.neighborhoodId,
-    this.neighborhoodName,
+    this.neighborhoodNameHe,
+    this.neighborhoodNameEn,
     this.neighborhoodDescription,
     this.latitude,
     this.longitude,
@@ -159,7 +166,8 @@ class Listing {
       pricePerMonth: (json['price_per_month'] as num?)?.toInt(),
       address: json['address'] as String?,
       neighborhoodId: json['neighborhood_id'] as String?,
-      neighborhoodName: hood is Map ? hood['name'] as String? : null,
+      neighborhoodNameHe: hood is Map ? hood['name'] as String? : null,
+      neighborhoodNameEn: hood is Map ? hood['name_en'] as String? : null,
       neighborhoodDescription: hood is Map
           ? hood['description'] as String?
           : null,

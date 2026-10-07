@@ -15,7 +15,7 @@ class OfferRepository {
   static const _select = '''
     *,
     businesses(*,
-      neighborhoods!businesses_neighborhood_id_fkey(name))
+      neighborhoods!businesses_neighborhood_id_fkey(name, name_en))
   ''';
 
   Future<List<Offer>> fetchActive({String? categoryId, int limit = 60}) async {

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/content_language.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../models/listing.dart';
 import 'listing_providers.dart';
@@ -12,7 +13,12 @@ import 'listing_providers.dart';
 /// route carried, every neighbourhood in the city rendered as Moriah.
 class Neighborhood {
   final String id;
-  final String name;
+
+  /// Hebrew, and English where the panel has one (00066); [name] is the
+  /// reader's.
+  final String nameHe;
+  final String? nameEn;
+  String get name => localName(nameHe, nameEn);
   final String slug;
 
   /// Written by the client in the admin panel. Null for most of them, and
@@ -22,15 +28,17 @@ class Neighborhood {
 
   const Neighborhood({
     required this.id,
-    required this.name,
+    required String name,
+    this.nameEn,
     this.slug = '',
     this.description,
     this.imageUrl,
-  });
+  }) : nameHe = name;
 
   factory Neighborhood.fromJson(Map<String, dynamic> json) => Neighborhood(
     id: json['id'] as String,
     name: (json['name'] as String?) ?? '',
+    nameEn: json['name_en'] as String?,
     slug: (json['slug'] as String?) ?? '',
     description: (json['description'] as String?)?.trim().isEmpty ?? true
         ? null
@@ -49,7 +57,7 @@ final activeNeighborhoodsProvider = FutureProvider<List<Neighborhood>>((
 ) async {
   final rows = await SupabaseConfig.client
       .from('neighborhoods')
-      .select('id, name, slug, description, image_url')
+      .select('id, name, name_en, slug, description, image_url')
       .eq('is_active', true)
       .order('sort_order', ascending: true);
   return List<Map<String, dynamic>>.from(
@@ -64,7 +72,7 @@ final neighborhoodByIdProvider = FutureProvider.family<Neighborhood?, String>((
 ) async {
   final rows = await SupabaseConfig.client
       .from('neighborhoods')
-      .select('id, name, slug, description, image_url')
+      .select('id, name, name_en, slug, description, image_url')
       .eq('id', id)
       .limit(1);
 

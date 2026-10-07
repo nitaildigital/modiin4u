@@ -24,7 +24,9 @@ class AdminListingListNotifier extends AdminTableNotifier {
         searchColumns: const ['title', 'address', 'description'],
         columns:
             '*, neighborhoods(id, name), '
-            'real_estate_agents(id, name, agency, phone)',
+            'real_estate_agents(id, name, agency, phone), '
+            // Who posted it, for the row: the panel reads profiles.
+            'owner:profiles!listings_owner_id_fkey(full_name)',
         orderBy: 'created_at',
         softDeleteStatus: 'removed',
       );

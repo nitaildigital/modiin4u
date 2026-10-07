@@ -14,9 +14,9 @@ import '../../auth/providers/auth_provider.dart';
 /// The main admin (`super_admin`) sees everything, whatever the rows say,
 /// so the client can never lock himself out.
 ///
-/// This decides what the panel shows. The database's own rules still let
-/// any administrator write; holding each module to its role there is a
-/// migration of its own.
+/// This decides what the panel shows; the database holds each module to
+/// its role as well (00050). The main admin changes the rows in Team →
+/// Roles & rights, and only the main admin may (00066).
 class AdminPermissions {
   /// Null for the main admin: everything is allowed.
   final Set<String>? _modules;

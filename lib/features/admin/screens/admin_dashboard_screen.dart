@@ -1135,6 +1135,14 @@ class _SettingsSection extends StatelessWidget {
         ),
         const _RepliesApprovalSetting(),
         _EditableSetting(
+          settingKey: AppSettingKeys.listingsExpireDays,
+          label: tr('ימים עד שמודעת נדל״ן פגה (0 = לא פגה)',
+              'Days a listing stays up after approval (0 = never expires)'),
+          hint: '0',
+          icon: IconsaxPlusLinear.calendar_remove,
+          number: true,
+        ),
+        _EditableSetting(
           settingKey: AppSettingKeys.reportsAutoHideAt,
           label: tr('הסתרה אוטומטית אחרי מספר דיווחים (0 = כבוי)',
               'Hide a review or reply after this many reports (0 = off)'),
