@@ -392,10 +392,14 @@ class _FavoriteCard extends StatelessWidget {
                   if (entry.subtitle != null) ...[
                     Row(
                       children: [
-                        const Icon(
-                          IconsaxPlusLinear.location,
+                        // An article's line is its opening words, not a
+                        // place: no location pin beside it.
+                        Icon(
+                          entry.kind == FavoriteKind.article
+                              ? IconsaxPlusLinear.document_text
+                              : IconsaxPlusLinear.location,
                           size: 14,
-                          color: Color(0xFF6D6D6D),
+                          color: const Color(0xFF6D6D6D),
                         ),
                         const SizedBox(width: 6),
                         Expanded(

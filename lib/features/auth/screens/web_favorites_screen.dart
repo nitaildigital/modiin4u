@@ -562,7 +562,12 @@ class _FavoriteCardState extends State<_FavoriteCard> {
                       ),
                       const SizedBox(height: 10),
                       if (entry.subtitle != null)
-                        _detailRow(IconsaxPlusLinear.location, entry.subtitle!),
+                        _detailRow(
+                          entry.kind == FavoriteKind.article
+                              ? IconsaxPlusLinear.document_text
+                              : IconsaxPlusLinear.location,
+                          entry.subtitle!,
+                        ),
                       if (date != null)
                         _detailRow(
                           IconsaxPlusLinear.calendar_1,
