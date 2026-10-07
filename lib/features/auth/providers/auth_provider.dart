@@ -280,6 +280,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       email: (row['email'] as String?) ?? user.email ?? '',
       phone: (row['phone'] as String?) ?? '',
       neighborhood: hood is Map ? hood['name'] as String? : null,
+      neighborhoodId: row['neighborhood_id'] as String?,
       avatarUrl: row['avatar_url'] as String?,
       points: (row['points'] as num?)?.toInt() ?? 0,
       isVerifiedResident: row['is_verified'] as bool? ?? false,

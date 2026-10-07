@@ -292,7 +292,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Row(
+                        // Both cards as tall as the taller one's text: at a
+                        // large font size the description overflowed a
+                        // fixed 127.
+                        IntrinsicHeight(
+                          child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Expanded(
                               child: _buildAccountTypeCard(
@@ -314,6 +319,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               ),
                             ),
                           ],
+                          ),
                         ),
                         const SizedBox(height: 20),
                         // Form fields
@@ -634,7 +640,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       onTap: () => setState(() => _accountType = type),
       child: Container(
         padding: const EdgeInsets.all(12),
-        height: 127,
+        constraints: const BoxConstraints(minHeight: 127),
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected ? AppColors.midBlue : const Color(0xFFE7E7E7),

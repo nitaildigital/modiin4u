@@ -6,6 +6,7 @@ class UserModel {
   final String email;
   final String phone;
   final String? neighborhood;
+  final String? neighborhoodId;
   final String? avatarUrl;
   final int points;
   final List<String> favoriteBusinessIds;
@@ -38,6 +39,7 @@ class UserModel {
     this.email = '',
     required this.phone,
     this.neighborhood,
+    this.neighborhoodId,
     this.avatarUrl,
     this.points = 0,
     this.favoriteBusinessIds = const [],
@@ -60,6 +62,7 @@ class UserModel {
     String? email,
     String? phone,
     String? neighborhood,
+    String? neighborhoodId,
     String? avatarUrl,
     int? points,
     List<String>? favoriteBusinessIds,
@@ -81,6 +84,7 @@ class UserModel {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       neighborhood: neighborhood ?? this.neighborhood,
+      neighborhoodId: neighborhoodId ?? this.neighborhoodId,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       points: points ?? this.points,
       favoriteBusinessIds: favoriteBusinessIds ?? this.favoriteBusinessIds,

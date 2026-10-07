@@ -122,6 +122,20 @@ class PushService {
     // The row records who is signed in, so a reply reaches the right person
     // and stops reaching them once they sign out.
     _ref.listen(authProvider.select((u) => u?.id), (_, _) => _scheduleSync());
+    // Neighbourhood updates follow the neighbourhood chosen at sign-up or in
+    // Edit Profile until one is picked here: the setting said "Not chosen"
+    // for someone who had chosen one, and their neighbourhood's updates
+    // went nowhere.
+    _ref.listen(
+      authProvider.select((u) => u?.neighborhoodId),
+      (_, id) {
+        final s = _ref.read(pushSettingsProvider);
+        if (id != null && s.neighborhoodId == null) {
+          _ref.read(pushSettingsProvider.notifier).update(s.copyWith(neighborhoodId: id));
+        }
+      },
+      fireImmediately: true,
+    );
 
     // Already allowed (a later run, or allowed in the browser before):
     // refresh the token and the row without asking anything.

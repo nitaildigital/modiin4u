@@ -467,16 +467,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         leading: const MIconCircle(
                           svg: 'assets/icons/m_account_c_info.svg',
                         ),
-                        title: mTr(
-                          context,
-                          'About Modiin4u',
-                          'אודות מודיעין בשבילך',
-                        ),
-                        subtitle: mTr(
-                          context,
-                          'App version 1.0.0',
-                          'גרסה 1.0.0',
-                        ),
+                        // "About Modiin4u" is the page above; this row is
+                        // the version, and read as the same entry twice.
+                        // The number is pubspec's — change both together.
+                        title: mTr(context, 'App version', 'גרסת האפליקציה'),
+                        subtitle: '1.0.0',
                         showChevron: false,
                       ),
                     ],
