@@ -2707,6 +2707,41 @@ the reply is.
   (push_host.dart) reloads the reviews, replies and the business, from a
   phone notification and from the bell alike.
 
+### Views, saves, expiry, report replies, rights, conversions (00066, 00067) — 7 October
+
+- **Article views (39):** `record_article_view` counts once per visitor per
+  article per 30 minutes, on top of WordPress's numbers; a view no longer
+  moves `updated_at` (the trigger ignores counter-only changes). Tested: 0 →
+  1 for two calls from one visitor, `updated_at` unchanged; the phone showed
+  the count rising.
+- **Saving articles (40):** Save beside Share on the phone article page →
+  Favourites → News. Tested on the Realme. The saved article's line had a
+  location pin; it has a document icon now.
+- **Listings expire:** approval stamps `published_at` and, with Settings →
+  "Days a listing stays up" (`listings_expire_days`, unset = never),
+  `expires_at`; `expire_listings()` nightly at 01:10 UTC moves them to
+  'expired' and tells the owner. Tested end to end with 30 days.
+- **The reporter is told** when the panel resolves or dismisses the report;
+  "Hide it" answers every open report on the item. Tested.
+- **Roles & rights (5):** Team → Roles & rights (main admin only) — each
+  role's view/create/edit/delete per section. `admin_role_permissions` was
+  writable by any admin, so a limited admin could grant itself everything;
+  only the main admin may write it now. Tested: a content editor refused
+  (403), the main admin allowed.
+- **Neighbourhoods in English:** `name_en`, a field in the panel, read
+  through a getter like businesses'. Left empty — nothing invented.
+- **Ended deals:** a resident's claim on a deal not live is refused (00066
+  section 6, added after the first run — run 00066 again).
+- **Push conversions (19), 00067:** the client's definition — a reply or a
+  review. A notification converts when its recipient writes one within 24
+  hours of opening it (the last one opened, once per device); the panel's
+  Push list has a Replies column. Not run yet.
+- **#43:** `/new-listing` removed.
+- Found while testing: a test listing sent for review notified the three
+  admins ("Listing awaiting approval: TEST expiry"); none has a device
+  registered, so it reached only the in-app list, and was deleted. Tests now
+  run with the watcher that cancels admin alerts as they are queued.
+
 ### "Could not save" on Redeem: an account deleted under an open app — 7 October
 
 Harshit's Redeem said "Could not save. Please try again." The phone was
