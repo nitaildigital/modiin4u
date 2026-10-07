@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_home_builder_provider.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminHomeBuilderScreen extends ConsumerStatefulWidget {
   const AdminHomeBuilderScreen({super.key});
@@ -53,7 +54,7 @@ class _AdminHomeBuilderScreenState
                     const SizedBox(width: 16),
                     _StatChip(tr('פעילים', 'Active'), '$active', AppColors.success),
                     const SizedBox(width: 16),
-                    _StatChip(tr('מפורסמים', 'Published'), '$published', AppColors.turquoise),
+                    _StatChip(tr('מפורסמים', 'Published'), '$published', AppColors.midBlue),
                     const SizedBox(width: 16),
                     _StatChip(tr('טיוטות', 'Drafts'), '$drafts', AppColors.gold),
                   ],
@@ -63,17 +64,9 @@ class _AdminHomeBuilderScreenState
           ),
 
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          child: Row(
+        AdminListToolbar(
+          search: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.dashboard_customize, size: 20, color: AppColors.navy),
               const SizedBox(width: 8),
@@ -86,41 +79,20 @@ class _AdminHomeBuilderScreenState
                   color: AppColors.navy,
                 ),
               ),
-              const Spacer(),
-              OutlinedButton.icon(
-                onPressed: _publishAll,
-                icon: const Icon(Icons.publish, size: 16),
-                label: Text(
-                  tr('פרסם הכל', 'Publish all'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.success,
-                  side: const BorderSide(color: AppColors.success),
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              FilledButton.icon(
-                onPressed: () => _showEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('בלוק חדש', 'New block'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
             ],
           ),
+          actions: [
+            AdminToolbarButton(
+              primary: false,
+              icon: Icons.publish,
+              label: tr('פרסם הכל', 'Publish all'),
+              onPressed: _publishAll,
+            ),
+            AdminToolbarButton(
+              label: tr('בלוק חדש', 'New block'),
+              onPressed: () => _showEditor(context, ref),
+            ),
+          ],
         ),
 
         // ─── Block List ───
@@ -191,7 +163,7 @@ class _AdminHomeBuilderScreenState
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isActive
-                            ? AppColors.turquoise.withValues(alpha: 0.3)
+                            ? AppColors.midBlue.withValues(alpha: 0.3)
                             : AppColors.border.withValues(alpha: 0.5),
                       ),
                       boxShadow: [
@@ -231,7 +203,7 @@ class _AdminHomeBuilderScreenState
                             _blockIcon(blockType),
                             size: 20,
                             color: isActive
-                                ? AppColors.turquoise
+                                ? AppColors.midBlue
                                 : AppColors.grayLight,
                           ),
                           const SizedBox(width: 8),
@@ -295,45 +267,9 @@ class _AdminHomeBuilderScreenState
                             ),
                             const SizedBox(width: 8),
                             if (isPublished)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.check_circle,
-                                    size: 12,
-                                    color: AppColors.success,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    tr('מפורסם', 'Published'),
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 10,
-                                      color: AppColors.success,
-                                    ),
-                                  ),
-                                ],
-                              )
+                              AdminPill(tr('מפורסם', 'Published'), AdminKit.of(context).success)
                             else
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.edit_note,
-                                    size: 12,
-                                    color: AppColors.gold,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    tr('טיוטה', 'Draft'),
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 10,
-                                      color: AppColors.gold,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              AdminPill(tr('טיוטה', 'Draft'), AdminKit.of(context).inkSoft),
                             if (isWide && b['audience'] != null) ...[
                               const SizedBox(width: 12),
                               Text(
@@ -353,7 +289,6 @@ class _AdminHomeBuilderScreenState
                         children: [
                           Switch(
                             value: isActive,
-                            activeThumbColor: AppColors.turquoise,
                             onChanged: (_) => _run(
                               () => ref
                                   .read(adminHomeBuilderProvider.notifier)
@@ -520,7 +455,7 @@ class _AdminHomeBuilderScreenState
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.turquoise,
+                backgroundColor: AppColors.midBlue,
               ),
               child: Text(action, style: TextStyle(fontFamily: AppFonts.rubik)),
             ),
@@ -832,7 +767,6 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                             ),
                           ),
                           value: _isActive,
-                          activeThumbColor: AppColors.turquoise,
                           onChanged: (v) => setState(() => _isActive = v),
                         ),
                         SwitchListTile(
@@ -918,7 +852,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AppColors.midBlue,
                           minimumSize: const Size(120, 42),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -1251,7 +1185,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.turquoise),
+          borderSide: const BorderSide(color: AppColors.midBlue),
         ),
       );
 

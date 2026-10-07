@@ -8,6 +8,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_parking_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// חניונים — the lots on the parking screens and the app map's Parkings
 /// layer.
@@ -51,97 +52,37 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
     return Column(
       children: [
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש חניון...', 'Search car parks...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminParkingListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
+            AdminFilterChip(
+              tr('מוצג', 'Shown'),
+              _activeFilter == 'active',
+              () => _setFilter('active'),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 320 : 200,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש חניון...', 'Search car parks...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminParkingListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
-              _FilterChip(
-                tr('מוצג', 'Shown'),
-                _activeFilter == 'active',
-                () => _setFilter('active'),
-              ),
-              _FilterChip(
-                tr('מוסתר', 'Hidden'),
-                _activeFilter == 'inactive',
-                () => _setFilter('inactive'),
-              ),
-              const Spacer(),
-              if (count != null)
-                Text(
-                  tr('$count חניונים', '$count car parks'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('חניון חדש', 'New car park'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            AdminFilterChip(
+              tr('מוסתר', 'Hidden'),
+              _activeFilter == 'inactive',
+              () => _setFilter('inactive'),
+            ),
+          ],
+          count: count == null ? null : tr('$count חניונים', '$count car parks'),
+          actions: [
+            AdminToolbarButton(
+              label: tr('חניון חדש', 'New car park'),
+              onPressed: () => _showEditor(),
+            ),
+          ],
         ),
 
         // ─── Table ───
@@ -293,9 +234,9 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
               flex: 1,
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
-                child: _StatusPill(
+                child: AdminPill(
                   active ? tr('מוצג', 'Shown') : tr('מוסתר', 'Hidden'),
-                  active ? AppColors.success : AppColors.grayLight,
+                  active ? AdminKit.of(context).success : AdminKit.of(context).muted,
                 ),
               ),
             ),
@@ -595,7 +536,6 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                         ),
                         value: _isActive,
                         onChanged: (v) => setState(() => _isActive = v),
-                        activeThumbColor: AppColors.turquoise,
                         contentPadding: EdgeInsets.zero,
                       ),
                     ],
@@ -637,7 +577,7 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AppColors.midBlue,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -778,32 +718,6 @@ class _ParkingEditorDialogState extends ConsumerState<_ParkingEditorDialog> {
 
 // ─── Shared Widgets ───
 
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _StatusPill(this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
 class _Col extends StatelessWidget {
   final String label;
   final int flex;
@@ -843,11 +757,11 @@ class _FilterChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
+                ? AppColors.midBlue.withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
+              color: selected ? AppColors.midBlue : AppColors.border,
               width: 0.5,
             ),
           ),
@@ -857,7 +771,7 @@ class _FilterChip extends StatelessWidget {
               fontFamily: AppFonts.rubik,
               fontSize: 12,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
+              color: selected ? AppColors.midBlue : AppColors.grayText,
             ),
           ),
         ),

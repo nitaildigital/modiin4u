@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../providers/admin_agreements_provider.dart';
 import '../widgets/admin_form_pickers.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminAgreementsScreen extends ConsumerStatefulWidget {
   const AdminAgreementsScreen({super.key});
@@ -76,7 +77,7 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
                     _StatChip(
                       tr('הכנסה חודשית משוערת', 'Estimated monthly revenue'),
                       '₪${monthly.toStringAsFixed(0)}',
-                      AppColors.turquoise,
+                      AppColors.midBlue,
                     ),
                     const SizedBox(width: 16),
                     _StatChip(
@@ -92,117 +93,58 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
             },
           ),
 
-        // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש לפי עסק...', 'Search by business...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
+              setState(() => _statusFilter = '');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter(null);
+            }),
+            AdminFilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
+              setState(() => _statusFilter = 'active');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter('active');
+            }),
+            AdminFilterChip(tr('מושהה', 'Paused'), _statusFilter == 'paused', () {
+              setState(() => _statusFilter = 'paused');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter('paused');
+            }),
+            AdminFilterChip(tr('בוטל', 'Cancelled'), _statusFilter == 'cancelled', () {
+              setState(() => _statusFilter = 'cancelled');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter('cancelled');
+            }),
+            AdminFilterChip(tr('פג תוקף', 'Expired'), _statusFilter == 'expired', () {
+              setState(() => _statusFilter = 'expired');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter('expired');
+            }),
+          ],
+          count: loaded == null
+              ? null
+              : tr('${loaded.length} הסכמים', '${loaded.length} agreements'),
+          actions: [
+            AdminToolbarButton(
+              label: tr('הסכם חדש', 'New agreement'),
+              onPressed: () => _showEditor(context, ref),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש לפי עסק...', 'Search by business...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminAgreementListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref
-                    .read(adminAgreementListProvider.notifier)
-                    .setStatusFilter(null);
-              }),
-              _FilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
-                setState(() => _statusFilter = 'active');
-                ref
-                    .read(adminAgreementListProvider.notifier)
-                    .setStatusFilter('active');
-              }),
-              _FilterChip(tr('מושהה', 'Paused'), _statusFilter == 'paused', () {
-                setState(() => _statusFilter = 'paused');
-                ref
-                    .read(adminAgreementListProvider.notifier)
-                    .setStatusFilter('paused');
-              }),
-              _FilterChip(tr('בוטל', 'Cancelled'), _statusFilter == 'cancelled', () {
-                setState(() => _statusFilter = 'cancelled');
-                ref
-                    .read(adminAgreementListProvider.notifier)
-                    .setStatusFilter('cancelled');
-              }),
-              _FilterChip(tr('פג תוקף', 'Expired'), _statusFilter == 'expired', () {
-                setState(() => _statusFilter = 'expired');
-                ref
-                    .read(adminAgreementListProvider.notifier)
-                    .setStatusFilter('expired');
-              }),
-              const Spacer(),
-              if (loaded != null)
-                Text(
-                  tr('${loaded.length} הסכמים', '${loaded.length} agreements'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('הסכם חדש', 'New agreement'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Table ───
@@ -784,13 +726,13 @@ class _AgreementEditorDialogState
                             ),
                             selected: _vatIncluded,
                             onSelected: (v) => setState(() => _vatIncluded = v),
-                            selectedColor: AppColors.turquoise.withValues(
+                            selectedColor: AppColors.midBlue.withValues(
                               alpha: 0.15,
                             ),
-                            checkmarkColor: AppColors.turquoise,
+                            checkmarkColor: AppColors.midBlue,
                             side: BorderSide(
                               color: _vatIncluded
-                                  ? AppColors.turquoise
+                                  ? AppColors.midBlue
                                   : AppColors.border,
                             ),
                           ),
@@ -804,13 +746,13 @@ class _AgreementEditorDialogState
                             ),
                             selected: _autoRenew,
                             onSelected: (v) => setState(() => _autoRenew = v),
-                            selectedColor: AppColors.turquoise.withValues(
+                            selectedColor: AppColors.midBlue.withValues(
                               alpha: 0.15,
                             ),
-                            checkmarkColor: AppColors.turquoise,
+                            checkmarkColor: AppColors.midBlue,
                             side: BorderSide(
                               color: _autoRenew
-                                  ? AppColors.turquoise
+                                  ? AppColors.midBlue
                                   : AppColors.border,
                             ),
                           ),
@@ -877,7 +819,7 @@ class _AgreementEditorDialogState
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AdminKit.of(context).accent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -1038,28 +980,17 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'active' => (tr('פעיל', 'Active'), AppColors.success),
-      'paused' => (tr('מושהה', 'Paused'), AppColors.gold),
-      'cancelled' => (tr('בוטל', 'Cancelled'), AppColors.error),
-      'expired' => (tr('פג תוקף', 'Expired'), AppColors.grayLight),
-      _ => (status, AppColors.grayLight),
+      'active' => (tr('פעיל', 'Active'), k.success),
+      'paused' => (tr('מושהה', 'Paused'), k.warning),
+      'cancelled' => (tr('בוטל', 'Cancelled'), k.danger),
+      'expired' => (tr('פג תוקף', 'Expired'), k.danger),
+      _ => (status, k.muted),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AdminPill(label, color),
     );
   }
 }
@@ -1080,46 +1011,6 @@ class _Col extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.grayLight,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
-          ),
         ),
       ),
     );

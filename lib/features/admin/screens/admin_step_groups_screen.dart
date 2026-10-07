@@ -9,6 +9,7 @@ import '../../steps/repositories/step_groups_repository.dart';
 import '../widgets/admin_load_error.dart';
 import 'admin_challenges_screen.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// The panel's Step Counter section: the city's challenges, and the step
 /// groups residents make in the app.
@@ -172,21 +173,9 @@ class AdminStepGroupsScreen extends ConsumerWidget {
                 style: style,
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: (hidden ? AppColors.grayLight : AppColors.success)
-                    .withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                hidden ? tr('מוסתרת', 'Hidden') : tr('פעילה', 'Active'),
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 12,
-                  color: hidden ? AppColors.grayText : AppColors.success,
-                ),
-              ),
+            AdminPill(
+              hidden ? tr('מוסתרת', 'Hidden') : tr('פעילה', 'Active'),
+              hidden ? AdminKit.of(context).muted : AdminKit.of(context).success,
             ),
             const SizedBox(width: 8),
             TextButton(

@@ -12,6 +12,7 @@ import '../widgets/admin_form_pickers.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/push_destination_field.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// `push_status`, the database enum, in the panel's words.
 Map<String, String> get _statusLabels => {
@@ -94,106 +95,46 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
                   tr('נשלחו', 'Sent'),
                   '${loaded.where((n) => n['status'] == 'sent').length}',
                   Icons.send,
-                  AppColors.turquoise,
+                  AppColors.midBlue,
                 ),
               ],
             ),
           ),
 
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש הודעה...', 'Search notifications...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminPushListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            for (final e in {
+              '': tr('הכל', 'All'),
+              'draft': tr('טיוטה', 'Draft'),
+              'scheduled': tr('מתוזמן', 'Scheduled'),
+              'sent': tr('נשלח', 'Sent'),
+              'cancelled': tr('בוטל', 'Cancelled'),
+            }.entries)
+              AdminFilterChip(e.value, _statusFilter == e.key, () {
+                setState(() => _statusFilter = e.key);
+                ref
+                    .read(adminPushListProvider.notifier)
+                    .setStatusFilter(e.key.isEmpty ? null : e.key);
+              }),
+          ],
+          count: loaded != null ? tr('${loaded.length} הודעות', '${loaded.length} notifications') : null,
+          actions: [
+            AdminToolbarButton(
+              label: tr('הודעה חדשה', 'New notification'),
+              onPressed: () => _showPushEditor(context),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 320 : 200,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש הודעה...', 'Search notifications...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminPushListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              for (final e in {
-                '': tr('הכל', 'All'),
-                'draft': tr('טיוטה', 'Draft'),
-                'scheduled': tr('מתוזמן', 'Scheduled'),
-                'sent': tr('נשלח', 'Sent'),
-                'cancelled': tr('בוטל', 'Cancelled'),
-              }.entries)
-                _FilterChip(e.value, _statusFilter == e.key, () {
-                  setState(() => _statusFilter = e.key);
-                  ref
-                      .read(adminPushListProvider.notifier)
-                      .setStatusFilter(e.key.isEmpty ? null : e.key);
-                }),
-              const Spacer(),
-              if (loaded != null)
-                Text(
-                  tr('${loaded.length} הודעות', '${loaded.length} notifications'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showPushEditor(context),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('הודעה חדשה', 'New notification'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Table ───
@@ -351,15 +292,15 @@ class _HowItWorksNote extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.turquoise.withValues(alpha: 0.08),
+        color: AppColors.midBlue.withValues(alpha: 0.08),
         border: Border(
-          bottom: BorderSide(color: AppColors.turquoise.withValues(alpha: 0.3)),
+          bottom: BorderSide(color: AppColors.midBlue.withValues(alpha: 0.3)),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, size: 18, color: AppColors.turquoise),
+          const Icon(Icons.info_outline, size: 18, color: AppColors.midBlue),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -574,7 +515,7 @@ class _PushTable extends StatelessWidget {
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.turquoise,
+                                  color: AppColors.midBlue,
                                 ),
                               ),
                           ],
@@ -1055,7 +996,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                         FilledButton(
                           onPressed: _saving ? null : _save,
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.turquoise,
+                            backgroundColor: AdminKit.of(context).accent,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -1230,28 +1171,16 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final color = switch (status) {
-      'sent' => AppColors.success,
-      'scheduled' || 'sending' => AppColors.midBlue,
-      'draft' => AppColors.gold,
-      'failed' => AppColors.error,
-      _ => AppColors.grayLight,
+      'sent' => k.success,
+      'scheduled' || 'sending' => k.warning,
+      'failed' || 'cancelled' => k.danger,
+      _ => k.muted,
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        _statusLabels[status] ?? status,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AdminPill(_statusLabels[status] ?? status, color),
     );
   }
 }
@@ -1272,46 +1201,6 @@ class _Col extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.grayLight,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
-          ),
         ),
       ),
     );

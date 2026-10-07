@@ -9,6 +9,7 @@ import '../providers/admin_permissions_provider.dart';
 import '../providers/admin_team_provider.dart';
 import '../widgets/admin_form_pickers.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminTeamScreen extends ConsumerStatefulWidget {
   const AdminTeamScreen({super.key});
@@ -40,108 +41,40 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
     return Column(
       children: [
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש לפי שם או אימייל...', 'Search by name or email...'),
+            onChanged: (v) {
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(
+                const Duration(milliseconds: 400),
+                () => ref
+                    .read(adminTeamProvider.notifier)
+                    .setSearch(v.isEmpty ? null : v),
+              );
+            },
+          ),
+          count: count == null ? null : tr('$count חברי צוות', '$count team members'),
+          actions: [
+            // What each role may do: the main admin's alone (00066).
+            if (AdminPermissions.of(ref.watch(adminPermissionsProvider)).isMainAdmin)
+              AdminToolbarButton(
+                primary: false,
+                icon: Icons.admin_panel_settings_outlined,
+                label: tr('תפקידים והרשאות', 'Roles & rights'),
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (_) => const _RoleRightsDialog(),
+                ),
               ),
+            AdminToolbarButton(
+              icon: Icons.person_add,
+              label: tr('הוספת חבר צוות', 'Add team member'),
+              onPressed: () => _showGrant(context),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש לפי שם או אימייל...', 'Search by name or email...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) {
-                    _searchDebounce?.cancel();
-                    _searchDebounce = Timer(
-                      const Duration(milliseconds: 400),
-                      () => ref
-                          .read(adminTeamProvider.notifier)
-                          .setSearch(v.isEmpty ? null : v),
-                    );
-                  },
-                ),
-              ),
-              const Spacer(),
-              if (count != null)
-                Text(
-                  tr('$count חברי צוות', '$count team members'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 12),
-              // What each role may do: the main admin's alone (00066).
-              if (AdminPermissions.of(ref.watch(adminPermissionsProvider)).isMainAdmin) ...[
-                OutlinedButton.icon(
-                  onPressed: () => showDialog(
-                    context: context,
-                    builder: (_) => const _RoleRightsDialog(),
-                  ),
-                  icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
-                  label: Text(
-                    tr('תפקידים והרשאות', 'Roles & rights'),
-                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                  ),
-                ),
-                const SizedBox(width: 12),
-              ],
-              ElevatedButton.icon(
-                onPressed: () => _showGrant(context),
-                icon: const Icon(Icons.person_add, size: 18),
-                label: Text(
-                  tr('הוספת חבר צוות', 'Add team member'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Cards Grid ───
@@ -398,7 +331,7 @@ class _GrantDialogState extends ConsumerState<_GrantDialog> {
                 ? null
                 : _save,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
+              backgroundColor: AppColors.midBlue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -519,7 +452,7 @@ class _RoleDialogState extends ConsumerState<_RoleDialog> {
             ElevatedButton(
               onPressed: _saving || _roleId == null ? null : _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.turquoise,
+                backgroundColor: AppColors.midBlue,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -623,24 +556,9 @@ class _TeamCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          isActive ? roleLabel : tr('$roleLabel · מושבת', '$roleLabel · disabled'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: color,
-                          ),
-                        ),
+                      AdminPill(
+                        isActive ? roleLabel : tr('$roleLabel · מושבת', '$roleLabel · disabled'),
+                        color,
                       ),
                     ],
                   ),
@@ -677,7 +595,6 @@ class _TeamCard extends StatelessWidget {
                     child: Switch(
                       value: isActive,
                       onChanged: onToggle,
-                      activeThumbColor: AppColors.turquoise,
                     ),
                   ),
               ],
@@ -695,7 +612,7 @@ class _TeamCard extends StatelessWidget {
     'content_editor' => AppColors.midBlue,
     'moderator' => AppColors.gold,
     'sales' || 'business_mgr' => AppColors.success,
-    'finance' => AppColors.turquoise,
+    'finance' => AppColors.midBlue,
     _ => AppColors.grayLight,
   };
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_trash_provider.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminTrashScreen extends ConsumerStatefulWidget {
   const AdminTrashScreen({super.key});
@@ -77,17 +78,9 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
         const _HowThisWorksNote(),
 
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          child: Row(
+        AdminListToolbar(
+          search: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.restore_from_trash, size: 20, color: AppColors.navy),
               const SizedBox(width: 8),
@@ -100,51 +93,36 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                   color: AppColors.navy,
                 ),
               ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _FilterChip(
-                        tr('הכל', 'All'),
-                        _tableFilter.isEmpty,
-                        () => _setTable(''),
-                      ),
-                      // Once filtered, the other tables were not read, so
-                      // every chip stays offered; unfiltered, only the tables
-                      // that have something removed.
-                      for (final s in trashSources)
-                        if (_tableFilter.isNotEmpty ||
-                            (byTable[s.table] ?? 0) > 0)
-                          _FilterChip(
-                            byTable[s.table] == null
-                                ? s.kind
-                                : '${s.kind} (${byTable[s.table]})',
-                            _tableFilter == s.table,
-                            () => _setTable(s.table),
-                          ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              if (list != null)
-                Text(
-                  tr('${list.length} פריטים', '${list.length} items'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              IconButton(
-                icon: const Icon(Icons.refresh, size: 18),
-                tooltip: tr('רענון', 'Refresh'),
-                onPressed: notifier.load,
-              ),
+              const SizedBox(width: 8),
             ],
           ),
+          filters: [
+            AdminFilterChip(
+              tr('הכל', 'All'),
+              _tableFilter.isEmpty,
+              () => _setTable(''),
+            ),
+            // Once filtered, the other tables were not read, so every chip
+            // stays offered; unfiltered, only the tables that have something
+            // removed.
+            for (final s in trashSources)
+              if (_tableFilter.isNotEmpty || (byTable[s.table] ?? 0) > 0)
+                AdminFilterChip(
+                  byTable[s.table] == null
+                      ? s.kind
+                      : '${s.kind} (${byTable[s.table]})',
+                  _tableFilter == s.table,
+                  () => _setTable(s.table),
+                ),
+          ],
+          count: list == null ? null : tr('${list.length} פריטים', '${list.length} items'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 18),
+              tooltip: tr('רענון', 'Refresh'),
+              onPressed: notifier.load,
+            ),
+          ],
         ),
 
         // Tables that could not be read are named, not passed off as empty.
@@ -260,7 +238,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
                                 flex: 2,
                                 child: Align(
                                   alignment: AlignmentDirectional.centerStart,
-                                  child: _KindPill(t.source.kind),
+                                  child: AdminPill(t.source.kind, AdminKit.of(context).accent),
                                 ),
                               ),
                               Expanded(
@@ -344,43 +322,6 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
 
 // ─── Helper Widgets ───
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.navy : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? AppColors.navy : AppColors.border,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: selected ? Colors.white : AppColors.grayText,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _Col extends StatelessWidget {
   final String label;
   final int flex;
@@ -397,31 +338,6 @@ class _Col extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: AppColors.grayText,
-        ),
-      ),
-    );
-  }
-}
-
-class _KindPill extends StatelessWidget {
-  final String kind;
-  const _KindPill(this.kind);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.turquoise.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        kind,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          color: AppColors.turquoise,
         ),
       ),
     );

@@ -298,7 +298,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isCover ? AppColors.turquoise : AppColors.border,
+          color: isCover ? AppColors.midBlue : AppColors.border,
           width: isCover ? 2 : 1,
         ),
       ),
@@ -324,7 +324,7 @@ class _AdminListingPhotosFieldState extends State<AdminListingPhotosField> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.turquoise,
+                      color: AppColors.midBlue,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

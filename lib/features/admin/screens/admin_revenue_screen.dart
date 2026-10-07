@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../providers/admin_revenue_provider.dart';
 import '../widgets/admin_form_pickers.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// `payment_status`, the database enum, in the panel's words.
 Map<String, String> get _paymentStatuses => {
@@ -112,7 +113,7 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
                     _StatChip(
                       tr('שולם החודש', 'Paid this month'),
                       '₪${monthPaid.toStringAsFixed(0)}',
-                      AppColors.turquoise,
+                      AppColors.midBlue,
                     ),
                     const SizedBox(width: 14),
                     _StatChip(
@@ -138,103 +139,35 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
             },
           ),
 
-        // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש לפי עסק / חשבונית...', 'Search by business / invoice...'),
+            onChanged: (v) => _debouncer.run(
+              () => ref
+                  .read(adminRevenueListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v),
             ),
           ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש לפי עסק / חשבונית...', 'Search by business / invoice...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(
-                    () => ref
-                        .read(adminRevenueListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final e in {'': tr('הכל', 'All'), ..._paymentStatuses}.entries)
-                        _FilterChip(e.value, _statusFilter == e.key, () {
-                          setState(() => _statusFilter = e.key);
-                          ref
-                              .read(adminRevenueListProvider.notifier)
-                              .setStatusFilter(e.key.isEmpty ? null : e.key);
-                        }),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              if (loaded != null)
-                Text(
-                  tr('${loaded.length} רשומות', '${loaded.length} records'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('רשומה חדשה', 'New record'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          filters: [
+            for (final e in {'': tr('הכל', 'All'), ..._paymentStatuses}.entries)
+              AdminFilterChip(e.value, _statusFilter == e.key, () {
+                setState(() => _statusFilter = e.key);
+                ref
+                    .read(adminRevenueListProvider.notifier)
+                    .setStatusFilter(e.key.isEmpty ? null : e.key);
+              }),
+          ],
+          count: loaded == null
+              ? null
+              : tr('${loaded.length} רשומות', '${loaded.length} records'),
+          actions: [
+            AdminToolbarButton(
+              label: tr('רשומה חדשה', 'New record'),
+              onPressed: () => _showEditor(),
+            ),
+          ],
         ),
 
         // ─── Table ───
@@ -748,7 +681,7 @@ class _RevenueEditorDialogState extends ConsumerState<_RevenueEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AdminKit.of(context).accent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -867,28 +800,17 @@ class _StatusPill extends StatelessWidget {
   const _StatusPill(this.status);
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final color = switch (status) {
-      'paid' => AppColors.success,
-      'pending' || 'partial' => AppColors.gold,
-      'overdue' => AppColors.error,
-      _ => AppColors.grayLight,
+      'paid' => k.success,
+      'pending' || 'partial' => k.warning,
+      'overdue' || 'cancelled' => k.danger,
+      _ => k.muted,
     };
     final label = _paymentStatuses[status] ?? status;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AdminPill(label, color),
     );
   }
 }
@@ -910,45 +832,6 @@ class _Col extends StatelessWidget {
       ),
     ),
   );
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Waits for typing to pause before searching. The old version chained

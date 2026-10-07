@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_reports_provider.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/supabase/supabase_config.dart';
 
@@ -96,7 +97,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                     const SizedBox(width: 12),
                     _StatChip(tr('נפתרו', 'Resolved'), '$resolved', AppColors.success),
                     const SizedBox(width: 12),
-                    _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.turquoise),
+                    _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.midBlue),
                   ],
                 ),
               );
@@ -108,79 +109,59 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
         const _WhereReportsComeFromNote(),
 
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _setStatus('')),
+            AdminFilterChip(
+              tr('פתוח', 'Open'),
+              _statusFilter == 'open',
+              () => _setStatus('open'),
             ),
-          ),
-          child: Row(
-            children: [
-              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _setStatus('')),
-              _FilterChip(
-                tr('פתוח', 'Open'),
-                _statusFilter == 'open',
-                () => _setStatus('open'),
+            AdminFilterChip(
+              tr('בטיפול', 'In progress'),
+              _statusFilter == 'reviewed',
+              () => _setStatus('reviewed'),
+            ),
+            AdminFilterChip(
+              tr('נפתר', 'Resolved'),
+              _statusFilter == 'resolved',
+              () => _setStatus('resolved'),
+            ),
+            AdminFilterChip(
+              tr('נדחה', 'Rejected'),
+              _statusFilter == 'dismissed',
+              () => _setStatus('dismissed'),
+            ),
+            if (isWide) ...[
+              const SizedBox(width: 16),
+              AdminFilterChip(
+                tr('עסקים', 'Businesses'),
+                _entityFilter == 'business',
+                () => _toggleEntity('business'),
               ),
-              _FilterChip(
-                tr('בטיפול', 'In progress'),
-                _statusFilter == 'reviewed',
-                () => _setStatus('reviewed'),
+              AdminFilterChip(
+                tr('ביקורות', 'Reviews'),
+                _entityFilter == 'review',
+                () => _toggleEntity('review'),
               ),
-              _FilterChip(
-                tr('נפתר', 'Resolved'),
-                _statusFilter == 'resolved',
-                () => _setStatus('resolved'),
+              AdminFilterChip(
+                tr('נכסים', 'Listings'),
+                _entityFilter == 'listing',
+                () => _toggleEntity('listing'),
               ),
-              _FilterChip(
-                tr('נדחה', 'Rejected'),
-                _statusFilter == 'dismissed',
-                () => _setStatus('dismissed'),
+              AdminFilterChip(
+                tr('תגובות', 'Comments'),
+                _entityFilter == 'comment',
+                () => _toggleEntity('comment'),
               ),
-              if (isWide) ...[
-                const SizedBox(width: 16),
-                _FilterChip(
-                  tr('עסקים', 'Businesses'),
-                  _entityFilter == 'business',
-                  () => _toggleEntity('business'),
-                ),
-                _FilterChip(
-                  tr('ביקורות', 'Reviews'),
-                  _entityFilter == 'review',
-                  () => _toggleEntity('review'),
-                ),
-                _FilterChip(
-                  tr('נכסים', 'Listings'),
-                  _entityFilter == 'listing',
-                  () => _toggleEntity('listing'),
-                ),
-                _FilterChip(
-                  tr('תגובות', 'Comments'),
-                  _entityFilter == 'comment',
-                  () => _toggleEntity('comment'),
-                ),
-                _FilterChip(
-                  tr('משתמשים', 'Users'),
-                  _entityFilter == 'user',
-                  () => _toggleEntity('user'),
-                ),
-              ],
-              const Spacer(),
-              if (loaded != null)
-                Text(
-                  tr('${loaded.length} דיווחים', '${loaded.length} reports'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
+              AdminFilterChip(
+                tr('משתמשים', 'Users'),
+                _entityFilter == 'user',
+                () => _toggleEntity('user'),
+              ),
             ],
-          ),
+          ],
+          count: loaded != null ? tr('${loaded.length} דיווחים', '${loaded.length} reports') : null,
         ),
 
         // ─── Table ───
@@ -453,7 +434,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                         status == 'dismissed')
                                       _IconAction(
                                         Icons.undo,
-                                        AppColors.turquoise,
+                                        AppColors.midBlue,
                                         tr('פתח מחדש', 'Reopen'),
                                         () => _run(
                                           () => notifier.reopen(id),
@@ -566,29 +547,15 @@ class _StatusPill extends StatelessWidget {
   const _StatusPill(this.status);
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'open' => (tr('פתוח', 'Open'), AppColors.error),
-      'reviewed' => (tr('בטיפול', 'In progress'), AppColors.gold),
-      'resolved' => (tr('נפתר', 'Resolved'), AppColors.success),
-      'dismissed' => (tr('נדחה', 'Rejected'), AppColors.grayLight),
-      _ => (status, AppColors.grayLight),
+      'open' => (tr('פתוח', 'Open'), k.danger),
+      'reviewed' => (tr('בטיפול', 'In progress'), k.warning),
+      'resolved' => (tr('נפתר', 'Resolved'), k.success),
+      'dismissed' => (tr('נדחה', 'Rejected'), k.muted),
+      _ => (status, k.muted),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
+    return AdminPill(label, color);
   }
 }
 
@@ -697,43 +664,6 @@ class _StatChip extends StatelessWidget {
           ),
         ),
       ],
-    ),
-  );
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.only(end: 6),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.turquoise.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected ? AppColors.turquoise : AppColors.border,
-            width: 0.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? AppColors.turquoise : AppColors.grayText,
-          ),
-        ),
-      ),
     ),
   );
 }

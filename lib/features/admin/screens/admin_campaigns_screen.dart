@@ -9,6 +9,7 @@ import '../providers/admin_campaigns_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminCampaignsScreen extends ConsumerStatefulWidget {
   const AdminCampaignsScreen({super.key});
@@ -73,7 +74,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                     _StatChip(
                       tr('חשיפות', 'Impressions'),
                       _formatNumber(totalImpressions),
-                      AppColors.turquoise,
+                      AppColors.midBlue,
                     ),
                     const SizedBox(width: 16),
                     _StatChip(
@@ -93,120 +94,62 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
             },
           ),
 
-        // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש קמפיין...', 'Search campaigns...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminCampaignListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
+              setState(() => _statusFilter = '');
+              ref
+                  .read(adminCampaignListProvider.notifier)
+                  .setStatusFilter(null);
+            }),
+            AdminFilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
+              setState(() => _statusFilter = 'active');
+              ref
+                  .read(adminCampaignListProvider.notifier)
+                  .setStatusFilter('active');
+            }),
+            AdminFilterChip(tr('מושהה', 'Paused'), _statusFilter == 'paused', () {
+              setState(() => _statusFilter = 'paused');
+              ref
+                  .read(adminCampaignListProvider.notifier)
+                  .setStatusFilter('paused');
+            }),
+            AdminFilterChip(tr('טיוטה', 'Draft'), _statusFilter == 'draft', () {
+              setState(() => _statusFilter = 'draft');
+              ref
+                  .read(adminCampaignListProvider.notifier)
+                  .setStatusFilter('draft');
+            }),
+            AdminFilterChip(tr('הסתיים', 'Ended'), _statusFilter == 'ended', () {
+              setState(() => _statusFilter = 'ended');
+              ref
+                  .read(adminCampaignListProvider.notifier)
+                  .setStatusFilter('ended');
+            }),
+          ],
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of letting
+          // the list below show the error and a retry.
+          count: switch (asyncData.valueOrNull) {
+            final list? => tr('${list.length} קמפיינים', '${list.length} campaigns'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('קמפיין חדש', 'New campaign'),
+              onPressed: () => _showEditor(context, ref),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש קמפיין...', 'Search campaigns...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminCampaignListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref
-                    .read(adminCampaignListProvider.notifier)
-                    .setStatusFilter(null);
-              }),
-              _FilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
-                setState(() => _statusFilter = 'active');
-                ref
-                    .read(adminCampaignListProvider.notifier)
-                    .setStatusFilter('active');
-              }),
-              _FilterChip(tr('מושהה', 'Paused'), _statusFilter == 'paused', () {
-                setState(() => _statusFilter = 'paused');
-                ref
-                    .read(adminCampaignListProvider.notifier)
-                    .setStatusFilter('paused');
-              }),
-              _FilterChip(tr('טיוטה', 'Draft'), _statusFilter == 'draft', () {
-                setState(() => _statusFilter = 'draft');
-                ref
-                    .read(adminCampaignListProvider.notifier)
-                    .setStatusFilter('draft');
-              }),
-              _FilterChip(tr('הסתיים', 'Ended'), _statusFilter == 'ended', () {
-                setState(() => _statusFilter = 'ended');
-                ref
-                    .read(adminCampaignListProvider.notifier)
-                    .setStatusFilter('ended');
-              }),
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of letting
-              // the list below show the error and a retry.
-              if (asyncData.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} קמפיינים', '${list.length} campaigns'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('קמפיין חדש', 'New campaign'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Table ───
@@ -892,7 +835,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AdminKit.of(context).accent,
                           minimumSize: const Size(120, 42),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -1177,7 +1120,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.turquoise),
+          borderSide: const BorderSide(color: AppColors.midBlue),
         ),
       );
 
@@ -1327,7 +1270,7 @@ class _SlotNote extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: (warn ? AppColors.error : AppColors.turquoise).withValues(
+        color: (warn ? AppColors.error : AppColors.midBlue).withValues(
           alpha: 0.06,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -1550,7 +1493,7 @@ class _SiteState extends StatelessWidget {
       ),
       'active' when start != null && start.isAfter(now) => (
         tr('יתחיל ב-${_fmtDate(start)}', 'Starts on ${_fmtDate(start)}'),
-        AppColors.turquoise,
+        AppColors.midBlue,
       ),
       'active' => (
         end == null ? tr('באתר עכשיו', 'On the site now') : tr('באתר עד ${_fmtDate(end)}', 'On the site until ${_fmtDate(end)}'),
@@ -1608,43 +1551,6 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.navy : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? AppColors.navy : AppColors.border,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: selected ? Colors.white : AppColors.grayText,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _Col extends StatelessWidget {
   final String label;
   final int flex;
@@ -1673,31 +1579,16 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'active' => (tr('פעיל', 'Active'), AppColors.success),
-      'scheduled' => (tr('מתוכנן', 'Planned'), AppColors.turquoise),
-      'paused' => (tr('מושהה', 'Paused'), AppColors.gold),
-      'ended' => (tr('הסתיים', 'Ended'), AppColors.grayText),
-      'draft' => (tr('טיוטה', 'Draft'), AppColors.grayLight),
-      _ => (status, AppColors.grayText),
+      'active' => (tr('פעיל', 'Active'), k.success),
+      'scheduled' => (tr('מתוכנן', 'Planned'), k.warning),
+      'paused' => (tr('מושהה', 'Paused'), k.warning),
+      'ended' => (tr('הסתיים', 'Ended'), k.danger),
+      'draft' => (tr('טיוטה', 'Draft'), k.muted),
+      _ => (status, k.inkSoft),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
+    return AdminPill(label, color);
   }
 }
 

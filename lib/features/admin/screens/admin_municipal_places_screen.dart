@@ -7,6 +7,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../municipal/models/municipal_place.dart';
 import '../providers/admin_municipal_places_provider.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// מוסדות עירוניים — what the Municipal page's service tiles list.
 ///
@@ -47,107 +48,57 @@ class _AdminMunicipalPlacesScreenState
     return Column(
       children: [
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש לפי שם, כתובת או טלפון...', 'Search by name, address or phone...'),
+            onChanged: (v) => _debouncer.run(
+              () => _notifier.setSearch(v.isEmpty ? null : v),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () {
+              setState(() => _activeFilter = '');
+              _notifier.setActiveFilter(null);
+            }),
+            AdminFilterChip(tr('מוצג', 'Shown'), _activeFilter == 'active', () {
+              setState(() => _activeFilter = 'active');
+              _notifier.setActiveFilter('active');
+            }),
+            AdminFilterChip(tr('מוסתר', 'Hidden'), _activeFilter == 'inactive', () {
+              setState(() => _activeFilter = 'inactive');
+              _notifier.setActiveFilter('inactive');
+            }),
+          ],
+          count: count == null ? null : tr('$count רשומות', '$count records'),
+          actions: [
+            AdminToolbarButton(
+              label: tr('רשומה חדשה', 'New record'),
+              onPressed: () => _showEditor(),
+            ),
+          ],
+        ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          decoration: BoxDecoration(
+            color: AdminKit.of(context).surface,
+            border: Border(bottom: BorderSide(color: AdminKit.of(context).border)),
+          ),
+          child: Wrap(
+            spacing: 0,
+            runSpacing: 6,
             children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: isWide ? 320 : 200,
-                    height: 40,
-                    child: TextField(
-                      controller: _searchController,
-                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: tr('חיפוש לפי שם, כתובת או טלפון...', 'Search by name, address or phone...'),
-                        hintStyle: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                          color: AppColors.grayLight,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          size: 18,
-                          color: AppColors.grayLight,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                      ),
-                      onChanged: (v) => _debouncer.run(
-                        () => _notifier.setSearch(v.isEmpty ? null : v),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  _FilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () {
-                    setState(() => _activeFilter = '');
-                    _notifier.setActiveFilter(null);
-                  }),
-                  _FilterChip(tr('מוצג', 'Shown'), _activeFilter == 'active', () {
-                    setState(() => _activeFilter = 'active');
-                    _notifier.setActiveFilter('active');
-                  }),
-                  _FilterChip(tr('מוסתר', 'Hidden'), _activeFilter == 'inactive', () {
-                    setState(() => _activeFilter = 'inactive');
-                    _notifier.setActiveFilter('inactive');
-                  }),
-                  const Spacer(),
-                  if (count != null)
-                    Text(
-                      tr('$count רשומות', '$count records'),
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 13,
-                        color: AppColors.grayText,
-                      ),
-                    ),
-                  const SizedBox(width: 16),
-                  FilledButton.icon(
-                    onPressed: () => _showEditor(),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(
-                      tr('רשומה חדשה', 'New record'),
-                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.turquoise,
-                      minimumSize: const Size(0, 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 0,
-                runSpacing: 6,
-                children: [
-                  _FilterChip(tr('כל הקטגוריות', 'All categories'), _category.isEmpty, () {
-                    setState(() => _category = '');
-                    _notifier.setCategory(null);
-                  }),
-                  for (final e in kMunicipalCategories.entries)
-                    _FilterChip(tr(e.value.he, e.value.en), _category == e.key, () {
-                      setState(() => _category = e.key);
-                      _notifier.setCategory(e.key);
-                    }),
-                ],
-              ),
+              AdminFilterChip(tr('כל הקטגוריות', 'All categories'), _category.isEmpty, () {
+                setState(() => _category = '');
+                _notifier.setCategory(null);
+              }),
+              for (final e in kMunicipalCategories.entries)
+                AdminFilterChip(tr(e.value.he, e.value.en), _category == e.key, () {
+                  setState(() => _category = e.key);
+                  _notifier.setCategory(e.key);
+                }),
             ],
           ),
         ),
@@ -251,9 +202,9 @@ class _AdminMunicipalPlacesScreenState
                   style: small.copyWith(color: AppColors.grayLight),
                 ),
               ),
-            _StatusPill(
+            AdminPill(
               active ? tr('מוצג', 'Shown') : tr('מוסתר', 'Hidden'),
-              active ? AppColors.success : AppColors.grayLight,
+              active ? AdminKit.of(context).success : AdminKit.of(context).muted,
             ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
@@ -473,7 +424,6 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                         ),
                         value: _isActive,
                         onChanged: (v) => setState(() => _isActive = v),
-                        activeThumbColor: AppColors.turquoise,
                         contentPadding: EdgeInsets.zero,
                       ),
                     ],
@@ -509,7 +459,7 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AppColors.midBlue,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -614,72 +564,6 @@ class _PlaceEditorDialogState extends ConsumerState<_PlaceEditorDialog> {
 }
 
 // ─── Shared widgets ───
-
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _StatusPill(this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _Debouncer {
   final int milliseconds;

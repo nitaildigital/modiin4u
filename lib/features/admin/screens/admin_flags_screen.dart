@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../providers/admin_flags_provider.dart';
 import '../widgets/admin_form_pickers.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminFlagsScreen extends ConsumerStatefulWidget {
   const AdminFlagsScreen({super.key});
@@ -45,9 +46,9 @@ class _AdminFlagsScreenState extends ConsumerState<AdminFlagsScreen>
           ),
           child: TabBar(
             controller: _tabController,
-            labelColor: AppColors.turquoise,
+            labelColor: AppColors.midBlue,
             unselectedLabelColor: AppColors.grayText,
-            indicatorColor: AppColors.turquoise,
+            indicatorColor: AppColors.midBlue,
             labelStyle: TextStyle(
               fontFamily: AppFonts.rubik,
               fontSize: 14,
@@ -171,7 +172,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
                     const SizedBox(width: 16),
                     _StatChip(tr('מופעלים', 'Enabled'), '$enabled', AppColors.success),
                     const SizedBox(width: 16),
-                    _StatChip('100% Rollout', '$full', AppColors.turquoise),
+                    _StatChip('100% Rollout', '$full', AppColors.midBlue),
                     const SizedBox(width: 16),
                     _StatChip('Partial Rollout', '$partial', AppColors.gold),
                   ],
@@ -181,17 +182,9 @@ class _FeatureFlagsTab extends ConsumerWidget {
           ),
 
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          child: Row(
+        AdminListToolbar(
+          search: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.flag, size: 18, color: AppColors.navy),
               const SizedBox(width: 8),
@@ -204,24 +197,14 @@ class _FeatureFlagsTab extends ConsumerWidget {
                   color: AppColors.navy,
                 ),
               ),
-              const Spacer(),
-              FilledButton.icon(
-                onPressed: () => _showFlagEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('Flag חדש', 'New flag'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 38),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
             ],
           ),
+          actions: [
+            AdminToolbarButton(
+              label: tr('Flag חדש', 'New flag'),
+              onPressed: () => _showFlagEditor(context, ref),
+            ),
+          ],
         ),
 
         // ─── List ───
@@ -458,17 +441,9 @@ class _RemoteConfigTab extends ConsumerWidget {
               'ההגדרות כאן נשמרות, אך האפליקציה והאתר עדיין אינם קוראים אותן.', 'Active settings: community_facebook_url (link to the Facebook group), community_share_url (link to the "Share with us" form), community_news_category (the news category on the Community page), municipal_forms_url (where the "Forms" tile leads) and site_url (the site address in step group invitation links). The other settings here are saved, but the app and the site do not read them yet.'),
         ),
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          child: Row(
+        AdminListToolbar(
+          search: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.settings_remote, size: 18, color: AppColors.navy),
               const SizedBox(width: 8),
@@ -481,34 +456,18 @@ class _RemoteConfigTab extends ConsumerWidget {
                   color: AppColors.navy,
                 ),
               ),
-              const Spacer(),
-              if (asyncData.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} הגדרות', '${list.length} settings'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showConfigEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('הגדרה חדשה', 'New setting'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 38),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
             ],
           ),
+          count: switch (asyncData.valueOrNull) {
+            final list? => tr('${list.length} הגדרות', '${list.length} settings'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('הגדרה חדשה', 'New setting'),
+              onPressed: () => _showConfigEditor(context, ref),
+            ),
+          ],
         ),
 
         // ─── Config list ───
@@ -566,7 +525,7 @@ class _RemoteConfigTab extends ConsumerWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.turquoise.withValues(
+                              color: AppColors.midBlue.withValues(
                                 alpha: 0.08,
                               ),
                               borderRadius: BorderRadius.circular(4),
@@ -576,7 +535,7 @@ class _RemoteConfigTab extends ConsumerWidget {
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 11,
-                                color: AppColors.turquoise,
+                                color: AppColors.midBlue,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -801,10 +760,10 @@ class _RolloutSliderState extends ConsumerState<_RolloutSlider> {
         const SizedBox(height: 4),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor: AppColors.turquoise,
+            activeTrackColor: AppColors.midBlue,
             inactiveTrackColor: AppColors.grayLight.withValues(alpha: 0.3),
-            thumbColor: AppColors.turquoise,
-            overlayColor: AppColors.turquoise.withValues(alpha: 0.1),
+            thumbColor: AppColors.midBlue,
+            overlayColor: AppColors.midBlue.withValues(alpha: 0.1),
             trackHeight: 4,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
           ),
@@ -949,7 +908,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                           min: 0,
                           max: 100,
                           divisions: 10,
-                          activeColor: AppColors.turquoise,
+                          activeColor: AppColors.midBlue,
                           onChanged: (v) =>
                               setState(() => _rolloutPct = v.round()),
                         ),
@@ -986,7 +945,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AppColors.midBlue,
                           minimumSize: const Size(120, 42),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -1069,7 +1028,7 @@ class _FlagEditorDialogState extends ConsumerState<_FlagEditorDialog> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.turquoise),
+              borderSide: const BorderSide(color: AppColors.midBlue),
             ),
           ),
         ),
@@ -1250,7 +1209,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AppColors.midBlue,
                           minimumSize: const Size(120, 42),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -1333,7 +1292,7 @@ class _ConfigEditorDialogState extends ConsumerState<_ConfigEditorDialog> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.turquoise),
+              borderSide: const BorderSide(color: AppColors.midBlue),
             ),
           ),
         ),

@@ -10,6 +10,7 @@ import '../widgets/admin_gallery_editor.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminNeighborhoodsScreen extends ConsumerStatefulWidget {
   const AdminNeighborhoodsScreen({super.key});
@@ -39,107 +40,50 @@ class _AdminNeighborhoodsScreenState
     return Column(
       children: [
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש שכונה...', 'Search neighbourhoods...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminNeighborhoodListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () {
+              setState(() => _activeFilter = '');
+              ref
+                  .read(adminNeighborhoodListProvider.notifier)
+                  .setActiveFilter(null);
+            }),
+            AdminFilterChip(tr('פעיל', 'Active'), _activeFilter == 'active', () {
+              setState(() => _activeFilter = 'active');
+              ref
+                  .read(adminNeighborhoodListProvider.notifier)
+                  .setActiveFilter('active');
+            }),
+            AdminFilterChip(tr('לא פעיל', 'Inactive'), _activeFilter == 'inactive', () {
+              setState(() => _activeFilter = 'inactive');
+              ref
+                  .read(adminNeighborhoodListProvider.notifier)
+                  .setActiveFilter('inactive');
+            }),
+          ],
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of letting
+          // the list below show the error and a retry.
+          count: switch (async.valueOrNull) {
+            final list? => tr('${list.length} שכונות', '${list.length} neighbourhoods'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('שכונה חדשה', 'New neighbourhood'),
+              onPressed: () => _showEditor(context, ref),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 320 : 200,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש שכונה...', 'Search neighbourhoods...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminNeighborhoodListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () {
-                setState(() => _activeFilter = '');
-                ref
-                    .read(adminNeighborhoodListProvider.notifier)
-                    .setActiveFilter(null);
-              }),
-              _FilterChip(tr('פעיל', 'Active'), _activeFilter == 'active', () {
-                setState(() => _activeFilter = 'active');
-                ref
-                    .read(adminNeighborhoodListProvider.notifier)
-                    .setActiveFilter('active');
-              }),
-              _FilterChip(tr('לא פעיל', 'Inactive'), _activeFilter == 'inactive', () {
-                setState(() => _activeFilter = 'inactive');
-                ref
-                    .read(adminNeighborhoodListProvider.notifier)
-                    .setActiveFilter('inactive');
-              }),
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of letting
-              // the list below show the error and a retry.
-              if (async.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} שכונות', '${list.length} neighbourhoods'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('שכונה חדשה', 'New neighbourhood'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Table ───
@@ -288,11 +232,14 @@ class _AdminNeighborhoodsScreenState
                                   ),
                                 Expanded(
                                   flex: 1,
-                                  child: _StatusPill(
-                                    active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
-                                    active
-                                        ? AppColors.success
-                                        : AppColors.grayLight,
+                                  child: Align(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: AdminPill(
+                                      active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
+                                      active
+                                          ? AdminKit.of(context).success
+                                          : AdminKit.of(context).muted,
+                                    ),
                                   ),
                                 ),
                                 PopupMenuButton<String>(
@@ -545,7 +492,6 @@ class _NeighborhoodEditorDialogState
                         ),
                         value: _isActive,
                         onChanged: (v) => setState(() => _isActive = v),
-                        activeColor: AppColors.turquoise,
                         contentPadding: EdgeInsets.zero,
                       ),
                     ],
@@ -587,7 +533,7 @@ class _NeighborhoodEditorDialogState
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AppColors.midBlue,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -709,32 +655,6 @@ class _NeighborhoodEditorDialogState
 
 // ─── Shared Widgets ───
 
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _StatusPill(this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
 class _Col extends StatelessWidget {
   final String label;
   final int flex;
@@ -751,46 +671,6 @@ class _Col extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.grayLight,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
-          ),
         ),
       ),
     );

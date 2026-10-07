@@ -10,6 +10,7 @@ import '../providers/admin_events_provider.dart';
 import '../widgets/admin_events_form_fields.dart';
 import '../widgets/image_upload_field.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminEventsScreen extends ConsumerStatefulWidget {
   const AdminEventsScreen({super.key});
@@ -50,111 +51,53 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
 
     return Column(
       children: [
-        // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש אירוע...', 'Search events...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminEventListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _filter('')),
+            AdminFilterChip(
+              tr('פורסם', 'Published'),
+              _statusFilter == 'published',
+              () => _filter('published'),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 320 : 200,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש אירוע...', 'Search events...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminEventListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _filter('')),
-              _FilterChip(
-                tr('פורסם', 'Published'),
-                _statusFilter == 'published',
-                () => _filter('published'),
-              ),
-              _FilterChip(
-                tr('טיוטה', 'Draft'),
-                _statusFilter == 'draft',
-                () => _filter('draft'),
-              ),
-              _FilterChip(
-                tr('ממתין', 'Pending'),
-                _statusFilter == 'pending',
-                () => _filter('pending'),
-              ),
-              _FilterChip(
-                tr('בוטל', 'Cancelled'),
-                _statusFilter == 'cancelled',
-                () => _filter('cancelled'),
-              ),
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of
-              // letting the table below show the error and a retry.
-              if (eventsAsync.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} אירועים', '${list.length} events'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEventEditor(context),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('אירוע חדש', 'New event'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            AdminFilterChip(
+              tr('טיוטה', 'Draft'),
+              _statusFilter == 'draft',
+              () => _filter('draft'),
+            ),
+            AdminFilterChip(
+              tr('ממתין', 'Pending'),
+              _statusFilter == 'pending',
+              () => _filter('pending'),
+            ),
+            AdminFilterChip(
+              tr('בוטל', 'Cancelled'),
+              _statusFilter == 'cancelled',
+              () => _filter('cancelled'),
+            ),
+          ],
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of
+          // letting the table below show the error and a retry.
+          count: switch (eventsAsync.valueOrNull) {
+            final list? => tr('${list.length} אירועים', '${list.length} events'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('אירוע חדש', 'New event'),
+              onPressed: () => _showEventEditor(context),
+            ),
+          ],
         ),
 
         // ─── Table ───
@@ -1213,7 +1156,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AdminKit.of(context).accent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -1309,9 +1252,9 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       ),
       selected: value,
       onSelected: onChanged,
-      selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
-      checkmarkColor: AppColors.turquoise,
-      side: BorderSide(color: value ? AppColors.turquoise : AppColors.border),
+      selectedColor: AppColors.midBlue.withValues(alpha: 0.15),
+      checkmarkColor: AppColors.midBlue,
+      side: BorderSide(color: value ? AppColors.midBlue : AppColors.border),
     );
   }
 
@@ -1361,11 +1304,11 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
                     selected.remove(c.id);
                   }
                 }),
-                selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
-                checkmarkColor: AppColors.turquoise,
+                selectedColor: AppColors.midBlue.withValues(alpha: 0.15),
+                checkmarkColor: AppColors.midBlue,
                 side: BorderSide(
                   color: selected.contains(c.id)
-                      ? AppColors.turquoise
+                      ? AppColors.midBlue
                       : AppColors.border,
                 ),
               ),
@@ -1589,32 +1532,18 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'published' => (tr('פורסם', 'Published'), AppColors.success),
-      'draft' => (tr('טיוטה', 'Draft'), AppColors.gold),
-      'pending' => (tr('ממתין', 'Pending'), AppColors.turquoise),
-      'cancelled' => (tr('בוטל', 'Cancelled'), AppColors.error),
-      'past' => (tr('הסתיים', 'Ended'), AppColors.grayText),
-      _ => (status, AppColors.grayLight),
+      'published' => (tr('פורסם', 'Published'), k.success),
+      'draft' => (tr('טיוטה', 'Draft'), k.muted),
+      'pending' => (tr('ממתין', 'Pending'), k.warning),
+      'cancelled' => (tr('בוטל', 'Cancelled'), k.danger),
+      'past' => (tr('הסתיים', 'Ended'), k.danger),
+      _ => (status, k.muted),
     };
     return Align(
       alignment: AlignmentDirectional.centerStart,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-      ),
+      child: AdminPill(label, color),
     );
   }
 }
@@ -1635,46 +1564,6 @@ class _Col extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.grayLight,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
-          ),
         ),
       ),
     );

@@ -555,7 +555,7 @@ class _Thumb extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: photo.isNew ? AppColors.turquoise : AppColors.adminCardBorder,
+          color: photo.isNew ? AppColors.midBlue : AppColors.adminCardBorder,
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -570,7 +570,7 @@ class _Thumb extends StatelessWidget {
                 start: 4,
                 child: _Badge(
                   photo.isNew ? tr('${index + 1} · חדשה', '${index + 1} · new') : '${index + 1}',
-                  photo.isNew ? AppColors.turquoise : AppColors.navy,
+                  photo.isNew ? AppColors.midBlue : AppColors.navy,
                 ),
               ),
             ],

@@ -163,7 +163,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Widget _buildPanel(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 800;
 
-    return Directionality(
+    // The kit's fields, switches, checkboxes and chips for every screen and
+    // every dialog opened from one (dialogs capture this theme), not only
+    // the two editors that were rebuilt on it.
+    return Theme(
+      data: AdminKit.of(context).theme(Theme.of(context)),
+      child: Directionality(
       textDirection: adminDir,
       child: Scaffold(
         backgroundColor: AppColors.adminContentBg,
@@ -286,6 +291,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -485,7 +491,7 @@ class _AdminTopBar extends ConsumerWidget {
                 gradient: signedIn == null
                     ? null
                     : const LinearGradient(
-                        colors: [AppColors.midBlue, AppColors.turquoise],
+                        colors: [AppColors.midBlue, AppColors.midBlue],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -725,96 +731,40 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
     return Column(
       children: [
         // ── CRM-style header bar ──
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: AppColors.adminCardBorder, width: 1),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            hint: tr('חיפוש לפי שם, טלפון, אימייל...', 'Search by name, phone, email...'),
+            onChanged: (v) => ref
+                .read(adminProfilesProvider.notifier)
+                .setSearch(v.isEmpty ? null : v),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _filter == ProfileFilter.all, () {
+              _setFilter(ProfileFilter.all);
+            }),
+            AdminFilterChip(tr('מאומתים', 'Verified'), _filter == ProfileFilter.verified, () {
+              _setFilter(ProfileFilter.verified);
+            }),
+            AdminFilterChip(tr('חסומים', 'Blocked'), _filter == ProfileFilter.banned, () {
+              _setFilter(ProfileFilter.banned);
+            }),
+          ],
+          actions: [
+            // An account is created when the resident first signs in — that
+            // is what puts the row in `auth.users` this table points at. The
+            // panel cannot make one, so the button says so rather than
+            // opening a form that could not save.
+            Tooltip(
+              message:
+                  tr('חשבון נוצר כשהתושב נכנס לאפליקציה בפעם הראשונה. '
+                  'לא ניתן ליצור משתמש מכאן.', 'An account is created when a resident first signs in to the app. Users cannot be created from here.'),
+              child: AdminToolbarButton(
+                label: tr('משתמש חדש', 'New user'),
+                onPressed: null,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppColors.adminSearchBorder,
-                      width: 1,
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: tr('חיפוש לפי שם, טלפון, אימייל...', 'Search by name, phone, email...'),
-                      hintStyle: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        color: AppColors.adminTextLight,
-                      ),
-                      prefixIcon: Icon(
-                        IconsaxPlusLinear.search_normal,
-                        size: 18,
-                        color: AppColors.adminTextLight,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                    ),
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-                    onChanged: (v) => ref
-                        .read(adminProfilesProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FilterPill(tr('הכל', 'All'), _filter == ProfileFilter.all, () {
-                _setFilter(ProfileFilter.all);
-              }),
-              _FilterPill(tr('מאומתים', 'Verified'), _filter == ProfileFilter.verified, () {
-                _setFilter(ProfileFilter.verified);
-              }),
-              _FilterPill(tr('חסומים', 'Blocked'), _filter == ProfileFilter.banned, () {
-                _setFilter(ProfileFilter.banned);
-              }),
-              const SizedBox(width: 12),
-              // An account is created when the resident first signs in — that
-              // is what puts the row in `auth.users` this table points at. The
-              // panel cannot make one, so the button says so rather than
-              // opening a form that could not save.
-              Tooltip(
-                message:
-                    tr('חשבון נוצר כשהתושב נכנס לאפליקציה בפעם הראשונה. '
-                    'לא ניתן ליצור משתמש מכאן.', 'An account is created when a resident first signs in to the app. Users cannot be created from here.'),
-                child: SizedBox(
-                  height: 40,
-                  child: FilledButton.icon(
-                    onPressed: null,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(
-                      tr('משתמש חדש', 'New user'),
-                      style: TextStyle(
-                        fontFamily: AppFonts.inter,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.midBlue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
         // ── User list ──
         Expanded(
@@ -902,15 +852,15 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
             ),
             if (p['is_verified'] == true) ...[
               const SizedBox(width: 8),
-              _Tag(tr('מאומת', 'Verified'), AppColors.success),
+              AdminPill(tr('מאומת', 'Verified'), AdminKit.of(context).success),
             ],
             if (p['is_broker'] == true) ...[
               const SizedBox(width: 6),
-              _Tag(tr('מתווך', 'Agent'), AppColors.midBlue),
+              AdminPill(tr('מתווך', 'Agent'), AdminKit.of(context).accent),
             ],
             if (isBanned) ...[
               const SizedBox(width: 6),
-              _Tag(tr('חסום', 'Blocked'), AppColors.error),
+              AdminPill(tr('חסום', 'Blocked'), AdminKit.of(context).danger),
             ],
           ],
         ),
@@ -1585,70 +1535,6 @@ class _SettingsTile extends StatelessWidget {
 }
 
 // ─── Shared Widgets ───
-
-class _Tag extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _Tag(this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.inter,
-          fontSize: 11,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterPill extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterPill(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.adminActiveBg : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.midBlue : AppColors.adminSearchBorder,
-              width: 1,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 13,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.midBlue : AppColors.adminTextMedium,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// An empty list, said plainly.
 ///

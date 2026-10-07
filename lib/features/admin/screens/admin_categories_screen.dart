@@ -8,6 +8,7 @@ import '../providers/admin_categories_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminCategoriesScreen extends ConsumerStatefulWidget {
   const AdminCategoriesScreen({super.key});
@@ -36,113 +37,56 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
     return Column(
       children: [
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש קטגוריה...', 'Search categories...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminCategoryListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _scopeFilter.isEmpty, () {
+              setState(() => _scopeFilter = '');
+              ref
+                  .read(adminCategoryListProvider.notifier)
+                  .setScopeFilter(null);
+            }),
+            AdminFilterChip(tr('עסקים', 'Businesses'), _scopeFilter == 'business', () {
+              setState(() => _scopeFilter = 'business');
+              ref
+                  .read(adminCategoryListProvider.notifier)
+                  .setScopeFilter('business');
+            }),
+            AdminFilterChip(tr('כתבות', 'Articles'), _scopeFilter == 'article', () {
+              setState(() => _scopeFilter = 'article');
+              ref
+                  .read(adminCategoryListProvider.notifier)
+                  .setScopeFilter('article');
+            }),
+            AdminFilterChip(tr('אירועים', 'Events'), _scopeFilter == 'event', () {
+              setState(() => _scopeFilter = 'event');
+              ref
+                  .read(adminCategoryListProvider.notifier)
+                  .setScopeFilter('event');
+            }),
+          ],
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of letting
+          // the list below show the error and a retry.
+          count: switch (async.valueOrNull) {
+            final list? => tr('${list.length} קטגוריות', '${list.length} categories'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('קטגוריה חדשה', 'New category'),
+              onPressed: () => _showEditor(context, ref),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 320 : 200,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש קטגוריה...', 'Search categories...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminCategoryListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _scopeFilter.isEmpty, () {
-                setState(() => _scopeFilter = '');
-                ref
-                    .read(adminCategoryListProvider.notifier)
-                    .setScopeFilter(null);
-              }),
-              _FilterChip(tr('עסקים', 'Businesses'), _scopeFilter == 'business', () {
-                setState(() => _scopeFilter = 'business');
-                ref
-                    .read(adminCategoryListProvider.notifier)
-                    .setScopeFilter('business');
-              }),
-              _FilterChip(tr('כתבות', 'Articles'), _scopeFilter == 'article', () {
-                setState(() => _scopeFilter = 'article');
-                ref
-                    .read(adminCategoryListProvider.notifier)
-                    .setScopeFilter('article');
-              }),
-              _FilterChip(tr('אירועים', 'Events'), _scopeFilter == 'event', () {
-                setState(() => _scopeFilter = 'event');
-                ref
-                    .read(adminCategoryListProvider.notifier)
-                    .setScopeFilter('event');
-              }),
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of letting
-              // the list below show the error and a retry.
-              if (async.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} קטגוריות', '${list.length} categories'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('קטגוריה חדשה', 'New category'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Table ───
@@ -309,11 +253,14 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                   ),
                                 Expanded(
                                   flex: 1,
-                                  child: _StatusPill(
-                                    active ? tr('פעיל', 'Active') : tr('מושבת', 'Disabled'),
-                                    active
-                                        ? AppColors.success
-                                        : AppColors.grayLight,
+                                  child: Align(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: AdminPill(
+                                      active ? tr('פעיל', 'Active') : tr('מושבת', 'Disabled'),
+                                      active
+                                          ? AdminKit.of(context).success
+                                          : AdminKit.of(context).muted,
+                                    ),
                                   ),
                                 ),
                                 PopupMenuButton<String>(
@@ -702,7 +649,6 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                         ),
                         value: _isActive,
                         onChanged: (v) => setState(() => _isActive = v),
-                        activeColor: AppColors.turquoise,
                         contentPadding: EdgeInsets.zero,
                       ),
                       if (_scope == 'business' && _hasInMenus)
@@ -727,7 +673,6 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                           ),
                           value: _inMenus,
                           onChanged: (v) => setState(() => _inMenus = v),
-                          activeColor: AppColors.turquoise,
                           contentPadding: EdgeInsets.zero,
                         ),
                     ],
@@ -769,7 +714,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AppColors.midBlue,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -892,37 +837,11 @@ class _ScopePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (scope) {
-      'business' => (tr('עסקים', 'Businesses'), AppColors.turquoise),
+      'business' => (tr('עסקים', 'Businesses'), AppColors.midBlue),
       'article' => (tr('כתבות', 'Articles'), AppColors.success),
       'event' => (tr('אירועים', 'Events'), AppColors.gold),
       _ => (scope, AppColors.grayLight),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _StatusPill(this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -958,46 +877,6 @@ class _Col extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.grayLight,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
-          ),
         ),
       ),
     );

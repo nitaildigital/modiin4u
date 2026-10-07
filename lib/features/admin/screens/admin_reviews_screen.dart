@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_reviews_provider.dart';
+import '../ui/admin_kit.dart';
 import '../admin_language.dart';
 
 /// Whether the panel offers its own reply to a review. Off: see the note
@@ -61,83 +62,37 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
 
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: AppColors.adminCardBorder, width: 1),
-            ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _search,
+            onChanged: _onSearch,
+            width: 260,
+            hint: tr('חיפוש לפי שם או טקסט...', 'Search by name or text...'),
           ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 260,
-                height: 40,
-                child: TextField(
-                  controller: _search,
-                  onChanged: _onSearch,
-                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש לפי שם או טקסט...', 'Search by name or text...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      color: AppColors.adminTextLight,
-                    ),
-                    prefixIcon: Icon(
-                      IconsaxPlusLinear.search_normal,
-                      size: 18,
-                      color: AppColors.adminTextLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(
-                        color: AppColors.adminSearchBorder,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(
-                        color: AppColors.adminSearchBorder,
-                      ),
-                    ),
-                  ),
-                ),
+          filters: [
+            for (final (value, label) in [
+              ('', tr('הכל', 'All')),
+              ('pending', tr('ממתין', 'Pending')),
+              ('approved', tr('מאושר', 'Approved')),
+              ('rejected', tr('נדחה', 'Rejected')),
+              ('hidden', tr('מוסתר', 'Hidden')),
+            ])
+              AdminFilterChip(
+                label,
+                _statusFilter == value,
+                () => _setStatus(value),
               ),
-              const SizedBox(width: 12),
-              for (final (value, label) in [
-                ('', tr('הכל', 'All')),
-                ('pending', tr('ממתין', 'Pending')),
-                ('approved', tr('מאושר', 'Approved')),
-                ('rejected', tr('נדחה', 'Rejected')),
-                ('hidden', tr('מוסתר', 'Hidden')),
-              ])
-                _FilterPill(
-                  label,
-                  _statusFilter == value,
-                  () => _setStatus(value),
-                ),
-              const Spacer(),
-              // Nothing is printed while the count is unknown, rather than a
-              // zero that reads as "no reviews". `hasValue`, not
-              // `whenData(...).value`: the latter rethrows on a failed load
-              // and greys the whole section instead of letting the list below
-              // show the error and a retry.
-              if (asyncReviews.hasValue)
-                Text(
-                  notifier.totalCount == 0
-                      ? tr('אין ביקורות', 'No reviews')
-                      : tr('${notifier.totalCount} ביקורות', '${notifier.totalCount} reviews'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 13,
-                    color: AppColors.adminTextLight,
-                  ),
-                ),
-            ],
-          ),
+          ],
+          // Nothing is printed while the count is unknown, rather than a
+          // zero that reads as "no reviews". `hasValue`, not
+          // `whenData(...).value`: the latter rethrows on a failed load
+          // and greys the whole section instead of letting the list below
+          // show the error and a retry.
+          count: asyncReviews.hasValue
+              ? (notifier.totalCount == 0
+                    ? tr('אין ביקורות', 'No reviews')
+                    : tr('${notifier.totalCount} ביקורות', '${notifier.totalCount} reviews'))
+              : null,
         ),
         Expanded(
           child: asyncReviews.when(
@@ -267,8 +222,8 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                       ),
                     ),
                     _Stars(rating),
-                    _Tag(_statusLabel(status), _statusColor(status)),
-                    if (verified) _Tag(tr('מאומת', 'Verified'), AppColors.midBlue),
+                    AdminPill(_statusLabel(status), _statusColor(status)),
+                    if (verified) AdminPill(tr('מאומת', 'Verified'), AdminKit.of(context).accent),
                   ],
                 ),
                 if (title.isNotEmpty) ...[
@@ -308,7 +263,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                       color: AppColors.surfaceLight,
                       borderRadius: BorderRadius.circular(8),
                       border: BorderDirectional(
-                        start: BorderSide(color: AppColors.turquoise, width: 3),
+                        start: BorderSide(color: AppColors.midBlue, width: 3),
                       ),
                     ),
                     child: Column(
@@ -431,10 +386,10 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
   };
 
   Color _statusColor(String status) => switch (status) {
-    'approved' => AppColors.success,
-    'pending' => AppColors.gold,
-    'rejected' => AppColors.error,
-    _ => AppColors.adminTextLight,
+    'approved' => AdminKit.of(context).success,
+    'pending' => AdminKit.of(context).warning,
+    'rejected' => AdminKit.of(context).danger,
+    _ => AdminKit.of(context).muted,
   };
 
   /// Reviews with a write in flight, whose buttons are off until it lands so
@@ -549,70 +504,6 @@ class _Stars extends StatelessWidget {
             color: i <= rating ? AppColors.gold : AppColors.adminTextLight,
           ),
       ],
-    );
-  }
-}
-
-class _Tag extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _Tag(this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.inter,
-          fontSize: 11,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterPill extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterPill(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.adminActiveBg : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.midBlue : AppColors.adminSearchBorder,
-              width: 1,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 13,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.midBlue : AppColors.adminTextMedium,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

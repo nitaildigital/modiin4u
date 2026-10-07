@@ -7,6 +7,7 @@ import '../providers/admin_realestate_provider.dart';
 import '../widgets/admin_listing_photos_field.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminRealEstateScreen extends ConsumerStatefulWidget {
   const AdminRealEstateScreen({super.key});
@@ -35,154 +36,94 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
 
     return Column(
       children: [
-        // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש כתובת / שכונה...', 'Search address / neighbourhood...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminListingListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            // Type filters
+            AdminFilterChip(
+              tr('הכל', 'All'),
+              _typeFilter.isEmpty && _statusFilter.isEmpty,
+              () {
+                setState(() {
+                  _typeFilter = '';
+                  _statusFilter = '';
+                });
+                ref
+                    .read(adminListingListProvider.notifier)
+                    .setKindFilter(null);
+                ref
+                    .read(adminListingListProvider.notifier)
+                    .setStatusFilter(null);
+              },
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש כתובת / שכונה...', 'Search address / neighbourhood...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminListingListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
+            AdminFilterChip(tr('השכרה', 'Rent'), _typeFilter == 'rent', () {
+              setState(() {
+                _typeFilter = 'rent';
+                _statusFilter = '';
+              });
+              ref
+                  .read(adminListingListProvider.notifier)
+                  .setKindFilter('rent');
+              ref
+                  .read(adminListingListProvider.notifier)
+                  .setStatusFilter(null);
+            }),
+            AdminFilterChip(tr('מכירה', 'Sale'), _typeFilter == 'sale', () {
+              setState(() {
+                _typeFilter = 'sale';
+                _statusFilter = '';
+              });
+              ref
+                  .read(adminListingListProvider.notifier)
+                  .setKindFilter('sale');
+              ref
+                  .read(adminListingListProvider.notifier)
+                  .setStatusFilter(null);
+            }),
 
-              // Type filters
-              _FilterChip(
-                tr('הכל', 'All'),
-                _typeFilter.isEmpty && _statusFilter.isEmpty,
-                () {
-                  setState(() {
-                    _typeFilter = '';
-                    _statusFilter = '';
-                  });
-                  ref
-                      .read(adminListingListProvider.notifier)
-                      .setKindFilter(null);
-                  ref
-                      .read(adminListingListProvider.notifier)
-                      .setStatusFilter(null);
-                },
+            if (isWide) ...[
+              Container(
+                width: 1,
+                height: 24,
+                margin: const EdgeInsetsDirectional.only(end: 8),
+                color: AdminKit.of(context).border,
               ),
-              _FilterChip(tr('השכרה', 'Rent'), _typeFilter == 'rent', () {
-                setState(() {
-                  _typeFilter = 'rent';
-                  _statusFilter = '';
-                });
+              AdminFilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
+                setState(() => _statusFilter = 'active');
                 ref
                     .read(adminListingListProvider.notifier)
-                    .setKindFilter('rent');
-                ref
-                    .read(adminListingListProvider.notifier)
-                    .setStatusFilter(null);
+                    .setStatusFilter('active');
               }),
-              _FilterChip(tr('מכירה', 'Sale'), _typeFilter == 'sale', () {
-                setState(() {
-                  _typeFilter = 'sale';
-                  _statusFilter = '';
-                });
+              AdminFilterChip(tr('ממתין', 'Pending'), _statusFilter == 'pending', () {
+                setState(() => _statusFilter = 'pending');
                 ref
                     .read(adminListingListProvider.notifier)
-                    .setKindFilter('sale');
-                ref
-                    .read(adminListingListProvider.notifier)
-                    .setStatusFilter(null);
+                    .setStatusFilter('pending');
               }),
-
-              if (isWide) ...[
-                Container(
-                  width: 1,
-                  height: 24,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  color: AppColors.border,
-                ),
-                _FilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
-                  setState(() => _statusFilter = 'active');
-                  ref
-                      .read(adminListingListProvider.notifier)
-                      .setStatusFilter('active');
-                }),
-                _FilterChip(tr('ממתין', 'Pending'), _statusFilter == 'pending', () {
-                  setState(() => _statusFilter = 'pending');
-                  ref
-                      .read(adminListingListProvider.notifier)
-                      .setStatusFilter('pending');
-                }),
-              ],
-
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of letting
-              // the list below show the error and a retry.
-              if (listingsAsync.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} נכסים', '${list.length} properties'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showListingEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('נכס חדש', 'New property'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
             ],
-          ),
+          ],
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of letting
+          // the list below show the error and a retry.
+          count: switch (listingsAsync.valueOrNull) {
+            final list? => tr('${list.length} נכסים', '${list.length} properties'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('נכס חדש', 'New property'),
+              onPressed: () => _showListingEditor(context, ref),
+            ),
+          ],
         ),
 
         // ─── Table ───
@@ -486,7 +427,13 @@ class _ListingTable extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Expanded(flex: 1, child: _TypeBadge(kind)),
+                      Expanded(
+                        flex: 1,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: _TypeBadge(kind),
+                        ),
+                      ),
                       Expanded(
                         flex: 1,
                         child: Text(
@@ -1184,7 +1131,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AdminKit.of(context).accent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -1386,9 +1333,9 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
       ),
       selected: value,
       onSelected: onChanged,
-      selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
-      checkmarkColor: AppColors.turquoise,
-      side: BorderSide(color: value ? AppColors.turquoise : AppColors.border),
+      selectedColor: AppColors.midBlue.withValues(alpha: 0.15),
+      checkmarkColor: AppColors.midBlue,
+      side: BorderSide(color: value ? AppColors.midBlue : AppColors.border),
     );
   }
 
@@ -1506,31 +1453,20 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'active' => (tr('פעיל', 'Active'), AppColors.success),
-      'pending' => (tr('ממתין', 'Pending'), AppColors.gold),
-      'sold' => (tr('נמכר', 'Sold'), AppColors.midBlue),
-      'rented' => (tr('הושכר', 'Rented'), AppColors.midBlue),
-      'expired' => (tr('פג תוקף', 'Expired'), AppColors.grayLight),
-      'removed' => (tr('הוסר', 'Removed'), AppColors.error),
-      'draft' => (tr('טיוטה', 'Draft'), AppColors.grayLight),
-      _ => (status, AppColors.grayLight),
+      'active' => (tr('פעיל', 'Active'), k.success),
+      'pending' => (tr('ממתין', 'Pending'), k.warning),
+      'sold' => (tr('נמכר', 'Sold'), k.accent),
+      'rented' => (tr('הושכר', 'Rented'), k.accent),
+      'expired' => (tr('פג תוקף', 'Expired'), k.danger),
+      'removed' => (tr('הוסר', 'Removed'), k.danger),
+      'draft' => (tr('טיוטה', 'Draft'), k.muted),
+      _ => (status, k.muted),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AdminPill(label, color),
     );
   }
 }
@@ -1542,7 +1478,7 @@ class _TypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (type) {
-      'rent' => (tr('השכרה', 'Rent'), AppColors.turquoise),
+      'rent' => (tr('השכרה', 'Rent'), AppColors.midBlue),
       'sale' => (tr('מכירה', 'Sale'), AppColors.midBlue),
       _ => (type, AppColors.grayLight),
     };
@@ -1581,46 +1517,6 @@ class _Col extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.grayLight,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
-          ),
         ),
       ),
     );

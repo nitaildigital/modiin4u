@@ -6,6 +6,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_challenges_provider.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// Step challenges.
 ///
@@ -39,78 +40,41 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
 
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש אתגר...', 'Search challenges...'),
+            onChanged: (v) => ref
+                .read(adminChallengeListProvider.notifier)
+                .setSearch(v),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
+            AdminFilterChip(
+              tr('פעילים', 'Active'),
+              _activeFilter == 'active',
+              () => _setFilter('active'),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  onChanged: (v) => ref
-                      .read(adminChallengeListProvider.notifier)
-                      .setSearch(v),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש אתגר...', 'Search challenges...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _chip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
-              _chip(
-                tr('פעילים', 'Active'),
-                _activeFilter == 'active',
-                () => _setFilter('active'),
-              ),
-              _chip(
-                tr('לא פעילים', 'Inactive'),
-                _activeFilter == 'inactive',
-                () => _setFilter('inactive'),
-              ),
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of letting
-              // the list below show the error and a retry.
-              if (async.valueOrNull case final l?)
-                Text(
-                  tr('${l.length} אתגרים', '${l.length} challenges'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('אתגר חדש', 'New challenge'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-              ),
-            ],
-          ),
+            AdminFilterChip(
+              tr('לא פעילים', 'Inactive'),
+              _activeFilter == 'inactive',
+              () => _setFilter('inactive'),
+            ),
+          ],
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of letting
+          // the list below show the error and a retry.
+          count: switch (async.valueOrNull) {
+            final l? => tr('${l.length} אתגרים', '${l.length} challenges'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('אתגר חדש', 'New challenge'),
+              onPressed: () => _showEditor(),
+            ),
+          ],
         ),
 
         Expanded(
@@ -161,18 +125,6 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
         .read(adminChallengeListProvider.notifier)
         .setActiveFilter(f.isEmpty ? null : f);
   }
-
-  Widget _chip(String label, bool selected, VoidCallback onTap) => Padding(
-    padding: const EdgeInsetsDirectional.only(end: 6),
-    child: FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
-      ),
-      selected: selected,
-      onSelected: (_) => onTap(),
-    ),
-  );
 
   Widget _row(Map<String, dynamic> c, Map<String, int> counts, bool isWide) {
     final active = c['is_active'] as bool? ?? false;
@@ -246,24 +198,11 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
               ),
             ),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: (active ? AppColors.success : AppColors.grayLight)
-                      .withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AdminPill(
                   active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 12,
-                    color: active ? AppColors.success : AppColors.grayText,
-                  ),
+                  active ? AdminKit.of(context).success : AdminKit.of(context).muted,
                 ),
               ),
             ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../news/models/article_body.dart';
 import '../providers/admin_articles_provider.dart';
@@ -40,124 +39,58 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
     return Column(
       children: [
         // ─── Toolbar (CRM-style) ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: AppColors.adminCardBorder, width: 1),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש כתבה...', 'Search articles...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminArticleListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
+              setState(() => _statusFilter = '');
+              ref
+                  .read(adminArticleListProvider.notifier)
+                  .setStatusFilter(null);
+            }),
+            AdminFilterChip(tr('פורסם', 'Published'), _statusFilter == 'published', () {
+              setState(() => _statusFilter = 'published');
+              ref
+                  .read(adminArticleListProvider.notifier)
+                  .setStatusFilter('published');
+            }),
+            AdminFilterChip(tr('טיוטה', 'Draft'), _statusFilter == 'draft', () {
+              setState(() => _statusFilter = 'draft');
+              ref
+                  .read(adminArticleListProvider.notifier)
+                  .setStatusFilter('draft');
+            }),
+            AdminFilterChip(tr('ארכיון', 'Archive'), _statusFilter == 'archived', () {
+              setState(() => _statusFilter = 'archived');
+              ref
+                  .read(adminArticleListProvider.notifier)
+                  .setStatusFilter('archived');
+            }),
+          ],
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of
+          // letting the table below show the error and a retry.
+          count: switch (articlesAsync.valueOrNull) {
+            final list? => notifier.hasMore
+                ? tr('${list.length} מתוך ${notifier.totalCount} כתבות', '${list.length} of ${notifier.totalCount} articles')
+                : tr('${notifier.totalCount} כתבות', '${notifier.totalCount} articles'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('כתבה חדשה', 'New article'),
+              onPressed: () => _showArticleEditor(context, ref),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 320 : 200,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש כתבה...', 'Search articles...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      color: AppColors.adminTextLight,
-                    ),
-                    prefixIcon: Icon(
-                      IconsaxPlusLinear.search_normal,
-                      size: 18,
-                      color: AppColors.adminTextLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(
-                        color: AppColors.adminSearchBorder,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(
-                        color: AppColors.adminSearchBorder,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: AppColors.midBlue),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminArticleListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref
-                    .read(adminArticleListProvider.notifier)
-                    .setStatusFilter(null);
-              }),
-              _FilterChip(tr('פורסם', 'Published'), _statusFilter == 'published', () {
-                setState(() => _statusFilter = 'published');
-                ref
-                    .read(adminArticleListProvider.notifier)
-                    .setStatusFilter('published');
-              }),
-              _FilterChip(tr('טיוטה', 'Draft'), _statusFilter == 'draft', () {
-                setState(() => _statusFilter = 'draft');
-                ref
-                    .read(adminArticleListProvider.notifier)
-                    .setStatusFilter('draft');
-              }),
-              _FilterChip(tr('ארכיון', 'Archive'), _statusFilter == 'archived', () {
-                setState(() => _statusFilter = 'archived');
-                ref
-                    .read(adminArticleListProvider.notifier)
-                    .setStatusFilter('archived');
-              }),
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of
-              // letting the table below show the error and a retry.
-              if (articlesAsync.valueOrNull case final list?)
-                Text(
-                  notifier.hasMore
-                      ? tr('${list.length} מתוך ${notifier.totalCount} כתבות', '${list.length} of ${notifier.totalCount} articles')
-                      : tr('${notifier.totalCount} כתבות', '${notifier.totalCount} articles'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 13,
-                    color: AppColors.adminTextLight,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              SizedBox(
-                height: 40,
-                child: FilledButton.icon(
-                  onPressed: () => _showArticleEditor(context, ref),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(
-                    tr('כתבה חדשה', 'New article'),
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.midBlue,
-                    minimumSize: const Size(0, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Table ───
@@ -1369,9 +1302,9 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
       ),
       selected: value,
       onSelected: onChanged,
-      selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
-      checkmarkColor: AppColors.turquoise,
-      side: BorderSide(color: value ? AppColors.turquoise : AppColors.border),
+      selectedColor: AppColors.midBlue.withValues(alpha: 0.15),
+      checkmarkColor: AppColors.midBlue,
+      side: BorderSide(color: value ? AppColors.midBlue : AppColors.border),
     );
   }
 
@@ -1472,29 +1405,15 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'published' => (tr('פורסם', 'Published'), AppColors.success),
-      'draft' => (tr('טיוטה', 'Draft'), AppColors.gold),
-      'archived' => (tr('ארכיון', 'Archive'), AppColors.grayLight),
-      'trash' => (tr('פח', 'Trash'), AppColors.error),
-      _ => (status, AppColors.grayLight),
+      'published' => (tr('פורסם', 'Published'), k.success),
+      'draft' => (tr('טיוטה', 'Draft'), k.inkSoft),
+      'archived' => (tr('ארכיון', 'Archive'), k.muted),
+      'trash' => (tr('פח', 'Trash'), k.danger),
+      _ => (status, k.muted),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
+    return AdminPill(label, color);
   }
 }
 
@@ -1514,47 +1433,6 @@ class _Col extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.grayLight,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.adminActiveBg : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected
-                  ? AppColors.midBlue.withValues(alpha: 0.3)
-                  : AppColors.adminSearchBorder,
-              width: 1,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 13,
-              fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-              color: selected ? AppColors.midBlue : AppColors.adminTextMedium,
-            ),
-          ),
         ),
       ),
     );

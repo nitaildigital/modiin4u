@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../providers/admin_tags_provider.dart';
 import '../widgets/admin_form_pickers.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminTagsScreen extends ConsumerStatefulWidget {
   const AdminTagsScreen({super.key});
@@ -42,102 +43,41 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
         const _NotShownNote(),
 
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש תגית...', 'Search tags...'),
+            onChanged: (v) {
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(
+                const Duration(milliseconds: 400),
+                () => ref
+                    .read(adminTagListProvider.notifier)
+                    .setSearch(v.isEmpty ? null : v),
+              );
+            },
+          ),
+          filters: [
+            AdminFilterChip(tr('שם', 'Name'), _sortBy == 'name', () {
+              setState(() => _sortBy = 'name');
+              ref.read(adminTagListProvider.notifier).setSortBy('name');
+            }),
+            AdminFilterChip(tr('שימוש', 'Usage'), _sortBy == 'usage', () {
+              setState(() => _sortBy = 'usage');
+              ref.read(adminTagListProvider.notifier).setSortBy('usage');
+            }),
+          ],
+          count: switch (asyncData.valueOrNull) {
+            final l? => tr('${l.length} תגיות', '${l.length} tags'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('תגית חדשה', 'New tag'),
+              onPressed: () => _showEditor(context, null),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש תגית...', 'Search tags...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) {
-                    _searchDebounce?.cancel();
-                    _searchDebounce = Timer(
-                      const Duration(milliseconds: 400),
-                      () => ref
-                          .read(adminTagListProvider.notifier)
-                          .setSearch(v.isEmpty ? null : v),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              _SortChip(tr('שם', 'Name'), _sortBy == 'name', () {
-                setState(() => _sortBy = 'name');
-                ref.read(adminTagListProvider.notifier).setSortBy('name');
-              }),
-              _SortChip(tr('שימוש', 'Usage'), _sortBy == 'usage', () {
-                setState(() => _sortBy = 'usage');
-                ref.read(adminTagListProvider.notifier).setSortBy('usage');
-              }),
-              const Spacer(),
-              if (asyncData.valueOrNull case final l?)
-                Text(
-                  tr('${l.length} תגיות', '${l.length} tags'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () => _showEditor(context, null),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('תגית חדשה', 'New tag'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Tags Grid ───
@@ -434,7 +374,7 @@ class _TagEditorDialogState extends ConsumerState<_TagEditorDialog> {
           ElevatedButton(
             onPressed: _saving ? null : _save,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
+              backgroundColor: AppColors.midBlue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -465,7 +405,7 @@ class _TagChip extends StatelessWidget {
     final usage = tag['usage_count'] as int? ?? 0;
     return Material(
       borderRadius: BorderRadius.circular(10),
-      color: AppColors.turquoise.withValues(alpha: 0.06),
+      color: AppColors.midBlue.withValues(alpha: 0.06),
       child: InkWell(
         onTap: onEdit,
         borderRadius: BorderRadius.circular(10),
@@ -474,7 +414,7 @@ class _TagChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.label, size: 16, color: AppColors.turquoise),
+              const Icon(Icons.label, size: 16, color: AppColors.midBlue),
               const SizedBox(width: 8),
               Text(
                 tag['name'] as String? ?? '',
@@ -512,45 +452,6 @@ class _TagChip extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SortChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _SortChip(this.label, this.selected, this.onTap);
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
-            ),
           ),
         ),
       ),

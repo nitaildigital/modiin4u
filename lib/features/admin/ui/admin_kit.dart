@@ -435,3 +435,144 @@ class AdminEditorPage extends StatelessWidget {
     );
   }
 }
+
+/// A filter for a list, as a bordered chip; filled with the accent's tint
+/// when chosen. Each screen drew its own, in four shapes and two blues.
+class AdminFilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final int? count;
+
+  const AdminFilterChip(this.label, this.selected, this.onTap, {super.key, this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? k.accentSoft : k.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: selected ? k.accent.withValues(alpha: 0.35) : k.border),
+          ),
+          child: Text(
+            count == null ? label : '$label · $count',
+            style: TextStyle(
+              fontFamily: AppFonts.rubik,
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? k.accent : k.inkSoft,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The search box at the start of a list's toolbar.
+class AdminSearchField extends StatelessWidget {
+  final String hint;
+  final TextEditingController? controller;
+  final ValueChanged<String> onChanged;
+  final double width;
+
+  const AdminSearchField({super.key, required this.hint, required this.onChanged, this.controller, this.width = 300});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    return SizedBox(
+      width: width,
+      height: 40,
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: k.body.copyWith(height: 1.2),
+        decoration: k.input(
+          hint: hint,
+          prefix: Icon(Icons.search, size: 18, color: k.muted),
+        ).copyWith(contentPadding: const EdgeInsets.symmetric(horizontal: 12)),
+      ),
+    );
+  }
+}
+
+/// The bar over a list: search, filters, the count and the main action —
+/// the same on every screen, white with a line under it.
+class AdminListToolbar extends StatelessWidget {
+  final Widget? search;
+  final List<Widget> filters;
+  final String? count;
+  final List<Widget> actions;
+
+  const AdminListToolbar({super.key, this.search, this.filters = const [], this.count, this.actions = const []});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      decoration: BoxDecoration(color: k.surface, border: Border(bottom: BorderSide(color: k.border))),
+      child: Row(
+        children: [
+          if (search != null) ...[search!, const SizedBox(width: 12)],
+          // Many filters scroll rather than push the actions off the bar.
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: filters),
+            ),
+          ),
+          if (count != null) ...[
+            const SizedBox(width: 12),
+            Text(count!, style: k.hint),
+          ],
+          for (final a in actions) Padding(padding: const EdgeInsetsDirectional.only(start: 12), child: a),
+        ],
+      ),
+    );
+  }
+}
+
+/// The small button a list's toolbar ends with ("New event"): the kit's
+/// primary button, at the bar's height.
+class AdminToolbarButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final bool primary;
+
+  const AdminToolbarButton({super.key, required this.label, required this.onPressed, this.icon = Icons.add, this.primary = true});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
+    final text = Text(label, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600));
+    return SizedBox(
+      height: 40,
+      child: primary
+          ? FilledButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon, size: 18),
+              label: text,
+              style: FilledButton.styleFrom(backgroundColor: k.accent, foregroundColor: Colors.white, shape: shape, elevation: 0),
+            )
+          : OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon, size: 18),
+              label: text,
+              style: OutlinedButton.styleFrom(foregroundColor: k.ink, side: BorderSide(color: k.border), backgroundColor: k.surface, shape: shape),
+            ),
+    );
+  }
+}
+

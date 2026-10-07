@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_comments_provider.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminCommentsScreen extends ConsumerStatefulWidget {
   const AdminCommentsScreen({super.key});
@@ -103,7 +104,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                   AppColors.error,
                 ),
                 const SizedBox(width: 12),
-                _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.turquoise),
+                _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.midBlue),
               ],
             ),
           ),
@@ -113,111 +114,61 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
         const _NothingWritesThisNote(),
 
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש תגובה...', 'Search comments...'),
+            onChanged: (v) => notifier.setSearch(v.isEmpty ? null : v),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _setStatus('')),
+            AdminFilterChip(
+              tr('ממתין', 'Pending'),
+              _statusFilter == 'pending',
+              () => _setStatus('pending'),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש תגובה...', 'Search comments...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => notifier.setSearch(v.isEmpty ? null : v),
-                ),
-              ),
+            AdminFilterChip(
+              tr('מאושר', 'Approved'),
+              _statusFilter == 'approved',
+              () => _setStatus('approved'),
+            ),
+            AdminFilterChip(
+              tr('נדחה', 'Rejected'),
+              _statusFilter == 'rejected',
+              () => _setStatus('rejected'),
+            ),
+            AdminFilterChip(
+              tr('מוסתר', 'Hidden'),
+              _statusFilter == 'hidden',
+              () => _setStatus('hidden'),
+            ),
+            if (isWide) ...[
               const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _setStatus('')),
-              _FilterChip(
-                tr('ממתין', 'Pending'),
-                _statusFilter == 'pending',
-                () => _setStatus('pending'),
+              // Residents' replies to reviews, from the business pages.
+              AdminFilterChip(
+                tr('ביקורות', 'Reviews'),
+                _entityFilter == 'review',
+                () => _toggleEntity('review'),
               ),
-              _FilterChip(
-                tr('מאושר', 'Approved'),
-                _statusFilter == 'approved',
-                () => _setStatus('approved'),
+              AdminFilterChip(
+                tr('עסקים', 'Businesses'),
+                _entityFilter == 'business',
+                () => _toggleEntity('business'),
               ),
-              _FilterChip(
-                tr('נדחה', 'Rejected'),
-                _statusFilter == 'rejected',
-                () => _setStatus('rejected'),
+              AdminFilterChip(
+                tr('כתבות', 'Articles'),
+                _entityFilter == 'article',
+                () => _toggleEntity('article'),
               ),
-              _FilterChip(
-                tr('מוסתר', 'Hidden'),
-                _statusFilter == 'hidden',
-                () => _setStatus('hidden'),
+              AdminFilterChip(
+                tr('אירועים', 'Events'),
+                _entityFilter == 'event',
+                () => _toggleEntity('event'),
               ),
-              if (isWide) ...[
-                const SizedBox(width: 12),
-                // Residents' replies to reviews, from the business pages.
-                _FilterChip(
-                  tr('ביקורות', 'Reviews'),
-                  _entityFilter == 'review',
-                  () => _toggleEntity('review'),
-                ),
-                _FilterChip(
-                  tr('עסקים', 'Businesses'),
-                  _entityFilter == 'business',
-                  () => _toggleEntity('business'),
-                ),
-                _FilterChip(
-                  tr('כתבות', 'Articles'),
-                  _entityFilter == 'article',
-                  () => _toggleEntity('article'),
-                ),
-                _FilterChip(
-                  tr('אירועים', 'Events'),
-                  _entityFilter == 'event',
-                  () => _toggleEntity('event'),
-                ),
-              ],
-              const Spacer(),
-              if (list != null)
-                Text(
-                  tr('${list.length} תגובות', '${list.length} comments'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
             ],
-          ),
+          ],
+          count: list != null ? tr('${list.length} תגובות', '${list.length} comments') : null,
         ),
 
         // ─── List ───
@@ -288,7 +239,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                       children: [
                         CircleAvatar(
                           radius: 18,
-                          backgroundColor: AppColors.turquoise.withValues(
+                          backgroundColor: AppColors.midBlue.withValues(
                             alpha: 0.1,
                           ),
                           child: Text(
@@ -297,7 +248,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                               fontFamily: AppFonts.rubik,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.turquoise,
+                              color: AppColors.midBlue,
                             ),
                           ),
                         ),
@@ -398,7 +349,7 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                                     _ActionButton(
                                       tr('הסתר', 'Hide'),
                                       Icons.visibility_off,
-                                      AppColors.turquoise,
+                                      AppColors.midBlue,
                                       () => _run(
                                         () => notifier.hide(id),
                                         tr('התגובה הוסתרה — אפשר להחזיר אותה מסל המחזור', 'Comment hidden — you can bring it back from the trash'),
@@ -503,29 +454,15 @@ class _StatusPill extends StatelessWidget {
   const _StatusPill(this.status);
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'approved' => (tr('מאושר', 'Approved'), AppColors.success),
-      'pending' => (tr('ממתין', 'Pending'), AppColors.gold),
-      'rejected' => (tr('נדחה', 'Rejected'), AppColors.error),
-      'hidden' => (tr('מוסתר', 'Hidden'), AppColors.grayText),
-      _ => (status, AppColors.grayLight),
+      'approved' => (tr('מאושר', 'Approved'), k.success),
+      'pending' => (tr('ממתין', 'Pending'), k.warning),
+      'rejected' => (tr('נדחה', 'Rejected'), k.danger),
+      'hidden' => (tr('מוסתר', 'Hidden'), k.muted),
+      _ => (status, k.muted),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
+    return AdminPill(label, color);
   }
 }
 
@@ -562,43 +499,6 @@ class _StatChip extends StatelessWidget {
           ),
         ),
       ],
-    ),
-  );
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.only(end: 6),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.turquoise.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected ? AppColors.turquoise : AppColors.border,
-            width: 0.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? AppColors.turquoise : AppColors.grayText,
-          ),
-        ),
-      ),
     ),
   );
 }

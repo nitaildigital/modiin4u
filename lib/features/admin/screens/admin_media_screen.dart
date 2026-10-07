@@ -12,6 +12,7 @@ import '../providers/admin_media_provider.dart';
 import '../providers/media_usage.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 // Sizes and dimensions are wrapped in a left-to-right isolate: inside a
 // Hebrew line "548×364" read as "364×548" and "47.5 KB" as "KB 47.5".
@@ -88,6 +89,13 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
     // list failed to load, and took the whole section down with it.
     final loaded = asyncData.valueOrNull;
     final totals = notifier.totals;
+    final count = loaded == null
+        ? null
+        : notifier.hasMore
+        ? (isWide
+              ? tr('${loaded.length} מתוך ${notifier.totalCount} קבצים', '${loaded.length} of ${notifier.totalCount} files')
+              : tr('${loaded.length} מתוך ${notifier.totalCount}', '${loaded.length} of ${notifier.totalCount}'))
+        : tr('${notifier.totalCount} קבצים', '${notifier.totalCount} files');
 
     return Column(
       children: [
@@ -108,7 +116,7 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
               spacing: 12,
               runSpacing: 8,
               children: [
-                _StatChip(tr('סה״כ קבצים', 'Total files'), '${totals.files}', AppColors.turquoise),
+                _StatChip(tr('סה״כ קבצים', 'Total files'), '${totals.files}', AppColors.midBlue),
                 _StatChip(tr('תמונות', 'Photos'), '${totals.images}', AppColors.midBlue),
                 _StatChip(
                   tr('נפח כולל', 'Total size'),
@@ -120,147 +128,81 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
           ),
 
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 140,
+            hint: tr('חיפוש לפי שם קובץ או טקסט חלופי', 'Search by file name or alt text'),
+            onChanged: (v) {
+              // One query when the typing stops, not one per letter.
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(
+                const Duration(milliseconds: 350),
+                () => notifier.setSearch(v.trim().isEmpty ? null : v),
+              );
+            },
+          ),
+          filters: [
+            if (isWide) ...[
+              AdminFilterChip(tr('הכל', 'All'), _mimeFilter.isEmpty, () => _setMime('')),
+              AdminFilterChip(
+                'JPEG',
+                _mimeFilter == 'image/jpeg',
+                () => _setMime('image/jpeg'),
               ),
+              AdminFilterChip(
+                'PNG',
+                _mimeFilter == 'image/png',
+                () => _setMime('image/png'),
+              ),
+              AdminFilterChip(
+                'WebP',
+                _mimeFilter == 'image/webp',
+                () => _setMime('image/webp'),
+              ),
+            ]
+            // A phone has no room for the count beside the buttons; in the
+            // filters' place it scrolls instead of overflowing the bar.
+            else if (count != null)
+              Text(count, style: AdminKit.of(context).hint),
+          ],
+          count: isWide ? count : null,
+          actions: [
+            IconButton(
+              icon: Icon(
+                _gridView ? Icons.view_list : Icons.grid_view,
+                size: 20,
+                color: AppColors.grayText,
+              ),
+              onPressed: () => setState(() => _gridView = !_gridView),
+              tooltip: _gridView ? tr('תצוגת רשימה', 'List view') : tr('תצוגת גריד', 'Grid view'),
             ),
-          ),
-          child: Row(
-            children: [
+            // The label goes on a phone, where the row has no room for it.
+            if (isWide)
+              AdminToolbarButton(
+                label: tr('העלאת קובץ', 'Upload a file'),
+                icon: Icons.upload,
+                onPressed: _showUpload,
+              )
+            else
               SizedBox(
-                width: isWide ? 280 : 140,
                 height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש לפי שם קובץ או טקסט חלופי', 'Search by file name or alt text'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
+                child: FilledButton(
+                  onPressed: _showUpload,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AdminKit.of(context).accent,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
+                    elevation: 0,
                   ),
-                  onChanged: (v) {
-                    // One query when the typing stops, not one per letter.
-                    _searchDebounce?.cancel();
-                    _searchDebounce = Timer(
-                      const Duration(milliseconds: 350),
-                      () => notifier.setSearch(v.trim().isEmpty ? null : v),
-                    );
-                  },
+                  child: const Icon(Icons.upload, size: 18),
                 ),
               ),
-              const SizedBox(width: 12),
-              if (isWide) ...[
-                _FilterChip(tr('הכל', 'All'), _mimeFilter.isEmpty, () => _setMime('')),
-                _FilterChip(
-                  'JPEG',
-                  _mimeFilter == 'image/jpeg',
-                  () => _setMime('image/jpeg'),
-                ),
-                _FilterChip(
-                  'PNG',
-                  _mimeFilter == 'image/png',
-                  () => _setMime('image/png'),
-                ),
-                _FilterChip(
-                  'WebP',
-                  _mimeFilter == 'image/webp',
-                  () => _setMime('image/webp'),
-                ),
-              ],
-              Expanded(
-                child: Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: loaded == null
-                      ? null
-                      : Text(
-                          notifier.hasMore
-                              ? (isWide
-                                    ? tr('${loaded.length} מתוך ${notifier.totalCount} קבצים', '${loaded.length} of ${notifier.totalCount} files')
-                                    : tr('${loaded.length} מתוך ${notifier.totalCount}', '${loaded.length} of ${notifier.totalCount}'))
-                              : tr('${notifier.totalCount} קבצים', '${notifier.totalCount} files'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  _gridView ? Icons.view_list : Icons.grid_view,
-                  size: 20,
-                  color: AppColors.grayText,
-                ),
-                onPressed: () => setState(() => _gridView = !_gridView),
-                tooltip: _gridView ? tr('תצוגת רשימה', 'List view') : tr('תצוגת גריד', 'Grid view'),
-              ),
-              const SizedBox(width: 8),
-              // The label goes on a phone, where the row has no room for it.
-              ElevatedButton(
-                onPressed: () => showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (_) => const _UploadDialog(),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWide ? 16 : 10,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.upload, size: 18),
-                    if (isWide) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        tr('העלאת קובץ', 'Upload a file'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Content ───
@@ -367,6 +309,12 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
       ],
     );
   }
+
+  void _showUpload() => showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const _UploadDialog(),
+  );
 
   void _showDetails(Map<String, dynamic> media) {
     showDialog(
@@ -591,7 +539,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
           ElevatedButton(
             onPressed: _busy || bytes == null ? null : _upload,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
+              backgroundColor: AppColors.midBlue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -837,7 +785,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
           ElevatedButton(
             onPressed: _saving ? null : _save,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
+              backgroundColor: AppColors.midBlue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -1267,43 +1215,6 @@ class _StatChip extends StatelessWidget {
           ),
         ),
       ],
-    ),
-  );
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.only(end: 6),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.turquoise.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected ? AppColors.turquoise : AppColors.border,
-            width: 0.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? AppColors.turquoise : AppColors.grayText,
-          ),
-        ),
-      ),
     ),
   );
 }

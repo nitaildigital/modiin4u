@@ -8,6 +8,7 @@ import '../providers/admin_agents_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// Estate agents.
 ///
@@ -41,77 +42,40 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
 
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש מתווך / סוכנות...', 'Search agent / agency...'),
+            onChanged: (v) =>
+                ref.read(adminAgentListProvider.notifier).setSearch(v),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
+            AdminFilterChip(
+              tr('פעילים', 'Active'),
+              _activeFilter == 'active',
+              () => _setFilter('active'),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  onChanged: (v) =>
-                      ref.read(adminAgentListProvider.notifier).setSearch(v),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש מתווך / סוכנות...', 'Search agent / agency...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _chip(tr('הכל', 'All'), _activeFilter.isEmpty, () => _setFilter('')),
-              _chip(
-                tr('פעילים', 'Active'),
-                _activeFilter == 'active',
-                () => _setFilter('active'),
-              ),
-              _chip(
-                tr('לא פעילים', 'Inactive'),
-                _activeFilter == 'inactive',
-                () => _setFilter('inactive'),
-              ),
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of letting
-              // the list below show the error and a retry.
-              if (async.valueOrNull case final l?)
-                Text(
-                  tr('${l.length} מתווכים', '${l.length} agents'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('מתווך חדש', 'New agent'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-              ),
-            ],
-          ),
+            AdminFilterChip(
+              tr('לא פעילים', 'Inactive'),
+              _activeFilter == 'inactive',
+              () => _setFilter('inactive'),
+            ),
+          ],
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of letting
+          // the list below show the error and a retry.
+          count: switch (async.valueOrNull) {
+            final l? => tr('${l.length} מתווכים', '${l.length} agents'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('מתווך חדש', 'New agent'),
+              onPressed: () => _showEditor(),
+            ),
+          ],
         ),
 
         Expanded(
@@ -161,18 +125,6 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
         .read(adminAgentListProvider.notifier)
         .setActiveFilter(f.isEmpty ? null : f);
   }
-
-  Widget _chip(String label, bool selected, VoidCallback onTap) => Padding(
-    padding: const EdgeInsetsDirectional.only(end: 6),
-    child: FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
-      ),
-      selected: selected,
-      onSelected: (_) => onTap(),
-    ),
-  );
 
   Widget _row(Map<String, dynamic> a, Map<String, int> counts, bool isWide) {
     final active = a['is_active'] as bool? ?? true;
@@ -243,24 +195,11 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
               ),
             ),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: (active ? AppColors.success : AppColors.grayLight)
-                      .withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AdminPill(
                   active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 12,
-                    color: active ? AppColors.success : AppColors.grayText,
-                  ),
+                  active ? AdminKit.of(context).success : AdminKit.of(context).muted,
                 ),
               ),
             ),

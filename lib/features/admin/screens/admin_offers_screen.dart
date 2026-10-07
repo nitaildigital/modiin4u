@@ -13,6 +13,7 @@ import '../widgets/admin_events_form_fields.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminOffersScreen extends ConsumerStatefulWidget {
   const AdminOffersScreen({super.key});
@@ -88,7 +89,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                     _StatChip(
                       tr('סה״כ נלקחו', 'Total claimed'),
                       '$totalClaims',
-                      AppColors.turquoise,
+                      AppColors.midBlue,
                     ),
                     const SizedBox(width: 16),
                     _StatChip(
@@ -106,110 +107,52 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
             },
           ),
 
-        // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש מבצע...', 'Search deals...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminOfferListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          // The four values of `offer_status`. "Scheduled" and "paused"
+          // were offered here too; the table has neither.
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _filter('')),
+            AdminFilterChip(
+              tr('פעיל', 'Active'),
+              _statusFilter == 'active',
+              () => _filter('active'),
             ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש מבצע...', 'Search deals...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminOfferListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // The four values of `offer_status`. "Scheduled" and "paused"
-              // were offered here too; the table has neither.
-              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _filter('')),
-              _FilterChip(
-                tr('פעיל', 'Active'),
-                _statusFilter == 'active',
-                () => _filter('active'),
-              ),
-              _FilterChip(
-                tr('טיוטה', 'Draft'),
-                _statusFilter == 'draft',
-                () => _filter('draft'),
-              ),
-              _FilterChip(
-                tr('פג תוקף', 'Expired'),
-                _statusFilter == 'expired',
-                () => _filter('expired'),
-              ),
-              _FilterChip(
-                tr('אזל', 'Sold out'),
-                _statusFilter == 'redeemed_out',
-                () => _filter('redeemed_out'),
-              ),
-              const Spacer(),
-              if (asyncData.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} מבצעים', '${list.length} deals'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(context),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('מבצע חדש', 'New deal'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            AdminFilterChip(
+              tr('טיוטה', 'Draft'),
+              _statusFilter == 'draft',
+              () => _filter('draft'),
+            ),
+            AdminFilterChip(
+              tr('פג תוקף', 'Expired'),
+              _statusFilter == 'expired',
+              () => _filter('expired'),
+            ),
+            AdminFilterChip(
+              tr('אזל', 'Sold out'),
+              _statusFilter == 'redeemed_out',
+              () => _filter('redeemed_out'),
+            ),
+          ],
+          count: switch (asyncData.valueOrNull) {
+            final list? => tr('${list.length} מבצעים', '${list.length} deals'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('מבצע חדש', 'New deal'),
+              onPressed: () => _showEditor(context),
+            ),
+          ],
         ),
 
         // ─── Table ───
@@ -960,7 +903,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AdminKit.of(context).accent,
                           minimumSize: const Size(120, 42),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -1032,7 +975,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.turquoise),
+        borderSide: const BorderSide(color: AppColors.midBlue),
       ),
     );
   }
@@ -1293,43 +1236,6 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.navy : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? AppColors.navy : AppColors.border,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: selected ? Colors.white : AppColors.grayText,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _Col extends StatelessWidget {
   final String label;
   final int flex;
@@ -1358,29 +1264,17 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'active' => (tr('פעיל', 'Active'), AppColors.success),
-      'expired' => (tr('פג תוקף', 'Expired'), AppColors.grayText),
-      'redeemed_out' => (tr('אזל', 'Sold out'), AppColors.orange),
-      'draft' => (tr('טיוטה', 'Draft'), AppColors.grayLight),
-      _ => (status, AppColors.grayText),
+      'active' => (tr('פעיל', 'Active'), k.success),
+      'expired' => (tr('פג תוקף', 'Expired'), k.danger),
+      'redeemed_out' => (tr('אזל', 'Sold out'), k.warning),
+      'draft' => (tr('טיוטה', 'Draft'), k.muted),
+      _ => (status, k.inkSoft),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-        textAlign: TextAlign.center,
-      ),
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AdminPill(label, color),
     );
   }
 }
@@ -1525,7 +1419,7 @@ class _ClaimsDialogState extends State<_ClaimsDialog> {
                               ),
                               TextButton(
                                 onPressed: () => _setUsed(c, !used),
-                                child: Text(used ? tr('ביטול מימוש', 'Undo') : tr('סימון כמומש', 'Mark used'), style: cell(used ? AppColors.error : AppColors.turquoise)),
+                                child: Text(used ? tr('ביטול מימוש', 'Undo') : tr('סימון כמומש', 'Mark used'), style: cell(used ? AppColors.error : AppColors.midBlue)),
                               ),
                             ],
                           ),

@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../providers/admin_ad_placements_provider.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminAdPlacementsScreen extends ConsumerStatefulWidget {
   const AdminAdPlacementsScreen({super.key});
@@ -56,7 +57,7 @@ class _AdminAdPlacementsScreenState
                     _StatChip(
                       tr('באנרים באתר עכשיו', 'Banners on the site now'),
                       '$totalCampaigns',
-                      AppColors.turquoise,
+                      AppColors.midBlue,
                     ),
                   ],
                 ),
@@ -64,61 +65,31 @@ class _AdminAdPlacementsScreenState
             },
           ),
 
-        // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          child: Row(
+        AdminListToolbar(
+          search: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.ad_units, size: 20, color: AppColors.navy),
+              Icon(Icons.ad_units, size: 20, color: AdminKit.of(context).inkSoft),
               const SizedBox(width: 8),
               Text(
                 tr('מיקומי פרסום', 'Ad placements'),
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.navy,
-                ),
-              ),
-              const Spacer(),
-              // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-              // on a failed load and greys the whole section instead of letting
-              // the list below show the error and a retry.
-              if (asyncData.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} מיקומים', '${list.length} placements'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _showEditor(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  tr('מיקום חדש', 'New placement'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.turquoise,
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
+                style: AdminKit.of(context).heading,
               ),
             ],
           ),
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of letting
+          // the list below show the error and a retry.
+          count: switch (asyncData.valueOrNull) {
+            final list? => tr('${list.length} מיקומים', '${list.length} placements'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('מיקום חדש', 'New placement'),
+              onPressed: () => _showEditor(context, ref),
+            ),
+          ],
         ),
 
         // ─── Table ───
@@ -281,7 +252,7 @@ class _AdminAdPlacementsScreenState
                                     ),
                                     decoration: BoxDecoration(
                                       color: campaigns > 0
-                                          ? AppColors.turquoise.withValues(
+                                          ? AppColors.midBlue.withValues(
                                               alpha: 0.1,
                                             )
                                           : AppColors.grayLight.withValues(
@@ -296,7 +267,7 @@ class _AdminAdPlacementsScreenState
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: campaigns > 0
-                                            ? AppColors.turquoise
+                                            ? AppColors.midBlue
                                             : AppColors.grayText,
                                       ),
                                       textAlign: TextAlign.center,
@@ -575,7 +546,6 @@ class _PlacementEditorDialogState
                             ),
                           ),
                           value: _isActive,
-                          activeThumbColor: AppColors.turquoise,
                           onChanged: (v) => setState(() => _isActive = v),
                         ),
                       ],
@@ -624,7 +594,7 @@ class _PlacementEditorDialogState
                       FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
+                          backgroundColor: AdminKit.of(context).accent,
                           minimumSize: const Size(120, 42),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -721,7 +691,7 @@ class _PlacementEditorDialogState
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.turquoise),
+              borderSide: const BorderSide(color: AppColors.midBlue),
             ),
           ),
         ),
@@ -842,27 +812,15 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'active' => (tr('פעיל', 'Active'), AppColors.success),
-      'inactive' => (tr('מושבת', 'Disabled'), AppColors.grayText),
-      _ => (status, AppColors.grayText),
+      'active' => (tr('פעיל', 'Active'), k.success),
+      'inactive' => (tr('מושבת', 'Disabled'), k.muted),
+      _ => (status, k.muted),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-        textAlign: TextAlign.center,
-      ),
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AdminPill(label, color),
     );
   }
 }

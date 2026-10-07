@@ -8,6 +8,7 @@ import '../../site_pages/widgets/site_page_body.dart';
 import '../providers/admin_site_pages_provider.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// עמודי מידע — About Us and the Accessibility Statement.
 ///
@@ -152,9 +153,9 @@ class _PageCard extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _StatusPill(
+                        AdminPill(
                           published ? tr('מפורסם', 'Published') : tr('לא מפורסם', 'Not published'),
-                          published ? AppColors.success : AppColors.grayLight,
+                          published ? AdminKit.of(context).success : AdminKit.of(context).muted,
                         ),
                       ],
                     ),
@@ -407,7 +408,6 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
           ),
           value: _published,
           onChanged: (v) => setState(() => _published = v),
-          activeThumbColor: AppColors.turquoise,
           contentPadding: EdgeInsets.zero,
         ),
       ],
@@ -536,7 +536,7 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
           FilledButton(
             onPressed: _saving ? null : _save,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.turquoise,
+              backgroundColor: AdminKit.of(context).accent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -628,32 +628,6 @@ class _SitePageEditorDialogState extends ConsumerState<_SitePageEditorDialog> {
 
 // ─── Small widgets ───
 
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _StatusPill(this.label, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
 class _LangChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -671,11 +645,11 @@ class _LangChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: selected
-                ? AppColors.turquoise.withValues(alpha: 0.1)
+                ? AppColors.midBlue.withValues(alpha: 0.1)
                 : Colors.white,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: selected ? AppColors.turquoise : AppColors.border,
+              color: selected ? AppColors.midBlue : AppColors.border,
               width: 0.5,
             ),
           ),
@@ -685,7 +659,7 @@ class _LangChip extends StatelessWidget {
               fontFamily: AppFonts.rubik,
               fontSize: 12,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? AppColors.turquoise : AppColors.grayText,
+              color: selected ? AppColors.midBlue : AppColors.grayText,
             ),
           ),
         ),

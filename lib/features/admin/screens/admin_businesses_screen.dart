@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show PostgrestException, StorageException;
 import '../../../core/theme/app_colors.dart';
@@ -39,137 +38,62 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
 
     return Column(
       children: [
-        // ─── Toolbar (CRM-style) ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: AppColors.adminCardBorder, width: 1),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש עסק...', 'Search businesses...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminBusinessListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
+              setState(() => _statusFilter = '');
+              ref
+                  .read(adminBusinessListProvider.notifier)
+                  .setStatusFilter(null);
+            }),
+            AdminFilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
+              setState(() => _statusFilter = 'active');
+              ref
+                  .read(adminBusinessListProvider.notifier)
+                  .setStatusFilter('active');
+            }),
+            AdminFilterChip(tr('ממתין', 'Pending'), _statusFilter == 'pending', () {
+              setState(() => _statusFilter = 'pending');
+              ref
+                  .read(adminBusinessListProvider.notifier)
+                  .setStatusFilter('pending');
+            }),
+            AdminFilterChip(tr('מושהה', 'Paused'), _statusFilter == 'suspended', () {
+              setState(() => _statusFilter = 'suspended');
+              ref
+                  .read(adminBusinessListProvider.notifier)
+                  .setStatusFilter('suspended');
+            }),
+            // Where a closed business is found again to be reopened.
+            AdminFilterChip(tr('סגור', 'Closed'), _statusFilter == 'closed', () {
+              setState(() => _statusFilter = 'closed');
+              ref
+                  .read(adminBusinessListProvider.notifier)
+                  .setStatusFilter('closed');
+            }),
+          ],
+          // `valueOrNull`: `whenData(...).value` throws when the list
+          // failed to load, and greyed the whole section until a reload.
+          count: switch (businessesAsync.valueOrNull) {
+            final list? => tr('${list.length} עסקים', '${list.length} businesses'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('עסק חדש', 'New business'),
+              onPressed: () => _showBusinessEditor(context, ref),
             ),
-          ),
-          child: Row(
-            children: [
-              // Search — CRM style
-              SizedBox(
-                width: isWide ? 320 : 200,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש עסק...', 'Search businesses...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      color: AppColors.adminTextLight,
-                    ),
-                    prefixIcon: Icon(
-                      IconsaxPlusLinear.search_normal,
-                      size: 18,
-                      color: AppColors.adminTextLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(
-                        color: AppColors.adminSearchBorder,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(
-                        color: AppColors.adminSearchBorder,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(color: AppColors.midBlue),
-                    ),
-                  ),
-                  onChanged: (v) => _debouncer.run(() {
-                    ref
-                        .read(adminBusinessListProvider.notifier)
-                        .setSearch(v.isEmpty ? null : v);
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Status filter
-              _FilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
-                setState(() => _statusFilter = '');
-                ref
-                    .read(adminBusinessListProvider.notifier)
-                    .setStatusFilter(null);
-              }),
-              _FilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
-                setState(() => _statusFilter = 'active');
-                ref
-                    .read(adminBusinessListProvider.notifier)
-                    .setStatusFilter('active');
-              }),
-              _FilterChip(tr('ממתין', 'Pending'), _statusFilter == 'pending', () {
-                setState(() => _statusFilter = 'pending');
-                ref
-                    .read(adminBusinessListProvider.notifier)
-                    .setStatusFilter('pending');
-              }),
-              _FilterChip(tr('מושהה', 'Paused'), _statusFilter == 'suspended', () {
-                setState(() => _statusFilter = 'suspended');
-                ref
-                    .read(adminBusinessListProvider.notifier)
-                    .setStatusFilter('suspended');
-              }),
-              // Where a closed business is found again to be reopened.
-              _FilterChip(tr('סגור', 'Closed'), _statusFilter == 'closed', () {
-                setState(() => _statusFilter = 'closed');
-                ref
-                    .read(adminBusinessListProvider.notifier)
-                    .setStatusFilter('closed');
-              }),
-
-              const Spacer(),
-
-              // Count
-              // `valueOrNull`: `whenData(...).value` throws when the list
-              // failed to load, and greyed the whole section until a reload.
-              if (businessesAsync.valueOrNull case final list?)
-                Text(
-                  tr('${list.length} עסקים', '${list.length} businesses'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 13,
-                    color: AppColors.adminTextLight,
-                  ),
-                ),
-              const SizedBox(width: 16),
-
-              // Add button — CRM style
-              SizedBox(
-                height: 40,
-                child: FilledButton.icon(
-                  onPressed: () => _showBusinessEditor(context, ref),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(
-                    tr('עסק חדש', 'New business'),
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.midBlue,
-                    minimumSize: const Size(0, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
 
         // ─── Table ───
@@ -668,71 +592,18 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final (label, color) = switch (status) {
-      'active' => (tr('פעיל', 'Active'), AppColors.success),
-      'pending' => (tr('ממתין', 'Pending'), AppColors.gold),
-      'suspended' => (tr('מושהה', 'Paused'), AppColors.error),
-      'closed' => (tr('סגור', 'Closed'), AppColors.grayLight),
-      'draft' => (tr('טיוטה', 'Draft'), AppColors.grayLight),
-      _ => (status, AppColors.grayLight),
+      'active' => (tr('פעיל', 'Active'), k.success),
+      'pending' => (tr('ממתין', 'Pending'), k.warning),
+      'suspended' => (tr('מושהה', 'Paused'), k.danger),
+      'closed' => (tr('סגור', 'Closed'), k.muted),
+      'draft' => (tr('טיוטה', 'Draft'), k.muted),
+      _ => (status, k.muted),
     };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.adminActiveBg : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: selected
-                  ? AppColors.midBlue.withValues(alpha: 0.3)
-                  : AppColors.adminSearchBorder,
-              width: 1,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 13,
-              fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-              color: selected ? AppColors.midBlue : AppColors.adminTextMedium,
-            ),
-          ),
-        ),
-      ),
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: AdminPill(label, color),
     );
   }
 }
@@ -1711,9 +1582,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
       ),
       selected: value,
       onSelected: onChanged,
-      selectedColor: AppColors.turquoise.withValues(alpha: 0.15),
-      checkmarkColor: AppColors.turquoise,
-      side: BorderSide(color: value ? AppColors.turquoise : AppColors.border),
+      selectedColor: AppColors.midBlue.withValues(alpha: 0.15),
+      checkmarkColor: AppColors.midBlue,
+      side: BorderSide(color: value ? AppColors.midBlue : AppColors.border),
     );
   }
 

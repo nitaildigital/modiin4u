@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../providers/admin_audit_provider.dart';
 import '../providers/admin_trash_provider.dart' show trashStateLabels;
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 class AdminAuditScreen extends ConsumerStatefulWidget {
   const AdminAuditScreen({super.key});
@@ -38,84 +39,34 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     return Column(
       children: [
         // ─── Toolbar ───
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש ביומן...', 'Search the log...'),
+            onChanged: (v) => ref
+                .read(adminAuditProvider.notifier)
+                .setSearch(v.isEmpty ? null : v),
           ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: isWide ? 280 : 180,
-                height: 40,
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: tr('חיפוש ביומן...', 'Search the log...'),
-                    hintStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      color: AppColors.grayLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 18,
-                      color: AppColors.grayLight,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.turquoise),
-                    ),
-                  ),
-                  onChanged: (v) => ref
-                      .read(adminAuditProvider.notifier)
-                      .setSearch(v.isEmpty ? null : v),
-                ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _actionFilter.isEmpty, () => _setAction('')),
+            for (final action in const [
+              'create',
+              'update',
+              'publish',
+              'archive',
+              'approve',
+              'reject',
+              'restore',
+              'delete',
+            ])
+              AdminFilterChip(
+                auditActionLabels[action]!,
+                _actionFilter == action,
+                () => _setAction(action),
               ),
-              const SizedBox(width: 12),
-              _FilterChip(tr('הכל', 'All'), _actionFilter.isEmpty, () => _setAction('')),
-              for (final action in const [
-                'create',
-                'update',
-                'publish',
-                'archive',
-                'approve',
-                'reject',
-                'restore',
-                'delete',
-              ])
-                _FilterChip(
-                  auditActionLabels[action]!,
-                  _actionFilter == action,
-                  () => _setAction(action),
-                ),
-              const Spacer(),
-              if (loaded != null)
-                Text(
-                  tr('${loaded.length} רשומות', '${loaded.length} records'),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
-                  ),
-                ),
-            ],
-          ),
+          ],
+          count: loaded == null ? null : tr('${loaded.length} רשומות', '${loaded.length} records'),
         ),
 
         // ─── Timeline ───
@@ -298,7 +249,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                                     children: [
                                       CircleAvatar(
                                         radius: 10,
-                                        backgroundColor: AppColors.turquoise
+                                        backgroundColor: AppColors.midBlue
                                             .withValues(alpha: 0.1),
                                         child: Text(
                                           adminName.isEmpty
@@ -308,7 +259,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                                             fontFamily: AppFonts.rubik,
                                             fontSize: 9,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.turquoise,
+                                            color: AppColors.midBlue,
                                           ),
                                         ),
                                       ),
@@ -379,7 +330,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
 
   Color _actionColor(String a) => switch (a) {
     'create' => AppColors.success,
-    'update' => AppColors.turquoise,
+    'update' => AppColors.midBlue,
     'delete' => AppColors.error,
     'approve' => AppColors.gold,
     'publish' => AppColors.success,
@@ -451,41 +402,4 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
       return iso;
     }
   }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FilterChip(this.label, this.selected, this.onTap);
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.only(end: 6),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.turquoise.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected ? AppColors.turquoise : AppColors.border,
-            width: 0.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? AppColors.turquoise : AppColors.grayText,
-          ),
-        ),
-      ),
-    ),
-  );
 }
