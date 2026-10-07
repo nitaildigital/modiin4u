@@ -16,6 +16,8 @@ import '../../realestate/screens/my_apartments_screen.dart' show formatShekels;
 import '../data/map_pois.dart';
 import '../providers/map_providers.dart';
 import '../../../shared/widgets/web_map_tiles.dart';
+import '../../../shared/widgets/app_map.dart' show MapCirclePin;
+import '../../municipal/providers/parking_providers.dart' show ParkingLot;
 import '../../../shared/widgets/network_photo.dart' show sizedPhotoUrl;
 
 const _kAssets = 'assets/web/map';
@@ -66,7 +68,13 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
   final _mapController = MapController();
   final _searchController = TextEditingController();
 
-  final _activeLayers = <String>{'Businesses', 'Events', 'Real Estate'};
+  final _activeLayers = <String>{'Businesses', 'Events', 'Real Estate', 'Parkings'};
+
+  /// The design's three layers, and car parks: the panel's Parkings
+  /// (`parking_lots`) had a layer on the phone's map only. The web frame has
+  /// no pin or card for them, so they take the phone's round pin and the
+  /// slide below, filled from the lot's own row.
+  static const _layers = [...mapLayers, parkingLayer];
   MapPoi? _selectedPoi;
   String _query = '';
 
@@ -93,6 +101,7 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
   String _layerLabel(String layer) => switch (layer) {
     'Businesses' => _t('Businesses', 'עסקים'),
     'Events' => _t('Events', 'אירועים'),
+    'Parkings' => _t('Car parks', 'חניונים'),
     _ => _t('Real Estate', 'נדל״ן'),
   };
 
@@ -255,7 +264,11 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
                     alignment: Alignment.bottomCenter,
                     duration: const Duration(milliseconds: 150),
                     child: look == null
-                        ? Icon(poi.icon, color: poi.color)
+                        ? MapCirclePin(
+                            color: poi.color,
+                            icon: poi.icon,
+                            selected: _selectedPoi == poi,
+                          )
                         : WebMapPin(asset: '$_kAssets/${look.pin}'),
                   ),
                 ),
@@ -308,8 +321,8 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
             ),
           ),
           const SizedBox(height: 20),
-          for (var i = 0; i < mapLayers.length; i++)
-            _buildLayerRow(mapLayers[i], isLast: i == mapLayers.length - 1),
+          for (var i = 0; i < _layers.length; i++)
+            _buildLayerRow(_layers[i], isLast: i == _layers.length - 1),
         ],
       ),
     );
@@ -461,6 +474,8 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
 
     final l = _listingFor(poi);
     if (l != null) return webListingSlideData(l, isHebrew: _isHebrew);
+    final lot = parkingLotOfPoi[poi];
+    if (lot != null) return _parkingSlideData(lot, color);
 
     final eventPrice = poi.eventFree ? _t('Free', 'חינם') : poi.eventPrice;
 
@@ -548,6 +563,40 @@ class _WebMapContentState extends ConsumerState<WebMapContent>
       about: poi.description,
       details: rows,
       route: poi.route,
+    );
+  }
+
+  /// A car park's slide: what the client entered for it in the panel, each
+  /// line only where he filled it in — no rating, reviews or availability,
+  /// which the city does not provide.
+  WebMapSlideData _parkingSlideData(ParkingLot lot, Color color) {
+    final price = lot.isFree == true
+        ? _t('Free', 'חינם')
+        : (lot.priceNote?.trim().isNotEmpty ?? false)
+        ? lot.priceNote!.trim()
+        : null;
+    final hours = (lot.hours?.trim().isNotEmpty ?? false) ? lot.hours!.trim() : null;
+    final spaces = lot.capacity == null
+        ? null
+        : _t('${lot.capacity} spaces', '${lot.capacity} מקומות');
+    return WebMapSlideData(
+      photos: [?lot.imageUrl],
+      badge: _t('Car park', 'חניון'),
+      badgeColor: color,
+      badgeIcon: null,
+      headline: lot.displayName(english: !_isHebrew),
+      tag: price,
+      facts: [?spaces, ?hours],
+      address: lot.address,
+      aboutTitle: _t('About This Car Park', 'על החניון'),
+      about: (lot.notes?.trim().isNotEmpty ?? false) ? lot.notes!.trim() : null,
+      details: [
+        if (hours != null) (_t('Hours', 'שעות'), hours),
+        if (price != null) (_t('Price', 'מחיר'), price),
+        if (spaces != null) (_t('Spaces', 'מקומות'), '${lot.capacity}'),
+      ],
+      // Its own page: Google's details, Waze and Google Maps.
+      route: '/parking/${lot.id}',
     );
   }
 }

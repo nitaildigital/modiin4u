@@ -343,7 +343,7 @@ class _AppMapState extends State<AppMap> {
                         ? null
                         : () => widget.onSelect!(pin.id),
                     child: pin.isCircle
-                        ? _CirclePin(
+                        ? MapCirclePin(
                             color: pin.circleColor!,
                             icon: pin.icon!,
                             selected: pin.id == widget.selectedId,
@@ -366,12 +366,14 @@ class _AppMapState extends State<AppMap> {
 }
 
 /// The round pin as a widget, for the browser's map; MapPinBitmap.ofCircle
-/// draws the same for Google's.
-class _CirclePin extends StatelessWidget {
+/// draws the same for Google's. The desktop map uses it for car parks, which
+/// the web design has no pin for.
+class MapCirclePin extends StatelessWidget {
   final Color color;
   final IconData icon;
   final bool selected;
-  const _CirclePin({
+  const MapCirclePin({
+    super.key,
     required this.color,
     required this.icon,
     required this.selected,

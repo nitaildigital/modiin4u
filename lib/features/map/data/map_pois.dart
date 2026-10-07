@@ -19,10 +19,10 @@ const mapLayers = [
 /// The phone map's fourth layer, from the `parking_lots` table the client
 /// fills in the panel (migration 00030).
 ///
-/// Kept out of [mapLayers] on purpose: the website's map and home page list
-/// every entry there as a toggle, and their designs are a separate job. Its
-/// pins carry this layer name, which neither website page switches on, so
-/// they stay off the website until it is given the layer too.
+/// Kept out of [mapLayers] on purpose: the website's home page lists every
+/// entry there as a toggle, and its design has no car parks. The website's
+/// map page adds this layer itself (web_map_screen.dart), with the phone's
+/// round pin, as the web design draws none for car parks.
 const parkingLayer = ('Parkings', IconsaxPlusBold.car, Color(0xFF17A9D0));
 
 // ═══════════════════════════════════════════════
