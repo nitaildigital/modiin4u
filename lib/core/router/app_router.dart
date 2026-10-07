@@ -34,7 +34,6 @@ import '../../features/events/screens/events_map_screen.dart';
 import '../../features/events/screens/event_detail_screen.dart';
 import '../../features/realestate/screens/realestate_screen.dart';
 import '../../features/realestate/screens/listing_detail_screen.dart';
-import '../../features/realestate/screens/new_listing_screen.dart';
 import '../../features/realestate/screens/add_apartment_screen.dart';
 import '../../features/realestate/screens/my_apartments_screen.dart';
 import '../../features/realestate/screens/realestate_map_screen.dart';
@@ -152,7 +151,6 @@ const _appOnlyPaths = {
   '/settings',
   '/my-apartments',
   '/add-apartment',
-  '/new-listing',
 };
 
 final appRouter = GoRouter(
@@ -389,11 +387,6 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => _slideTransition(
         ListingDetailScreen(listingId: state.pathParameters['id']!), state,
       ),
-    ),
-    GoRoute(
-      path: '/new-listing',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const NewListingScreen(),
     ),
     GoRoute(
       path: '/my-apartments',
