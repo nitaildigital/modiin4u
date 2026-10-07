@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -90,6 +91,25 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     // Nothing stored means nothing to wait for, and the stream stays quiet
     // until someone signs in.
     if (_client.auth.currentSession == null) _doneRestoring();
+
+    // Back from the background: the account may have been deleted meanwhile
+    // (from the panel, or by a deletion request). The check at start missed
+    // that while the app stayed open, and every write then failed with
+    // "Could not save" — the profile it wrote for was gone.
+    _lifecycle = AppLifecycleListener(onResume: () => signOutIfAccountGone());
+  }
+
+  AppLifecycleListener? _lifecycle;
+
+  /// Signs out when the server no longer knows this session's account, and
+  /// says whether it did. Called on resume, and by a screen whose write was
+  /// refused for a profile that no longer exists.
+  Future<bool> signOutIfAccountGone() async {
+    if (_client.auth.currentSession == null) return false;
+    if (!await _accountGone()) return false;
+    await _client.auth.signOut();
+    if (mounted) state = null;
+    return true;
   }
 
   /// Deferred, because Riverpod forbids writing another provider while this
@@ -107,6 +127,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   @override
   void dispose() {
     _sub?.cancel();
+    _lifecycle?.dispose();
     super.dispose();
   }
 

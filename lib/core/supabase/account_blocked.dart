@@ -22,6 +22,20 @@ Future<bool> refusedAsBlocked(Object error) async {
   }
 }
 
+/// Whether a write was refused because the profile it is for no longer
+/// exists — the account was deleted while this phone kept its session. The
+/// caller then asks the server, and signs out if the account is gone.
+bool refusedForMissingProfile(Object error) =>
+    error is PostgrestException &&
+    error.code == '23503' &&
+    '${error.message} ${error.details}'.contains('profile');
+
+/// What someone whose account was deleted is told, in the app's language.
+String accountGoneMessage(BuildContext context) =>
+    Localizations.localeOf(context).languageCode == 'he'
+    ? 'החשבון הזה כבר לא קיים. התחברו מחדש.'
+    : 'This account no longer exists. Please sign in again.';
+
 /// What a blocked resident is told, in the app's language.
 String accountBlockedMessage(BuildContext context) =>
     Localizations.localeOf(context).languageCode == 'he'

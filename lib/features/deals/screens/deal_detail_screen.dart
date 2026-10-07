@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../shared/widgets/sign_in_action.dart';
 import '../../../core/supabase/account_blocked.dart';
+import '../../auth/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -551,15 +552,22 @@ class _MobileDealDetailContent extends ConsumerWidget {
       );
     } catch (e) {
       final blocked = await refusedAsBlocked(e);
+      final gone = refusedForMissingProfile(e) &&
+          await ref.read(authProvider.notifier).signOutIfAccountGone();
       if (!context.mounted) return;
       // The database refuses a claim once the deal's last one is gone
-      // (00049) — someone may have taken it since the page opened.
+      // (00049), or once the deal has ended (00066) — either may have
+      // happened since the page opened.
       _toast(
         context,
         '$e'.contains('offer-full')
             ? mDealsT(context, 'This offer has been fully claimed', 'ההטבה נוצלה במלואה')
+            : '$e'.contains('offer-ended')
+            ? mDealsT(context, 'This deal has ended', 'ההטבה הסתיימה')
             : blocked
             ? accountBlockedMessage(context)
+            : gone
+            ? accountGoneMessage(context)
             : l.errCouldNotSave,
       );
       if ('$e'.contains('offer-full')) ref.invalidate(offerByIdProvider(offer.id));

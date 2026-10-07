@@ -271,3 +271,35 @@ create policy admin_role_permissions_read on public.admin_role_permissions
   for select to authenticated using (is_admin());
 create policy admin_role_permissions_write on public.admin_role_permissions
   for all to authenticated using (is_super_admin()) with check (is_super_admin());
+
+-- ─── 6. A deal that has ended cannot be claimed ───
+-- Found 7 Oct: half the deals marked active were past their end date, and a
+-- claim on one was accepted — a voucher for a deal already over. The phone's
+-- list hides ended deals, but a link or an open page still reached them.
+-- Only a resident's claim is checked; the panel may still record one.
+create or replace function public.offer_claims_live_offer()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if not is_resident_write() then
+    return new;
+  end if;
+  if not exists (
+    select 1 from offers
+     where id = new.offer_id
+       and status = 'active'
+       and (start_at is null or start_at <= now())
+       and (end_at is null or end_at > now())
+  ) then
+    raise exception 'offer-ended' using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists offer_claims_a_live_offer on public.offer_claims;
+create trigger offer_claims_a_live_offer
+  before insert on public.offer_claims
+  for each row execute function public.offer_claims_live_offer();

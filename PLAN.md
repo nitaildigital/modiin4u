@@ -2707,6 +2707,22 @@ the reply is.
   (push_host.dart) reloads the reviews, replies and the business, from a
   phone notification and from the bell alike.
 
+### "Could not save" on Redeem: an account deleted under an open app — 7 October
+
+Harshit's Redeem said "Could not save. Please try again." The phone was
+still signed in as a test resident deleted an hour earlier: its session stays
+valid up to an hour, the claim's `profile_id` pointed at a profile no longer
+there (23503), and "try again" could never work. The app checked for a
+deleted account only at start. Now it checks again whenever it comes back to
+the foreground (`signOutIfAccountGone`, auth_provider.dart), and a write
+refused for a missing profile asks the server and signs out with "This
+account no longer exists". Tested on the Realme: signed in, app to the
+background, account deleted, app back — signed out without a restart.
+
+Found alongside: 6 of the 12 deals marked active were past their end date,
+and a claim on one was accepted. 00066 now refuses a resident's claim on a
+deal that is not live ('offer-ended'), and the deal page says it has ended.
+
 ### The admin panel redesigned, a word processor for articles — 7 October
 
 The client (6 Oct): make the panel faster to work in; a text editor with
