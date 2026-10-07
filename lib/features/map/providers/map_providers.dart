@@ -32,6 +32,9 @@ final mapPoisProvider = FutureProvider<List<MapPoi>>((ref) async {
   // than needing this file changed again.
   final listings = await ref.watch(listingsProvider.future);
   final parkingLots = await ref.watch(parkingLotsProvider.future);
+  // The pin card's kind of place follows the app's language; until the
+  // links arrive it is the description, as it always was.
+  final kinds = ref.watch(businessPrimaryCategoryProvider).valueOrNull;
 
   return [
     for (final b in businesses)
@@ -39,9 +42,9 @@ final mapPoisProvider = FutureProvider<List<MapPoi>>((ref) async {
       if (b.latitude != 0 && b.longitude != 0)
         MapPoi(
           name: b.name,
-          category: b.category.isNotEmpty
-              ? b.category
-              : (b.description ?? 'עסק'),
+          category: businessKind(b, kinds).isNotEmpty
+              ? businessKind(b, kinds)
+              : 'עסק',
           position: LatLng(b.latitude, b.longitude),
           icon: businessPinIcon([b.name, b.description ?? '']),
           color: _businessColor,

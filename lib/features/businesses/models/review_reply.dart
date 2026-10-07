@@ -8,6 +8,9 @@ class ReviewReply {
   final String authorName;
   final String body;
   final bool isApproved;
+
+  /// Hidden or rejected by the team; its writer is told so.
+  final bool isRemoved;
   final DateTime createdAt;
 
   const ReviewReply({
@@ -17,6 +20,7 @@ class ReviewReply {
     required this.authorName,
     required this.body,
     required this.isApproved,
+    this.isRemoved = false,
     required this.createdAt,
   });
 
@@ -38,6 +42,7 @@ class ReviewReply {
         : '',
     body: (json['body'] as String? ?? '').trim(),
     isApproved: json['status'] == 'approved',
+    isRemoved: const {'hidden', 'rejected'}.contains(json['status']),
     createdAt:
         DateTime.tryParse(json['created_at'] as String? ?? '') ??
         DateTime.now(),

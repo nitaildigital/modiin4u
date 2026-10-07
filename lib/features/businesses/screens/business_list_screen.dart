@@ -626,18 +626,19 @@ class _CountRow extends StatelessWidget {
 }
 
 /// One business, rendered with the shared card.
-class BusinessListTile extends StatelessWidget {
+class BusinessListTile extends ConsumerWidget {
   final Business business;
 
   const BusinessListTile({super.key, required this.business});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return BusinessCard(
       name: business.name,
-      category: business.category.isNotEmpty
-          ? business.category
-          : (business.description ?? ''),
+      category: businessKind(
+        business,
+        ref.watch(businessPrimaryCategoryProvider).valueOrNull,
+      ),
       rating: business.rating,
       reviewCount: business.reviewCount,
       // No hours on record yet, so the open/closed tag stays hidden.

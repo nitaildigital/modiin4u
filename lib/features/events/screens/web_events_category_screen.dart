@@ -823,7 +823,11 @@ class _EventListRow extends StatelessWidget {
                                         child: Text.rich(
                                           TextSpan(children: [
                                             TextSpan(text: '${e.rsvpCount} ', style: const TextStyle(color: Colors.black)),
-                                            TextSpan(text: l.t('people interested', 'מתעניינים')),
+                                            TextSpan(
+                                              text: e.rsvpCount == 1
+                                                  ? l.t('person interested', 'מתעניין')
+                                                  : l.t('people interested', 'מתעניינים'),
+                                            ),
                                           ]),
                                           style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: _kTextDark, height: 15 / 12),
                                           maxLines: 1,

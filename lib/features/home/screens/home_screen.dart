@@ -731,7 +731,16 @@ class _CardFrame extends StatelessWidget {
   }
 }
 
-Widget _businessCard(Business b) => _BusinessCard(data: _BusinessData.from(b));
+// The tag is the business's category (`businessKind`), as on the website's
+// cards, so it follows the app's language.
+Widget _businessCard(Business b) => Consumer(
+  builder: (context, ref, _) => _BusinessCard(
+    data: _BusinessData.from(
+      b,
+      kind: businessKind(b, ref.watch(businessPrimaryCategoryProvider).valueOrNull),
+    ),
+  ),
+);
 // Dates are formatted here rather than inside the data classes: a factory
 // has no BuildContext, so a month name written there would stay Hebrew with
 // the app set to English.
@@ -887,14 +896,14 @@ class _BusinessData {
     required this.gradientColors,
   });
 
-  factory _BusinessData.from(Business b) => _BusinessData(
+  factory _BusinessData.from(Business b, {required String kind}) => _BusinessData(
     id: b.id,
     imageUrl: b.imageUrl,
     name: b.name,
     address: [b.address, b.neighborhood].where((s) => s.isNotEmpty).join(', '),
     rating: b.rating,
     reviews: b.reviewCount,
-    type: b.category.isNotEmpty ? b.category : (b.description ?? ''),
+    type: kind,
     typeColor: const Color(0xFF006BF6),
     isKosher: b.kosherLabel != null,
     gradientColors: _gradientFor(b.id),

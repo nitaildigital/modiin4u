@@ -869,7 +869,11 @@ class LHe extends L {
 
   @override
   String floorLabel(String n) {
-    return 'קומה $n';
+    String _temp0 = intl.Intl.selectLogic(n, {
+      '0': 'קומת קרקע',
+      'other': 'קומה $n',
+    });
+    return '$_temp0';
   }
 
   @override
@@ -951,7 +955,13 @@ class LHe extends L {
 
   @override
   String dealsCount(int n) {
-    return '$n מבצעים';
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n מבצעים',
+      one: 'מבצע אחד',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1525,7 +1535,15 @@ class LHe extends L {
   String get newEventsAppearHere => 'אירועים חדשים יופיעו כאן';
 
   @override
-  String get peopleInterestedSuffix => ' מתעניינים';
+  String peopleInterestedSuffix(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: ' מתעניינים',
+      one: ' מתעניין',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get organizedBy => 'מארגנים';

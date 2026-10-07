@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../shared/widgets/sign_in_action.dart';
 import 'package:flutter/material.dart';
+import '../../../core/supabase/account_blocked.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -423,7 +424,7 @@ class _MobileEventDetailContentState
                       style: const TextStyle(color: Colors.black),
                     ),
                     TextSpan(
-                      text: L.of(context).peopleInterestedSuffix,
+                      text: L.of(context).peopleInterestedSuffix(event.rsvpCount),
                     ),
                   ],
                 ),
@@ -831,8 +832,11 @@ class _MobileEventDetailContentState
       // number on the page has to be re-read too.
       ref.invalidate(isAttendingProvider(event.id));
       ref.invalidate(eventByIdProvider(event.id));
-    } catch (_) {
-      if (mounted) _rsvpToast(l.rsvpFailed);
+    } catch (e) {
+      final blocked = await refusedAsBlocked(e);
+      if (mounted) {
+        _rsvpToast(blocked ? accountBlockedMessage(context) : l.rsvpFailed);
+      }
     } finally {
       if (mounted) setState(() => _rsvpBusy = false);
     }

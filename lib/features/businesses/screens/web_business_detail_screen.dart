@@ -94,7 +94,12 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
   @override
   Widget build(BuildContext context) {
     final gallery = ref.watch(businessGalleryProvider(b.id)).valueOrNull ?? const <String>[];
-    final reviews = ref.watch(businessReviewsProvider(b.id)).valueOrNull ?? const <BusinessReview>[];
+    // Only approved ones here: the website has no resident accounts, so a
+    // pending review in the list could only be an admin's own.
+    final reviews = [
+      for (final r in ref.watch(businessReviewsProvider(b.id)).valueOrNull ?? const <BusinessReview>[])
+        if (r.isApproved) r,
+    ];
     final kind = (ref.watch(businessPrimaryCategoryProvider).valueOrNull ?? const {})[b.id];
 
     return Directionality(

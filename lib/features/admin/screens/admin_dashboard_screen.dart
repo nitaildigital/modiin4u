@@ -39,6 +39,7 @@ import 'admin_analytics_screen.dart';
 import 'admin_site_pages_screen.dart';
 import '../admin_language.dart';
 import '../../../shared/providers/app_settings_provider.dart';
+import '../ui/admin_kit.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -1132,6 +1133,17 @@ class _SettingsSection extends StatelessWidget {
           icon: IconsaxPlusLinear.briefcase,
           number: true,
         ),
+        const _RepliesApprovalSetting(),
+        _EditableSetting(
+          settingKey: AppSettingKeys.reportsAutoHideAt,
+          label: tr('הסתרה אוטומטית אחרי מספר דיווחים (0 = כבוי)',
+              'Hide a review or reply after this many reports (0 = off)'),
+          hint: '0',
+          icon: IconsaxPlusLinear.eye_slash,
+          number: true,
+          numberMax: 50,
+          rangeMessage: tr('מספר בין 0 ל-50', 'A number from 0 to 50'),
+        ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
@@ -1261,12 +1273,19 @@ class _EditableSetting extends ConsumerStatefulWidget {
   final String hint;
   final IconData icon;
   final bool number;
+
+  /// For a number: the largest allowed, and what to say when it is out of
+  /// range (the first number setting counted days).
+  final int numberMax;
+  final String? rangeMessage;
   const _EditableSetting({
     required this.settingKey,
     required this.label,
     required this.hint,
     required this.icon,
     this.number = false,
+    this.numberMax = 365,
+    this.rangeMessage,
   });
 
   @override
@@ -1289,8 +1308,9 @@ class _EditableSettingState extends ConsumerState<_EditableSetting> {
     final Object? value;
     if (widget.number) {
       final n = int.tryParse(text);
-      if (n == null || n < 0 || n > 365) {
-        _say(tr('מספר ימים בין 0 ל-365', 'A number of days from 0 to 365'));
+      if (n == null || n < 0 || n > widget.numberMax) {
+        _say(widget.rangeMessage ??
+            tr('מספר ימים בין 0 ל-365', 'A number of days from 0 to 365'));
         return;
       }
       value = n;
@@ -1379,6 +1399,115 @@ class _EditableSettingState extends ConsumerState<_EditableSetting> {
           FilledButton(
             onPressed: _saving || settings == null ? null : _save,
             child: Text(tr('שמירה', 'Save')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Whether residents' replies to reviews wait for approval. Off by default
+/// since 00063: replies appear at once, and the panel hides one afterwards
+/// (Comments) or acts on a report. On, every new reply waits in Comments.
+class _RepliesApprovalSetting extends ConsumerStatefulWidget {
+  const _RepliesApprovalSetting();
+
+  @override
+  ConsumerState<_RepliesApprovalSetting> createState() =>
+      _RepliesApprovalSettingState();
+}
+
+class _RepliesApprovalSettingState
+    extends ConsumerState<_RepliesApprovalSetting> {
+  bool _saving = false;
+
+  Future<void> _set(bool on) async {
+    setState(() => _saving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await SupabaseConfig.client.from('app_settings').upsert(
+        {'key': AppSettingKeys.repliesNeedApproval, 'value': on},
+        onConflict: 'key',
+      );
+      ref.invalidate(appSettingsProvider);
+      messenger.showSnackBar(SnackBar(content: Text(tr('נשמר', 'Saved'))));
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(tr('השמירה נכשלה', 'Could not save'))),
+      );
+    }
+    if (mounted) setState(() => _saving = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(appSettingsProvider).valueOrNull;
+    final on = settings?[AppSettingKeys.repliesNeedApproval] == true;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.adminCardBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.midBlue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              IconsaxPlusLinear.messages_2,
+              size: 20,
+              color: AppColors.midBlue,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tr('תגובות לביקורות ממתינות לאישור',
+                      'Replies to reviews wait for approval'),
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: AppColors.adminTextDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  on
+                      ? tr('כל תגובה חדשה ממתינה בתגובות עד שתאושר.',
+                          'Each new reply waits in Comments until approved.')
+                      : tr('תגובות מופיעות מיד; אפשר להסתיר תגובה בתגובות, ותושבים יכולים לדווח עליה.',
+                          'Replies appear at once; hide one in Comments, and residents can report it.'),
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 12,
+                    color: AppColors.adminTextLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // The kit's switch colours (AdminSwitchRow): this screen is not
+          // under the kit's theme, and the app's switch is black when off.
+          Switch(
+            value: on,
+            onChanged: settings == null || _saving ? null : _set,
+            activeTrackColor: AdminKit.of(context).accent,
+            activeThumbColor: Colors.white,
+            inactiveTrackColor: const Color(0xFFE5E7EB),
+            inactiveThumbColor: Colors.white,
+            trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
           ),
         ],
       ),

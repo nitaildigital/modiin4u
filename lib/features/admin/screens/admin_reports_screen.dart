@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_reports_provider.dart';
 import '../admin_language.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/supabase/supabase_config.dart';
 
 class AdminReportsScreen extends ConsumerStatefulWidget {
   const AdminReportsScreen({super.key});
@@ -103,7 +105,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
 
         // Nothing files reports yet; an empty list should not read as
         // "nothing wrong".
-        const _NothingWritesThisNote(),
+        const _WhereReportsComeFromNote(),
 
         // ─── Toolbar ───
         Container(
@@ -150,6 +152,11 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   tr('ביקורות', 'Reviews'),
                   _entityFilter == 'review',
                   () => _toggleEntity('review'),
+                ),
+                _FilterChip(
+                  tr('נכסים', 'Listings'),
+                  _entityFilter == 'listing',
+                  () => _toggleEntity('listing'),
                 ),
                 _FilterChip(
                   tr('תגובות', 'Comments'),
@@ -375,11 +382,25 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                     ),
                                   ),
                                 ),
+                              // Five 40px buttons at most (Open, in
+                              // progress, hide, resolve, reject); narrower,
+                              // the last hung outside and took no taps.
                               SizedBox(
-                                width: 110,
+                                width: 208,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
+                                    // What was reported, on the site, in a
+                                    // new tab: the row says only its type.
+                                    _IconAction(
+                                      Icons.open_in_new,
+                                      AppColors.midBlue,
+                                      tr('פתח את מה שדווח', 'Open what was reported'),
+                                      () => _openReported(
+                                        r['entity_type'] as String? ?? '',
+                                        r['entity_id'] as String? ?? '',
+                                      ),
+                                    ),
                                     if (status == 'open')
                                       _IconAction(
                                         Icons.search,
@@ -388,6 +409,23 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                         () => _run(
                                           () => notifier.markReviewed(id),
                                           tr('הדיווח סומן בטיפול', 'Report marked in progress'),
+                                        ),
+                                      ),
+                                    if ((status == 'open' ||
+                                            status == 'reviewed') &&
+                                        (r['entity_type'] == 'review' ||
+                                            r['entity_type'] == 'comment'))
+                                      _IconAction(
+                                        Icons.visibility_off_outlined,
+                                        AppColors.error,
+                                        tr('הסתר וסגור את הדיווח', 'Hide it and close the report'),
+                                        () => _run(
+                                          () => notifier.hideAndResolve(
+                                            id,
+                                            r['entity_type'] as String,
+                                            r['entity_id'] as String,
+                                          ),
+                                          tr('הוסתר, והדיווח נסגר', 'Hidden, and the report closed'),
                                         ),
                                       ),
                                     if (status == 'open' ||
@@ -458,8 +496,46 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
     'harassment' => Icons.person_off,
     _ => Icons.flag,
   };
+  void _toast(String message) => ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message, style: TextStyle(fontFamily: AppFonts.rubik))),
+  );
+
+  /// The reported item's page on the site. A review and a reply to one
+  /// live on their business's page, so that is looked up first.
+  Future<void> _openReported(String type, String id) async {
+    try {
+      final client = SupabaseConfig.client;
+      String? path;
+      switch (type) {
+        case 'business':
+          path = '/business/$id';
+        case 'listing':
+          path = '/listing/$id';
+        case 'article':
+          path = '/article/$id';
+        case 'review' || 'comment':
+          var reviewId = id;
+          if (type == 'comment') {
+            final c = await client.from('comments').select('entity_id').eq('id', id).maybeSingle();
+            reviewId = c?['entity_id'] as String? ?? '';
+          }
+          final r = await client.from('reviews').select('business_id').eq('id', reviewId).maybeSingle();
+          final business = r?['business_id'] as String?;
+          if (business != null) path = '/business/$business';
+      }
+      if (path == null) {
+        _toast(tr('הפריט כבר לא קיים', 'The item no longer exists'));
+        return;
+      }
+      await launchUrl(Uri.base.resolve(path), webOnlyWindowName: '_blank');
+    } catch (_) {
+      _toast(tr('לא ניתן היה לפתוח', 'Could not open it'));
+    }
+  }
+
   String _entityLabel(String t) => switch (t) {
     'business' => tr('עסק', 'Business'),
+    'listing' => tr('נכס', 'Listing'),
     'review' => tr('ביקורת', 'Review'),
     'comment' => tr('תגובה', 'Comment'),
     'article' => tr('כתבה', 'Article'),
@@ -468,6 +544,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
   };
   IconData _entityIcon(String t) => switch (t) {
     'business' => Icons.store,
+    'listing' => Icons.home_work_outlined,
     'review' => Icons.rate_review,
     'comment' => Icons.comment,
     'article' => Icons.article,
@@ -529,9 +606,9 @@ class _IconAction extends StatelessWidget {
   );
 }
 
-/// Why this list is empty, said rather than left to be guessed.
-class _NothingWritesThisNote extends StatelessWidget {
-  const _NothingWritesThisNote();
+/// Where the reports come from, so an empty list is not a mystery.
+class _WhereReportsComeFromNote extends StatelessWidget {
+  const _WhereReportsComeFromNote();
 
   @override
   Widget build(BuildContext context) {
@@ -551,8 +628,9 @@ class _NothingWritesThisNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              tr('עדיין אין באתר או באפליקציה כפתור לדיווח על תוכן, ולכן הרשימה '
-              'תתמלא רק כשיתווסף אחד.', 'The site and the app have no button for reporting content yet, so the list will fill only once one is added.'),
+              tr('הדיווחים מגיעים מהאפליקציה: תושבים מדווחים על ביקורת, עסק או פארק, '
+              'או מודעת נדל״ן. לאתר אין חשבונות תושבים, ולכן אין ממנו דיווחים.',
+              'Reports come from the app: residents report a review, a business or park, or a listing. The website has no resident accounts, so none come from it.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,

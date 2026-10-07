@@ -23,6 +23,8 @@ import '../widgets/m_price_text.dart';
 import 'web_listing_detail_screen.dart';
 import '../../../shared/widgets/app_map.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
+import '../../../core/supabase/supabase_config.dart';
+import '../../../shared/widgets/report_sheet.dart';
 
 /// One apartment listing.
 ///
@@ -251,6 +253,36 @@ class _MobileListingDetailContentState
                 ),
 
               _buildNearbyProperties(l, hood),
+
+              // A listing that is wrong, gone or a scam: to the panel's
+              // Reports queue. App only (reports need an account), and not
+              // on one's own listing.
+              if (!kIsWeb &&
+                  listing.ownerId != SupabaseConfig.client.auth.currentUser?.id)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton.icon(
+                      onPressed: () => showReportSheet(
+                        context,
+                        entityType: 'listing',
+                        entityId: listing.id,
+                      ),
+                      icon: const Icon(Icons.flag_outlined, size: 16, color: Color(0xFF6D6D6D)),
+                      label: Text(
+                        Localizations.localeOf(context).languageCode == 'he'
+                            ? 'דיווח על בעיה'
+                            : 'Report a problem',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 13,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
 
               const SizedBox(height: 40),
             ],

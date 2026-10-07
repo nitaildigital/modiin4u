@@ -1756,7 +1756,7 @@ abstract class L {
   /// No description provided for @floorLabel.
   ///
   /// In he, this message translates to:
-  /// **'קומה {n}'**
+  /// **'{n, select, 0{קומת קרקע} other{קומה {n}}}'**
   String floorLabel(String n);
 
   /// No description provided for @viewOnMap.
@@ -1900,7 +1900,7 @@ abstract class L {
   /// No description provided for @dealsCount.
   ///
   /// In he, this message translates to:
-  /// **'{n} מבצעים'**
+  /// **'{n, plural, =1{מבצע אחד} other{{n} מבצעים}}'**
   String dealsCount(int n);
 
   /// No description provided for @validUntil.
@@ -2998,8 +2998,8 @@ abstract class L {
   /// No description provided for @peopleInterestedSuffix.
   ///
   /// In he, this message translates to:
-  /// **' מתעניינים'**
-  String get peopleInterestedSuffix;
+  /// **'{count, plural, =1{ מתעניין} other{ מתעניינים}}'**
+  String peopleInterestedSuffix(int count);
 
   /// No description provided for @organizedBy.
   ///

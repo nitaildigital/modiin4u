@@ -346,7 +346,7 @@
   "propertyLabel": "נדל״ן",
   "viaBroker": "באמצעות מתווך",
   "newBadge": "חדש",
-  "floorLabel": "קומה {n}",
+  "floorLabel": "{n, select, 0{קומת קרקע} other{קומה {n}}}",
   "@floorLabel": {
     "placeholders": {
       "n": {
@@ -405,7 +405,7 @@
       }
     }
   },
-  "dealsCount": "{n} מבצעים",
+  "dealsCount": "{n, plural, =1{מבצע אחד} other{{n} מבצעים}}",
   "@dealsCount": {
     "placeholders": {
       "n": {
@@ -633,7 +633,14 @@
   "eventsInModiin": "אירועים במודיעין",
   "noUpcomingEvents": "אין אירועים קרובים",
   "newEventsAppearHere": "אירועים חדשים יופיעו כאן",
-  "peopleInterestedSuffix": " מתעניינים",
+  "peopleInterestedSuffix": "{count, plural, =1{ מתעניין} other{ מתעניינים}}",
+  "@peopleInterestedSuffix": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "organizedBy": "מארגנים",
   "aboutThisEvent": "על האירוע",
   "whereIsIt": "איפה זה?",

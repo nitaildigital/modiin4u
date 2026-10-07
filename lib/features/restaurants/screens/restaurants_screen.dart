@@ -437,9 +437,10 @@ class _MobileRestaurantsContentState
   /// so the section follows whatever the admin panel defines.
   Widget _buildVerticalSection(String title, String slug, String viewAllLabel) {
     final provider = businessesBySlugProvider(slug);
+    final kinds = ref.watch(businessPrimaryCategoryProvider).valueOrNull;
     final places = (ref.watch(provider).valueOrNull ?? const <Business>[])
         .take(3)
-        .map(_Place.from)
+        .map((b) => _Place.from(b, businessKind(b, kinds)))
         .toList();
     if (places.isEmpty) return const SizedBox.shrink();
     return Padding(
@@ -529,10 +530,11 @@ class _MobileRestaurantsContentState
   // Horizontal section (scroll cards)
   // ═══════════════════════════════════════════════
   Widget _buildHorizontalSection(String title) {
+    final kinds = ref.watch(businessPrimaryCategoryProvider).valueOrNull;
     final places =
         (ref.watch(topRatedBusinessesProvider).valueOrNull ??
                 const <Business>[])
-            .map(_HPlace.from)
+            .map((b) => _HPlace.from(b, businessKind(b, kinds)))
             .toList();
     if (places.isEmpty) return const SizedBox.shrink();
     return Column(
@@ -611,10 +613,10 @@ class _Place {
     this.imageUrl,
   });
 
-  factory _Place.from(Business b) => _Place(
+  factory _Place.from(Business b, String kind) => _Place(
     b.id,
     b.name,
-    b.description ?? '',
+    kind,
     [b.address, b.neighborhood].where((s) => s.isNotEmpty).join(', '),
     b.rating,
     b.reviewCount,
@@ -645,10 +647,10 @@ class _HPlace {
     this.imageUrl,
   );
 
-  factory _HPlace.from(Business b) => _HPlace(
+  factory _HPlace.from(Business b, String kind) => _HPlace(
     b.id,
     b.name,
-    b.description ?? '',
+    kind,
     [b.address, b.neighborhood].where((s) => s.isNotEmpty).join(', '),
     b.rating,
     b.reviewCount,

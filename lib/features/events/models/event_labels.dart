@@ -105,7 +105,9 @@ class EventLabels {
 
   /// "124 people interested".
   String peopleInterested(int n) =>
-      t('$n people interested', '$n מתעניינים');
+      n == 1
+          ? t('1 person interested', '1 מתעניין')
+          : t('$n people interested', '$n מתעניינים');
 
   /// A category's name in the language showing.
   ///

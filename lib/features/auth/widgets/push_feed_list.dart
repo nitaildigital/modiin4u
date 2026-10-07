@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/push/push_feed.dart';
+import '../../../core/push/push_host.dart' show refreshForPushLink;
 import '../../../core/push/push_service.dart';
 import '../../../core/push/push_switch.dart';
 import '../../../core/push/push_unread.dart';
@@ -76,7 +77,7 @@ class PushFeedList extends ConsumerWidget {
   }
 }
 
-class _FeedRow extends StatelessWidget {
+class _FeedRow extends ConsumerWidget {
   final PushFeedItem item;
   final String languageCode;
   final bool unread;
@@ -96,10 +97,11 @@ class _FeedRow extends StatelessWidget {
     return DateFormat(today ? 'HH:mm' : 'd.M.yyyy').format(t);
   }
 
-  void _open(BuildContext context) {
+  void _open(BuildContext context, WidgetRef ref) {
     final link = item.link;
     if (link == null || link.isEmpty) return;
     if (link.startsWith('/')) {
+      refreshForPushLink(ref, link);
       context.push(link);
     } else {
       final uri = Uri.tryParse(link);
@@ -108,11 +110,11 @@ class _FeedRow extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final title = item.titleFor(languageCode);
     final body = item.bodyFor(languageCode);
     return InkWell(
-      onTap: item.link == null ? null : () => _open(context),
+      onTap: item.link == null ? null : () => _open(context, ref),
       child: Container(
         // Unread: a light tint and a dot, as the bell's own badge counted it.
         color: unread ? AppColors.turquoise.withValues(alpha: 0.06) : null,

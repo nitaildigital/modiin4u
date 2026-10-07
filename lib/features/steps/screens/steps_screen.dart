@@ -43,6 +43,10 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
   bool get _hebrew => Localizations.localeOf(context).languageCode == 'he';
   int _leaderboardTab = 0; // 0 = Neighborhood, 1 = City
   late bool _groups = widget.groupsTab && !kIsWeb;
+
+  /// The leaderboards, which "View Challenge" scrolls to: while a challenge
+  /// runs they count from its start, so they are its standings.
+  final _leaderboardKey = GlobalKey();
   bool _month = false;
 
   /// The daily target the ring fills against.
@@ -168,7 +172,10 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                           ],
 
                           const MDealsBanner(code: 'STEPS_INLINE', inset: 0, bottom: 16),
-                          _buildLeaderboard(),
+                          KeyedSubtree(
+                            key: _leaderboardKey,
+                            child: _buildLeaderboard(),
+                          ),
                         ],
                         const SizedBox(height: 32),
                       ],
@@ -975,33 +982,48 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
           ),
           const SizedBox(height: 20),
 
-          // View Challenge button
-          Container(
-            width: double.infinity,
-            height: 42,
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF123A72)),
-              borderRadius: BorderRadius.circular(60),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  l.viewChallenge,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+          // View Challenge button — to the standings below. It led nowhere.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              final target = _leaderboardKey.currentContext;
+              if (target == null) return;
+              Scrollable.ensureVisible(
+                target,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOut,
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              height: 42,
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF123A72)),
+                borderRadius: BorderRadius.circular(60),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    l.viewChallenge,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF123A72),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Forward is to the left in Hebrew.
+                  Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? IconsaxPlusLinear.arrow_left_3
+                        : IconsaxPlusLinear.arrow_right_3,
+                    size: 16,
                     color: const Color(0xFF123A72),
                   ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  IconsaxPlusLinear.arrow_right_3,
-                  size: 16,
-                  color: Color(0xFF123A72),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

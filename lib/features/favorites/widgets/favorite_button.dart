@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/supabase/account_blocked.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/favorite_providers.dart';
 import '../repositories/favorite_repository.dart';
@@ -58,12 +59,13 @@ class FavoriteButton extends ConsumerWidget {
           action: signInAction(context),
         ),
       );
-    } catch (_) {
+    } catch (e) {
+      final blocked = await refusedAsBlocked(e);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            L.of(context).errCouldNotSave,
+            blocked ? accountBlockedMessage(context) : L.of(context).errCouldNotSave,
             style: TextStyle(fontFamily: AppFonts.rubik),
           ),
           backgroundColor: AppColors.error,

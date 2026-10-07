@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
@@ -8,6 +9,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../models/business.dart';
+import '../providers/business_providers.dart';
 
 /// One business on a phone's category page — the mobile "Bars" frame's card.
 ///
@@ -15,7 +17,7 @@ import '../models/business.dart';
 /// foot, then the name, the kind of place, the address and the rating. The
 /// frame's "1.2 km" needs the device's location and is left out; "Open now"
 /// is drawn only for a business with hours on record.
-class MBusinessPlaceCard extends StatelessWidget {
+class MBusinessPlaceCard extends ConsumerWidget {
   final Business business;
 
   const MBusinessPlaceCard({super.key, required this.business});
@@ -24,10 +26,11 @@ class MBusinessPlaceCard extends StatelessWidget {
   static const _grey = Color(0xFF5F5E5A);
 
   @override
-  Widget build(BuildContext context) {
-    final kind = business.category.isNotEmpty
-        ? business.category
-        : (business.description ?? '');
+  Widget build(BuildContext context, WidgetRef ref) {
+    final kind = businessKind(
+      business,
+      ref.watch(businessPrimaryCategoryProvider).valueOrNull,
+    );
 
     return GestureDetector(
       onTap: () => context.push('/business/${business.id}'),

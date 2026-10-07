@@ -2562,6 +2562,151 @@ in Hebrew — and that English content was the client's call. Asked for now.
   and Find a Professional in English, Hebrew and back without a reload, and
   the phone width in English.
 
+### Migrations 00050, 00053–00055 run; a device pass, and Report — 7 October
+
+Harshit ran the four migrations the tracker still had waiting; 00051 and
+00052 (owners, jobs) stay unrun until Kamal's designs. 00056 and 00059, marked
+"not run" above, were already in the database. Each was then tried on the
+Realme (Android 11), the iPhone 17 Pro simulator and, for the panel, a local
+web build in headless Chrome, with two throwaway residents
+(`tmp-resident-…@modiin4u.test`) and rows made for the test and deleted after
+(a TEST deal, listing, challenge, review and report). The release build was
+installed on the iPhone 11; it was not driven from here.
+
+- **00056 vouchers:** a claim got its own code (4Z7Z2R); "Slide to use now"
+  marked it used, with the time, and `redeem_count` went to 1.
+- **00054 bans:** blocked from the panel's column, the resident's heart was
+  refused. It said "Could not save. Please try again", which would never work:
+  `refusedAsBlocked()` (core/supabase/account_blocked.dart) asks
+  `is_banned_user()` when a write is refused, and the favourite, claim, deal
+  heart, review, RSVP and listing forms now say the account is blocked and to
+  ask through Help & Support. Unblocked, the same heart saved.
+- **00055:** "Mark as rented" in My Apartments → `rented`.
+- **00053:** a sign-up carrying "2026-02-30" made its account, the date left
+  out, the rest kept.
+- **00050:** a temporary admin set to content editor could not change a deal
+  (0 rows); as business manager, could.
+- **00059:** both residents pressed "I'm going" on the same event at once:
+  1 → 3, and back to 1 when both cancelled.
+- **English names:** the cards' kind of place ("בית קפה" with English
+  chosen) was the business's Hebrew short description, because
+  `Business.category` is always empty. `businessKind()` names its category from
+  `businessPrimaryCategoryProvider`, in the reader's language, on the home
+  cards, category list, place card, Restaurants, map pins and under the name
+  on the business page; the description only when a business is filed nowhere.
+- **Reviews:** a review just sent left the page saying "No reviews yet" and
+  the rating box open. The list now reads approved reviews and the writer's
+  own (not everyone's pending ones, which row security would hand an admin);
+  the writer's is marked "Pending Approval", has no Reply, and counts in
+  neither the average nor the bars; the rating box goes once they have
+  reviewed. The name row wraps (it overflowed by 9 px with the label).
+- **Report (tracker 38).** Both legal texts promise it and the panel's queue
+  was always empty. `report_sheet.dart`: the table's six reasons and optional
+  details, app only (a report needs an account). On other people's reviews
+  beside Reply, "Report a problem" at the end of a business or park page and a
+  listing (not one's own). The panel's Reports rows have Open, which opens the
+  item on the site in a new tab (a review's business page), a Listings filter,
+  and a note saying where reports come from. Tested: a report from the Realme
+  appeared in the panel and Open went to the business.
+- **Small:** the business page draws Call and Website only when there is one
+  (greyed circles did nothing); "1 deal(s)", "1 person interested", and
+  "Ground Floor" for floor 0 in both languages; "View Challenge" scrolls to the
+  standings (it did nothing) and its arrow faces forward in Hebrew. The Step
+  Counter's back arrow was already right.
+- **Seen, not fixed:** an open app keeps what it loaded (a deleted challenge
+  stayed until restart) — refreshing on return to the app touches every
+  provider; the challenge card's prize line repeats the name when there is no
+  prize; `/new-listing` (43) is still there — deleting its two files was
+  refused in this session and is left to do by hand.
+
+### Replies live at once; reports that count and reach the team — 7 October
+
+Harshit, testing on the phone: a reply waiting for an admin, every one, "is
+not good". And the report flow stopped at "the team will look at it".
+
+- **00063:** a resident's reply to a review is saved approved, so it shows at
+  once; reviews and other comments still start pending. Panel → Settings →
+  "Replies to reviews wait for approval" (`app_settings.replies_need_approval`,
+  off) puts approval back. `addReviewReply` reads back what the database
+  saved, so the app says "Reply sent!" or "will appear once approved"
+  accordingly. Other people's replies have Report. The reply notifications
+  (00045) already fire for a row inserted approved. Replies already pending
+  stay pending until approved once in Comments. This reverses the 30 Sep
+  arrangement ("whether replies should appear without approval is the
+  client's call") — tell the client, who has the switch.
+- **00064:** one report per person per item (unique index; the sheet says
+  "you already reported this"); `report_count` on reviews and comments is the
+  number of open reports, kept by a trigger, so the Comments screen's counts
+  are real; the first open report on an item queues a push to the admins
+  who moderate (super admins and roles with 'moderation'), one per item, no
+  link (the panel is the website's); `app_settings.reports_auto_hide_at`
+  hides a review or reply at that many open reports — 0 or unset, the
+  default, hides nothing (Settings → "Hide … after this many reports").
+- **Panel → Reports:** "Hide it and close the report" on a review or reply —
+  resolving alone left the item on the site.
+- Not yet: the reporter hears nothing back.
+- **Tested after 00063 and 00064 ran (7 Oct, 12:40–13:05)** — iOS simulator
+  (resident 2, Hebrew), the Realme (resident 1, English), the panel in a local
+  web build as a temporary admin. A watcher cancelled every "New report" push
+  as it was queued, so no administrator was woken by the test. A review from
+  iOS, approved in the panel, showed on Android (4.8 from 4); a reply from
+  Android was live at once ("Reply sent!") and queued "New reply to your
+  review" to the review's writer only; reported from iOS → `report_count` 1,
+  one "New report" to the 4 moderating admins; the same report again → "כבר
+  דיווחת על זה"; panel → Reports → Hide it → the reply hidden, the report
+  resolved, the count 0; Settings → auto-hide 1 → one report hid a reply;
+  Settings → replies need approval → the next reply "will appear once
+  approved", pending. Both settings deleted after, test rows and pushes too.
+- **Found and fixed in that test:** the business page kept the reviews it
+  first loaded for the whole session (the summary provider kept the list
+  alive), so a review approved or hidden in the panel showed as before until
+  the app restarted — both are auto-disposed now and re-read on each visit;
+  the writer of a hidden review or reply saw "Pending Approval", or the reply
+  vanished (the query asked for approved and pending only) — they now see
+  "Hidden by the team"; the replies switch in Settings drew the app's black
+  switch — it takes the kit's colours.
+
+### Notifications around moderation, and a reply notification that opens the reply — 7 October
+
+Harshit: the writer should hear when their review or reply is approved, the
+team when something new waits, and a reply notification should open where
+the reply is.
+
+- **00065:** `queue_reply_push` links to `/business/<id>?review=<r>&reply=<c>`;
+  a reply approved after waiting tells its writer ("Your reply is
+  published"); a reply that waits (approval switched on) tells the team.
+  `queue_review_push` (new, on reviews): a pending review → the team ("New
+  review awaiting approval", business · stars · name: text); approved after
+  waiting → its writer ("Your review is published", linking to it).
+  `queue_listing_review_push`: a listing sent for review → the team. The team
+  is `moderator_profile_ids(module)` — active super admins and roles with the
+  module ('moderation' for reviews and replies, 'businesses' for listings,
+  which the panel files נדל״ן under), less the writer; no link, as the panel
+  is the website's.
+- **App:** `/business/:id?review=&reply=` opens the Reviews tab, scrolls to
+  the review or the reply once both lists have loaded, and marks it light
+  blue for five seconds. Tested on the iOS simulator with `simctl push`
+  carrying the link, the app in the background: tapping the banner opened
+  Gabriel's Reviews at the reply, marked; a review-only link marked the
+  review. The fade first ran through grey (from transparent black) — it fades
+  to clear light blue now.
+- **Tested after 00065 ran (7 Oct, 13:20–13:35), with real notifications:**
+  a review from iOS → "New review awaiting approval" to the 3 admins
+  (cancelled as queued by a watcher, so nobody was woken); approved → "הביקורת
+  שלך פורסמה" arrived on the simulator and, from the bell, opened the review
+  marked; a reply → "New reply to your review" with the review and reply in
+  its link → the reply, scrolled to and marked; on the Realme, app closed, the
+  notification from the shade opened the app at the reply, marked; with
+  approval on, a pending reply → "New reply awaiting approval" to the admins,
+  approved → "Your reply is published" to its writer and "New reply" to the
+  review's. Test rows, settings and pushes deleted.
+- **Found and fixed:** with the same business already open underneath, the
+  new page scrolled on its first frame, over the list from before the reply,
+  found nothing and never tried again — it waits for the reload now and
+  retries; the rating at the top stayed as first loaded. `refreshForPushLink`
+  (push_host.dart) reloads the reviews, replies and the business, from a
+  phone notification and from the bell alike.
+
 ### The admin panel redesigned, a word processor for articles — 7 October
 
 The client (6 Oct): make the panel faster to work in; a text editor with

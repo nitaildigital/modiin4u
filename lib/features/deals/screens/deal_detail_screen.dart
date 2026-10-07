@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../shared/widgets/sign_in_action.dart';
+import '../../../core/supabase/account_blocked.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -549,6 +550,7 @@ class _MobileDealDetailContent extends ConsumerWidget {
         signIn: e.message != 'already-claimed',
       );
     } catch (e) {
+      final blocked = await refusedAsBlocked(e);
       if (!context.mounted) return;
       // The database refuses a claim once the deal's last one is gone
       // (00049) — someone may have taken it since the page opened.
@@ -556,6 +558,8 @@ class _MobileDealDetailContent extends ConsumerWidget {
         context,
         '$e'.contains('offer-full')
             ? mDealsT(context, 'This offer has been fully claimed', 'ההטבה נוצלה במלואה')
+            : blocked
+            ? accountBlockedMessage(context)
             : l.errCouldNotSave,
       );
       if ('$e'.contains('offer-full')) ref.invalidate(offerByIdProvider(offer.id));
@@ -609,9 +613,13 @@ class _HeartButton extends ConsumerWidget {
           if (!ok && context.mounted) {
             _MobileDealDetailContent._toast(context, l.signInToSave, signIn: true);
           }
-        } catch (_) {
+        } catch (e) {
+          final blocked = await refusedAsBlocked(e);
           if (context.mounted) {
-            _MobileDealDetailContent._toast(context, l.errCouldNotSave);
+            _MobileDealDetailContent._toast(
+              context,
+              blocked ? accountBlockedMessage(context) : l.errCouldNotSave,
+            );
           }
         }
       },

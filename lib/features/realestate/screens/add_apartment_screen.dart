@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/supabase/account_blocked.dart';
 import '../../../shared/widgets/sign_in_action.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -355,10 +356,14 @@ class _MobileAddApartmentContentState
       if (!mounted) return;
       setState(() => _saving = false);
       _toast(l.signInToPostListing, error: true, signIn: true);
-    } catch (_) {
+    } catch (e) {
+      final blocked = await refusedAsBlocked(e);
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(l.errCouldNotSubmit, error: true);
+      _toast(
+        blocked ? accountBlockedMessage(context) : l.errCouldNotSubmit,
+        error: true,
+      );
     }
   }
 
@@ -390,10 +395,14 @@ class _MobileAddApartmentContentState
       if (!mounted) return;
       setState(() => _saving = false);
       _toast(l.signInToPostListing, error: true, signIn: true);
-    } catch (_) {
+    } catch (e) {
+      final blocked = await refusedAsBlocked(e);
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(l.errCouldNotSaveDraft, error: true);
+      _toast(
+        blocked ? accountBlockedMessage(context) : l.errCouldNotSaveDraft,
+        error: true,
+      );
     }
   }
 

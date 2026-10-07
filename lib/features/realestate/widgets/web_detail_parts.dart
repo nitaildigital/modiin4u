@@ -713,7 +713,11 @@ class _DetailListingCardState extends State<DetailListingCard> {
       if (l.sqm != null) _stat('detail_card_area.svg', _t('${l.sqm} m²', '${l.sqm} מ״ר')),
       if (l.rooms != null)
         _stat('detail_card_rooms.svg', _t('${detailRooms(l.rooms!)} Rooms', '${detailRooms(l.rooms!)} חדרים')),
-      if (l.floor != null) _stat('detail_card_floor.svg', _t('Floor ${l.floor}', 'קומה ${l.floor}')),
+      if (l.floor != null)
+        _stat(
+          'detail_card_floor.svg',
+          l.floor == 0 ? _t('Ground Floor', 'קומת קרקע') : _t('Floor ${l.floor}', 'קומה ${l.floor}'),
+        ),
     ];
     final statsRow = Row(
       children: [

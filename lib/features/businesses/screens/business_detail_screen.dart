@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../shared/widgets/sign_in_action.dart';
+import '../../../core/supabase/account_blocked.dart';
+import '../../../shared/widgets/report_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../repositories/business_stats.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -32,7 +34,17 @@ import '../repositories/business_repository.dart' show BusinessNotFound;
 class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
 
-  const BusinessDetailScreen({super.key, required this.businessId});
+  /// From a notification: the review, and the reply under it, to open the
+  /// Reviews tab at and mark.
+  final String? focusReviewId;
+  final String? focusReplyId;
+
+  const BusinessDetailScreen({
+    super.key,
+    required this.businessId,
+    this.focusReviewId,
+    this.focusReplyId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,15 +66,25 @@ class BusinessDetailScreen extends ConsumerWidget {
                     child: ErrorRetry(onRetry: () => ref.invalidate(provider)),
                   ),
                 ),
-          data: (business) => _BusinessDetailContent(business: business),
+          data: (business) => _BusinessDetailContent(
+            business: business,
+            focusReviewId: focusReviewId,
+            focusReplyId: focusReplyId,
+          ),
         );
   }
 }
 
 class _BusinessDetailContent extends ConsumerStatefulWidget {
   final Business business;
+  final String? focusReviewId;
+  final String? focusReplyId;
 
-  const _BusinessDetailContent({required this.business});
+  const _BusinessDetailContent({
+    required this.business,
+    this.focusReviewId,
+    this.focusReplyId,
+  });
 
   @override
   ConsumerState<_BusinessDetailContent> createState() =>
@@ -77,6 +99,38 @@ class _BusinessDetailContentState
   void initState() {
     super.initState();
     BusinessStats.record(business.id, BusinessStat.view);
+    // Opened from a reply or review notification: straight to Reviews.
+    if (widget.focusReviewId != null) _selectedTab = 3;
+  }
+
+  /// The review or reply a notification pointed at: keyed so the page can
+  /// scroll to it once the list has loaded, and marked for a few seconds.
+  final _focusKey = GlobalKey();
+  bool _focusScrolled = false;
+  bool _focusMarked = true;
+
+  void _scrollToFocus() {
+    if (_focusScrolled) return;
+    _focusScrolled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _focusKey.currentContext;
+      // Not on screen yet — the list shown may be the one from before the
+      // notification's reply existed (another page of this business kept it).
+      // Try again on the next build.
+      if (target == null) {
+        _focusScrolled = false;
+        return;
+      }
+      Scrollable.ensureVisible(
+        target,
+        alignment: 0.2,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOut,
+      );
+      Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) setState(() => _focusMarked = false);
+      });
+    });
   }
 
   /// Share, from the control on the photograph.
@@ -179,8 +233,12 @@ class _BusinessDetailContentState
                     ),
                   ),
                   const SizedBox(height: 6),
+                  // Its category, in the reader's language, as on the cards.
                   Text(
-                    business.description ?? '',
+                    businessKind(
+                      business,
+                      ref.watch(businessPrimaryCategoryProvider).valueOrNull,
+                    ),
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
                       fontSize: 14,
@@ -655,28 +713,28 @@ class _BusinessDetailContentState
           const Spacer(),
           // A park has no phone, website or social page (the client's
           // rule for parks), so it keeps only the directions button.
-          if (!business.isPark) ...[
-          _OutlineCircleButton(
-            icon: IconsaxPlusLinear.call,
-            color: AppColors.turquoise,
-            onTap: business.phone == null
-                ? null
-                : () {
-                    BusinessStats.record(business.id, BusinessStat.call);
-                    launchUrl(Uri.parse('tel:${business.phone}'));
-                  },
-          ),
-          const SizedBox(width: 12),
-          _OutlineCircleButton(
-            icon: IconsaxPlusLinear.global,
-            color: AppColors.turquoise,
-            onTap: business.website == null
-                ? null
-                : () {
-                    BusinessStats.record(business.id, BusinessStat.website);
-                    launchUrl(Uri.parse(business.website!));
-                  },
-          ),
+          // Call and Website are drawn only when the business has them, as
+          // WhatsApp and Instagram are; a greyed circle offered nothing.
+          if (!business.isPark && (business.phone?.trim().isNotEmpty ?? false))
+            _OutlineCircleButton(
+              icon: IconsaxPlusLinear.call,
+              color: AppColors.turquoise,
+              onTap: () {
+                BusinessStats.record(business.id, BusinessStat.call);
+                launchUrl(Uri.parse('tel:${business.phone}'));
+              },
+            ),
+          if (!business.isPark && (business.website?.trim().isNotEmpty ?? false)) ...[
+            if (business.phone?.trim().isNotEmpty ?? false)
+              const SizedBox(width: 12),
+            _OutlineCircleButton(
+              icon: IconsaxPlusLinear.global,
+              color: AppColors.turquoise,
+              onTap: () {
+                BusinessStats.record(business.id, BusinessStat.website);
+                launchUrl(Uri.parse(business.website!));
+              },
+            ),
           ],
           // WhatsApp, which the website showed and the phone did not.
           if ((business.whatsapp?.trim().isNotEmpty ?? false) && !business.isPark) ...[
@@ -795,6 +853,31 @@ class _BusinessDetailContentState
             // September, so the card is not drawn in a browser.
             _buildGallerySection(),
             _buildReviewsSection(),
+            // Wrong details, a business that has closed: to the panel's
+            // Reports queue. App only, as reports need an account.
+            if (!kIsWeb)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    onPressed: () => showReportSheet(
+                      context,
+                      entityType: 'business',
+                      entityId: business.id,
+                    ),
+                    icon: const Icon(Icons.flag_outlined, size: 16, color: Color(0xFF6D6D6D)),
+                    label: Text(
+                      _isHe ? 'דיווח על בעיה' : 'Report a problem',
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 13,
+                        color: const Color(0xFF6D6D6D),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         );
       case 1:
@@ -932,7 +1015,11 @@ class _BusinessDetailContentState
         const SizedBox(height: 24),
 
         // ── Write a Review prompt (Google-style) ── the app's; see above.
-        if (!kIsWeb) _buildWriteReviewPrompt(),
+        // Gone once they have reviewed: their review is in the list below,
+        // and a second one is refused anyway ("already reviewed").
+        if (!kIsWeb &&
+            ref.watch(hasReviewedProvider(business.id)).valueOrNull != true)
+          _buildWriteReviewPrompt(),
 
         const SizedBox(height: 16),
 
@@ -994,10 +1081,14 @@ class _BusinessDetailContentState
         e.message == 'already-reviewed' ? l.alreadyReviewed : l.signInToReview,
         error: true,
       );
-    } catch (_) {
+    } catch (e) {
+      final blocked = await refusedAsBlocked(e);
       if (!mounted) return;
       setState(() => _savingReview = false);
-      _reviewToast(l.errCouldNotSave, error: true);
+      _reviewToast(
+        blocked ? accountBlockedMessage(context) : l.errCouldNotSave,
+        error: true,
+      );
     }
   }
 
@@ -1020,11 +1111,16 @@ class _BusinessDetailContentState
     );
     if (text == null || text.trim().isEmpty || !mounted) return;
     try {
-      await addReviewReply(reviewId: reviewId, body: text);
+      final live = await addReviewReply(reviewId: reviewId, body: text);
       ref.invalidate(reviewRepliesProvider(business.id));
-      if (mounted) _reviewToast(l.replySentForApproval);
-    } catch (_) {
-      if (mounted) _reviewToast(l.couldNotSendReply, error: true);
+      if (mounted) _reviewToast(live ? l.replySent : l.replySentForApproval);
+    } catch (e) {
+      final blocked = await refusedAsBlocked(e);
+      if (!mounted) return;
+      _reviewToast(
+        blocked ? accountBlockedMessage(context) : l.couldNotSendReply,
+        error: true,
+      );
     }
   }
 
@@ -1587,9 +1683,17 @@ class _BusinessDetailContentState
       ),
       data: (list) {
         if (list.isEmpty) return const _NoReviewsYet();
+        final repliesValue = ref.watch(reviewRepliesProvider(business.id));
         final replies =
-            ref.watch(reviewRepliesProvider(business.id)).valueOrNull ??
-            const <String, List<ReviewReply>>{};
+            repliesValue.valueOrNull ?? const <String, List<ReviewReply>>{};
+        // Scroll once both the reviews and their replies are on screen, and
+        // not while they are being read again (a notification reloads them).
+        if (widget.focusReviewId != null &&
+            repliesValue.hasValue &&
+            !repliesValue.isLoading &&
+            !reviews.isLoading) {
+          _scrollToFocus();
+        }
         final me = ref.watch(authProvider)?.id;
 
         return Padding(
@@ -1605,13 +1709,39 @@ class _BusinessDetailContentState
                   date: _formatReviewDate(list[i].createdAt),
                   rating: list[i].rating,
                   text: list[i].body,
+                  pending: !list[i].isApproved,
+                  removed: list[i].isRemoved,
+                  // The review itself is the target unless a reply is.
+                  key: list[i].id == widget.focusReviewId && widget.focusReplyId == null
+                      ? _focusKey
+                      : null,
+                  marked: _focusMarked &&
+                      list[i].id == widget.focusReviewId &&
+                      widget.focusReplyId == null,
+                  focusReplyId: widget.focusReviewId == list[i].id
+                      ? widget.focusReplyId
+                      : null,
+                  focusReplyKey: _focusKey,
+                  replyMarked: _focusMarked,
                   replies: replies[list[i].id] ?? const [],
                   myId: me,
                   formatDate: _formatReviewDate,
                   // Replying needs an account, and accounts are the app's:
-                  // the website shows the replies but offers no button.
-                  onReply: kIsWeb ? null : () => _replyTo(list[i].id),
+                  // the website shows the replies but offers no button. Nor
+                  // on one's own review still waiting: nobody else sees it.
+                  onReply: kIsWeb || !list[i].isApproved
+                      ? null
+                      : () => _replyTo(list[i].id),
                   onDeleteReply: _deleteReply,
+                  // Someone else's review, in the app (accounts are the
+                  // app's): to the panel's Reports queue.
+                  onReport: kIsWeb || list[i].authorId == me
+                      ? null
+                      : () => showReportSheet(
+                          context,
+                          entityType: 'review',
+                          entityId: list[i].id,
+                        ),
                   isLast: i == list.length - 1,
                 ),
             ],
@@ -1890,6 +2020,17 @@ class _ReviewCard extends StatefulWidget {
   final int rating;
   final String text;
 
+  /// The writer's own review, not yet approved — or [removed] by the team.
+  final bool pending;
+  final bool removed;
+
+  /// Highlighted because a notification pointed here; and the reply under
+  /// it that one pointed at, keyed with [focusReplyKey].
+  final bool marked;
+  final String? focusReplyId;
+  final GlobalKey? focusReplyKey;
+  final bool replyMarked;
+
   /// Residents' replies to this review (approved, and the signed-in
   /// person's own while it waits). Modiin4u and the businesses do not reply
   /// at this stage, so the panel's `admin_response` is no longer shown.
@@ -1897,6 +2038,7 @@ class _ReviewCard extends StatefulWidget {
   final String? myId;
   final String Function(DateTime?) formatDate;
   final VoidCallback? onReply;
+  final VoidCallback? onReport;
   final void Function(String replyId) onDeleteReply;
   final bool isLast;
 
@@ -1906,10 +2048,18 @@ class _ReviewCard extends StatefulWidget {
     required this.date,
     required this.rating,
     required this.text,
+    super.key,
+    this.pending = false,
+    this.removed = false,
+    this.marked = false,
+    this.focusReplyId,
+    this.focusReplyKey,
+    this.replyMarked = false,
     this.replies = const [],
     this.myId,
     required this.formatDate,
     this.onReply,
+    this.onReport,
     required this.onDeleteReply,
     this.isLast = false,
   });
@@ -1921,9 +2071,12 @@ class _ReviewCard extends StatefulWidget {
 class _ReviewCardState extends State<_ReviewCard> {
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // Animated, so the mark a notification put here fades rather than blinks.
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 600),
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
+        color: widget.marked ? _markColor : _markColor.withValues(alpha: 0),
         border: widget.isLast
             ? null
             : const Border(bottom: BorderSide(color: Color(0xFFE7E7E7))),
@@ -1959,8 +2112,10 @@ class _ReviewCardState extends State<_ReviewCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name + date
-                Row(
+                // Name + date; wraps, as a reply's does, when "Pending
+                // approval" joins them on a narrow phone.
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       widget.name,
@@ -1981,6 +2136,21 @@ class _ReviewCardState extends State<_ReviewCard> {
                         color: const Color(0xFF6D6D6D),
                       ),
                     ),
+                    // As on a reply of one's own that waits.
+                    if (widget.pending) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.removed
+                            ? _removedLabel(context)
+                            : L.of(context).pendingApproval,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFFD68200),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
 
@@ -2017,29 +2187,57 @@ class _ReviewCardState extends State<_ReviewCard> {
                 ),
                 for (final reply in widget.replies)
                   _ReplyTile(
+                    key: reply.id == widget.focusReplyId ? widget.focusReplyKey : null,
+                    marked: widget.replyMarked && reply.id == widget.focusReplyId,
                     reply: reply,
                     date: widget.formatDate(reply.createdAt),
                     isMine: reply.authorId == widget.myId,
                     onDelete: () => widget.onDeleteReply(reply.id),
                   ),
-                if (widget.onReply != null)
+                if (widget.onReply != null || widget.onReport != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
-                    child: GestureDetector(
-                      onTap: widget.onReply,
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(
-                          L.of(context).replyToReview,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.midBlue,
+                    child: Row(
+                      children: [
+                        if (widget.onReply != null)
+                          GestureDetector(
+                            onTap: widget.onReply,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(
+                                L.of(context).replyToReview,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.midBlue,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        if (widget.onReply != null && widget.onReport != null)
+                          const SizedBox(width: 20),
+                        if (widget.onReport != null)
+                          GestureDetector(
+                            onTap: widget.onReport,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(
+                                Localizations.localeOf(context).languageCode == 'he'
+                                    ? 'דיווח'
+                                    : 'Report',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF6D6D6D),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
               ],
@@ -2549,13 +2747,29 @@ class _BusinessNotFound extends StatelessWidget {
 /// One reply under a review: set in with a rule at its start, the author's
 /// initials, name and date, then the text. The author's own reply says when
 /// it is still waiting for approval, and can be deleted.
+/// The light blue behind a review or reply a notification opened. It fades
+/// to the same blue made clear — from transparent black it passed through grey.
+const _markColor = Color(0xFFE8F1FB);
+
+/// What a writer sees on their own review or reply that the team took down:
+/// it is not waiting, so "Pending Approval" would mislead.
+String _removedLabel(BuildContext context) =>
+    Localizations.localeOf(context).languageCode == 'he'
+        ? 'הוסתר על ידי הצוות'
+        : 'Hidden by the team';
+
 class _ReplyTile extends StatelessWidget {
   final ReviewReply reply;
   final String date;
   final bool isMine;
   final VoidCallback onDelete;
 
+  /// Highlighted because a notification pointed here.
+  final bool marked;
+
   const _ReplyTile({
+    super.key,
+    this.marked = false,
     required this.reply,
     required this.date,
     required this.isMine,
@@ -2566,12 +2780,17 @@ class _ReplyTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = L.of(context);
     final name = reply.authorName.isEmpty ? l.resident : reply.authorName;
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 600),
       margin: const EdgeInsetsDirectional.only(top: 10),
-      padding: const EdgeInsetsDirectional.only(start: 10),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsetsDirectional.only(start: 10, top: 4, bottom: 4),
+      decoration: BoxDecoration(
+        color: marked ? _markColor : _markColor.withValues(alpha: 0),
         border: BorderDirectional(
-          start: BorderSide(color: Color(0xFFE7E7E7), width: 2),
+          start: BorderSide(
+            color: marked ? AppColors.midBlue : const Color(0xFFE7E7E7),
+            width: 2,
+          ),
         ),
       ),
       child: Row(
@@ -2624,7 +2843,9 @@ class _ReplyTile extends StatelessWidget {
                     ),
                     if (!reply.isApproved)
                       Text(
-                        l.pendingApproval,
+                        reply.isRemoved
+                            ? _removedLabel(context)
+                            : l.pendingApproval,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 10,
@@ -2652,6 +2873,31 @@ class _ReplyTile extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         l.delete,
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 11,
+                          color: const Color(0xFF6D6D6D),
+                        ),
+                      ),
+                    ),
+                  )
+                // Replies go live without approval (00063), so anyone can
+                // send one that should not be there to the Reports queue.
+                // In the app only, where there are accounts.
+                else if (!kIsWeb)
+                  GestureDetector(
+                    onTap: () => showReportSheet(
+                      context,
+                      entityType: 'comment',
+                      entityId: reply.id,
+                    ),
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        Localizations.localeOf(context).languageCode == 'he'
+                            ? 'דיווח'
+                            : 'Report',
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 11,

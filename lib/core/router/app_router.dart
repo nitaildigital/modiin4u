@@ -309,9 +309,17 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) {
         final id = state.pathParameters['id']!;
+        // A reply or review notification names what it is about (00065):
+        // the page opens on the Reviews tab at it.
+        final review = state.uri.queryParameters['review'];
+        final reply = state.uri.queryParameters['reply'];
         return _slideTransition(
           isRowId(id)
-              ? BusinessDetailScreen(businessId: id)
+              ? BusinessDetailScreen(
+                  businessId: id,
+                  focusReviewId: review,
+                  focusReplyId: reply,
+                )
               : SlugPage(
                   kind: SlugKind.business,
                   slug: id,

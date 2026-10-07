@@ -5,8 +5,8 @@ import 'admin_table_notifier.dart';
 
 /// What residents have reported, on the live table.
 ///
-/// Nothing on the website or in the app files a report yet, so this list
-/// stays empty until something does.
+/// Filed from the app (`report_sheet.dart`): a review, a business or park,
+/// a listing. The website has no resident accounts, so none come from it.
 final adminReportsProvider =
     StateNotifierProvider<
       AdminReportsNotifier,
@@ -42,6 +42,22 @@ class AdminReportsNotifier extends AdminTableNotifier {
 
   Future<void> dismiss(String id, [String? resolution]) =>
       _close(id, 'dismissed', resolution);
+
+  /// Hides the reported review or reply and closes the report as resolved,
+  /// in one step: resolving alone left the item on the site. Hidden, not
+  /// deleted — Reviews and Comments can show it again.
+  Future<void> hideAndResolve(String id, String entityType, String entityId) async {
+    final table = switch (entityType) {
+      'review' => 'reviews',
+      'comment' => 'comments',
+      _ => throw ArgumentError('only a review or a reply can be hidden here'),
+    };
+    await SupabaseConfig.client
+        .from(table)
+        .update({'status': 'hidden'})
+        .eq('id', entityId);
+    await _close(id, 'resolved', 'הוסתר · Hidden');
+  }
 
   /// Opens a closed report again.
   Future<void> reopen(String id) =>

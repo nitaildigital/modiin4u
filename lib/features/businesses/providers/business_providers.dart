@@ -269,6 +269,16 @@ final businessPrimaryCategoryProvider =
       },
     );
 
+/// The kind of place a phone card names under a business: its category from
+/// [businessPrimaryCategoryProvider], in the reader's language (00062), or
+/// its short description when it is filed nowhere — which is what every card
+/// showed before, Hebrew even with the app in English.
+String businessKind(
+  Business b,
+  Map<String, ({BusinessCategory category, String rootSlug})>? kinds,
+) =>
+    kinds?[b.id]?.category.name ?? b.description ?? '';
+
 /// A category row from the `categories` table.
 class BusinessCategory {
   final String id;
@@ -323,18 +333,30 @@ class BusinessCategory {
 /// real business — and a summary saying "based on 0 reviews" beside a 4.6
 /// score. This reads the `reviews` table instead, so an empty table shows an
 /// empty state rather than fiction.
+///
+/// Dropped when the business page closes, so reopening it reads the reviews
+/// again: kept for the whole session, a review the panel approved — or a
+/// reply it hid — showed as it was when the page first opened, until the app
+/// restarted (as replies already are, below).
 final businessReviewsProvider =
-    FutureProvider.family<List<BusinessReview>, String>((
+    FutureProvider.autoDispose.family<List<BusinessReview>, String>((
       ref,
       businessId,
     ) async {
-      final rows = await SupabaseConfig.client
+      // The approved reviews, and the signed-in person's own whatever its
+      // state, so a review just sent shows as waiting instead of the page
+      // saying "No reviews yet". Row security would also hand an admin
+      // everyone's pending ones, hence the filter rather than none.
+      final me = ref.watch(authProvider)?.id;
+      final query = SupabaseConfig.client
           .from('reviews')
           // Two foreign keys run from `reviews` to `profiles` — the author and
           // whoever replied — so the join has to say which one it means.
           .select('*, profiles!reviews_author_id_fkey(full_name, avatar_url)')
-          .eq('business_id', businessId)
-          .eq('status', 'approved')
+          .eq('business_id', businessId);
+      final rows = await (me == null
+              ? query.eq('status', 'approved')
+              : query.or('status.eq.approved,author_id.eq.$me'))
           .order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(
@@ -351,19 +373,23 @@ final reviewRepliesProvider =
       ref,
       businessId,
     ) async {
-      ref.watch(authProvider);
+      final me = ref.watch(authProvider)?.id;
       final reviews = await ref.watch(
         businessReviewsProvider(businessId).future,
       );
       if (reviews.isEmpty) return const {};
-      final rows = await SupabaseConfig.client
+      final query = SupabaseConfig.client
           .from('comments')
           .select(
             'id, entity_id, author_id, author_name, body, status, created_at',
           )
           .eq('entity_type', 'review')
-          .inFilter('entity_id', [for (final r in reviews) r.id])
-          .inFilter('status', ['approved', 'pending'])
+          .inFilter('entity_id', [for (final r in reviews) r.id]);
+      // Approved and pending ones, and the writer's own whatever its state,
+      // so a reply the team hid says so to its writer rather than vanishing.
+      final rows = await (me == null
+              ? query.inFilter('status', ['approved', 'pending'])
+              : query.or('status.in.(approved,pending),author_id.eq.$me'))
           .order('created_at', ascending: true);
       final byReview = <String, List<ReviewReply>>{};
       for (final r in List<Map<String, dynamic>>.from(rows)) {
@@ -373,20 +399,28 @@ final reviewRepliesProvider =
       return byReview;
     });
 
-/// Writes a reply to a review. It waits for the panel's approval, as a
-/// review does; the author sees it straight away, marked as waiting.
-Future<void> addReviewReply({
+/// Writes a reply to a review.
+///
+/// True when it is live at once — the default since 00063; false when the
+/// panel's Settings ask for replies to be approved first. The database
+/// decides, so the app reports what it did rather than guessing.
+Future<bool> addReviewReply({
   required String reviewId,
   required String body,
 }) async {
   final uid = SupabaseConfig.client.auth.currentUser?.id;
   if (uid == null) throw StateError('signed-out');
-  await SupabaseConfig.client.from('comments').insert({
-    'entity_type': 'review',
-    'entity_id': reviewId,
-    'author_id': uid,
-    'body': body.trim(),
-  });
+  final row = await SupabaseConfig.client
+      .from('comments')
+      .insert({
+        'entity_type': 'review',
+        'entity_id': reviewId,
+        'author_id': uid,
+        'body': body.trim(),
+      })
+      .select('status')
+      .single();
+  return row['status'] == 'approved';
 }
 
 /// Removes the signed-in person's own reply.
@@ -395,7 +429,9 @@ Future<void> deleteReviewReply(String replyId) async {
 }
 
 /// The numbers above the list, derived from the reviews themselves.
-final businessReviewSummaryProvider = Provider.family<ReviewSummary, String>((
+// Auto-disposed with the reviews it reads: a provider kept for the session
+// kept them alive too, and the page showed them as first loaded.
+final businessReviewSummaryProvider = Provider.autoDispose.family<ReviewSummary, String>((
   ref,
   businessId,
 ) {
@@ -417,7 +453,7 @@ final businessMenuProvider = FutureProvider.family<List<menu.MenuItem>, String>(
 ///
 /// The form is hidden once they have — the old one let anyone submit
 /// repeatedly into a list held in memory.
-final hasReviewedProvider = FutureProvider.family<bool, String>((
+final hasReviewedProvider = FutureProvider.autoDispose.family<bool, String>((
   ref,
   businessId,
 ) async {

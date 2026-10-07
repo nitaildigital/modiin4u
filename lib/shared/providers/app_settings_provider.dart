@@ -17,6 +17,14 @@ abstract final class AppSettingKeys {
   static const androidStoreUrl = 'store_url_android';
   static const iosStoreUrl = 'store_url_ios';
   static const jobApplicationsKeepDays = 'job_applications_keep_days';
+
+  /// Whether residents' replies to reviews wait for approval (00063). Off,
+  /// or never set, they appear at once.
+  static const repliesNeedApproval = 'replies_need_approval';
+
+  /// How many open reports hide a review or a reply until someone looks
+  /// (00064). 0, or never set, nothing hides itself.
+  static const reportsAutoHideAt = 'reports_auto_hide_at';
 }
 
 /// A store link, only when the panel has given an https address.

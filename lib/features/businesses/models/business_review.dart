@@ -2,6 +2,9 @@
 class BusinessReview {
   final String id;
 
+  /// Who wrote it, so their own review offers no "Report".
+  final String? authorId;
+
   /// Empty when the review carries no name; the page then says "Resident"
   /// in the reader's language. It used to be filled with the Hebrew word
   /// here, which the English website printed as it was.
@@ -17,8 +20,18 @@ class BusinessReview {
   final String? adminResponse;
   final DateTime? respondedAt;
 
+  /// False only for the signed-in writer's own review while the panel has
+  /// not approved it: the list shows it to them, marked, and leaves it out
+  /// of the average and the counts.
+  final bool isApproved;
+
+  /// Taken down by the team (hidden or rejected), as opposed to waiting:
+  /// its writer is told so, not that it is pending.
+  final bool isRemoved;
+
   const BusinessReview({
     required this.id,
+    this.authorId,
     required this.authorName,
     required this.rating,
     required this.body,
@@ -28,6 +41,8 @@ class BusinessReview {
     this.createdAt,
     this.adminResponse,
     this.respondedAt,
+    this.isApproved = true,
+    this.isRemoved = false,
   });
 
   factory BusinessReview.fromJson(Map<String, dynamic> json) {
@@ -45,6 +60,7 @@ class BusinessReview {
 
     return BusinessReview(
       id: json['id'] as String,
+      authorId: json['author_id'] as String?,
       authorName: name ?? '',
       authorAvatarUrl: avatar,
       rating: (json['rating'] as num?)?.toInt() ?? 0,
@@ -54,6 +70,8 @@ class BusinessReview {
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       adminResponse: json['admin_response'] as String?,
       respondedAt: DateTime.tryParse(json['responded_at'] as String? ?? ''),
+      isApproved: (json['status'] as String? ?? 'approved') == 'approved',
+      isRemoved: const {'hidden', 'rejected'}.contains(json['status']),
     );
   }
 
@@ -88,7 +106,9 @@ class ReviewSummary {
     distribution: [0, 0, 0, 0, 0],
   );
 
-  factory ReviewSummary.of(List<BusinessReview> reviews) {
+  factory ReviewSummary.of(List<BusinessReview> all) {
+    // A review waiting for the panel is not part of the score yet.
+    final reviews = [for (final r in all) if (r.isApproved) r];
     if (reviews.isEmpty) return empty;
 
     final counts = List<int>.filled(5, 0);

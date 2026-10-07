@@ -881,7 +881,11 @@ class LEn extends L {
 
   @override
   String floorLabel(String n) {
-    return 'Floor $n';
+    String _temp0 = intl.Intl.selectLogic(n, {
+      '0': 'Ground Floor',
+      'other': 'Floor $n',
+    });
+    return '$_temp0';
   }
 
   @override
@@ -964,7 +968,13 @@ class LEn extends L {
 
   @override
   String dealsCount(int n) {
-    return '$n deals';
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n deals',
+      one: '1 deal',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1542,7 +1552,15 @@ class LEn extends L {
   String get newEventsAppearHere => 'New events will appear here';
 
   @override
-  String get peopleInterestedSuffix => ' people interested';
+  String peopleInterestedSuffix(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: ' people interested',
+      one: ' person interested',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get organizedBy => 'Organized by';

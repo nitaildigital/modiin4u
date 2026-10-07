@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/businesses/providers/business_providers.dart'
-    show businessReviewsProvider, reviewRepliesProvider;
+    show businessByIdProvider, businessReviewsProvider, reviewRepliesProvider;
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/steps/providers/steps_providers.dart' show activeChallengeProvider;
 import '../../features/steps/widgets/challenge_prize.dart' show showChallengeWin;
@@ -23,6 +23,18 @@ import 'push_service.dart';
 /// Wraps the app (MaterialApp's `builder`) to start the push service, open
 /// what a tapped notification points at, and show one that arrives while the
 /// app is open — which the phone and the browser leave to the app to draw.
+/// Before a notification's link opens — from the phone or from the bell —
+/// what it is about is read again. A reply or review notification leads to a
+/// business: a page of it still open underneath kept its reviews, replies,
+/// rating and count as they were before the reply or the approval.
+void refreshForPushLink(WidgetRef ref, String link) {
+  final business = RegExp(r'^/business/([^/?#]+)').firstMatch(link)?.group(1);
+  if (business == null) return;
+  ref.invalidate(businessReviewsProvider(business));
+  ref.invalidate(reviewRepliesProvider(business));
+  ref.invalidate(businessByIdProvider(business));
+}
+
 class PushHost extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -165,14 +177,7 @@ class _PushHostState extends ConsumerState<PushHost> {
     final link = _push.pendingLink.value;
     if (link == null || !_inApp) return;
     _push.pendingLink.value = null;
-    // A reply notification leads to the business: its reviews and replies
-    // are read again, or a page still open underneath showed them as they
-    // were before the reply was approved.
-    final business = RegExp(r'^/business/([^/?#]+)').firstMatch(link)?.group(1);
-    if (business != null) {
-      ref.invalidate(businessReviewsProvider(business));
-      ref.invalidate(reviewRepliesProvider(business));
-    }
+    refreshForPushLink(ref, link);
     appRouter.push(link);
   }
 

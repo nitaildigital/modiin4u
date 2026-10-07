@@ -346,7 +346,7 @@
   "propertyLabel": "Property",
   "viaBroker": "Via Broker",
   "newBadge": "New",
-  "floorLabel": "Floor {n}",
+  "floorLabel": "{n, select, 0{Ground Floor} other{Floor {n}}}",
   "@floorLabel": {
     "placeholders": {
       "n": {
@@ -405,7 +405,7 @@
       }
     }
   },
-  "dealsCount": "{n} deals",
+  "dealsCount": "{n, plural, =1{1 deal} other{{n} deals}}",
   "@dealsCount": {
     "placeholders": {
       "n": {
@@ -633,7 +633,14 @@
   "eventsInModiin": "Events in Modiin",
   "noUpcomingEvents": "No upcoming events",
   "newEventsAppearHere": "New events will appear here",
-  "peopleInterestedSuffix": " people interested",
+  "peopleInterestedSuffix": "{count, plural, =1{ person interested} other{ people interested}}",
+  "@peopleInterestedSuffix": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "organizedBy": "Organized by",
   "aboutThisEvent": "About This Event",
   "whereIsIt": "Where Is It?",
