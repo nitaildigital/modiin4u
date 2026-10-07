@@ -5,6 +5,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show PostgrestException, StorageException;
 import '../../../core/theme/app_colors.dart';
+import '../ui/admin_kit.dart';
 import '../providers/admin_businesses_provider.dart';
 import '../widgets/business_stats_dialog.dart';
 import '../widgets/admin_gallery_editor.dart';
@@ -320,11 +321,8 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
     WidgetRef ref, {
     Map<String, dynamic>? business,
   }) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _BusinessEditorDialog(business: business),
-    );
+    // A page of its own rather than a small dialog (7 Oct).
+    AdminEditorPage.open<void>(context, _BusinessEditorDialog(business: business));
   }
 }
 
@@ -750,9 +748,7 @@ class _BusinessEditorDialog extends ConsumerStatefulWidget {
       _BusinessEditorDialogState();
 }
 
-class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
 
@@ -882,7 +878,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
 
   Widget _menuList() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         Text(
           tr('כל שורה היא פריט. \u05f4קטגוריה\u05f4 היא הכותרת שמעליו — למשל \u05f4ראשונות\u05f4.', 'Each line is an item. "Category" is the heading above it — for example "Starters".'),
@@ -928,7 +926,6 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 6, vsync: this);
     for (var d = DateTime.monday; d <= DateTime.sunday; d++) {
       _openCtl[d] = TextEditingController();
       _closeCtl[d] = TextEditingController();
@@ -1011,7 +1008,6 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
 
   @override
   void dispose() {
-    _tabs.dispose();
     for (final c in _openCtl.values) {
       c.dispose();
     }
@@ -1049,171 +1045,52 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
   @override
   Widget build(BuildContext context) {
     final neighborhoods = ref.watch(neighborhoodsProvider);
+    final k = AdminKit.of(context);
 
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 800, maxHeight: 700),
-        child: Directionality(
-          textDirection: adminDir,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.navy,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(14),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _isEditing ? tr('עריכת עסק', 'Edit business') : tr('עסק חדש', 'New business'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Tabs
-                Container(
-                  color: AppColors.surfaceLight,
-                  child: TabBar(
-                    controller: _tabs,
-                    labelStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    unselectedLabelStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                    ),
-                    labelColor: AppColors.turquoise,
-                    unselectedLabelColor: AppColors.grayText,
-                    indicatorColor: AppColors.turquoise,
-                    tabs: [
-                      Tab(text: tr('פרטים', 'Details')),
-                      Tab(text: tr('גלריה', 'Gallery')),
-                      Tab(text: tr('שעות פתיחה', 'Opening hours')),
-                      Tab(text: tr('תפריט', 'Menu')),
-                      Tab(text: tr('מאפיינים', 'Features')),
-                      Tab(text: 'SEO'),
-                    ],
-                  ),
-                ),
-
-                // Tab content
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabs,
-                    children: [
-                      _buildDetailsTab(neighborhoods),
-                      ListView(
-                        padding: const EdgeInsets.all(20),
-                        children: [AdminGalleryEditor(controller: _gallery)],
-                      ),
-                      _buildHoursTab(),
-                      _buildMenuTab(),
-                      _buildAttributesTab(),
-                      _buildSeoTab(),
-                    ],
-                  ),
-                ),
-
-                // Footer
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: Row(
-                    children: [
-                      if (_isEditing) ...[
-                        _StatusPill(_status),
-                        const SizedBox(width: 8),
-                      ],
-                      if (_error != null)
-                        Expanded(
-                          child: Text(
-                            _error!,
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 12,
-                              color: AppColors.error,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        )
-                      else
-                        const Spacer(),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          tr('ביטול', 'Cancel'),
-                          style: TextStyle(fontFamily: AppFonts.rubik),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: _saving ? null : _save,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                _isEditing ? tr('שמור', 'Save') : tr('צור עסק', 'Create business'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+    // One page, every part of the business in view — it was a dialog with
+    // six tabs, and a field on another tab could not even be checked.
+    return Form(
+      key: _formKey,
+      child: AdminEditorPage(
+        title: _isEditing ? tr('עריכת עסק', 'Edit business') : tr('עסק חדש', 'New business'),
+        status: _isEditing ? _StatusPill(_status) : null,
+        onClose: () => Navigator.pop(context),
+        actions: [
+          AdminButton(
+            label: _isEditing ? tr('שמירה', 'Save') : tr('יצירת עסק', 'Create business'),
+            icon: Icons.check,
+            busy: _saving,
+            onPressed: _saving ? null : _save,
           ),
-        ),
+        ],
+        main: [
+          if (_error != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: k.danger.withValues(alpha: 0.06),
+                border: Border.all(color: k.danger.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(k.radius),
+              ),
+              child: Text(_error!, style: k.body.copyWith(color: k.danger)),
+            ),
+          AdminCard(title: tr('פרטי העסק', 'Business details'), child: _buildDetailsTab(neighborhoods)),
+          // The gallery editor has its own heading.
+          AdminCard(child: AdminGalleryEditor(controller: _gallery)),
+          AdminCard(title: tr('שעות פתיחה', 'Opening hours'), child: _buildHoursTab()),
+          AdminCard(title: tr('תפריט', 'Menu'), collapsible: true, initiallyOpen: _menuItems.isNotEmpty, child: _buildMenuTab()),
+        ],
+        side: [
+          AdminCard(title: tr('מאפיינים וקידום', 'Features and promotion'), child: _buildAttributesTab()),
+          AdminCard(
+            title: 'SEO',
+            subtitle: tr('כתובת, תיאור לגוגל ולשיתוף', 'Address, description for Google and sharing'),
+            collapsible: true,
+            initiallyOpen: false,
+            child: _buildSeoTab(),
+          ),
+        ],
       ),
     );
   }
@@ -1222,7 +1099,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     AsyncValue<List<Map<String, dynamic>>> neighborhoods,
   ) {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         Text(
           tr('סוג', 'Type'),
@@ -1292,7 +1171,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
         ),
         const SizedBox(height: 6),
         Text(
-          tr('תמונות נוספות מנוהלות בלשונית ״גלריה״.', 'More photos are managed in the "Gallery" tab.'),
+          tr('תמונות נוספות מנוהלות בכרטיס ״גלריה״.', 'More photos are managed in the "Gallery" section.'),
           style: TextStyle(
             fontFamily: AppFonts.rubik,
             fontSize: 12,
@@ -1461,7 +1340,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
 
   Widget _buildAttributesTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         Text(
           tr('כשרות', 'Kosher'),
@@ -1749,7 +1630,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
 
   Widget _buildSeoTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         _field('SEO Title', _metaTitle),
         _field('Meta Description', _metaDesc, maxLines: 3),
@@ -2045,7 +1928,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     }
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       children: [
         Text(
           tr('השאירו ריק אם השעות אינן ידועות. יום ללא שעות לא יוצג באפליקציה.', 'Leave empty if the hours are not known. A day without hours is not shown in the app.'),
@@ -2213,21 +2098,24 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
     return v.isEmpty ? null : v;
   }
 
+  /// Said at the top of the page and in a message at the bottom, since the
+  /// page may be scrolled far from the top when Save is pressed.
+  void _fail(String message) {
+    setState(() => _error = message);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _save() async {
     setState(() => _error = null);
 
-    // The tabs build only the one on screen, so the form cannot validate a
-    // field on another tab. The required ones are checked here, and the
-    // details tab brought forward when one is missing.
+    // The required fields are checked here and said at the top of the page.
     if (_name.text.trim().isEmpty || _address.text.trim().isEmpty) {
-      _tabs.animateTo(0);
-      setState(() => _error = tr('שם העסק והכתובת הם שדות חובה (לשונית פרטים).', 'The business name and address are required (Details tab).'));
+      _fail(tr('שם העסק והכתובת הם שדות חובה.', 'The business name and address are required.'));
       return;
     }
     if (_dateValidator(_featuredStart.text) != null ||
         _dateValidator(_featuredEnd.text) != null) {
-      _tabs.animateTo(4);
-      setState(() => _error = tr('תאריכי הקידום צריכים להיות בפורמט YYYY-MM-DD.', 'The promotion dates must be in the format YYYY-MM-DD.'));
+      _fail(tr('תאריכי הקידום צריכים להיות בפורמט YYYY-MM-DD.', 'The promotion dates must be in the format YYYY-MM-DD.'));
       return;
     }
     final badDay = [
@@ -2241,11 +2129,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
           _dayNames[d]!,
     ];
     if (badDay.isNotEmpty) {
-      _tabs.animateTo(2);
-      setState(
-        () => _error =
-            tr('שעה לא תקינה ביום ${badDay.join(', ')} — HH:MM, למשל 09:00.', 'Invalid time on ${badDay.join(', ')} — HH:MM, for example 09:00.'),
-      );
+      _fail(tr('שעה לא תקינה ביום ${badDay.join(', ')} — HH:MM, למשל 09:00.', 'Invalid time on ${badDay.join(', ')} — HH:MM, for example 09:00.'));
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -2340,7 +2224,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog>
 
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) setState(() => _error = tr('השמירה נכשלה: ${_errorText(e)}', 'Saving failed: ${_errorText(e)}'));
+      if (mounted) _fail(tr('השמירה נכשלה: ${_errorText(e)}', 'Saving failed: ${_errorText(e)}'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

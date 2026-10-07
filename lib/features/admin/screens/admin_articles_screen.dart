@@ -5,6 +5,8 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../news/models/article_body.dart';
 import '../providers/admin_articles_provider.dart';
+import '../ui/admin_kit.dart';
+import '../widgets/admin_rich_editor.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
 import '../admin_language.dart';
@@ -307,11 +309,8 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
     WidgetRef ref, {
     Map<String, dynamic>? article,
   }) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _ArticleEditorDialog(article: article),
-    );
+    // A page of its own rather than a small dialog (7 Oct).
+    AdminEditorPage.open<void>(context, _ArticleEditorDialog(article: article));
   }
 }
 
@@ -653,9 +652,7 @@ class _ArticleEditorDialog extends ConsumerStatefulWidget {
       _ArticleEditorDialogState();
 }
 
-class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
 
@@ -716,7 +713,6 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 4, vsync: this);
     final a = widget.article;
 
     _title = TextEditingController(text: a?['title'] as String? ?? '');
@@ -790,7 +786,6 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
 
   @override
   void dispose() {
-    _tabs.dispose();
     _title.dispose();
     _subtitle.dispose();
     _slug.dispose();
@@ -816,228 +811,242 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 850, maxHeight: 750),
-        child: Directionality(
-          textDirection: adminDir,
-          child: Form(
-            key: _formKey,
+    final k = AdminKit.of(context);
+    return Form(
+      key: _formKey,
+      child: AdminEditorPage(
+        title: _isEditing ? tr('עריכת כתבה', 'Edit article') : tr('כתבה חדשה', 'New article'),
+        status: _isEditing ? _StatusPill(_status) : null,
+        onClose: () => Navigator.pop(context),
+        actions: [
+          if (_status == 'draft')
+            AdminButton.secondary(
+              label: tr('שמירת טיוטה', 'Save draft'),
+              onPressed: _canSave ? () => _save(asDraft: true) : null,
+            ),
+          AdminButton(
+            label: _isEditing ? tr('שמירה', 'Save') : tr('יצירת כתבה', 'Create article'),
+            icon: Icons.check,
+            busy: _saving,
+            onPressed: _canSave ? () => _save() : null,
+          ),
+        ],
+        main: [
+          AdminCard(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
+                TextFormField(
+                  controller: _title,
+                  validator: (v) => v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
+                  style: k.title.copyWith(fontSize: 26),
+                  maxLines: null,
+                  decoration: InputDecoration(
+                    hintText: tr('כותרת הכתבה', 'Article title'),
+                    hintStyle: k.title.copyWith(fontSize: 26, color: k.muted),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    filled: false,
+                    isDense: true,
                   ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.navy,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(14),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _isEditing ? tr('עריכת כתבה', 'Edit article') : tr('כתבה חדשה', 'New article'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
+                  onChanged: (v) {
+                    // A new article's address follows its title until it is
+                    // edited by hand.
+                    if (!_isEditing && !_slugTouched) _slug.text = _slugOf(v);
+                  },
                 ),
-
-                // Tabs
-                Container(
-                  color: AppColors.surfaceLight,
-                  child: TabBar(
-                    controller: _tabs,
-                    labelStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    unselectedLabelStyle: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 13,
-                    ),
-                    labelColor: AppColors.turquoise,
-                    unselectedLabelColor: AppColors.grayText,
-                    indicatorColor: AppColors.turquoise,
-                    tabs: [
-                      Tab(text: tr('תוכן', 'Content')),
-                      Tab(text: tr('הגדרות', 'Settings')),
-                      Tab(text: 'SEO'),
-                      Tab(text: tr('תצוגה מקדימה', 'Preview')),
-                    ],
-                  ),
-                ),
-
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabs,
-                    children: [
-                      _buildContentTab(),
-                      _buildSettingsTab(),
-                      _buildSeoTab(),
-                      _buildPreviewTab(),
-                    ],
-                  ),
-                ),
-
-                // Footer
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: Row(
-                    children: [
-                      if (_isEditing) ...[
-                        _StatusPill(_status),
-                        const SizedBox(width: 8),
-                      ],
-                      if (_isEditing)
-                        Text(
-                          tr('${widget.article?['view_count'] ?? 0} צפיות', '${widget.article?['view_count'] ?? 0} views'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 12,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          tr('ביטול', 'Cancel'),
-                          style: TextStyle(fontFamily: AppFonts.rubik),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (_status == 'draft') ...[
-                        OutlinedButton(
-                          onPressed: _canSave
-                              ? () => _save(asDraft: true)
-                              : null,
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            tr('שמור טיוטה', 'Save draft'),
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      FilledButton(
-                        onPressed: _canSave ? () => _save() : null,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.turquoise,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                _isEditing ? tr('שמור', 'Save') : tr('צור כתבה', 'Create article'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ],
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _subtitle,
+                  style: k.body.copyWith(fontSize: 16, color: k.inkSoft),
+                  maxLines: null,
+                  decoration: InputDecoration(
+                    hintText: tr('כותרת משנה (לא חובה)', 'Subtitle (optional)'),
+                    hintStyle: k.body.copyWith(fontSize: 16, color: k.muted),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    filled: false,
+                    isDense: true,
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          AdminCard(
+            title: tr('תוכן הכתבה', 'Article text'),
+            subtitle: tr('הדגשה, כותרות, רשימות, קישורים ותמונות בתוך הטקסט', 'Bold, headings, lists, links and pictures inside the text'),
+            child: FormField<String>(
+              validator: (_) => _body.text.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
+              builder: (field) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AdminRichEditor(
+                    initialHtml: _body.text,
+                    imageFolder: 'articles/body',
+                    onChanged: (html) {
+                      _body.text = html;
+                      field.didChange(html);
+                    },
+                  ),
+                  if (field.hasError) ...[
+                    const SizedBox(height: 6),
+                    Text(field.errorText!, style: k.hint.copyWith(color: k.danger)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          AdminCard(
+            title: tr('תקציר', 'Summary'),
+            subtitle: tr('מופיע בכרטיס הכתבה ובשיתוף', 'Shown on the article card and when shared'),
+            child: TextFormField(
+              controller: _excerpt,
+              maxLines: 3,
+              minLines: 2,
+              style: k.body,
+              decoration: k.input(hint: tr('שניים–שלושה משפטים על הכתבה', 'Two or three sentences about the article')),
+            ),
+          ),
+          AdminCard(
+            title: tr('תצוגה מקדימה', 'Preview'),
+            subtitle: tr('כפי שהאתר יציג את הכתבה', 'As the site will show the article'),
+            collapsible: true,
+            initiallyOpen: false,
+            child: _buildPreview(),
+          ),
+        ],
+        side: [
+          AdminCard(
+            title: tr('פרסום', 'Publishing'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(tr('סטטוס', 'Status'), style: k.label),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: _status,
+                  decoration: k.input(),
+                  style: k.body,
+                  items: [
+                    for (final (value, label) in [
+                      ('draft', tr('טיוטה', 'Draft')),
+                      ('published', tr('פורסם', 'Published')),
+                      ('archived', tr('ארכיון', 'Archive')),
+                      // Only offered to an article already there; the trash
+                      // screen is where articles are sent to it.
+                      if (_baseline['status'] == 'trash') ('trash', tr('פח', 'Trash')),
+                    ])
+                      DropdownMenuItem(value: value, child: Text(label)),
+                  ],
+                  onChanged: (v) => setState(() => _status = v!),
+                ),
+                const SizedBox(height: 14),
+                Text(tr('תאריך פרסום', 'Publication date'), style: k.label),
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: _pickPublishedAt,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InputDecorator(
+                    decoration: k.input(suffix: Icon(Icons.edit_calendar_outlined, size: 18, color: k.inkSoft)),
+                    child: Text(
+                      _publishedAt == null ? tr('ייקבע בפרסום הראשון', 'Set at first publication') : _formatDateTime(_publishedAt!),
+                      style: _publishedAt == null ? k.hint : k.body,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  tr('נקבע בפרסום הראשון ונשאר קבוע, אלא אם משנים אותו כאן.', 'Set at first publication and kept, unless changed here.'),
+                  style: k.hint.copyWith(fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                AdminSwitchRow(
+                  label: tr('לשלוח התראה בפרסום', 'Send a notification when published'),
+                  value: _notifyOnPublish,
+                  onChanged: (v) => setState(() => _notifyOnPublish = v),
+                ),
+                if (_isEditing) ...[
+                  const SizedBox(height: 6),
+                  Text(tr('${widget.article?['view_count'] ?? 0} צפיות', '${widget.article?['view_count'] ?? 0} views'), style: k.hint),
+                ],
+              ],
+            ),
+          ),
+          AdminCard(title: tr('קטגוריות', 'Categories'), child: _buildCategoryPicker()),
+          AdminCard(
+            title: tr('תמונה ראשית', 'Main image'),
+            child: ImageUploadField(
+              label: tr('תמונת כריכה', 'Cover image'),
+              controller: _coverImageUrl,
+              folder: 'articles/cover',
+            ),
+          ),
+          AdminCard(
+            title: tr('תצוגה באתר', 'On the site'),
+            child: Column(
+              children: [
+                AdminSwitchRow(label: tr('חדשות בזק', 'Breaking news'), value: _isBreaking, onChanged: (v) => setState(() => _isBreaking = v)),
+                AdminSwitchRow(label: tr('מומלץ', 'Recommended'), value: _isFeatured, onChanged: (v) => setState(() => _isFeatured = v)),
+                AdminSwitchRow(label: tr('נעוץ', 'Pinned'), value: _isPinned, onChanged: (v) => setState(() => _isPinned = v)),
+                AdminSwitchRow(label: tr('ממומן', 'Sponsored'), value: _isSponsored, onChanged: (v) => setState(() => _isSponsored = v)),
+                AdminSwitchRow(label: tr('לחברים בלבד', 'Members only'), value: _isMembersOnly, onChanged: (v) => setState(() => _isMembersOnly = v)),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('מקור וקרדיט', 'Source and credit'),
+            child: Column(
+              children: [
+                AdminField(label: tr('מקור', 'Source'), controller: _source),
+                // `credit` is the byline the site prints under the title.
+                AdminField(label: tr('קרדיט / כותב', 'Credit / author'), controller: _credit),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: 'SEO',
+            subtitle: tr('כתובת, תיאור לגוגל ולשיתוף', 'Address, description for Google and sharing'),
+            collapsible: true,
+            initiallyOpen: false,
+            child: Column(
+              children: [
+                AdminField(
+                  label: tr('כתובת (slug) *', 'Address (slug) *'),
+                  controller: _slug,
+                  textDirection: TextDirection.ltr,
+                  validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
+                  onChanged: (_) => _slugTouched = true,
+                ),
+                AdminField(label: 'SEO Title', controller: _seoTitle),
+                AdminField(label: 'Meta Description', controller: _metaDesc, maxLines: 3),
+                AdminField(label: 'Meta Keywords', controller: _metaKeywords),
+                AdminField(label: 'Focus Keyword', controller: _focusKeyword),
+                AdminField(label: 'OG Title', controller: _ogTitle),
+                AdminField(label: 'OG Description', controller: _ogDesc, maxLines: 3),
+                AdminSwitchRow(label: 'Noindex', value: _noindex, onChanged: (v) => setState(() => _noindex = v)),
+                AdminSwitchRow(label: 'Nofollow', value: _nofollow, onChanged: (v) => setState(() => _nofollow = v)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildContentTab() {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        _field(
-          tr('כותרת *', 'Title *'),
-          _title,
-          validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
-        ),
-        _field(tr('כותרת משנה', 'Subtitle'), _subtitle),
-        _field(
-          'Slug *',
-          _slug,
-          validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
-        ),
-        _buildCategoryPicker(),
-        _field(tr('תקציר', 'Summary'), _excerpt, maxLines: 2),
-        // Uploaded to storage, or an address pasted as before.
-        ImageUploadField(
-          label: tr('תמונת כריכה', 'Cover image'),
-          controller: _coverImageUrl,
-          folder: 'articles/cover',
-        ),
-        const SizedBox(height: 16),
-        // The body is kept exactly as it is stored. The imported stories are
-        // WordPress HTML, and a rich editor would rewrite that markup on
-        // every save; a text box leaves it alone, and the preview tab shows
-        // what the site will make of it.
-        _field(
-          tr('תוכן *', 'Content *'),
-          _body,
-          maxLines: 12,
-          helper:
-              tr('הטקסט נשמר בדיוק כפי שהוא, כולל תגיות HTML מהאתר הקודם. '
-              'פסקה חדשה: שורה ריקה. לשונית "תצוגה מקדימה" מראה איך האתר יציג אותו.', 'The text is saved exactly as it is, including HTML tags from the old site. New paragraph: an empty line. The "Preview" tab shows how the site will display it.'),
-          validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
-        ),
-        Row(
-          children: [
-            Expanded(child: _field(tr('מקור', 'Source'), _source)),
-            const SizedBox(width: 12),
-            // `credit` is the byline the site prints under the title.
-            Expanded(child: _field(tr('קרדיט / כותב', 'Credit / author'), _credit)),
-          ],
-        ),
-      ],
-    );
+  /// Typed by hand once, the address is left alone.
+  bool _slugTouched = false;
+
+  /// An address from a title: Latin letters and digits kept, the rest as
+  /// dashes; a Hebrew title gives a dated one, which the person can change.
+  static String _slugOf(String title) {
+    final latin = title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+    if (latin.length >= 3) return latin;
+    final now = DateTime.now();
+    return 'article-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.millisecondsSinceEpoch % 100000}';
   }
 
   /// Several categories, not one: 70 of the articles are filed under two or
@@ -1151,155 +1160,6 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
     );
   }
 
-  Widget _buildSettingsTab() {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Text(
-          tr('סטטוס', 'Status'),
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppColors.navy,
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _status,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-          ),
-          items: [
-            for (final (value, label) in [
-              ('draft', tr('טיוטה', 'Draft')),
-              ('published', tr('פורסם', 'Published')),
-              ('archived', tr('ארכיון', 'Archive')),
-              // Only offered to an article already there; the trash screen
-              // is where articles are sent to it.
-              if (_baseline['status'] == 'trash') ('trash', tr('פח', 'Trash')),
-            ])
-              DropdownMenuItem(
-                value: value,
-                child: Text(
-                  label,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                ),
-              ),
-          ],
-          onChanged: (v) => setState(() => _status = v!),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          tr('תאריך פרסום', 'Publication date'),
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppColors.navy,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                ),
-                child: Text(
-                  _publishedAt == null
-                      ? tr('ייקבע בפרסום הראשון', 'Set at first publication')
-                      : _formatDateTime(_publishedAt!),
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: _publishedAt == null
-                        ? AppColors.grayLight
-                        : AppColors.navy,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: _pickPublishedAt,
-              icon: const Icon(Icons.edit_calendar_outlined, size: 16),
-              label: Text(
-                tr('שינוי', 'Change'),
-                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          tr('התאריך נקבע בפרסום הראשון ונשאר קבוע, גם אחרי עריכה או פרסום מחדש. '
-          'הוא משתנה רק אם משנים אותו כאן.', 'The date is set at first publication and stays fixed, even after editing or republishing. It changes only if you change it here.'),
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 11,
-            color: AppColors.grayText,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          tr('דגלים', 'Flags'),
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppColors.navy,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            _toggle(
-              tr('חדשות בזק', 'Breaking news'),
-              _isBreaking,
-              (v) => setState(() => _isBreaking = v),
-            ),
-            _toggle(
-              tr('מומלץ', 'Recommended'),
-              _isFeatured,
-              (v) => setState(() => _isFeatured = v),
-            ),
-            _toggle(tr('נעוץ', 'Pinned'), _isPinned, (v) => setState(() => _isPinned = v)),
-            _toggle(
-              tr('ממומן', 'Sponsored'),
-              _isSponsored,
-              (v) => setState(() => _isSponsored = v),
-            ),
-            _toggle(
-              tr('לחברים בלבד', 'Members only'),
-              _isMembersOnly,
-              (v) => setState(() => _isMembersOnly = v),
-            ),
-            // Replaces "Push-worthy" (`push_worthy`), which nothing read.
-            _toggle(
-              tr('לשלוח התראה בפרסום', 'Send a notification when published'),
-              _notifyOnPublish,
-              (v) => setState(() => _notifyOnPublish = v),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Future<void> _pickPublishedAt() async {
     final now = DateTime.now();
     final initial = _publishedAt ?? now;
@@ -1340,55 +1200,17 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
       '${d.day}/${d.month}/${d.year} '
       '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
-  Widget _buildSeoTab() {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        _field('SEO Title', _seoTitle),
-        _field('Meta Description', _metaDesc, maxLines: 3),
-        _field('Meta Keywords', _metaKeywords),
-        _field('Focus Keyword', _focusKeyword),
-        const SizedBox(height: 16),
-        Text(
-          'Open Graph',
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppColors.navy,
-          ),
-        ),
-        const SizedBox(height: 8),
-        _field('OG Title', _ogTitle),
-        _field('OG Description', _ogDesc, maxLines: 3),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            _toggle('Noindex', _noindex, (v) => setState(() => _noindex = v)),
-            _toggle(
-              'Nofollow',
-              _nofollow,
-              (v) => setState(() => _nofollow = v),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   /// The body read the way the website reads it — the same parser — so a
   /// broken tag or a photo that will not load shows here before it shows on
   /// the site. Read-only; the text box on the first tab is what is saved.
-  Widget _buildPreviewTab() {
+  Widget _buildPreview() {
     return ListenableBuilder(
       listenable: Listenable.merge([_title, _subtitle, _coverImageUrl, _body]),
       builder: (context, _) {
         final blocks = parseArticleBody(_body.text);
         final cover = _coverImageUrl.text.trim();
-        return ListView(
-          padding: const EdgeInsets.all(20),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
@@ -1534,35 +1356,6 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog>
             color: AppColors.grayLight,
           ),
           overflow: TextOverflow.ellipsis,
-        ),
-      ),
-    );
-  }
-
-  Widget _field(
-    String label,
-    TextEditingController controller, {
-    int maxLines = 1,
-    String? helper,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        validator: validator,
-        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-        decoration: InputDecoration(
-          labelText: label,
-          helperText: helper,
-          helperMaxLines: 3,
-          labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
         ),
       ),
     );

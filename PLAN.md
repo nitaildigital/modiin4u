@@ -2528,6 +2528,42 @@ Notes:
   build; a file never copied is a 404. Tried on 32 files, Hebrew names
   included.
 
+### The admin panel redesigned, a word processor for articles — 7 October
+
+The client (6 Oct): make the panel faster to work in; a text editor with
+bold, pictures inside the text and links; easier article and business
+editing; the look of the PersonaAI CRM (crm.personaai.me) in our colours.
+Asked which screens and how far: all of them, the look and feel. Built
+directly rather than drawn in Figma first; a pilot of the two editors before
+the other screens.
+
+- **One kit.** `lib/features/admin/ui/admin_kit.dart` holds the panel's
+  colours, type, fields, cards, switches, buttons and the full-page editor;
+  its `theme()` dresses the screens' own Material fields and switches the
+  same way, so older screens change with it. The brand's mid blue acts,
+  everything else is the CRM's greys and white cards.
+- **Editors are pages, not dialogs.** Articles and businesses opened an
+  800 × 700 dialog with four or six tabs; a field on another tab could not be
+  checked, and Save said "see the Details tab". Now a page: the text and
+  details on the left, how it is filed and shown (status, categories,
+  picture, flags, SEO folded away) on the right, Save always in the top bar.
+  A missing field is said at the top and in a message at the bottom.
+- **The article body is written in an editor** (`flutter_quill`), not typed
+  as HTML. It reads the body's HTML in and writes HTML out, because the site
+  and the 669 stories from WordPress are HTML. Only what the site's article
+  page draws (`article_body.dart`) is offered: paragraphs, H1–H3, lists,
+  quotes, bold, italic, links, pictures. A picture goes to
+  `media/articles/body/`. "HTML" shows the markup for the rare thing the
+  editor cannot say.
+- **A body nobody typed in is never written back.** The converter would
+  rewrite WordPress's markup on every save; the editor reports a change only
+  on an edit, and the save writes only changed fields, so opening and saving
+  an old story leaves its body exactly as it was.
+- Tried in a browser on 7 Oct: a real business and a real article opened
+  (not saved); a draft business created and deleted; lists, links, bold,
+  headings and a picture in a new article, the HTML each produced checked.
+  The toolbar gave the keyboard away on every press: it gives it back now.
+
 ### English on the website stopped halfway — 2 October
 
 "Why is the website not fully English when English is selected?"
