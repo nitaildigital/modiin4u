@@ -2270,6 +2270,81 @@ Monday to Sunday, about). The form's pieces are shared with Add Apartment
   jobs, applications and CV. Messages have no table; jobs need 00052, still
   unrun.
 
+**Kamal's business and job-seeker screens — 7 Oct (evening).** Every frame
+in `business_side/` and `user_side/`, saved in the database, with
+notifications for every event (Harshit, for the client: "don't wait for me
+to tell you every one"). Migrations **00052** (jobs, which had waited
+for these designs), **00069** and **00070** — all run 7 Oct with Harshit's
+go-ahead.
+
+| Part | Where | Saved in |
+|---|---|---|
+| Jobs for residents: list with search, chips (youth, no experience, part-time, students, shifts) and a filter sheet; job page; apply with a CV or without; Saved / Applied | `lib/features/jobs/screens/` (jobs, job_detail, apply_job, my_jobs) | `jobs`, `job_applications` through `apply_for_job`, `favorites` type `job`, CVs in the private `cvs` bucket |
+| My Profile (the CV): basic details, about, skills, work experience, education, resumes, more information, a completion bar | `my_profile_screen.dart`, `job_profile_editors.dart` | `job_profiles`, `job_experiences`, `job_educations`, `resumes` — read by the person, by a business they applied to, and by the panel (`can_view_job_seeker`) |
+| A business's jobs: My Jobs (All / Active / Draft / Closed, applications and views), Post a Job in three steps with Save Draft, Job Posted, the job page with Details / Applicants / Performance, Applicant Profile with a heart (shortlist) and status moves | `business_jobs`, `post_job`, `job_posted`, `business_job_detail`, `applicant_profile` | `jobs` (+ responsibilities, schedule, images), `job_applicants()` for photo/place/latest role, `job_stats` |
+| Business Profile (the owner's page, edited in place: cover, logo, details, about, hours, photos), Deals (edit, promote, close, delete), Create Deal, Deal Published | `lib/features/business_owner/` | `businesses`, `business_hours`, `entity_media`; `offers` (+ `deal_type`, `deal_value`) |
+| Messages between a business and a person: list and live chat | `lib/features/messages/` | `conversations`, `messages` (realtime); a business can only open one with someone who applied to it; the panel does not read them |
+| Promotion: a business asks (page, deal or job, 3/7/14/30 days, a message); the panel's new **Promotions** section approves or declines (with a reason) or ends one early; approved, it stands first in its list for those days | `promote_screen.dart`, `admin_promotions_screen.dart` | `promotion_requests`, `promoted_until` on businesses, offers and jobs; cleared every 10 minutes once ended, so the lists simply sort on it |
+| The panel's **Jobs** section (close, reopen, end a promotion) and Jobs as a category scope | `admin_jobs_screen.dart`, `admin_categories_screen.dart` | — |
+| Home: Jobs in place of Deals among the four shortcuts and a message icon with the unread count, as the home frame draws them; the side menu in its business and resident versions; a Jobs switch in Settings | `home_screen.dart`, `app_side_menu.dart`, `settings_screen.dart` | `push_devices.notify_jobs` |
+
+**Notifications (00069).** A new job → everyone with Jobs on; a job closed →
+its applicants and whoever saved it; an application → the business; invited
+to an interview, accepted or not selected → the applicant; a message → the
+other side (at most one a minute per conversation); a promotion request →
+the team; approved or declined → the business; a business waiting for
+approval → the team, approved → its owner; a claim on a deal and an
+approved review → the business's owner. **A business owner's new deal is now
+announced to everyone with Deals on** — 00060 held owners' deals back as
+"the panel's to announce"; Harshit asked for new deals to go to all users.
+
+**Decisions taken here, to confirm with the client:** promotions are free in
+the system (he collects payment, as with the setup fee); an approved
+promotion starts at once and runs for the days asked; promoted items carry
+no "Promoted" label (the design has none — Israeli advertising rules may
+want one); jobs have no expiry date unless the owner closes them; the
+"Online" line, chat attachments and emoji, a deal's days and hours, company
+logos on work experience and a list of skills to search have no data and are
+left out.
+
+**Tested 7 Oct (evening), two phones and the panel.** A throwaway business
+owner on the OnePlus, a throwaway resident on the Realme, a temporary admin
+in the panel (local web build). Passed, each checked in the database and on
+screen: business approved in the panel; profile edits and cover upload;
+deal created, edited, claimed (voucher), closed; promotion asked for a deal,
+a job and the business, approved and declined with a reason in the panel,
+ended early; **approved items first** — the deal first in Popular Deals, the
+business first in All Businesses and in its category (Shopping, of 44), the
+promoted job above a newer one in Jobs; Post a Job (all three steps, image),
+apply, applicant profile from the CV, shortlist, interview / not selected;
+messages both ways; job closed by the owner and by the panel; the panel's
+Jobs and Promotions sections. **Notifications reached the phones** — in the
+tray with the app closed, as a banner with it open, and in the bell: new
+job, new deal, business approved, promotion approved / declined (with the
+reason), new application, invited to interview, not selected, job closed,
+new deal claim, and each chat message (tapping it opens the conversation).
+
+Found and fixed in the same session:
+- **A business could delete a deal a resident had claimed**, and the
+  voucher went with it: an older policy (`offers_modify_admin`) let owners
+  delete anything of theirs. 00070 adds a restrictive policy; checked as the
+  real accounts — a claimed deal stays (closing still works), an unclaimed
+  one still deletes.
+- Chat messages showed newest first (a live stream sorts that way unless
+  told) — fixed in `messages.dart`.
+- The owner's screens kept what they had read: "waiting for approval" after
+  approval, "Promotion requested" after the approval. They now read again
+  on every notification and on return to the app
+  (`core/providers/account_refresh.dart`); checked — the button turned to
+  "Promoted until …" by itself when the approval arrived.
+- The panel's Promotions and Jobs lists did not pick up new rows: a refresh
+  button, and tapping a filter reloads. The Jobs pill was English in the
+  Hebrew panel. A job with no views showed "—", now 0.
+
+All test rows, files, notifications and the three accounts deleted after.
+Known: a list a resident already has open shows a new promotion on its next
+refresh (pull down or back after two minutes), not instantly.
+
 **Audit, 5 Oct: what should be saved and is not.** The whole app, site and
 panel against the database (59 tables; 20 never written by the code).
 
