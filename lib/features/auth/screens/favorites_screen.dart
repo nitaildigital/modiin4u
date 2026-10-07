@@ -330,6 +330,7 @@ class _FavoriteCard extends StatelessWidget {
     FavoriteKind.event => l.event,
     FavoriteKind.article => l.news,
     FavoriteKind.listing => l.propertyLabel,
+    FavoriteKind.job => l.localeName == 'he' ? 'משרה' : 'Job',
   };
 
   Color get _typeColor => switch (entry.kind) {
@@ -337,6 +338,7 @@ class _FavoriteCard extends StatelessWidget {
     FavoriteKind.event => const Color(0xFF7247ED),
     FavoriteKind.article => const Color(0xFF1E40B5),
     FavoriteKind.listing => const Color(0xFFD47D00),
+    FavoriteKind.job => const Color(0xFF123A72),
   };
 
   IconData get _fallbackIcon => switch (entry.kind) {
@@ -344,6 +346,7 @@ class _FavoriteCard extends StatelessWidget {
     FavoriteKind.event => IconsaxPlusBold.calendar_1,
     FavoriteKind.article => IconsaxPlusBold.document_text,
     FavoriteKind.listing => IconsaxPlusBold.home_2,
+    FavoriteKind.job => IconsaxPlusBold.briefcase,
   };
 
   @override

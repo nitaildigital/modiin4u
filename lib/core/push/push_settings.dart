@@ -30,6 +30,9 @@ class PushSettings {
   /// reaches a device someone is signed in on.
   final bool replies;
 
+  /// Each new job opening (00069).
+  final bool jobs;
+
   const PushSettings({
     this.enabled = true,
     this.news = true,
@@ -40,6 +43,7 @@ class PushSettings {
     this.neighborhood = true,
     this.neighborhoodId,
     this.replies = true,
+    this.jobs = true,
   });
 
   factory PushSettings.fromJson(Map<String, dynamic> json) {
@@ -55,6 +59,7 @@ class PushSettings {
       neighborhood: flag('neighborhood', d.neighborhood),
       neighborhoodId: json['neighborhood_id'] as String?,
       replies: flag('replies', d.replies),
+      jobs: flag('jobs', d.jobs),
     );
   }
 
@@ -68,6 +73,7 @@ class PushSettings {
     'neighborhood': neighborhood,
     'neighborhood_id': neighborhoodId,
     'replies': replies,
+    'jobs': jobs,
   };
 
   PushSettings copyWith({
@@ -80,6 +86,7 @@ class PushSettings {
     bool? neighborhood,
     String? neighborhoodId,
     bool? replies,
+    bool? jobs,
   }) {
     return PushSettings(
       enabled: enabled ?? this.enabled,
@@ -91,6 +98,7 @@ class PushSettings {
       neighborhood: neighborhood ?? this.neighborhood,
       neighborhoodId: neighborhoodId ?? this.neighborhoodId,
       replies: replies ?? this.replies,
+      jobs: jobs ?? this.jobs,
     );
   }
 }

@@ -73,6 +73,14 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                   .read(adminCategoryListProvider.notifier)
                   .setScopeFilter('event');
             }),
+            const SizedBox(width: 8),
+            // Job categories (00052): the trades the Post a Job form offers.
+            AdminFilterChip(tr('משרות', 'Jobs'), _scopeFilter == 'job', () {
+              setState(() => _scopeFilter = 'job');
+              ref
+                  .read(adminCategoryListProvider.notifier)
+                  .setScopeFilter('job');
+            }),
           ],
           // `valueOrNull`, not `whenData(...).value`: the latter rethrows
           // on a failed load and greys the whole section instead of letting
@@ -561,6 +569,16 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                               ),
                             ),
                           ),
+                          DropdownMenuItem(
+                            value: 'job',
+                            child: Text(
+                              tr('משרות', 'Jobs'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ],
                         onChanged: (v) => setState(() {
                           _scope = v!;
@@ -840,6 +858,7 @@ class _ScopePill extends StatelessWidget {
       'business' => (tr('עסקים', 'Businesses'), AppColors.midBlue),
       'article' => (tr('כתבות', 'Articles'), AppColors.success),
       'event' => (tr('אירועים', 'Events'), AppColors.gold),
+      'job' => (tr('משרות', 'Jobs'), AppColors.turquoise),
       _ => (scope, AppColors.grayLight),
     };
     return Container(

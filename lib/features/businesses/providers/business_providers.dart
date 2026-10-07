@@ -15,6 +15,12 @@ final businessRepositoryProvider = Provider<BusinessRepository>(
   (ref) => BusinessRepository(),
 );
 
+/// A business with an approved promotion running (00069) before one without:
+/// the client's promise is the top of the list for the days he approved,
+/// whatever order the list is otherwise in.
+int promotedFirst(Business a, Business b) =>
+    (b.isPromoted ? 1 : 0).compareTo(a.isPromoted ? 1 : 0);
+
 /// Every active business, newest first.
 final businessesProvider = FutureProvider<List<Business>>((ref) async {
   final rows = await ref
@@ -30,6 +36,8 @@ final parksProvider = FutureProvider<List<Business>>((ref) async {
       .watch(businessRepositoryProvider)
       .fetchAll(status: 'active', kind: 'park');
   return rows.map(Business.fromJson).toList()..sort((a, b) {
+    final byPromotion = promotedFirst(a, b);
+    if (byPromotion != 0) return byPromotion;
     final byRating = b.rating.compareTo(a.rating);
     return byRating != 0 ? byRating : a.name.compareTo(b.name);
   });
@@ -89,7 +97,10 @@ final nearbyBusinessesProvider =
       // A business with no coordinates has no distance; it cannot be "near".
       final placed =
           all.where((b) => b.latitude != 0 && b.longitude != 0).toList()
-            ..sort((a, b) => away(a).compareTo(away(b)));
+            ..sort((a, b) {
+              final byPromotion = promotedFirst(a, b);
+              return byPromotion != 0 ? byPromotion : away(a).compareTo(away(b));
+            });
       return (businesses: placed, byDistance: true);
     });
 
@@ -121,6 +132,8 @@ final nearbyRestaurantsProvider =
       int photo(Business b) => (b.imageUrl ?? '').isEmpty ? 1 : 0;
       final sorted = [...food]
         ..sort((a, b) {
+          final byPromotion = promotedFirst(a, b);
+          if (byPromotion != 0) return byPromotion;
           final byPhoto = photo(a).compareTo(photo(b));
           if (byPhoto != 0) return byPhoto;
           final byRating = b.rating.compareTo(a.rating);

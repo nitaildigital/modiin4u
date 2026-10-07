@@ -5,6 +5,9 @@ import '../../features/businesses/providers/business_providers.dart';
 import '../../features/deals/providers/offer_providers.dart';
 import '../../features/events/providers/event_providers.dart';
 import '../../features/home/providers/home_web_providers.dart';
+import '../../features/jobs/providers/job_providers.dart' show liveJobsProvider;
+import '../../features/messages/data/messages.dart' show unreadMessagesProvider, conversationsProvider;
+import 'account_refresh.dart';
 import '../../features/municipal/providers/parking_providers.dart';
 import '../../features/news/providers/news_providers.dart';
 import '../../features/realestate/providers/listing_providers.dart';
@@ -42,6 +45,12 @@ class _ResumeRefreshState extends ConsumerState<ResumeRefresh> {
     _lifecycle = AppLifecycleListener(
       onHide: () => _leftAt = DateTime.now(),
       onShow: () {
+        // Messages are read on every return, however short: a reply is what
+        // brings someone back to the app.
+        ref
+          ..invalidate(unreadMessagesProvider)
+          ..invalidate(conversationsProvider);
+        refreshAfterNotificationWidget(ref);
         final left = _leftAt;
         _leftAt = null;
         if (left != null && DateTime.now().difference(left) >= widget.away) {
@@ -66,7 +75,8 @@ class _ResumeRefreshState extends ConsumerState<ResumeRefresh> {
       ..invalidate(restOfArticlesProvider)
       ..invalidate(activeChallengeProvider)
       ..invalidate(homeNoticeProvider)
-      ..invalidate(parkingLotsProvider);
+      ..invalidate(parkingLotsProvider)
+      ..invalidate(liveJobsProvider);
   }
 
   @override

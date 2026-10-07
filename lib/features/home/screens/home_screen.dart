@@ -33,6 +33,8 @@ import 'web_home_screen.dart';
 import '../providers/home_web_providers.dart' show homeNoticeProvider;
 import 'package:url_launcher/url_launcher.dart';
 import '../../favorites/widgets/favorite_button.dart';
+import '../../messages/data/messages.dart' show unreadMessagesProvider;
+import '../../auth/widgets/m_account_widgets.dart' show mTr;
 import '../../favorites/repositories/favorite_repository.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -363,6 +365,28 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
             ],
           ),
 
+          // Messages, beside the ☰, in the app only (accounts are the
+          // app's): business and resident conversations, with a count of
+          // unread ones.
+          if (!kIsWeb)
+            PositionedDirectional(
+              top: topPadding - 2,
+              end: 47,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => context.push('/messages'),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Consumer(
+                    builder: (context, ref, _) => PushCountBadge(
+                      count: ref.watch(unreadMessagesProvider).valueOrNull ?? 0,
+                      child: const Icon(IconsaxPlusLinear.message_text, size: 24, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // ☰ — in the app the design's side menu; in a browser nobody
           // signs in (that belongs to the app), so it is the site's menu,
           // which is what a ☰ on a website is.
@@ -473,7 +497,9 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
       (L.of(context).restaurants, 'assets/icons/m_home_cat_restaurants.svg', '/restaurants'),
       (L.of(context).events, 'assets/icons/m_home_cat_events.svg', '/events'),
       (L.of(context).realEstate, 'assets/icons/m_home_cat_realestate.svg', '/realestate'),
-      (L.of(context).deals, 'assets/icons/m_home_cat_deals.svg', '/deals'),
+      // Jobs in Deals' place, as Kamal's home frame (user_side/Home.png)
+      // draws it; deals keep their own row further down the page.
+      (mTr(context, 'Jobs', 'משרות'), 'assets/icons/m_home_cat_jobs.svg', '/jobs'),
     ];
 
     return Padding(

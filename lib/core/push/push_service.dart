@@ -7,9 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart'
     show openAppSettings;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/messages/data/messages.dart' show unreadMessagesProvider, conversationsProvider;
+import '../providers/account_refresh.dart';
 import '../../firebase_options.dart';
 import '../providers/locale_provider.dart';
 import '../supabase/supabase_config.dart';
@@ -101,9 +104,21 @@ class PushService {
         sound: true,
       );
     }
-    FirebaseMessaging.onMessage.listen(
-      (m) => foreground.add(PushMessage.from(m, inAppBanner: !iPhone)),
-    );
+    FirebaseMessaging.onMessage.listen((m) {
+      final message = PushMessage.from(m, inAppBanner: !iPhone);
+      // A new chat message moves the unread count on the home page's icon
+      // while the app is open.
+      if ((message.link ?? '').startsWith('/messages')) {
+        _ref
+          ..invalidate(unreadMessagesProvider)
+          ..invalidate(conversationsProvider);
+      }
+      // A decision or a new application changes what the open screens show
+      // — the business's approval, a promotion, an application's status —
+      // so they read it again rather than keep what they had.
+      refreshAfterNotification(_ref);
+      foreground.add(message);
+    });
     FirebaseMessaging.onMessageOpenedApp.listen(
       (m) => open(PushMessage.from(m)),
     );
@@ -307,25 +322,32 @@ class PushService {
     final token = _token;
     if (token == null) return;
     final s = _ref.read(pushSettingsProvider);
+    final params = <String, dynamic>{
+      'p_token': token,
+      'p_platform': _platform,
+      'p_locale': _ref.read(localeProvider).languageCode,
+      'p_enabled': s.enabled,
+      'p_news': s.news,
+      'p_events': s.events,
+      'p_businesses': s.businesses,
+      'p_deals': s.deals,
+      'p_realestate': s.realestate,
+      'p_neighborhood': s.neighborhood,
+      'p_neighborhood_id': s.neighborhoodId,
+      'p_app_version': null,
+      'p_replies': s.replies,
+    };
     try {
-      await SupabaseConfig.client.rpc(
-        'register_push_device',
-        params: {
-          'p_token': token,
-          'p_platform': _platform,
-          'p_locale': _ref.read(localeProvider).languageCode,
-          'p_enabled': s.enabled,
-          'p_news': s.news,
-          'p_events': s.events,
-          'p_businesses': s.businesses,
-          'p_deals': s.deals,
-          'p_realestate': s.realestate,
-          'p_neighborhood': s.neighborhood,
-          'p_neighborhood_id': s.neighborhoodId,
-          'p_app_version': null,
-          'p_replies': s.replies,
-        },
-      );
+      try {
+        await SupabaseConfig.client.rpc(
+          'register_push_device',
+          params: {...params, 'p_jobs': s.jobs},
+        );
+      } on PostgrestException {
+        // A database without 00069 has no Jobs switch; the device still
+        // registers for everything else.
+        await SupabaseConfig.client.rpc('register_push_device', params: params);
+      }
     } catch (e) {
       // The next change, start or token refresh tries again.
       debugPrint('Push registration: $e');

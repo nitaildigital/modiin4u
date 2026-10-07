@@ -11,6 +11,8 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../l10n/app_localizations.dart';
 import 'network_photo.dart';
 import '../../features/auth/widgets/m_account_widgets.dart' show mTr;
+import '../../features/business_owner/data/owner_data.dart' show myBusinessProvider;
+import '../../features/messages/data/messages.dart' show unreadMessagesProvider;
 
 /// The app's side menu, opened from the ☰ on the home screen.
 ///
@@ -84,6 +86,8 @@ class _SideMenuPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
     final user = ref.watch(authProvider);
+    final isBusiness = user?.isBusinessOwner ?? false;
+    final business = isBusiness ? ref.watch(myBusinessProvider).valueOrNull : null;
     // 334 of the frame's 393.
     final width = (MediaQuery.sizeOf(context).width * 0.85).clamp(0.0, 334.0);
 
@@ -105,8 +109,13 @@ class _SideMenuPanel extends ConsumerWidget {
                   if (user != null)
                     _ProfileHeader(
                       user: user,
-                      onProfile: () => _go(context, '/profile'),
-                      onEdit: () => _go(context, '/edit-profile'),
+                      businessName: business?.name,
+                      businessLogo: business?.logoUrl,
+                      onProfile: () => _go(context, isBusiness ? '/my-business' : '/profile'),
+                      // The design's Edit: the business's page for a business
+                      // account, My Profile (the job profile, whose pencil
+                      // opens name and photo) for a resident.
+                      onEdit: () => _go(context, isBusiness ? '/my-business' : '/my-profile'),
                     )
                   else
                     _SignedOutHeader(onSignIn: () => _go(context, '/login')),
@@ -116,11 +125,44 @@ class _SideMenuPanel extends ConsumerWidget {
                     label: l.navHome,
                     onTap: () => _go(context, '/'),
                   ),
-                  _MenuRow(
-                    svg: 'assets/icons/m_menu_heart.svg',
-                    label: l.favorites,
-                    onTap: () => _go(context, '/favorites'),
-                  ),
+                  if (isBusiness) ...[
+                    // The business menu frame: My Jobs, Deals, Favorites,
+                    // Messages.
+                    _MenuRow(
+                      icon: IconsaxPlusLinear.briefcase,
+                      label: mTr(context, 'My Jobs', 'המשרות שלי'),
+                      onTap: () => _go(context, '/business-jobs'),
+                    ),
+                    _MenuRow(
+                      icon: IconsaxPlusLinear.ticket_discount,
+                      label: l.deals,
+                      onTap: () => _go(context, '/business-deals'),
+                    ),
+                    _MenuRow(
+                      svg: 'assets/icons/m_menu_heart.svg',
+                      label: l.favorites,
+                      onTap: () => _go(context, '/favorites'),
+                    ),
+                    _MenuRow(
+                      icon: IconsaxPlusLinear.message_text,
+                      label: mTr(context, 'Messages', 'הודעות'),
+                      count: ref.watch(unreadMessagesProvider).valueOrNull ?? 0,
+                      onTap: () => _go(context, '/messages'),
+                    ),
+                  ] else ...[
+                    _MenuRow(
+                      svg: 'assets/icons/m_menu_heart.svg',
+                      label: l.favorites,
+                      onTap: () => _go(context, '/favorites'),
+                    ),
+                    // The resident menu frame adds My Jobs after Favorites.
+                    if (user != null)
+                      _MenuRow(
+                        icon: IconsaxPlusLinear.briefcase,
+                        label: mTr(context, 'My Jobs', 'המשרות שלי'),
+                        onTap: () => _go(context, '/my-jobs'),
+                      ),
+                  ],
                   // The notifications sent so far (the bell). The design has
                   // no bell on the phone's home screen, and Profile — the
                   // only other way there — needs an account, which
@@ -131,16 +173,18 @@ class _SideMenuPanel extends ConsumerWidget {
                     count: ref.watch(pushUnreadCountProvider),
                     onTap: () => _go(context, '/notifications'),
                   ),
-                  _MenuRow(
-                    svg: 'assets/icons/m_menu_steps.svg',
-                    label: l.stepCounter,
-                    onTap: () => _go(context, '/steps'),
-                  ),
-                  _MenuRow(
-                    svg: 'assets/icons/m_menu_building.svg',
-                    label: l.myApartments,
-                    onTap: () => _go(context, '/my-apartments'),
-                  ),
+                  if (!isBusiness) ...[
+                    _MenuRow(
+                      svg: 'assets/icons/m_menu_steps.svg',
+                      label: l.stepCounter,
+                      onTap: () => _go(context, '/steps'),
+                    ),
+                    _MenuRow(
+                      svg: 'assets/icons/m_menu_building.svg',
+                      label: l.myApartments,
+                      onTap: () => _go(context, '/my-apartments'),
+                    ),
+                  ],
                   _MenuRow(
                     svg: 'assets/icons/m_menu_settings.svg',
                     label: l.settings,
@@ -182,10 +226,17 @@ class _ProfileHeader extends StatelessWidget {
   final VoidCallback onProfile;
   final VoidCallback onEdit;
 
+  /// A business account's menu shows the business — its logo and name — as
+  /// the design's business menu does; the e-mail stays the account's.
+  final String? businessName;
+  final String? businessLogo;
+
   const _ProfileHeader({
     required this.user,
     required this.onProfile,
     required this.onEdit,
+    this.businessName,
+    this.businessLogo,
   });
 
   @override
@@ -205,7 +256,7 @@ class _ProfileHeader extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: onProfile,
-                child: _Avatar(user: user),
+                child: _Avatar(user: user, imageUrl: businessLogo, name: businessName),
               ),
               GestureDetector(
                 onTap: onEdit,
@@ -250,7 +301,7 @@ class _ProfileHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.name,
+                  businessName ?? user.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -329,12 +380,14 @@ class _ProfileHeader extends StatelessWidget {
 
 class _Avatar extends StatelessWidget {
   final UserModel user;
+  final String? imageUrl;
+  final String? name;
 
-  const _Avatar({required this.user});
+  const _Avatar({required this.user, this.imageUrl, this.name});
 
   @override
   Widget build(BuildContext context) {
-    final url = user.avatarUrl;
+    final url = name != null ? imageUrl : user.avatarUrl;
     if (url != null && url.isNotEmpty) {
       return ClipOval(
         child: NetworkPhoto(url: url, width: 68, height: 68, icon: null),
@@ -354,7 +407,7 @@ class _Avatar extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Text(
-        user.initials,
+        name != null && name!.trim().isNotEmpty ? name!.trim().characters.first : user.initials,
         style: TextStyle(
           fontFamily: AppFonts.inter,
           fontSize: 24,

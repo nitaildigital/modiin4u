@@ -92,6 +92,12 @@ class Business {
   /// the phone, website and menu, as the client asked.
   final bool isPark;
   final String? ownerId;
+
+  /// Until when an approved promotion (00069) puts it at the top of the
+  /// lists; null when it has none running.
+  final DateTime? promotedUntil;
+  bool get isPromoted =>
+      promotedUntil != null && promotedUntil!.isAfter(DateTime.now());
   final DateTime createdAt;
 
   Business({
@@ -132,6 +138,7 @@ class Business {
     this.status = BusinessStatus.active,
     this.isPark = false,
     this.ownerId,
+    this.promotedUntil,
     DateTime? createdAt,
   }) : nameHe = name,
        neighborhoodHe = neighborhood,
@@ -207,6 +214,7 @@ class Business {
       openOnShabbat: openOnShabbat ?? this.openOnShabbat,
       status: status ?? this.status,
       ownerId: ownerId ?? this.ownerId,
+      promotedUntil: promotedUntil,
       createdAt: createdAt,
     );
   }
@@ -322,6 +330,7 @@ class Business {
       ),
       isPark: json['kind'] == 'park',
       ownerId: json['owner_id'] as String?,
+      promotedUntil: DateTime.tryParse(json['promoted_until'] as String? ?? ''),
       createdAt: json['created_at'] is String
           ? DateTime.tryParse(json['created_at'] as String)
           : null,

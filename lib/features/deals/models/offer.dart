@@ -53,6 +53,16 @@ class Offer {
   final String? audience;
   final DateTime? createdAt;
 
+  /// Until when an approved promotion (00069) puts it first; null when none.
+  final DateTime? promotedUntil;
+  bool get isPromoted =>
+      promotedUntil != null && promotedUntil!.isAfter(DateTime.now());
+
+  /// Create Deal's type and value (00069): 'percentage' 20 → 20% off.
+  final String? dealType;
+  final double? dealValue;
+  final String? status;
+
   const Offer({
     required this.id,
     required this.name,
@@ -78,6 +88,10 @@ class Offer {
     this.viewCount = 0,
     this.audience,
     this.createdAt,
+    this.promotedUntil,
+    this.dealType,
+    this.dealValue,
+    this.status,
   }) : businessNameHe = businessName;
 
   factory Offer.fromJson(Map<String, dynamic> json) {
@@ -116,6 +130,10 @@ class Offer {
       viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
       audience: json['audience'] as String?,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
+      promotedUntil: DateTime.tryParse(json['promoted_until'] as String? ?? ''),
+      dealType: json['deal_type'] as String?,
+      dealValue: (json['deal_value'] as num?)?.toDouble(),
+      status: json['status'] as String?,
     );
   }
 

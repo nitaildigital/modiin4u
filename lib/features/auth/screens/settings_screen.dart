@@ -198,6 +198,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         onChanged: (v) => set(s.copyWith(deals: v)),
       ),
       toggle(
+        icon: IconsaxPlusLinear.briefcase,
+        title: mTr(context, 'Jobs', 'משרות'),
+        subtitle: mTr(context, 'New job openings in Modiin', 'משרות חדשות במודיעין'),
+        value: s.jobs,
+        enabled: on,
+        onChanged: (v) => set(s.copyWith(jobs: v)),
+      ),
+      toggle(
         icon: IconsaxPlusLinear.building,
         title: mTr(context, 'Real estate', 'נדל״ן'),
         subtitle: mTr(context, 'Apartments and property news', 'דירות ועדכוני נדל״ן'),

@@ -469,6 +469,7 @@ class _FavoriteCardState extends State<_FavoriteCard> {
     FavoriteKind.event => _t('Event', 'אירוע'),
     FavoriteKind.article => _t('News', 'חדשות'),
     FavoriteKind.listing => _t('Property', 'נכס'),
+    FavoriteKind.job => _t('Job', 'משרה'),
   };
 
   Color get _typeColor => switch (widget.entry.kind) {
@@ -476,6 +477,7 @@ class _FavoriteCardState extends State<_FavoriteCard> {
     FavoriteKind.event => const Color(0xFF7247ED),
     FavoriteKind.article => const Color(0xFF1E40B5),
     FavoriteKind.listing => const Color(0xFFD47D00),
+    FavoriteKind.job => const Color(0xFF123A72),
   };
 
   IconData get _fallbackIcon => switch (widget.entry.kind) {
@@ -483,6 +485,7 @@ class _FavoriteCardState extends State<_FavoriteCard> {
     FavoriteKind.event => IconsaxPlusBold.calendar_1,
     FavoriteKind.article => IconsaxPlusBold.document_text,
     FavoriteKind.listing => IconsaxPlusBold.home_2,
+    FavoriteKind.job => IconsaxPlusBold.briefcase,
   };
 
   String _formatDate(DateTime date) {

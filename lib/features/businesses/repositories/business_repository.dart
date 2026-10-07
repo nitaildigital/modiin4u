@@ -46,8 +46,19 @@ class BusinessRepository {
       );
     }
 
-    final data = await query.order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(data);
+    // A business with a promotion running stands first (00069 clears one
+    // when it ends, so a plain descending order is enough). A database
+    // without 00069 has no such column, and the list must still load.
+    try {
+      final data = await query
+          .order('promoted_until', ascending: false, nullsFirst: false)
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(data);
+    } on PostgrestException catch (e) {
+      if (!e.message.contains('promoted_until')) rethrow;
+      final data = await query.order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(data);
+    }
   }
 
   /// Business ids linked to a category, named by its id or its slug — the

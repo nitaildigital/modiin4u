@@ -4,8 +4,9 @@ import '../../../core/supabase/supabase_config.dart';
 import '../../../core/providers/content_language.dart';
 
 /// What can be saved. The `favorites` table keys rows by this plus the id, so
-/// one business and one article can share an id without colliding.
-enum FavoriteKind { business, article, event, listing }
+/// one business and one article can share an id without colliding. Saved
+/// jobs are listed on My Jobs, not on Favourites.
+enum FavoriteKind { business, article, event, listing, job }
 
 extension FavoriteKindValue on FavoriteKind {
   String get value => switch (this) {
@@ -13,6 +14,7 @@ extension FavoriteKindValue on FavoriteKind {
     FavoriteKind.article => 'article',
     FavoriteKind.event => 'event',
     FavoriteKind.listing => 'listing',
+    FavoriteKind.job => 'job',
   };
 }
 

@@ -18,6 +18,25 @@ import '../../features/municipal/models/municipal_place.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/business_signup_screen.dart';
+import '../../features/jobs/models/job.dart';
+import '../../features/jobs/screens/jobs_screen.dart';
+import '../../features/jobs/screens/job_detail_screen.dart';
+import '../../features/jobs/screens/apply_job_screen.dart';
+import '../../features/jobs/screens/my_jobs_screen.dart';
+import '../../features/jobs/screens/my_profile_screen.dart';
+import '../../features/jobs/screens/job_profile_editors.dart';
+import '../../features/jobs/screens/business_jobs_screen.dart';
+import '../../features/jobs/screens/post_job_screen.dart';
+import '../../features/jobs/screens/job_posted_screen.dart';
+import '../../features/jobs/screens/business_job_detail_screen.dart';
+import '../../features/jobs/screens/applicant_profile_screen.dart';
+import '../../features/business_owner/screens/business_profile_screen.dart';
+import '../../features/business_owner/screens/business_deals_screen.dart';
+import '../../features/business_owner/screens/create_deal_screen.dart';
+import '../../features/business_owner/screens/deal_published_screen.dart';
+import '../../features/business_owner/screens/promote_screen.dart';
+import '../../features/messages/screens/conversations_screen.dart';
+import '../../features/messages/screens/chat_screen.dart';
 import '../../features/auth/screens/profile_screen.dart';
 import '../../features/auth/screens/edit_profile_screen.dart';
 import '../../features/auth/screens/favorites_screen.dart';
@@ -153,7 +172,27 @@ const _appOnlyPaths = {
   '/settings',
   '/my-apartments',
   '/add-apartment',
+  '/jobs',
+  '/my-jobs',
+  '/my-profile',
+  '/business-jobs',
+  '/business-deals',
+  '/my-business',
+  '/messages',
 };
+
+/// The app-only pages with an id in their address (a job, a conversation,
+/// an editor) — accounts belong to the app, so in a browser these lead home
+/// too.
+const _appOnlyPrefixes = [
+  '/jobs/',
+  '/my-profile/',
+  '/business-jobs/',
+  '/business-deals/',
+  '/applicant/',
+  '/promote/',
+  '/messages/',
+];
 
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
@@ -177,7 +216,10 @@ final appRouter = GoRouter(
   // how an administrator gets into the control centre, which is web-only.
   redirect: (context, state) {
     final path = state.uri.path;
-    if (kIsWeb && _appOnlyPaths.contains(path)) return '/';
+    if (kIsWeb &&
+        (_appOnlyPaths.contains(path) || _appOnlyPrefixes.any(path.startsWith))) {
+      return '/';
+    }
     // The old site's addresses end in a slash (/news/modiin-news-523/), and
     // that is how Google and every link out there has them. The routes are
     // written without one.
@@ -560,6 +602,137 @@ final appRouter = GoRouter(
       path: '/signup/business',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(const BusinessSignUpScreen(), state),
+    ),
+    GoRoute(
+      path: '/jobs',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const JobsScreen(), state),
+    ),
+    GoRoute(
+      path: '/jobs/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(JobDetailScreen(jobId: state.pathParameters['id']!), state),
+    ),
+    GoRoute(
+      path: '/jobs/:id/apply',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(ApplyJobScreen(jobId: state.pathParameters['id']!), state),
+    ),
+    GoRoute(
+      path: '/my-jobs',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(MyJobsScreen(initialTab: state.uri.queryParameters['tab'] == 'applied' ? 1 : 0), state),
+    ),
+    GoRoute(
+      path: '/my-profile',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const MyProfileScreen(), state),
+    ),
+    GoRoute(
+      path: '/my-profile/basic',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const BasicDetailsEditor(), state),
+    ),
+    GoRoute(
+      path: '/my-profile/about',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const AboutMeEditor(), state),
+    ),
+    GoRoute(
+      path: '/my-profile/skills',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const SkillsEditor(), state),
+    ),
+    GoRoute(
+      path: '/my-profile/experience',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(WorkExperienceEditor(existing: state.extra as WorkExperience?), state),
+    ),
+    GoRoute(
+      path: '/my-profile/education',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(EducationEditor(existing: state.extra as Education?), state),
+    ),
+    GoRoute(
+      path: '/my-profile/additional',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const AdditionalInfoEditor(), state),
+    ),
+    GoRoute(
+      path: '/business-jobs',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const BusinessJobsScreen(), state),
+    ),
+    GoRoute(
+      path: '/business-jobs/new',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const PostJobScreen(), state),
+    ),
+    GoRoute(
+      path: '/business-jobs/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(BusinessJobDetailScreen(jobId: state.pathParameters['id']!, initialTab: state.uri.queryParameters['tab'] == 'applicants' ? 1 : 0), state),
+    ),
+    GoRoute(
+      path: '/business-jobs/:id/edit',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(PostJobScreen(jobId: state.pathParameters['id']!), state),
+    ),
+    GoRoute(
+      path: '/business-jobs/:id/posted',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(JobPostedScreen(jobId: state.pathParameters['id']!), state),
+    ),
+    GoRoute(
+      path: '/my-business',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const BusinessProfileScreen(), state),
+    ),
+    GoRoute(
+      path: '/business-deals',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const BusinessDealsScreen(), state),
+    ),
+    GoRoute(
+      path: '/business-deals/new',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const CreateDealScreen(), state),
+    ),
+    GoRoute(
+      path: '/business-deals/:id/edit',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(CreateDealScreen(dealId: state.pathParameters['id']!), state),
+    ),
+    GoRoute(
+      path: '/business-deals/:id/published',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(DealPublishedScreen(dealId: state.pathParameters['id']!), state),
+    ),
+    GoRoute(
+      path: '/promote/:type/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(PromoteScreen(type: state.pathParameters['type']!, id: state.pathParameters['id']!), state),
+    ),
+    GoRoute(
+      path: '/messages',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const ConversationsScreen(), state),
+    ),
+    GoRoute(
+      path: '/messages/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(ChatScreen(conversationId: state.pathParameters['id']!), state),
+    ),
+    GoRoute(
+      path: '/applicant/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      // Opened from a job's Applicants tab, which hands over the job and the
+      // application; there is no address to open it from cold.
+      redirect: (context, state) => state.extra is (Job, JobApplication) ? null : '/business-jobs',
+      pageBuilder: (context, state) {
+        final (job, application) = state.extra! as (Job, JobApplication);
+        return _slideTransition(ApplicantProfileScreen(job: job, application: application), state);
+      },
     ),
     GoRoute(
       path: '/profile',

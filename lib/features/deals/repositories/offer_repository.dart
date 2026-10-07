@@ -29,10 +29,23 @@ class OfferRepository {
       query = query.inFilter('business_id', ids);
     }
 
-    final rows = await query
-        .order('is_featured', ascending: false)
-        .order('end_at', ascending: true, nullsFirst: false)
-        .limit(limit);
+    // A deal with an approved promotion first (00069), then the panel's
+    // featured ones. Without 00069 there is no such column; the list still
+    // loads in the old order.
+    List<dynamic> rows;
+    try {
+      rows = await query
+          .order('promoted_until', ascending: false, nullsFirst: false)
+          .order('is_featured', ascending: false)
+          .order('end_at', ascending: true, nullsFirst: false)
+          .limit(limit);
+    } on PostgrestException catch (e) {
+      if (!e.message.contains('promoted_until')) rethrow;
+      rows = await query
+          .order('is_featured', ascending: false)
+          .order('end_at', ascending: true, nullsFirst: false)
+          .limit(limit);
+    }
 
     return List<Map<String, dynamic>>.from(rows).map(Offer.fromJson).toList();
   }
