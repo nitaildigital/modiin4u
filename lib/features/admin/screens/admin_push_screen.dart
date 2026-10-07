@@ -366,8 +366,9 @@ class _HowItWorksNote extends StatelessWidget {
               tr('הודעה נשלחת עד דקה אחרי המועד שלה. כתבה, אירוע או עסק חדש '
               'שמתפרסמים נשלחים אוטומטית חמש דקות אחרי הפרסום למי שבחר בנושא, '
               'אלא אם הורדתם את הסימון "לשלוח התראה" בטופס שלהם — ועד שהיא '
-              'יוצאת, אפשר לבטל אותה כאן. "נפתחו" סופר כל מכשיר פעם אחת.',
-              'A notification goes out within a minute of its time. A new article, event or business is sent automatically five minutes after it is published to everyone who chose that topic, unless you cleared "Send a notification" in its form — and until it goes out, you can cancel it here. "Opened" counts each device once.'),
+              'יוצאת, אפשר לבטל אותה כאן. "נפתחו" סופר כל מכשיר פעם אחת; "תגובות" '
+              'סופר מי שכתב תגובה או ביקורת עד יממה אחרי שפתח אותה.',
+              'A notification goes out within a minute of its time. A new article, event or business is sent automatically five minutes after it is published to everyone who chose that topic, unless you cleared "Send a notification" in its form — and until it goes out, you can cancel it here. "Opened" counts each device once; "Replies" counts the people who wrote a reply or a review within a day of opening it.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -481,6 +482,9 @@ class _PushTable extends StatelessWidget {
               _Col(tr('סטטוס', 'Status'), flex: 1),
               if (isWide) _Col(tr('נשלחו אל', 'Sent to'), flex: 1),
               if (isWide) _Col(tr('נפתחו', 'Opened'), flex: 1),
+              // Conversions, as the client defined them: a reply or a review
+              // written within a day of opening the notification (00067).
+              if (isWide) _Col(tr('תגובות', 'Replies'), flex: 1),
               if (isWide) _Col(tr('תאריך', 'Date'), flex: 2),
               const SizedBox(width: 40),
             ],
@@ -500,6 +504,7 @@ class _PushTable extends StatelessWidget {
               // told: an accepted message is not proof it was seen.
               final delivered = n['sent_count'] as int? ?? 0;
               final opened = n['opened_count'] as int? ?? 0;
+              final converted = n['conversion_count'] as int? ?? 0;
               final sentAt = n['sent_at'] as String?;
               final scheduledAt = n['scheduled_at'] as String?;
 
@@ -606,6 +611,18 @@ class _PushTable extends StatelessWidget {
                             delivered > 0
                                 ? '$opened (${(opened / delivered * 100).round()}%)'
                                 : '—',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 13,
+                              color: AppColors.grayText,
+                            ),
+                          ),
+                        ),
+                      if (isWide)
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            opened > 0 ? '$converted' : '—',
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 13,
