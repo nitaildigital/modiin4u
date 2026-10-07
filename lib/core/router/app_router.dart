@@ -17,6 +17,7 @@ import '../../features/municipal/screens/municipal_places_screen.dart';
 import '../../features/municipal/models/municipal_place.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
+import '../../features/auth/screens/business_signup_screen.dart';
 import '../../features/auth/screens/profile_screen.dart';
 import '../../features/auth/screens/edit_profile_screen.dart';
 import '../../features/auth/screens/favorites_screen.dart';
@@ -144,6 +145,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 const _appOnlyPaths = {
   '/onboarding',
   '/signup',
+  '/signup/business',
   '/profile',
   '/edit-profile',
   '/change-password',
@@ -553,6 +555,11 @@ final appRouter = GoRouter(
       path: '/signup',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(const SignUpScreen(), state),
+    ),
+    GoRoute(
+      path: '/signup/business',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const BusinessSignUpScreen(), state),
     ),
     GoRoute(
       path: '/profile',

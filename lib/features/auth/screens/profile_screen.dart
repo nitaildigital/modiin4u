@@ -279,7 +279,7 @@ class ProfileScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          user.isBroker
+                          user.isBusinessOwner || user.isBroker
                               ? SvgPicture.asset(
                                   'assets/icons/m_account_briefcase.svg',
                                   width: 14,
@@ -292,7 +292,11 @@ class ProfileScreen extends ConsumerWidget {
                                 ),
                           const SizedBox(width: 6),
                           Text(
-                            user.isBroker ? l.realEstateBroker : l.resident,
+                            user.isBusinessOwner
+                                ? mTr(context, 'Business Account', 'חשבון עסקי')
+                                : user.isBroker
+                                ? l.realEstateBroker
+                                : l.resident,
                             style: TextStyle(
                               fontFamily: AppFonts.inter,
                               fontSize: 12,

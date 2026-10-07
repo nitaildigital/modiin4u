@@ -52,6 +52,9 @@ dependencies:
   share_plus: ^10.1.4
   flutter_rating_bar: ^4.0.1
   image_picker: ^1.1.2
+  # Keeps the photos picked at a business sign-up until the first sign-in
+  # can upload them (pending_business_media.dart). Already in the build.
+  path_provider: ^2.1.5
   shared_preferences: ^2.3.4
   fl_chart: ^1.2.0
   iconsax_plus: ^1.0.0

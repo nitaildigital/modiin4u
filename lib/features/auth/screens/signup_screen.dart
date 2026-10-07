@@ -12,7 +12,9 @@ import '../widgets/m_account_widgets.dart';
 import 'web_signup_screen.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 
-enum AccountType { resident, broker }
+/// Business opens its own form (business_signup_screen.dart): the design
+/// asks for the business's details there, in the apartment form's style.
+enum AccountType { resident, broker, business }
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -318,10 +320,63 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 subtitle: l.accountBrokerSub,
                               ),
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildAccountTypeCard(
+                                type: AccountType.business,
+                                icon: Icons.storefront_outlined,
+                                iconColor: const Color(0xFFD67E00),
+                                title: mTr(context, 'Business', 'עסק'),
+                                subtitle: mTr(
+                                  context,
+                                  'I own a business in Modiin.',
+                                  'יש לי עסק במודיעין.',
+                                ),
+                              ),
+                            ),
                           ],
                           ),
                         ),
                         const SizedBox(height: 20),
+                        if (_accountType == AccountType.business) ...[
+                          Text(
+                            mTr(
+                              context,
+                              "Next, your business's details, photos and opening hours. The Modiin4u team approves the business before it is shown in the app.",
+                              'בהמשך: פרטי העסק, תמונות ושעות פתיחה. צוות מודיעין בשבילך מאשר את העסק לפני שהוא מוצג באפליקציה.',
+                            ),
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 14,
+                              height: 1.4,
+                              color: const Color(0xFF6D6D6D),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              onPressed: () => context.push('/signup/business'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.midBlue,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                mTr(context, 'Continue', 'המשך'),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ] else ...[
                         // Form fields
                         _buildTextField(
                           label: l.fullName,
@@ -581,6 +636,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                   ),
                           ),
                         ),
+                        ],
                         const SizedBox(height: 24),
                         // Already have an account? Sign In
                         Center(

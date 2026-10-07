@@ -2202,9 +2202,9 @@ WhatsApp, e-mail or a short form, as the owner chooses per job.
 
 | # | Part | Needs the design | State |
 |---|---|---|---|
-| O1 | Owner requests and approval: a request for a business, approve / reject in the panel, assign or remove an owner directly | No | 🟡 written: 00051 (`business_owner_requests`, `admin_decide_owner_request`, `admin_assign_business_owner`, `admin_remove_business_owner`) — not run |
-| O2 | An owner writes their own business's hours, menu, photos and deals (deals live at once; not featured or sponsored) | No | 🟡 written: 00051 (owner rules, `offers_owner_guard`, uploads under `businesses/<id>/`) — not run |
-| O3 | An owner reads their own business's statistics (00048's functions, owner allowed) | No | 🟡 written: 00051 — not run |
+| O1 | Owner requests and approval: a request for a business, approve / reject in the panel, assign or remove an owner directly | No | 🟡 written: 00051 (`business_owner_requests`, `admin_decide_owner_request`, `admin_assign_business_owner`, `admin_remove_business_owner`) — run 7 Oct |
+| O2 | An owner writes their own business's hours, menu, photos and deals (deals live at once; not featured or sponsored) | No | 🟡 written: 00051 (owner rules, `offers_owner_guard`, uploads under `businesses/<id>/`) — run 7 Oct |
+| O3 | An owner reads their own business's statistics (00048's functions, owner allowed) | No | 🟡 written: 00051 — run 7 Oct |
 | O4 | The panel creating a login for an owner who has none: an invitation by e-mail from a server function (the service key cannot be in the panel) | No | ⬜ function `owner-invite` |
 | O5 | The owner area on the website: sign-in, my business, edit, deals, statistics, jobs | **Yes** | ⏸ Figma |
 | J1 | Jobs: the job, its statuses (draft, active, expired, closed/filled), expiry, renewal, duplicating; apply by call / WhatsApp / e-mail / form | No | 🟡 written: 00052 (`jobs`, live while active and unexpired; categories with scope 'job') — renewal and duplicating are the screens' — not run |
@@ -2233,6 +2233,42 @@ Recommended: the website, with the client's explicit OK. It also decides
 applying on the website: without accounts there, a visitor applies by the
 form or call / WhatsApp / e-mail, but cannot attach a CV (a CV needs an
 account, to keep it private).
+
+**Business accounts at sign-up — 7 Oct.** Kamal's designs (exported to
+`business_side/` and `user_side/`) put the owner's screens in the app, which
+settles the question above: owners sign up and work in the app. Sign-up now
+offers a third card, Business, beside Resident and Broker. It opens
+`/signup/business` (`business_signup_screen.dart`), drawn like Add Apartment as
+Harshit asked: basic details (logo, contact person, business name, e-mail,
+phone, location, password), photos, then additional details (website, hours
+Monday to Sunday, about). The form's pieces are shared with Add Apartment
+(`lib/shared/widgets/m_step_form.dart`).
+
+- *Pending until the client approves it* (his choice through Harshit, as for
+  apartments). It waits under Businesses → Pending; he adds the category and
+  the map pin there — the form asks for neither.
+- *How it is saved.* Sign-up asks for the address to be confirmed, so there is
+  no session to write with. The details go with the account
+  (`account_type: 'business'`, `business: {...}`) and migration 00068's trigger
+  creates the business, `pending`, owned by the account, with its hours. A
+  failure there is logged and never stops the sign-up. The logo and photos are
+  kept on the phone (`PendingBusinessMedia`) and uploaded at the first sign-in
+  under `businesses/<id>/` — logo, cover (the first photo) and gallery, as the
+  panel stores them. Signed in first on another phone, the business has no
+  pictures yet.
+- *A business account* is one that owns a business (00051: "owner" is not a
+  stored role). Profile and side menu say "Business Account", as the design's
+  menu does.
+- *Run:* 00051 and 00068 (7 Oct). Tested on the OnePlus in English and Hebrew
+  with a throwaway account: validation, logo, three photos, hours (08:30–17:00,
+  Saturday closed), sign-up, the business row and hours in the database,
+  confirmation, sign-in, the pictures uploaded and served. Account, business,
+  hours, media rows and files deleted after.
+- *Not built yet — the rest of Kamal's frames:* the business's own profile
+  page with editing, its side menu (My Jobs, Deals, Messages), deals (create,
+  promote), jobs (post, my jobs, applicants), messages, and the resident's
+  jobs, applications and CV. Messages have no table; jobs need 00052, still
+  unrun.
 
 **Audit, 5 Oct: what should be saved and is not.** The whole app, site and
 panel against the database (59 tables; 20 never written by the code).

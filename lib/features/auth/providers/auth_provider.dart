@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../businesses/services/pending_business_media.dart';
 import '../models/user_model.dart';
 
 /// The signed-in person, or null.
@@ -229,7 +230,15 @@ class AuthNotifier extends StateNotifier<UserModel?> {
         return;
       }
       final isAdmin = await _isAdmin(user.id);
-      if (current()) state = _fromRow(row, user, isAdmin: isAdmin);
+      final businessId = await _ownedBusinessId(user.id);
+      if (current()) {
+        state = _fromRow(row, user, isAdmin: isAdmin, businessId: businessId);
+      }
+      // The logo and photos a business sign-up picked go up now that there
+      // is a session to store them with.
+      if (businessId != null) {
+        unawaited(PendingBusinessMedia.uploadForCurrentUser(_client));
+      }
     } catch (_) {
       if (current()) state = _fromSession(user);
     }
@@ -264,6 +273,24 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     }
   }
 
+  /// The business this account owns, if any — pending or live. "Owner" is not
+  /// a stored role (00051): a business account is one that owns a business,
+  /// which a business sign-up creates (00068) and the panel can assign.
+  Future<String?> _ownedBusinessId(String id) async {
+    try {
+      final row = await _client
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', id)
+          .order('created_at')
+          .limit(1)
+          .maybeSingle();
+      return row?['id'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   UserModel _fromSession(User user) => UserModel(
     id: user.id,
     name: (user.email ?? '').split('@').first,
@@ -272,7 +299,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     createdAt: DateTime.tryParse(user.createdAt) ?? DateTime.now(),
   );
 
-  UserModel _fromRow(Map<String, dynamic> row, User user, {required bool isAdmin}) {
+  UserModel _fromRow(Map<String, dynamic> row, User user, {required bool isAdmin, String? businessId}) {
     final hood = row['neighborhoods'];
     return UserModel(
       id: user.id,
@@ -290,7 +317,12 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       familyStatus: row['family_status'] as String?,
       hasPet: row['has_pet'] as bool?,
       dateOfBirth: DateTime.tryParse(row['date_of_birth'] as String? ?? ''),
-      role: isAdmin ? UserRole.admin : UserRole.user,
+      role: isAdmin
+          ? UserRole.admin
+          : businessId != null
+          ? UserRole.businessOwner
+          : UserRole.user,
+      ownedBusinessId: businessId,
       createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
       lastLoginAt: DateTime.tryParse(row['last_login_at'] as String? ?? ''),
     );

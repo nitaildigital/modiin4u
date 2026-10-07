@@ -10,6 +10,7 @@ import '../../features/auth/models/user_model.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../l10n/app_localizations.dart';
 import 'network_photo.dart';
+import '../../features/auth/widgets/m_account_widgets.dart' show mTr;
 
 /// The app's side menu, opened from the ☰ on the home screen.
 ///
@@ -288,7 +289,7 @@ class _ProfileHeader extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      user.isBroker
+                      user.isBusinessOwner || user.isBroker
                           ? SvgPicture.asset(
                               'assets/icons/m_menu_briefcase.svg',
                               width: 14,
@@ -301,7 +302,12 @@ class _ProfileHeader extends StatelessWidget {
                             ),
                       const SizedBox(width: 6),
                       Text(
-                        user.isBroker ? l.realEstateBroker : l.resident,
+                        // "Business Account", as the design's business menu.
+                        user.isBusinessOwner
+                            ? mTr(context, 'Business Account', 'חשבון עסקי')
+                            : user.isBroker
+                            ? l.realEstateBroker
+                            : l.resident,
                         style: TextStyle(
                           fontFamily: AppFonts.inter,
                           fontSize: 12,
