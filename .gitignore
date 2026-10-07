@@ -74,3 +74,5 @@ package-lock.json
 # into the function's environment through tool/setup_push.py, never into git.
 /firebase-service-account.json
 *-firebase-adminsdk-*.json
+business_side/
+user_side/
