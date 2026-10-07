@@ -480,15 +480,11 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
   }
 
   void _showEditor(BuildContext context, {Map<String, dynamic>? offer}) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _OfferEditorDialog(offer: offer),
-    );
+    AdminEditorPage.open<void>(context, _OfferEditorDialog(offer: offer));
   }
 }
 
-// ─── Editor Dialog ───
+// ─── Editor ───
 
 class _OfferEditorDialog extends ConsumerStatefulWidget {
   final Map<String, dynamic>? offer;
@@ -501,6 +497,7 @@ class _OfferEditorDialog extends ConsumerStatefulWidget {
 class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  String? _error;
 
   late final TextEditingController _name;
   late final TextEditingController _description;
@@ -611,394 +608,269 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 860),
-        child: Directionality(
-          textDirection: adminDir,
-          child: Form(
-            key: _formKey,
+    final k = AdminKit.of(context);
+    return Form(
+      key: _formKey,
+      child: AdminEditorPage(
+        title: _isEditing ? tr('עריכת מבצע', 'Edit deal') : tr('מבצע חדש', 'New deal'),
+        status: _isEditing ? _StatusPill(_status) : null,
+        onClose: () => Navigator.pop(context),
+        actions: [
+          AdminButton.secondary(
+            label: tr('ביטול', 'Cancel'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          AdminButton(
+            label: _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
+            icon: Icons.check,
+            busy: _saving,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
+        main: [
+          if (_error != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: k.danger.withValues(alpha: 0.06),
+                border: Border.all(color: k.danger.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(k.radius),
+              ),
+              child: Text(_error!, style: k.body.copyWith(color: k.danger)),
+            ),
+          AdminCard(
+            title: tr('פרטי המבצע', 'Deal details'),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.navy,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(14),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _isEditing ? tr('עריכת מבצע', 'Edit deal') : tr('מבצע חדש', 'New deal'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
+                AdminField(
+                  label: tr('שם המבצע *', 'Deal name *'),
+                  controller: _name,
+                  hint: tr('20% הנחה על כל הפיצות', '20% off all pizzas'),
+                  validator: (v) =>
+                      (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
+                ),
+                _BadgeHint(controller: _name),
+                const SizedBox(height: 16),
+                _labelled(
+                  tr('תיאור', 'Description'),
+                  TextFormField(
+                    controller: _description,
+                    minLines: 3,
+                    maxLines: null,
+                    style: k.body,
+                    decoration: k.input(hint: tr('פירוט המבצע...', 'Deal details...')),
                   ),
                 ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildField(
-                          tr('שם המבצע *', 'Deal name *'),
-                          _name,
-                          hint: tr('20% הנחה על כל הפיצות', '20% off all pizzas'),
-                          validator: (v) =>
-                              (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
-                        ),
-                        const SizedBox(height: 6),
-                        _BadgeHint(controller: _name),
-                        const SizedBox(height: 14),
-                        _label(tr('עסק *', 'Business *')),
-                        AdminBusinessPickerField(
-                          label: '',
-                          businessId: _businessId,
-                          fallbackName: _businessName,
-                          required: true,
-                          onChanged: (b) => setState(() {
-                            _businessId = b?.id;
-                            _businessName = b?.name;
-                          }),
-                        ),
-                        const SizedBox(height: 14),
-                        _buildField(
-                          tr('תיאור', 'Description'),
-                          _description,
-                          hint: tr('פירוט המבצע...', 'Deal details...'),
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildField(
-                          tr('תנאים', 'Terms'),
-                          _terms,
-                          hint: tr('תנאים והגבלות...', 'Terms and conditions...'),
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 14),
-                        ImageUploadField(
-                          label: tr('תמונה', 'Image'),
-                          controller: _image,
-                          folder: 'offers',
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _buildField(
-                                tr('קוד קופון', 'Coupon code'),
-                                _code,
-                                hint: 'PIZZA20',
-                                ltr: true,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildField(
-                                tr('מקסימום מימושים', 'Maximum redemptions'),
-                                _maxClaims,
-                                hint: tr('ללא הגבלה', 'No limit'),
-                                keyboardType: TextInputType.number,
-                                validator: (v) =>
-                                    _wholeNumber(v, min: 1, required: false),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _buildField(
-                                tr('מימושים לכל משתמש', 'Redemptions per user'),
-                                _maxPerUser,
-                                hint: '1',
-                                keyboardType: TextInputType.number,
-                                validator: (v) =>
-                                    _wholeNumber(v, min: 1, required: true),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildField(
-                                tr('נקודות נדרשות', 'Points required'),
-                                _points,
-                                hint: '0',
-                                keyboardType: TextInputType.number,
-                                validator: (v) =>
-                                    _wholeNumber(v, min: 0, required: true),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _labelled(
-                                tr('תחילת מבצע', 'Deal start'),
-                                AdminDateField(
-                                  controller: _startDate,
-                                  decoration: _inputDecoration(),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _labelled(
-                                tr('שעה', 'Time'),
-                                AdminTimeField(
-                                  controller: _startTime,
-                                  decoration: _inputDecoration(hint: '00:00'),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _labelled(
-                                tr('סיום מבצע', 'End deal'),
-                                AdminDateField(
-                                  controller: _endDate,
-                                  decoration: _inputDecoration(),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _labelled(
-                                tr('שעה', 'Time'),
-                                AdminTimeField(
-                                  controller: _endTime,
-                                  decoration: _inputDecoration(hint: '23:59'),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          tr('בלי תאריך סיום לא יוצג באתר שעון ספירה לאחור.', 'Without an end date, no countdown is shown on the site.'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 11,
-                            color: AppColors.grayLight,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _buildDropdown(
-                                tr('קהל', 'Audience'),
-                                _audience,
-                                _audiences,
-                                (v) => setState(() => _audience = v!),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildDropdown(
-                                tr('סטטוס', 'Status'),
-                                _status,
-                                _statuses,
-                                (v) => setState(() => _status = v!),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          tr('תושבים מאומתים בלבד — מסומן באתר "לתושבים בלבד". '
-                          'רק מבצע בסטטוס "פעיל" מוצג באתר.', 'Verified residents only — marked "Residents only" on the site. Only a deal with the status "Active" is shown on the site.'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 11,
-                            color: AppColors.grayLight,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            tr('מומלץ', 'Recommended'),
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 14,
-                            ),
-                          ),
-                          value: _isFeatured,
-                          activeThumbColor: AppColors.gold,
-                          onChanged: (v) => setState(() => _isFeatured = v),
-                        ),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            tr('לשלוח התראה כשהמבצע עולה', 'Send a notification when it goes live'),
-                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                          ),
-                          value: _notify,
-                          onChanged: (v) => setState(() => _notify = v),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.border.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          tr('ביטול', 'Cancel'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      FilledButton(
-                        onPressed: _saving ? null : _save,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AdminKit.of(context).accent,
-                          minimumSize: const Size(120, 42),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ],
+                _labelled(
+                  tr('תנאים', 'Terms'),
+                  TextFormField(
+                    controller: _terms,
+                    minLines: 3,
+                    maxLines: null,
+                    style: k.body,
+                    decoration: k.input(hint: tr('תנאים והגבלות...', 'Terms and conditions...')),
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          AdminCard(
+            title: tr('מימוש', 'Redemption'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: AdminField(
+                        label: tr('קוד קופון', 'Coupon code'),
+                        controller: _code,
+                        hint: 'PIZZA20',
+                        textDirection: TextDirection.ltr,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AdminField(
+                        label: tr('מקסימום מימושים', 'Maximum redemptions'),
+                        controller: _maxClaims,
+                        hint: tr('ללא הגבלה', 'No limit'),
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            _wholeNumber(v, min: 1, required: false),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: AdminField(
+                        label: tr('מימושים לכל משתמש', 'Redemptions per user'),
+                        controller: _maxPerUser,
+                        hint: '1',
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            _wholeNumber(v, min: 1, required: true),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AdminField(
+                        label: tr('נקודות נדרשות', 'Points required'),
+                        controller: _points,
+                        hint: '0',
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            _wholeNumber(v, min: 0, required: true),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('מועדים', 'Dates'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _labelled(
+                        tr('תחילת מבצע', 'Deal start'),
+                        AdminDateField(
+                          controller: _startDate,
+                          decoration: k.input(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _labelled(
+                        tr('שעה', 'Time'),
+                        AdminTimeField(
+                          controller: _startTime,
+                          decoration: k.input(hint: '00:00'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _labelled(
+                        tr('סיום מבצע', 'End deal'),
+                        AdminDateField(
+                          controller: _endDate,
+                          decoration: k.input(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _labelled(
+                        tr('שעה', 'Time'),
+                        AdminTimeField(
+                          controller: _endTime,
+                          decoration: k.input(hint: '23:59'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  tr('בלי תאריך סיום לא יוצג באתר שעון ספירה לאחור.', 'Without an end date, no countdown is shown on the site.'),
+                  style: k.hint.copyWith(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+        side: [
+          AdminCard(
+            title: tr('פרסום', 'Publishing'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildDropdown(
+                  tr('סטטוס', 'Status'),
+                  _status,
+                  _statuses,
+                  (v) => setState(() => _status = v!),
+                ),
+                _buildDropdown(
+                  tr('קהל', 'Audience'),
+                  _audience,
+                  _audiences,
+                  (v) => setState(() => _audience = v!),
+                ),
+                Text(
+                  tr('תושבים מאומתים בלבד — מסומן באתר "לתושבים בלבד". '
+                  'רק מבצע בסטטוס "פעיל" מוצג באתר.', 'Verified residents only — marked "Residents only" on the site. Only a deal with the status "Active" is shown on the site.'),
+                  style: k.hint.copyWith(fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                AdminSwitchRow(
+                  label: tr('מומלץ', 'Recommended'),
+                  value: _isFeatured,
+                  onChanged: (v) => setState(() => _isFeatured = v),
+                ),
+                AdminSwitchRow(
+                  label: tr('לשלוח התראה כשהמבצע עולה', 'Send a notification when it goes live'),
+                  value: _notify,
+                  onChanged: (v) => setState(() => _notify = v),
+                ),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('עסק *', 'Business *'),
+            child: AdminBusinessPickerField(
+              label: '',
+              businessId: _businessId,
+              fallbackName: _businessName,
+              required: true,
+              onChanged: (b) => setState(() {
+                _businessId = b?.id;
+                _businessName = b?.name;
+              }),
+            ),
+          ),
+          // The upload field has its own heading.
+          AdminCard(
+            child: ImageUploadField(
+              label: tr('תמונה', 'Image'),
+              controller: _image,
+              folder: 'offers',
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _label(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Text(
-      text,
-      style: TextStyle(
-        fontFamily: AppFonts.rubik,
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        color: AppColors.grayText,
-      ),
-    ),
-  );
-
-  Widget _labelled(String label, Widget field) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [_label(label), field],
-  );
-
-  InputDecoration _inputDecoration({String? hint}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-        fontFamily: AppFonts.rubik,
-        fontSize: 13,
-        color: AppColors.grayLight,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.midBlue),
-      ),
-    );
-  }
-
-  Widget _buildField(
-    String label,
-    TextEditingController ctrl, {
-    String? hint,
-    String? Function(String?)? validator,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    bool ltr = false,
-  }) {
-    return _labelled(
-      label,
-      TextFormField(
-        controller: ctrl,
-        validator: validator,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        textDirection: ltr ? TextDirection.ltr : null,
-        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-        decoration: _inputDecoration(hint: hint),
+  /// A label above a field, as [AdminField] lays it out, for the fields it
+  /// does not cover (dates, times, choices, longer text).
+  Widget _labelled(String label, Widget field) {
+    final k = AdminKit.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: k.label),
+          const SizedBox(height: 6),
+          field,
+        ],
       ),
     );
   }
@@ -1009,23 +881,17 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     Map<String, String> items,
     ValueChanged<String?> onChanged,
   ) {
+    final k = AdminKit.of(context);
     return _labelled(
       label,
       DropdownButtonFormField<String>(
         initialValue: value,
+        style: k.body,
         items: items.entries
-            .map(
-              (e) => DropdownMenuItem(
-                value: e.key,
-                child: Text(
-                  e.value,
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-                ),
-              ),
-            )
+            .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
             .toList(),
         onChanged: onChanged,
-        decoration: _inputDecoration(),
+        decoration: k.input(),
       ),
     );
   }
@@ -1058,14 +924,21 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     ).toUtc().toIso8601String();
   }
 
-  void _toast(String message) {
+  /// Said at the top of the page and in a message at the bottom, since the
+  /// page may be scrolled far from the top when Save is pressed.
+  void _fail(String message) {
+    setState(() => _error = message);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.error),
     );
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    setState(() => _error = null);
+    if (!_formKey.currentState!.validate()) {
+      _fail(tr('יש שדות שצריך לתקן — הם מסומנים באדום.', 'Some fields need correcting — they are marked in red.'));
+      return;
+    }
 
     String? nullIfEmpty(TextEditingController c) {
       final t = c.text.trim();
@@ -1077,7 +950,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     if (startAt != null &&
         endAt != null &&
         !DateTime.parse(endAt).isAfter(DateTime.parse(startAt))) {
-      _toast(tr('סיום המבצע חייב להיות אחרי תחילתו', 'The deal\'s end must be after its start'));
+      _fail(tr('סיום המבצע חייב להיות אחרי תחילתו', 'The deal\'s end must be after its start'));
       return;
     }
 
@@ -1109,7 +982,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) _toast(tr('שגיאה: $e', 'Error: $e'));
+      if (mounted) _fail(tr('שגיאה: $e', 'Error: $e'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

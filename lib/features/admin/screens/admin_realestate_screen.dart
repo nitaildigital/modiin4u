@@ -270,11 +270,7 @@ class _AdminRealEstateScreenState extends ConsumerState<AdminRealEstateScreen> {
     WidgetRef ref, {
     Map<String, dynamic>? listing,
   }) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _ListingEditorDialog(listing: listing),
-    );
+    AdminEditorPage.open<void>(context, _ListingEditorDialog(listing: listing));
   }
 }
 
@@ -621,6 +617,7 @@ class _ListingEditorDialog extends ConsumerStatefulWidget {
 class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  String? _error;
 
   late final TextEditingController _address;
   late final TextEditingController _price;
@@ -760,427 +757,336 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 760),
-        child: Directionality(
-          textDirection: adminDir,
-          child: Form(
-            key: _formKey,
+    final k = AdminKit.of(context);
+    return Form(
+      key: _formKey,
+      child: AdminEditorPage(
+        title: _isEditing ? tr('עריכת נכס', 'Edit property') : tr('נכס חדש', 'New property'),
+        status: _isEditing ? _StatusPill(_status) : null,
+        onClose: () {
+          if (!_saving) _close();
+        },
+        actions: [
+          AdminButton.secondary(
+            label: tr('ביטול', 'Cancel'),
+            onPressed: _saving ? null : _close,
+          ),
+          AdminButton(
+            label: _isEditing ? tr('שמור', 'Save') : tr('צור נכס', 'Create property'),
+            icon: Icons.check,
+            busy: _saving,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
+        main: [
+          if (_error != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: k.danger.withValues(alpha: 0.06),
+                border: Border.all(color: k.danger.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(k.radius),
+              ),
+              child: Text(_error!, style: k.body.copyWith(color: k.danger)),
+            ),
+          AdminCard(
+            title: tr('פרטי הנכס', 'Property details'),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.navy,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(14),
+                // `title` is NOT NULL on the table and the form never
+                // collected it, so even a corrected save would have failed.
+                _field(
+                  tr('כותרת *', 'Title *'),
+                  _title,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
+                ),
+                _field(
+                  tr('כתובת *', 'Address *'),
+                  _address,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
+                ),
+                _field(
+                  _kind == 'rent'
+                      ? tr('מחיר לחודש (₪) *', 'Monthly price (₪) *')
+                      : tr('מחיר (₪) *', 'Price (₪) *'),
+                  _price,
+                  hint: _kind == 'rent' ? '6000' : '2500000',
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return tr('שדה חובה', 'Required field');
+                    return int.tryParse(v) == null
+                        ? tr('מספר שלם, בלי פסיקים', 'A whole number, without commas')
+                        : null;
+                  },
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _field(
+                        tr('חדרים', 'Rooms'),
+                        _rooms,
+                        hint: '4.5',
+                        validator: _number(),
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _isEditing ? tr('עריכת נכס', 'Edit property') : tr('נכס חדש', 'New property'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _field(
+                        tr('חדרי רחצה', 'Bathrooms'),
+                        _bathrooms,
+                        hint: '2',
+                        validator: _number(whole: true),
                       ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: _saving ? null : _close,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _field(
+                        tr('מ״ר', 'sqm'),
+                        _sqm,
+                        hint: '110',
+                        validator: _number(whole: true),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _field(
+                        tr('קומה', 'Floor'),
+                        _floor,
+                        hint: '3',
+                        validator: _number(whole: true),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _field(
+                        tr('סה״כ קומות', 'Total floors'),
+                        _totalFloors,
+                        hint: '6',
+                        validator: _number(whole: true),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: _availableFromField()),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('תיאור', 'Description'),
+            child: TextFormField(
+              controller: _description,
+              minLines: 4,
+              maxLines: 12,
+              style: k.body,
+              decoration: k.input(),
+            ),
+          ),
+          // The photos field has its own heading.
+          AdminCard(
+            child: AdminListingPhotosField(
+              photos: _photos,
+              onChanged: (p) => setState(() => _photos = p),
+              onUploaded: _uploaded.add,
+            ),
+          ),
+          AdminCard(
+            title: tr('מיקום במפה', 'Location on the map'),
+            subtitle: tr('המפה בעמוד הנכס מוצגת רק כששני השדות מלאים. '
+            'ב-Google Maps: קליק ימני על הנקודה, והמספרים הראשונים שמופיעים הם קו הרוחב וקו האורך.', 'The map on the property page is shown only when both fields are filled. In Google Maps: right-click the spot, and the first numbers shown are the latitude and longitude.'),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      // `title` is NOT NULL on the table and the form never
-                      // collected it, so even a corrected save would have failed.
-                      _field(
-                        tr('כותרת *', 'Title *'),
-                        _title,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _dropdown<String>(
-                              label: tr('סוג מודעה *', 'Listing type *'),
-                              value: _kind,
-                              items: [
-                                ('rent', tr('השכרה', 'Rent')),
-                                ('sale', tr('מכירה', 'Sale')),
-                              ],
-                              onChanged: (v) => setState(() => _kind = v!),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              _kind == 'rent'
-                                  ? tr('מחיר לחודש (₪) *', 'Monthly price (₪) *')
-                                  : tr('מחיר (₪) *', 'Price (₪) *'),
-                              _price,
-                              hint: _kind == 'rent' ? '6000' : '2500000',
-                              validator: (v) {
-                                if (v == null || v.isEmpty) return tr('שדה חובה', 'Required field');
-                                return int.tryParse(v) == null
-                                    ? tr('מספר שלם, בלי פסיקים', 'A whole number, without commas')
-                                    : null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _dropdown<String>(
-                              label: tr('סוג נכס', 'Property type'),
-                              value: _propertyType,
-                              items: [
-                                ('apartment', tr('דירה', 'Apartment')),
-                                ('penthouse', tr('פנטהאוז', 'Penthouse')),
-                                ('garden', tr('דירת גן', 'Garden apartment')),
-                                ('duplex', tr('דופלקס', 'Duplex')),
-                                ('villa', tr('וילה', 'Villa')),
-                                ('studio', tr('סטודיו', 'Studio')),
-                                ('other', tr('אחר', 'Other')),
-                              ],
-                              onChanged: (v) =>
-                                  setState(() => _propertyType = v!),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // The neighbourhood is a row in `neighborhoods`, so it is
-                          // picked rather than typed — a typed name matched nothing.
-                          Expanded(
-                            child: _optionsDropdown(
-                              label: tr('שכונה', 'Neighbourhood'),
-                              none: tr('ללא שכונה', 'No neighbourhood'),
-                              value: _neighborhoodId,
-                              options: ref.watch(
-                                adminNeighborhoodOptionsProvider,
-                              ),
-                              labelOf: (h) => h['name'] as String,
-                              onChanged: (v) =>
-                                  setState(() => _neighborhoodId = v),
-                            ),
-                          ),
-                        ],
-                      ),
-                      _field(
-                        tr('כתובת *', 'Address *'),
-                        _address,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              tr('חדרים', 'Rooms'),
-                              _rooms,
-                              hint: '4.5',
-                              validator: _number(),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              tr('חדרי רחצה', 'Bathrooms'),
-                              _bathrooms,
-                              hint: '2',
-                              validator: _number(whole: true),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              tr('מ״ר', 'sqm'),
-                              _sqm,
-                              hint: '110',
-                              validator: _number(whole: true),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              tr('קומה', 'Floor'),
-                              _floor,
-                              hint: '3',
-                              validator: _number(whole: true),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              tr('סה״כ קומות', 'Total floors'),
-                              _totalFloors,
-                              hint: '6',
-                              validator: _number(whole: true),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(child: _availableFromField()),
-                        ],
-                      ),
-                      _field(tr('תיאור', 'Description'), _description, maxLines: 4),
-                      const SizedBox(height: 4),
-                      AdminListingPhotosField(
-                        photos: _photos,
-                        onChanged: (p) => setState(() => _photos = p),
-                        onUploaded: _uploaded.add,
-                      ),
-                      const SizedBox(height: 20),
-                      _heading(tr('מיקום במפה', 'Location on the map')),
-                      const SizedBox(height: 4),
-                      Text(
-                        tr('המפה בעמוד הנכס מוצגת רק כששני השדות מלאים. '
-                        'ב-Google Maps: קליק ימני על הנקודה, והמספרים הראשונים שמופיעים הם קו הרוחב וקו האורך.', 'The map on the property page is shown only when both fields are filled. In Google Maps: right-click the spot, and the first numbers shown are the latitude and longitude.'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 11,
-                          color: AppColors.grayText,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              tr('קו רוחב (latitude)', 'Latitude'),
-                              _latitude,
-                              hint: '31.8969',
-                              ltr: true,
-                              validator: _coordinate(90),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              tr('קו אורך (longitude)', 'Longitude'),
-                              _longitude,
-                              hint: '35.0104',
-                              ltr: true,
-                              validator: _coordinate(180),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      _heading(tr('פרטי קשר', 'Contact details')),
-                      const SizedBox(height: 4),
-                      Text(
-                        tr('כשנבחר סוכן, עמוד הנכס מציג את פרטי הסוכן; אחרת את השם והטלפון שכאן.', 'When an agent is chosen, the property page shows the agent\'s details; otherwise the name and phone here.'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 11,
-                          color: AppColors.grayText,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _optionsDropdown(
-                        label: tr('סוכן', 'Agent'),
-                        none: tr('ללא סוכן', 'No agent'),
-                        value: _agentId,
-                        options: ref.watch(realEstateAgentsProvider),
-                        labelOf: (a) => [
-                          a['name'] as String? ?? '',
-                          if ((a['agency'] as String?)?.isNotEmpty == true)
-                            a['agency'] as String,
-                        ].join(' — '),
-                        onChanged: (v) => setState(() => _agentId = v),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(child: _field(tr('שם', 'Name'), _contactName)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(tr('טלפון', 'Phone'), _contactPhone, ltr: true),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      _heading(tr('מאפיינים', 'Features')),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          _toggle(
-                            tr('חניה', 'Parking'),
-                            _hasParking,
-                            (v) => setState(() => _hasParking = v),
-                          ),
-                          _toggle(
-                            tr('מעלית', 'Elevator'),
-                            _hasElevator,
-                            (v) => setState(() => _hasElevator = v),
-                          ),
-                          _toggle(
-                            tr('מרפסת', 'Balcony'),
-                            _hasBalcony,
-                            (v) => setState(() => _hasBalcony = v),
-                          ),
-                          _toggle(
-                            tr('מחסן', 'Storage room'),
-                            _hasStorage,
-                            (v) => setState(() => _hasStorage = v),
-                          ),
-                          _toggle(
-                            tr('ממ״ד', 'Safe room'),
-                            _hasMamad,
-                            (v) => setState(() => _hasMamad = v),
-                          ),
-                          _toggle(
-                            tr('מרוהט', 'Furnished'),
-                            _isFurnished,
-                            (v) => setState(() => _isFurnished = v),
-                          ),
-                          _toggle(
-                            tr('נגיש', 'Accessible'),
-                            _isAccessible,
-                            (v) => setState(() => _isAccessible = v),
-                          ),
-                          _toggle(
-                            tr('משופץ', 'Renovated'),
-                            _isRenovated,
-                            (v) => setState(() => _isRenovated = v),
-                          ),
-                          _toggle(
-                            tr('מתווך', 'Agent'),
-                            _isBroker,
-                            (v) => setState(() => _isBroker = v),
-                          ),
-                          _toggle(
-                            tr('מומלץ', 'Recommended'),
-                            _isFeatured,
-                            (v) => setState(() => _isFeatured = v),
-                          ),
-                          _toggle(
-                            tr('לשלוח התראה באישור', 'Send a notification when approved'),
-                            _notify,
-                            (v) => setState(() => _notify = v),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _heading(tr('סטטוס', 'Status')),
-                      const SizedBox(height: 8),
-                      // Every status the table knows, so a listing that is
-                      // `removed` or a rental marked `sold` opens showing
-                      // what it is rather than a blank box.
-                      _dropdown<String>(
-                        value: _status,
-                        items: [
-                          if (_baseline['status'] == 'draft')
-                            ('draft', tr('טיוטה', 'Draft')),
-                          ('pending', tr('ממתין לאישור', 'Pending approval')),
-                          ('active', tr('פעיל — מוצג באתר', 'Active — shown on the site')),
-                          ('sold', tr('נמכר', 'Sold')),
-                          ('rented', tr('הושכר', 'Rented')),
-                          ('expired', tr('פג תוקף', 'Expired')),
-                          ('removed', tr('הוסר', 'Removed')),
-                        ],
-                        onChanged: (v) => setState(() => _status = v!),
-                      ),
-                    ],
+                  child: _field(
+                    tr('קו רוחב (latitude)', 'Latitude'),
+                    _latitude,
+                    hint: '31.8969',
+                    ltr: true,
+                    validator: _coordinate(90),
                   ),
                 ),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Spacer(),
-                      TextButton(
-                        onPressed: _saving ? null : _close,
-                        child: Text(
-                          tr('ביטול', 'Cancel'),
-                          style: TextStyle(fontFamily: AppFonts.rubik),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: _saving ? null : _save,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AdminKit.of(context).accent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                _isEditing ? tr('שמור', 'Save') : tr('צור נכס', 'Create property'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _field(
+                    tr('קו אורך (longitude)', 'Longitude'),
+                    _longitude,
+                    hint: '35.0104',
+                    ltr: true,
+                    validator: _coordinate(180),
                   ),
                 ),
               ],
             ),
           ),
-        ),
+        ],
+        side: [
+          AdminCard(
+            title: tr('פרסום', 'Publishing'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Every status the table knows, so a listing that is
+                // `removed` or a rental marked `sold` opens showing
+                // what it is rather than a blank box.
+                _dropdown<String>(
+                  label: tr('סטטוס', 'Status'),
+                  value: _status,
+                  items: [
+                    if (_baseline['status'] == 'draft')
+                      ('draft', tr('טיוטה', 'Draft')),
+                    ('pending', tr('ממתין לאישור', 'Pending approval')),
+                    ('active', tr('פעיל — מוצג באתר', 'Active — shown on the site')),
+                    ('sold', tr('נמכר', 'Sold')),
+                    ('rented', tr('הושכר', 'Rented')),
+                    ('expired', tr('פג תוקף', 'Expired')),
+                    ('removed', tr('הוסר', 'Removed')),
+                  ],
+                  onChanged: (v) => setState(() => _status = v!),
+                ),
+                AdminSwitchRow(
+                  label: tr('מומלץ', 'Recommended'),
+                  value: _isFeatured,
+                  onChanged: (v) => setState(() => _isFeatured = v),
+                ),
+                AdminSwitchRow(
+                  label: tr('לשלוח התראה באישור', 'Send a notification when approved'),
+                  value: _notify,
+                  onChanged: (v) => setState(() => _notify = v),
+                ),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('סוג ושכונה', 'Type and neighbourhood'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _dropdown<String>(
+                  label: tr('סוג מודעה *', 'Listing type *'),
+                  value: _kind,
+                  items: [
+                    ('rent', tr('השכרה', 'Rent')),
+                    ('sale', tr('מכירה', 'Sale')),
+                  ],
+                  onChanged: (v) => setState(() => _kind = v!),
+                ),
+                _dropdown<String>(
+                  label: tr('סוג נכס', 'Property type'),
+                  value: _propertyType,
+                  items: [
+                    ('apartment', tr('דירה', 'Apartment')),
+                    ('penthouse', tr('פנטהאוז', 'Penthouse')),
+                    ('garden', tr('דירת גן', 'Garden apartment')),
+                    ('duplex', tr('דופלקס', 'Duplex')),
+                    ('villa', tr('וילה', 'Villa')),
+                    ('studio', tr('סטודיו', 'Studio')),
+                    ('other', tr('אחר', 'Other')),
+                  ],
+                  onChanged: (v) => setState(() => _propertyType = v!),
+                ),
+                // The neighbourhood is a row in `neighborhoods`, so it is
+                // picked rather than typed — a typed name matched nothing.
+                _optionsDropdown(
+                  label: tr('שכונה', 'Neighbourhood'),
+                  none: tr('ללא שכונה', 'No neighbourhood'),
+                  value: _neighborhoodId,
+                  options: ref.watch(adminNeighborhoodOptionsProvider),
+                  labelOf: (h) => h['name'] as String,
+                  onChanged: (v) => setState(() => _neighborhoodId = v),
+                ),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('פרטי קשר', 'Contact details'),
+            subtitle: tr('כשנבחר סוכן, עמוד הנכס מציג את פרטי הסוכן; אחרת את השם והטלפון שכאן.', 'When an agent is chosen, the property page shows the agent\'s details; otherwise the name and phone here.'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _optionsDropdown(
+                  label: tr('סוכן', 'Agent'),
+                  none: tr('ללא סוכן', 'No agent'),
+                  value: _agentId,
+                  options: ref.watch(realEstateAgentsProvider),
+                  labelOf: (a) => [
+                    a['name'] as String? ?? '',
+                    if ((a['agency'] as String?)?.isNotEmpty == true)
+                      a['agency'] as String,
+                  ].join(' — '),
+                  onChanged: (v) => setState(() => _agentId = v),
+                ),
+                _field(tr('שם', 'Name'), _contactName),
+                _field(tr('טלפון', 'Phone'), _contactPhone, ltr: true),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('מאפיינים', 'Features'),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                _toggle(
+                  tr('חניה', 'Parking'),
+                  _hasParking,
+                  (v) => setState(() => _hasParking = v),
+                ),
+                _toggle(
+                  tr('מעלית', 'Elevator'),
+                  _hasElevator,
+                  (v) => setState(() => _hasElevator = v),
+                ),
+                _toggle(
+                  tr('מרפסת', 'Balcony'),
+                  _hasBalcony,
+                  (v) => setState(() => _hasBalcony = v),
+                ),
+                _toggle(
+                  tr('מחסן', 'Storage room'),
+                  _hasStorage,
+                  (v) => setState(() => _hasStorage = v),
+                ),
+                _toggle(
+                  tr('ממ״ד', 'Safe room'),
+                  _hasMamad,
+                  (v) => setState(() => _hasMamad = v),
+                ),
+                _toggle(
+                  tr('מרוהט', 'Furnished'),
+                  _isFurnished,
+                  (v) => setState(() => _isFurnished = v),
+                ),
+                _toggle(
+                  tr('נגיש', 'Accessible'),
+                  _isAccessible,
+                  (v) => setState(() => _isAccessible = v),
+                ),
+                _toggle(
+                  tr('משופץ', 'Renovated'),
+                  _isRenovated,
+                  (v) => setState(() => _isRenovated = v),
+                ),
+                _toggle(
+                  tr('מתווך', 'Agent'),
+                  _isBroker,
+                  (v) => setState(() => _isBroker = v),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
-
-  Widget _heading(String text) => Text(
-    text,
-    style: TextStyle(
-      fontFamily: AppFonts.rubik,
-      fontSize: 14,
-      fontWeight: FontWeight.w700,
-      color: AppColors.navy,
-    ),
-  );
-
-  InputDecoration _decoration(String? label) => InputDecoration(
-    labelText: label,
-    labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-  );
 
   Widget _dropdown<T>({
     String? label,
@@ -1188,22 +1094,30 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
     required List<(T, String)> items,
     required ValueChanged<T?> onChanged,
   }) {
+    final k = AdminKit.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: DropdownButtonFormField<T>(
-        initialValue: value,
-        decoration: _decoration(label),
-        items: [
-          for (final (v, text) in items)
-            DropdownMenuItem(
-              value: v,
-              child: Text(
-                text,
-                style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-              ),
-            ),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (label != null) ...[
+            Text(label, style: k.label),
+            const SizedBox(height: 6),
+          ],
+          DropdownButtonFormField<T>(
+            initialValue: value,
+            isExpanded: true,
+            decoration: k.input(),
+            items: [
+              for (final (v, text) in items)
+                DropdownMenuItem(
+                  value: v,
+                  child: Text(text, overflow: TextOverflow.ellipsis, style: k.body),
+                ),
+            ],
+            onChanged: onChanged,
+          ),
         ],
-        onChanged: onChanged,
       ),
     );
   }
@@ -1224,7 +1138,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
   }) {
     if (options.isLoading) {
       return const Padding(
-        padding: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.only(bottom: 16),
         child: LinearProgressIndicator(),
       );
     }
@@ -1248,40 +1162,46 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
   }
 
   Widget _availableFromField() {
+    final k = AdminKit.of(context);
     final d = _availableFrom;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () async {
-          final now = DateTime.now();
-          final picked = await showDatePicker(
-            locale: adminLocale,
-            context: context,
-            initialDate: d ?? now,
-            firstDate: DateTime(now.year - 2),
-            lastDate: DateTime(now.year + 3),
-          );
-          if (picked != null) setState(() => _availableFrom = picked);
-        },
-        child: InputDecorator(
-          decoration: _decoration(tr('כניסה מ-', 'Move-in from')).copyWith(
-            suffixIcon: d == null
-                ? const Icon(Icons.calendar_today_outlined, size: 16)
-                : IconButton(
-                    tooltip: tr('ניקוי', 'Clear'),
-                    icon: const Icon(Icons.close, size: 16),
-                    onPressed: () => setState(() => _availableFrom = null),
-                  ),
-          ),
-          child: Text(
-            d == null ? tr('מיידי / לא צוין', 'Immediate / not specified') : '${d.day}/${d.month}/${d.year}',
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontSize: 13,
-              color: d == null ? AppColors.grayLight : AppColors.navy,
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(tr('כניסה מ-', 'Move-in from'), style: k.label),
+          const SizedBox(height: 6),
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                locale: adminLocale,
+                context: context,
+                initialDate: d ?? now,
+                firstDate: DateTime(now.year - 2),
+                lastDate: DateTime(now.year + 3),
+              );
+              if (picked != null) setState(() => _availableFrom = picked);
+            },
+            child: InputDecorator(
+              decoration: k.input(
+                suffix: d == null
+                    ? Icon(Icons.calendar_today_outlined, size: 16, color: k.inkSoft)
+                    : IconButton(
+                        tooltip: tr('ניקוי', 'Clear'),
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () => setState(() => _availableFrom = null),
+                      ),
+              ),
+              child: Text(
+                d == null ? tr('מיידי / לא צוין', 'Immediate / not specified') : '${d.day}/${d.month}/${d.year}',
+                overflow: TextOverflow.ellipsis,
+                style: d == null ? k.hint : k.body,
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -1307,21 +1227,16 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
   Widget _field(
     String label,
     TextEditingController controller, {
-    int maxLines = 1,
     String? hint,
     bool ltr = false,
     String? Function(String?)? validator,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        validator: validator,
-        textDirection: ltr ? TextDirection.ltr : null,
-        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-        decoration: _decoration(label).copyWith(hintText: hint),
-      ),
+    return AdminField(
+      label: label,
+      controller: controller,
+      hint: hint,
+      validator: validator,
+      textDirection: ltr ? TextDirection.ltr : null,
     );
   }
 
@@ -1401,8 +1316,19 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
     return a == b;
   }
 
+  /// Said at the top of the page and in a message at the bottom, since the
+  /// page may be scrolled far from the top when Save is pressed.
+  void _fail(String message) {
+    setState(() => _error = message);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    setState(() => _error = null);
+    if (!_formKey.currentState!.validate()) {
+      _fail(tr('יש שדות לתקן — הם מסומנים באדום.', 'Some fields need correcting — they are marked in red.'));
+      return;
+    }
 
     final fields = _collect();
     final changed = _isEditing
@@ -1431,14 +1357,7 @@ class _ListingEditorDialogState extends ConsumerState<_ListingEditorDialog> {
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(tr('שגיאה: $e', 'Error: $e')),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (mounted) _fail(tr('שגיאה: $e', 'Error: $e'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

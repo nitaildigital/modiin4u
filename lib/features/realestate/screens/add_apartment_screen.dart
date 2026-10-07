@@ -17,6 +17,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../auth/widgets/m_account_widgets.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
+import '../../../shared/widgets/m_step_form.dart';
 import 'web_add_apartment_screen.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 
@@ -503,7 +504,7 @@ class _MobileAddApartmentContentState
                           padding: const EdgeInsets.fromLTRB(15, 26, 15, 24),
                           children: [
                             Center(
-                              child: _StepProgressBar(
+                              child: MStepProgressBar(
                                 currentStep: _currentStep,
                                 labels: [
                                   l.stepBasics,
@@ -536,7 +537,7 @@ class _MobileAddApartmentContentState
                     color: Colors.white,
                     border: Border(top: BorderSide(color: _hairline)),
                   ),
-                  child: _BottomButton(
+                  child: MStepButton(
                     label: submitted
                         ? l.backToMyApartments
                         : _currentStep == 2
@@ -602,7 +603,7 @@ class _MobileAddApartmentContentState
       const SizedBox(height: 20),
 
       // ── Listing Type (toggle) ──
-      _FormCard(
+      MFormCard(
         label: l.listingType,
         child: Row(
           children: [
@@ -629,9 +630,9 @@ class _MobileAddApartmentContentState
       const SizedBox(height: 16),
 
       // ── Property Type ──
-      _FormCard(
+      MFormCard(
         label: l.propertyType,
-        child: _DropdownRow<PropertyType>(
+        child: MDropdownRow<PropertyType>(
           placeholder: l.selectPropertyType,
           value: _propertyType,
           items: [
@@ -644,9 +645,9 @@ class _MobileAddApartmentContentState
       const SizedBox(height: 16),
 
       // ── Title ──
-      _FormCard(
+      MFormCard(
         label: l.listingTitle,
-        child: _InputRow(controller: _title, placeholder: l.listingTitleHint),
+        child: MInputRow(controller: _title, placeholder: l.listingTitleHint),
       ),
       const SizedBox(height: 16),
 
@@ -654,9 +655,9 @@ class _MobileAddApartmentContentState
       //
       // The label follows the listing type, because the number means a
       // different thing for a rental and is stored in a different column.
-      _FormCard(
+      MFormCard(
         label: _kind == ListingKind.rent ? l.pricePerMonth : l.price,
-        child: _InputRow(
+        child: MInputRow(
           controller: _price,
           placeholder: l.enterPrice,
           keyboardType: TextInputType.number,
@@ -669,23 +670,23 @@ class _MobileAddApartmentContentState
       // The design has a single "Location" line; the table keeps the street
       // address and the neighbourhood apart, and the directory filters on
       // the neighbourhood, so both are asked for.
-      _FormCard(
+      MFormCard(
         label: l.address,
-        child: _InputRow(controller: _address, placeholder: l.enterAddress),
+        child: MInputRow(controller: _address, placeholder: l.enterAddress),
       ),
       const SizedBox(height: 16),
 
       // ── Contact ──
       //
       // Filled from the profile; the listing page's Contact button calls it.
-      _FormCard(
+      MFormCard(
         label: l.fullName,
-        child: _InputRow(controller: _contactName, placeholder: l.fullName),
+        child: MInputRow(controller: _contactName, placeholder: l.fullName),
       ),
       const SizedBox(height: 16),
-      _FormCard(
+      MFormCard(
         label: l.phone,
-        child: _InputRow(
+        child: MInputRow(
           controller: _contactPhone,
           placeholder: l.phone,
           keyboardType: TextInputType.phone,
@@ -698,9 +699,9 @@ class _MobileAddApartmentContentState
       // Stored as an id, so the list comes from the table rather than from
       // anything typed. While it is loading the field is simply empty; it
       // is optional, so a slow network must not block the form.
-      _FormCard(
+      MFormCard(
         label: l.neighborhood,
-        child: _DropdownRow<String>(
+        child: MDropdownRow<String>(
           placeholder: l.selectHint,
           value: _neighborhoodId,
           items: [
@@ -718,9 +719,9 @@ class _MobileAddApartmentContentState
       // The design says bedrooms; a listing here counts rooms, half rooms
       // included, and that is what the table stores — so the options step by
       // a half rather than by a whole.
-      _FormCard(
+      MFormCard(
         label: l.roomsLabel,
-        child: _DropdownRow<double>(
+        child: MDropdownRow<double>(
           placeholder: l.selectRooms,
           value: _rooms,
           items: [
@@ -733,9 +734,9 @@ class _MobileAddApartmentContentState
       const SizedBox(height: 16),
 
       // ── Bathrooms ──
-      _FormCard(
+      MFormCard(
         label: l.bathrooms,
-        child: _DropdownRow<int>(
+        child: MDropdownRow<int>(
           placeholder: l.selectBathrooms,
           value: _bathrooms,
           items: [
@@ -833,9 +834,9 @@ class _MobileAddApartmentContentState
       Row(
         children: [
           Expanded(
-            child: _FormCard(
+            child: MFormCard(
               label: l.floor,
-              child: _DropdownRow<int>(
+              child: MDropdownRow<int>(
                 placeholder: l.selectHint,
                 value: _floor,
                 items: [
@@ -848,9 +849,9 @@ class _MobileAddApartmentContentState
           ),
           const SizedBox(width: 13),
           Expanded(
-            child: _FormCard(
+            child: MFormCard(
               label: l.totalFloors,
-              child: _DropdownRow<int>(
+              child: MDropdownRow<int>(
                 placeholder: l.selectHint,
                 value: _totalFloors,
                 items: [
@@ -866,9 +867,9 @@ class _MobileAddApartmentContentState
       const SizedBox(height: 16),
 
       // ── Area ──
-      _FormCard(
+      MFormCard(
         label: l.areaSqm,
-        child: _InputRow(
+        child: MInputRow(
           controller: _area,
           placeholder: l.enterArea,
           keyboardType: TextInputType.number,
@@ -878,7 +879,7 @@ class _MobileAddApartmentContentState
       const SizedBox(height: 16),
 
       // ── Amenities ──
-      _FormCard(
+      MFormCard(
         label: l.amenities,
         child: Wrap(
           spacing: 8,
@@ -996,7 +997,7 @@ class _MobileAddApartmentContentState
     if (index < _photos.length) return _photoTile(l, index);
     if (_uploading && index == _photos.length) {
       return CustomPaint(
-        painter: _DashedBorderPainter(),
+        painter: MDashedBorderPainter(),
         child: const Center(
           child: SizedBox(
             width: 24,
@@ -1010,7 +1011,7 @@ class _MobileAddApartmentContentState
       behavior: HitTestBehavior.opaque,
       onTap: _uploading ? null : _pickPhotos,
       child: CustomPaint(
-        painter: _DashedBorderPainter(),
+        painter: MDashedBorderPainter(),
         child: Center(
           child: SvgPicture.asset(
             'assets/icons/m_realestate_plus.svg',
@@ -1249,80 +1250,6 @@ class _MobileAddApartmentContentState
 }
 
 // ═══════════════════════════════════════════════════
-// Bottom bar button
-// ═══════════════════════════════════════════════════
-
-/// The 44px mid-blue pill in the bottom bar, with the forward arrow on the
-/// steps that lead on (turned round for right-to-left).
-class _BottomButton extends StatelessWidget {
-  final String label;
-  final bool arrow;
-  final bool loading;
-  final VoidCallback? onTap;
-
-  const _BottomButton({
-    required this.label,
-    required this.arrow,
-    required this.loading,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final rtl = Directionality.of(context) == TextDirection.rtl;
-    return GestureDetector(
-      onTap: loading ? null : onTap,
-      child: Container(
-        width: double.infinity,
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        decoration: BoxDecoration(
-          color: _mid,
-          borderRadius: BorderRadius.circular(60),
-        ),
-        child: loading
-            ? const Center(
-                child: SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.4,
-                    color: Colors.white,
-                  ),
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      height: 24 / 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                  if (arrow) ...[
-                    const SizedBox(width: 12),
-                    Transform.flip(
-                      flipX: rtl,
-                      child: SvgPicture.asset(
-                        'assets/icons/m_realestate_arrow_next.svg',
-                        width: 20,
-                        height: 20,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════
 // Step progress bar (with checkmark for completed)
 // ═══════════════════════════════════════════════════
 
@@ -1340,174 +1267,6 @@ enum _Amenity {
   const _Amenity({this.svg, this.icon});
   final String? svg;
   final IconData? icon;
-}
-
-class _StepProgressBar extends StatelessWidget {
-  final int currentStep;
-  final List<String> labels;
-
-  /// Going back to a step already done, which the design draws as a link.
-  final ValueChanged<int> onStepTap;
-
-  const _StepProgressBar({
-    required this.currentStep,
-    required this.labels,
-    required this.onStepTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // The frames draw the line to "Details" in mid blue from the first step
-    // on; the line to "Photos" turns blue once the photographs are reached.
-    final second = currentStep >= 2 ? _mid : _hairline;
-    return SizedBox(
-      width: 268,
-      height: 47,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Connecting line
-          PositionedDirectional(
-            start: 40,
-            top: 11,
-            child: Container(
-              width: 186,
-              height: 2,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(5),
-                gradient: LinearGradient(
-                  begin: AlignmentDirectional.centerStart,
-                  end: AlignmentDirectional.centerEnd,
-                  colors: [_mid, _mid, second, second],
-                  stops: const [0.0, 0.52, 0.58, 1.0],
-                ),
-              ),
-            ),
-          ),
-
-          // Step circles + labels
-          for (int i = 0; i < labels.length; i++)
-            PositionedDirectional(
-              start: i * 106.0,
-              top: 0,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: i < currentStep ? () => onStepTap(i) : null,
-                child: SizedBox(
-                  width: 56,
-                  child: Column(
-                    children: [
-                      // A white ring outside each circle, so the line stops
-                      // short of it as drawn.
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: i <= currentStep
-                              ? _mid
-                              : const Color(0xFFF6F6F6),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 4,
-                            strokeAlign: BorderSide.strokeAlignOutside,
-                          ),
-                        ),
-                        child: Center(
-                          child: i < currentStep
-                              // Completed: the design's ticked circle, which
-                              // carries its own ring and so is 32 across.
-                              ? OverflowBox(
-                                  maxWidth: 32,
-                                  maxHeight: 32,
-                                  child: SvgPicture.asset(
-                                    'assets/icons/m_realestate_step_done.svg',
-                                    width: 32,
-                                    height: 32,
-                                  ),
-                                )
-                              // Current or future: show number
-                              : Text(
-                                  '${i + 1}',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.inter,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: i <= currentStep
-                                        ? Colors.white
-                                        : _grey,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Label — centred under its circle even where it is
-                      // wider than the 56 the circle's column is drawn at.
-                      SizedBox(
-                        height: 15,
-                        child: OverflowBox(
-                          maxWidth: 106,
-                          child: Text(
-                            labels[i],
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: i <= currentStep ? _mid : _grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// Form card wrapper
-// ═══════════════════════════════════════════════════
-
-class _FormCard extends StatelessWidget {
-  final String label;
-  final Widget child;
-  const _FormCard({required this.label, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _hairline),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: _ink,
-            ),
-          ),
-          const SizedBox(height: 13),
-          child,
-        ],
-      ),
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1632,174 +1391,3 @@ class _AmenityChip extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════
-// Dropdown-style row (placeholder + chevron)
-// ═══════════════════════════════════════════════════
-
-/// A dropdown, rather than a line of text with an arrow drawn next to it.
-///
-/// The mock version took only a placeholder and could not be opened, so every
-/// choice on the form — property type, rooms, floor — was unreachable.
-class _DropdownRow<T> extends StatelessWidget {
-  final String placeholder;
-  final T? value;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
-
-  const _DropdownRow({
-    required this.placeholder,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // A dense drop-down is still 24 tall; the design's line is 20, as tall
-    // as the arrow, so the button is let overhang by two either side rather
-    // than making every card four taller than drawn.
-    return SizedBox(
-      height: 20,
-      child: OverflowBox(
-        maxHeight: 24,
-        child: _button(),
-      ),
-    );
-  }
-
-  Widget _button() {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<T>(
-        value: items.any((i) => i.value == value) ? value : null,
-        isExpanded: true,
-        isDense: true,
-        hint: Text(
-          placeholder,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: _grey,
-          ),
-        ),
-        icon: SvgPicture.asset(
-          'assets/icons/m_account_chevron.svg',
-          width: 20,
-          height: 20,
-        ),
-        style: TextStyle(
-          fontFamily: AppFonts.inter,
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          color: _ink,
-        ),
-        items: items,
-        onChanged: onChanged,
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// Text input row (placeholder only, no chevron)
-// ═══════════════════════════════════════════════════
-
-/// A text field with a controller behind it.
-///
-/// It had none, so everything typed into the form was discarded on the way to
-/// the next step.
-class _InputRow extends StatelessWidget {
-  final String placeholder;
-  final TextEditingController controller;
-  final TextInputType? keyboardType;
-
-  /// A unit shown at the end of the line, such as m² beside the area.
-  final String? suffix;
-
-  const _InputRow({
-    required this.placeholder,
-    required this.controller,
-    this.keyboardType,
-    this.suffix,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hint = TextStyle(
-      fontFamily: AppFonts.inter,
-      fontSize: 14,
-      fontWeight: FontWeight.w400,
-      color: _grey,
-    );
-    return SizedBox(
-      height: 20,
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType: keyboardType,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: _ink,
-              ),
-              decoration: InputDecoration(
-                hintText: placeholder,
-                hintStyle: hint,
-                // The theme fills inputs grey and rounds them; these sit
-                // inside the white bordered cards.
-                filled: false,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-                isDense: true,
-              ),
-            ),
-          ),
-          if (suffix != null) Text(suffix!, style: hint),
-        ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// Dashed border painter
-// ═══════════════════════════════════════════════════
-
-class _DashedBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = _grey
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    const dashWidth = 6.0;
-    const dashGap = 4.0;
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      const Radius.circular(8),
-    );
-
-    // Extract path from rounded rect and draw dashes along it
-    final path = Path()..addRRect(rrect);
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final end = (distance + dashWidth).clamp(0.0, metric.length);
-        canvas.drawPath(metric.extractPath(distance, end), paint);
-        distance += dashWidth + dashGap;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

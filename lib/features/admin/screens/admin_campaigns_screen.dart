@@ -506,11 +506,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
     WidgetRef ref, {
     Map<String, dynamic>? campaign,
   }) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _CampaignEditorDialog(campaign: campaign),
-    );
+    AdminEditorPage.open<void>(context, _CampaignEditorDialog(campaign: campaign));
   }
 }
 
@@ -598,274 +594,191 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     final slots = ref.watch(adminCampaignSlotOptionsProvider);
     final slot = slots.valueOrNull
         ?.where((p) => p['id'] == _placementId)
         .firstOrNull;
 
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 700, maxHeight: 820),
-        child: Directionality(
-          textDirection: adminDir,
-          child: Form(
-            key: _formKey,
+    return Form(
+      key: _formKey,
+      child: AdminEditorPage(
+        title: _isEditing ? tr('עריכת קמפיין', 'Edit campaign') : tr('קמפיין חדש', 'New campaign'),
+        status: _isEditing ? _StatusPill(_status) : null,
+        onClose: () => Navigator.pop(context),
+        actions: [
+          AdminButton.secondary(
+            label: tr('סגירה', 'Close'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          AdminButton(
+            label: _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
+            icon: Icons.check,
+            busy: _saving,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
+        main: [
+          if (_error != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: k.danger.withValues(alpha: 0.06),
+                border: Border.all(color: k.danger.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(k.radius),
+              ),
+              child: Text(_error!, style: k.body.copyWith(color: k.danger)),
+            ),
+          AdminCard(
+            title: tr('פרטי הקמפיין', 'Campaign details'),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.navy,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(14),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _isEditing ? tr('עריכת קמפיין', 'Edit campaign') : tr('קמפיין חדש', 'New campaign'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
+                _buildField(
+                  tr('שם קמפיין', 'Campaign name'),
+                  _name,
+                  hint: tr('פיצה פרגו — 20% הנחה', 'Pizza Prego — 20% off'),
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
                 ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildField(
-                          tr('שם קמפיין', 'Campaign name'),
-                          _name,
-                          hint: tr('פיצה פרגו — 20% הנחה', 'Pizza Prego — 20% off'),
-                          validator: (v) =>
-                              v == null || v.trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildSlotPicker(slots),
-                        if (slot != null) ...[
-                          const SizedBox(height: 8),
-                          _SlotNote(slot: slot),
-                        ],
-                        const SizedBox(height: 14),
-                        _buildBusinessPicker(),
-                        const SizedBox(height: 14),
-                        ImageUploadField(
-                          label: tr('תמונת הבאנר — מה שמוצג באתר', 'The banner image — what the site shows'),
-                          controller: _desktopImage,
-                          folder: 'campaigns',
-                        ),
-                        const SizedBox(height: 14),
-                        ImageUploadField(
-                          label:
-                              tr('תמונה למובייל (לא חובה — האתר מציג את התמונה שלמעלה)', 'Mobile image (optional — the site shows the image above)'),
-                          controller: _mobileImage,
-                          folder: 'campaigns/mobile',
-                        ),
-                        const SizedBox(height: 14),
-                        _buildField(
-                          tr('קישור יעד — לאן לוחצים', 'Target link — where a tap leads'),
-                          _destinationUrl,
-                          hint: 'https://...',
-                          validator: (v) {
-                            final t = (v ?? '').trim();
-                            if (t.isEmpty) return null;
-                            return _normalizeUrl(t) == null
-                                ? tr('כתובת לא תקינה — למשל https://example.co.il', 'Invalid address — for example https://example.co.il')
-                                : null;
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildDateField(
-                                tr('תחילת הצגה', 'Show from'),
-                                _startAt,
-                                empty: tr('מיד', 'Immediately'),
-                                onPick: (d) => setState(
-                                  () => _startAt = DateTime(
-                                    d.year,
-                                    d.month,
-                                    d.day,
-                                  ),
-                                ),
-                                onClear: () => setState(() => _startAt = null),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildDateField(
-                                tr('סיום הצגה (כולל היום הזה)', 'Show until (including that day)'),
-                                _endAt,
-                                empty: tr('ללא סיום', 'No end'),
-                                // To the end of the chosen day, so a campaign
-                                // "until the 30th" runs through the 30th.
-                                onPick: (d) => setState(
-                                  () => _endAt = DateTime(
-                                    d.year,
-                                    d.month,
-                                    d.day,
-                                    23,
-                                    59,
-                                  ),
-                                ),
-                                onClear: () => setState(() => _endAt = null),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _buildField(
-                                tr('עדיפות', 'Priority'),
-                                _priority,
-                                hint: '0',
-                                helper: tr('מספר גבוה יותר מוצג ראשון במיקום', 'A higher number is shown first in the placement'),
-                                keyboardType: TextInputType.number,
-                                // The column is a 32-bit integer.
-                                validator: (v) {
-                                  final n = int.tryParse((v ?? '').trim());
-                                  return n == null || n.abs() > 2147483647
-                                      ? tr('מספר שלם', 'A whole number')
-                                      : null;
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(child: _buildSalespersonPicker()),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        _buildDropdown(tr('סטטוס', 'Status'), _status, {
-                          'draft': tr('טיוטה — לא מוצג', 'Draft — not shown'),
-                          'active': tr('פעיל — מוצג בתאריכים שנקבעו', 'Active — shown on the set dates'),
-                          'paused': tr('מושהה — לא מוצג', 'Paused — not shown'),
-                          'ended': tr('הסתיים — לא מוצג', 'Ended — not shown'),
-                          // Nothing moves a campaign from "scheduled" to
-                          // "active", and the site shows only active ones,
-                          // so it is offered only to a row that has it.
-                          // Scheduling is "active" with a start date.
-                          if (_status == 'scheduled')
-                            'scheduled': tr('מתוכנן — לא מוצג (בחרו פעיל)', 'Planned — not shown (choose Active)'),
-                        }, (v) => setState(() => _status = v!)),
-                        const SizedBox(height: 14),
-                        _SiteHint(
-                          text: _siteHint(slot),
-                          live: _wouldBeLive(slot),
-                        ),
-                        if (_isEditing) ...[
-                          const SizedBox(height: 14),
-                          Text(
-                            tr('חשיפות: ${widget.campaign!['impressions'] ?? 0} · '
-                            'קליקים: ${widget.campaign!['clicks'] ?? 0}', 'Impressions: ${widget.campaign!['impressions'] ?? 0} · Clicks: ${widget.campaign!['clicks'] ?? 0}'),
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 12,
-                              color: AppColors.grayLight,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: AppColors.border.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          tr('סגירה', 'Close'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
-                            color: AppColors.grayText,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _error == null
-                            ? const SizedBox.shrink()
-                            : Text(
-                                _error!,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                  color: AppColors.error,
-                                ),
-                              ),
-                      ),
-                      const SizedBox(width: 12),
-                      FilledButton(
-                        onPressed: _saving ? null : _save,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AdminKit.of(context).accent,
-                          minimumSize: const Size(120, 42),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                _isEditing ? tr('עדכון', 'Update') : tr('יצירה', 'Create'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ],
-                  ),
+                _buildField(
+                  tr('קישור יעד — לאן לוחצים', 'Target link — where a tap leads'),
+                  _destinationUrl,
+                  hint: 'https://...',
+                  validator: (v) {
+                    final t = (v ?? '').trim();
+                    if (t.isEmpty) return null;
+                    return _normalizeUrl(t) == null
+                        ? tr('כתובת לא תקינה — למשל https://example.co.il', 'Invalid address — for example https://example.co.il')
+                        : null;
+                  },
                 ),
               ],
             ),
           ),
-        ),
+          AdminCard(
+            title: tr('באנר', 'Banner'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ImageUploadField(
+                  label: tr('תמונת הבאנר — מה שמוצג באתר', 'The banner image — what the site shows'),
+                  controller: _desktopImage,
+                  folder: 'campaigns',
+                ),
+                const SizedBox(height: 16),
+                ImageUploadField(
+                  label:
+                      tr('תמונה למובייל (לא חובה — האתר מציג את התמונה שלמעלה)', 'Mobile image (optional — the site shows the image above)'),
+                  controller: _mobileImage,
+                  folder: 'campaigns/mobile',
+                ),
+              ],
+            ),
+          ),
+        ],
+        side: [
+          AdminCard(
+            title: tr('פרסום', 'Publishing'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildDropdown(tr('סטטוס', 'Status'), _status, {
+                  'draft': tr('טיוטה — לא מוצג', 'Draft — not shown'),
+                  'active': tr('פעיל — מוצג בתאריכים שנקבעו', 'Active — shown on the set dates'),
+                  'paused': tr('מושהה — לא מוצג', 'Paused — not shown'),
+                  'ended': tr('הסתיים — לא מוצג', 'Ended — not shown'),
+                  // Nothing moves a campaign from "scheduled" to
+                  // "active", and the site shows only active ones,
+                  // so it is offered only to a row that has it.
+                  // Scheduling is "active" with a start date.
+                  if (_status == 'scheduled')
+                    'scheduled': tr('מתוכנן — לא מוצג (בחרו פעיל)', 'Planned — not shown (choose Active)'),
+                }, (v) => setState(() => _status = v!)),
+                _buildDateField(
+                  tr('תחילת הצגה', 'Show from'),
+                  _startAt,
+                  empty: tr('מיד', 'Immediately'),
+                  onPick: (d) => setState(
+                    () => _startAt = DateTime(
+                      d.year,
+                      d.month,
+                      d.day,
+                    ),
+                  ),
+                  onClear: () => setState(() => _startAt = null),
+                ),
+                _buildDateField(
+                  tr('סיום הצגה (כולל היום הזה)', 'Show until (including that day)'),
+                  _endAt,
+                  empty: tr('ללא סיום', 'No end'),
+                  // To the end of the chosen day, so a campaign
+                  // "until the 30th" runs through the 30th.
+                  onPick: (d) => setState(
+                    () => _endAt = DateTime(
+                      d.year,
+                      d.month,
+                      d.day,
+                      23,
+                      59,
+                    ),
+                  ),
+                  onClear: () => setState(() => _endAt = null),
+                ),
+                _SiteHint(
+                  text: _siteHint(slot),
+                  live: _wouldBeLive(slot),
+                ),
+                if (_isEditing) ...[
+                  const SizedBox(height: 14),
+                  Text(
+                    tr('חשיפות: ${widget.campaign!['impressions'] ?? 0} · '
+                    'קליקים: ${widget.campaign!['clicks'] ?? 0}', 'Impressions: ${widget.campaign!['impressions'] ?? 0} · Clicks: ${widget.campaign!['clicks'] ?? 0}'),
+                    style: k.hint,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('מיקום ועדיפות', 'Placement and priority'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildSlotPicker(slots),
+                if (slot != null) ...[
+                  _SlotNote(slot: slot),
+                  const SizedBox(height: 16),
+                ],
+                _buildField(
+                  tr('עדיפות', 'Priority'),
+                  _priority,
+                  hint: '0',
+                  helper: tr('מספר גבוה יותר מוצג ראשון במיקום', 'A higher number is shown first in the placement'),
+                  keyboardType: TextInputType.number,
+                  // The column is a 32-bit integer.
+                  validator: (v) {
+                    final n = int.tryParse((v ?? '').trim());
+                    return n == null || n.abs() > 2147483647
+                        ? tr('מספר שלם', 'A whole number')
+                        : null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('מפרסם', 'Advertiser'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildBusinessPicker(),
+                _buildSalespersonPicker(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1023,19 +936,27 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
 
   // ─── Saving ───
 
+  /// Said at the top of the page and in a message at the bottom, since the
+  /// page may be scrolled far from the top when Save is pressed.
+  void _fail(String message) {
+    setState(() => _error = message);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _save() async {
     setState(() => _error = null);
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _fail(tr('יש שדות לתקן — הם מסומנים באדום.', 'Some fields need correcting — they are marked in red.'));
+      return;
+    }
     if (_startAt != null && _endAt != null && !_endAt!.isAfter(_startAt!)) {
-      setState(() => _error = tr('תאריך הסיום חייב להיות אחרי תאריך ההתחלה', 'The end date must be after the start date'));
+      _fail(tr('תאריך הסיום חייב להיות אחרי תאריך ההתחלה', 'The end date must be after the start date'));
       return;
     }
     // The site skips a campaign with no picture, so an active one without
     // it would be a booking that shows nothing.
     if (_status == 'active' && _desktopImage.text.trim().isEmpty) {
-      setState(
-        () => _error = tr('קמפיין פעיל צריך תמונה — העלו תמונה או שמרו כטיוטה', 'An active campaign needs an image — upload one or save as a draft'),
-      );
+      _fail(tr('קמפיין פעיל צריך תמונה — העלו תמונה או שמרו כטיוטה', 'An active campaign needs an image — upload one or save as a draft'));
       return;
     }
 
@@ -1065,10 +986,8 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _saving = false;
-          _error = tr('השמירה נכשלה: ${_why(e)}', 'Saving failed: ${_why(e)}');
-        });
+        setState(() => _saving = false);
+        _fail(tr('השמירה נכשלה: ${_why(e)}', 'Saving failed: ${_why(e)}'));
       }
     }
   }
@@ -1092,54 +1011,19 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
   // ─── Fields ───
 
   InputDecoration _decoration({String? hint, String? helper}) =>
-      InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 13,
-          color: AppColors.grayLight,
-        ),
-        helperText: helper,
-        helperMaxLines: 2,
-        helperStyle: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          color: AppColors.grayText,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.midBlue),
-        ),
-      );
+      AdminKit.of(context).input(hint: hint, helper: helper);
 
   Widget _labelled(String label, Widget child) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.rubik,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: AppColors.grayText,
-          ),
-        ),
-        const SizedBox(height: 6),
-        child,
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(label, style: AdminKit.of(context).label),
+          const SizedBox(height: 6),
+          child,
+        ],
+      ),
     );
   }
 
@@ -1152,16 +1036,14 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
     int maxLines = 1,
     TextInputType? keyboardType,
   }) {
-    return _labelled(
-      label,
-      TextFormField(
-        controller: ctrl,
-        validator: validator,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-        decoration: _decoration(hint: hint, helper: helper),
-      ),
+    return AdminField(
+      label: label,
+      controller: ctrl,
+      hint: hint,
+      helper: helper,
+      validator: validator,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
     );
   }
 

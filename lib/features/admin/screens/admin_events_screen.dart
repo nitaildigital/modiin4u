@@ -246,11 +246,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
   }
 
   void _showEventEditor(BuildContext context, {Map<String, dynamic>? event}) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _EventEditorDialog(event: event),
-    );
+    AdminEditorPage.open<void>(context, _EventEditorDialog(event: event));
   }
 }
 
@@ -583,6 +579,7 @@ class _EventEditorDialog extends ConsumerStatefulWidget {
 class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  String? _error;
 
   /// Set once a new event has been inserted, so that a retry after a failed
   /// category step updates it rather than inserting a second copy.
@@ -731,461 +728,367 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     _initialCategoryIds = List.of(current);
   }
 
-  InputDecoration _decoration(String label, {String? hint, String? helper}) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      helperText: helper,
-      helperMaxLines: 2,
-      labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-      helperStyle: TextStyle(
-        fontFamily: AppFonts.rubik,
-        fontSize: 11,
-        color: AppColors.grayLight,
-      ),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final links = ref.watch(adminEventCategoryLinksProvider);
     _adoptLinks(links.valueOrNull);
+    final k = AdminKit.of(context);
 
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 860),
-        child: Directionality(
-          textDirection: adminDir,
-          child: Form(
-            key: _formKey,
+    return Form(
+      key: _formKey,
+      child: AdminEditorPage(
+        title: _isEditing ? tr('עריכת אירוע', 'Edit event') : tr('אירוע חדש', 'New event'),
+        status: _isEditing ? _StatusPill(_status) : null,
+        onClose: () => Navigator.pop(context),
+        actions: [
+          AdminButton.secondary(
+            label: tr('ביטול', 'Cancel'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          AdminButton(
+            label: _isEditing ? tr('שמור', 'Save') : tr('צור אירוע', 'Create event'),
+            icon: Icons.check,
+            busy: _saving,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
+        main: [
+          if (_error != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: k.danger.withValues(alpha: 0.06),
+                border: Border.all(color: k.danger.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(k.radius),
+              ),
+              child: Text(_error!, style: k.body.copyWith(color: k.danger)),
+            ),
+
+          // ── What ──
+          AdminCard(
+            title: tr('פרטי האירוע', 'Event details'),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.navy,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(14),
+                AdminField(
+                  label: tr('שם אירוע *', 'Event name *'),
+                  controller: _title,
+                  validator: (v) =>
+                      (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
+                ),
+                AdminField(
+                  label: tr('תיאור קצר', 'Short description'),
+                  controller: _shortDescription,
+                  helper: tr('משפט או שניים. מוצג באתר כשאין תיאור מלא.', 'A sentence or two. Shown on the site when there is no full description.'),
+                  maxLines: 2,
+                ),
+                _labelled(
+                  tr('תיאור מלא', 'Full description'),
+                  TextFormField(
+                    controller: _body,
+                    minLines: 6,
+                    maxLines: null,
+                    style: k.body,
+                    decoration: k.input(
+                      helper:
+                          tr('מוצג תחת "אודות האירוע". שורה ריקה מפרידה בין פסקאות.', 'Shown under "About the event". An empty line separates paragraphs.'),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _isEditing ? tr('עריכת אירוע', 'Edit event') : tr('אירוע חדש', 'New event'),
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
                 ),
-
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      // ── What ──
-                      _section(tr('פרטי האירוע', 'Event details')),
-                      _field(
-                        _title,
-                        _decoration(tr('שם אירוע *', 'Event name *')),
-                        validator: (v) =>
-                            (v ?? '').trim().isEmpty ? tr('שדה חובה', 'Required field') : null,
-                      ),
-                      _field(
-                        _shortDescription,
-                        _decoration(
-                          tr('תיאור קצר', 'Short description'),
-                          helper: tr('משפט או שניים. מוצג באתר כשאין תיאור מלא.', 'A sentence or two. Shown on the site when there is no full description.'),
-                        ),
-                        maxLines: 2,
-                      ),
-                      _field(
-                        _body,
-                        _decoration(
-                          tr('תיאור מלא', 'Full description'),
-                          helper:
-                              tr('מוצג תחת "אודות האירוע". שורה ריקה מפרידה בין פסקאות.', 'Shown under "About the event". An empty line separates paragraphs.'),
-                        ),
-                        maxLines: 6,
-                      ),
-                      _field(
-                        _included,
-                        _decoration(
-                          tr('מה כלול', 'What is included'),
-                          hint: tr('הופעה חיה\nכיבוד קל\nחניה חופשית', 'Live show\nLight refreshments\nFree parking'),
-                          helper:
-                              tr('פריט אחד בכל שורה. מוצג באתר כרשימת סימונים תחת '
-                              '"מה כלול"; ריק — החלק לא יוצג.', 'One item per line. Shown on the site as a checklist under "What is included"; empty — the section is not shown.'),
-                        ),
-                        maxLines: 5,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: ImageUploadField(
-                          label: tr('תמונה', 'Image'),
-                          controller: _image,
-                          folder: 'events',
-                        ),
-                      ),
-                      _categoriesField(links),
-
-                      // ── When ──
-                      _section(tr('מועד', 'Time')),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _padded(
-                              AdminDateField(
-                                controller: _startDate,
-                                decoration: _decoration(tr('תאריך התחלה *', 'Start date *')),
-                                required: true,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _padded(
-                              AdminTimeField(
-                                controller: _startTime,
-                                decoration: _decoration(tr('שעת התחלה', 'Start time')),
-                                enabled: !_isAllDay,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _padded(
-                              AdminDateField(
-                                controller: _endDate,
-                                decoration: _decoration(
-                                  tr('תאריך סיום', 'End date'),
-                                  helper: tr('רק לאירוע של יותר מיום אחד', 'Only for an event longer than one day'),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _padded(
-                              AdminTimeField(
-                                controller: _endTime,
-                                decoration: _decoration(tr('שעת סיום', 'End time')),
-                                enabled: !_isAllDay,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          _toggle(
-                            tr('כל היום', 'All day'),
-                            _isAllDay,
-                            (v) => setState(() => _isAllDay = v),
-                          ),
-                        ],
-                      ),
-
-                      // ── Where ──
-                      _section(tr('מיקום', 'Location')),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _field(
-                              _venue,
-                              _decoration(tr('שם המקום', 'Place name'), hint: tr('היכל התרבות', 'Heichal HaTarbut')),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: TextButton.icon(
-                              onPressed: _fillFromBusiness,
-                              icon: const Icon(
-                                Icons.storefront_outlined,
-                                size: 16,
-                              ),
-                              label: Text(
-                                tr('מילוי מעסק', 'Fill from a business'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      _field(_address, _decoration(tr('כתובת', 'Address'))),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _field(
-                              _latitude,
-                              _decoration(
-                                tr('קו רוחב', 'Latitude'),
-                                hint: '31.8969',
-                                helper:
-                                    tr('אפשר להדביק כאן "31.89, 35.01" מגוגל מפות', 'You can paste "31.89, 35.01" from Google Maps here'),
-                              ),
-                              ltr: true,
-                              onChanged: _splitPastedCoordinates,
-                              validator: (v) => _coordinate(v, 90),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              _longitude,
-                              _decoration(
-                                tr('קו אורך', 'Longitude'),
-                                hint: '35.0095',
-                                helper: tr('בלי נקודה — אין מפה ואין ניווט באתר', 'No point — no map and no navigation on the site'),
-                              ),
-                              ltr: true,
-                              validator: (v) => _coordinate(v, 180),
-                            ),
-                          ),
-                        ],
-                      ),
-                      _field(
-                        _waze,
-                        _decoration(
-                          tr('קישור Waze', 'Waze link'),
-                          hint: 'https://waze.com/ul?...',
-                          helper: tr('אם ריק, כפתור הניווט באתר ישתמש בנקודה', 'If empty, the site\'s navigation button uses the point'),
-                        ),
-                        ltr: true,
-                        validator: _url,
-                      ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          _toggle(
-                            tr('אירוע אונליין', 'Online event'),
-                            _isOnline,
-                            (v) => setState(() => _isOnline = v),
-                          ),
-                        ],
-                      ),
-                      if (_isOnline) ...[
-                        const SizedBox(height: 8),
-                        _field(
-                          _onlineUrl,
-                          _decoration(tr('קישור לשידור', 'Stream link'), hint: 'https://'),
-                          ltr: true,
-                          validator: _url,
-                        ),
-                      ],
-
-                      // ── Tickets ──
-                      _section(tr('כרטיסים', 'Tickets')),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          _toggle(
-                            tr('כניסה חופשית', 'Free entry'),
-                            _isFree,
-                            (v) => setState(() => _isFree = v),
-                          ),
-                          _toggle(
-                            tr('אזלו הכרטיסים', 'Tickets sold out'),
-                            _isSoldOut,
-                            (v) => setState(() => _isSoldOut = v),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _field(
-                              _price,
-                              _decoration(
-                                tr('מחיר (₪)', 'Price (₪)'),
-                                hint: '50',
-                                helper: _isFree ? tr('האירוע מסומן חינם', 'The event is marked free') : null,
-                              ),
-                              ltr: true,
-                              enabled: !_isFree,
-                              validator: _priceValidator,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              _maxAttendees,
-                              _decoration(tr('מספר משתתפים מרבי', 'Maximum participants'), hint: '100'),
-                              ltr: true,
-                              validator: _positiveInt,
-                            ),
-                          ),
-                        ],
-                      ),
-                      _field(
-                        _ticketUrl,
-                        _decoration(tr('קישור לרכישת כרטיסים', 'Ticket purchase link'), hint: 'https://'),
-                        ltr: true,
-                        validator: _url,
-                      ),
-
-                      // ── Who ──
-                      _section(tr('מארגן', 'Organiser')),
-                      _padded(
-                        AdminBusinessPickerField(
-                          label: tr('העסק המארגן', 'Organising business'),
-                          businessId: _businessId,
-                          onChanged: (b) => setState(() => _businessId = b?.id),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12, right: 4),
-                        child: Text(
-                          tr('מוצג בעמוד האירוע בכרטיס "מאורגן על ידי". ריק — הכרטיס לא יוצג.', 'Shown on the event page in the "Organised by" card. Empty — the card is not shown.'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 11,
-                            color: AppColors.grayLight,
-                          ),
-                        ),
-                      ),
-
-                      // ── Status ──
-                      _section(tr('פרסום', 'Publish')),
-                      DropdownButtonFormField<String>(
-                        initialValue: _status,
-                        decoration: _decoration(tr('סטטוס', 'Status')),
-                        items: [
-                          for (final s in _statuses.entries)
-                            DropdownMenuItem(
-                              value: s.key,
-                              child: Text(
-                                s.value,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                        ],
-                        onChanged: (v) => setState(() => _status = v!),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6, right: 4),
-                        child: Text(
-                          _publishedNote(),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 11,
-                            color: AppColors.grayLight,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          _toggle(
-                            tr('מומלץ', 'Recommended'),
-                            _isFeatured,
-                            (v) => setState(() => _isFeatured = v),
-                          ),
-                          _toggle(
-                            tr('לשלוח התראה בפרסום', 'Send a notification when published'),
-                            _notifyOnPublish,
-                            (v) => setState(() => _notifyOnPublish = v),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          tr('ביטול', 'Cancel'),
-                          style: TextStyle(fontFamily: AppFonts.rubik),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: _saving ? null : _save,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AdminKit.of(context).accent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: _saving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                _isEditing ? tr('שמור', 'Save') : tr('צור אירוע', 'Create event'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
-                    ],
+                _labelled(
+                  tr('מה כלול', 'What is included'),
+                  TextFormField(
+                    controller: _included,
+                    minLines: 5,
+                    maxLines: null,
+                    style: k.body,
+                    decoration: k.input(
+                      hint: tr('הופעה חיה\nכיבוד קל\nחניה חופשית', 'Live show\nLight refreshments\nFree parking'),
+                      helper:
+                          tr('פריט אחד בכל שורה. מוצג באתר כרשימת סימונים תחת '
+                          '"מה כלול"; ריק — החלק לא יוצג.', 'One item per line. Shown on the site as a checklist under "What is included"; empty — the section is not shown.'),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
+
+          // ── When ──
+          AdminCard(
+            title: tr('מועד', 'Time'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _labelled(
+                        tr('תאריך התחלה *', 'Start date *'),
+                        AdminDateField(
+                          controller: _startDate,
+                          decoration: k.input(),
+                          required: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _labelled(
+                        tr('שעת התחלה', 'Start time'),
+                        AdminTimeField(
+                          controller: _startTime,
+                          decoration: k.input(),
+                          enabled: !_isAllDay,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _labelled(
+                        tr('תאריך סיום', 'End date'),
+                        AdminDateField(
+                          controller: _endDate,
+                          decoration: k.input(
+                            helper: tr('רק לאירוע של יותר מיום אחד', 'Only for an event longer than one day'),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _labelled(
+                        tr('שעת סיום', 'End time'),
+                        AdminTimeField(
+                          controller: _endTime,
+                          decoration: k.input(),
+                          enabled: !_isAllDay,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                AdminSwitchRow(
+                  label: tr('כל היום', 'All day'),
+                  value: _isAllDay,
+                  onChanged: (v) => setState(() => _isAllDay = v),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Where ──
+          AdminCard(
+            title: tr('מיקום', 'Location'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AdminField(
+                  label: tr('שם המקום', 'Place name'),
+                  controller: _venue,
+                  hint: tr('היכל התרבות', 'Heichal HaTarbut'),
+                  trailing: TextButton.icon(
+                    onPressed: _fillFromBusiness,
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    icon: const Icon(Icons.storefront_outlined, size: 16),
+                    label: Text(
+                      tr('מילוי מעסק', 'Fill from a business'),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
+                    ),
+                  ),
+                ),
+                AdminField(label: tr('כתובת', 'Address'), controller: _address),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: AdminField(
+                        label: tr('קו רוחב', 'Latitude'),
+                        controller: _latitude,
+                        hint: '31.8969',
+                        helper:
+                            tr('אפשר להדביק כאן "31.89, 35.01" מגוגל מפות', 'You can paste "31.89, 35.01" from Google Maps here'),
+                        textDirection: TextDirection.ltr,
+                        onChanged: _splitPastedCoordinates,
+                        validator: (v) => _coordinate(v, 90),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AdminField(
+                        label: tr('קו אורך', 'Longitude'),
+                        controller: _longitude,
+                        hint: '35.0095',
+                        helper: tr('בלי נקודה — אין מפה ואין ניווט באתר', 'No point — no map and no navigation on the site'),
+                        textDirection: TextDirection.ltr,
+                        validator: (v) => _coordinate(v, 180),
+                      ),
+                    ),
+                  ],
+                ),
+                AdminField(
+                  label: tr('קישור Waze', 'Waze link'),
+                  controller: _waze,
+                  hint: 'https://waze.com/ul?...',
+                  helper: tr('אם ריק, כפתור הניווט באתר ישתמש בנקודה', 'If empty, the site\'s navigation button uses the point'),
+                  textDirection: TextDirection.ltr,
+                  validator: _url,
+                ),
+                AdminSwitchRow(
+                  label: tr('אירוע אונליין', 'Online event'),
+                  value: _isOnline,
+                  onChanged: (v) => setState(() => _isOnline = v),
+                ),
+                if (_isOnline) ...[
+                  const SizedBox(height: 8),
+                  AdminField(
+                    label: tr('קישור לשידור', 'Stream link'),
+                    controller: _onlineUrl,
+                    hint: 'https://',
+                    textDirection: TextDirection.ltr,
+                    validator: _url,
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // ── Tickets ──
+          AdminCard(
+            title: tr('כרטיסים', 'Tickets'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AdminSwitchRow(
+                  label: tr('כניסה חופשית', 'Free entry'),
+                  value: _isFree,
+                  onChanged: (v) => setState(() => _isFree = v),
+                ),
+                AdminSwitchRow(
+                  label: tr('אזלו הכרטיסים', 'Tickets sold out'),
+                  value: _isSoldOut,
+                  onChanged: (v) => setState(() => _isSoldOut = v),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _labelled(
+                        tr('מחיר (₪)', 'Price (₪)'),
+                        TextFormField(
+                          controller: _price,
+                          enabled: !_isFree,
+                          validator: _isFree ? null : _priceValidator,
+                          textDirection: TextDirection.ltr,
+                          style: k.body,
+                          decoration: k.input(
+                            hint: '50',
+                            helper: _isFree ? tr('האירוע מסומן חינם', 'The event is marked free') : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AdminField(
+                        label: tr('מספר משתתפים מרבי', 'Maximum participants'),
+                        controller: _maxAttendees,
+                        hint: '100',
+                        textDirection: TextDirection.ltr,
+                        validator: _positiveInt,
+                      ),
+                    ),
+                  ],
+                ),
+                AdminField(
+                  label: tr('קישור לרכישת כרטיסים', 'Ticket purchase link'),
+                  controller: _ticketUrl,
+                  hint: 'https://',
+                  textDirection: TextDirection.ltr,
+                  validator: _url,
+                ),
+              ],
+            ),
+          ),
+        ],
+        side: [
+          // ── Status ──
+          AdminCard(
+            title: tr('פרסום', 'Publish'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(tr('סטטוס', 'Status'), style: k.label),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: _status,
+                  decoration: k.input(),
+                  style: k.body,
+                  items: [
+                    for (final s in _statuses.entries)
+                      DropdownMenuItem(value: s.key, child: Text(s.value)),
+                  ],
+                  onChanged: (v) => setState(() => _status = v!),
+                ),
+                const SizedBox(height: 6),
+                Text(_publishedNote(), style: k.hint.copyWith(fontSize: 12)),
+                const SizedBox(height: 8),
+                AdminSwitchRow(
+                  label: tr('מומלץ', 'Recommended'),
+                  value: _isFeatured,
+                  onChanged: (v) => setState(() => _isFeatured = v),
+                ),
+                AdminSwitchRow(
+                  label: tr('לשלוח התראה בפרסום', 'Send a notification when published'),
+                  value: _notifyOnPublish,
+                  onChanged: (v) => setState(() => _notifyOnPublish = v),
+                ),
+              ],
+            ),
+          ),
+          AdminCard(
+            title: tr('קטגוריות', 'Categories'),
+            child: _categoriesField(links),
+          ),
+          // The upload field has its own heading.
+          AdminCard(
+            child: ImageUploadField(
+              label: tr('תמונה', 'Image'),
+              controller: _image,
+              folder: 'events',
+            ),
+          ),
+
+          // ── Who ──
+          AdminCard(
+            title: tr('מארגן', 'Organiser'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AdminBusinessPickerField(
+                  label: tr('העסק המארגן', 'Organising business'),
+                  businessId: _businessId,
+                  onChanged: (b) => setState(() => _businessId = b?.id),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  tr('מוצג בעמוד האירוע בכרטיס "מאורגן על ידי". ריק — הכרטיס לא יוצג.', 'Shown on the event page in the "Organised by" card. Empty — the card is not shown.'),
+                  style: k.hint.copyWith(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1202,59 +1105,20 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     return tr('תאריך הפרסום יירשם בשמירה הראשונה בסטטוס "פורסם".', 'The publication date is recorded at the first save with the status "Published".');
   }
 
-  Widget _section(String title) {
+  /// A label above a field, as [AdminField] lays it out, for the fields it
+  /// does not cover (dates, times, a box that can be turned off).
+  Widget _labelled(String label, Widget field) {
+    final k = AdminKit.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 10),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: AppColors.navy,
-        ),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: k.label),
+          const SizedBox(height: 6),
+          field,
+        ],
       ),
-    );
-  }
-
-  Widget _padded(Widget child) =>
-      Padding(padding: const EdgeInsets.only(bottom: 12), child: child);
-
-  Widget _field(
-    TextEditingController controller,
-    InputDecoration decoration, {
-    int maxLines = 1,
-    bool ltr = false,
-    bool enabled = true,
-    String? Function(String?)? validator,
-    ValueChanged<String>? onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        enabled: enabled,
-        validator: enabled ? validator : null,
-        onChanged: onChanged,
-        textDirection: ltr ? TextDirection.ltr : null,
-        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-        decoration: decoration,
-      ),
-    );
-  }
-
-  Widget _toggle(String label, bool value, ValueChanged<bool> onChanged) {
-    return FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12),
-      ),
-      selected: value,
-      onSelected: onChanged,
-      selectedColor: AppColors.midBlue.withValues(alpha: 0.15),
-      checkmarkColor: AppColors.midBlue,
-      side: BorderSide(color: value ? AppColors.midBlue : AppColors.border),
     );
   }
 
@@ -1423,14 +1287,21 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     return n == null || n <= 0 ? tr('מספר שלם חיובי', 'A positive whole number') : null;
   }
 
-  void _toast(String message) {
+  /// Said at the top of the page and in a message at the bottom, since the
+  /// page may be scrolled far from the top when Save is pressed.
+  void _fail(String message) {
+    setState(() => _error = message);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.error),
     );
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    setState(() => _error = null);
+    if (!_formKey.currentState!.validate()) {
+      _fail(tr('יש שדות שצריך לתקן — הם מסומנים באדום.', 'Some fields need correcting — they are marked in red.'));
+      return;
+    }
 
     String? nullIfEmpty(TextEditingController c) {
       final t = c.text.trim();
@@ -1440,14 +1311,14 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     final start = parseAdminDate(_startDate.text)!;
     final end = parseAdminDate(_endDate.text);
     if (end != null && end.isBefore(start)) {
-      _toast(tr('תאריך הסיום לפני תאריך ההתחלה', 'The end date is before the start date'));
+      _fail(tr('תאריך הסיום לפני תאריך ההתחלה', 'The end date is before the start date'));
       return;
     }
     final pair = _coordinatePair(_latitude.text);
     final lat = pair?.lat ?? double.tryParse(_latitude.text.trim());
     final lng = pair?.lng ?? double.tryParse(_longitude.text.trim());
     if ((lat == null) != (lng == null)) {
-      _toast(tr('יש למלא גם קו רוחב וגם קו אורך, או להשאיר את שניהם ריקים', 'Fill in both latitude and longitude, or leave both empty'));
+      _fail(tr('יש למלא גם קו רוחב וגם קו אורך, או להשאיר את שניהם ריקים', 'Fill in both latitude and longitude, or leave both empty'));
       return;
     }
 
@@ -1517,7 +1388,7 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) _toast(tr('שגיאה: $e', 'Error: $e'));
+      if (mounted) _fail(tr('שגיאה: $e', 'Error: $e'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

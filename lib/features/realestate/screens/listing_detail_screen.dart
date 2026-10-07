@@ -1062,13 +1062,19 @@ class _StatCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  unit,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF3D3D3D),
+                // Shortened rather than spilling out of the card: at a large
+                // font size "3 Bathrooms" ran 12px past it on a phone.
+                Flexible(
+                  child: Text(
+                    unit,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF3D3D3D),
+                    ),
                   ),
                 ),
               ],
