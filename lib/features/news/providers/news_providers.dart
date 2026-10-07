@@ -4,6 +4,7 @@ import '../../../core/supabase/supabase_config.dart';
 
 import '../models/article.dart';
 import '../repositories/article_repository.dart';
+import '../../../shared/providers/nav_categories_provider.dart';
 
 final articleRepositoryProvider =
     Provider<ArticleRepository>((ref) => ArticleRepository());
@@ -66,18 +67,25 @@ final articleCategoryNamesProvider = FutureProvider<Map<String, String>>((ref) a
 /// article id. The article page's chip leads to the category, and its "More
 /// Related News" are the category's other stories, so both need the id.
 final articleFilingProvider =
-    FutureProvider<Map<String, ({String id, String name})>>((ref) async {
+    FutureProvider<Map<String, NavCategory>>((ref) async {
       final rows = await SupabaseConfig.client
           .from('entity_categories')
-          .select('entity_id, category_id, is_primary, categories(name)')
+          .select('entity_id, category_id, is_primary, categories(*)')
           .eq('entity_type', 'article');
-      final filed = <String, ({String id, String name})>{};
+      final filed = <String, NavCategory>{};
       for (final r in List<Map<String, dynamic>>.from(rows)) {
-        final name = (r['categories'] as Map?)?['name'] as String?;
-        if (name == null || name.isEmpty) continue;
+        final category = r['categories'] as Map?;
+        final he = category?['name'] as String?;
+        if (he == null || he.isEmpty) continue;
         final id = r['entity_id'] as String;
         if (!filed.containsKey(id) || r['is_primary'] == true) {
-          filed[id] = (id: r['category_id'] as String, name: name);
+          // Its name is read in the language on screen at the time.
+          filed[id] = NavCategory(
+            id: r['category_id'] as String,
+            name: he,
+            nameEn: category?['name_en'] as String?,
+            count: 1,
+          );
         }
       }
       return filed;

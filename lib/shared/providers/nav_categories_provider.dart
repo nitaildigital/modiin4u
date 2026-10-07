@@ -1,14 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/supabase/supabase_config.dart';
+import '../../core/providers/content_language.dart';
 
 /// One entry in a navbar menu.
 class NavCategory {
   final String id;
-  final String name;
+  final String nameHe;
+  final String? nameEn;
   final int count;
 
-  const NavCategory({required this.id, required this.name, required this.count});
+  /// In the reader's language (content_language.dart).
+  String get name => localName(nameHe, nameEn);
+
+  const NavCategory({required this.id, required String name, this.nameEn, required this.count})
+    : nameHe = name;
 }
 
 /// The categories a navbar menu offers, for one scope — `article` or
@@ -52,6 +58,7 @@ final navCategoriesProvider =
           NavCategory(
             id: r['id'] as String,
             name: (r['name'] as String?) ?? '',
+            nameEn: r['name_en'] as String?,
             count: count,
           ),
         );
@@ -85,7 +92,8 @@ final navProfessionalsProvider = FutureProvider<List<NavCategory>>((ref) async {
 
   final rows = await client
       .from('businesses')
-      .select('id, name')
+      // `*` so the English name comes too, once 00062 has added it.
+      .select('*')
       .inFilter('id', ids)
       .eq('status', 'active')
       .order('name', ascending: true);
@@ -94,6 +102,7 @@ final navProfessionalsProvider = FutureProvider<List<NavCategory>>((ref) async {
       NavCategory(
         id: r['id'] as String,
         name: (r['name'] as String?) ?? '',
+        nameEn: r['name_en'] as String?,
         count: 1,
       ),
   ];
@@ -106,14 +115,23 @@ final navProfessionalsProvider = FutureProvider<List<NavCategory>>((ref) async {
 /// and fell back to the word "עסקים" — so every category read "Businesses",
 /// and a shared link without the query string lost the name entirely. The
 /// name belongs to the row, not to the link.
+///
+/// The row rather than a string, so its [NavCategory.name] is read in the
+/// language on screen at the time.
 final categoryNameProvider =
-    FutureProvider.family<String?, String>((ref, categoryId) async {
+    FutureProvider.family<NavCategory?, String>((ref, categoryId) async {
       final isId = RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(categoryId);
       final row = await SupabaseConfig.client
           .from('categories')
-          .select('name')
+          .select('*')
           .eq(isId ? 'id' : 'slug', categoryId)
           .limit(1)
           .maybeSingle();
-      return row?['name'] as String?;
+      if (row == null) return null;
+      return NavCategory(
+        id: row['id'] as String,
+        name: (row['name'] as String?) ?? '',
+        nameEn: row['name_en'] as String?,
+        count: 0,
+      );
     });

@@ -207,7 +207,7 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent>
         else
           _buildGrid(
             rest.skip(side.length).toList(),
-            title: ref.watch(categoryNameProvider(catId)).valueOrNull ?? _t('Latest Stories', 'הכתבות האחרונות'),
+            title: ref.watch(categoryNameProvider(catId)).valueOrNull?.name ?? _t('Latest Stories', 'הכתבות האחרונות'),
           ),
       ],
     );

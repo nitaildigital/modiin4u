@@ -2528,6 +2528,40 @@ Notes:
   build; a file never copied is a 404. Tried on 32 files, Hebrew names
   included.
 
+### English names for businesses and categories — 7 October
+
+With English chosen, the menus and headings were English and everything in
+them Hebrew: "Businesses in Modiin" opened on מסעדות, "Find a Professional"
+on חשמלאי and ישראל לוי. The 2 Oct note below says why — one name per row,
+in Hebrew — and that English content was the client's call. Asked for now.
+
+- **00062** adds `name_en` to `categories` and `businesses`. Empty shows the
+  Hebrew name, so nothing goes blank.
+- **Drafts, for the client to review:** `tool/english_names_registry.json`
+  holds an English name for all 102 categories and the 297 businesses with a
+  Hebrew name — chains under their own (Bank Leumi, McDonald's, Super-Pharm),
+  names with an English part under that part, the rest transliterated with
+  ordinary words translated (ישראל לוי → Israel Levi, פארק עמק חפר → Emek
+  Hefer Park). `tool/fill_english_names.py` wrote them on 7 Oct; it fills only
+  empty fields, and `--undo` takes back only what is still its draft.
+- **The panel:** "Name in English" in the category and business editors; the
+  categories list shows it beside the Hebrew.
+- **Which name shows:** the models' `name` is a getter
+  (`core/providers/content_language.dart`) asked each time it is read — in
+  the app its language, on the website the language of the layout on screen,
+  the navbar's above 1100 px and the app's below. The two differ for a
+  first-time desktop visitor (English pages, Hebrew app locale), which is why
+  it is not simply the locale. A getter rather than `displayName(hebrew)` at
+  each of some seventy call sites.
+- Search matches the English name too. The navbar's News and
+  Businesses/Professionals menus read in the page's direction now; they were
+  right to left always, for the Hebrew names.
+- Still Hebrew: article titles and text, business descriptions and
+  addresses, event titles, deal names, neighbourhoods.
+- Checked in Chrome on a local build: the three menus, the home page's cards
+  and Find a Professional in English, Hebrew and back without a reload, and
+  the phone width in English.
+
 ### The admin panel redesigned, a word processor for articles — 7 October
 
 The client (6 Oct): make the panel faster to work in; a text editor with

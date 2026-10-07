@@ -14,7 +14,7 @@ class OfferRepository {
 
   static const _select = '''
     *,
-    businesses(id, name, address, logo_url, cover_url,
+    businesses(*,
       neighborhoods!businesses_neighborhood_id_fkey(name))
   ''';
 

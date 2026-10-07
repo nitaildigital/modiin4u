@@ -266,6 +266,19 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                           ),
                                         ),
                                       ),
+                                      // The English name, when it has one.
+                                      if ((c['name_en'] as String?)?.trim().isNotEmpty ?? false)
+                                        Flexible(
+                                          child: Text(
+                                            '  ·  ${(c['name_en'] as String).trim()}',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontFamily: AppFonts.rubik,
+                                              fontSize: 13,
+                                              color: AppColors.grayMeta,
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -399,6 +412,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
   bool _saving = false;
 
   late final TextEditingController _name;
+  late final TextEditingController _nameEn;
   late final TextEditingController _slug;
   late final TextEditingController _icon;
   late final TextEditingController _description;
@@ -424,6 +438,13 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
               ?.containsKey('in_menus') ??
           false);
 
+  /// The same for the English name, until 00062 runs.
+  bool get _hasNameEn =>
+      widget.category?.containsKey('name_en') ??
+      (ref.read(adminCategoryListProvider).valueOrNull?.firstOrNull
+              ?.containsKey('name_en') ??
+          false);
+
   bool get _isEditing => widget.category != null;
 
   @override
@@ -431,6 +452,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
     super.initState();
     final c = widget.category;
     _name = TextEditingController(text: c?['name'] as String? ?? '');
+    _nameEn = TextEditingController(text: c?['name_en'] as String? ?? '');
     _slug = TextEditingController(text: c?['slug'] as String? ?? '');
     _icon = TextEditingController(text: c?['icon'] as String? ?? '');
     _description = TextEditingController(
@@ -449,6 +471,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
   @override
   void dispose() {
     _name.dispose();
+    _nameEn.dispose();
     _slug.dispose();
     _icon.dispose();
     _description.dispose();
@@ -527,6 +550,10 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                         validator: (v) =>
                             v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                       ),
+                      // What the site and the app show with English chosen;
+                      // empty, they show the Hebrew name.
+                      if (_hasNameEn)
+                        _field(tr('שם באנגלית', 'Name in English'), _nameEn),
                       _field(tr('Slug (ריק ייווצר מהשם)', 'Slug (left empty, it is made from the name)'), _slug),
                       _field(tr('אייקון (אמוג\'י)', 'Icon (emoji)'), _icon),
                       _field(tr('תיאור', 'Description'), _description, maxLines: 2),
@@ -829,6 +856,7 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
       'parent_id': _parentId,
       'is_active': _isActive,
       if (_hasInMenus) 'in_menus': _scope != 'business' || _inMenus,
+      if (_hasNameEn) 'name_en': _nameEn.text.trim().isEmpty ? null : _nameEn.text.trim(),
     };
 
     try {

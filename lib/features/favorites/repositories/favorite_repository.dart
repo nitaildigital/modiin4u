@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../../core/providers/content_language.dart';
 
 /// What can be saved. The `favorites` table keys rows by this plus the id, so
 /// one business and one article can share an id without colliding.
@@ -101,8 +102,9 @@ extension FavoriteResolve on FavoriteRepository {
           : client
                 .from('businesses')
                 .select(
-                  'id, name, short_description, address, cover_url, '
-                  'og_image_url, rating, review_count',
+                  // `*` so the English name comes too, once 00062 has
+                  // added it.
+                  '*',
                 )
                 .inFilter('id', businessIds)
                 .then(List<Map<String, dynamic>>.from),
@@ -142,7 +144,7 @@ extension FavoriteResolve on FavoriteRepository {
         FavoriteEntry(
           kind: FavoriteKind.business,
           id: r['id'] as String,
-          title: (r['name'] as String?) ?? '',
+          title: localName((r['name'] as String?) ?? '', r['name_en'] as String?),
           subtitle: text(r['short_description']) ?? text(r['address']),
           imageUrl: text(r['cover_url']) ?? text(r['og_image_url']),
           route: '/business/${r['id']}',

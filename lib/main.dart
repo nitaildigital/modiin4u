@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -16,6 +18,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/page_title/page_title.dart';
 import 'shared/web_asset_precache.dart';
+import 'core/providers/content_language.dart';
 import 'shared/widgets/web_chrome.dart' show restoreWebLanguage, webIsHebrew;
 
 void main() async {
@@ -51,6 +54,18 @@ void main() async {
     debugPrint('⚠️ Supabase init failed/timed out: $e');
   }
   final container = ProviderContainer();
+  // Businesses' and categories' names follow the language on screen
+  // (content_language.dart).
+  bool appEnglish() => container.read(localeProvider).languageCode == 'en';
+  setContentLanguage(
+    kIsWeb
+        ? () {
+            final view = PlatformDispatcher.instance.views.first;
+            final width = view.physicalSize.width / view.devicePixelRatio;
+            return width > 1100 ? !webIsHebrew.value : appEnglish();
+          }
+        : appEnglish,
+  );
   if (kIsWeb) {
     final languageChosen = await restoreWebLanguage();
     _linkWebLanguage(container, languageChosen: languageChosen);

@@ -825,10 +825,10 @@ class _NewsMenu extends ConsumerWidget {
     final list = ref.watch(navCategoriesProvider('article')).valueOrNull ?? const <NavCategory>[];
     if (list.isEmpty) return const SizedBox.shrink();
 
-    // The names are the categories' own, in Hebrew, whichever language the
-    // page is in — so the card reads right to left, as the client's does.
+    // The names are in the page's language since they have English ones
+    // (00062), so the card reads the way the page does.
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isHebrew ? TextDirection.rtl : TextDirection.ltr,
       child: Material(
         type: MaterialType.transparency,
         child: Container(
@@ -907,11 +907,11 @@ class _MegaMenu extends ConsumerWidget {
     // The businesses menu has one photograph; professionals, two side by side.
     final slides = isBusinesses ? 1 : 2;
 
-    // Hebrew names, so right to left in either language: the first column
-    // on the right and the photographs at the far end, as on the client's
-    // site.
+    // The way the page reads: in Hebrew the first column on the right and
+    // the photographs at the far end, as on the client's site; in English,
+    // since the names have English ones (00062), the mirror of it.
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isHebrew ? TextDirection.rtl : TextDirection.ltr,
       child: Material(
         type: MaterialType.transparency,
         child: Container(

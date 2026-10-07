@@ -758,6 +758,15 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
   late final TextEditingController _ogImageUrl;
   // Basic info
   late final TextEditingController _name;
+  late final TextEditingController _nameEn;
+
+  /// Whether the database has `name_en` yet; until 00062 runs the field is
+  /// neither shown nor saved, so a save cannot fail on it.
+  bool get _hasNameEn =>
+      widget.business?.containsKey('name_en') ??
+      (ref.read(adminBusinessListProvider).valueOrNull?.firstOrNull
+              ?.containsKey('name_en') ??
+          false);
   late final TextEditingController _slug;
   late final TextEditingController _shortDesc;
   late final TextEditingController _fullDesc;
@@ -948,6 +957,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
       text: b?['og_image_url'] as String? ?? '',
     );
     _name = TextEditingController(text: b?['name'] as String? ?? '');
+    _nameEn = TextEditingController(text: b?['name_en'] as String? ?? '');
     _slug = TextEditingController(text: b?['slug'] as String? ?? '');
     _shortDesc = TextEditingController(
       text: b?['short_description'] as String? ?? '',
@@ -1023,6 +1033,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
     _featuredEnd.dispose();
     _gallery.dispose();
     _name.dispose();
+    _nameEn.dispose();
     _slug.dispose();
     _shortDesc.dispose();
     _fullDesc.dispose();
@@ -1139,6 +1150,10 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
           _name,
           validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
         ),
+        // What the site and the app show with English chosen; empty, they
+        // show the Hebrew name.
+        if (_hasNameEn)
+          _field(tr('שם באנגלית', 'Name in English'), _nameEn),
         _field(tr('Slug (כתובת הדף — ריק ייווצר מהשם)', 'Slug (the page address — left empty, it is made from the name)'), _slug),
         _field(tr('תיאור קצר (מוצג בכרטיס)', 'Short description (shown on the card)'), _shortDesc, maxLines: 2),
         _field(tr('אודות (מוצג בדף העסק)', 'About (shown on the business page)'), _fullDesc, maxLines: 6),
@@ -2143,6 +2158,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
       'cover_url': _t(_coverUrl),
       'og_image_url': _t(_ogImageUrl),
       'name': _name.text.trim(),
+      if (_hasNameEn) 'name_en': _t(_nameEn),
       'slug': _slug.text.trim(),
       'short_description': _t(_shortDesc),
       'full_description': _t(_fullDesc),

@@ -1,3 +1,5 @@
+import '../../../core/providers/content_language.dart';
+
 class BusinessHours {
   final int dayOfWeek; // 1=Monday, 7=Sunday
   final String? openTime; // "09:00"
@@ -34,7 +36,12 @@ enum BusinessStatus { pending, active, suspended, rejected }
 
 class Business {
   final String id;
-  final String name;
+
+  /// The name as written in Hebrew, and in English where the panel has one
+  /// (00062); [name] is the one for the reader's language.
+  final String nameHe;
+  final String? nameEn;
+  String get name => localName(nameHe, nameEn);
   final String slug;
   final String category;
   final String? subcategory;
@@ -84,7 +91,8 @@ class Business {
 
   Business({
     required this.id,
-    required this.name,
+    required String name,
+    this.nameEn,
     this.slug = '',
     required this.category,
     this.subcategory,
@@ -119,7 +127,8 @@ class Business {
     this.isPark = false,
     this.ownerId,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  }) : nameHe = name,
+       createdAt = createdAt ?? DateTime.now();
 
   Business copyWith({
     String? name,
@@ -157,7 +166,8 @@ class Business {
   }) {
     return Business(
       id: id,
-      name: name ?? this.name,
+      name: name ?? nameHe,
+      nameEn: nameEn,
       slug: slug ?? this.slug,
       category: category ?? this.category,
       subcategory: subcategory ?? this.subcategory,
@@ -253,6 +263,7 @@ class Business {
     return Business(
       id: json['id'] as String,
       name: (json['name'] as String?) ?? '',
+      nameEn: json['name_en'] as String?,
       slug: (json['slug'] as String?) ?? '',
       category: (json['category'] as String?) ?? '',
       subcategory: json['subcategory'] as String?,

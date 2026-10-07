@@ -87,7 +87,8 @@ final filteredEventsProvider = FutureProvider<List<Event>>((ref) async {
 final eventCategoriesProvider = FutureProvider<List<EventCategory>>((ref) async {
   final rows = await SupabaseConfig.client
       .from('categories')
-      .select('id, name, slug, image_url, sort_order')
+      // `*` so the English name comes too, once 00062 has added it.
+      .select('*')
       .eq('scope', 'event')
       .eq('is_active', true)
       .order('sort_order', ascending: true);

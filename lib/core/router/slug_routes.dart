@@ -6,6 +6,7 @@ import '../supabase/supabase_config.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_fonts.dart';
 import '../../shared/widgets/web_chrome.dart' show webIsHebrew;
+import '../providers/content_language.dart';
 
 /// The old WordPress site's addresses, served as they were.
 ///
@@ -22,9 +23,10 @@ import '../../shared/widgets/web_chrome.dart' show webIsHebrew;
 /// (deploy/nginx/seo-redirects.conf) rather than reaching this.
 enum SlugKind {
   article('articles', 'id, title', null),
-  business('businesses', 'id, name', null),
-  businessCategory('categories', 'id, name', 'business'),
-  articleCategory('categories', 'id, name', 'article');
+  // `*` for the English name, which a database without 00062 lacks.
+  business('businesses', '*', null),
+  businessCategory('categories', '*', 'business'),
+  articleCategory('categories', '*', 'article');
 
   const SlugKind(this.table, this.columns, this.scope);
   final String table;
@@ -53,7 +55,8 @@ final slugRowProvider =
       final r = rows.first;
       return (
         id: r['id'] as String,
-        name: ((r['title'] ?? r['name']) as String?) ?? '',
+        name: r['title'] as String? ??
+            localName((r['name'] as String?) ?? '', r['name_en'] as String?),
       );
     });
 

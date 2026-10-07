@@ -38,7 +38,7 @@ class BusinessListScreen extends ConsumerWidget {
   String _title(WidgetRef ref) {
     final id = categoryId;
     if (id == null) return title;
-    return ref.watch(categoryNameProvider(id)).valueOrNull ?? title;
+    return ref.watch(categoryNameProvider(id)).valueOrNull?.name ?? title;
   }
 
   @override

@@ -1,3 +1,5 @@
+import '../../../core/providers/content_language.dart';
+
 /// A deal, as the `offers` table stores it.
 ///
 /// The Deals screen used to carry four invented offers on shops that are not
@@ -14,7 +16,12 @@ class Offer {
   final String? code;
 
   final String? businessId;
-  final String? businessName;
+  /// The business's name in Hebrew, and in English where the panel has one
+  /// (00062); [businessName] is the reader's.
+  final String? businessNameHe;
+  final String? businessNameEn;
+  String? get businessName =>
+      businessNameHe == null ? null : localName(businessNameHe!, businessNameEn);
   final String? businessAddress;
 
   /// The logo where the business has one, its cover where it does not — for
@@ -54,7 +61,8 @@ class Offer {
     this.imageUrl,
     this.code,
     this.businessId,
-    this.businessName,
+    String? businessName,
+    this.businessNameEn,
     this.businessAddress,
     this.businessLogoUrl,
     this.businessLogo,
@@ -70,7 +78,7 @@ class Offer {
     this.viewCount = 0,
     this.audience,
     this.createdAt,
-  });
+  }) : businessNameHe = businessName;
 
   factory Offer.fromJson(Map<String, dynamic> json) {
     final biz = json['businesses'];
@@ -90,6 +98,7 @@ class Offer {
       code: json['code'] as String?,
       businessId: json['business_id'] as String?,
       businessName: bizText('name'),
+      businessNameEn: bizText('name_en'),
       businessAddress: bizText('address'),
       businessLogoUrl: bizText('logo_url') ?? bizText('cover_url'),
       businessLogo: bizText('logo_url'),

@@ -41,7 +41,8 @@ class BusinessRepository {
     }
     if (search != null && search.isNotEmpty) {
       query = query.or(
-        'name.ilike.%$search%,short_description.ilike.%$search%',
+        // The English name too (00062 — run it before this is deployed).
+        'name.ilike.%$search%,name_en.ilike.%$search%,short_description.ilike.%$search%',
       );
     }
 
