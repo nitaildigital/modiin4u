@@ -146,7 +146,10 @@ final nearbyListingsProvider = FutureProvider.family<List<Listing>, String>((
 /// Everything the signed-in person has posted, pending ones included.
 /// Empty when signed out rather than an error, so the screen can offer to
 /// sign in instead of showing a failure.
-final myListingsProvider = FutureProvider<List<Listing>>((ref) async {
+// Dropped when My Apartments closes, so reopening it shows what the panel
+// decided meanwhile: kept for the session, an approved listing still read
+// "Pending" until the app restarted.
+final myListingsProvider = FutureProvider.autoDispose<List<Listing>>((ref) async {
   final user = ref.watch(authProvider);
   if (user == null) return const [];
   return ref.watch(listingRepositoryProvider).fetchMine(user.id);

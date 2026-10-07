@@ -19,6 +19,7 @@ import 'l10n/app_localizations.dart';
 import 'shared/page_title/page_title.dart';
 import 'shared/web_asset_precache.dart';
 import 'core/providers/content_language.dart';
+import 'core/providers/resume_refresh.dart';
 import 'shared/widgets/web_chrome.dart' show restoreWebLanguage, webIsHebrew;
 
 void main() async {
@@ -158,7 +159,9 @@ class Modiin4uApp extends ConsumerWidget {
         routerConfig: appRouter,
         // Push notifications: taps open their page, and one that arrives
         // while the app is open shows as a banner over it.
-        builder: (context, child) => PushHost(child: child ?? const SizedBox.shrink()),
+        builder: (context, child) => ResumeRefresh(
+          child: PushHost(child: child ?? const SizedBox.shrink()),
+        ),
 
         // ─── Language ───
         //
