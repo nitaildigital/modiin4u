@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/widgets/m_account_widgets.dart' show MBackArrow;
 import '../../../shared/widgets/network_photo.dart';
 import '../models/listing.dart';
 import '../providers/listing_providers.dart';
@@ -90,6 +92,11 @@ class _RealEstateMapScreenState extends ConsumerState<RealEstateMapScreen> {
             .toList();
     final selected = pinned.where((x) => x.id == _selectedId).firstOrNull;
 
+    // The search row sits where the frame puts it, unless the phone's status
+    // bar reaches lower than that (the taller iPhones), when it moves down to
+    // stay clear of it.
+    final top = math.max(58.0, MediaQuery.paddingOf(context).top + 8);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -119,10 +126,15 @@ class _RealEstateMapScreenState extends ConsumerState<RealEstateMapScreen> {
               // icon opens the listing filters now, and carries a dot while
               // any of them is set — the same mark the Bars page's filter
               // control uses.
-              Positioned(
-                top: 58,
-                left: 16,
-                right: 16,
+              PositionedDirectional(
+                top: top,
+                start: 16,
+                child: _MapBackButton(onTap: () => context.back('/realestate')),
+              ),
+              PositionedDirectional(
+                top: top,
+                start: 72,
+                end: 16,
                 child: Container(
                   height: 48,
                   padding: const EdgeInsetsDirectional.only(start: 16, end: 6),
@@ -202,7 +214,7 @@ class _RealEstateMapScreenState extends ConsumerState<RealEstateMapScreen> {
               // map that looks broken.
               if (pinned.isEmpty)
                 Positioned(
-                  top: 122,
+                  top: top + 64,
                   left: 16,
                   right: 16,
                   child: Container(
@@ -559,6 +571,48 @@ class _PropertyCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// The way back, at the start of the search row.
+//
+// The map fills the screen and has no app bar, so on an iPhone — which has
+// no system back button — there was no visible way off it.
+// ═══════════════════════════════════════════════
+class _MapBackButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _MapBackButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: MaterialLocalizations.of(context).backButtonTooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFE7E7E7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: MBackArrow(onTap: onTap),
+        ),
+      ),
     );
   }
 }

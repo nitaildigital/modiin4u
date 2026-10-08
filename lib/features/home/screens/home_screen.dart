@@ -79,12 +79,42 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
     return l.goodEvening;
   }
 
-  void _onSearch() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
-      context.push('/search?q=${Uri.encodeComponent(query)}');
-      _searchController.clear();
-    }
+  /// The keyword search, from the magnifier at the start of the bar.
+  ///
+  /// The bar itself opens the chat now (the client's choice), and the results
+  /// page shows the words it was given rather than taking any, so they are
+  /// typed here first.
+  Future<void> _openKeywordSearch() async {
+    final query = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.viewInsetsOf(ctx).bottom),
+        child: SafeArea(
+          top: false,
+          child: TextField(
+            controller: _searchController,
+            autofocus: true,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (value) => Navigator.pop(ctx, value.trim()),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF1F1F1F)),
+            decoration: InputDecoration(
+              hintText: MaterialLocalizations.of(ctx).searchFieldLabel,
+              hintStyle: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF6D6D6D)),
+              prefixIcon: const Icon(IconsaxPlusLinear.search_normal_1, color: Color(0xFF6D6D6D), size: 18),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (!mounted || query == null || query.isEmpty) return;
+    _searchController.clear();
+    context.push('/search?q=${Uri.encodeComponent(query)}');
   }
 
   @override
@@ -290,34 +320,54 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(50)),
                   child: Row(
                     children: [
-                      const SizedBox(width: 16),
-                      const Icon(IconsaxPlusLinear.search_normal_1, color: Color(0xFF6D6D6D), size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onSubmitted: (_) => _onSearch(),
-                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: const Color(0xFF1F1F1F)),
-                          decoration: InputDecoration(
-                            hintText: l.searchPlaceholder,
-                            // White on white, as drawn — not the theme's
-                            // grey field fill.
-                            filled: false,
-                            hintStyle: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF6D6D6D),
+                      // The magnifier is the keyword search; the rest of the
+                      // bar asks the chat. A 40px target, so the icon sits
+                      // where it was drawn.
+                      const SizedBox(width: 4),
+                      Semantics(
+                        button: true,
+                        label: MaterialLocalizations.of(context).searchFieldLabel,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _openKeywordSearch,
+                          child: const SizedBox(
+                            width: 40,
+                            height: 48,
+                            child: Center(
+                              child: Icon(IconsaxPlusLinear.search_normal_1, color: Color(0xFF6D6D6D), size: 18),
                             ),
-                            border: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                          ),
+                        ),
+                      ),
+                      // Not a field any more: tapping it opens the PersonaAI
+                      // chat straight away (the client's choice), so the
+                      // placeholder is only text inviting the question.
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => openPersonaAiChat(context),
+                          child: SizedBox(
+                            height: 48,
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                l.searchPlaceholder,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  color: const Color(0xFF6D6D6D),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                       // Ask: the client's PersonaAI chat (5 Oct), which
-                      // replaced the floating bubble. Enter in the field
-                      // still searches the site.
+                      // replaced the floating bubble — the same as tapping
+                      // the bar.
                       GestureDetector(
                         onTap: () => openPersonaAiChat(context),
                         child: Container(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/widgets/m_account_widgets.dart' show MBackArrow;
 import '../providers/restaurant_providers.dart';
 import 'web_restaurants_map_screen.dart';
 import '../../../shared/widgets/app_map.dart';
@@ -80,6 +83,11 @@ class _MobileRestaurantsMapContentState
         .where((p) => p.business.id == _selectedId)
         .firstOrNull;
 
+    // The search row sits where the frame puts it, unless the phone's status
+    // bar reaches lower than that (the taller iPhones), when it moves down to
+    // stay clear of it.
+    final top = math.max(58.0, MediaQuery.paddingOf(context).top + 8);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -114,10 +122,15 @@ class _MobileRestaurantsMapContentState
               // ── Search ──
               //
               // A `Text` before, so nothing could be typed.
-              Positioned(
-                top: 58,
-                left: 16,
-                right: 16,
+              PositionedDirectional(
+                top: top,
+                start: 16,
+                child: _MapBackButton(onTap: () => context.back('/restaurants')),
+              ),
+              PositionedDirectional(
+                top: top,
+                start: 72,
+                end: 16,
                 child: Container(
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -175,7 +188,7 @@ class _MobileRestaurantsMapContentState
               // a failure to load.
               if (places.isEmpty)
                 Positioned(
-                  top: 122,
+                  top: top + 64,
                   left: 16,
                   right: 16,
                   child: Container(
@@ -523,6 +536,48 @@ class _CoverImage extends StatelessWidget {
       // A broken link should look like a place with no photo, not like an
       // error.
       errorBuilder: (_, _, _) => _fallback,
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// The way back, at the start of the search row.
+//
+// The map fills the screen and has no app bar, so on an iPhone — which has
+// no system back button — there was no visible way off it.
+// ═══════════════════════════════════════════════
+class _MapBackButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _MapBackButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: MaterialLocalizations.of(context).backButtonTooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFE7E7E7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: MBackArrow(onTap: onTap),
+        ),
+      ),
     );
   }
 }
