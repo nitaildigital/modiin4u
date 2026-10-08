@@ -795,6 +795,31 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                 ],
               ),
             ),
+          ] else if (b.hoursText != null) ...[
+            // No day-by-day hours, but the hours as the business wrote them
+            // (the old site's text, or the panel's), printed as they stand:
+            // read into the rows above they would be guesses.
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(_t('Opening hours', 'שעות פתיחה'), style: _inter(14, weight: FontWeight.w600, color: _kBody)),
+                  const SizedBox(height: 8),
+                  // Each line in its own direction, at the page's start edge:
+                  // a line of only times set right to left would show
+                  // "08:00 - 18:00" as "18:00 - 08:00".
+                  for (final line in b.hoursText!.split('\n'))
+                    Text(
+                      line,
+                      textDirection: _dirOf(line),
+                      textAlign: _isHebrew ? TextAlign.right : TextAlign.left,
+                      style: _inter(14, weight: FontWeight.w500, color: _kBody, height: 1.6),
+                    ),
+                ],
+              ),
+            ),
           ],
         ],
       ),

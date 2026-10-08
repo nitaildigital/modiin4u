@@ -639,6 +639,16 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
               ?.containsKey('name_en') ??
           false);
   late final TextEditingController _slug;
+
+  /// Opening hours as the business writes them (00071) — what the old site
+  /// had, holiday notes and all. The pages show it where no day below has
+  /// hours. Like `name_en`, neither shown nor saved until the column exists.
+  late final TextEditingController _hoursText;
+  bool get _hasHoursText =>
+      widget.business?.containsKey('hours_text') ??
+      (ref.read(adminBusinessListProvider).valueOrNull?.firstOrNull
+              ?.containsKey('hours_text') ??
+          false);
   late final TextEditingController _shortDesc;
   late final TextEditingController _fullDesc;
   late final TextEditingController _phone;
@@ -830,6 +840,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
     _name = TextEditingController(text: b?['name'] as String? ?? '');
     _nameEn = TextEditingController(text: b?['name_en'] as String? ?? '');
     _slug = TextEditingController(text: b?['slug'] as String? ?? '');
+    _hoursText = TextEditingController(text: b?['hours_text'] as String? ?? '');
     _shortDesc = TextEditingController(
       text: b?['short_description'] as String? ?? '',
     );
@@ -906,6 +917,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
     _name.dispose();
     _nameEn.dispose();
     _slug.dispose();
+    _hoursText.dispose();
     _shortDesc.dispose();
     _fullDesc.dispose();
     _phone.dispose();
@@ -960,7 +972,35 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
           AdminCard(title: tr('פרטי העסק', 'Business details'), child: _buildDetailsTab(neighborhoods)),
           // The gallery editor has its own heading.
           AdminCard(child: AdminGalleryEditor(controller: _gallery)),
-          AdminCard(title: tr('שעות פתיחה', 'Opening hours'), child: _buildHoursTab()),
+          AdminCard(
+            title: tr('שעות פתיחה', 'Opening hours'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_hasHoursText) ...[
+                  TextFormField(
+                    controller: _hoursText,
+                    minLines: 3,
+                    maxLines: 8,
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: tr('שעות פתיחה (טקסט)', 'Opening hours (text)'),
+                      labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                      helperText: tr(
+                        'מוצג בדף העסק כשלא הוגדרו שעות לפי יום',
+                        'Shown on the business page when no hours are set day by day',
+                      ),
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                _buildHoursTab(),
+              ],
+            ),
+          ),
           AdminCard(title: tr('תפריט', 'Menu'), collapsible: true, initiallyOpen: _menuItems.isNotEmpty, child: _buildMenuTab()),
         ],
         side: [
@@ -2033,6 +2073,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
       'slug': _slug.text.trim(),
       'short_description': _t(_shortDesc),
       'full_description': _t(_fullDesc),
+      if (_hasHoursText) 'hours_text': _t(_hoursText),
       'kind': _kind,
       // A park has no contact details (the client's rule), so any typed
       // before switching the type are not kept.

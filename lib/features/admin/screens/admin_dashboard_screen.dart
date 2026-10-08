@@ -23,6 +23,7 @@ import 'admin_municipal_places_screen.dart';
 import 'admin_media_screen.dart';
 import 'admin_offers_screen.dart';
 import 'admin_promotions_screen.dart';
+import 'admin_photo_submissions_screen.dart';
 import 'admin_jobs_screen.dart';
 import 'admin_agreements_screen.dart';
 import 'admin_revenue_screen.dart';
@@ -74,6 +75,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     // ── מסחר ופרסום ──
     (tr('מבצעים', 'Deals'), IconsaxPlusLinear.discount_shape),
     (tr('קידומים', 'Promotions'), IconsaxPlusLinear.ranking_1),
+    (tr('תמונות תושבים', 'Resident photos'), IconsaxPlusLinear.gallery_add),
     (tr('משרות', 'Jobs'), IconsaxPlusLinear.briefcase),
     (tr('הסכמים', 'Agreements'), IconsaxPlusLinear.document),
     (tr('הכנסות', 'Revenue'), IconsaxPlusLinear.wallet_3),
@@ -112,9 +114,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     'businesses', 'articles', 'events', 'businesses', 'businesses',
     'businesses', 'businesses', //
     'categories', 'categories', 'categories', 'media', //
-    // Promotions and jobs go with businesses: whoever may edit businesses
-    // decides on them (00069's admin_decide_promotion asks the same).
-    'offers', 'businesses', 'businesses', 'revenue', 'revenue', 'campaigns', 'campaigns', //
+    // Promotions, residents' photos and jobs go with businesses: whoever may
+    // edit businesses decides on them (00069's admin_decide_promotion and
+    // 00071's admin_decide_photo ask the same).
+    'offers', 'businesses', 'businesses', 'businesses', 'revenue', 'revenue', 'campaigns',
+    'campaigns', //
     'moderation', 'moderation', 'moderation', 'push', 'settings', //
     'team', 'audit', 'settings', 'settings', 'settings', 'articles', null,
   ];
@@ -126,7 +130,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   /// Where the settings pane sits in [_sections] — the top bar's gear jumps
   /// here rather than doing nothing, which is what it used to do.
-  static const _settingsSection = 31;
+  static const _settingsSection = 32;
 
   /// The index in [_sections] each sidebar heading sits above. They move
   /// whenever a section is added: when חניונים went in at 6 these were left
@@ -137,8 +141,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     2: tr('תוכן', 'Content'),
     9: tr('טקסונומיה', 'Taxonomy'),
     13: tr('מסחר ופרסום', 'Commerce & advertising'),
-    20: tr('אינטראקציה', 'Interaction'),
-    25: tr('מערכת', 'System'),
+    21: tr('אינטראקציה', 'Interaction'),
+    26: tr('מערכת', 'System'),
   };
 
   @override
@@ -319,23 +323,24 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       12 => const AdminMediaScreen(),
       13 => const AdminOffersScreen(),
       14 => const AdminPromotionsScreen(),
-      15 => const AdminJobsScreen(),
-      16 => const AdminAgreementsScreen(),
-      17 => const AdminRevenueScreen(),
-      18 => const AdminAdPlacementsScreen(),
-      19 => const AdminCampaignsScreen(),
-      20 => const AdminReviewsScreen(),
-      21 => const AdminCommentsScreen(),
-      22 => const AdminReportsScreen(),
-      23 => const AdminPushScreen(),
-      24 => const AdminStepsSection(),
-      25 => const AdminTeamScreen(),
-      26 => const AdminAuditScreen(),
-      27 => const AdminTrashScreen(),
-      28 => const AdminHomeBuilderScreen(),
-      29 => const AdminFlagsScreen(),
-      30 => const AdminSitePagesScreen(),
-      31 => const _SettingsSection(),
+      15 => const AdminPhotoSubmissionsScreen(),
+      16 => const AdminJobsScreen(),
+      17 => const AdminAgreementsScreen(),
+      18 => const AdminRevenueScreen(),
+      19 => const AdminAdPlacementsScreen(),
+      20 => const AdminCampaignsScreen(),
+      21 => const AdminReviewsScreen(),
+      22 => const AdminCommentsScreen(),
+      23 => const AdminReportsScreen(),
+      24 => const AdminPushScreen(),
+      25 => const AdminStepsSection(),
+      26 => const AdminTeamScreen(),
+      27 => const AdminAuditScreen(),
+      28 => const AdminTrashScreen(),
+      29 => const AdminHomeBuilderScreen(),
+      30 => const AdminFlagsScreen(),
+      31 => const AdminSitePagesScreen(),
+      32 => const _SettingsSection(),
       _ => const SizedBox(),
     };
   }
@@ -1438,8 +1443,8 @@ class _RepliesApprovalSettingState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tr('תגובות לביקורות ממתינות לאישור',
-                      'Replies to reviews wait for approval'),
+                  tr('תגובות (לביקורות ולכתבות) ממתינות לאישור',
+                      'Replies to reviews and article comments wait for approval'),
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontWeight: FontWeight.w500,

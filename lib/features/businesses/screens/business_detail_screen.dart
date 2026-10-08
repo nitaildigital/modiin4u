@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import '../../../shared/widgets/sign_in_action.dart';
 import '../../../core/supabase/account_blocked.dart';
 import '../../../shared/widgets/report_sheet.dart';
@@ -11,18 +11,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/widgets/m_account_widgets.dart' show mTr;
 import '../../../shared/widgets/error_retry.dart';
 import '../models/menu_item.dart' as menu;
 import '../../../shared/widgets/skeleton.dart';
 import '../models/business.dart';
 import '../models/review_reply.dart';
 import '../providers/business_providers.dart';
+import '../services/photo_submission.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../../shared/widgets/network_photo.dart';
@@ -984,26 +987,128 @@ class _BusinessDetailContentState
   // Photos tab
   // ─────────────────────────────────────────────
   Widget _buildPhotosTab() {
+    // Sending a photograph needs an account, and accounts are the app's
+    // (28 September): a narrow browser shows the gallery and nothing more.
+    final canAdd = !kIsWeb;
+    final pending = canAdd
+        ? ref.watch(myPendingPhotosProvider(business.id)).valueOrNull ??
+              const <PhotoSubmission>[]
+        : const <PhotoSubmission>[];
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // A photo-upload tile sat here. It opened the picker and
-          // toasted "Photo X selected for upload" — nothing was ever
-          // uploaded. Resident-contributed photos need storage and table
-          // policies of their own and somewhere to moderate them, and
-          // `entity_media` has no status column, so the control is gone
-          // rather than continuing to claim an upload that never happens.
-
           // A gallery and a user-photo grid used to sit here, both drawn as
           // coloured squares — ten of them, the same ten for every business.
           // The real photographs are in `media` now; see
-          // businessGalleryProvider.
-          _GalleryGrid(businessId: business.id),
+          // businessGalleryProvider. A resident's own photograph joins them
+          // once the panel approves it (00071); until then only its sender
+          // sees it, marked as waiting.
+          _GalleryGrid(
+            businessId: business.id,
+            pending: pending,
+            addButton: canAdd
+                ? _AddPhotoButton(busy: _sendingPhoto, onTap: _addPhoto)
+                : null,
+          ),
         ],
       ),
     );
+  }
+
+  bool _sendingPhoto = false;
+
+  /// A resident's photograph of this business, sent to the panel's queue
+  /// (Resident photos). Signed out, it says sign-in is needed, as a review
+  /// does; the photograph reaches the gallery only once approved.
+  Future<void> _addPhoto() async {
+    if (_sendingPhoto) return;
+    if (ref.read(authProvider) == null) {
+      _reviewToast(
+        mTr(context, 'Sign in to add a photo', 'יש להתחבר כדי להוסיף תמונה'),
+        error: true,
+        signIn: true,
+      );
+      return;
+    }
+
+    final XFile? picked;
+    try {
+      picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2000,
+        imageQuality: 85,
+      );
+    } catch (_) {
+      if (mounted) {
+        _reviewToast(
+          mTr(context, 'Could not open your photos', 'לא ניתן לפתוח את התמונות'),
+          error: true,
+        );
+      }
+      return;
+    }
+    if (picked == null || !mounted) return;
+    final bytes = await picked.readAsBytes();
+    if (!mounted) return;
+    if (bytes.lengthInBytes > PhotoSubmissions.maxBytes) {
+      _reviewToast(
+        mTr(
+          context,
+          'This photo is too large — up to 10 MB',
+          'התמונה גדולה מדי — עד 10MB',
+        ),
+        error: true,
+      );
+      return;
+    }
+
+    // A last look at the photograph, with room for a caption; leaving the
+    // caption empty sends it without one.
+    final caption = await showDialog<String>(
+      context: context,
+      builder: (_) => _PhotoCaptionDialog(bytes: bytes),
+    );
+    if (caption == null || !mounted) return;
+
+    setState(() => _sendingPhoto = true);
+    try {
+      await PhotoSubmissions.send(
+        businessId: business.id,
+        bytes: bytes,
+        fileName: picked.name,
+        caption: caption,
+      );
+      ref.invalidate(myPendingPhotosProvider(business.id));
+      if (mounted) {
+        _reviewToast(
+          mTr(
+            context,
+            'Thanks! Your photo will appear after approval',
+            'תודה! התמונה תופיע לאחר אישור',
+          ),
+        );
+      }
+    } on PhotoSenderBlocked {
+      if (mounted) _reviewToast(accountBlockedMessage(context), error: true);
+    } catch (e) {
+      final blocked = await refusedAsBlocked(e);
+      if (!mounted) return;
+      _reviewToast(
+        blocked
+            ? accountBlockedMessage(context)
+            : mTr(
+                context,
+                'The photo was not sent. Please try again.',
+                'התמונה לא נשלחה. נסו שוב.',
+              ),
+        error: true,
+      );
+    } finally {
+      if (mounted) setState(() => _sendingPhoto = false);
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -1410,6 +1515,23 @@ class _BusinessDetailContentState
             ),
             const SizedBox(height: 20),
             ..._buildHoursRows(),
+          ] else if (business.hoursText != null) ...[
+            // No day-by-day hours, but the hours as the business wrote them
+            // (the old site's text, or the panel's): printed as they stand,
+            // line breaks and all, since read into a table they would be
+            // guesses.
+            const SizedBox(height: 24),
+            Text(
+              mTr(context, 'Opening hours', 'שעות פתיחה'),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1F1F1F),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _HoursText(text: business.hoursText!),
           ],
         ],
       ),
@@ -2434,10 +2556,19 @@ class _BusinessLogo extends StatelessWidget {
   }
 }
 
-/// A business's photographs, from the WordPress gallery.
+/// A business's photographs, from the WordPress gallery, after the reader's
+/// own still waiting for the panel.
 class _GalleryGrid extends ConsumerWidget {
   final String businessId;
-  const _GalleryGrid({required this.businessId});
+  final List<PhotoSubmission> pending;
+
+  /// "Add photo", in the app; null in a browser.
+  final Widget? addButton;
+  const _GalleryGrid({
+    required this.businessId,
+    this.pending = const [],
+    this.addButton,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -2447,32 +2578,50 @@ class _GalleryGrid extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 40),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, _) => const _NoPhotosYet(),
+      error: (_, _) => _NoPhotosYet(action: addButton),
       data: (urls) {
-        if (urls.isEmpty) return const _NoPhotosYet();
-        return LayoutBuilder(
-          builder: (context, c) {
-            // Three across on a phone, four on anything wider.
-            final perRow = c.maxWidth > 700 ? 4 : 3;
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: urls.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: perRow,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-              ),
-              itemBuilder: (context, i) => GestureDetector(
-                onTap: () => _openViewer(context, urls, i),
-                child: NetworkPhoto(
-                  url: urls[i],
-                  radius: BorderRadius.circular(10),
-                  icon: IconsaxPlusLinear.gallery,
-                ),
-              ),
-            );
-          },
+        if (urls.isEmpty && pending.isEmpty) {
+          return _NoPhotosYet(action: addButton);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (addButton != null) ...[addButton!, const SizedBox(height: 16)],
+            LayoutBuilder(
+              builder: (context, c) {
+                // Three across on a phone, four on anything wider.
+                final perRow = c.maxWidth > 700 ? 4 : 3;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: pending.length + urls.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: perRow,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                  ),
+                  itemBuilder: (context, i) {
+                    if (i < pending.length) {
+                      final url = pending[i].url;
+                      return GestureDetector(
+                        onTap: () => _openViewer(context, [url], 0),
+                        child: _PendingPhotoTile(url: url),
+                      );
+                    }
+                    final at = i - pending.length;
+                    return GestureDetector(
+                      onTap: () => _openViewer(context, urls, at),
+                      child: NetworkPhoto(
+                        url: urls[at],
+                        radius: BorderRadius.circular(10),
+                        icon: IconsaxPlusLinear.gallery,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         );
       },
     );
@@ -2584,7 +2733,9 @@ class _PhotoViewerState extends State<_PhotoViewer> {
 }
 
 class _NoPhotosYet extends StatelessWidget {
-  const _NoPhotosYet();
+  /// "Add photo", where the reader can send one.
+  final Widget? action;
+  const _NoPhotosYet({this.action});
 
   @override
   Widget build(BuildContext context) {
@@ -2615,8 +2766,227 @@ class _NoPhotosYet extends StatelessWidget {
               color: const Color(0xFF1F1F1F),
             ),
           ),
+          if (action != null) ...[const SizedBox(height: 16), action!],
         ],
       ),
+    );
+  }
+}
+
+/// "Add photo" on the Photos tab.
+class _AddPhotoButton extends StatelessWidget {
+  final bool busy;
+  final VoidCallback onTap;
+  const _AddPhotoButton({required this.busy, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: OutlinedButton.icon(
+        onPressed: busy ? null : onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.midBlue,
+          side: const BorderSide(color: AppColors.midBlue),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(50),
+          ),
+        ),
+        icon: busy
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(IconsaxPlusLinear.gallery_add, size: 18),
+        label: Text(
+          mTr(context, 'Add photo', 'הוספת תמונה'),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One of the reader's own photographs the panel has not decided on yet:
+/// shown to them, dimmed, so they can see it arrived.
+class _PendingPhotoTile extends StatelessWidget {
+  final String url;
+  const _PendingPhotoTile({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        NetworkPhoto(
+          url: url,
+          radius: BorderRadius.circular(10),
+          icon: IconsaxPlusLinear.gallery,
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(IconsaxPlusLinear.clock, size: 18, color: Colors.white),
+                const SizedBox(height: 4),
+                Text(
+                  mTr(context, 'Waiting for approval', 'ממתינה לאישור'),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The picked photograph and an optional caption, before it is sent. Pops
+/// the caption ('' for none), or null when cancelled.
+class _PhotoCaptionDialog extends StatefulWidget {
+  final Uint8List bytes;
+  const _PhotoCaptionDialog({required this.bytes});
+
+  @override
+  State<_PhotoCaptionDialog> createState() => _PhotoCaptionDialogState();
+}
+
+class _PhotoCaptionDialogState extends State<_PhotoCaptionDialog> {
+  final _caption = TextEditingController();
+
+  @override
+  void dispose() {
+    _caption.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(
+        mTr(context, 'Add photo', 'הוספת תמונה'),
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF1F1F1F),
+        ),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.memory(
+                widget.bytes,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _caption,
+              maxLines: 3,
+              minLines: 1,
+              // The table takes up to 300 characters.
+              maxLength: 300,
+              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: mTr(
+                  context,
+                  'Caption (optional)',
+                  'כיתוב (לא חובה)',
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            Text(
+              mTr(
+                context,
+                'The photo will appear on the page after approval.',
+                'התמונה תופיע בעמוד לאחר אישור.',
+              ),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 12,
+                color: const Color(0xFF6D6D6D),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(mTr(context, 'Cancel', 'ביטול')),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _caption.text.trim()),
+          child: Text(mTr(context, 'Send', 'שליחה')),
+        ),
+      ],
+    );
+  }
+}
+
+/// Opening hours as the business wrote them, line for line, each line in its
+/// own direction and all at the page's start edge. Per line, not for the
+/// whole text: a line with Hebrew reads right to left, but a line of only
+/// times ("08:00 - 18:00") set right to left would show as "18:00 - 08:00".
+class _HoursText extends StatelessWidget {
+  final String text;
+  const _HoursText({required this.text});
+
+  static final _hebrew = RegExp(r'[\u0590-\u05FF]');
+
+  @override
+  Widget build(BuildContext context) {
+    final pageRtl = Directionality.of(context) == TextDirection.rtl;
+    final style = TextStyle(
+      fontFamily: AppFonts.inter,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.6,
+      color: const Color(0xFF3D3D3D),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final line in text.split('\n'))
+          Text(
+            line,
+            textDirection: _hebrew.hasMatch(line) ? TextDirection.rtl : TextDirection.ltr,
+            textAlign: pageRtl ? TextAlign.right : TextAlign.left,
+            style: style,
+          ),
+      ],
     );
   }
 }

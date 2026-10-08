@@ -9,6 +9,7 @@ import '../models/business_review.dart';
 import '../models/review_reply.dart';
 import '../models/menu_item.dart' as menu;
 import '../repositories/business_repository.dart';
+import '../services/photo_submission.dart';
 import '../../../core/providers/content_language.dart';
 
 final businessRepositoryProvider = Provider<BusinessRepository>(
@@ -497,4 +498,14 @@ final businessGalleryProvider =
           if ((r['media'] as Map?)?['url'] is String)
             (r['media'] as Map)['url'] as String,
       ];
+    });
+
+/// The signed-in person's photographs of a business still waiting for the
+/// panel (00071), so the Photos tab can show them as received. Empty when
+/// signed out; read again when the account changes.
+final myPendingPhotosProvider = FutureProvider.autoDispose
+    .family<List<PhotoSubmission>, String>((ref, businessId) async {
+      final user = ref.watch(authProvider);
+      if (user == null) return const [];
+      return PhotoSubmissions.pendingOf(businessId);
     });
