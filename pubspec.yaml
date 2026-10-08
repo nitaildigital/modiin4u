@@ -105,8 +105,11 @@ flutter_launcher_icons:
     image_path: "assets/images/app_icon.png"
 
 # ─── Native Splash Screen ───
-# Replace assets/images/app_icon.png with your splash logo,
-# then run: dart run flutter_native_splash:create
+# The app's icon on navy (8 Oct: the client saw a white square here). Both
+# images are made from assets/images/app_icon.png with the icon's corners
+# rounded off; Android 12+ shows its image inside a circle two thirds wide,
+# so that one has the icon smaller on a larger, transparent canvas.
+# Run: dart run flutter_native_splash:create
 flutter_native_splash:
   color: "#0A1230"
   image: "assets/images/splash_logo.png"
@@ -116,7 +119,7 @@ flutter_native_splash:
   # Android 12+ splash screen
   android_12:
     color: "#0A1230"
-    image: "assets/images/splash_logo.png"
+    image: "assets/images/splash_logo_android12.png"
   # iOS splash
   ios: true
   # Web splash
