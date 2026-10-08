@@ -48,6 +48,18 @@ String? resendWaitSeconds(Object error) {
   return RegExp(r'(\d+)\s*second').firstMatch(error.message)?.group(1) ?? '';
 }
 
+/// Thrown by [AuthNotifier.signUp] when the address already has an account.
+///
+/// With email confirmation on, Supabase does not refuse such a sign-up: it
+/// answers as though it worked, sends nothing, and hides the account behind
+/// an empty list of identities, so that a stranger cannot test which
+/// addresses are registered. The screen would then say "check your email" for
+/// an email that never comes — the person needs to sign in or reset their
+/// password instead.
+class EmailAlreadyRegistered implements Exception {
+  const EmailAlreadyRegistered();
+}
+
 class AuthNotifier extends StateNotifier<UserModel?> {
   final SupabaseClient _client = SupabaseConfig.client;
   final Ref _ref;
@@ -155,13 +167,25 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   /// Returns true when a session came back. It does not when the project
   /// requires the address to be confirmed first, and the screen then says to
   /// check the email rather than pretending to be signed in.
+  ///
+  /// Throws [EmailAlreadyRegistered] when the address already has an account.
   Future<bool> signUp({required String email, required String password, Map<String, dynamic>? data}) async {
-    final res = await _client.auth.signUp(
-      email: email.trim(),
-      password: password,
-      data: data,
-      emailRedirectTo: redirectUrl,
-    );
+    final AuthResponse res;
+    try {
+      res = await _client.auth.signUp(
+        email: email.trim(),
+        password: password,
+        data: data,
+        emailRedirectTo: redirectUrl,
+      );
+    } on AuthException catch (e) {
+      // Without email confirmation Supabase does say so outright.
+      if (e.code == 'user_already_exists') throw const EmailAlreadyRegistered();
+      rethrow;
+    }
+    if (res.session == null && (res.user?.identities?.isEmpty ?? false)) {
+      throw const EmailAlreadyRegistered();
+    }
     return res.session != null;
   }
 
@@ -212,7 +236,15 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     // arriving afterwards and putting the account back on screen.
     bool current() => mounted && _client.auth.currentUser?.id == user.id;
     try {
-      final row = await _client.from('profiles').select('*, neighborhoods(name)').eq('id', user.id).maybeSingle();
+      // The neighbourhood by its key, named: a table that links profiles and
+      // neighbourhoods (as 00071's ratings did, until 00072) makes a bare
+      // `neighborhoods(name)` ambiguous, the read fails, and everyone loads
+      // without name or role.
+      final row = await _client
+          .from('profiles')
+          .select('*, neighborhoods!profiles_neighborhood_id_fkey(name)')
+          .eq('id', user.id)
+          .maybeSingle();
 
       if (row == null) {
         // No profile can mean the account was deleted — from the panel, or

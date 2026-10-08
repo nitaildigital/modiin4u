@@ -238,12 +238,67 @@ class _BusinessSignUpScreenState extends ConsumerState<BusinessSignUpScreen> {
         _signedIn = signedIn;
         _step = 3;
       });
+    } on EmailAlreadyRegistered {
+      await PendingBusinessMedia.discard(email);
+      if (!mounted) return;
+      setState(() => _saving = false);
+      await _showAlreadyRegistered(email);
     } catch (e) {
       await PendingBusinessMedia.discard(email);
       if (!mounted) return;
       setState(() => _saving = false);
       _toast(e is AuthException ? e.message : l.errCouldNotSubmit, error: true);
     }
+  }
+
+  /// Points someone who already has an account to it.
+  ///
+  /// Supabase sends no email in this case, so "check your email" would leave
+  /// them waiting for nothing. The reset is the same email the sign-in page
+  /// sends from "Forgot Password?", to the address already typed here.
+  Future<void> _showAlreadyRegistered(String email) {
+    final l = L.of(context);
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(
+          mTr(
+            context,
+            'This email already has an account. Sign in, or reset your '
+                'password if you forgot it.',
+            'לכתובת הזו כבר יש חשבון. התחברו, או אפסו את הסיסמה אם שכחתם אותה.',
+          ),
+          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await ref.read(authProvider.notifier).sendPasswordReset(email);
+              } catch (_) {
+                // Reported the same either way, as on the sign-in page.
+              }
+              if (mounted) _toast(l.resetLinkSent);
+            },
+            child: Text(
+              mTr(context, 'Reset password', 'איפוס סיסמה'),
+              style: TextStyle(fontFamily: AppFonts.inter),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.go('/login');
+            },
+            child: Text(
+              l.signIn,
+              style: TextStyle(fontFamily: AppFonts.inter, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// A site typed without its scheme ("mybiz.co.il") still has to open from

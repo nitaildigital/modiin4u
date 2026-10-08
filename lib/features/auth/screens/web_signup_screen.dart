@@ -152,11 +152,79 @@ class _WebSignupContentState extends ConsumerState<WebSignupContent>
       }
       if (!mounted) return;
       context.go('/');
+    } on EmailAlreadyRegistered {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      await _showAlreadyRegistered();
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
       _showError(e is AuthException ? e.message : e.toString());
     }
+  }
+
+  /// Points someone who already has an account to it.
+  ///
+  /// Supabase sends no email in this case, so "check your email" would leave
+  /// them waiting for nothing. The reset is the same email the sign-in page
+  /// sends from "Forgot Password?", to the address already typed here.
+  Future<void> _showAlreadyRegistered() {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          content: Text(
+            _t(
+              'This email already has an account. Sign in, or reset your '
+                  'password if you forgot it.',
+              'לכתובת הזו כבר יש חשבון. התחברו, או אפסו את הסיסמה אם שכחתם אותה.',
+            ),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  await ref
+                      .read(authProvider.notifier)
+                      .sendPasswordReset(_emailController.text);
+                } catch (_) {
+                  // Reported the same either way, as on the sign-in page.
+                }
+                if (mounted) {
+                  _showInfo(
+                    _t(
+                      'If an account exists for that address, a reset link '
+                          'has been sent.',
+                      'אם קיים חשבון עם הכתובת הזו, נשלח אליה קישור לאיפוס.',
+                    ),
+                  );
+                }
+              },
+              child: Text(
+                _t('Reset password', 'איפוס סיסמה'),
+                style: TextStyle(fontFamily: AppFonts.inter),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                context.go('/login');
+              },
+              child: Text(
+                _t('Sign In', 'התחברות'),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Explains what happened and offers to send the email again.
