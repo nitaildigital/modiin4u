@@ -1160,10 +1160,10 @@ class _SettingsSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
           child: Text(
             tr(
-              'מספר הבנייה הוא המספר שבסוגריים במסך ההגדרות של האפליקציה ("גרסת האפליקציה", למשל 1.0.0 (7) → 7). '
+              'מספר הבנייה הוא ה-Version code ב-Google Play Console וה-Build ב-App Store Connect (למשל 1.0.1 (7) → 7). '
                   'אפליקציה ישנה מזה מבקשת לעדכן, עם הקישור לחנות שלמעלה. '
                   'להגדיר רק אחרי שהגרסה החדשה זמינה בחנות.',
-              'The build number is the one in brackets on the app\'s Settings ("App version", e.g. 1.0.0 (7) → 7). '
+              'The build number is the version code in Google Play Console and the build in App Store Connect (e.g. 1.0.1 (7) → 7). '
                   'An older app asks for the update, with the store link above. '
                   'Set it only once the new version is live in the store.',
             ),

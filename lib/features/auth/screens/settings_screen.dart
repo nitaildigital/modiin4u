@@ -25,14 +25,14 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  /// "1.0.0 (1)": the version and build this phone runs.
+  /// "1.0.0": the version this phone runs, read from the build.
   String? _version;
 
   @override
   void initState() {
     super.initState();
     PackageInfo.fromPlatform().then((info) {
-      if (mounted) setState(() => _version = '${info.version} (${info.buildNumber})');
+      if (mounted) setState(() => _version = info.version);
     }).catchError((_) {});
   }
 
@@ -473,8 +473,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         // "About Modiin4u" is the page above; this row is
                         // the version, and read as the same entry twice.
-                        // Read from the build, with its build number — the
-                        // number the panel's force update compares.
+                        // Read from the build, so it follows pubspec.
                         title: mTr(context, 'App version', 'גרסת האפליקציה'),
                         subtitle: _version ?? '',
                         showChevron: false,
