@@ -8,20 +8,22 @@ import '../../shared/providers/app_settings_provider.dart';
 import '../supabase/supabase_config.dart';
 import '../theme/app_fonts.dart';
 
-/// Stops an app that is too old, until it is updated.
+/// Asks an app that is out of date to be updated — required, or with "Later".
 ///
-/// The client (8 Oct): force an update from the panel. Settings in the panel
-/// holds the oldest build each platform may still use
-/// (`min_build_android`, `min_build_ios` in `app_settings`) — the build
-/// number, the part after "+" in pubspec's version. Below it, the app shows
-/// only a page asking for the update, with a button to the store link the
-/// panel holds. 0 or empty means no minimum.
+/// The client (8 Oct): update the app from the panel, forced or not. Settings
+/// in the panel holds the latest build of each platform (`min_build_android`,
+/// `min_build_ios` in `app_settings`) — the build number, the part after "+"
+/// in pubspec's version — and whether updating to it is required
+/// (`force_update_android`, `force_update_ios`). An older build shows a page
+/// asking for the update, with a button to the store link the panel holds.
+/// Required, that page is all the app shows; otherwise "Later" closes it until
+/// the app is next started. 0 or empty means no update is asked for.
 ///
-/// Asked at start and on every return from the background, so a minimum set
-/// while the app is open applies the next time it is opened. Never on the
-/// website, which is always the latest. When the answer cannot be had — no
-/// connection, no table — the app is let through: a check that fails must
-/// not lock people out.
+/// Asked at start and on every return from the background, so a change in
+/// the panel applies the next time the app is opened — and an update made
+/// required after "Later" still stops the app. Never on the website, which is
+/// always the latest. When the answer cannot be had — no connection, no table
+/// — the app is let through: a check that fails must not lock people out.
 class ForceUpdateGate extends StatefulWidget {
   final Widget child;
   const ForceUpdateGate({super.key, required this.child});
@@ -33,9 +35,15 @@ class ForceUpdateGate extends StatefulWidget {
 class _ForceUpdateGateState extends State<ForceUpdateGate> {
   AppLifecycleListener? _lifecycle;
 
-  /// The store to send to, once this build is found too old; null while it
-  /// may run. An empty string: too old, but the panel has no store link.
+  /// The store to send to, once this build is found out of date; null while
+  /// it is current. An empty string: out of date, but no store link.
   String? _blockedStore;
+
+  /// Whether the update is required; otherwise "Later" may close the page.
+  bool _required = false;
+
+  /// "Later" was pressed in this run of the app.
+  bool _later = false;
 
   bool get _android => defaultTargetPlatform == TargetPlatform.android;
 
@@ -63,10 +71,13 @@ class _ForceUpdateGateState extends State<ForceUpdateGate> {
       final storeKey = _android
           ? AppSettingKeys.androidStoreUrl
           : AppSettingKeys.iosStoreUrl;
+      final forceKey = _android
+          ? AppSettingKeys.forceUpdateAndroid
+          : AppSettingKeys.forceUpdateIos;
       final rows = await SupabaseConfig.client
           .from('app_settings')
           .select('key, value')
-          .inFilter('key', [minKey, storeKey]);
+          .inFilter('key', [minKey, storeKey, forceKey]);
       final settings = {
         for (final r in List<Map<String, dynamic>>.from(rows))
           r['key'] as String: r['value'],
@@ -78,11 +89,10 @@ class _ForceUpdateGateState extends State<ForceUpdateGate> {
       };
       final blocked = minimum > 0 && build > 0 && build < minimum;
       if (!mounted) return;
-      setState(
-        () => _blockedStore = blocked
-            ? (storeUrl(settings, storeKey) ?? '')
-            : null,
-      );
+      setState(() {
+        _blockedStore = blocked ? (storeUrl(settings, storeKey) ?? '') : null;
+        _required = settings[forceKey] == true;
+      });
     } catch (_) {
       // Left as it was: a failed check neither blocks nor unblocks.
     }
@@ -91,10 +101,11 @@ class _ForceUpdateGateState extends State<ForceUpdateGate> {
   @override
   Widget build(BuildContext context) {
     final store = _blockedStore;
-    if (store == null) return widget.child;
+    if (store == null || (_later && !_required)) return widget.child;
     return _UpdateRequired(
       store: store.isEmpty ? null : store,
       android: _android,
+      onLater: _required ? null : () => setState(() => _later = true),
     );
   }
 }
@@ -102,13 +113,23 @@ class _ForceUpdateGateState extends State<ForceUpdateGate> {
 class _UpdateRequired extends StatelessWidget {
   final String? store;
   final bool android;
-  const _UpdateRequired({required this.store, required this.android});
+
+  /// Null when the update is required.
+  final VoidCallback? onLater;
+  const _UpdateRequired({
+    required this.store,
+    required this.android,
+    required this.onLater,
+  });
 
   @override
   Widget build(BuildContext context) {
     final he = Localizations.localeOf(context).languageCode == 'he';
     String t(String en, String hebrew) => he ? hebrew : en;
-    final storeName = android ? 'Google Play' : 'App Store';
+    // "from the App Store" in English; Hebrew names it bare (ב-App Store).
+    final storeName = android
+        ? 'Google Play'
+        : (he ? 'App Store' : 'the App Store');
     // Above the navigator, so the phone's back button has nothing to go back
     // to: it leaves the app, and opening it again shows this page again.
     return Scaffold(
@@ -130,7 +151,9 @@ class _UpdateRequired extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  t('Update required', 'נדרש עדכון'),
+                  onLater == null
+                      ? t('Update required', 'נדרש עדכון')
+                      : t('Update available', 'עדכון זמין'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
@@ -141,15 +164,24 @@ class _UpdateRequired extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  store == null
-                      ? t(
-                          'A new version of Modiin4u is out. Update it from $storeName to keep using the app.',
-                          'יצאה גרסה חדשה של מודיעין בשבילך. עדכנו אותה ב-$storeName כדי להמשיך להשתמש באפליקציה.',
-                        )
-                      : t(
-                          'A new version of Modiin4u is out. Update to keep using the app.',
-                          'יצאה גרסה חדשה של מודיעין בשבילך. עדכנו כדי להמשיך להשתמש באפליקציה.',
-                        ),
+                  switch ((store == null, onLater == null)) {
+                    (true, true) => t(
+                      'A new version of Modiin4u is out. Update it from $storeName to keep using the app.',
+                      'יצאה גרסה חדשה של מודיעין בשבילך. עדכנו אותה ב-$storeName כדי להמשיך להשתמש באפליקציה.',
+                    ),
+                    (false, true) => t(
+                      'A new version of Modiin4u is out. Update to keep using the app.',
+                      'יצאה גרסה חדשה של מודיעין בשבילך. עדכנו כדי להמשיך להשתמש באפליקציה.',
+                    ),
+                    (true, false) => t(
+                      'A new version of Modiin4u is out. You can update it from $storeName.',
+                      'יצאה גרסה חדשה של מודיעין בשבילך. אפשר לעדכן אותה ב-$storeName.',
+                    ),
+                    (false, false) => t(
+                      'A new version of Modiin4u is out.',
+                      'יצאה גרסה חדשה של מודיעין בשבילך.',
+                    ),
+                  },
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
@@ -183,6 +215,21 @@ class _UpdateRequired extends StatelessWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
+                      ),
+                    ),
+                  ),
+                ],
+                if (onLater != null) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: onLater,
+                    style: TextButton.styleFrom(foregroundColor: Colors.white),
+                    child: Text(
+                      t('Later', 'אחר כך'),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),

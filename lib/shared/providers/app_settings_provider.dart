@@ -30,10 +30,15 @@ abstract final class AppSettingKeys {
   /// it never expires.
   static const listingsExpireDays = 'listings_expire_days';
 
-  /// The oldest build each platform may still run (force update). 0, or
-  /// never set, no minimum. See core/update/force_update.dart.
+  /// The latest build of each platform: an older one asks for the update.
+  /// 0, or never set, no prompt. See core/update/force_update.dart.
   static const minBuildAndroid = 'min_build_android';
   static const minBuildIos = 'min_build_ios';
+
+  /// Whether that update is required (the app does not open until it is
+  /// done) or may be put off with "Later". Off, or never set: "Later".
+  static const forceUpdateAndroid = 'force_update_android';
+  static const forceUpdateIos = 'force_update_ios';
 }
 
 /// A store link, only when the panel has given an https address.

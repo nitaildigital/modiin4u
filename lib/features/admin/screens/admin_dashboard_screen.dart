@@ -1096,7 +1096,19 @@ class _SettingsSection extends StatelessWidget {
           icon: IconsaxPlusLinear.briefcase,
           number: true,
         ),
-        const _RepliesApprovalSetting(),
+        // Whether residents' replies to reviews wait for approval. Off by
+        // default since 00063: replies appear at once, and the panel hides
+        // one afterwards (Comments) or acts on a report.
+        _SwitchSetting(
+          settingKey: AppSettingKeys.repliesNeedApproval,
+          title: tr('תגובות (לביקורות ולכתבות) ממתינות לאישור',
+              'Replies to reviews and article comments wait for approval'),
+          onText: tr('כל תגובה חדשה ממתינה בתגובות עד שתאושר.',
+              'Each new reply waits in Comments until approved.'),
+          offText: tr('תגובות מופיעות מיד; אפשר להסתיר תגובה בתגובות, ותושבים יכולים לדווח עליה.',
+              'Replies appear at once; hide one in Comments, and residents can report it.'),
+          icon: IconsaxPlusLinear.messages_2,
+        ),
         _EditableSetting(
           settingKey: AppSettingKeys.listingsExpireDays,
           label: tr('ימים עד שמודעת נדל״ן פגה (0 = לא פגה)',
@@ -1115,37 +1127,44 @@ class _SettingsSection extends StatelessWidget {
           numberMax: 50,
           rangeMessage: tr('מספר בין 0 ל-50', 'A number from 0 to 50'),
         ),
-        // Force update: below these builds the app shows only "Update
-        // required" with the store link above (core/update/force_update.dart).
-        _EditableSetting(
-          settingKey: AppSettingKeys.minBuildAndroid,
-          label: tr('עדכון מחייב — מספר הבנייה המינימלי ל-Android (0 = כבוי)',
-              'Force update — oldest Android build allowed (0 = off)'),
-          hint: '0',
-          icon: IconsaxPlusLinear.refresh_circle,
-          number: true,
-          numberMax: 1000000,
-          rangeMessage: tr('מספר בנייה, 0 עד 1,000,000', 'A build number, 0 to 1,000,000'),
-        ),
-        _EditableSetting(
-          settingKey: AppSettingKeys.minBuildIos,
-          label: tr('עדכון מחייב — מספר הבנייה המינימלי ל-iOS (0 = כבוי)',
-              'Force update — oldest iOS build allowed (0 = off)'),
-          hint: '0',
-          icon: IconsaxPlusLinear.refresh_circle,
-          number: true,
-          numberMax: 1000000,
-          rangeMessage: tr('מספר בנייה, 0 עד 1,000,000', 'A build number, 0 to 1,000,000'),
-        ),
+        // App updates: below these builds the app asks for the update —
+        // with "Later" unless the switch makes it required
+        // (core/update/force_update.dart).
+        for (final android in [true, false]) ...[
+          _EditableSetting(
+            settingKey: android ? AppSettingKeys.minBuildAndroid : AppSettingKeys.minBuildIos,
+            label: android
+                ? tr('עדכון אפליקציה — מספר הבנייה העדכני ל-Android (0 = כבוי)',
+                    'App update — latest Android build (0 = off)')
+                : tr('עדכון אפליקציה — מספר הבנייה העדכני ל-iOS (0 = כבוי)',
+                    'App update — latest iOS build (0 = off)'),
+            hint: '0',
+            icon: IconsaxPlusLinear.refresh_circle,
+            number: true,
+            numberMax: 1000000,
+            rangeMessage: tr('מספר בנייה, 0 עד 1,000,000', 'A build number, 0 to 1,000,000'),
+          ),
+          _SwitchSetting(
+            settingKey: android ? AppSettingKeys.forceUpdateAndroid : AppSettingKeys.forceUpdateIos,
+            title: android
+                ? tr('עדכון חובה ב-Android', 'Android update is required')
+                : tr('עדכון חובה ב-iOS', 'iOS update is required'),
+            onText: tr('גרסה ישנה יותר לא נפתחת עד שמעדכנים.',
+                'An older version does not open until it is updated.'),
+            offText: tr('גרסה ישנה יותר מבקשת לעדכן, ואפשר ללחוץ "אחר כך".',
+                'An older version asks for the update, and "Later" lets people carry on.'),
+            icon: IconsaxPlusLinear.lock_1,
+          ),
+        ],
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
           child: Text(
             tr(
               'מספר הבנייה הוא המספר שבסוגריים במסך ההגדרות של האפליקציה ("גרסת האפליקציה", למשל 1.0.0 (7) → 7). '
-                  'אפליקציה ישנה מזה תציג רק "נדרש עדכון" עם הקישור לחנות שלמעלה. '
+                  'אפליקציה ישנה מזה מבקשת לעדכן, עם הקישור לחנות שלמעלה. '
                   'להגדיר רק אחרי שהגרסה החדשה זמינה בחנות.',
               'The build number is the one in brackets on the app\'s Settings ("App version", e.g. 1.0.0 (7) → 7). '
-                  'An older app shows only "Update required", with the store link above. '
+                  'An older app asks for the update, with the store link above. '
                   'Set it only once the new version is live in the store.',
             ),
             style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, height: 1.5, color: AppColors.adminTextLight),
@@ -1413,19 +1432,27 @@ class _EditableSettingState extends ConsumerState<_EditableSetting> {
   }
 }
 
-/// Whether residents' replies to reviews wait for approval. Off by default
-/// since 00063: replies appear at once, and the panel hides one afterwards
-/// (Comments) or acts on a report. On, every new reply waits in Comments.
-class _RepliesApprovalSetting extends ConsumerStatefulWidget {
-  const _RepliesApprovalSetting();
+/// An on/off `app_settings` value the panel edits, with a line under the
+/// title saying what the current choice does.
+class _SwitchSetting extends ConsumerStatefulWidget {
+  final String settingKey;
+  final String title;
+  final String onText;
+  final String offText;
+  final IconData icon;
+  const _SwitchSetting({
+    required this.settingKey,
+    required this.title,
+    required this.onText,
+    required this.offText,
+    required this.icon,
+  });
 
   @override
-  ConsumerState<_RepliesApprovalSetting> createState() =>
-      _RepliesApprovalSettingState();
+  ConsumerState<_SwitchSetting> createState() => _SwitchSettingState();
 }
 
-class _RepliesApprovalSettingState
-    extends ConsumerState<_RepliesApprovalSetting> {
+class _SwitchSettingState extends ConsumerState<_SwitchSetting> {
   bool _saving = false;
 
   Future<void> _set(bool on) async {
@@ -1433,7 +1460,7 @@ class _RepliesApprovalSettingState
     final messenger = ScaffoldMessenger.of(context);
     try {
       await SupabaseConfig.client.from('app_settings').upsert(
-        {'key': AppSettingKeys.repliesNeedApproval, 'value': on},
+        {'key': widget.settingKey, 'value': on},
         onConflict: 'key',
       );
       ref.invalidate(appSettingsProvider);
@@ -1449,7 +1476,7 @@ class _RepliesApprovalSettingState
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(appSettingsProvider).valueOrNull;
-    final on = settings?[AppSettingKeys.repliesNeedApproval] == true;
+    final on = settings?[widget.settingKey] == true;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
@@ -1467,11 +1494,7 @@ class _RepliesApprovalSettingState
               color: AppColors.midBlue.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              IconsaxPlusLinear.messages_2,
-              size: 20,
-              color: AppColors.midBlue,
-            ),
+            child: Icon(widget.icon, size: 20, color: AppColors.midBlue),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1479,8 +1502,7 @@ class _RepliesApprovalSettingState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tr('תגובות (לביקורות ולכתבות) ממתינות לאישור',
-                      'Replies to reviews and article comments wait for approval'),
+                  widget.title,
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontWeight: FontWeight.w500,
@@ -1490,11 +1512,7 @@ class _RepliesApprovalSettingState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  on
-                      ? tr('כל תגובה חדשה ממתינה בתגובות עד שתאושר.',
-                          'Each new reply waits in Comments until approved.')
-                      : tr('תגובות מופיעות מיד; אפשר להסתיר תגובה בתגובות, ותושבים יכולים לדווח עליה.',
-                          'Replies appear at once; hide one in Comments, and residents can report it.'),
+                  on ? widget.onText : widget.offText,
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
                     fontSize: 12,
