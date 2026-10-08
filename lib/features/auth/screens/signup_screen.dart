@@ -342,58 +342,42 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           ),
                         ),
                         const SizedBox(height: 40),
-                        // Account Type
-                        Text(
-                          l.accountType,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF4F4F4F),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // Both cards as tall as the taller one's text: at a
-                        // large font size the description overflowed a
-                        // fixed 127.
-                        IntrinsicHeight(
-                          child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: _buildAccountTypeCard(
-                                type: AccountType.resident,
-                                icon: Icons.person_outline,
-                                iconColor: AppColors.turquoise,
-                                title: l.accountResident,
-                                subtitle: l.accountResidentSub,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildAccountTypeCard(
-                                type: AccountType.broker,
-                                icon: Icons.business_outlined,
-                                iconColor: const Color(0xFFB0B0B0),
-                                title: l.realEstateBroker,
-                                subtitle: l.accountBrokerSub,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildAccountTypeCard(
-                                type: AccountType.business,
-                                icon: Icons.storefront_outlined,
-                                iconColor: const Color(0xFFD67E00),
-                                title: mTr(context, 'Business', 'עסק'),
-                                subtitle: mTr(
-                                  context,
-                                  'I own a business in Modiin.',
-                                  'יש לי עסק במודיעין.',
+                        // Account type, as a dropdown: three cards side by
+                        // side left each a column a few words wide on a
+                        // phone, and the descriptions broke a word a line.
+                        _buildDropdownField<AccountType>(
+                          label: l.accountType,
+                          hint: l.accountType,
+                          value: _accountType,
+                          items: [
+                            for (final t in AccountType.values)
+                              DropdownMenuItem(
+                                value: t,
+                                child: Row(
+                                  children: [
+                                    Icon(_accountTypeIcon(t), size: 20, color: _accountTypeColor(t)),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      _accountTypeTitle(t, l),
+                                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
                           ],
+                          onChanged: (t) {
+                            if (t != null) setState(() => _accountType = t);
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        // What the chosen type is for — the cards' second line.
+                        Text(
+                          _accountTypeSubtitle(_accountType, l),
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 13,
+                            height: 1.35,
+                            color: const Color(0xFF6D6D6D),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -743,96 +727,29 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 
-  Widget _buildAccountTypeCard({
-    required AccountType type,
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-  }) {
-    final isSelected = _accountType == type;
-    return GestureDetector(
-      onTap: () => setState(() => _accountType = type),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        constraints: const BoxConstraints(minHeight: 127),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: isSelected ? AppColors.midBlue : const Color(0xFFE7E7E7),
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? iconColor.withValues(alpha: 0.15)
-                        : const Color(0xFFF6F6F6),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 20, color: iconColor),
-                ),
-                // Radio button
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.midBlue
-                          : const Color(0xFFD1D1D1),
-                      width: 2,
-                    ),
-                  ),
-                  child: isSelected
-                      ? Center(
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: const BoxDecoration(
-                              color: AppColors.midBlue,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        )
-                      : null,
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF3D3D3D),
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF6D6D6D),
-                height: 1.25,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  IconData _accountTypeIcon(AccountType t) => switch (t) {
+    AccountType.resident => Icons.person_outline,
+    AccountType.broker => Icons.business_outlined,
+    AccountType.business => Icons.storefront_outlined,
+  };
+
+  Color _accountTypeColor(AccountType t) => switch (t) {
+    AccountType.resident => AppColors.turquoise,
+    AccountType.broker => AppColors.midBlue,
+    AccountType.business => const Color(0xFFD67E00),
+  };
+
+  String _accountTypeTitle(AccountType t, L l) => switch (t) {
+    AccountType.resident => l.accountResident,
+    AccountType.broker => l.realEstateBroker,
+    AccountType.business => mTr(context, 'Business', 'עסק'),
+  };
+
+  String _accountTypeSubtitle(AccountType t, L l) => switch (t) {
+    AccountType.resident => l.accountResidentSub,
+    AccountType.broker => l.accountBrokerSub,
+    AccountType.business => mTr(context, 'I own a business in Modiin.', 'יש לי עסק במודיעין.'),
+  };
 
   Widget _buildTextField({
     required String label,
