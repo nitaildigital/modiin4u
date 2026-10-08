@@ -13,6 +13,8 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../models/article.dart';
 import '../models/article_body.dart';
+import '../models/article_comment.dart';
+import '../providers/article_comments_provider.dart';
 import '../providers/news_providers.dart';
 import '../../../shared/widgets/web_share_menu.dart';
 
@@ -23,9 +25,10 @@ import '../../../shared/widgets/web_share_menu.dart';
 // The two frames are the same page for a reader who is signed out and one
 // who is signed in: they differ only at the foot, where the first asks the
 // reader to log in to comment and the second gives them a box to write in.
-// Accounts are the app's alone, so neither is drawn here, and nor is the
-// comment thread above them, its "12 Comments" count in the header, or the
-// Save button in the bar under the photo.
+// Accounts are the app's alone, so neither is drawn here: the thread above
+// them is (00071), read-only, with a line saying comments are written in the
+// app. Not drawn: its "12 Comments" count in the header, or the Save button
+// in the bar under the photo.
 // ═══════════════════════════════════════════════════════════
 
 const _kBorder = Color(0xFFE7E7E7);
@@ -290,7 +293,68 @@ class _WebArticleContentState extends ConsumerState<WebArticleContent>
             ),
           ),
         ],
+        _buildComments(article),
       ],
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  // COMMENTS — residents' comments from the app, read-only
+  // ─────────────────────────────────────────────
+
+  /// The approved comments, as threads one level deep. Nothing at all when
+  /// there are none: the website cannot take one, so an empty section would
+  /// only invite what it cannot offer.
+  Widget _buildComments(Article article) {
+    final threads = ref.watch(articleCommentsProvider(article.id)).valueOrNull ?? const <ArticleCommentThread>[];
+    if (threads.isEmpty) return const SizedBox.shrink();
+    final count = threads.fold<int>(0, (n, t) => n + 1 + t.replies.length);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 61),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            _t('Comments ($count)', 'תגובות ($count)'),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              height: 22 / 18,
+              color: AppColors.navy,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _t('Comments are written in the Modiin4u app', 'התגובות נכתבות באפליקציה'),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: _kGrey),
+          ),
+          const SizedBox(height: 8),
+          for (var i = 0; i < threads.length; i++)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              decoration: BoxDecoration(
+                border: i == threads.length - 1 ? null : const Border(bottom: BorderSide(color: _kBorder)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _WebComment(comment: threads[i].comment, date: _dateTime(threads[i].comment.createdAt, _isHebrew)),
+                  for (final r in threads[i].replies)
+                    Container(
+                      margin: const EdgeInsetsDirectional.only(top: 16, start: 52),
+                      padding: const EdgeInsetsDirectional.only(start: 16),
+                      decoration: const BoxDecoration(
+                        border: BorderDirectional(start: BorderSide(color: _kBorder, width: 2)),
+                      ),
+                      child: _WebComment(comment: r, date: _dateTime(r.createdAt, _isHebrew), reply: true),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -581,6 +645,91 @@ String _dateTime(DateTime value, bool isHebrew) {
   }
   final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
   return '${_enMonths[d.month - 1]} ${d.day}, ${d.year} | $h:$mm ${d.hour < 12 ? 'a.m.' : 'p.m.'}';
+}
+
+/// One comment: the writer's photo or initial, name and date, the text.
+class _WebComment extends StatelessWidget {
+  final ArticleComment comment;
+  final String date;
+  final bool reply;
+  const _WebComment({required this.comment, required this.date, this.reply = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final size = reply ? 32.0 : 40.0;
+    final letter = Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(color: Color(0xFFE8EEF7), shape: BoxShape.circle),
+      alignment: Alignment.center,
+      child: Text(
+        comment.initial,
+        style: TextStyle(
+          fontFamily: AppFonts.inter,
+          fontSize: size * 0.4,
+          fontWeight: FontWeight.w600,
+          color: AppColors.midBlue,
+        ),
+      ),
+    );
+    final url = comment.avatarUrl;
+    final hebrew = Directionality.of(context) == TextDirection.rtl;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        url == null
+            ? letter
+            : ClipOval(
+                child: Image.network(url, width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, _, _) => letter),
+              ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    // The profile's name; a row without one is a resident.
+                    comment.authorName.isEmpty ? (hebrew ? 'תושב' : 'Resident') : comment.authorName,
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: reply ? 14 : 16,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    date,
+                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, height: 1.2, color: _kGrey),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  comment.body,
+                  // Written in Hebrew or English whatever the toggle says.
+                  textDirection: _directionOf(comment.body),
+                  style: TextStyle(
+                    fontFamily: AppFonts.inter,
+                    fontSize: reply ? 15 : 16,
+                    height: 1.6,
+                    color: _kBodyText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// The turquoise category chip, 36 tall.

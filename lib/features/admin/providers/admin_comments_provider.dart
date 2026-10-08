@@ -4,9 +4,8 @@ import 'admin_table_notifier.dart';
 
 /// Comments awaiting moderation, on the live table.
 ///
-/// Nothing on the website or in the app writes a comment yet (accounts and
-/// community features are the app's, and the app has no comment form), so
-/// this list stays empty until one does.
+/// The app writes them: replies to reviews on a business page, and comments
+/// on articles (00071). Both go up at once unless Settings ask for approval.
 final adminCommentsProvider =
     StateNotifierProvider<
       AdminCommentsNotifier,

@@ -445,9 +445,9 @@ class MNewsCard extends StatelessWidget {
 // BOTTOM BAR — 69 tall, a rule on top, cells 20 × 12 inside
 // ─────────────────────────────────────────────
 
-/// The design's bar holds comments, shares and Save. Articles have no
-/// comments in the app and no way to save one, so only Share is drawn; its
-/// count shows once a share has been counted.
+/// The design's bar holds comments, shares and Save. The comments are on
+/// the page under the story (MArticleComments), so the bar draws Share, its
+/// count once a share has been counted, and Save in the app.
 class MArticleBottomBar extends ConsumerWidget {
   final Article article;
   final VoidCallback onShare;

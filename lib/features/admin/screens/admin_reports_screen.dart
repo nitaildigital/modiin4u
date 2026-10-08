@@ -497,7 +497,17 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
         case 'review' || 'comment':
           var reviewId = id;
           if (type == 'comment') {
-            final c = await client.from('comments').select('entity_id').eq('id', id).maybeSingle();
+            final c = await client
+                .from('comments')
+                .select('entity_type, entity_id')
+                .eq('id', id)
+                .maybeSingle();
+            // A comment on an article (00071) opens the article at it; only
+            // a reply to a review lives on a business's page.
+            if (c?['entity_type'] == 'article') {
+              path = '/article/${c!['entity_id']}?comment=$id';
+              break;
+            }
             reviewId = c?['entity_id'] as String? ?? '';
           }
           final r = await client.from('reviews').select('business_id').eq('id', reviewId).maybeSingle();

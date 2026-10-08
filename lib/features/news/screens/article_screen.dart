@@ -11,6 +11,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/article.dart';
 import '../providers/news_providers.dart';
+import '../widgets/m_article_comments.dart';
 import '../widgets/m_article_parts.dart';
 import 'web_article_screen.dart';
 import '../../businesses/repositories/business_stats.dart';
@@ -22,7 +23,12 @@ import '../../../core/router/app_router.dart' show AppNavigation;
 class ArticleScreen extends StatefulWidget {
   final String articleId;
 
-  const ArticleScreen({super.key, required this.articleId});
+  /// The comment a reply notification points at. Null reads it from the
+  /// address (`/article/<id>?comment=<id>`), which is what the notification
+  /// opens.
+  final String? focusCommentId;
+
+  const ArticleScreen({super.key, required this.articleId, this.focusCommentId});
 
   @override
   State<ArticleScreen> createState() => _ArticleScreenState();
@@ -45,14 +51,26 @@ class _ArticleScreenState extends State<ArticleScreen> {
     if (old.articleId != articleId) BusinessStats.recordArticleView(articleId);
   }
 
+  /// `?comment=` on the address. The route builds this page from the path
+  /// alone, so the query is read here rather than handed in.
+  String? _commentFromAddress(BuildContext context) {
+    try {
+      final id = GoRouterState.of(context).uri.queryParameters['comment'];
+      return id == null || id.isEmpty ? null : id;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final focus = widget.focusCommentId ?? _commentFromAddress(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) {
           return WebArticleContent(articleId: articleId);
         }
-        return _MobileArticleContent(articleId: articleId);
+        return _MobileArticleContent(articleId: articleId, focusCommentId: focus);
       },
     );
   }
@@ -60,8 +78,9 @@ class _ArticleScreenState extends State<ArticleScreen> {
 
 class _MobileArticleContent extends ConsumerWidget {
   final String articleId;
+  final String? focusCommentId;
 
-  const _MobileArticleContent({required this.articleId});
+  const _MobileArticleContent({required this.articleId, this.focusCommentId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -97,7 +116,7 @@ class _MobileArticleContent extends ConsumerWidget {
         data: (a) => Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 430),
-            child: _ArticleView(article: a),
+            child: _ArticleView(article: a, focusCommentId: focusCommentId),
           ),
         ),
       ),
@@ -115,15 +134,15 @@ class _MobileArticleContent extends ConsumerWidget {
 
 // ═══════════════════════════════════════════════
 // Figma "News Detail" (556:10027): the 260 photo with the back button, the
-// category and views, the headline and date over a rule, the body, then
-// "More Related News". The design's "12 Comments" thread and the bar's
-// Comments cell are not drawn: articles have no comments in the app. Save is
-// (MArticleBottomBar), to Favourites → News.
+// category and views, the headline and date over a rule, the body, the
+// comments (00071), then "More Related News". The bar's Comments cell is not
+// drawn. Save is (MArticleBottomBar), to Favourites → News.
 // ═══════════════════════════════════════════════
 class _ArticleView extends ConsumerWidget {
   final Article article;
+  final String? focusCommentId;
 
-  const _ArticleView({required this.article});
+  const _ArticleView({required this.article, this.focusCommentId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -141,6 +160,11 @@ class _ArticleView extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: MArticleBody(article: article),
+          ),
+          MArticleComments(
+            key: ValueKey(article.id),
+            articleId: article.id,
+            focusCommentId: focusCommentId,
           ),
           if (related.isNotEmpty) ...[
             const SizedBox(height: 41),

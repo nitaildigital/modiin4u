@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/admin_comments_provider.dart';
 import '../admin_language.dart';
 import '../ui/admin_kit.dart';
+
+/// The titles of the articles the listed comments are on, by id — one read
+/// for the whole list, keyed by the ids sorted and joined, so a comment reads
+/// as being on a story the moderator can recognise.
+final _articleTitlesProvider =
+    FutureProvider.autoDispose.family<Map<String, String>, String>((ref, joined) async {
+      final rows = await SupabaseConfig.client
+          .from('articles')
+          .select('id, title')
+          .inFilter('id', joined.split(','));
+      return {
+        for (final r in List<Map<String, dynamic>>.from(rows))
+          r['id'] as String: (r['title'] as String? ?? '').trim(),
+      };
+    });
 
 class AdminCommentsScreen extends ConsumerStatefulWidget {
   const AdminCommentsScreen({super.key});
@@ -68,6 +84,15 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
     final list = asyncData.valueOrNull;
     final notifier = ref.read(adminCommentsProvider.notifier);
     final isWide = MediaQuery.of(context).size.width > 900;
+    final articleIds = {
+      for (final c in list ?? const <Map<String, dynamic>>[])
+        if (c['entity_type'] == 'article' && c['entity_id'] is String) c['entity_id'] as String,
+    }.toList()
+      ..sort();
+    final articleTitles = articleIds.isEmpty
+        ? const <String, String>{}
+        : ref.watch(_articleTitlesProvider(articleIds.join(','))).valueOrNull ??
+            const <String, String>{};
 
     return Column(
       children: [
@@ -269,17 +294,21 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    _entityLabel(
-                                      c['entity_type'] as String? ?? '',
-                                    ),
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 11,
-                                      color: AppColors.grayLight,
+                                  // Takes the room the status leaves, as an
+                                  // article's title can be long.
+                                  Expanded(
+                                    child: Text(
+                                      _entityLabel(c, articleTitles),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 11,
+                                        color: AppColors.grayLight,
+                                      ),
                                     ),
                                   ),
-                                  const Spacer(),
+                                  const SizedBox(width: 8),
                                   _StatusPill(status),
                                   if (reports > 0) ...[
                                     const SizedBox(width: 6),
@@ -372,13 +401,24 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
     );
   }
 
-  String _entityLabel(String t) => switch (t) {
-    'review' => tr('תגובה לביקורת', 'Reply to the review'),
-    'business' => tr('על עסק', 'About a business'),
-    'article' => tr('על כתבה', 'About an article'),
-    'event' => tr('על אירוע', 'About an event'),
-    _ => t,
-  };
+  /// Where the comment was left. An article's comment names the article,
+  /// and says when it answers another comment there.
+  String _entityLabel(Map<String, dynamic> c, Map<String, String> articleTitles) {
+    final t = c['entity_type'] as String? ?? '';
+    if (t == 'article') {
+      final title = articleTitles[c['entity_id']] ?? '';
+      final kind = c['parent_id'] != null
+          ? tr('תגובה בכתבה', 'Reply on an article')
+          : tr('כתבה', 'Article');
+      return title.isEmpty ? kind : '$kind · $title';
+    }
+    return switch (t) {
+      'review' => tr('תגובה לביקורת', 'Reply to the review'),
+      'business' => tr('על עסק', 'About a business'),
+      'event' => tr('על אירוע', 'About an event'),
+      _ => t,
+    };
+  }
   String _shortDate(String iso) {
     try {
       final d = DateTime.parse(iso).toLocal();
@@ -432,9 +472,12 @@ class _NothingWritesThisNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              // Out of date since replies to reviews came (00039).
-              tr('תושבים כותבים כאן תגובות לביקורות מהאפליקציה. תגובה מופיעה '
-              'רק לאחר אישור, וכותב הביקורת מקבל התראה.', 'Residents reply to reviews from the app. A reply appears only once approved, and the review\'s author is notified.'),
+              // Brought up to date with what the database does: replies to
+              // reviews (00039, live at once since 00063) and comments on
+              // articles (00071) wait only when Settings ask for approval.
+              tr('תושבים כותבים מהאפליקציה תגובות לביקורות ותגובות לכתבות. '
+              'תגובה עולה מיד, אלא אם בהגדרות נקבע שתגובות ממתינות לאישור — '
+              'אז היא מופיעה כאן כממתינה.', 'Residents reply to reviews and comment on articles from the app. A comment goes up at once unless Settings ask for approval — then it waits here as pending.'),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
