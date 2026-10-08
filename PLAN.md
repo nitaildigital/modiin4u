@@ -2428,6 +2428,23 @@ type cards look poor — a dropdown.
   and the Realme (Android 11).
 - **Deployed 8 Oct, 11:30** after 00071–00073 were in place; the live
   main.dart.js checked against the build.
+
+**Signed out after an hour away — 8 Oct.** The client: "I'll continue
+testing as soon as I'm able to … stay logged in." On every return from the
+background the app asks the server whether the account still exists
+(`signOutIfAccountGone`, added 7 Oct for accounts deleted under an open
+app), and signed out on any 403. Access tokens last 3600 s. Back after more
+than an hour, that question went out with the expired token before the
+client had renewed it; the server refuses an expired or broken token with
+403 `bad_jwt` — so the app took it for a deleted account and signed the
+person out. Now the check renews an expired session first and signs out
+only on `user_not_found` (or 404). A deleted account is still caught: with a
+live token the server says `user_not_found`; with an expired one the renewal
+fails (`refresh_token_not_found`) and the Supabase client signs out itself.
+"Remember me" was not the cause: it starts ticked, and unticked it signs out
+only at the next start, by design. Checked on the OnePlus: a cold restart
+keeps the session; an account deleted while the app was in the background
+is signed out on return.
 - Checked: Google's hours on a business page with none of its own — the four
   linked car parks have no hours on Google, so with Google's documented
   sample place, on a test row. Owner, business, files, notifications and the

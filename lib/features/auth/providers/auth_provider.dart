@@ -277,14 +277,24 @@ class AuthNotifier extends StateNotifier<UserModel?> {
   }
 
   /// Whether the server no longer knows this session's account. Only a clear
-  /// answer counts: no connection is not a deleted account.
+  /// answer counts: no connection is not a deleted account, and neither is
+  /// an expired token.
+  ///
+  /// This runs on every return from the background, and an access token
+  /// lasts an hour. Back after longer, `getUser()` sent the expired token
+  /// before the client had renewed it; the server refuses that with 403
+  /// `bad_jwt`, which was read as "deleted", and the person was signed out —
+  /// the client could not stay signed in (8 Oct). So the session is renewed
+  /// first when it has expired, and only "no such user" signs out.
   Future<bool> _accountGone() async {
     try {
+      if (_client.auth.currentSession?.isExpired ?? false) {
+        await _client.auth.refreshSession();
+      }
       await _client.auth.getUser();
       return false;
     } on AuthException catch (e) {
-      final code = e.statusCode ?? '';
-      return code == '403' || code == '404' || e.code == 'user_not_found';
+      return e.code == 'user_not_found' || e.statusCode == '404';
     } catch (_) {
       return false;
     }
