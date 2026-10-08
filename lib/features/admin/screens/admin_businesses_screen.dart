@@ -649,6 +649,15 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
       (ref.read(adminBusinessListProvider).valueOrNull?.firstOrNull
               ?.containsKey('hours_text') ??
           false);
+
+  /// The business's place on Google Maps (00073), whose hours the pages show
+  /// when there are none here. Shown and saved once the column exists.
+  late final TextEditingController _googlePlaceId;
+  bool get _hasGooglePlace =>
+      widget.business?.containsKey('google_place_id') ??
+      (ref.read(adminBusinessListProvider).valueOrNull?.firstOrNull
+              ?.containsKey('google_place_id') ??
+          false);
   late final TextEditingController _shortDesc;
   late final TextEditingController _fullDesc;
   late final TextEditingController _phone;
@@ -841,6 +850,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
     _nameEn = TextEditingController(text: b?['name_en'] as String? ?? '');
     _slug = TextEditingController(text: b?['slug'] as String? ?? '');
     _hoursText = TextEditingController(text: b?['hours_text'] as String? ?? '');
+    _googlePlaceId = TextEditingController(text: b?['google_place_id'] as String? ?? '');
     _shortDesc = TextEditingController(
       text: b?['short_description'] as String? ?? '',
     );
@@ -918,6 +928,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
     _nameEn.dispose();
     _slug.dispose();
     _hoursText.dispose();
+    _googlePlaceId.dispose();
     _shortDesc.dispose();
     _fullDesc.dispose();
     _phone.dispose();
@@ -991,6 +1002,23 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
                         'Shown on the business page when no hours are set day by day',
                       ),
                       alignLabelWithHint: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                if (_hasGooglePlace) ...[
+                  TextFormField(
+                    controller: _googlePlaceId,
+                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: tr('מזהה המקום ב-Google Maps', 'Google Maps place ID'),
+                      labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                      helperText: tr(
+                        'כשאין כאן שעות, דף העסק מציג את השעות מ-Google. ריק — ללא',
+                        'When there are no hours here, the page shows Google\'s. Empty for none',
+                      ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
@@ -2074,6 +2102,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
       'short_description': _t(_shortDesc),
       'full_description': _t(_fullDesc),
       if (_hasHoursText) 'hours_text': _t(_hoursText),
+      if (_hasGooglePlace) 'google_place_id': _t(_googlePlaceId),
       'kind': _kind,
       // A park has no contact details (the client's rule), so any typed
       // before switching the type are not kept.

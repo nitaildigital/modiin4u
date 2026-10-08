@@ -151,3 +151,49 @@ Future<GooglePlaceDetails?> fetchGooglePlace(String placeId, {required String la
     return null;
   }
 }
+
+/// A business's opening hours from Google, for a business with none of its
+/// own (00073): Google's lines ("יום ראשון: 9:00–18:00"), and the place's
+/// address on Google Maps for the credit. Only those two fields are asked
+/// for, so the request is billed for nothing else.
+class GoogleHours {
+  final List<String> lines;
+  final String? mapsUri;
+  const GoogleHours({required this.lines, this.mapsUri});
+}
+
+Future<GoogleHours?> fetchGoogleHours(String placeId, {required String language}) async {
+  if (!googlePlacesAvailable) return null;
+  try {
+    final res = await http.get(
+      Uri.parse('https://places.googleapis.com/v1/places/$placeId?languageCode=$language'),
+      headers: {
+        ...googlePlacesHeaders,
+        'X-Goog-FieldMask': 'regularOpeningHours.weekdayDescriptions,googleMapsUri',
+      },
+    );
+    if (res.statusCode != 200) {
+      debugPrint('Google hours $placeId: ${res.statusCode} ${res.body}');
+      return null;
+    }
+    final j = jsonDecode(res.body) as Map<String, dynamic>;
+    final lines = [
+      for (final d in ((j['regularOpeningHours'] as Map?)?['weekdayDescriptions'] as List?) ?? const [])
+        d as String,
+    ];
+    return lines.isEmpty ? null : GoogleHours(lines: lines, mapsUri: j['googleMapsUri'] as String?);
+  } catch (e) {
+    debugPrint('Google hours $placeId: $e');
+    return null;
+  }
+}
+
+/// Google's "יום ראשון: 7:00–0:00" read back to front in Hebrew — the time
+/// range has no letters to take a direction from, so right-to-left text
+/// turned it into "0:00–7:00". The part after the day's name is isolated
+/// left to right, so a range always reads from opening to closing.
+String googleHoursLine(String line) {
+  final i = line.indexOf(': ');
+  if (i < 0) return line;
+  return '${line.substring(0, i + 2)}\u2066${line.substring(i + 2)}\u2069';
+}

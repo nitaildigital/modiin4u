@@ -18,6 +18,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../municipal/services/google_place.dart';
 import '../../auth/widgets/m_account_widgets.dart' show mTr;
 import '../../../shared/widgets/error_retry.dart';
 import '../models/menu_item.dart' as menu;
@@ -1532,7 +1533,9 @@ class _BusinessDetailContentState
             ),
             const SizedBox(height: 12),
             _HoursText(text: business.hoursText!),
-          ],
+          ] else if (business.googlePlaceId != null)
+            // Nothing of its own: Google's hours, asked for now (00073).
+            _GoogleHoursSection(placeId: business.googlePlaceId!),
         ],
       ),
     );
@@ -2950,6 +2953,69 @@ class _PhotoCaptionDialogState extends State<_PhotoCaptionDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context, _caption.text.trim()),
           child: Text(mTr(context, 'Send', 'שליחה')),
+        ),
+      ],
+    );
+  }
+}
+
+/// A business's hours from Google Maps, for a business with none of its
+/// own. Nothing at all while they load or if Google has none — an empty
+/// "Opening hours" would say the business has no hours. Shown with Google's
+/// mark and a link to the place, as Google's terms ask.
+class _GoogleHoursSection extends ConsumerWidget {
+  final String placeId;
+  const _GoogleHoursSection({required this.placeId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = L.of(context);
+    final language = Localizations.localeOf(context).languageCode == 'he' ? 'he' : 'en';
+    final g = ref.watch(businessGoogleHoursProvider((placeId: placeId, language: language))).valueOrNull;
+    if (g == null) return const SizedBox.shrink();
+    final grey = TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: const Color(0xFF6B6B6B));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Text(
+          mTr(context, 'Opening hours', 'שעות פתיחה'),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F1F1F),
+          ),
+        ),
+        const SizedBox(height: 12),
+        for (final line in g.lines)
+          Text(
+            googleHoursLine(line),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              height: 1.6,
+              color: const Color(0xFF3D3D3D),
+            ),
+          ),
+        const SizedBox(height: 10),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 10,
+          runSpacing: 6,
+          children: [
+            Image.asset('assets/web/common/google_logo.png', height: 16),
+            Text(l.parkingFromGoogle, style: grey),
+            if (g.mapsUri != null)
+              InkWell(
+                onTap: () => launchUrl(Uri.parse(g.mapsUri!), mode: LaunchMode.externalApplication),
+                child: Text(
+                  l.parkingViewOnGoogle,
+                  style: grey.copyWith(color: AppColors.midBlue, fontWeight: FontWeight.w600),
+                ),
+              ),
+          ],
         ),
       ],
     );

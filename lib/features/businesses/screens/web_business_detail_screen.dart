@@ -20,6 +20,7 @@ import '../models/business.dart';
 import '../models/business_review.dart';
 import '../models/review_reply.dart';
 import '../providers/business_providers.dart';
+import '../../municipal/services/google_place.dart';
 import '../../../shared/widgets/web_contact_menu.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -820,7 +821,48 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                 ],
               ),
             ),
-          ],
+          ] else if (b.googlePlaceId != null)
+            // Nothing of its own: Google's hours, asked for now (00073).
+            _buildGoogleHours(b.googlePlaceId!),
+        ],
+      ),
+    );
+  }
+
+  /// A business's hours from Google Maps, where it has none of its own —
+  /// nothing while they load or if Google has none, and Google's mark and a
+  /// link to the place with them, as Google's terms ask.
+  Widget _buildGoogleHours(String placeId) {
+    final l = L.of(context);
+    final g = ref
+        .watch(businessGoogleHoursProvider((placeId: placeId, language: _isHebrew ? 'he' : 'en')))
+        .valueOrNull;
+    if (g == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_t('Opening hours', 'שעות פתיחה'), style: _inter(14, weight: FontWeight.w600, color: _kBody)),
+          const SizedBox(height: 8),
+          for (final line in g.lines)
+            Text(googleHoursLine(line), style: _inter(14, weight: FontWeight.w500, color: _kBody, height: 1.6)),
+          const SizedBox(height: 10),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 10,
+            runSpacing: 6,
+            children: [
+              Image.asset('assets/web/common/google_logo.png', height: 16),
+              Text(l.parkingFromGoogle, style: _inter(12, color: _kGrey)),
+              if (g.mapsUri != null)
+                InkWell(
+                  onTap: () => launchUrl(Uri.parse(g.mapsUri!), mode: LaunchMode.externalApplication),
+                  child: Text(l.parkingViewOnGoogle,
+                      style: _inter(12, weight: FontWeight.w600, color: AppColors.midBlue)),
+                ),
+            ],
+          ),
         ],
       ),
     );

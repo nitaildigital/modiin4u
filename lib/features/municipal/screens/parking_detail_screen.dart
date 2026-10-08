@@ -272,7 +272,7 @@ class _ParkingDetailBody extends ConsumerWidget {
           _Section(
             icon: IconsaxPlusLinear.clock,
             title: l.openingHours,
-            children: [for (final h in g!.hours) Text(_ltrTimes(h), style: _text(13, color: _kGrey))],
+            children: [for (final h in g!.hours) Text(googleHoursLine(h), style: _text(13, color: _kGrey))],
           )
         else if (lot.hours != null)
           _Section(
@@ -353,16 +353,6 @@ class _ParkingDetailBody extends ConsumerWidget {
       ],
     );
   }
-}
-
-/// Google's "יום ראשון: 7:00–0:00" read back to front in Hebrew — the time
-/// range has no letters to take a direction from, so right-to-left text
-/// turned it into "0:00–7:00". The part after the day's name is isolated
-/// left to right, so a range always reads from opening to closing.
-String _ltrTimes(String line) {
-  final i = line.indexOf(': ');
-  if (i < 0) return line;
-  return '${line.substring(0, i + 2)}\u2066${line.substring(i + 2)}\u2069';
 }
 
 TextStyle _text(double size, {FontWeight weight = FontWeight.w400, Color color = _kHeading}) =>

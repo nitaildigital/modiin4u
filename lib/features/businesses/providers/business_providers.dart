@@ -10,6 +10,7 @@ import '../models/review_reply.dart';
 import '../models/menu_item.dart' as menu;
 import '../repositories/business_repository.dart';
 import '../services/photo_submission.dart';
+import '../../municipal/services/google_place.dart';
 import '../../../core/providers/content_language.dart';
 
 final businessRepositoryProvider = Provider<BusinessRepository>(
@@ -509,3 +510,11 @@ final myPendingPhotosProvider = FutureProvider.autoDispose
       if (user == null) return const [];
       return PhotoSubmissions.pendingOf(businessId);
     });
+
+/// A business's hours from Google, for a business with none of its own and
+/// a place ID (00073). Asked for when the page opens — Google's terms let us
+/// keep the ID, not the hours. Null when Google has none or cannot be asked.
+final businessGoogleHoursProvider = FutureProvider.autoDispose
+    .family<GoogleHours?, ({String placeId, String language})>(
+      (ref, key) => fetchGoogleHours(key.placeId, language: key.language),
+    );

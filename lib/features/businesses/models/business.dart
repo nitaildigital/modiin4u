@@ -82,6 +82,11 @@ class Business {
   /// when [hours] is empty, and never read for "open now": turned into
   /// day-by-day rows they would be guesses.
   final String? hoursText;
+
+  /// The business's place on Google Maps (00073). Only the ID is kept —
+  /// Google's terms — and the page asks Google for the hours when it has
+  /// none of its own.
+  final String? googlePlaceId;
   final double rating;
   final int reviewCount;
   final String? kosherStatus;
@@ -132,6 +137,7 @@ class Business {
     this.tags = const [],
     this.hours = const [],
     this.hoursText,
+    this.googlePlaceId,
     this.rating = 0,
     this.reviewCount = 0,
     this.kosherStatus,
@@ -210,6 +216,7 @@ class Business {
       tags: tags ?? this.tags,
       hours: hours ?? this.hours,
       hoursText: hoursText,
+      googlePlaceId: googlePlaceId,
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,
       kosherStatus: kosherStatus ?? this.kosherStatus,
@@ -323,6 +330,10 @@ class Business {
       hoursText: switch ((json['hours_text'] as String?)?.replaceAll('\r\n', '\n').trim()) {
         null || '' => null,
         final text => text,
+      },
+      googlePlaceId: switch ((json['google_place_id'] as String?)?.trim()) {
+        null || '' => null,
+        final id => id,
       },
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
       reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
