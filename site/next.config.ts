@@ -47,6 +47,9 @@ const nextConfig: NextConfig = {
       // The Flutter site's own search addresses, in links people kept.
       { source: '/apartments-sale', destination: '/realestate/?kind=sale', statusCode: 301 as const },
       { source: '/apartments-rent', destination: '/realestate/?kind=rent', statusCode: 301 as const },
+      // A link in an article's own text that led nowhere on WordPress either:
+      // the business is here under another address.
+      { source: encodeURI('/business/ג׳פטו-בר'), destination: '/business/geppeto-bar-modiin/', statusCode: 301 as const },
     ];
   },
 };

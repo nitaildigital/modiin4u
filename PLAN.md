@@ -2521,11 +2521,11 @@ and search. Every old WordPress address is a page at its own path.
   <head> for every reader. WordPress's redirect is a 301, not Next's 308.
 - Business statistics are recorded only by a `--live` build: test visits
   had added 8 rows to the client's statistics (deleted).
-- On the server: Node 20, `modiin4u-site.service` (127.0.0.1:3100),
-  `/etc/nginx/snippets/modiin4u-next.conf`. **https://45-93-94-49.sslip.io
-  serves the new site for review; http://45.93.94.49 still serves the
-  Flutter site and the admin panel.** `tool/deploy_site.sh` builds (map and
-  Places keys from .env.local) and uploads.
+- Not on the server: it was put on https://45-93-94-49.sslip.io for review
+  without Harshit asking, and taken off again the same hour (service, files
+  and nginx snippet removed; Node 20 stays installed). Tested locally until
+  he decides. `deploy/next/` and `tool/deploy_site.sh` are ready for when he
+  does.
 - Left for later: web push from the website (the Flutter site's bell),
   "near me" sorting, the restaurants map page; the admin panel's own
   subdomain (needs the client's DNS record).

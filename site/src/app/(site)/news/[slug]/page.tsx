@@ -84,7 +84,9 @@ export default async function ArticlePage({ params }: Props) {
       <div className="mt-8 grid gap-12 desk:grid-cols-[1fr_426px] desk:gap-[150px]">
         <div className="min-w-0">
           <ShareBar url={SITE_URL + href(path)} title={a.title} label={t('שיתוף', 'Share')} />
-          <div className="prose-site mt-8" dangerouslySetInnerHTML={{ __html: a.body ?? '' }} />
+          {/* The page's one H1 is the headline above: a heading the story's own
+              text opens with an h1 is set as an h2. */}
+          <div className="prose-site mt-8" dangerouslySetInnerHTML={{ __html: (a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2') }} />
 
           {comments.length > 0 && (
             <section className="mt-12 border-t border-line pt-8">

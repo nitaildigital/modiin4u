@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/config';
-import { href, wpPaths } from '@/lib/seo';
+import { href, wpPage, wpPaths } from '@/lib/seo';
 import { db } from '@/lib/supabase';
 
 export const revalidate = 600;
@@ -20,5 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const b of biz.data ?? []) if (b.slug && !b.noindex) out.set(`/business/${b.slug}/`, b.updated_at);
   for (const c of cats.data ?? []) if (c.slug) out.set(`/${c.scope === 'business' ? 'business-cat' : 'new'}/${c.slug}/`, c.updated_at);
   for (const p of wpPaths()) if (!out.has(p)) out.set(p, undefined);
+  // An address WordPress redirects is redirected here too: not listed.
+  for (const p of [...out.keys()]) if (wpPage(p)?.redirect_to) out.delete(p);
   return [...out].map(([path, lastmod]) => ({ url: SITE_URL + href(path), ...(lastmod ? { lastModified: lastmod } : {}) }));
 }
