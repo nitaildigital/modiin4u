@@ -2392,6 +2392,36 @@ photos, files, notifications, the accounts and both temporary admins
 *Building for Android from Android Studio's Java 25 fails ("25.0.3");
 build with Java 21:* `cd android && JAVA_HOME=<jbr-21> ./gradlew assembleDebug`.
 
+**Hours from Google; a business made in the app; the account type — 8 Oct
+(afternoon).** Harshit: take businesses' hours from Google or WordPress;
+show what a business entered once it is approved; the sign-up's account
+type cards look poor — a dropdown.
+
+- **Hours, in this order:** what the business or the client set day by day;
+  else the WordPress text (00071, 171 businesses); else Google's, asked for
+  when the page opens with Google's mark and "View on Google Maps" — phone
+  and website. **00073** adds `businesses.google_place_id` (only the ID is
+  kept: Google's terms, as for car parks). Editable in the panel's business
+  editor under Opening hours. The request asks for the hours only.
+- **Linking the 61 businesses with no hours** is `tool/link_business_google.py`
+  (dry run, `--apply`, `--undo`): search by name, link only when the name
+  matches closely and the place is within 300 m of ours; the rest listed for
+  the client. **Not run yet — it needs a Places key for scripts**
+  (`GOOGLE_PLACES_SERVER_KEY`): the website's key refuses any caller but the
+  site, and using it from a script would undo that restriction.
+- **A business made in the app, approved:** already shown as entered —
+  checked 8 Oct with a throwaway owner on the OnePlus: logo, cover, photos,
+  about, address, phone and day-by-day hours (Saturday closed) on the
+  owner's profile, in search, on the business page in the app and on the
+  website, after Approve in the panel.
+- **Account type** on the phone sign-up is a dropdown (icon and name) with
+  the chosen type's one line under it; three cards side by side had left a
+  few words per line.
+- Checked: Google's hours on a business page with none of its own — the four
+  linked car parks have no hours on Google, so with Google's documented
+  sample place, on a test row. Owner, business, files, notifications and the
+  temporary admin deleted after.
+
 **Audit, 5 Oct: what should be saved and is not.** The whole app, site and
 panel against the database (59 tables; 20 never written by the code).
 
