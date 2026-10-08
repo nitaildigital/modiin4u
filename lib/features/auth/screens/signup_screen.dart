@@ -349,20 +349,30 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           label: l.accountType,
                           hint: l.accountType,
                           value: _accountType,
+                          // In the list, each type with what it is for under
+                          // its name, as the cards had it. The closed field is
+                          // one line tall, so it shows the name, and the
+                          // chosen type's line is set under it.
+                          itemHeight: null,
+                          isExpanded: true,
                           items: [
                             for (final t in AccountType.values)
                               DropdownMenuItem(
                                 value: t,
-                                child: Row(
-                                  children: [
-                                    Icon(_accountTypeIcon(t), size: 20, color: _accountTypeColor(t)),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      _accountTypeTitle(t, l),
-                                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-                                    ),
-                                  ],
-                                ),
+                                child: _accountTypeRow(t, l),
+                              ),
+                          ],
+                          selectedItemBuilder: (context) => [
+                            for (final t in AccountType.values)
+                              Row(
+                                children: [
+                                  Icon(_accountTypeIcon(t), size: 20, color: _accountTypeColor(t)),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    _accountTypeTitle(t, l),
+                                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+                                  ),
+                                ],
                               ),
                           ],
                           onChanged: (t) {
@@ -370,7 +380,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           },
                         ),
                         const SizedBox(height: 8),
-                        // What the chosen type is for — the cards' second line.
                         Text(
                           _accountTypeSubtitle(_accountType, l),
                           style: TextStyle(
@@ -727,6 +736,44 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 
+  Widget _accountTypeRow(AccountType t, L l) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      children: [
+        Icon(_accountTypeIcon(t), size: 22, color: _accountTypeColor(t)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _accountTypeTitle(t, l),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1F1F1F),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _accountTypeSubtitle(t, l),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 12,
+                  height: 1.3,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF6D6D6D),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
   IconData _accountTypeIcon(AccountType t) => switch (t) {
     AccountType.resident => Icons.person_outline,
     AccountType.broker => Icons.business_outlined,
@@ -840,6 +887,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     required T? value,
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
+    double? itemHeight = kMinInteractiveDimension,
+    bool isExpanded = false,
+    DropdownButtonBuilder? selectedItemBuilder,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -858,6 +908,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           initialValue: value,
           items: items,
           onChanged: onChanged,
+          itemHeight: itemHeight,
+          isExpanded: isExpanded,
+          selectedItemBuilder: selectedItemBuilder,
           icon: const Icon(
             Icons.keyboard_arrow_down,
             size: 20,
