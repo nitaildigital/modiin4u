@@ -2126,7 +2126,7 @@ Status: ✅ done and tested · 🟡 built, waiting on a step · ⬜ not started 
 |---|---|---|---|
 | 1 | Firebase access | ✅ | — (accepted 2 Oct; project `modiin4u-a895f`) |
 | 2 | Google Play access | ✅ | — (accepted 2 Oct) |
-| 3 | Legal texts | ⏸ | His lawyer's Terms and Privacy Policy came 5 Oct. **In the panel as unpublished drafts, as written** (`tool/import_legal_docs.py`; the old WordPress text kept in `tool/legal_docs_registry.json` for `--undo`): Terms in 'terms', the Privacy Policy in a new 'privacy' row. Still carry ~60 template brackets and notes: he and the lawyer finish them in the panel and publish. Tell the lawyer note **b**. No English versions |
+| 3 | Legal texts | ✅ | His lawyer's Terms and Privacy Policy came 5 Oct. **In the panel as unpublished drafts, as written** (`tool/import_legal_docs.py`; the old WordPress text kept in `tool/legal_docs_registry.json` for `--undo`): Terms in 'terms', the Privacy Policy in a new 'privacy' row. Brackets filled and **published 8 Oct** (`tool/publish_legal_docs.py`, see "The lawyer's Terms and Privacy Policy, brackets filled"); he and the lawyer can still edit them in the panel. No English versions |
 | 4 | Michael: launch-day SEO steps | ⏸ | No answer yet. Domain move (`tool/enable_domain.sh`), redirects, `SEO_LIVE=1`, Search Console |
 | 5 | Admin roles: "limit roles" | 🟡 | Panel done and tested (note **c**). The database still lets any admin write any table: a migration. Our proposed split (main / content / business editor) was not confirmed in words. **The rights are rows in `admin_role_permissions` that the panel cannot edit** (the Team section assigns roles only): a rights editor is still to build. As stored, Business editor has no Categories — Content editor does — unlike our proposal; his call |
 | 6 | The old site's 63 categories, each its own page "for SEO" | ✅ not live (5 Oct) | Built: migration 00047, `tool/import_old_categories.py` (60 new under the nearest main category, 3 existing, 4 lists kept out of the menus, 394 business links), navbar and directory grid show main categories. Run 00047, then the import, then `build_seo_pages.py --write-redirects`, then test |
@@ -2454,9 +2454,10 @@ after it 200.
 force an update. Settings in the panel has "Force update — oldest Android
 build allowed" and the same for iOS (`min_build_android`, `min_build_ios` in
 `app_settings`, no migration: the table already takes any key). The build
-number is the part after "+" in pubspec's version; the app's Settings now
-shows it ("App version 1.0.0 (1)", read from the build with
-`package_info_plus` — it had "1.0.0" typed in). A build below the minimum
+number is the part after "+" in pubspec's version — the version code in
+Play Console, the build in App Store Connect. The app's Settings shows the
+version only ("1.0.0", read from the build with `package_info_plus`; for a
+while it showed "1.0.0 (1)", changed back at Harshit's word). A build below the minimum
 shows only "Update required" (`core/update/force_update.dart`), with an
 Update button to the store link set beside it, or "update it from Google
 Play / the App Store" while there is none. Checked at start and on every
@@ -3057,6 +3058,43 @@ the other screens.
   (not saved); a draft business created and deleted; lists, links, bold,
   headings and a picture in a new article, the HTML each produced checked.
   The toolbar gave the keyboard away on every press: it gives it back now.
+
+### The lawyer's Terms and Privacy Policy, brackets filled — 8 October
+
+Harshit asked for the lawyer's two documents (5 Oct) on the app and the
+website with the template's brackets filled. `tool/publish_legal_docs.py`
+reads them as `import_legal_docs.py` does and changes only the brackets, each
+one listed in the script with its source, and stops if one is left:
+
+- The operator, address, phone and e-mail are the documents' own values
+  (מודיעין בשבילך, 558559068, אלמוגן 11, 058-4770195,
+  modiin4uoffice@gmail.com). The template's info@, legal@, privacy@… on
+  modiin4u.co.il became that address: the domain has no mailboxes.
+- The accessibility coordinator, ניתאי לוי, is from the panel's
+  Accessibility Statement.
+- What the app does: sign-in by e-mail only, so the Google/Apple sentence and
+  row go; Supabase (ap-south-1, India), Firebase Cloud Messaging (USA), Brevo
+  (France), PersonaAI for the chat; no analytics or crash SDK, so those rows
+  go; steps, distance and active energy from HealthKit / Health Connect. The
+  chat is PersonaAI's page and we keep no conversations, so "kept with us up
+  to 90 days" became "not kept by us; kept by PersonaAI under its terms", and
+  the claim about PersonaAI's training, which nothing on record supports, is
+  out.
+- The lawyer's open choices took his own suggestions: age 16 (16–17 for
+  minors), 24 hours, 30 days, 7 business days, 12 months; account deletion
+  deletes public content (reviews cascade with the account). The press-ethics
+  note and the parental-consent item are out.
+- Each document's "נספח פנימי – לא לפרסום" is cut, as it says.
+
+The WordPress text that is live goes to `tool/legal_publish_registry.json`;
+`--undo` restores it. Run and published 8 Oct; both rows checked to match
+the script's text, with no bracket and no internal appendix.
+
+What the texts now promise that the app does not do: signing up does not
+check the age; nothing tells a resident before their first chat that it
+goes to PersonaAI; Privacy §23 still says Apple access is revoked on
+deletion. The Brevo row lists e-mail only: no SMS is sent. The tables print
+one cell per paragraph, as the drafts did.
 
 ### English on the website stopped halfway — 2 October
 

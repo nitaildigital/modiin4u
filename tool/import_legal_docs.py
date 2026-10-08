@@ -169,4 +169,5 @@ def main():
         print('dry run: pass --apply to write')
 
 
-main()
+if __name__ == '__main__':
+    main()
