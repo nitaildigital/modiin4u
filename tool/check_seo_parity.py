@@ -88,7 +88,7 @@ def check(base, path, wp, menu):
     h1 = text(first(r'<h1[^>]*>([\s\S]*?)</h1>', h))
     if wp.get('h1') and h1 != norm(wp['h1']):
         diff['h1'] = (wp['h1'], h1)
-    links = {urllib.parse.unquote(x) for x in re.findall(r'<a href="([^"]+)"', h)}
+    links = {urllib.parse.unquote(html.unescape(x)) for x in re.findall(r'<a\s[^>]*href="([^"]+)"', h)}
     missing = [p for p in menu if p not in links]
     if missing:
         diff['menu'] = f'{len(missing)} of {len(menu)} menu links missing'

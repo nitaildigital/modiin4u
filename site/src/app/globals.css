@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* The app's palette and type (lib/core/theme/app_colors.dart, app_fonts.dart). */
+@theme {
+  --color-navy: #0A1230;
+  --color-midblue: #123A72;
+  --color-turquoise: #17A9D0;
+  --color-gold: #FAC775;
+  --color-orange: #FB7901;
+  --color-ink: #0F161E;
+  --color-gray-text: #5F5E5A;
+  --color-gray-meta: #6B7280;
+  --color-gray-light: #888780;
+  --color-line: #E7E7E7;
+  --color-card-border: #EAEAEA;
+  --color-filter-border: #DBDBDB;
+  --color-section: #F5F5F5;
+  --color-surface: #F7F8FA;
+  --color-background: #F9F9F7;
+  --color-success: #2ECC71;
+  --color-error: #E74C3C;
+  --font-sans: var(--font-inter), var(--font-rubik), system-ui, sans-serif;
+  --font-rubik: var(--font-rubik), system-ui, sans-serif;
+  --font-nunito: var(--font-nunito), var(--font-rubik), system-ui, sans-serif;
+  --breakpoint-desk: 1100px;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body { background: #fff; color: var(--color-ink); }
+
+/* The page's content column: 1600 at most, and a gap either side that never
+   falls below about 4.5% of the window (webGutter in web_chrome.dart). */
+.wrap {
+  width: 100%;
+  max-width: calc(1600px + 2 * clamp(24px, 4.5vw, 80px));
+  margin-inline: auto;
+  padding-inline: clamp(16px, 4.5vw, 80px);
+}
+
+/* Stored article and business HTML, as the app draws it. */
+.prose-site { line-height: 1.75; font-size: 16px; color: #3D3D3D; }
+.prose-site p { margin: 0 0 1em; }
+.prose-site h2 { font-size: 22px; font-weight: 600; margin: 1.4em 0 .6em; color: var(--color-midblue); }
+.prose-site h3 { font-size: 19px; font-weight: 600; margin: 1.2em 0 .5em; }
+.prose-site ul, .prose-site ol { padding-inline-start: 1.4em; margin: 0 0 1em; }
+.prose-site ul { list-style: disc; } .prose-site ol { list-style: decimal; }
+.prose-site a { color: var(--color-turquoise); text-decoration: underline; }
+.prose-site img { max-width: 100%; height: auto; border-radius: 12px; margin: 1em 0; }
+.prose-site blockquote { border-inline-start: 3px solid var(--color-turquoise); padding-inline-start: 1em; color: #555; }
+.prose-site iframe { max-width: 100%; }
+
+/* PersonaAI's own bubble and pop-ups: the "Ask" button opens the chat
+   instead (the client, 5 Oct). `html body` outranks the widget's own
+   `#…{display:flex !important}`. */
+html body #personaai-chat-button,
+html body #personaai-anim-layer,
+html body #personaai-welcome-bubble,
+html body #personaai-proactive-bubble { display: none !important; }

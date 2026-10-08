@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 49497">
+<circle id="Ellipse 523" cx="24" cy="24" r="24" fill="#146DDF" fill-opacity="0.15"/>
+<g id="Frame">
+<path id="Vector" d="M14 21C14.7956 21 15.5587 21.3161 16.1213 21.8787C16.6839 22.4413 17 23.2044 17 24C17 24.7956 16.6839 25.5587 16.1213 26.1213C15.5587 26.6839 14.7956 27 14 27V29C14 29.5304 14.2107 30.0391 14.5858 30.4142C14.9609 30.7893 15.4696 31 16 31H32C32.5304 31 33.0391 30.7893 33.4142 30.4142C33.7893 30.0391 34 29.5304 34 29V27C33.2044 27 32.4413 26.6839 31.8787 26.1213C31.3161 25.5587 31 24.7956 31 24C31 23.2044 31.3161 22.4413 31.8787 21.8787C32.4413 21.3161 33.2044 21 34 21V19C34 18.4696 33.7893 17.9609 33.4142 17.5858C33.0391 17.2107 32.5304 17 32 17H16C15.4696 17 14.9609 17.2107 14.5858 17.5858C14.2107 17.9609 14 18.4696 14 19V21Z" stroke="#146DDF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M25 17V19" stroke="#146DDF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M25 29V31" stroke="#146DDF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_4" d="M25 23V25" stroke="#146DDF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</svg>

@@ -1,0 +1,27 @@
+# The public website (site/, Next.js), as a service on the server.
+#
+# Runs the standalone build tool/deploy_site.sh uploads to /srv/modiin4u-site,
+# on 127.0.0.1:3100 only — nginx (deploy/nginx) is what the world talks to.
+# SEO_LIVE=1 is set at launch, in /etc/modiin4u-site.env, and only then: it
+# opens the site to search engines and turns the analytics on.
+#
+#   cp deploy/next/modiin4u-site.service /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now modiin4u-site
+[Unit]
+Description=Modiin4u public website (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/srv/modiin4u-site
+Environment=NODE_ENV=production
+Environment=PORT=3100
+Environment=HOSTNAME=127.0.0.1
+EnvironmentFile=-/etc/modiin4u-site.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

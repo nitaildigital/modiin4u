@@ -2486,6 +2486,50 @@ the Realme (optional → Later → stays away on return; required → stopped)
 and on the iOS simulator (optional with Later; required after returning
 from Safari). Test settings removed.
 
+**The public website moves to Next.js — 8 Oct.** Harshit put two options
+to the client — keep Flutter web and bolt SEO onto it, or rebuild the
+public site in Next.js — and the client chose Next.js: the site's Google
+traffic is its income, and a canvas-drawn Flutter page shows Google its text
+only in a hidden block. Decided with Harshit the same day:
+- **Only the public site moves.** The admin panel stays the Flutter web
+  build, on its own subdomain (the client asked for that for security); the
+  phone apps stay Flutter. One Supabase behind all three.
+- **On our server**, behind nginx: Next.js server-rendered, pages refreshed
+  as content changes (ISR), so no cron to rewrite them.
+- **Today's design**, desktop and phone, Hebrew and English — rebuilt, not
+  redesigned.
+- **SEO acceptance:** `tool/check_seo_parity.py` against the new site —
+  every WordPress page at its address with its title, description, H1 and
+  menu, as the Flutter site already passes (992/992).
+- Code in `site/` in this repo.
+
+**Next.js site built and on the server for review — 8 Oct.** `site/`
+(conventions in site/CONVENTIONS.md). The foundation — SEO helpers
+(`pageMetadata`, `h1For` from the WordPress snapshot, canonical on www,
+noindex until `SEO_LIVE=1`, Open Graph/Twitter from the panel's social
+fields), sitemap (1,135 addresses), robots, WordPress's menu in the header's
+menus (every link real HTML), footer, language cookie (Hebrew by default, as
+Google reads it), Google map tiles through Leaflet with the same web key,
+PersonaAI, and WordPress's analytics (GA4 G-NVPTYVDZ40, Clarity, Hotjar —
+on only with SEO_LIVE) — then the pages built in parallel by area: news,
+business lists, the business page, events and deals, real estate,
+municipal/parks/parking/Shabbat/community/map/info/contact/auth links, home
+and search. Every old WordPress address is a page at its own path.
+- **SEO parity on the production build and on the server: 992 of 992.**
+  Next 15 streams metadata into the body when a page is slow, which Bing,
+  Facebook and WhatsApp do not read; `htmlLimitedBots: /.*/` keeps it in
+  <head> for every reader. WordPress's redirect is a 301, not Next's 308.
+- Business statistics are recorded only by a `--live` build: test visits
+  had added 8 rows to the client's statistics (deleted).
+- On the server: Node 20, `modiin4u-site.service` (127.0.0.1:3100),
+  `/etc/nginx/snippets/modiin4u-next.conf`. **https://45-93-94-49.sslip.io
+  serves the new site for review; http://45.93.94.49 still serves the
+  Flutter site and the admin panel.** `tool/deploy_site.sh` builds (map and
+  Places keys from .env.local) and uploads.
+- Left for later: web push from the website (the Flutter site's bell),
+  "near me" sorting, the restaurants map page; the admin panel's own
+  subdomain (needs the client's DNS record).
+
 **The move from WordPress: every page the same for Google — 8 Oct.** The
 client: the site's SEO is its strongest income; nothing may be lost at the
 move. Harshit: everything as WordPress has it — addresses, titles, headings,
