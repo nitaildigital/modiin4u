@@ -65,6 +65,21 @@ SITE = json.load(open(os.path.join(ROOT, 'tool', 'seo', 'site.json'), encoding='
     if os.path.exists(os.path.join(ROOT, 'tool', 'seo', 'site.json')) else {}
 SUFFIX = SITE.get('title_suffix', ' - מודיעין בשבילך')
 
+# What Google reads on the WordPress site today (tool/snapshot_wp_seo.py):
+# each old address's title, description and H1, and the header menu. Every
+# page that existed there keeps its H1, and every page carries the menu's
+# links with their text, as the old pages did.
+_WP_FILE = os.path.join(ROOT, 'tool', 'seo', 'wp_pages.json')
+WP = json.load(open(_WP_FILE, encoding='utf-8')) if os.path.exists(_WP_FILE) else {}
+WP_PAGES = WP.get('pages', {})
+WP_MENU = WP.get('menu', [])
+
+
+def key(path):
+    """An address as the snapshot keys it: decoded, with a trailing slash."""
+    p = urllib.parse.unquote(path or '/')
+    return p if p.endswith('/') else p + '/'
+
 # The sections a visitor reaches from the navbar, with the app's own Hebrew
 # names for them. Titles and descriptions from site.json where the old site
 # had a page for the same thing; otherwise the name, and no description
@@ -136,6 +151,7 @@ class Builder:
         self.out, self.site, self.live = out, site.rstrip('/'), live
         self.urls = []      # (path, lastmod) for the sitemap
         self.skipped = []
+        self.written = {}   # key(path) → (body, image, jsonld), for the old addresses
         index = os.path.join(out, 'index.html')
         shell = os.path.join(out, 'shell.html')
         template = open(index, encoding='utf-8').read()
@@ -172,6 +188,11 @@ class Builder:
         return '\n  '.join(bits)
 
     def page(self, path, title, description, body, image=None, jsonld=(), index=True, lastmod=None):
+        self.written.setdefault(key(path), (body, image, jsonld))
+        # The heading Google knows from the old site, where there was a page.
+        wp_h1 = WP_PAGES.get(key(path), {}).get('h1')
+        if wp_h1:
+            body = re.sub(r'<h1>.*?</h1>', f'<h1>{esc(wp_h1)}</h1>', body, count=1, flags=re.S)
         rel = urllib.parse.unquote(path).strip('/')
         target_dir = os.path.join(self.out, rel) if rel else self.out
         if any(len(part.encode()) > 240 for part in rel.split('/')):
@@ -199,7 +220,12 @@ class Builder:
 
     def nav(self):
         links = ''.join(f'<li><a href="{p}">{esc(n)}</a></li>' for p, n in SECTIONS)
-        return f'<nav><a href="/">{esc(SITE.get("og_site_name", "מודיעין בשבילך"))}</a><ul>{links}</ul></nav>'
+        # The old site's header menu, link for link: the internal links and
+        # anchor texts every WordPress page carried.
+        menu = ''.join(f'<li><a href="{urllib.parse.quote(p, safe="/")}">{esc(n)}</a></li>'
+                       for p, n in WP_MENU)
+        return (f'<nav><a href="/">{esc(SITE.get("og_site_name", "מודיעין בשבילך"))}</a>'
+                f'<ul>{links}</ul>' + (f'<ul>{menu}</ul>' if menu else '') + '</nav>')
 
     def write_shell(self):
         doc = self.template.replace('<meta charset="UTF-8">',
@@ -224,6 +250,9 @@ class Builder:
     def write_sitemap(self):
         rows = []
         for path, lastmod in self.urls:
+            # An address WordPress redirects is redirected here too, not listed.
+            if WP_PAGES.get(key(path), {}).get('redirect_to'):
+                continue
             lm = f'<lastmod>{lastmod[:10]}</lastmod>' if lastmod else ''
             rows.append(f'<url><loc>{esc(self.site + path)}</loc>{lm}</url>')
         with open(os.path.join(self.out, 'sitemap.xml'), 'w', encoding='utf-8') as f:
@@ -323,7 +352,8 @@ def main():
         '/parks/': biz_list(parks),
     }
     for path, name in SECTIONS:
-        meta = SITE.get('sections', {}).get(path, {})
+        # WordPress's own title where it had a page at the address.
+        meta = WP_PAGES.get(path) or SITE.get('sections', {}).get(path, {})
         title = meta.get('title') or name + SUFFIX
         b.page(path, title, meta.get('description', ''),
                f'<h1>{esc(name)}</h1>{section_body.get(path, "")}',
@@ -415,6 +445,23 @@ def main():
         b.page(path, title, desc, f'<h1>{esc(c["name"])}</h1>{listing}', lastmod=c.get('updated_at'),
                jsonld=[b.breadcrumb((site_name, '/'), parent, (c['name'], path))])
 
+    # ── the old site's addresses, where they were ──
+    # Every address WordPress had keeps answering at that address, with the
+    # old page's title, description and H1, and the content of the page that
+    # replaces it — no redirect, so nothing about it changes for Google.
+    served = 0
+    for old, new in old_addresses().items():
+        if old in b.written or not new:
+            continue
+        target = b.written.get(key(new)) or b.written.get('/businesses/')
+        wp = WP_PAGES.get(old, {})
+        body, image, jsonld = target
+        b.page(urllib.parse.quote(old, safe='/'),
+               wp.get('title') or plain(re.search(r'<h1>(.*?)</h1>', body).group(1)) + SUFFIX,
+               wp.get('description', ''), body, image=image, jsonld=jsonld)
+        served += 1
+    print('old addresses served where they were:', served)
+
     b.write_sitemap()
     print(f'{len(b.urls)} pages written into {a.out} ({"live" if a.live else "noindex until launch"});'
           f' sitemap.xml, robots.txt, shell.html')
@@ -422,15 +469,40 @@ def main():
         print('skipped (path too long for a file name):', len(b.skipped))
 
 
+def old_addresses():
+    """Every old address that has no page of its own here, and the page that
+    stands in for it: those url_map.csv once sent elsewhere, and the menu's
+    addresses WordPress kept out of its sitemaps (empty categories, the
+    contact and apartment-search pages), which stand in with the directory,
+    real estate or the home page."""
+    rows = csv.DictReader(open(os.path.join(ROOT, 'tool', 'seo', 'url_map.csv'), encoding='utf-8-sig'))
+    out = {}
+    for r in rows:
+        old, new = key(r['old_path']), key(r['new_path'] or '/')
+        if old != new:
+            out.setdefault(old, new)
+    stand_in = {'/search-apartments/': '/realestate/'}
+    for p, _ in WP_MENU:
+        p = key(p)
+        out.setdefault(p, stand_in.get(p) or ('/businesses/' if p.startswith(('/business', '/professionals')) else '/'))
+    return out
+
+
 def write_redirects():
     """deploy/nginx/seo-redirects.conf: a 301 for each old address that moved."""
-    rows = list(csv.DictReader(open(os.path.join(ROOT, 'tool', 'seo', 'url_map.csv'), encoding='utf-8-sig')))
+    # Every old address is served where it was (old_addresses()), so the only
+    # redirects are the ones WordPress itself made: those the snapshot saw
+    # (tool/seo/wp_pages.json, `redirect_to`), and any exported from its
+    # redirect rules into tool/seo/wp_redirects.csv (old_path,new_path).
+    src = os.path.join(ROOT, 'tool', 'seo', 'wp_redirects.csv')
+    rows = list(csv.DictReader(open(src, encoding='utf-8-sig'))) if os.path.exists(src) else []
+    rows += [{'old_path': p, 'new_path': w['redirect_to']}
+             for p, w in WP_PAGES.items() if w.get('redirect_to')]
     lines = [
-        '# Old WordPress addresses that moved, each to its new page — written by',
-        '# tool/build_seo_pages.py --write-redirects from tool/seo/url_map.csv.',
-        '# Addresses that kept their path (every article and business) are not',
-        '# here: the new site serves them as they were. Installed next to',
-        '# modiin4u-site.conf, which includes it.',
+        "# WordPress's own redirects, kept — written by tool/build_seo_pages.py",
+        '# --write-redirects from tool/seo/wp_redirects.csv. Every other old',
+        '# address is served where it was. Installed next to modiin4u-site.conf,',
+        '# which includes it.',
         '',
     ]
     seen = set()

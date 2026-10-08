@@ -2486,6 +2486,47 @@ the Realme (optional → Later → stays away on return; required → stopped)
 and on the iOS simulator (optional with Later; required after returning
 from Safari). Test settings removed.
 
+**The move from WordPress: every page the same for Google — 8 Oct.** The
+client: the site's SEO is its strongest income; nothing may be lost at the
+move. Harshit: everything as WordPress has it — addresses, titles, headings,
+menus. Done and measured page by page:
+- `tool/snapshot_wp_seo.py` reads WordPress as a crawler does — every
+  address in its sitemaps and its header menu (992 pages, 59 menu links),
+  with title, description, robots, first H1, and WordPress's own redirects —
+  into `tool/seo/wp_pages.json`. **Run it again after WordPress is frozen,
+  just before the move.**
+- `tool/build_seo_pages.py` now serves **every old address where it was** —
+  no redirect: the 40 that were 301s (section pages such as
+  `/modiin-news/`, professionals, their categories, apartments, agents) and
+  10 menu pages WordPress kept out of its sitemaps, each with WordPress's
+  title, description and H1 and the content of the page that replaced it.
+  Every page takes WordPress's H1 where it had one, and every page carries
+  the old header menu's links with their text. The only redirect left is
+  WordPress's own (`/news/modiin-news/` → `/news/modiin-news-6/`); the
+  sitemap leaves it out. Sections take WordPress's title where it had one.
+- The app answers the old addresses with the screen that replaced them
+  (`_oldAddress` in app_router.dart) instead of "page not found".
+- The server ran an older nginx redirect file (200 lines, sending the 63
+  restored categories to merged ones) and lacked the `/wp-content/uploads/`
+  block. Both installed from the repo, old copies kept in /root as
+  `*.bak-20261008`, `nginx -t` passed.
+- The old images (11,421 files) are copied to /var/www/modiin4u-uploads by
+  `tool/copy_wp_uploads.py`; 12 failed, listed in its failed.txt — run again.
+- `tool/check_seo_parity.py [base]` compares every snapshot page with the new
+  site. Before: 106 addresses not answering at their own address, 43 H1s and
+  every menu different. **After deploy: 992 of 992 the same** (address or
+  redirect, canonical, title, description, H1, menu). Checked in a browser:
+  `/modiin-news/`, `/professionals/clicking/`, `/business-cat/איטלקי/`.
+
+Article bodies match WordPress's API for 664 of 665 (the parking guide was
+edited on WordPress after the import — the final sync will take it).
+Still open: WordPress's redirect rules beyond those its pages show (needs
+its admin, to export them); freezing WordPress and a final sync; the text is
+in a hidden block under the canvas rather than visible HTML; a cron to
+rewrite pages as content is published. Business pages show the panel's
+name on screen (e.g. "שיה") under WordPress's H1 ("שיה מודיעין") for
+search engines — restoring the names in the panel is the client's call.
+
 **Dark mode removed for now — 8 Oct.** The switch changed the theme, but the
 screens are drawn to the light designs with their own colours (about 2,600
 fixed whites, greys and blacks, 16 places reading the theme), so turning it

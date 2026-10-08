@@ -194,6 +194,61 @@ const _appOnlyPrefixes = [
   '/messages/',
 ];
 
+/// The old WordPress site's addresses that have no route of their own, and
+/// the screen that replaced each (tool/seo/url_map.csv). Matched decoded and
+/// without the trailing slash; null for every other address.
+const _oldPaths = {
+  '/personal-area': '/',
+  '/share-with-us': '/community',
+  '/shabat-times-modiin': '/shabbat',
+  '/maar': '/businesses',
+  '/modiin-news': '/news',
+  '/search-rest-modiin': '/restaurants',
+  '/facebookgruop': '/community',
+  '/my-avenue': '/realestate',
+  '/search-apartments': '/realestate',
+  '/יצירת-קשר': '/',
+  '/business': '/businesses',
+  '/professionals': '/businesses',
+  '/professionals/lak-gell-modiin': '/businesses',
+  '/apartments': '/realestate',
+  '/real-estate-agents': '/realestate',
+  '/new/business': '/new/business-news',
+  '/new/culinary': '/new/food',
+  '/business-cat/בריאות': '/business-cat/health',
+  '/business-cat/ספורט-וכושר': '/business-cat/sports-fitness',
+  '/business-cat/רכב': '/business-cat/automotive',
+  '/business-cat/הטבות': '/businesses',
+  '/professionals-cat/בונה-אתרים': '/business-cat/web-design',
+  '/professionals-cat/הנדימן': '/business-cat/handyman',
+  '/professionals-cat/חשמלאי': '/business-cat/electrician',
+  '/professionals-cat/טכנאי-מקררים': '/business-cat/fridge-technician',
+  '/professionals-cat/לק-ג׳ל': '/business-cat/gel-nails',
+  '/professionals-cat/עורך-דין': '/business-cat/lawyer',
+  '/professionals-cat/שיפוצניק': '/business-cat/renovations',
+};
+
+String? _oldAddress(String path) {
+  final p = path.length > 1 && path.endsWith('/')
+      ? path.substring(0, path.length - 1)
+      : path;
+  final exact = _oldPaths[p];
+  if (exact != null) return exact;
+  // A professional is a business here; its category, where it had none of
+  // its own, and the old apartment and agent pages stand in with the
+  // directory and real estate.
+  if (p.startsWith('/professionals/')) {
+    return '/business/${p.substring('/professionals/'.length)}';
+  }
+  if (p.startsWith('/professionals-cat/')) return '/businesses';
+  if (p.startsWith('/apartments/') ||
+      p.startsWith('/real-estate-agents/') ||
+      p.startsWith('/real-astate-agents/')) {
+    return '/realestate';
+  }
+  return null;
+}
+
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
 
@@ -220,6 +275,12 @@ final appRouter = GoRouter(
         (_appOnlyPaths.contains(path) || _appOnlyPrefixes.any(path.startsWith))) {
       return '/';
     }
+    // The old site's addresses that have no route of their own: the server
+    // answers them where they were, with their own page for search engines
+    // (tool/build_seo_pages.py), and the app shows the screen that replaced
+    // them.
+    final old = _oldAddress(Uri.decodeComponent(path));
+    if (kIsWeb && old != null) return old;
     // The old site's addresses end in a slash (/news/modiin-news-523/), and
     // that is how Google and every link out there has them. The routes are
     // written without one.
