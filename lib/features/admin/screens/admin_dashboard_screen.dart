@@ -1115,6 +1115,42 @@ class _SettingsSection extends StatelessWidget {
           numberMax: 50,
           rangeMessage: tr('מספר בין 0 ל-50', 'A number from 0 to 50'),
         ),
+        // Force update: below these builds the app shows only "Update
+        // required" with the store link above (core/update/force_update.dart).
+        _EditableSetting(
+          settingKey: AppSettingKeys.minBuildAndroid,
+          label: tr('עדכון מחייב — מספר הבנייה המינימלי ל-Android (0 = כבוי)',
+              'Force update — oldest Android build allowed (0 = off)'),
+          hint: '0',
+          icon: IconsaxPlusLinear.refresh_circle,
+          number: true,
+          numberMax: 1000000,
+          rangeMessage: tr('מספר בנייה, 0 עד 1,000,000', 'A build number, 0 to 1,000,000'),
+        ),
+        _EditableSetting(
+          settingKey: AppSettingKeys.minBuildIos,
+          label: tr('עדכון מחייב — מספר הבנייה המינימלי ל-iOS (0 = כבוי)',
+              'Force update — oldest iOS build allowed (0 = off)'),
+          hint: '0',
+          icon: IconsaxPlusLinear.refresh_circle,
+          number: true,
+          numberMax: 1000000,
+          rangeMessage: tr('מספר בנייה, 0 עד 1,000,000', 'A build number, 0 to 1,000,000'),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+          child: Text(
+            tr(
+              'מספר הבנייה הוא המספר שבסוגריים במסך ההגדרות של האפליקציה ("גרסת האפליקציה", למשל 1.0.0 (7) → 7). '
+                  'אפליקציה ישנה מזה תציג רק "נדרש עדכון" עם הקישור לחנות שלמעלה. '
+                  'להגדיר רק אחרי שהגרסה החדשה זמינה בחנות.',
+              'The build number is the one in brackets on the app\'s Settings ("App version", e.g. 1.0.0 (7) → 7). '
+                  'An older app shows only "Update required", with the store link above. '
+                  'Set it only once the new version is live in the store.',
+            ),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, height: 1.5, color: AppColors.adminTextLight),
+          ),
+        ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),

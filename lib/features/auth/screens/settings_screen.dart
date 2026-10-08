@@ -3,6 +3,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/push/push_service.dart';
 import '../../../core/push/push_settings.dart';
@@ -25,6 +26,17 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  /// "1.0.0 (1)": the version and build this phone runs.
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = '${info.version} (${info.buildNumber})');
+    }).catchError((_) {});
+  }
+
   /// The switches write to the profile now, so leaving the screen puts the
   /// pending change through rather than dropping it.
   @override
@@ -477,9 +489,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         // "About Modiin4u" is the page above; this row is
                         // the version, and read as the same entry twice.
-                        // The number is pubspec's — change both together.
+                        // Read from the build, with its build number — the
+                        // number the panel's force update compares.
                         title: mTr(context, 'App version', 'גרסת האפליקציה'),
-                        subtitle: '1.0.0',
+                        subtitle: _version ?? '',
                         showChevron: false,
                       ),
                     ],

@@ -2445,6 +2445,23 @@ fails (`refresh_token_not_found`) and the Supabase client signs out itself.
 only at the next start, by design. Checked on the OnePlus: a cold restart
 keeps the session; an account deleted while the app was in the background
 is signed out on return.
+
+**Force update from the panel — 8 Oct.** Harshit: the admin must be able to
+force an update. Settings in the panel has "Force update — oldest Android
+build allowed" and the same for iOS (`min_build_android`, `min_build_ios` in
+`app_settings`, no migration: the table already takes any key). The build
+number is the part after "+" in pubspec's version; the app's Settings now
+shows it ("App version 1.0.0 (1)", read from the build with
+`package_info_plus` — it had "1.0.0" typed in). A build below the minimum
+shows only "Update required" (`core/update/force_update.dart`), with an
+Update button to the store link set beside it, or "update it from Google
+Play / the App Store" while there is none. Checked at start and on every
+return to the app; never on the website; a failed check (offline) lets the
+app through. **Only builds that contain this code obey it** — the copies
+already installed cannot be stopped. Set it only once the new version is
+live in the store. Checked on the Realme with the panel: 2 → the page at
+once on return and on a cold start; back to 0 → the app again. The Update
+button itself is untested — no store link exists yet.
 - Checked: Google's hours on a business page with none of its own — the four
   linked car parks have no hours on Google, so with Google's documented
   sample place, on a test row. Owner, business, files, notifications and the

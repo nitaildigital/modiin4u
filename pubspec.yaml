@@ -77,6 +77,7 @@ dependencies:
   # Picks a CV (PDF, DOC, DOCX) for job applications; image_picker takes
   # pictures only.
   file_picker: ^11.0.3
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

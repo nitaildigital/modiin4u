@@ -29,6 +29,11 @@ abstract final class AppSettingKeys {
   /// How many days an approved listing stays up (00066). 0, or never set,
   /// it never expires.
   static const listingsExpireDays = 'listings_expire_days';
+
+  /// The oldest build each platform may still run (force update). 0, or
+  /// never set, no minimum. See core/update/force_update.dart.
+  static const minBuildAndroid = 'min_build_android';
+  static const minBuildIos = 'min_build_ios';
 }
 
 /// A store link, only when the panel has given an https address.
