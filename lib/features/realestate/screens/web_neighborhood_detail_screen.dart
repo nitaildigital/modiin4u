@@ -9,6 +9,7 @@ import '../../../shared/widgets/web_chrome.dart';
 import '../models/listing.dart';
 import '../providers/detail_providers.dart';
 import '../providers/neighborhood_providers.dart';
+import '../providers/neighborhood_rating_providers.dart';
 import '../widgets/web_detail_parts.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 
@@ -199,6 +200,7 @@ class _WebNeighborhoodDetailContentState extends ConsumerState<WebNeighborhoodDe
               const SizedBox(height: 16),
               // Every neighbourhood in the directory is one of this city's.
               DetailPlace(_t('Modiin', 'מודיעין'), style: detailInter(14)),
+              _buildRating(n),
               if (intro != null) ...[
                 const SizedBox(height: 32),
                 SizedBox(
@@ -302,6 +304,31 @@ class _WebNeighborhoodDetailContentState extends ConsumerState<WebNeighborhoodDe
     );
   }
 
+  /// The residents' average star rating and how many gave one (00071),
+  /// read only: rating needs an account, and accounts are the app's.
+  /// Nothing at all until someone has rated — a "0.0" would read as a bad
+  /// score rather than as none.
+  Widget _buildRating(Neighborhood n) {
+    final r = ref.watch(neighborhoodRatingProvider(n.id)).valueOrNull;
+    if (r == null) return const SizedBox.shrink();
+    final count = r.count == 1
+        ? _t('1 rating', 'דירוג אחד')
+        : _t('${r.count} ratings', '${r.count} דירוגים');
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(r.average.toStringAsFixed(1), style: detailInter(14, weight: FontWeight.w500)),
+          const SizedBox(width: 8),
+          _AverageStars(value: r.average),
+          const SizedBox(width: 8),
+          Text('($count)', style: detailInter(14, color: kDetailMuted)),
+        ],
+      ),
+    );
+  }
+
   // ─────────────────────────────────────────────
   // ABOUT
   // ─────────────────────────────────────────────
@@ -370,6 +397,50 @@ class _WebNeighborhoodDetailContentState extends ConsumerState<WebNeighborhoodDe
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Five of the business page's stars filled to [value], to the nearest half.
+/// The first star sits at the reading start, and a half star is filled on
+/// that side.
+class _AverageStars extends StatelessWidget {
+  final double value;
+  const _AverageStars({required this.value});
+
+  static const _full = 'assets/web/business/star14_full.svg';
+  static const _empty = 'assets/web/business/star14_empty.svg';
+  static const _size = 14.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final halves = (value * 2).round() / 2;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < 5; i++) ...[
+          if (i > 0) const SizedBox(width: 4),
+          SizedBox(
+            width: _size,
+            height: _size,
+            child: Stack(
+              children: [
+                SvgPicture.asset(_empty, width: _size, height: _size),
+                if (halves - i > 0)
+                  ClipRect(
+                    child: Align(
+                      // The filled part grows from the reading start.
+                      alignment: rtl ? Alignment.centerRight : Alignment.centerLeft,
+                      widthFactor: (halves - i).clamp(0.0, 1.0),
+                      child: SvgPicture.asset(_full, width: _size, height: _size),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

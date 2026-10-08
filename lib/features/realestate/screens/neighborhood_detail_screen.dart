@@ -6,16 +6,21 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/supabase/account_blocked.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../auth/widgets/m_account_widgets.dart' show mTr;
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../../shared/widgets/network_photo.dart';
+import '../../../shared/widgets/sign_in_action.dart';
 import '../models/listing.dart';
 import '../providers/detail_providers.dart';
 import '../providers/neighborhood_providers.dart';
+import '../providers/neighborhood_rating_providers.dart';
 import 'web_neighborhood_detail_screen.dart';
 
 /// The design's outline icons, kept with the website's copies.
@@ -121,6 +126,10 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
           // Moriah — when it was settled, where its street names come from —
           // used to appear under every neighbourhood in the city.
           if (n.description != null) _buildAboutSection(context, n),
+
+          // Residents' stars, after what the page says about the place and
+          // before its listings.
+          _RatingCard(neighborhoodId: n.id),
 
           _buildListingSection(context, ref, n, ListingKind.sale),
           _buildListingSection(context, ref, n, ListingKind.rent),
@@ -289,6 +298,310 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Neighbourhood rating
+// ═══════════════════════════════════════════════
+
+/// The design's star colours, as on a business page.
+const _kStarGold = Color(0xFFFFC107);
+const _kStarGrey = Color(0xFFD1D1D1);
+const _kStarOutline = Color(0xFFBDBDBD);
+
+/// "Rate this neighbourhood": the residents' average and count, and under it
+/// five stars the signed-in person sets their own rating with (00071).
+///
+/// One rating per person, changed at will and saved on the tap. In a narrow
+/// browser this layout is the website's, where accounts are the app's, so
+/// there it only shows the average — and nothing when nobody has rated.
+class _RatingCard extends ConsumerStatefulWidget {
+  final String neighborhoodId;
+  const _RatingCard({required this.neighborhoodId});
+
+  @override
+  ConsumerState<_RatingCard> createState() => _RatingCardState();
+}
+
+class _RatingCardState extends ConsumerState<_RatingCard> {
+  /// The rating just tapped, shown while it is saved and until the stored
+  /// one has been read back, so the stars do not jump back for a moment.
+  /// [_pending] tells "cleared" (null) apart from "nothing pending".
+  bool _pending = false;
+  int? _pendingValue;
+
+  String get _id => widget.neighborhoodId;
+
+  void _snack(String text, {bool error = false, SnackBarAction? action}) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(text, style: TextStyle(fontFamily: AppFonts.rubik)),
+        backgroundColor: error ? AppColors.error : null,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        action: action,
+      ),
+    );
+  }
+
+  Future<void> _rate(int? rating, int? current) async {
+    if (_pending || rating == current) return;
+
+    // Rating needs an account, so offer one rather than doing nothing.
+    if (ref.read(authProvider) == null) {
+      _snack(
+        mTr(
+          context,
+          'Sign in to rate this neighbourhood',
+          'התחברו כדי לדרג את השכונה',
+        ),
+        action: signInAction(context),
+      );
+      return;
+    }
+
+    setState(() {
+      _pending = true;
+      _pendingValue = rating;
+    });
+    try {
+      await setMyNeighborhoodRating(ref, _id, rating);
+      if (!mounted) return;
+      _snack(
+        rating == null
+            ? mTr(context, 'Your rating was removed', 'הדירוג שלך הוסר')
+            : mTr(context, 'Thanks for rating', 'תודה על הדירוג'),
+      );
+    } catch (e) {
+      // A blocked account is refused by the database; say so, since "try
+      // again" would never work for them.
+      final blocked = await refusedAsBlocked(e);
+      if (!mounted) return;
+      _snack(
+        blocked ? accountBlockedMessage(context) : L.of(context).errCouldNotSave,
+        error: true,
+      );
+    }
+    // Keep the tapped stars until the stored rating is back — the one just
+    // saved, or the earlier one when the save was refused.
+    try {
+      await ref.read(myNeighborhoodRatingProvider(_id).future);
+    } catch (_) {}
+    if (mounted) setState(() => _pending = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = ref.watch(neighborhoodRatingProvider(_id));
+    final average = summary.valueOrNull;
+
+    if (kIsWeb) {
+      if (average == null) return const SizedBox.shrink();
+      return _frame(
+        title: mTr(context, 'Neighbourhood rating', 'דירוג השכונה'),
+        children: [_averageRow(average)],
+      );
+    }
+
+    final stored = ref.watch(myNeighborhoodRatingProvider(_id)).valueOrNull;
+    final mine = _pending ? _pendingValue : stored;
+
+    return _frame(
+      title: mTr(context, 'Rate this neighbourhood', 'דרגו את השכונה'),
+      children: [
+        // Nothing while the figures load, so "no ratings yet" does not flash
+        // up before an average that exists.
+        if (average != null)
+          _averageRow(average)
+        else if (summary.hasValue)
+          Text(
+            mTr(
+              context,
+              'No ratings yet — be the first',
+              'עדיין אין דירוגים — היו הראשונים',
+            ),
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 14,
+              color: const Color(0xFF6D6D6D),
+            ),
+          ),
+        const SizedBox(height: 16),
+        Text(
+          mTr(context, 'Your rating', 'הדירוג שלך'),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF6D6D6D),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // The business page's star picker: first star at the reading start,
+        // the motion lines turned with it in Hebrew.
+        Row(
+          children: List.generate(5, (i) {
+            final value = i + 1;
+            final on = mine != null && mine >= value;
+            return Semantics(
+              button: true,
+              selected: mine == value,
+              label: mTr(context, '$value of 5 stars', '$value מתוך 5 כוכבים'),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _rate(value, mine),
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(end: i < 4 ? 12 : 0),
+                  child: Transform.flip(
+                    flipX: Directionality.of(context) == TextDirection.rtl,
+                    child: Icon(
+                      on ? IconsaxPlusBold.star_1 : IconsaxPlusLinear.star,
+                      size: 32,
+                      color: on ? _kStarGold : _kStarOutline,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        if (mine != null)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton(
+              onPressed: _pending ? null : () => _rate(null, mine),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                mTr(context, 'Remove my rating', 'הסרת הדירוג שלי'),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.midBlue,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// The page's bordered card, as the figures above it are drawn.
+  Widget _frame({required String title, required List<Widget> children}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE7E7E7)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1F1F1F),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// "4.3 ★★★★½ (12 ratings)".
+  Widget _averageRow(NeighborhoodRating r) {
+    final count = r.count == 1
+        ? mTr(context, '1 rating', 'דירוג אחד')
+        : mTr(context, '${r.count} ratings', '${r.count} דירוגים');
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        Text(
+          r.average.toStringAsFixed(1),
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        _AverageStars(value: r.average, size: 18),
+        Text(
+          '($count)',
+          style: TextStyle(
+            fontFamily: AppFonts.inter,
+            fontSize: 14,
+            color: const Color(0xFF6D6D6D),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Five stars filled to [value], to the nearest half, starting at the
+/// reading start — a half star is filled on its reading-start side.
+class _AverageStars extends StatelessWidget {
+  final double value;
+  final double size;
+  const _AverageStars({required this.value, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final halves = (value * 2).round() / 2;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        final fill = (halves - i).clamp(0.0, 1.0);
+        return Padding(
+          padding: EdgeInsetsDirectional.only(end: i < 4 ? 4 : 0),
+          // Flipped whole in Hebrew, so the motion lines and the filled half
+          // both face the reading start.
+          child: Transform.flip(
+            flipX: rtl,
+            child: Stack(
+              // Left, not start: the flip above already turns it for Hebrew.
+              alignment: Alignment.topLeft,
+              children: [
+                Icon(IconsaxPlusBold.star_1, size: size, color: _kStarGrey),
+                if (fill > 0)
+                  ClipRect(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: fill,
+                      child: Icon(
+                        IconsaxPlusBold.star_1,
+                        size: size,
+                        color: _kStarGold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }
