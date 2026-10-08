@@ -2414,9 +2414,20 @@ type cards look poor — a dropdown.
   about, address, phone and day-by-day hours (Saturday closed) on the
   owner's profile, in search, on the business page in the app and on the
   website, after Approve in the panel.
-- **Account type** on the phone sign-up is a dropdown (icon and name) with
-  the chosen type's one line under it; three cards side by side had left a
-  few words per line.
+- **Account type** on the phone sign-up is a dropdown: in the open list each
+  type has its icon, name and the cards' line under the name; the closed
+  field (one line tall) shows icon and name, with the chosen type's line
+  under the field. Three cards side by side had left a few words per line.
+- **Launch screen: the app's icon on navy** (Harshit, 8 Oct), where the white
+  square was. Made from `assets/images/app_icon.png` — the 1024 px original
+  of `ic_launcher_foreground.png` — with its corners rounded off; Android 12+
+  crops its launch image to a circle, so `splash_logo_android12.png` has the
+  icon smaller on a larger canvas. `flutter_native_splash:create` also adds a
+  navy splash to the website's index.html and re-indents Info.plist; both
+  reverted, the website has never had one. Checked on the OnePlus (Android 9)
+  and the Realme (Android 11).
+- **Deployed 8 Oct, 11:30** after 00071–00073 were in place; the live
+  main.dart.js checked against the build.
 - Checked: Google's hours on a business page with none of its own — the four
   linked car parks have no hours on Google, so with Google's documented
   sample place, on a test row. Owner, business, files, notifications and the
