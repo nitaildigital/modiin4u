@@ -2345,6 +2345,53 @@ All test rows, files, notifications and the three accounts deleted after.
 Known: a list a resident already has open shows a new promotion on its next
 refresh (pull down or back after two minutes), not instantly.
 
+**The client's QA round — 8 Oct.** Nine points from his testing on an
+iPhone; Harshit: do them all. Migrations **00071** and **00072**, both run
+8 Oct with his go-ahead.
+
+| # | Point | What was done |
+|---|---|---|
+| 1 | No verification email at sign-up | His address already had an account (made 24 Sep). Supabase then sends nothing and answers as if it had; the app now recognises that answer and says so, with Sign in and Reset password (`EmailAlreadyRegistered`, both sign-up forms and the business one) |
+| 2 | Search and the AI chat: which does the bar do? | Harshit chose: the home bar opens the PersonaAI chat; the search icon beside it opens search |
+| 3 | No way back from Show Map | A back button on the restaurants, real estate and events maps; the search bar moved over to make room |
+| 4 | App icon | Waits for the client's design |
+| 5 | A white square on the launch screen | The launch images were the logo on white; now transparent on the navy background — iOS, Android (night too) and web. iPhones keep the old launch screen until the app is reinstalled |
+| 6 | Business hours missing | No business had any: the WordPress site kept them as free text and the import never read them. `businesses.hours_text` (00071), filled for 171 businesses by `tool/import_wp_hours.py` (exact name match, only where empty, undoable); לוצ'נה מודיעין skipped — two businesses have that name. Shown as written, each line in its own direction, where there are no day-by-day hours; editable in the panel. **Never read for "open now"** — that would be guessing |
+| 7 | Residents can't add photos | Add photo on a business's Photos tab (app only); the person sees it "waiting for approval"; the panel's new **Resident photos** section approves (it joins the gallery) or declines with a reason; both tell the person, a new one tells the team (`photo_submissions`, `admin_decide_photo`, 00071) |
+| 8 | No comments on articles | Comments and replies under each article in the app, live at once unless the panel's "replies need approval" is on; delete your own, report others'; a reply tells the comment's author and opens on it. The website shows them read-only. The panel's Comments section and Reports open them |
+| 9 | No neighbourhood rating | One to five stars per person on the neighbourhood page (change or remove); the average and count for all. The website shows the average only (`neighborhood_ratings`, `neighborhood_rating_summary`, 00071) |
+
+**00071 broke every signed-in profile until 00072 mended it.**
+`neighborhood_ratings` had keys to both `profiles` and `neighborhoods`, so
+the API saw a second link between them and refused the app's profile read
+(`profiles?select=*,neighborhoods(name)`) as ambiguous (PGRST201). Everyone
+signed in loaded with no name or neighbourhood, and admins and business
+owners without their role — the panel said "no access". 00072 points the
+rater at `auth.users` instead (a deleted account still takes its ratings),
+which fixed installed apps and the live site at once; the app's read now
+also names its link. A browser that had cached the refusal kept it until its
+cache was cleared. Checked: no other table makes such a second link that the
+code embeds without naming it. **When a new table links two tables that are
+already linked, name the link in every embed between them.**
+
+Also fixed while testing: hours like "08:00 - 18:00" under a Hebrew day
+showed as "18:00 - 08:00" (the whole text was set right to left; now each
+line in its own direction); and an approved photo appeared only after a
+restart (the gallery now reads again when the notification arrives).
+
+**Tested 8 Oct** on the OnePlus with a throwaway resident and the panel in a
+local web build with a temporary admin: the launch screen; the bar opening
+the chat; all three map back buttons; an existing address at sign-up; hours
+on the phone and the website; a comment, a reply, delete, and a second
+account's reply arriving as a push that opened on it; a rating given and
+removed; two photos uploaded, one approved and one declined in the panel,
+both pushes delivered, the approved one in the gallery. All test comments,
+photos, files, notifications, the accounts and both temporary admins
+(including one left from 7 Oct) deleted after.
+
+*Building for Android from Android Studio's Java 25 fails ("25.0.3");
+build with Java 21:* `cd android && JAVA_HOME=<jbr-21> ./gradlew assembleDebug`.
+
 **Audit, 5 Oct: what should be saved and is not.** The whole app, site and
 panel against the database (59 tables; 20 never written by the code).
 
