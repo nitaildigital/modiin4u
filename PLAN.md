@@ -2461,7 +2461,21 @@ app through. **Only builds that contain this code obey it** — the copies
 already installed cannot be stopped. Set it only once the new version is
 live in the store. Checked on the Realme with the panel: 2 → the page at
 once on return and on a cold start; back to 0 → the app again. The Update
-button itself is untested — no store link exists yet.
+button itself is untested — no store link exists yet. Also checked on iOS
+(iPhone 17 Pro simulator, iOS 26): the page on a cold start with the
+Update button once a link was set, and the app again at 0. The TestFlight
+address Harshit gave is App Store Connect's (a sign-in page for the team);
+testers need a `testflight.apple.com/join/…` link. The store links also show
+on the website, so they were left empty.
+
+**Dark mode removed for now — 8 Oct.** The switch changed the theme, but the
+screens are drawn to the light designs with their own colours (about 2,600
+fixed whites, greys and blacks, 16 places reading the theme), so turning it
+on left almost everything white. There is no dark design. Harshit chose to
+remove it: the switch is gone from Settings (app and website), the app is
+always light (`themeMode: ThemeMode.light` in main.dart, so a dark choice
+saved before is ignored) and `theme_provider.dart` is deleted.
+`AppTheme.dark` stays for when there is a dark design.
 - Checked: Google's hours on a business page with none of its own — the four
   linked car parks have no hours on Google, so with Google's documented
   sample place, on a test row. Owner, business, files, notifications and the

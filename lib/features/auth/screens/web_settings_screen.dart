@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/providers/theme_provider.dart';
 import '../../../core/push/push_service.dart';
 import '../../../core/push/push_settings.dart';
 import '../../../core/push/push_switch.dart';
@@ -137,7 +136,6 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
     final signedIn = ref.watch(isLoggedInProvider);
     final prefs =
         ref.watch(preferencesProvider) ?? const NotificationPreferences();
@@ -172,8 +170,6 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
                               _buildNotificationsCard(),
                               const SizedBox(height: 20),
                               _buildAccessCard(prefs, signedIn, set),
-                              const SizedBox(height: 20),
-                              _buildDisplayCard(isDark),
                               const SizedBox(height: 20),
                               _buildAccountCard(),
                               if (signedIn) ...[
@@ -415,24 +411,6 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
           value: prefs.healthEnabled,
           enabled: signedIn,
           onChanged: (v) => set(prefs.copyWith(healthEnabled: v)),
-          isLast: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDisplayCard(bool isDark) {
-    return _buildCard(
-      title: _t('Display', 'תצוגה'),
-      children: [
-        _ToggleRow(
-          icon: Icons.dark_mode_outlined,
-          label: _t('Dark mode', 'מצב כהה'),
-          subtitle: isDark
-              ? _t('Dark mode is on.', 'מצב כהה פעיל.')
-              : _t('Light mode is on.', 'מצב בהיר פעיל.'),
-          value: isDark,
-          onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
           isLast: true,
         ),
       ],

@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart' show GoRouter;
 
-import 'core/providers/theme_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/supabase/supabase_config.dart';
 import 'core/theme/app_theme.dart';
@@ -136,7 +135,6 @@ class Modiin4uApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 
     // Following a reset link signs the person in, so without this the app
@@ -155,8 +153,11 @@ class Modiin4uApp extends ConsumerWidget {
         onGenerateTitle: (context) => served ?? L.of(context).appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: themeMode,
+        // Light only. The screens are drawn to the light designs with their
+        // own colours, so a dark theme turned only a few parts dark; the
+        // switch is gone until there is a dark design (8 Oct), and a dark
+        // choice saved before is not applied.
+        themeMode: ThemeMode.light,
         routerConfig: appRouter,
         // Push notifications: taps open their page, and one that arrives
         // while the app is open shows as a banner over it. Outermost, the

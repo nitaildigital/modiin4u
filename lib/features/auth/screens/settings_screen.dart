@@ -9,7 +9,6 @@ import '../../../core/push/push_service.dart';
 import '../../../core/push/push_settings.dart';
 import '../../../core/push/push_switch.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/providers/theme_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
@@ -267,7 +266,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// and access switches the app already had sit in the same cards, so no
   /// choice a person could make before is lost.
   Widget _buildMobile(BuildContext context) {
-    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
     final signedIn = ref.watch(isLoggedInProvider);
     final prefs =
         ref.watch(preferencesProvider) ?? const NotificationPreferences();
@@ -373,20 +371,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         value: isHebrew ? 'עברית' : 'English',
                         onTap: () => context.push('/change-language'),
-                      ),
-                      MSettingsRow(
-                        leading: const MIconCircle(
-                          icon: IconsaxPlusLinear.moon,
-                        ),
-                        title: l.darkMode,
-                        subtitle: isDark
-                            ? mTr(context, 'Dark mode is on', 'מצב כהה פעיל')
-                            : mTr(context, 'Light mode is on', 'מצב בהיר פעיל'),
-                        trailing: MSwitch(
-                          value: isDark,
-                          onChanged: (_) =>
-                              ref.read(themeModeProvider.notifier).toggle(),
-                        ),
                       ),
                     ],
                   ),
