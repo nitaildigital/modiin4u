@@ -2444,7 +2444,11 @@ fails (`refresh_token_not_found`) and the Supabase client signs out itself.
 "Remember me" was not the cause: it starts ticked, and unticked it signs out
 only at the next start, by design. Checked on the OnePlus: a cold restart
 keeps the session; an account deleted while the app was in the background
-is signed out on return.
+is signed out on return; and an account signed in at 11:52 with the app left
+in the background, brought back at 12:56 with its token expired, stayed
+signed in (same process, no restart). The server's answer to the expired
+token was checked too: 403 `bad_jwt` "token is expired", and the renewal
+after it 200.
 
 **Force update from the panel — 8 Oct.** Harshit: the admin must be able to
 force an update. Settings in the panel has "Force update — oldest Android
@@ -2467,6 +2471,19 @@ Update button once a link was set, and the app again at 0. The TestFlight
 address Harshit gave is App Store Connect's (a sign-in page for the team);
 testers need a `testflight.apple.com/join/…` link. The store links also show
 on the website, so they were left empty.
+
+**Forced or optional, the admin's choice — 8 Oct.** Harshit: the admin
+decides whether people must update or may skip. Each platform now has the
+build number ("App update — latest Android build") and a switch "Android
+update is required" (`force_update_android`, `force_update_ios`; off or
+unset: optional). Optional, the page reads "Update available" and has
+"Later", which lets the app carry on until it is next started; required, it
+reads "Update required" with no way past. Turning "required" on also stops
+an app where "Later" was pressed, on its next return. The panel's on/off
+settings share one widget now (`_SwitchSetting`). Checked with the panel on
+the Realme (optional → Later → stays away on return; required → stopped)
+and on the iOS simulator (optional with Later; required after returning
+from Safari). Test settings removed.
 
 **Dark mode removed for now — 8 Oct.** The switch changed the theme, but the
 screens are drawn to the light designs with their own colours (about 2,600
