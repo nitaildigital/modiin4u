@@ -240,7 +240,9 @@ class UrbanProfileRepository {
         .from('profile_places')
         .select('position, top_pick, businesses($_placeColumns, status)')
         .eq('profile_id', uid)
-        .order('position');
+        // The Dart client sorts newest first unless told; places go first
+        // to last as they were chosen.
+        .order('position', ascending: true);
     final places = <UrbanPlace>[
       for (final r in List<Map<String, dynamic>>.from(placeRows))
         if (r['businesses'] is Map && (r['businesses'] as Map)['status'] == 'active')

@@ -130,9 +130,9 @@ class _StepFrame extends StatelessWidget {
                       Expanded(
                         child: MButton(
                           label: primaryLabel,
-                          icon: Directionality.of(context) == TextDirection.rtl
-                              ? IconsaxPlusLinear.arrow_left_1
-                              : IconsaxPlusLinear.arrow_right_1,
+                          // The frames' plain arrow; Material's turns round by
+                          // itself in Hebrew.
+                          icon: Icons.arrow_forward_rounded,
                           iconAfter: true,
                           loading: busy,
                           onTap: onPrimary,

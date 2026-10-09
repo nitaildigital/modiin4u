@@ -1896,7 +1896,9 @@ class _UrbanProfileFactsState extends ConsumerState<_UrbanProfileFacts> {
         .from('profile_places')
         .select('position, top_pick, businesses(name)')
         .eq('profile_id', widget.profile['id'] as String)
-        .order('position');
+        // The Dart client sorts newest first unless told; places go first
+        // to last as they were chosen.
+        .order('position', ascending: true);
     return [
       for (final r in List<Map<String, dynamic>>.from(rows))
         if (r['businesses'] is Map) ((r['businesses'] as Map)['name'] as String?) ?? '',

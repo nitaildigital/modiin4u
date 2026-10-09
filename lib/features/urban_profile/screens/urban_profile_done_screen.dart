@@ -139,7 +139,10 @@ class _DoneState extends ConsumerState<UrbanProfileDoneScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(myUrbanProfileProvider);
     final p = async.valueOrNull;
-    if (p != null) WidgetsBinding.instance.addPostFrameCallback((_) => _settle(p));
+    // Only once the profile is read afresh: arriving from step 3, the value
+    // held is still the one from before its places were saved, and marking
+    // from it found the profile incomplete.
+    if (p != null && !async.isLoading) WidgetsBinding.instance.addPostFrameCallback((_) => _settle(p));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FB),
