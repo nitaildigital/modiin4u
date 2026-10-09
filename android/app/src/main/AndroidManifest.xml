@@ -109,6 +109,21 @@
                       android:pathPrefix="/join/"/>
             </intent-filter>
 
+            <!-- Urban Profile links: https://www.modiin4u.co.il/u/<username>.
+                 Not auto-verified yet: www is the WordPress site until it
+                 moves to our server, and on older Android one host that
+                 fails verification would stop the /join/ links above from
+                 opening the app too. Until then Android asks which app
+                 opens it, or the website's /u/ page does. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="www.modiin4u.co.il"/>
+                <data android:pathPrefix="/u/"/>
+            </intent-filter>
+
             <!-- Health Connect's "why does this app ask" link. -->
             <intent-filter>
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>

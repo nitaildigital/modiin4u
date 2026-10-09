@@ -59,6 +59,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
               'reject',
               'restore',
               'delete',
+              'view',
             ])
               AdminFilterChip(
                 auditActionLabels[action]!,
@@ -338,6 +339,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     'archive' => AppColors.grayText,
     'reject' => AppColors.error,
     'login' => AppColors.midBlue,
+    'view' => AppColors.grayText,
     _ => AppColors.grayLight,
   };
   IconData _actionIcon(String a) => switch (a) {
@@ -350,6 +352,7 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     'archive' => Icons.archive_outlined,
     'reject' => Icons.cancel_outlined,
     'login' => Icons.login,
+    'view' => Icons.visibility_outlined,
     _ => Icons.info_outline,
   };
   String _actionLabel(String a) => auditActionLabels[a] ?? a;

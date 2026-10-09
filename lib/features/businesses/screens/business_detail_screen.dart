@@ -34,6 +34,7 @@ import 'web_business_detail_screen.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../shared/widgets/web_chrome.dart' show WebFooter, WebNavbar, webIsHebrew;
 import '../repositories/business_repository.dart' show BusinessNotFound;
+import '../../messages/open_conversation.dart';
 
 class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
@@ -720,6 +721,19 @@ class _BusinessDetailContentState
         children: [
           direction,
           const Spacer(),
+          // Write to the business in the app (Messages) — only one that has
+          // an owner to read it, and never to one's own.
+          if (!kIsWeb &&
+              !business.isPark &&
+              business.ownerId != null &&
+              business.ownerId != ref.watch(authProvider)?.id) ...[
+            _OutlineCircleButton(
+              icon: IconsaxPlusLinear.message_text,
+              color: AppColors.turquoise,
+              onTap: () => messageBusiness(context, ref, businessId: business.id),
+            ),
+            const SizedBox(width: 12),
+          ],
           // A park has no phone, website or social page (the client's
           // rule for parks), so it keeps only the directions button.
           // Call and Website are drawn only when the business has them, as

@@ -44,6 +44,7 @@ Map<String, String> get auditTableLabels => <String, String>{
   'profiles': tr('משתמש', 'User'),
   'admin_users': tr('צוות ניהול', 'Admin team'),
   'parking_lots': tr('חניון', 'Car park'),
+  'conversations': tr('שיחה', 'Conversation'),
 };
 
 /// Hebrew names for the `audit_action` values the panel writes.
@@ -57,6 +58,8 @@ Map<String, String> get auditActionLabels => <String, String>{
   'publish': tr('פרסום', 'Publish'),
   'unpublish': tr('הסרת פרסום', 'Unpublish'),
   'archive': tr('העברה לארכיון', 'Move to archive'),
+  // 00078: a conversation read in the panel's Messages.
+  'view': tr('צפייה', 'View'),
 };
 
 final _uuidText = RegExp(

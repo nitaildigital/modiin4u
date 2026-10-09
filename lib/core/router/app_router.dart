@@ -76,6 +76,9 @@ import '../../features/restaurants/screens/restaurants_screen.dart';
 import '../../features/restaurants/screens/restaurants_map_screen.dart';
 import '../../shared/widgets/shell_scaffold.dart';
 import '../../l10n/app_localizations.dart';
+import '../../features/urban_profile/screens/urban_profile_steps.dart';
+import '../../features/urban_profile/screens/urban_profile_done_screen.dart';
+import '../../features/urban_profile/screens/urban_profile_more_screens.dart';
 
 
 /// The six destinations that live inside the bottom-navigation shell.
@@ -192,6 +195,10 @@ const _appOnlyPrefixes = [
   '/applicant/',
   '/promote/',
   '/messages/',
+  // The Urban Profile is the app's; on the web its link is the Next.js
+  // site's /u/<username>.
+  '/urban-profile/',
+  '/u/',
 ];
 
 /// The old WordPress site's addresses that have no route of their own, and
@@ -799,6 +806,43 @@ final appRouter = GoRouter(
       path: '/profile',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(const ProfileScreen(), state),
+    ),
+    // The Urban Profile (00077): the three onboarding steps, the finished
+    // profile, Top Picks, privacy, and a resident's profile by its link.
+    GoRoute(
+      path: '/urban-profile/1',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(UrbanProfileStep1(from: state.uri.queryParameters['from']), state),
+    ),
+    GoRoute(
+      path: '/urban-profile/2',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(UrbanProfileStep2(from: state.uri.queryParameters['from']), state),
+    ),
+    GoRoute(
+      path: '/urban-profile/3',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(UrbanProfileStep3(from: state.uri.queryParameters['from']), state),
+    ),
+    GoRoute(
+      path: '/urban-profile/done',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(UrbanProfileDoneScreen(from: state.uri.queryParameters['from']), state),
+    ),
+    GoRoute(
+      path: '/urban-profile/top-picks',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const UrbanProfileTopPicksScreen(), state),
+    ),
+    GoRoute(
+      path: '/urban-profile/privacy',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const UrbanProfilePrivacyScreen(), state),
+    ),
+    GoRoute(
+      path: '/u/:username',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(UrbanProfileViewScreen(username: state.pathParameters['username']!), state),
     ),
     GoRoute(
       path: '/edit-profile',

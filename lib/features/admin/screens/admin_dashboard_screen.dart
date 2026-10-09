@@ -30,6 +30,7 @@ import 'admin_revenue_screen.dart';
 import 'admin_ad_placements_screen.dart';
 import 'admin_campaigns_screen.dart';
 import 'admin_comments_screen.dart';
+import 'admin_messages_screen.dart';
 import 'admin_reports_screen.dart';
 import 'admin_push_screen.dart';
 import 'admin_team_screen.dart';
@@ -43,6 +44,7 @@ import 'admin_site_pages_screen.dart';
 import '../admin_language.dart';
 import '../../../shared/providers/app_settings_provider.dart';
 import '../ui/admin_kit.dart';
+import '../../urban_profile/data/urban_profile.dart' show interestOf, urbanProfileLink;
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -84,6 +86,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     // ── אינטראקציה ──
     (tr('ביקורות', 'Reviews'), IconsaxPlusLinear.star),
     (tr('תגובות', 'Comments'), IconsaxPlusLinear.message_text),
+    (tr('הודעות', 'Messages'), IconsaxPlusLinear.messages_2),
     (tr('דיווחים', 'Reports'), IconsaxPlusLinear.flag),
     ('Push', IconsaxPlusLinear.notification),
     (tr('אתגרים וקבוצות', 'Challenges & groups'), IconsaxPlusLinear.cup),
@@ -119,7 +122,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     // 00071's admin_decide_photo ask the same).
     'offers', 'businesses', 'businesses', 'businesses', 'revenue', 'revenue', 'campaigns',
     'campaigns', //
-    'moderation', 'moderation', 'moderation', 'push', 'settings', //
+    // Messages (00078) go with moderation, as its functions ask.
+    'moderation', 'moderation', 'moderation', 'moderation', 'push', 'settings', //
     'team', 'audit', 'settings', 'settings', 'settings', 'articles', null,
   ];
 
@@ -130,7 +134,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   /// Where the settings pane sits in [_sections] — the top bar's gear jumps
   /// here rather than doing nothing, which is what it used to do.
-  static const _settingsSection = 32;
+  static const _settingsSection = 33;
 
   /// The index in [_sections] each sidebar heading sits above. They move
   /// whenever a section is added: when חניונים went in at 6 these were left
@@ -142,7 +146,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     9: tr('טקסונומיה', 'Taxonomy'),
     13: tr('מסחר ופרסום', 'Commerce & advertising'),
     21: tr('אינטראקציה', 'Interaction'),
-    26: tr('מערכת', 'System'),
+    27: tr('מערכת', 'System'),
   };
 
   @override
@@ -331,16 +335,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       20 => const AdminCampaignsScreen(),
       21 => const AdminReviewsScreen(),
       22 => const AdminCommentsScreen(),
-      23 => const AdminReportsScreen(),
-      24 => const AdminPushScreen(),
-      25 => const AdminStepsSection(),
-      26 => const AdminTeamScreen(),
-      27 => const AdminAuditScreen(),
-      28 => const AdminTrashScreen(),
-      29 => const AdminHomeBuilderScreen(),
-      30 => const AdminFlagsScreen(),
-      31 => const AdminSitePagesScreen(),
-      32 => const _SettingsSection(),
+      23 => const AdminMessagesScreen(),
+      24 => const AdminReportsScreen(),
+      25 => const AdminPushScreen(),
+      26 => const AdminStepsSection(),
+      27 => const AdminTeamScreen(),
+      28 => const AdminAuditScreen(),
+      29 => const AdminTrashScreen(),
+      30 => const AdminHomeBuilderScreen(),
+      31 => const AdminFlagsScreen(),
+      32 => const AdminSitePagesScreen(),
+      33 => const _SettingsSection(),
       _ => const SizedBox(),
     };
   }
@@ -1804,6 +1809,7 @@ void _showProfileDialog(
                       ),
                     ),
                   ),
+                  _UrbanProfileFacts(profile: profile),
                 ],
               ),
             ),
@@ -1866,3 +1872,127 @@ void _showProfileDialog(
     ),
   );
 }
+
+/// A resident's Urban Profile (00077), as others would see it, in the user's
+/// window. Read-only: what they wrote is theirs. A profile that should not be
+/// shown is made private here (reversible — they may share it again; a
+/// resident who keeps at it is blocked), and a report on it arrives under
+/// Reports as a report on the user.
+class _UrbanProfileFacts extends ConsumerStatefulWidget {
+  final Map<String, dynamic> profile;
+  const _UrbanProfileFacts({required this.profile});
+
+  @override
+  ConsumerState<_UrbanProfileFacts> createState() => _UrbanProfileFactsState();
+}
+
+class _UrbanProfileFactsState extends ConsumerState<_UrbanProfileFacts> {
+  late String _visibility = (widget.profile['profile_visibility'] as String?) ?? 'private';
+  late final Future<List<String>> _places = _loadPlaces();
+  bool _busy = false;
+
+  Future<List<String>> _loadPlaces() async {
+    final rows = await SupabaseConfig.client
+        .from('profile_places')
+        .select('position, top_pick, businesses(name)')
+        .eq('profile_id', widget.profile['id'] as String)
+        .order('position');
+    return [
+      for (final r in List<Map<String, dynamic>>.from(rows))
+        if (r['businesses'] is Map) ((r['businesses'] as Map)['name'] as String?) ?? '',
+    ];
+  }
+
+  Future<void> _makePrivate() async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(adminProfilesProvider.notifier).updateProfile(widget.profile['id'] as String, {'profile_visibility': 'private'});
+      if (!mounted) return;
+      setState(() {
+        _visibility = 'private';
+        _busy = false;
+      });
+      messenger.showSnackBar(SnackBar(content: Text(tr('הפרופיל הוסתר', 'Profile made private'))));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      messenger.showSnackBar(SnackBar(backgroundColor: AppColors.error, content: Text(tr('הפעולה נכשלה: $e', 'The action failed: $e'))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    final p = widget.profile;
+    final username = (p['username'] as String?) ?? '';
+    final bio = ((p['bio'] as String?) ?? '').trim();
+    final keys = List<String>.from((p['interests'] as List?) ?? const []);
+    final visible = _visibility == 'residents';
+    final he = !adminEnglish.value;
+    if (username.isEmpty && bio.isEmpty && keys.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(tr('לא מילא/ה פרופיל עירוני.', 'No Urban Profile yet.'), style: k.hint),
+        ),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: k.subtle, border: Border.all(color: k.border), borderRadius: BorderRadius.circular(10)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(tr('פרופיל עירוני', 'Urban Profile'), style: k.heading.copyWith(fontSize: 14))),
+              AdminPill(visible ? tr('גלוי לתושבים', 'Visible to residents') : tr('פרטי', 'Private'), visible ? k.success : k.muted),
+            ],
+          ),
+          if (username.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            SelectableText(urbanProfileLink(username).replaceFirst('https://', ''), style: k.hint),
+          ],
+          if (bio.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text('“$bio”', style: k.body.copyWith(fontStyle: FontStyle.italic)),
+          ],
+          if (keys.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final key in keys)
+                  if (interestOf(key) case final i?) AdminPill('${i.emoji} ${i.label(he)}', k.accent),
+              ],
+            ),
+          ],
+          FutureBuilder<List<String>>(
+            future: _places,
+            builder: (context, snap) {
+              final names = snap.data ?? const [];
+              if (names.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text('${tr('מקומות', 'Places')}: ${names.join(' · ')}', style: k.label),
+              );
+            },
+          ),
+          if (visible) ...[
+            const SizedBox(height: 10),
+            AdminButton.secondary(
+              label: tr('הסתרת הפרופיל', 'Make profile private'),
+              busy: _busy,
+              onPressed: _busy ? null : _makePrivate,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+

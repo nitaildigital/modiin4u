@@ -15,6 +15,7 @@ import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
 import 'web_profile_screen.dart';
+import '../../urban_profile/widgets/urban_profile_section.dart';
 
 /// Profile screen – blurred-photo header with avatar, name & badge, the
 /// person's details, the "Edit Profile" CTA and the ACCOUNT menu card.
@@ -321,6 +322,12 @@ class ProfileScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            // A business account is a business, not a
+                            // resident with an Urban Profile.
+                            if (!user.isBusinessOwner) ...[
+                              const UrbanProfileSection(),
+                              const SizedBox(height: 24),
+                            ],
                             MSection(
                               label: mTr(
                                 context,

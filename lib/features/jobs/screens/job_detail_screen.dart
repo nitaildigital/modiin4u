@@ -11,13 +11,14 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/sign_in_action.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/widgets/m_account_widgets.dart';
+import '../../messages/open_conversation.dart';
 import '../models/job.dart';
 import '../providers/job_providers.dart';
 import '../widgets/m_job_card.dart';
 
 /// Job Detail (`user_side/Job Detail.png`, `Job Detail Applied.png`): the
 /// job, what it asks, its pictures and the business behind it, with Share and
-/// Apply Now pinned to the bottom. A section the business left empty is not
+/// Apply Now — once applied, Message the employer — pinned to the bottom. A section the business left empty is not
 /// drawn.
 class JobDetailScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -86,7 +87,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   Widget _bottomBar(Job job, DateTime? appliedAt) {
     final Widget main;
     if (appliedAt != null) {
-      main = MButton(label: mTr(context, 'Applied', 'הוגשה מועמדות'), icon: IconsaxPlusLinear.tick_circle, height: 44);
+      // Applied: the box above says so, and the button writes to the
+      // employer instead (the client, 9 Oct — "if we applied for the job …
+      // then we can send them a message").
+      main = MButton(
+        label: mTr(context, 'Message the employer', 'שליחת הודעה למעסיק'),
+        icon: IconsaxPlusLinear.message_text,
+        height: 44,
+        onTap: () => messageBusiness(context, ref, businessId: job.businessId, jobId: job.id),
+      );
     } else if (!job.isLive) {
       main = MButton(label: mTr(context, 'Closed', 'המשרה סגורה'), height: 44);
     } else {

@@ -15,6 +15,7 @@
 	<array>
 		<string>applinks:app.modiin4u.co.il</string>
 		<string>applinks:45-93-94-49.sslip.io</string>
+		<string>applinks:www.modiin4u.co.il</string>
 	</array>
 	<!-- The Step Counter reads steps, distance and active calories. -->
 	<key>com.apple.developer.healthkit</key>

@@ -20,6 +20,7 @@ import 'shared/web_asset_precache.dart';
 import 'core/providers/content_language.dart';
 import 'core/providers/resume_refresh.dart';
 import 'core/update/force_update.dart';
+import 'features/urban_profile/urban_profile_gate.dart';
 import 'shared/widgets/web_chrome.dart' show restoreWebLanguage, webIsHebrew;
 
 void main() async {
@@ -164,7 +165,7 @@ class Modiin4uApp extends ConsumerWidget {
         // update the panel can require: a build too old shows nothing else.
         builder: (context, child) => ForceUpdateGate(
           child: ResumeRefresh(
-            child: PushHost(child: child ?? const SizedBox.shrink()),
+            child: PushHost(child: UrbanProfileGate(child: child ?? const SizedBox.shrink())),
           ),
         ),
 

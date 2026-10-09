@@ -7,6 +7,7 @@ import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/m_kit.dart';
 import '../../../shared/widgets/m_step_form.dart';
 import '../../auth/widgets/m_account_widgets.dart';
+import '../../messages/open_conversation.dart';
 import '../models/job.dart';
 import '../providers/job_providers.dart';
 import '../widgets/m_job_card.dart';
@@ -158,7 +159,12 @@ class _SavedCard extends ConsumerWidget {
     final appliedAt = ref.watch(appliedAtProvider(job.id));
     final Widget button;
     if (appliedAt != null) {
-      button = MButton(label: mTr(context, 'Applied', 'הוגשה מועמדות'), icon: IconsaxPlusLinear.tick_circle, height: 42);
+      button = MButton(
+        label: mTr(context, 'Message the employer', 'שליחת הודעה למעסיק'),
+        icon: IconsaxPlusLinear.message_text,
+        height: 42,
+        onTap: () => messageBusiness(context, ref, businessId: job.businessId, jobId: job.id),
+      );
     } else if (!job.isLive) {
       button = MButton(label: mTr(context, 'Closed', 'המשרה סגורה'), height: 42);
     } else {
@@ -213,7 +219,10 @@ class _AppliedTab extends ConsumerWidget {
                     card: MJobCard(
                       job: job,
                       onTap: () => context.push('/jobs/${job.id}'),
-                      footer: _StatusBox(application: application),
+                      footer: _StatusBox(
+                        application: application,
+                        onMessage: () => messageBusiness(context, ref, businessId: job.businessId, jobId: job.id),
+                      ),
                     ),
                   );
                 },
@@ -224,10 +233,11 @@ class _AppliedTab extends ConsumerWidget {
 }
 
 /// Where an application stands: green while it is going ahead, grey once
-/// the business has said no.
+/// the business has said no — with a way to write to the employer.
 class _StatusBox extends StatelessWidget {
   final JobApplication application;
-  const _StatusBox({required this.application});
+  final VoidCallback onMessage;
+  const _StatusBox({required this.application, required this.onMessage});
 
   @override
   Widget build(BuildContext context) {
@@ -251,6 +261,19 @@ class _StatusBox extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(mAgo(context, application.createdAt), style: mText(12, color: const Color(0xFF4A4A4A))),
               ],
+            ),
+          ),
+          Tooltip(
+            message: mTr(context, 'Message the employer', 'שליחת הודעה למעסיק'),
+            child: InkResponse(
+              onTap: onMessage,
+              radius: 22,
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                child: const Icon(IconsaxPlusLinear.message_text, size: 19, color: mStepMid),
+              ),
             ),
           ),
         ],
