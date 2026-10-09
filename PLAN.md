@@ -2683,6 +2683,32 @@ should be tested one kind at a time from added content.
   Google is his decision. (Supabase was unreachable for about five minutes
   during the run; the pages that timed out then answer in under 0.1 s.)
 
+**Google's bill for maps and places — 9 Oct.** Where it comes from: the
+websites' maps (Map Tiles API, billed per tile) and Google's details for a
+place (Places API: hours on a business page, a car park's details and
+photos, billed per request). The app's maps on Android and iOS are Google's
+mobile SDK, which Google does not charge per map. Done:
+- **Tiles reused:** both websites kept a new tile session per visit, so
+  every tile had a new address and nothing came from the browser's cache;
+  the session is kept in the browser for its life (about two weeks), with
+  its credit (one call fewer).
+- **Fewer tiles:** maps stay around Modi'in (bounds) and load tiles when a
+  pan or zoom ends, not during it; the new site's maps are drawn only when
+  they come near the screen (the ones at the foot of a business, listing or
+  event page loaded for every visit).
+- **Searches debounced:** the map pages re-framed the map — new tiles — on
+  every letter typed; now when typing pauses. The events browser re-framed
+  on any render (its pins were made afresh); now only on new results. The
+  panel's tables queried the database on every letter; now once typing
+  pauses (one change in AdminTableNotifier, 24 tables).
+- **Places:** opening hours are asked for when that part of the page is
+  reached; a car park shows four Google photos at most, each fetched as it
+  scrolls into view. Google's terms allow keeping a place's ID, not its
+  details, so nothing is cached on our side.
+- **For the client, in Google Cloud:** a daily quota on Map Tiles API and
+  Places API (New) — a hard stop instead of a larger bill — and a budget
+  alert. Only he (or someone on the project) can set them.
+
 **Launch review, sorted with Harshit — 9 Oct.** What was done, from the
 review of the whole project (the rest is in LAUNCH_RUNBOOK.md and on hold):
 - **Play:** `CAMERA` and `READ_MEDIA_IMAGES` removed (every photo is picked
