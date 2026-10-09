@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /** The website's Places key, restricted to the site's addresses. Without it
  *  (a local build) nothing is asked and nothing drawn. */
@@ -10,8 +10,8 @@ const asked: Record<string, Promise<Hours | null>> = {};
 
 /** A business's hours from Google, for a business with none of its own and
  *  a place ID (00073; fetchGoogleHours). Google's terms let us keep the ID,
- *  not the hours, so they are asked for each time the page opens, and only
- *  these two fields, so the request is billed for nothing else. */
+ *  not the hours, so they are asked for on each visit that reaches them, and
+ *  only these two fields, so the request is billed for nothing else. */
 function googleHours(placeId: string, language: 'he' | 'en'): Promise<Hours | null> {
   const k = `${placeId}:${language}`;
   asked[k] ??= (async () => {
@@ -43,13 +43,23 @@ function line(s: string): string {
  *  place, as Google's terms ask. */
 export function GoogleHours({ placeId, lang, phone = false }: { placeId: string; lang: 'he' | 'en'; phone?: boolean }) {
   const [g, setG] = useState<Hours | null>(null);
+  const spot = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!KEY) return;
     let live = true;
-    googleHours(placeId, lang).then((h) => { if (live) setG(h); });
-    return () => { live = false; };
+    // Asked for only once this part of the page is about to be seen: each
+    // request is billed, and most visits never scroll this far (9 Oct).
+    // The page's other layout, hidden, is never seen and never asks.
+    const el = spot.current;
+    const ask = () => googleHours(placeId, lang).then((h) => { if (live) setG(h); });
+    if (!el || typeof IntersectionObserver === 'undefined') { ask(); return () => { live = false; }; }
+    const watch = new IntersectionObserver((seen) => {
+      if (seen.some((e) => e.isIntersecting)) { watch.disconnect(); ask(); }
+    }, { rootMargin: '300px' });
+    watch.observe(el);
+    return () => { live = false; watch.disconnect(); };
   }, [placeId, lang]);
-  if (!g) return null;
+  if (!g) return <div ref={spot} aria-hidden className="h-px" />;
   const he = lang === 'he';
   return (
     <div className={phone ? 'mt-6' : 'px-5 pt-4'}>

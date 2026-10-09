@@ -5,6 +5,7 @@ import { Calendar1, SearchStatus } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import type { EventCard, EventCategory } from '@/lib/data/events';
 import { MapView, type MapPin } from '@/components/map/MapView';
+import { useDebounced } from '@/lib/useDebounced';
 import { Photo } from './Photo';
 import { address, categoryLabel, dayOfMonth, eventPrice, shortMonth, timeRange } from './labels';
 
@@ -49,8 +50,10 @@ export function EventsCategoryBrowser({ lang, events, categories, byEvent, initi
     .map((c) => ({ c, n: events.filter((e) => inCategory(e, c.id)).length }))
     .filter(({ c, n }) => n > 0 || picked.has(c.slug));
 
+  // The list and the map follow the location box when typing pauses.
+  const placeQuery = useDebounced(place);
   const visible = useMemo(() => {
-    const q = place.trim().toLowerCase();
+    const q = placeQuery.trim().toLowerCase();
     const rows = events.filter((e) =>
       (picked.size === 0 || (byEvent[e.id] ?? []).some((c) => picked.has(c.slug))) &&
       (price === 'all' || (price === 'free' ? e.is_free : !e.is_free)) &&
@@ -64,7 +67,7 @@ export function EventsCategoryBrowser({ lang, events, categories, byEvent, initi
       if (x == null || y == null) return x == null ? (y == null ? bySoonest(a, b) : 1) : -1;
       return y - x || bySoonest(a, b);
     });
-  }, [events, byEvent, picked, price, place, sort]);
+  }, [events, byEvent, picked, price, placeQuery, sort]);
 
   const only = picked.size === 1 ? categories.find((c) => picked.has(c.slug)) : undefined;
   const name = only ? categoryLabel(only, lang) : null;
@@ -73,10 +76,13 @@ export function EventsCategoryBrowser({ lang, events, categories, byEvent, initi
     : t(`נמצאו ${visible.length} אירועים`, `${visible.length} Events found`));
   const filtering = place.trim() !== '' || price !== 'all' || picked.size > 0;
 
-  // An online event, or one with no coordinates, gets no pin.
-  const pins: MapPin[] = visible
+  // An online event, or one with no coordinates, gets no pin. Made again only
+  // when the results change: the map re-frames (and loads tiles) on a new set
+  // of pins, and was doing so on every render — opening the sort, a hover.
+  const pins: MapPin[] = useMemo(() => visible
     .filter((e) => !e.is_online && e.latitude && e.longitude)
-    .map((e) => ({ id: e.id, lat: e.latitude!, lng: e.longitude!, icon: '/web/events/map_pin.svg', size: [40, 43], href: eventHref[e.id], label: e.title }));
+    .map((e) => ({ id: e.id, lat: e.latitude!, lng: e.longitude!, icon: '/web/events/map_pin.svg', size: [40, 43] as [number, number], href: eventHref[e.id], label: e.title })),
+  [visible, eventHref]);
 
   const toggle = (slug: string) => setPicked((s) => {
     const next = new Set(s);

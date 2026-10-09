@@ -7,8 +7,24 @@ import type { MapPin } from './MapView';
 
 const KEY = process.env.NEXT_PUBLIC_MAPS_WEB_KEY ?? '';
 
-type Session = { token: string; copyright: string };
+type Session = { token: string; copyright: string; expires: number };
 const sessions: Partial<Record<'he' | 'en', Promise<Session | null>>> = {};
+const STORED = 'modiin4u.map_session.';
+
+/** A session kept in the browser for its life (Google gives about two
+ *  weeks): a page that started a new one each time gave every tile a new
+ *  address, so the browser could never reuse one it already had, and every
+ *  map on every page was drawn — and billed — afresh (9 Oct). The credit
+ *  is kept with it, so the viewport call is made once too. */
+function stored(lang: 'he' | 'en'): Session | null {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORED + lang) ?? 'null') as Session | null;
+    // An hour's margin, so a session never runs out in the middle of a visit.
+    return s && s.expires - 3600_000 > Date.now() ? s : null;
+  } catch {
+    return null;
+  }
+}
 
 /** A Google Map Tiles session for the page's language (as web_map_tiles.dart):
  *  a Hebrew map for the Hebrew site, an English one for the English. The key
@@ -17,19 +33,26 @@ const sessions: Partial<Record<'he' | 'en', Promise<Session | null>>> = {};
 function session(lang: 'he' | 'en'): Promise<Session | null> {
   if (!KEY) return Promise.resolve(null);
   sessions[lang] ??= (async () => {
+    const kept = stored(lang);
+    if (kept) return kept;
     try {
       const r = await fetch(`https://tile.googleapis.com/v1/createSession?key=${KEY}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mapType: 'roadmap', language: lang === 'he' ? 'he-IL' : 'en-US', region: 'IL' }),
       });
       if (!r.ok) return null;
-      const token = (await r.json()).session as string;
+      const made = await r.json() as { session: string; expiry?: string };
+      const token = made.session;
+      // Google gives the expiry in seconds; a week if it says nothing.
+      const expires = made.expiry ? Number(made.expiry) * 1000 : Date.now() + 7 * 86_400_000;
       let copyright = `Map data ©${new Date().getFullYear()} Google`;
       try {
         const v = await fetch(`https://tile.googleapis.com/tile/v1/viewport?session=${token}&key=${KEY}&zoom=13&north=31.93&south=31.86&east=35.06&west=34.96`);
         if (v.ok) copyright = (await v.json()).copyright || copyright;
       } catch { /* the default credit */ }
-      return { token, copyright };
+      const fresh = { token, copyright, expires };
+      try { localStorage.setItem(STORED + lang, JSON.stringify(fresh)); } catch { /* this visit only */ }
+      return fresh;
     } catch {
       return null;
     }
@@ -78,6 +101,9 @@ function Recenter({ center, zoom, label }: { center: [number, number]; zoom: num
 }
 
 const MODIIN: [number, number] = [31.8969, 35.0095];
+/** Modi'in-Maccabim-Re'ut with a margin: the map stays around the city, so
+ *  nobody pans or zooms out across the country loading tiles no page needs. */
+const AREA = L.latLngBounds([31.80, 34.88], [32.00, 35.16]);
 
 /** [selectedId] and [hoverId] draw that pin larger and on top (the chosen
  *  pin is also brought into view); [onMapClick] hears a click beside the
@@ -97,11 +123,15 @@ export default function LeafletMap({ pins, center, zoom = 14, interactive = true
   return (
     <MapContainer center={c} zoom={zoom} zoomControl={zoomButtons ?? interactive} dragging={interactive} scrollWheelZoom={wheel ?? interactive}
       doubleClickZoom={interactive} touchZoom={interactive} attributionControl={!!s}
+      minZoom={11} maxZoom={18} maxBounds={AREA} maxBoundsViscosity={1}
       className="isolate z-0 size-full bg-[#E8EAED]" style={{ direction: 'ltr' }}>
       {s && (
         <TileLayer url={`https://tile.googleapis.com/v1/2dtiles/{z}/{x}/{y}?session=${s.token}&key=${KEY}`}
           attribution={`<img src="/web/common/google_logo.png" alt="Google" style="height:14px;display:inline;vertical-align:middle"> ${s.copyright}`}
-          maxZoom={20} tileSize={256} />
+          maxZoom={18} tileSize={256}
+          // Tiles are asked for once the map stops, not for every frame of a
+          // pan or a zoom — each tile is a billed request.
+          updateWhenIdle updateWhenZooming={false} keepBuffer={1} />
       )}
       {pins.map((p) => {
         const big = p.id === selectedId || p.id === hoverId;

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CloseCircle, Location, SearchNormal1 } from 'iconsax-react';
 import { MapView, type MapPin } from '@/components/map/MapView';
+import { useDebounced } from '@/lib/useDebounced';
 import { useDesk } from '@/components/municipal/useDesk';
 import type { Lang } from '@/lib/i18n';
 import { LAYER_LOOK, type CityPin, type MapLayer, type MapSlide } from '@/lib/data/map-shared';
@@ -144,7 +145,8 @@ export function CityMap({ pins, lang, title, intro }: { pins: CityPin[]; lang: L
   const [q, setQ] = useState('');
   const [selected, setSelected] = useState<CityPin | null>(null);
 
-  const needle = q.trim().toLowerCase();
+  // The pins follow the search box when typing pauses.
+  const needle = useDebounced(q).trim().toLowerCase();
   const visible = useMemo(() => pins.filter((p) => layers.has(p.layer) && (!needle || p.search.includes(needle))), [pins, layers, needle]);
   const mapPins = useMemo<MapPin[]>(() => visible.map((p) => ({ id: p.id, lat: p.lat, lng: p.lng, icon: LAYER_LOOK[p.layer].pin, size: [40, 43] })), [visible]);
   const byId = useMemo(() => new Map(pins.map((p) => [p.id, p])), [pins]);

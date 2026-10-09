@@ -40,8 +40,9 @@ async function fetchPlace(placeId: string, lang: Lang): Promise<Google | null> {
       hours: j.regularOpeningHours?.weekdayDescriptions ?? [],
       rating: typeof j.rating === 'number' ? j.rating : null,
       ratingCount: j.userRatingCount ?? 0,
+      // Four at most: each photo shown is a billed request.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      photos: (j.photos ?? []).slice(0, 6).map((p: any) => ({
+      photos: (j.photos ?? []).slice(0, 4).map((p: any) => ({
         name: p.name as string,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         authors: (p.authorAttributions ?? []).map((a: any) => a.displayName ?? '').filter(Boolean),
@@ -103,7 +104,8 @@ export function ParkingDetail({ lot, lang }: { lot: ParkingLot; lang: Lang }) {
         <div className="mb-4 flex h-[200px] gap-2 overflow-x-auto">
           {g.photos.map((p) => (
             <figure key={p.name} className={`relative h-full shrink-0 overflow-hidden rounded-xl bg-[#F0F2F5] ${g.photos.length === 1 ? 'w-full' : 'w-[300px]'}`}>
-              <img src={`https://places.googleapis.com/v1/${p.name}/media?maxWidthPx=900&key=${KEY}`} alt="" className="size-full object-cover" />
+              {/* Fetched (and billed) only as it scrolls into view. */}
+              <img src={`https://places.googleapis.com/v1/${p.name}/media?maxWidthPx=900&key=${KEY}`} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
               {/* Who took it, as Google requires for its photos. */}
               {p.authors.length > 0 && (
                 <figcaption className="absolute inset-x-0 bottom-0 truncate bg-black/45 px-2 py-1 text-[11px] text-white">{t(`צילום: ${p.authors.join(', ')}`, `Photo: ${p.authors.join(', ')}`)}</figcaption>

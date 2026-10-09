@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CloseCircle, Filter, RowVertical, SearchNormal1, SearchStatus } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import { useDesk } from '@/components/municipal/useDesk';
+import { useDebounced } from '@/lib/useDebounced';
 import { MapView, type MapPin } from './MapView';
 
 /** One place on a list-and-map page. The server draws its list row and its
@@ -47,15 +48,18 @@ export function ListMap({ lang, items, facets = [], sorts = [], heading, sub, li
   const [hover, setHover] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
 
+  // The box shows each letter at once; the list and the map follow when
+  // typing pauses.
+  const query = useDebounced(q);
   const visible = useMemo(() => {
-    const needle = q.trim().toLowerCase();
+    const needle = query.trim().toLowerCase();
     const rows = items.filter((it) => (!needle || it.text.includes(needle))
       && facets.every((f) => !(picked[f.id]?.length) || picked[f.id].some((v) => it.tags.includes(`${f.id}:${v}`))));
     if (!sort) return rows;
     return rows.map((r, i) => [r, i] as const)
       .sort(([a, ai], [b, bi]) => (a.sort[sort] ?? Infinity) - (b.sort[sort] ?? Infinity) || ai - bi)
       .map(([r]) => r);
-  }, [items, facets, picked, q, sort]);
+  }, [items, facets, picked, query, sort]);
 
   // Drawn once per result set, so a hover does not re-fit the map.
   const pins: MapPin[] = useMemo(() => visible.filter((it) => it.lat != null && it.lng != null)
