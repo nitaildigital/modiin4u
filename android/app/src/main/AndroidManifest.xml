@@ -23,9 +23,11 @@
     <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
 
-    <!-- Camera & gallery for image_picker (apartment photos) -->
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- No camera or photo-library permission: every photo is chosen from
+         the gallery, which image_picker opens through the system's photo
+         picker (Android 13+) or the document chooser (before), neither of
+         which needs one. Play rejects READ_MEDIA_IMAGES without a core use
+         of the whole library (9 Oct). -->
 
     <!-- Push notifications. From Android 13 the app asks for this once;
          before it, notifications were allowed by default. -->

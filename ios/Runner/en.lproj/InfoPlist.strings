@@ -1,0 +1,6 @@
+/* The permission prompts in English, as Info.plist has them. */
+"NSMotionUsageDescription" = "Modiin4U counts your steps so you can take part in the city step challenges and leaderboards.";
+"NSHealthShareUsageDescription" = "Modiin4U reads your steps, walking distance and active calories from Apple Health to show your daily activity and share your step totals with the groups you join.";
+"NSHealthUpdateUsageDescription" = "Modiin4U does not write to Apple Health; it only reads your steps, distance and active calories.";
+"NSLocationWhenInUseUsageDescription" = "Modiin4U uses your location to show nearby businesses, events, and real estate on the map.";
+"NSPhotoLibraryUsageDescription" = "Modiin4U needs photo library access to upload images for your apartment listing.";

@@ -1,0 +1,7 @@
+/* The permission prompts in Hebrew, for a phone set to Hebrew: the same
+   sentences as Info.plist's English. */
+"NSMotionUsageDescription" = "מודיעין בשבילך סופרת את הצעדים שלך כדי שתוכלו להשתתף באתגרי הצעדים ובטבלאות של העיר.";
+"NSHealthShareUsageDescription" = "מודיעין בשבילך קוראת מ-Apple Health את הצעדים, מרחק ההליכה והקלוריות הפעילות שלך, כדי להציג את הפעילות היומית שלך ולשתף את סך הצעדים עם הקבוצות שהצטרפת אליהן.";
+"NSHealthUpdateUsageDescription" = "מודיעין בשבילך אינה כותבת ל-Apple Health; היא רק קוראת צעדים, מרחק וקלוריות פעילות.";
+"NSLocationWhenInUseUsageDescription" = "מודיעין בשבילך משתמשת במיקום שלך כדי להציג במפה עסקים, אירועים ונדל״ן בקרבתך.";
+"NSPhotoLibraryUsageDescription" = "מודיעין בשבילך צריכה גישה לתמונות כדי להעלות תמונות למודעת הדירה שלך.";
