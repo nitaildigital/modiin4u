@@ -1,4 +1,5 @@
 import type { Lang } from '@/lib/i18n';
+import { ownPhoto } from '@/lib/photos';
 import type { ContactOption } from './Menus';
 import { localName, type Listing, type ListingKind, type PropertyType } from '@/lib/data/realestate';
 
@@ -79,19 +80,11 @@ export function contactOptions(c: { phone?: string | null; whatsapp?: string | n
   return out;
 }
 
-/** A photo from our storage at about the size it is drawn (sizedPhotoUrl in
- *  network_photo.dart): storage resizes on the way out, so a 380-wide card
- *  asks for an 800-wide copy rather than the 4 MB original. Anything else
- *  is left as it is. */
+/** A photo from our storage at about the size it is drawn, twice over for a
+ *  sharp screen: a 380-wide card gets an 800-wide copy rather than the 4 MB
+ *  original. Made by the site itself (ownPhoto). */
 export function photo(url: string, width: number): string {
-  const stored = '/storage/v1/object/public/';
-  if (!url.includes('.supabase.co' + stored)) return url;
-  const path = url.split('?')[0].toLowerCase();
-  if (!/\.(jpe?g|png|webp)$/.test(path)) return url;
-  const px = width * 2;
-  const step = [200, 400, 600, 800, 1200, 1600, 2000, 2500].find((s) => s >= px) ?? 2500;
-  return url.replace(stored, '/storage/v1/render/image/public/') + (url.includes('?') ? '&' : '?')
-    + `width=${step}&height=2500&resize=contain&quality=75`;
+  return ownPhoto(url, width * 2) ?? url;
 }
 
 /** A description as the client wrote it, one entry per paragraph. */

@@ -1,3 +1,4 @@
+import { ownPhoto } from '@/lib/photos';
 import type { Lang } from '@/lib/i18n';
 import type { Business } from '@/lib/data/business';
 
@@ -129,15 +130,9 @@ export function waNumber(raw: string): string {
   return d;
 }
 
-/** A stored photo at about the size it is drawn (sizedPhotoUrl): Supabase
- *  resizes a JPEG, PNG or WebP on the way out, so a 4 MB cover reaches a
- *  200-pixel thumbnail as a few kilobytes. Anything else is left as it is. */
+/** A stored photo at about the size it is drawn, twice over for a sharp
+ *  screen (sizedPhotoUrl): a 4 MB cover reaches a 200-pixel thumbnail as a
+ *  few kilobytes. Made by the site itself (ownPhoto). */
 export function sized(url: string, width: number): string {
-  const stored = '/storage/v1/object/public/';
-  if (!url.includes('.supabase.co' + stored)) return url;
-  const path = url.split('?')[0].toLowerCase();
-  if (!/\.(jpe?g|png|webp)$/.test(path)) return url;
-  const steps = [200, 400, 600, 800, 1200, 1600, 2000, 2500];
-  const w = steps.find((s) => s >= width * 2) ?? 2500;
-  return `${url.replace(stored, '/storage/v1/render/image/public/')}${url.includes('?') ? '&' : '?'}width=${w}&height=2500&resize=contain&quality=75`;
+  return ownPhoto(url, width * 2) ?? url;
 }

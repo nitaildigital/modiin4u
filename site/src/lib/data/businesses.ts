@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { db } from '../supabase';
 import type { Lang } from '../i18n';
 import { plain } from '../seo';
+import { ownPhoto } from '../photos';
 
 /** A business category as the directory reads it (`categories`, scope
  *  business, switched on in the panel). */
@@ -180,19 +181,10 @@ export function kosherLabel(level: string | null | undefined): string | null {
 /** The cover, or the sharing picture where there is no cover. */
 export const bizPhoto = (b: Pick<BizRow, 'cover_url' | 'og_image_url'>) => b.cover_url || b.og_image_url || null;
 
-/** A photo in storage asked for at the width it is drawn (sizedPhotoUrl in
- *  network_photo.dart): `contain` inside a box as tall as storage allows, so
- *  only the width binds. Anything not in storage is left as it is. */
+/** A photo in storage at the width it is drawn (sizedPhotoUrl in
+ *  network_photo.dart), made by the site itself (ownPhoto). */
 export function sizedPhoto(url: string | null | undefined, px: number): string | null {
-  if (!url) return null;
-  const stored = '/storage/v1/object/public/';
-  if (!url.includes('.supabase.co' + stored)) return url;
-  const path = url.split('?')[0].toLowerCase();
-  if (!/\.(jpe?g|png|webp)$/.test(path)) return url;
-  const steps = [200, 400, 600, 800, 1200, 1600, 2000, 2500];
-  const width = steps.find((s) => s >= px) ?? 2500;
-  const sep = url.includes('?') ? '&' : '?';
-  return `${url.replace(stored, '/storage/v1/render/image/public/')}${sep}width=${width}&height=2500&resize=contain&quality=75`;
+  return ownPhoto(url, px);
 }
 
 // ── restaurants ──

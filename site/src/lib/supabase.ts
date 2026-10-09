@@ -8,7 +8,14 @@ import { REVALIDATE, SUPABASE_ANON_KEY, SUPABASE_URL } from './config';
 export const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
   global: {
-    fetch: (input, init) => fetch(input, { ...init, next: { revalidate: REVALIDATE } }),
+    // Ten seconds, then the read fails: when the database does not answer
+    // (9 Oct, the project restricted for an hour) a page says so at once
+    // rather than waiting minutes for a connection that will not come.
+    fetch: (input, init) => fetch(input, {
+      ...init,
+      signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000),
+      next: { revalidate: REVALIDATE },
+    }),
   },
 });
 
