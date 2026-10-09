@@ -2773,6 +2773,33 @@ of the app, the site and the database, and what was done:
   unapproved businesses can publish; sign-up unconfirmed), the data
   functions that read a failed query as "no rows", the launch items.
 
+**The client's TestFlight notes — 9 Oct.** Four items, done in the app,
+the panel and the new site:
+- **"What Locals Are Saying" / "מה חושבים תושבי העיר?"** in place of
+  "Reviews" on a business, a park and a neighbourhood: the tab, the section
+  title and the rating cards. The tab label wraps to two lines.
+- **The reviewer's photo, with their consent (migration 00076, applied).**
+  Reviews and comments copied the author's profile photo without asking. Now
+  `profiles.show_photo_on_posts` is null until asked, then yes or no, and
+  the triggers copy the photo only on yes; the photos copied before were
+  removed (3 reviews). The app asks once, the first time someone who has a
+  profile photo sends a review; Settings → Account has "Show my photo"
+  to change it. Without a photo the card shows the initials.
+- **Photos in the review.** A review takes up to four photos (10 MB each),
+  uploaded to `media/reviews/<author>/`; the database refuses photos from
+  anyone else's folder, and a review whose photos change goes back to the
+  queue, like new words. The panel's review queue shows them. The separate
+  "Add photo" on the Photos tab was removed: the client wants photos sent
+  with a review.
+- **Cuisine cards cut:** the photo in a restaurant category card was drawn
+  at its own width; it fills the card now.
+Checked: the database rules with two throwaway residents (11 of 11); the
+new site on localhost (desktop and phone); the app in the iOS simulator
+(a test review with two photos and a consented avatar, the cuisine cards).
+The test rows and files were deleted. Not checked by hand: picking a photo,
+the consent question and the Settings switch — the simulator could not be
+driven — so these wait for a phone.
+
 **The project restricted for image resizing — 9 Oct.** Supabase's Pro plan
 includes 100 "storage image transformations" a month (each different
 original photo resized through `/render/image` counts once); with the spend
