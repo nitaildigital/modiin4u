@@ -10,8 +10,11 @@ Decided 8 Oct 2026 (PLAN.md, "The public website moves to Next.js").
 - **Never invent content.** Every name, number, date, price, hour and review
   comes from the database (or from the WordPress snapshot, for SEO text).
   If a design needs data the database lacks, leave it out.
-- **The website has no resident accounts.** Signing in, sign-up, favourites,
-  writing reviews or comments, RSVP: the app's. The site shows, read-only.
+- **The website has no resident accounts — except for Messages.** Sign-up,
+  favourites, writing reviews or comments, RSVP: the app's. The site shows,
+  read-only. The one exception (the client, 9 Oct): residents and business
+  owners sign in at `/signin/` to read and answer their Messages and to see
+  Urban Profiles (`src/lib/session.ts`); those pages are noindex.
 - **Same design as the current site** — the Flutter `web_*_screen.dart`
   pages (desktop, ≥ 1100 px) and the phone screens `<name>_screen.dart`
   (below 1100 px). Reference screenshots of the current site are the target.

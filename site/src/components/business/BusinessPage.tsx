@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Buildings2, Call, Clock, Export, Gallery, Global, Instagram, Location, MessageText1, Messages2, Reserve, Shop, Star1, Verify, ArrowLeft2 } from 'iconsax-react';
+import { Buildings2, Call, Clock, Export, Gallery, Global, Instagram, Location, MessageText, MessageText1, Messages2, Reserve, Shop, Star1, Verify, ArrowLeft2 } from 'iconsax-react';
+import { MessageBusiness } from '@/components/messages/MessageBusiness';
 import { getLang, tr, type Lang } from '@/lib/i18n';
 import { h1For, breadcrumb, href, SITE_NAME } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
@@ -30,6 +31,8 @@ type View = {
   cover: string | null; photos: string[]; hours: Hours[]; hoursText: string | null;
   reviews: ReviewView[]; menu: MenuItem[]; isPark: boolean; hasPlace: boolean;
   phone: string; website: string; whatsapp: string; instagram: string;
+  /** Who reads the business's Messages; none for a park or a business no one runs. */
+  owner: string | null;
 };
 
 /** A business or park page — web_business_detail_screen.dart above 1100 px,
@@ -77,6 +80,7 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
     website: isPark ? '' : (b.website ?? '').trim(),
     whatsapp: isPark ? '' : (b.whatsapp ?? '').trim(),
     instagram: isPark ? '' : (b.instagram ?? '').trim(),
+    owner: isPark ? null : b.owner_id,
   };
 
   const image = b.og_image_url || b.cover_url;
@@ -369,6 +373,11 @@ function MoreInfo({ v }: { v: View }) {
   return (
     <div className="flex flex-col gap-5 rounded-xl border border-line p-6">
       <h2 className="mb-1 font-nunito text-xl font-semibold text-midblue">{t('מידע נוסף', 'More Info')}</h2>
+      {v.owner && (
+        <MessageBusiness lang={v.lang} businessId={v.b.id} ownerId={v.owner} className="text-start">
+          <InfoRow icon={<MessageText size={20} color="#123A72" />} label={t('הודעה', 'Message')} value={t('כתבו לעסק', 'Write to the business')} />
+        </MessageBusiness>
+      )}
       {v.website && (
         <TrackedLink stat="website" href={webLink(v.website)}>
           <InfoRow icon={<img src="/web/business/website.svg" alt="" width={20} height={20} />} label={t('אתר', 'Website')} value={shownUrl(v.website)} blue external />
@@ -524,6 +533,7 @@ function Phone({ v }: { v: View }) {
           <DirectionMark size={16} className="text-white" />{t('ניווט', 'Get Directions')}
         </TrackedLink>
         <span className="flex-1" />
+        {v.owner && <MessageBusiness lang={v.lang} businessId={v.b.id} ownerId={v.owner} className={circle}><MessageText size={20} color="#17A9D0" /></MessageBusiness>}
         {v.phone && <TrackedLink stat="call" href={`tel:${v.phone}`} newTab={false} className={circle} label={t('התקשרו', 'Call')}><Call size={20} color="#17A9D0" /></TrackedLink>}
         {v.website && <TrackedLink stat="website" href={webLink(v.website)} className={circle} label={t('אתר', 'Website')}><Global size={20} color="#17A9D0" /></TrackedLink>}
         {v.whatsapp && <TrackedLink stat="whatsapp" href={`https://wa.me/${waNumber(v.whatsapp)}`} className={circle} label="WhatsApp"><Messages2 size={20} color="#17A9D0" /></TrackedLink>}

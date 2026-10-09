@@ -6,6 +6,7 @@ import { NavLinks } from './NavLinks';
 import { navItems } from './nav-items';
 import { MobileMenu } from './MobileMenu';
 import { Bell } from '@/components/push/Bell';
+import { HeaderMessages } from '@/components/messages/HeaderMessages';
 
 function Logo({ className = '' }: { className?: string }) {
   return (
@@ -36,6 +37,7 @@ export async function Header({ floating = false }: { floating?: boolean }) {
         <NavLinks items={lang === 'he' ? items : [...items]} menus={menus} floating={floating} />
       </nav>
       <div className="flex shrink-0 items-center gap-3">
+        <HeaderMessages lang={lang} />
         <Bell lang={lang} />
         <LangToggle lang={lang} />
         <a href={encodeURI(contact?.path ?? '/יצירת-קשר/')}
@@ -59,7 +61,10 @@ export async function Header({ floating = false }: { floating?: boolean }) {
       {!floating && (
         <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-line bg-white px-4 desk:hidden">
           <Logo className="scale-75" />
-          <MobileMenu lang={lang} menus={menus} items={items} />
+          <div className="flex items-center gap-1">
+            <HeaderMessages lang={lang} />
+            <MobileMenu lang={lang} menus={menus} items={items} />
+          </div>
         </header>
       )}
     </>
