@@ -2683,6 +2683,36 @@ should be tested one kind at a time from added content.
   Google is his decision. (Supabase was unreachable for about five minutes
   during the run; the pages that timed out then answer in under 0.1 s.)
 
+**Launch review, sorted with Harshit — 9 Oct.** What was done, from the
+review of the whole project (the rest is in LAUNCH_RUNBOOK.md and on hold):
+- **Play:** `CAMERA` and `READ_MEDIA_IMAGES` removed (every photo is picked
+  from the gallery, through the system's picker); the iOS camera text too.
+- **iOS:** the privacy manifest is in the build now (it was never added to
+  the Xcode project), with the data the app sends — steps, user ID, user
+  content, push token, view counts; Hebrew as an app language with the
+  permission prompts in Hebrew; `tool/build_ios.sh` compiles in the Places
+  key from `.env.local`. Built without signing: both are in the app.
+- **Migration 00075 (written, not applied):** a deal or a job only for an
+  active business, and shown only while it is active (an owner's rights came
+  with a pending or closed business); only the panel deletes a business; an
+  edited review goes back to pending; a comment cannot be moved and its new
+  text is approved as a new one. Read against the live policies first: an
+  owner cannot approve their own business (the review had it wrong).
+- **Sign-up confirmation** was already on (`mailer_autoconfirm` false).
+- **Sample content:** `tool/remove_seed_remote.py` lists and, with
+  `--apply`, removes seed_remote.sql's 19 businesses, 10 articles and 10
+  events; nothing points at them. `tool/tmp_admin.py --list/--purge`: none
+  left. `seed_sample_content.py --undo` already restores a field only while
+  it holds the script's value.
+- **Steps:** saved when the app goes to the background or closes, the
+  moment a goal is reached (10,000 a day, or the challenge's), when the
+  Steps screen opens, and every half hour while open — not on a clock.
+- **The site:** a failed database read fails the page (500, "הדף לא זמין
+  כרגע", the last good copy from nginx) instead of drawing "no results" with
+  200 or "not found" with 404 — in one place, lib/supabase.ts; the footer,
+  the menus and the store links still degrade quietly. The sitemap reads past
+  the 1,000-row cut; the event lists ask only from yesterday on.
+
 **Keeping Supabase's load down — 9 Oct, after the restriction.** The
 project moved from Nano to Micro (Harshit). An hour later the database
 had spent about 15 s on queries in all (most of it the dashboard's own),
