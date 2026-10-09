@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { Floating, useFloating } from '@/components/ui/Floating';
 
 /** The website's Share (web_share_menu.dart): a small menu under the button —
  *  WhatsApp, Facebook, X, e-mail and Copy link. Each is an ordinary link, so
@@ -11,18 +12,8 @@ export function ShareMenu({ url, title, message, lang, className, children, alig
   className: string; children: ReactNode; align?: 'start' | 'end';
 }) {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, anchor, menu } = useFloating();
   const [copied, setCopied] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (ev: MouseEvent) => { if (!box.current?.contains(ev.target as Node)) setOpen(false); };
-    const esc = (ev: KeyboardEvent) => { if (ev.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', close);
-    document.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
-  }, [open]);
 
   const text = encodeURIComponent([message || title, url].join('\n'));
   const items: [string, string, string][] = [
@@ -44,12 +35,11 @@ export function ShareMenu({ url, title, message, lang, className, children, alig
   };
 
   return (
-    <div ref={box} className="relative">
+    <div ref={anchor} className="relative">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="menu" className={className}>
         {children}
       </button>
-      {open && (
-        <div role="menu" className={`absolute top-[calc(100%+8px)] z-[1100] min-w-[190px] rounded-xl border border-line bg-white py-1.5 text-start shadow-[0_8px_24px_rgba(0,0,0,0.12)] ${align === 'end' ? 'end-0' : 'start-0'}`}>
+      <Floating open={open} anchor={anchor} menu={menu} align={align} width={190} className="!py-1.5 text-start">
           {items.map(([name, link, icon]) => (
             <a key={name} role="menuitem" href={link} target={link.startsWith('mailto:') ? '_self' : '_blank'} rel="noopener"
               onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-ink hover:bg-surface">
@@ -60,8 +50,7 @@ export function ShareMenu({ url, title, message, lang, className, children, alig
           <button type="button" role="menuitem" onClick={copy} className="flex w-full items-center gap-3 px-4 py-2.5 text-start text-sm text-ink hover:bg-surface">
             {copied ? t('הקישור הועתק', 'Link copied') : t('העתקת קישור', 'Copy link')}
           </button>
-        </div>
-      )}
+      </Floating>
     </div>
   );
 }

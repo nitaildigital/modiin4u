@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { Floating, useFloating } from '@/components/ui/Floating';
 import { Call, Copy, Message, Sms } from 'iconsax-react';
 
 /** Digits and a leading +, or null when there is no number. */
@@ -15,25 +16,16 @@ const waOf = (raw: string | null) => {
   return d.length >= 9 ? d : null;
 };
 
-/** Contact / Call Now (web_contact_menu.dart): a small menu under the button
- *  with the number itself, copying it, WhatsApp and e-mail — whichever the
- *  place has. A bare `tel:` does nothing visible on most computers, and the
+/** Contact / Call Now (web_contact_menu.dart): a small menu by the button,
+ *  over the page (Floating), with the number itself, copying it, WhatsApp
+ *  and e-mail — whichever the place has. A bare `tel:` does nothing visible on most computers, and the
  *  visitor would never see the number. */
 export function ContactButton({ phone, whatsapp, email, label, lang, wide = false }: {
   phone: string | null; whatsapp: string | null; email: string | null; label: string; lang: 'he' | 'en'; wide?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen, anchor, menu } = useFloating();
   const [copied, setCopied] = useState<string | null>(null);
-  const box = useRef<HTMLDivElement>(null);
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
-  useEffect(() => {
-    if (!open) return;
-    const away = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', away);
-    document.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
-  }, [open]);
 
   const tel = telOf(phone);
   const wa = waOf(whatsapp);
@@ -41,6 +33,7 @@ export function ContactButton({ phone, whatsapp, email, label, lang, wide = fals
   if (!tel && !wa && !mail) return null;
 
   const copy = async () => {
+    setOpen(false);
     try {
       await navigator.clipboard.writeText(phone!.trim());
       setCopied(t('המספר הועתק', 'Number copied'));
@@ -53,7 +46,7 @@ export function ContactButton({ phone, whatsapp, email, label, lang, wide = fals
 
   const row = 'flex h-12 w-full items-center gap-3 px-4 text-[15px] font-medium text-navy hover:bg-section';
   return (
-    <div ref={box} className={`relative ${wide ? 'w-full' : 'w-fit'}`} onClick={(e) => e.stopPropagation()}>
+    <div ref={anchor} className={`relative ${wide ? 'w-full' : 'w-fit'}`} onClick={(e) => e.stopPropagation()}>
       <button type="button" onClick={(e) => { e.preventDefault(); setOpen((o) => !o); }} aria-expanded={open}
         className={`group/contact flex items-center justify-center gap-2 rounded-[60px] border border-midblue py-2 text-sm font-medium leading-6 text-midblue hover:bg-midblue hover:text-white group-hover/card:bg-midblue group-hover/card:text-white ${wide ? 'w-full' : 'px-4'}`}>
         {/* Outlined, and filled under the pointer — over the card or the button. */}
@@ -61,15 +54,13 @@ export function ContactButton({ phone, whatsapp, email, label, lang, wide = fals
         <img src="/web/home/card_phone_white.svg" alt="" width={16} height={16} className="hidden size-4 group-hover/card:block group-hover/contact:block" />
         {label}
       </button>
-      {open && (
-        <div role="menu" className="absolute start-0 top-full z-30 mt-2 w-[220px] overflow-hidden rounded-xl border border-line bg-white py-2 shadow-lg">
+      <Floating open={open} anchor={anchor} menu={menu}>
           {tel && <a role="menuitem" href={`tel:${tel}`} className={row}><Call size={20} color="#123A72" /><span dir="ltr">{phone!.trim()}</span></a>}
           {tel && <button role="menuitem" type="button" onClick={copy} className={row}><Copy size={20} color="#123A72" />{t('העתקת המספר', 'Copy number')}</button>}
           {wa && <a role="menuitem" href={`https://wa.me/${wa}`} target="_blank" rel="noopener" className={row}><Message size={20} color="#123A72" />WhatsApp</a>}
           {mail && <a role="menuitem" href={`mailto:${mail}`} className={row}><Sms size={20} color="#123A72" /><span dir="ltr" className="truncate">{mail}</span></a>}
-        </div>
-      )}
-      {copied && <p role="status" className="absolute start-0 top-full z-30 mt-2 whitespace-nowrap rounded-lg bg-ink px-3 py-2 text-xs text-white">{copied}</p>}
+      </Floating>
+      {copied && <p role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-xl bg-ink px-5 py-3 text-sm text-white shadow-lg">{copied}</p>}
     </div>
   );
 }

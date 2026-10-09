@@ -4,6 +4,7 @@ import { ArrowLeft, Call, Copy, Gallery, Link2 } from 'iconsax-react';
 import { track, type BusinessStat } from './stats';
 import { FacebookMark, MailMark, WhatsAppMark, XMark } from './icons';
 import { sized } from './format';
+import { Floating, useFloating } from '@/components/ui/Floating';
 
 type UI = {
   businessId: string;
@@ -234,24 +235,12 @@ export function ExpandableText({ text, more, less, className = '' }: { text: str
 
 /** A small menu under its button, closed by a click elsewhere or Escape. */
 function Popover({ button, children, className = '' }: { button: (toggle: () => void) => React.ReactNode; children: (close: () => void) => React.ReactNode; className?: string }) {
-  const [open, setOpen] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const down = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', down);
-    document.addEventListener('keydown', key);
-    return () => { document.removeEventListener('mousedown', down); document.removeEventListener('keydown', key); };
-  }, [open]);
+  // Over the page (Floating): above the row when there is no room below.
+  const { open, setOpen, anchor, menu } = useFloating();
   return (
-    <div ref={box} className={`relative ${className}`}>
+    <div ref={anchor} className={`relative ${className}`}>
       {button(() => setOpen((o) => !o))}
-      {open && (
-        <div role="menu" className="absolute start-0 top-full z-30 mt-2 min-w-[220px] rounded-xl border border-line bg-white py-2 shadow-[0_6px_20px_rgba(0,0,0,0.12)]">
-          {children(() => setOpen(false))}
-        </div>
-      )}
+      <Floating open={open} anchor={anchor} menu={menu}>{children(() => setOpen(false))}</Floating>
     </div>
   );
 }
