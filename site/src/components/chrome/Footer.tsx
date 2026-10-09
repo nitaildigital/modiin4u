@@ -39,7 +39,9 @@ function Column({ title, links, more }: { title: string; links: [string, string]
  *  app badges, the about paragraph; the legal links and PersonaAI under it. */
 export async function Footer({ lang }: { lang: Lang }) {
   const t = tr(lang);
-  const { data } = await db.from('app_settings').select('key, value');
+  // The footer is on every page: a failed read leaves its store links out
+  // rather than failing the page.
+  const data = await db.from('app_settings').select('key, value').then((r) => r.data, () => null);
   const settings = Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
   const ios = store(settings, 'store_url_ios');
   const android = store(settings, 'store_url_android');

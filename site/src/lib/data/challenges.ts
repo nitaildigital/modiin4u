@@ -8,7 +8,9 @@ export type Challenge = {
 };
 
 export async function activeChallenge(): Promise<Challenge | null> {
-  const now = new Date().toISOString();
+  // To the minute, so the cached read is reused for a minute rather than
+  // made afresh for every view (the exact time made every key new).
+  const now = new Date(Math.floor(Date.now() / 60_000) * 60_000).toISOString();
   const { data } = await db.from('challenges').select('id,name,description,goal,prize,prize_en,start_at,end_at')
     .eq('is_active', true).lte('start_at', now).gte('end_at', now).order('start_at', { ascending: false }).limit(1);
   return ((data ?? [])[0] as Challenge | undefined) ?? null;

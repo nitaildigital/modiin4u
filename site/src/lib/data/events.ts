@@ -134,11 +134,21 @@ export function hasCoordinates(e: Pick<EventCard, 'is_online' | 'latitude' | 'lo
  *  the ones whose start has passed. An event with no start time counts from
  *  the start of its day, as the app reads it. */
 export const upcomingEvents = cache(async (): Promise<EventCard[]> => {
+  // From yesterday on, in the database: past events stay published, and
+  // the list would otherwise grow for ever and, past a thousand rows, lose
+  // the upcoming ones at its end. The exact time is decided below.
   const { data } = await db.from('events').select(CARD).eq('status', 'published')
+    .or(`start_date.gte.${israelDaysAgo(1)},start_date.is.null`)
     .order('start_date', { ascending: true }).order('start_time', { ascending: true, nullsFirst: true });
   const now = Date.now();
   return ((data ?? []) as Row[]).map(toCard).filter((e) => e.starts == null || e.starts >= now);
 });
+
+/** The date [days] ago on the clock in Modi'in, "2026-10-08". */
+function israelDaysAgo(days: number): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(new Date(Date.now() - days * 86_400_000));
+}
 
 /** One event by its id, whatever its date — as the app opens it. The
  *  database's own rules decide which statuses a visitor may read. */

@@ -24,8 +24,12 @@ const PROFESSIONAL_SLUGS: Record<string, string> = {
 export async function getMenus(lang: Lang): Promise<Menus> {
   let english: Record<string, string> = {};
   if (lang === 'en') {
-    const { data } = await db.from('categories').select('slug, name_en').not('name_en', 'is', null);
-    english = Object.fromEntries((data ?? []).map((c) => [c.slug as string, c.name_en as string]));
+    // The menu is drawn on every page: should the read fail, the WordPress
+    // (Hebrew) wording stands rather than the page failing.
+    try {
+      const { data } = await db.from('categories').select('slug, name_en').not('name_en', 'is', null);
+      english = Object.fromEntries((data ?? []).map((c) => [c.slug as string, c.name_en as string]));
+    } catch { /* the snapshot's wording */ }
   }
   const label = (path: string, text: string) => {
     if (lang !== 'en') return text;

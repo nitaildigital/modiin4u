@@ -41,15 +41,14 @@ export async function municipalFormsUrl(): Promise<string> {
   return MUNICIPAL_FORMS_URL;
 }
 
-/** The lots the client has entered and not hidden, in his order. A read the
- *  database refuses gives none, as in the app. */
+/** The lots the client has entered and not hidden, in his order. A failed
+ *  read fails the page (lib/supabase.ts), not "no car parks yet". */
 export const parkingLots = cache(async (): Promise<ParkingLot[]> => {
-  const { data, error } = await db.from('parking_lots')
+  const { data } = await db.from('parking_lots')
     .select('id,name,name_en,address,hours,price_note,is_free,capacity,notes,latitude,longitude,image_url,google_place_id')
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
-  if (error) return [];
   return ((data ?? []) as ParkingLot[]).map((r) => ({
     ...r, name_en: text(r.name_en), address: text(r.address), hours: text(r.hours), price_note: text(r.price_note),
     notes: text(r.notes), image_url: text(r.image_url), google_place_id: text(r.google_place_id),

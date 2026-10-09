@@ -237,9 +237,13 @@ export type HomeEvent = {
 
 /** Every published event, earliest first (EventRepository.fetchAll). */
 export const publishedEvents = cache(async (): Promise<HomeEvent[]> => {
+  // From yesterday on (Israel), in the database: the past would otherwise
+  // pile up and, past a thousand rows, push the coming ones out.
+  const since = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(new Date(Date.now() - 86_400_000));
   const { data } = await db.from('events')
     .select('id,slug,title,image_url,og_image,start_date,start_time,is_all_day,venue_name,address,is_free,price,latitude,longitude')
-    .eq('status', 'published').order('start_date', { ascending: true });
+    .eq('status', 'published').or(`start_date.gte.${since},start_date.is.null`).order('start_date', { ascending: true });
   return (data ?? []) as HomeEvent[];
 });
 

@@ -20,20 +20,33 @@ async function filedCategories(): Promise<Set<string>> {
   return ids;
 }
 
+/** Every row a query matches, a thousand at a time — the most the database
+ *  returns at once, which would otherwise cut the list without saying so
+ *  (673 articles now; the thousand-and-first would be left out of Google's
+ *  list). [page] builds the query for one range, in a fixed order. */
+async function allRows<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null }>): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data } = await page(from, from + 999);
+    out.push(...(data ?? []));
+    if (!data || data.length < 1000) return out;
+  }
+}
+
 /** Every page search engines should know: each article, business, park and
  *  category from the database, the sections, and every address the
  *  WordPress site had. One entry per address. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [arts, biz, cats, used] = await Promise.all([
-    db.from('articles').select('slug, updated_at, published_at, noindex').eq('status', 'published').limit(5000),
-    db.from('businesses').select('slug, updated_at, noindex').eq('status', 'active').limit(5000),
+    allRows((a, b) => db.from('articles').select('slug, updated_at, published_at, noindex').eq('status', 'published').order('id').range(a, b)),
+    allRows((a, b) => db.from('businesses').select('slug, updated_at, noindex').eq('status', 'active').order('id').range(a, b)),
     db.from('categories').select('id, slug, scope, updated_at').eq('is_active', true).in('scope', ['business', 'article']),
     filedCategories(),
   ]);
   const out = new Map<string, string | undefined>();
   for (const p of ['/', '/news/', '/business/', '/search-rest-modiin/', '/events/', '/deals/', '/search-apartments/', '/municipal/', '/parks/', '/shabat-times-modiin/', '/community/']) out.set(p, undefined);
-  for (const a of arts.data ?? []) if (a.slug && !a.noindex) out.set(`/news/${a.slug}/`, a.updated_at ?? a.published_at);
-  for (const b of biz.data ?? []) if (b.slug && !b.noindex) out.set(`/business/${b.slug}/`, b.updated_at);
+  for (const a of arts) if (a.slug && !a.noindex) out.set(`/news/${a.slug}/`, a.updated_at ?? a.published_at);
+  for (const b of biz) if (b.slug && !b.noindex) out.set(`/business/${b.slug}/`, b.updated_at);
   for (const c of cats.data ?? []) if (c.slug && used.has(c.id)) out.set(c.scope === 'business' ? categoryPath(c.slug) : `/new/${c.slug}/`, c.updated_at);
   for (const p of wpPaths()) if (!out.has(p)) out.set(p, undefined);
   // An address WordPress redirects is redirected here too: not listed.

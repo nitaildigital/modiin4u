@@ -23,7 +23,10 @@ export async function groupPreview(code: string): Promise<GroupPreview | null> {
 /** The app's store links, only where the panel has given an https address
  *  (storeUrl in app_settings_provider.dart). */
 export async function storeLinks(): Promise<{ android: string | null; ios: string | null }> {
-  const { data } = await db.from('app_settings').select('key,value').in('key', ['store_url_android', 'store_url_ios']);
+  // Without them the page still says where the app is; a failed read
+  // leaves the links out rather than the page.
+  const data = await db.from('app_settings').select('key,value').in('key', ['store_url_android', 'store_url_ios'])
+    .then((r) => r.data, () => null);
   const pick = (k: string) => {
     const v = (data ?? []).find((r) => r.key === k)?.value;
     return typeof v === 'string' && v.trim().startsWith('https://') ? v.trim() : null;
