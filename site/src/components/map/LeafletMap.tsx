@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { MapContainer, Marker, TileLayer, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { MapPin } from './MapView';
@@ -46,15 +46,56 @@ function FitPins({ pins, fit }: { pins: MapPin[]; fit: boolean }) {
   return null;
 }
 
-export default function LeafletMap({ pins, center, zoom = 14, interactive = true, fit = true, lang, onPick }: {
+/** The chosen pin is brought into view, as the current site centres on it. */
+function FollowPick({ pin }: { pin: MapPin | undefined }) {
+  const map = useMap();
+  const at = pin ? `${pin.lat},${pin.lng}` : null;
+  // By place, not by object: a page that draws its pins afresh on every
+  // hover must not pull the map back each time.
+  useEffect(() => { if (at) map.panTo(at.split(',').map(Number) as [number, number], { animate: true }); }, [map, at]);
+  return null;
+}
+
+/** A click on the map itself, not on a pin: closes the open card. */
+function MapClick({ onClick }: { onClick: () => void }) {
+  useMapEvents({ click: onClick });
+  return null;
+}
+
+/** The current site's round "my area" button: back to the city. */
+function Recenter({ center, zoom, label }: { center: [number, number]; zoom: number; label: string }) {
+  const map = useMap();
+  return (
+    <div className="leaflet-bottom leaflet-right" style={{ marginBottom: 84 }}>
+      <button type="button" aria-label={label} title={label}
+        onClick={(e) => { e.stopPropagation(); map.setView(center, zoom); }}
+        className="leaflet-control flex size-[34px] items-center justify-center rounded-[4px] border-2 border-black/20 bg-white bg-clip-padding text-[#333] hover:bg-[#f4f4f4]"
+        style={{ pointerEvents: 'auto' }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="8" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2" strokeLinecap="round" /></svg>
+      </button>
+    </div>
+  );
+}
+
+const MODIIN: [number, number] = [31.8969, 35.0095];
+
+/** [selectedId] and [hoverId] draw that pin larger and on top (the chosen
+ *  pin is also brought into view); [onMapClick] hears a click beside the
+ *  pins; [wheel] false leaves the mouse wheel to scroll the page, as the
+ *  current site's in-page maps do; [recenter] adds its "back to the city"
+ *  button. */
+export default function LeafletMap({ pins, center, zoom = 14, interactive = true, fit = true, lang, onPick, selectedId, hoverId, onMapClick, wheel, recenter = false, zoomButtons }: {
   pins: MapPin[]; center?: [number, number]; zoom?: number; interactive?: boolean; fit?: boolean;
   lang: 'he' | 'en'; onPick?: (pin: MapPin) => void;
+  selectedId?: string | null; hoverId?: string | null; onMapClick?: () => void; wheel?: boolean; recenter?: boolean;
+  /** Leaflet's + and −; off where controls of the page's own sit over the map. */
+  zoomButtons?: boolean;
 }) {
   const [s, setS] = useState<Session | null | undefined>(undefined);
   useEffect(() => { session(lang).then(setS); }, [lang]);
-  const c = center ?? (pins[0] ? [pins[0].lat, pins[0].lng] as [number, number] : [31.8969, 35.0095] as [number, number]);
+  const c = center ?? (pins[0] ? [pins[0].lat, pins[0].lng] as [number, number] : MODIIN);
   return (
-    <MapContainer center={c} zoom={zoom} zoomControl={interactive} dragging={interactive} scrollWheelZoom={interactive}
+    <MapContainer center={c} zoom={zoom} zoomControl={zoomButtons ?? interactive} dragging={interactive} scrollWheelZoom={wheel ?? interactive}
       doubleClickZoom={interactive} touchZoom={interactive} attributionControl={!!s}
       className="isolate z-0 size-full bg-[#E8EAED]" style={{ direction: 'ltr' }}>
       {s && (
@@ -62,14 +103,21 @@ export default function LeafletMap({ pins, center, zoom = 14, interactive = true
           attribution={`<img src="/web/common/google_logo.png" alt="Google" style="height:14px;display:inline;vertical-align:middle"> ${s.copyright}`}
           maxZoom={20} tileSize={256} />
       )}
-      {pins.map((p) => (
-        <Marker key={p.id} position={[p.lat, p.lng]}
-          icon={L.icon({ iconUrl: p.icon ?? '/web/business/map_marker.svg', iconSize: p.size ?? [40, 44], iconAnchor: [(p.size?.[0] ?? 40) / 2, p.size?.[1] ?? 44] })}
-          eventHandlers={{ click: () => { if (onPick) onPick(p); else if (p.href) window.location.href = p.href; } }}>
-          {p.label && <Tooltip direction="top" offset={[0, -(p.size?.[1] ?? 44)]}>{p.label}</Tooltip>}
-        </Marker>
-      ))}
+      {pins.map((p) => {
+        const big = p.id === selectedId || p.id === hoverId;
+        const [w, h] = (p.size ?? [40, 44]).map((n) => (big ? Math.round(n * 1.25) : n));
+        return (
+          <Marker key={p.id} position={[p.lat, p.lng]} zIndexOffset={big ? 1000 : 0}
+            icon={L.icon({ iconUrl: p.icon ?? '/web/business/map_marker.svg', iconSize: [w, h], iconAnchor: [w / 2, h] })}
+            eventHandlers={{ click: () => { if (onPick) onPick(p); else if (p.href) window.location.href = p.href; } }}>
+            {p.label && <Tooltip direction="top" offset={[0, -h]}>{p.label}</Tooltip>}
+          </Marker>
+        );
+      })}
       <FitPins pins={pins} fit={fit} />
+      <FollowPick pin={selectedId ? pins.find((p) => p.id === selectedId) : undefined} />
+      {onMapClick && <MapClick onClick={onMapClick} />}
+      {recenter && interactive && <Recenter center={center ?? MODIIN} zoom={zoom} label={lang === 'he' ? 'חזרה למודיעין' : 'Back to Modiin'} />}
     </MapContainer>
   );
 }

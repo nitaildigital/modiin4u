@@ -160,7 +160,8 @@ export function CityMap({ pins, lang, title, intro }: { pins: CityPin[]; lang: L
     setSelected(null);
   }
 
-  const map = <MapView pins={mapPins} lang={lang} center={CENTER} zoom={15} fit={false} onPick={(p) => setSelected(byId.get(p.id) ?? null)} />;
+  const map = <MapView pins={mapPins} lang={lang} center={CENTER} zoom={15} fit={false} recenter={!!desk}
+    selectedId={selected?.id} onMapClick={() => setSelected(null)} onPick={(p) => setSelected(byId.get(p.id) ?? null)} />;
 
   return (
     <div className="citymap relative h-[calc(100dvh-56px-76px)] min-h-[480px] desk:h-[calc(100vh-81px)] desk:min-h-[640px]">

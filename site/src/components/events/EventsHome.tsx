@@ -263,7 +263,7 @@ export function EventsHome({ lang, heading, headingIsH1, events, categories, byE
         </section>
         {/* "View on Map", floating over the list above the bottom menu. */}
         <div className="pointer-events-none fixed inset-x-0 bottom-[92px] z-30 flex justify-center">
-          <Link href="/map/" className="pointer-events-auto flex h-10 items-center gap-1.5 rounded-[50px] bg-white px-4 text-sm font-medium text-navy shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
+          <Link href="/events-map/" className="pointer-events-auto flex h-10 items-center gap-1.5 rounded-[50px] bg-white px-4 text-sm font-medium text-navy shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
             <img src="/icons/m_events_map.svg" alt="" className="size-4" />
             {t('הצג במפה', 'View on Map')}
           </Link>

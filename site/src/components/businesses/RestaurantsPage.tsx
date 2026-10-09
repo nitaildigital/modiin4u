@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Location, Reserve, SearchNormal1, Setting4, ShieldTick, Verify } from 'iconsax-react';
+import { ArrowLeft, ArrowRight, Location, Map as MapIcon, SearchNormal1, Setting4, ShieldTick, Verify } from 'iconsax-react';
 import { getLang, tr, type Lang } from '@/lib/i18n';
 import { breadcrumb, h1For, href, SITE_NAME } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
@@ -23,11 +23,11 @@ const catHref = (slug: string) => href(`/business-cat/${slug}/`);
  *  title, search and quick picks, the paid banners, the food categories, and
  *  rows of restaurants, cafés, bars, the best loved and those that deliver —
  *  and restaurants_screen.dart on a phone. Every "View all" opens the
- *  category's page; the search opens the restaurants list, narrowed.
+ *  category's page (a list Google can read); the search opens the
+ *  restaurants list, narrowed; "View on Map" opens /restaurants-map/.
  *
- *  Left out: the map listing (/restaurants-map) the current site's buttons
- *  open — the lists stand in for it — and the Takeaway pick, which no row
- *  answers (`has_takeaway` is false on all of them). */
+ *  Left out: the Takeaway pick, which no row answers (`has_takeaway` is
+ *  false on all of them). */
 export async function RestaurantsPage({ path }: { path: string }) {
   const lang = await getLang();
   const t = tr(lang);
@@ -143,15 +143,17 @@ export async function RestaurantsPage({ path }: { path: string }) {
               <img src="/web/common/search_white.svg" alt="" className="size-[18px]" />{t('חיפוש', 'Search')}
             </button>
           </form>
-          {picks.length > 0 && (
-            <div className="relative mt-[33px] hidden flex-wrap justify-center gap-2 desk:flex">
-              {picks.map((p) => (
-                <Link key={p.to} href={p.to} className="flex items-center gap-2 rounded-lg bg-white px-3 py-2.5 text-xs leading-[15px] text-midblue hover:bg-white/90">
-                  <img src={`/web/restaurants/${p.icon}`} alt="" className="size-3.5" />{p.label}
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="relative mt-[33px] hidden flex-wrap justify-center gap-2 desk:flex">
+            {picks.map((p) => (
+              <Link key={p.to} href={p.to} className="flex items-center gap-2 rounded-lg bg-white px-3 py-2.5 text-xs leading-[15px] text-midblue hover:bg-white/90">
+                <img src={`/web/restaurants/${p.icon}`} alt="" className="size-3.5" />{p.label}
+              </Link>
+            ))}
+            {/* Every place on the map, with the filters (/restaurants-map). */}
+            <Link href="/restaurants-map/" className="flex items-center gap-2 rounded-lg bg-white px-3 py-2.5 text-xs leading-[15px] text-midblue hover:bg-white/90">
+              <MapIcon size={14} color="currentColor" />{t('הצגה במפה', 'View on Map')}
+            </Link>
+          </div>
           <Link href={catHref('restaurants')} className="mt-1 flex h-12 items-center gap-2 rounded-full border border-line bg-white px-4 desk:hidden">
             <SearchNormal1 size={18} color="#6D6D6D" />
             <span className="flex-1 text-sm text-[#6D6D6D]">{t('חיפוש מסעדה, מטבח או מיקום', 'Search a restaurant, cuisine or place')}</span>
@@ -209,12 +211,18 @@ export async function RestaurantsPage({ path }: { path: string }) {
 
       {/* ── phone ── */}
       <div className="mx-auto max-w-[430px] desk:hidden">
-        <div className="mx-4 mt-4 grid h-[200px] place-items-center rounded-xl bg-[linear-gradient(to_bottom_right,#0058B5,#010A36)] text-white/12">
-          <Reserve size={48} color="currentColor" variant="Bold" />
-        </div>
-        <div className="mt-3 flex justify-center gap-[3px]" aria-hidden>
-          {[0, 1, 2].map((i) => <span key={i} className={`h-1 w-5 rounded-full ${i === 1 ? 'bg-midblue' : 'bg-[#D9D9D9]'}`} />)}
-        </div>
+        {/* The campaigns booked for the page's top, one at a time across
+            (the app's screen drew an empty panel with three still dots
+            here); nothing booked, nothing drawn. */}
+        {top.length > 0 && (
+          <ul className="mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 [scrollbar-width:none]">
+            {top.map((b) => (
+              <li key={b.id} className="w-full shrink-0 snap-center [&_img]:h-[200px] [&_img]:w-full [&_img]:rounded-xl [&_img]:object-cover">
+                <BannerImage banner={b} />
+              </li>
+            ))}
+          </ul>
+        )}
         {cuisines.length > 0 && (
           <section className="mt-4">
             <h2 className="px-4 text-base font-semibold text-[#1F1F1F]">{t('גלו את מודיעין', 'Discover Modiin')}</h2>
@@ -258,6 +266,13 @@ export async function RestaurantsPage({ path }: { path: string }) {
             </ul>
           </section>
         )}
+        {/* "View on Map", floating over the list above the bottom menu, as on
+            the events page. */}
+        <div className="pointer-events-none fixed inset-x-0 bottom-[92px] z-30 flex justify-center">
+          <Link href="/restaurants-map/" className="pointer-events-auto flex h-10 items-center gap-1.5 rounded-[50px] bg-white px-4 text-sm font-medium text-navy shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
+            <MapIcon size={16} color="currentColor" />{t('הצג במפה', 'View on Map')}
+          </Link>
+        </div>
       </div>
     </div>
   );

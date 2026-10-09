@@ -90,7 +90,7 @@ export function ParkingExplorer({ lots, lang }: { lots: ParkingLot[]; lang: Lang
   }
 
   const map = (
-    <MapView pins={pins} lang={lang} onPick={pick} fit center={lots.length === 1 ? [lots[0].latitude, lots[0].longitude] : [31.8928, 35.0104]} zoom={lots.length === 1 ? 16 : 14} />
+    <MapView pins={pins} lang={lang} onPick={pick} selectedId={selected} wheel={false} fit center={lots.length === 1 ? [lots[0].latitude, lots[0].longitude] : [31.8928, 35.0104]} zoom={lots.length === 1 ? 16 : 14} />
   );
 
   return (

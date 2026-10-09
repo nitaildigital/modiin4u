@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home2, SearchNormal1, SearchStatus } from 'iconsax-react';
+import { CloseCircle, Home2, Map1, SearchNormal1, SearchStatus } from 'iconsax-react';
 import { getLang, tr, type Lang } from '@/lib/i18n';
 import { breadcrumb, href, SITE_NAME } from '@/lib/seo';
 import { SITE_URL, CONTACT } from '@/lib/config';
@@ -9,7 +9,6 @@ import { MapView } from '@/components/map/MapView';
 import { ListingCard, ListingPhoto } from './ListingCard';
 import { HoodCarousel } from './HoodCarousel';
 import { FilterForm, PriceRange } from './FilterForm';
-import { MapButton } from './MapButton';
 import { ContactMenu } from './Menus';
 import { BROWSE_TYPES, contactOptions, hoodName, priceOf, roomsText, shekels, typeLabel } from './format';
 import { applySearch, filterCount, priceBounds, readSearch, searchHref, sortListings, type Search, type SearchParams } from './search';
@@ -70,7 +69,7 @@ export async function RealEstateView({ path, h1, sp, oldAddress = false }: {
             {h1}
           </h1>
         </div>
-        <PhoneControls s={s} lang={lang} kind={phoneKind} />
+        <PhoneControls s={s} lang={lang} kind={phoneKind} hoods={hoods} />
       </div>
 
       <div className="hidden desk:block">
@@ -90,14 +89,19 @@ export async function RealEstateView({ path, h1, sp, oldAddress = false }: {
 // PHONE
 // ─────────────────────────────────────────────
 
-function PhoneControls({ s, lang, kind }: { s: Search; lang: Lang; kind: ListingKind }) {
+function PhoneControls({ s, lang, kind, hoods }: { s: Search; lang: Lang; kind: ListingKind; hoods: Neighborhood[] }) {
   const t = tr(lang);
   const chosen = s.types.length === 1 ? s.types[0] : null;
+  // A neighbourhood page's "See all" narrows the list to it: said here, with
+  // a way out, rather than filtering out of sight.
+  const hood = s.neighborhood ? hoods.find((h) => h.id === s.neighborhood) : undefined;
   return (
     <div className="desk:hidden">
       <FilterForm action="/realestate/" className="mt-[18px] px-4">
         {s.kind && <input type="hidden" name="kind" value={s.kind} />}
         {s.types.map((ty) => <input key={ty} type="hidden" name="type" value={ty} />)}
+        {s.neighborhood && <input type="hidden" name="neighborhood" value={s.neighborhood} />}
+        {s.sort !== 'newest' && <input type="hidden" name="sort" value={s.sort} />}
         <label className="flex h-12 items-center gap-2 rounded-full border border-line bg-white px-4">
           <SearchNormal1 size={18} color="#6D6D6D" />
           <input type="search" name="q" defaultValue={s.q} placeholder={t('חיפוש לפי מיקום, שכונה...', 'Search by location, neighborhood...')}
@@ -116,6 +120,15 @@ function PhoneControls({ s, lang, kind }: { s: Search; lang: Lang; kind: Listing
           );
         })}
       </div>
+      {hood && (
+        <div className="mt-3 flex px-4">
+          <Link href={searchHref({ ...s, neighborhood: null })} scroll={false} aria-label={t('הסרת הסינון לפי שכונה', 'Remove the neighborhood filter')}
+            className="flex h-8 items-center gap-1.5 rounded-full bg-[#E8EEF7] ps-3 pe-2 text-sm text-midblue">
+            {t('שכונה: ', 'Neighborhood: ')}{localName(hood.name, hood.name_en, lang)}
+            <CloseCircle size={18} color="currentColor" />
+          </Link>
+        </div>
+      )}
       <div className="mt-4 flex gap-5 px-4">
         {(['sale', 'rent'] as const).map((k) => {
           const on = kind === k;
@@ -133,10 +146,7 @@ function PhoneControls({ s, lang, kind }: { s: Search; lang: Lang; kind: Listing
 
 function PhoneList({ rows, s, lang }: { rows: Listing[]; s: Search; lang: Lang }) {
   const t = tr(lang);
-  const pins = rows.filter((l) => l.latitude != null && l.longitude != null).map((l) => ({
-    id: l.id, lat: l.latitude!, lng: l.longitude!, href: href(`/listing/${l.id}/`), label: l.title,
-    icon: `${A}/listing_pin.svg`, size: [40, 44] as [number, number],
-  }));
+  const onMap = rows.some((l) => l.latitude != null && l.longitude != null);
   if (!rows.length) {
     const filtering = !!s.q || filterCount(s) > 0;
     return (
@@ -152,7 +162,14 @@ function PhoneList({ rows, s, lang }: { rows: Listing[]; s: Search; lang: Lang }
       <div className="flex flex-col gap-4">
         {rows.map((l) => <ListingCard key={l.id} l={l} lang={lang} variant="phone" />)}
       </div>
-      <MapButton pins={pins} label={t('הצג במפה', 'View on Map')} lang={lang} />
+      {onMap && (
+        <div className="pointer-events-none sticky bottom-[92px] z-30 mt-4 flex justify-center">
+          <Link href={searchHref({ ...s, kind: s.kind ?? 'sale' }, '/realestate-map/')}
+            className="pointer-events-auto flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium text-navy shadow-[0_4px_12px_rgba(0,0,0,0.25)]">
+            <Map1 size={16} color="currentColor" />{t('הצג במפה', 'View on Map')}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
