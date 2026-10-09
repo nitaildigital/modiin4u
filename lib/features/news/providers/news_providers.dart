@@ -12,7 +12,7 @@ final articleRepositoryProvider =
 /// Published articles, newest first.
 final publishedArticlesProvider = FutureProvider<List<Article>>((ref) async {
   final rows =
-      await ref.watch(articleRepositoryProvider).fetchAll(status: 'published');
+      await ref.watch(articleRepositoryProvider).fetchPublishedList();
   return rows.map(Article.fromJson).toList();
 });
 

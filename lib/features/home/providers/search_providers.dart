@@ -45,7 +45,7 @@ final searchResultsProvider =
 
   final results = await Future.wait([
     ref.watch(businessRepositoryProvider).fetchAll(status: 'active', search: q, kind: null),
-    ref.watch(articleRepositoryProvider).fetchAll(status: 'published', search: q),
+    ref.watch(articleRepositoryProvider).search(q),
     ref.watch(eventRepositoryProvider).fetchAll(search: q),
   ]);
   final listings = await ref.watch(listingRepositoryProvider).fetchActive(search: q);

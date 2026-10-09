@@ -4,6 +4,45 @@ import '../../../core/supabase/supabase_config.dart';
 class ArticleRepository {
   final SupabaseClient _client = SupabaseConfig.client;
 
+  /// What a list or a card draws, and nothing more: not the body, nor the
+  /// SEO fields. The news list read every column of every article — 1.8 MB
+  /// of bodies alone, on every open and every return to the app (9 Oct).
+  /// The article page reads its own row in full ([fetchById]).
+  static const listColumns = 'id,title,subtitle,slug,excerpt,featured_image,mobile_image,og_image,credit,'
+      'status,is_breaking,is_featured,view_count,share_count,published_at,updated_at,created_at';
+
+  /// Every published article for the lists, newest first, a thousand rows
+  /// a request — the most the database returns at once, which would
+  /// otherwise cut the list without saying so.
+  Future<List<Map<String, dynamic>>> fetchPublishedList() async {
+    final out = <Map<String, dynamic>>[];
+    for (var from = 0;; from += 1000) {
+      final page = await _client
+          .from('articles')
+          .select(listColumns)
+          .eq('status', 'published')
+          .order('published_at', ascending: false, nullsFirst: false)
+          .order('created_at', ascending: false)
+          .order('id')
+          .range(from, from + 999);
+      out.addAll(List<Map<String, dynamic>>.from(page));
+      if (page.length < 1000) break;
+    }
+    return out;
+  }
+
+  /// The search's article hits: the card columns, the newest [limit].
+  Future<List<Map<String, dynamic>>> search(String q, {int limit = 30}) async {
+    final data = await _client
+        .from('articles')
+        .select(listColumns)
+        .eq('status', 'published')
+        .or('title.ilike.%$q%,slug.ilike.%$q%')
+        .order('published_at', ascending: false, nullsFirst: false)
+        .limit(limit);
+    return List<Map<String, dynamic>>.from(data);
+  }
+
   Future<List<Map<String, dynamic>>> fetchAll({
     String? search,
     String? status,

@@ -1,33 +1,25 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-/// A photo from our Supabase storage, at the size it is drawn.
+/// The address to load a photo from our Supabase storage at.
 ///
-/// The directory's photos are stored as they were uploaded: the median cover
-/// is 270 KB, the largest 4.3 MB, and forty of them came to 16 MB — a
-/// restaurants page asks for twenty. Storage can resize on the way out, so a
-/// card 380 wide asks for an 800-pixel copy (for a sharp screen), which the
-/// browser receives as WebP: that 4.3 MB photo arrives as 82 KB.
-///
-/// Widths are rounded up to a few steps so one copy serves many boxes and
-/// stays in Supabase's cache. Anything not a stored JPEG, PNG or WebP — a
-/// logo in SVG, a picture on another site — is left as it is.
-String sizedPhotoUrl(String url, double logicalWidth, double devicePixelRatio) {
-  const stored = '/storage/v1/object/public/';
-  if (!url.contains('.supabase.co$stored')) return url;
-  final path = url.split('?').first.toLowerCase();
-  if (!(path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png') || path.endsWith('.webp'))) {
-    return url;
-  }
-  final px = (logicalWidth.isFinite && logicalWidth > 0 ? logicalWidth : 1600) * devicePixelRatio;
+/// It was Supabase's resizing address (`/render/image`, an 800-pixel WebP
+/// for a 380-wide card): each different photo resized there counts against
+/// the plan's 100 a month, and on 9 Oct the whole project was restricted at
+/// 862 — the database included. So the original is loaded, as stored: an
+/// ordinary download, cached by the phone and the browser, against an egress
+/// quota then at 1%. [NetworkPhoto] decodes it at the size it is drawn, so a
+/// phone's memory holds no more than before. The parameters stay for when
+/// small copies are stored at upload (PLAN.md, 9 Oct).
+String sizedPhotoUrl(String url, double logicalWidth, double devicePixelRatio) => url;
+
+/// The pixel width to decode a photo drawn [logicalWidth] wide at, rounded
+/// up to a few steps; null where the width is not known.
+int? decodeWidth(double logicalWidth, double devicePixelRatio) {
+  if (!logicalWidth.isFinite || logicalWidth <= 0) return null;
+  final px = logicalWidth * devicePixelRatio;
   const steps = [200, 400, 600, 800, 1200, 1600, 2000, 2500];
-  final width = steps.firstWhere((s) => s >= px, orElse: () => 2500);
-  final sep = url.contains('?') ? '&' : '?';
-  // `contain` inside a box as tall as storage allows, so only the width
-  // binds. Given a width alone, storage keeps the original height and crops
-  // the photo to a narrow strip — which a card then enlarged to fill itself,
-  // and every photo on the businesses page looked stretched.
-  return '${url.replaceFirst(stored, '/storage/v1/render/image/public/')}${sep}width=$width&height=2500&resize=contain&quality=75';
+  return steps.firstWhere((s) => s >= px, orElse: () => 2500);
 }
 
 /// The width to ask for, for a photo covering a box of [width] × [height]:
@@ -112,25 +104,17 @@ class NetworkPhoto extends StatelessWidget {
       final needed = fit == BoxFit.cover && logicalHeight.isFinite
           ? (logicalWidth.isFinite ? logicalWidth : 0).clamp(logicalHeight * 16 / 9, double.infinity).toDouble()
           : logicalWidth;
-      final sized = sizedPhotoUrl(src, needed, MediaQuery.devicePixelRatioOf(context));
       return CachedNetworkImage(
-        imageUrl: sized,
+        imageUrl: sizedPhotoUrl(src, needed, MediaQuery.devicePixelRatioOf(context)),
+        // Decoded at the size it is drawn: a 4 MB original in a card takes
+        // the memory of a card-sized picture.
+        memCacheWidth: decodeWidth(needed, MediaQuery.devicePixelRatioOf(context)),
         width: width,
         height: height,
         fit: fit,
         fadeInDuration: const Duration(milliseconds: 250),
         placeholder: (_, _) => fallback,
-        // Should the resized copy fail, the original is still there.
-        errorWidget: (_, _, _) => sized == src
-            ? fallback
-            : CachedNetworkImage(
-                imageUrl: src,
-                width: width,
-                height: height,
-                fit: fit,
-                placeholder: (_, _) => fallback,
-                errorWidget: (_, _, _) => fallback,
-              ),
+        errorWidget: (_, _, _) => fallback,
       );
     }
 

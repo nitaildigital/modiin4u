@@ -126,13 +126,19 @@ class StepCounter extends StateNotifier<StepState> {
     await refreshHealth(upload: true);
     await _startSensor();
 
-    // A minute's tick saves today's count while it changes; coming back to
-    // the app re-reads the health store, which went on counting meanwhile.
-    _tick = Timer.periodic(const Duration(minutes: 1), (t) {
-      if (t.tick % 5 == 0) refreshHealth();
+    // Today's count is saved every five minutes while it changes, and once
+    // more as the app goes to the background, so nothing walked is lost. It
+    // was every minute, with six lists read again after each save — the
+    // database's busiest writer for one person walking (9 Oct). Coming back
+    // to the app re-reads the health store, which went on counting meanwhile.
+    _tick = Timer.periodic(const Duration(minutes: 5), (t) {
+      if (t.tick % 3 == 0) refreshHealth();
       _uploadToday();
     });
-    _lifecycle = AppLifecycleListener(onResume: () => refreshHealth());
+    _lifecycle = AppLifecycleListener(
+      onResume: () => refreshHealth(),
+      onHide: () => _uploadToday(),
+    );
   }
 
   Future<void> _startSensor() async {
@@ -220,27 +226,38 @@ class StepCounter extends StateNotifier<StepState> {
   Future<void> _uploadToday() async {
     final value = state.today;
     if (value == null || value <= 0 || value == _lastUploaded) return;
-    await _upload({dateKey(DateTime.now()): value});
-    _lastUploaded = value;
+    // Remembered only once it is saved: offline, or before signing in, the
+    // next tick sends it again.
+    if (await _upload({dateKey(DateTime.now()): value})) _lastUploaded = value;
   }
 
-  Future<void> _upload(Map<String, int> days) async {
-    if (days.isEmpty || _ref.read(authProvider) == null) return;
+  DateTime? _ranksReadAt;
+
+  /// Saves [days]; true once they are in the database.
+  Future<bool> _upload(Map<String, int> days) async {
+    if (days.isEmpty || _ref.read(authProvider) == null) return false;
     try {
       await _ref.read(stepsRepositoryProvider).recordDays(days);
+      // This person's own figures follow the walk.
       _ref.invalidate(myStepWeekProvider);
       _ref.invalidate(myStepMonthProvider);
-      // The challenge card and the rankings count the same days, so they
-      // follow the walk too rather than the figure at opening.
       _ref.invalidate(myChallengeStepsProvider);
-      // A save can make someone the winner (00058); the challenge is read
-      // again so the banner and the win message follow at once.
-      _ref.invalidate(activeChallengeProvider);
-      _ref.invalidate(peopleLeaderboardProvider);
-      _ref.invalidate(neighborhoodLeaderboardProvider);
+      // The rankings and the challenge (a save can make someone the winner,
+      // 00058) read every resident's days: again at most every quarter of an
+      // hour, not after every save. Opening the screen or pulling it down
+      // reads them anyway.
+      final now = DateTime.now();
+      if (_ranksReadAt == null || now.difference(_ranksReadAt!) >= const Duration(minutes: 15)) {
+        _ranksReadAt = now;
+        _ref.invalidate(activeChallengeProvider);
+        _ref.invalidate(peopleLeaderboardProvider);
+        _ref.invalidate(neighborhoodLeaderboardProvider);
+      }
+      return true;
     } catch (_) {
-      // Offline: the next minute tries again with the same or a higher
+      // Offline: the next tick tries again with the same or a higher
       // figure, and the day keeps its highest.
+      return false;
     }
   }
 
