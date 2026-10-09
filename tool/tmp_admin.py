@@ -2,6 +2,8 @@
 
   python3 tool/tmp_admin.py --create   # a new admin with a random password
   python3 tool/tmp_admin.py --delete   # removes it again, and says what is left
+  python3 tool/tmp_admin.py --list     # every temporary admin still there
+  python3 tool/tmp_admin.py --purge    # removes them all (before launch)
 
 Testing the panel needs someone who can sign in to it, and borrowing a real
 administrator's account means acting as them. This makes a throwaway one: an
@@ -10,6 +12,11 @@ password are written to a file in the system's temporary folder (mode 600),
 never printed, so a test script can read them without them appearing in a
 terminal or a log. Delete the admin when the test is done — the script checks
 that nothing of it remains.
+
+--delete knows only the admin in this machine's file; an admin made on
+another machine, or whose file was lost, stayed (two super_admins on 5 Oct).
+--list finds every account at a tmp-admin-…@modiin4u.test address, and
+--purge removes them all — only those: no other account matches.
 
 Reads SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.local.
 """
@@ -70,5 +77,25 @@ elif '--delete' in sys.argv:
     left_profile = http('GET', f"/rest/v1/profiles?select=id&id=eq.{c['id']}")
     os.remove(CREDS)
     print('deleted', c['email'], '| admin_users left:', len(left_admin), '| profiles left:', len(left_profile))
+elif '--list' in sys.argv or '--purge' in sys.argv:
+    import re
+    found, page = [], 1
+    while True:
+        batch = (http('GET', f'/auth/v1/admin/users?page={page}&per_page=200') or {}).get('users', [])
+        found += [u for u in batch if re.fullmatch(r'tmp-admin-[0-9a-f]+@modiin4u\.test', u.get('email') or '')]
+        if len(batch) < 200:
+            break
+        page += 1
+    for u in found:
+        print(u['email'], '| created', (u.get('created_at') or '')[:10], '| last sign-in', (u.get('last_sign_in_at') or 'never')[:10])
+    print(len(found), 'temporary admin account(s)')
+    if '--purge' in sys.argv:
+        for u in found:
+            http('DELETE', f"/rest/v1/admin_users?profile_id=eq.{u['id']}")
+            http('DELETE', f"/auth/v1/admin/users/{u['id']}")
+            left = http('GET', f"/rest/v1/admin_users?select=id&profile_id=eq.{u['id']}")
+            print('deleted', u['email'], '| admin_users left:', len(left))
+        if os.path.exists(CREDS):
+            os.remove(CREDS)
 else:
     print(__doc__)
