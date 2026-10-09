@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'web_chrome.dart' show webIsHebrew;
 
@@ -37,7 +38,29 @@ class _GoogleSession {
   /// The credit Google gives for the area — "Map data ©2026 Google, Mapa
   /// GISrael" — which must be shown on the map with its logo.
   final String copyright;
-  const _GoogleSession(this.token, this.copyright);
+
+  /// When Google ends the session, in milliseconds since the epoch.
+  final int expires;
+  const _GoogleSession(this.token, this.copyright, this.expires);
+
+  Map<String, dynamic> toJson() => {'token': token, 'copyright': copyright, 'expires': expires};
+}
+
+/// The session is kept in the browser for its life (9 Oct). A new one on
+/// every visit gave every tile a new address, so the browser could never
+/// reuse a tile it already had, and each visit's map was drawn — and billed
+/// — afresh; the credit is kept with it, so its call is made once too.
+Future<_GoogleSession?> _storedSession(bool hebrew) async {
+  try {
+    final raw = (await SharedPreferences.getInstance()).getString('map_session_${hebrew ? 'he' : 'en'}');
+    if (raw == null) return null;
+    final j = jsonDecode(raw) as Map<String, dynamic>;
+    final s = _GoogleSession(j['token'] as String, j['copyright'] as String, (j['expires'] as num).toInt());
+    // An hour's margin, so a session never runs out in the middle of a visit.
+    return s.expires - 3600000 > DateTime.now().millisecondsSinceEpoch ? s : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 /// One session per label language: the English site gets an English map,
@@ -45,6 +68,8 @@ class _GoogleSession {
 /// than a visit.
 final _sessionProvider = FutureProvider.family<_GoogleSession?, bool>((ref, hebrew) async {
   if (!_googleTiles) return null;
+  final kept = await _storedSession(hebrew);
+  if (kept != null) return kept;
   try {
     final res = await http.post(
       Uri.parse('https://tile.googleapis.com/v1/createSession?key=$_key'),
@@ -73,7 +98,12 @@ final _sessionProvider = FutureProvider.family<_GoogleSession?, bool>((ref, hebr
       debugPrint('Google map session refused (${res.statusCode}); no map tiles');
       return null;
     }
-    final token = (jsonDecode(res.body) as Map<String, dynamic>)['session'] as String;
+    final made = jsonDecode(res.body) as Map<String, dynamic>;
+    final token = made['session'] as String;
+    // Google gives the expiry in seconds; a week if it says nothing.
+    final expires = int.tryParse('${made['expiry'] ?? ''}') != null
+        ? int.parse('${made['expiry']}') * 1000
+        : DateTime.now().add(const Duration(days: 7)).millisecondsSinceEpoch;
 
     // The credit for Modiin, which is where every map on the site looks.
     var copyright = 'Map data ©${DateTime.now().year} Google';
@@ -85,7 +115,12 @@ final _sessionProvider = FutureProvider.family<_GoogleSession?, bool>((ref, hebr
       final said = v.statusCode == 200 ? (jsonDecode(v.body) as Map<String, dynamic>)['copyright'] as String? : null;
       if (said != null && said.isNotEmpty) copyright = said;
     } catch (_) {}
-    return _GoogleSession(token, copyright);
+    final fresh = _GoogleSession(token, copyright, expires);
+    try {
+      await (await SharedPreferences.getInstance())
+          .setString('map_session_${hebrew ? 'he' : 'en'}', jsonEncode(fresh.toJson()));
+    } catch (_) {}
+    return fresh;
   } catch (e) {
     debugPrint('Google map session failed ($e); no map tiles');
     return null;
@@ -116,6 +151,9 @@ class WebMapTiles extends ConsumerWidget {
                   urlTemplate: 'https://tile.googleapis.com/v1/2dtiles/{z}/{x}/{y}?session=${s.token}&key=$_key',
                   maxZoom: 21,
                   tileBuilder: tileBuilder,
+                  // Tiles are asked for once the map settles, not for every
+                  // frame of a pan or a zoom — each one is a billed request.
+                  tileUpdateTransformer: TileUpdateTransformers.debounce(const Duration(milliseconds: 250)),
                 ),
         );
       },

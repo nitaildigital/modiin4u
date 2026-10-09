@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
@@ -153,9 +155,20 @@ class AdminTableNotifier
     }
   }
 
+  Timer? _searchTimer;
+
+  /// The search box's text, read from the database once typing pauses: it
+  /// queried on every letter (9 Oct) — a word was six round trips.
   void setSearch(String? search) {
     _search = search;
-    load();
+    _searchTimer?.cancel();
+    _searchTimer = Timer(const Duration(milliseconds: 350), load);
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
   }
 
   void setStatusFilter(String? status) {

@@ -306,6 +306,11 @@ class _AppMapState extends State<AppMap> {
             : null,
         minZoom: widget.minZoom,
         maxZoom: widget.maxZoom,
+        // The map stays around the city: nobody pans across the country
+        // loading tiles (billed, on the website) no page needs.
+        cameraConstraint: fm.CameraConstraint.containCenter(
+          bounds: fm.LatLngBounds(const LatLng(31.80, 34.88), const LatLng(32.00, 35.16)),
+        ),
         backgroundColor: const Color(0xFFF9F5ED),
         interactionOptions: fm.InteractionOptions(
           flags: !widget.interactive
