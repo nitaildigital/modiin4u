@@ -88,6 +88,7 @@ export async function Footer({ lang }: { lang: Lang }) {
           <div className="flex flex-col gap-12">
             <Column title={t('מודיעין4u', 'Modiin4u')} links={[
               [t('בית', 'Home'), '/'], [t('אודותינו', 'About Us'), '/about/'], [t('צור קשר', 'Contact Us'), encodeURI('/יצירת-קשר/')],
+              [t('קבלת התראות', 'Get notifications'), '/notifications/'],
               [t('מדיניות פרטיות', 'Privacy Policy'), '/privacy/'], [t('תנאי שימוש', 'Terms of Use'), '/terms/'],
               [t('הצהרת נגישות', 'Accessibility Statement'), '/accessibility/'], [t('מחיקת חשבון', 'Delete account'), '/delete-account/'],
             ]} />

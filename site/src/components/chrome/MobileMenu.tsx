@@ -34,6 +34,8 @@ export function MobileMenu({ lang, menus, items }: { lang: Lang; menus: Menus; i
               {items.map((i) => (
                 <li key={i.id}><Link href={i.href} onClick={() => setOpen(false)} className="text-lg font-medium text-ink">{i.label}</Link></li>
               ))}
+              {/* Where a visitor turns notifications on and reads them. */}
+              <li><Link href="/notifications/" onClick={() => setOpen(false)} className="text-lg font-medium text-ink">{t('התראות', 'Notifications')}</Link></li>
             </ul>
             {groups.map(([title, links]) => links.length > 0 && (
               <details key={title} className="border-t border-line py-3">

@@ -8,6 +8,7 @@ import { SITE_NAME } from '@/lib/seo';
 import { Footer } from '@/components/chrome/Footer';
 import { MobileTabBar } from '@/components/chrome/MobileTabBar';
 import { Analytics } from '@/components/chrome/Analytics';
+import { PushBoot } from '@/components/push/PushBoot';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 const rubik = Rubik({ subsets: ['latin', 'hebrew'], variable: '--font-rubik', display: 'swap' });
@@ -30,6 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Footer lang={lang} />
         <MobileTabBar lang={lang} />
         <Analytics />
+        <PushBoot lang={lang} />
         {/* The client's PersonaAI chat; the "Ask" buttons open it. */}
         <Script id="personaai-config" strategy="afterInteractive">{`
           window.PersonaAI = { businessId: "25ea67c7-94cd-4771-8f71-1d530bc7b2a1", position: "bottom-right",

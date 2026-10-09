@@ -5,6 +5,7 @@ import { LangToggle } from './LangToggle';
 import { NavLinks } from './NavLinks';
 import { navItems } from './nav-items';
 import { MobileMenu } from './MobileMenu';
+import { Bell } from '@/components/push/Bell';
 
 function Logo({ className = '' }: { className?: string }) {
   return (
@@ -35,6 +36,7 @@ export async function Header({ floating = false }: { floating?: boolean }) {
         <NavLinks items={lang === 'he' ? items : [...items]} menus={menus} floating={floating} />
       </nav>
       <div className="flex shrink-0 items-center gap-3">
+        <Bell lang={lang} />
         <LangToggle lang={lang} />
         <a href={encodeURI(contact?.path ?? '/יצירת-קשר/')}
           className="flex h-[46px] items-center rounded-full bg-midblue px-6 text-base font-medium text-white hover:bg-midblue/90">

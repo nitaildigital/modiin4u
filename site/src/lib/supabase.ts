@@ -12,9 +12,13 @@ export const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
-/** The client a browser uses (a tracked view, a click). */
+const newBrowserDb = () => createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+let browserClient: ReturnType<typeof newBrowserDb> | null = null;
+
+/** The client a browser uses (a tracked view, a click, the bell): one per
+ *  page, shared — several would each start their own auth helper. */
 export function browserDb() {
-  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return (browserClient ??= newBrowserDb());
 }
