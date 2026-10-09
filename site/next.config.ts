@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { CATEGORY_MOVES, SECTION_MOVES } from './src/lib/routes';
 
 /** WordPress's own redirects, which the snapshot saw (`redirect_to`): kept
  *  as the same 301s, so an address WordPress sent elsewhere goes to the same
@@ -35,18 +36,36 @@ const nextConfig: NextConfig = {
   // other crawlers do not: they read the head only.
   htmlLimitedBots: /.*/,
   images: {
+    // The widths ownPhoto asks for (src/lib/photos.ts), and nothing else.
+    deviceSizes: [800, 1200, 1600, 2000, 2500],
+    imageSizes: [200, 400, 600],
+    // One quality, the one ownPhoto asks for: any other `q` would make
+    // another copy of every photo, kept a year.
+    qualities: [75],
+    // A stored photo never changes under its name (a new upload gets a new
+    // one), so each copy is made once and kept.
+    minimumCacheTTL: 60 * 60 * 24 * 365,
     remotePatterns: [
-      { protocol: 'https', hostname: 'zbtgietqoxkglfxfocrb.supabase.co' },
-      { protocol: 'https', hostname: 'www.modiin4u.co.il' },
-      { protocol: 'https', hostname: 'modiin4u.co.il' },
+      // Our storage's public files only: nothing else is resized here.
+      { protocol: 'https', hostname: 'zbtgietqoxkglfxfocrb.supabase.co', pathname: '/storage/v1/object/public/**' },
     ],
   },
   async redirects() {
     return [
       ...wordpressRedirects(),
+      // The sections the app's design named anew, and the categories filed
+      // under another slug, to the address WordPress had for them
+      // (src/lib/routes.ts); a search's `?` fields go along.
+      ...SECTION_MOVES.map(([from, to]) => ({ source: from.replace(/\/$/, ''), destination: encodeURI(to), statusCode: 301 as const })),
+      ...Object.entries(CATEGORY_MOVES).map(([slug, to]) => ({ source: `/business-cat/${slug}`, destination: encodeURI(to), statusCode: 301 as const })),
+      // Two WordPress pages its sitemaps never listed, so the snapshot has
+      // neither: the accessibility statement, and the terms and privacy in
+      // one page — the new site has each as its own page.
+      { source: encodeURI('/הצהרת-נגישות'), destination: '/accessibility/', statusCode: 301 as const },
+      { source: encodeURI('/תקנון-תנאי-שימוש-ומדיניות-פרטיות'), destination: '/terms/', statusCode: 301 as const },
       // The Flutter site's own search addresses, in links people kept.
-      { source: '/apartments-sale', destination: '/realestate/?kind=sale', statusCode: 301 as const },
-      { source: '/apartments-rent', destination: '/realestate/?kind=rent', statusCode: 301 as const },
+      { source: '/apartments-sale', destination: '/search-apartments/?kind=sale', statusCode: 301 as const },
+      { source: '/apartments-rent', destination: '/search-apartments/?kind=rent', statusCode: 301 as const },
       // A link in an article's own text that led nowhere on WordPress either:
       // the business is here under another address.
       { source: encodeURI('/business/ג׳פטו-בר'), destination: '/business/geppeto-bar-modiin/', statusCode: 301 as const },

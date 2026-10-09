@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Book, Brush2, Car, Coffee, Health, Music, Reserve, Setting2, Shop, ShoppingBag, Weight } from 'iconsax-react';
 import { getLang, tr, type Lang } from '@/lib/i18n';
 import { breadcrumb, h1For, href, SITE_NAME } from '@/lib/seo';
+import { categoryPath } from '@/lib/routes';
 import { SITE_URL, CONTACT } from '@/lib/config';
 import {
   activeBusinesses, bizDescription, bizName, bizPhoto, businessCategories, catName, categoriesByBusiness,
@@ -19,7 +20,7 @@ import { Photo } from './Photo';
  *  business filed under one of these (web_businesses_screen _serviceSlugs). */
 const SERVICE_SLUGS = new Set(['services', 'health', 'beauty', 'automotive', 'education']);
 
-/** The business directory (/businesses/, and the old addresses that stand
+/** The business directory (WordPress's /business/, and the old addresses that stand
  *  for it): web_businesses_screen.dart at desktop width — the title and
  *  search, the busiest categories, every business in a grid, the service
  *  providers and the "add your business" band — and businesses_screen.dart on
@@ -32,7 +33,7 @@ export async function DirectoryPage({ path }: { path: string }) {
     activeBusinesses(), businessCategories(), categoryCounts(), primaryCategories(), categoriesByBusiness(),
   ]);
   const count = (c: BizCategory) => counts.get(c.id) ?? 0;
-  const tile = (c: BizCategory): Tile => ({ id: c.id, slug: c.slug, href: href(`/business-cat/${c.slug}/`), name: catName(c, lang), count: count(c) });
+  const tile = (c: BizCategory): Tile => ({ id: c.id, slug: c.slug, href: href(categoryPath(c.slug)), name: catName(c, lang), count: count(c) });
   const byCount = (a: BizCategory, b: BizCategory) => count(b) - count(a);
   const inMenus = cats.filter((c) => c.in_menus !== false);
   // The main ones above the fold; sub-categories such as "מסעדות כשרות"
@@ -56,17 +57,19 @@ export async function DirectoryPage({ path }: { path: string }) {
           itemListElement: rows.map((b, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE_URL + href(`/business/${b.slug}/`), name: b.name })),
         },
       ]} />
-      <DirectorySearchProvider>
+      <DirectorySearchProvider
+        businesses={items.map(({ card, search }) => ({ name: card.name, href: card.href, line: card.kind, search }))}
+        categories={allTiles.filter((c) => c.count > 0).map((c) => ({ name: c.name, href: c.href, line: t(`${c.count} עסקים`, `${c.count} businesses`), search: c.name.toLowerCase() }))}>
         <header className="pt-3.5 text-center desk:pt-14">
           <h1 className="text-base font-semibold text-black desk:font-nunito desk:text-[44px] desk:leading-[1.23]">{title}</h1>
           <p className="mt-3.5 hidden text-base text-[#6D6D6D] desk:block">
             {t('מצאו עסקים מקומיים, נותני שירות ובעלי מקצוע מומלצים – הכל במקום אחד.', 'Find trusted local businesses, service providers and professionals — all in one place.')}
           </p>
           <div className="mx-auto mt-10 hidden max-w-[820px] px-6 desk:block">
-            <DesktopSearch placeholder={t('חפשו עסקים, שירותים או בעלי מקצוע במודיעין...', 'Search businesses, services or professionals in Modiin...')} button={t('חיפוש', 'Search')} />
+            <DesktopSearch placeholder={t('חפשו עסקים, שירותים או בעלי מקצוע במודיעין...', 'Search businesses, services or professionals in Modiin...')} button={t('חיפוש', 'Search')} lang={lang} />
           </div>
           <div className="mt-4 desk:hidden">
-            <PhoneSearch placeholder={t('חיפוש עסקים במודיעין', 'Search businesses in Modiin')} />
+            <PhoneSearch placeholder={t('חיפוש עסקים במודיעין', 'Search businesses in Modiin')} lang={lang} />
           </div>
         </header>
 
@@ -141,7 +144,7 @@ function PhoneCategory({ c, count, lang }: { c: BizCategory; count: number; lang
   const color = PHONE_COLORS[Math.abs(c.sort_order ?? 0) % PHONE_COLORS.length];
   const image = sizedPhoto(c.image_url, 400);
   return (
-    <Link href={href(`/business-cat/${c.slug}/`)} className="relative flex aspect-[174/170] flex-col overflow-hidden rounded-xl p-4 text-white"
+    <Link href={href(categoryPath(c.slug))} className="relative flex aspect-[174/170] flex-col overflow-hidden rounded-xl p-4 text-white"
       style={image ? undefined : { backgroundImage: `linear-gradient(to bottom right, ${color}, ${darken(color, 0.55)})` }}>
       {image && (
         <>

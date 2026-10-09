@@ -122,13 +122,13 @@ export default async function ListingPage({ params }: Props) {
               .concat(specs.slice(4).map((s) => ({ '@type': 'LocationFeatureSpecification', name: s.label, value: true }))),
           },
         },
-        breadcrumb([[SITE_NAME, '/'], ['נדל״ן', '/realestate/'], ...(hood && hoodPath ? [[hood, hoodPath] as [string, string]] : []), [l.title, path]]),
+        breadcrumb([[SITE_NAME, '/'], ['נדל״ן', '/search-apartments/'], ...(hood && hoodPath ? [[hood, hoodPath] as [string, string]] : []), [l.title, path]]),
       ]} />
 
       {/* PHONE — the photographs, then the price. */}
       <div className="desk:hidden">
-        <PhoneGallery photos={photos} alt={l.title} back="/realestate/" backLabel={t('חזרה לנדל״ן', 'Back to Real Estate')}
-          corner={<ShareMenu url={url} title={l.title} lang={lang} menuClass="end-0"
+        <PhoneGallery photos={photos} alt={l.title} back="/search-apartments/" backLabel={t('חזרה לנדל״ן', 'Back to Real Estate')}
+          corner={<ShareMenu url={url} title={l.title} lang={lang} place="end"
             className="flex size-10 items-center justify-center rounded-full bg-white text-[#3D3D3D]" icon={<Export size={20} color="currentColor" />} />} />
         {price != null && (
           <p className="flex items-center gap-1.5 px-4 pt-6">
@@ -142,7 +142,7 @@ export default async function ListingPage({ params }: Props) {
       <div className="px-4 desk:px-[clamp(24px,4.5vw,80px)]">
         <header className="mx-auto max-w-[1200px] pt-3 desk:pt-8">
           <div className="flex items-center gap-2 desk:min-h-10">
-            <Link href="/realestate/" aria-label={t('חזרה לנדל״ן', 'Back to Real Estate')} className="hidden shrink-0 desk:block">
+            <Link href="/search-apartments/" aria-label={t('חזרה לנדל״ן', 'Back to Real Estate')} className="hidden shrink-0 desk:block">
               <img src={`${A}/detail_back.svg`} alt="" width={24} height={24} className="rtl:-scale-x-100" />
             </Link>
             <h1 dir="auto" className="text-lg font-semibold text-black desk:font-nunito desk:text-[28px] desk:leading-[34px] desk:text-navy">{h1For(path, l.title)}</h1>
@@ -225,12 +225,12 @@ export default async function ListingPage({ params }: Props) {
                 </div>
                 {(phone || l.agent_id) && reach.length > 0 && (
                   <div className="mt-[26px]">
-                    <ContactMenu options={reach} label={t('צרו קשר', 'Contact')} menuClass="inset-x-0"
+                    <ContactMenu options={reach} label={t('צרו קשר', 'Contact')} place="match"
                       className="flex h-11 w-full items-center justify-center rounded-[60px] bg-midblue text-base font-medium text-white hover:bg-midblue/90" />
                   </div>
                 )}
                 <div className="mt-3">
-                  <ShareMenu url={url} title={l.title} lang={lang} label={t('שיתוף', 'Share')} menuClass="inset-x-0"
+                  <ShareMenu url={url} title={l.title} lang={lang} label={t('שיתוף', 'Share')} place="match"
                     className="flex h-11 w-full items-center justify-center rounded-[60px] border border-midblue text-base font-medium text-midblue hover:bg-midblue/5" />
                 </div>
               </aside>

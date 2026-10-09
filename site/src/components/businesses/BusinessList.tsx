@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { FilterRemove, SearchNormal1, Setting4, Shop } from 'iconsax-react';
+import { CloseCircle, FilterRemove, SearchNormal1, Setting4, Shop } from 'iconsax-react';
 import { BusinessCard, type BizCard } from './BusinessCard';
 import { Chip, FilterPill, ShowMore } from './ListControls';
 
@@ -17,15 +17,20 @@ type Sort = 'newest' | 'rating' | 'name';
 const PAGE = 24;
 
 /** One category's businesses (web_business_list_screen; on a phone
- *  business_list_screen): at desktop width the count, the Kosher and
- *  Delivery pills and the grid; on a phone the search box with the filter
- *  sheet — cuisine on the restaurants list, kosher, rating, delivery and the
- *  order — the count, and one photograph card a row.
+ *  business_list_screen): the search, the filters, the count and the cards.
+ *
+ *  The filters follow the list (9 Oct): the category's sub-categories where
+ *  it has any — the cuisines of the restaurants, the trades of the
+ *  professionals — and kosher, delivery and rating only while a business in
+ *  it has them; the Kosher and Delivery pills had been on every category,
+ *  Health and Building Materials included. WordPress's category pages had
+ *  none; its restaurant search had cuisine, kosher, delivery and rating.
+ *  On a desktop they sit over the grid, on a phone in the sheet.
  *
  *  `?q=`, `?sort=rating`, `?delivery=1` and `?kosher=kosher` open it
  *  narrowed, for the Restaurants page's "View all" links. */
-export function BusinessList({ items, lang, title, cuisines = [] }: {
-  items: ListItem[]; lang: 'he' | 'en'; title: string; cuisines?: { slug: string; name: string }[];
+export function BusinessList({ items, lang, title, cuisines = [], food = false }: {
+  items: ListItem[]; lang: 'he' | 'en'; title: string; cuisines?: { slug: string; name: string }[]; food?: boolean;
 }) {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
   const params = useSearchParams();
@@ -38,7 +43,7 @@ export function BusinessList({ items, lang, title, cuisines = [] }: {
   const [shown, setShown] = useState(PAGE);
   const [sheet, setSheet] = useState(false);
 
-  const filtering = kosher !== 'all' || delivery || minRating > 0 || picked.size > 0;
+  const filtering = kosher !== 'all' || delivery || minRating > 0 || picked.size > 0 || sort !== 'newest';
   const clear = () => { setKosher('all'); setDelivery(false); setMinRating(0); setPicked(new Set()); setSort('newest'); };
 
   const list = useMemo(() => {
@@ -56,27 +61,57 @@ export function BusinessList({ items, lang, title, cuisines = [] }: {
   const ids = list.map((i) => i.card.id);
   const order = new Map(ids.map((id, i) => [id, i]));
 
-  // Desktop's two pills are the same filters as the sheet's.
-  const pill = kosher === 'kosher' && !delivery ? 0 : delivery && kosher === 'all' ? 1 : -1;
-  const setPill = (i: 0 | 1) => {
-    const off = pill === i;
-    setKosher(!off && i === 0 ? 'kosher' : 'all');
-    setDelivery(!off && i === 1);
+  // A filter is offered only where some business in the list answers it.
+  const hasKosher = items.some((i) => !!i.card.kosher);
+  const hasDelivery = items.some((i) => i.card.delivery);
+  const hasRating = items.some((i) => i.card.rating > 0);
+  const subTitle = food ? t('סוג מטבח', 'Cuisine') : t('תחום', 'Category');
+  const togglePick = (slug: string) => {
+    const next = new Set(picked);
+    if (next.has(slug)) next.delete(slug); else next.add(slug);
+    setPicked(next);
     setShown(PAGE);
   };
+  const sortLabel = (v: Sort) => v === 'rating' ? t('דירוג', 'Rating') : v === 'name' ? t('שם', 'Name') : t('חדש ביותר', 'Newest');
 
   const empty = items.length === 0;
   return (
     <>
-      {/* Desktop: the count and the pills. */}
+      {/* Desktop: the search and the filters over the count. */}
       <div className="hidden desk:block">
-        <p className="mt-2.5 text-sm text-gray-text">{list.length === 1 ? t('נמצא עסק אחד', '1 business found') : t(`נמצאו ${list.length} עסקים`, `${list.length} businesses found`)}</p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <FilterPill on={pill === 0} onClick={() => setPill(0)}>{t('כשר', 'Kosher')}</FilterPill>
-          <FilterPill on={pill === 1} onClick={() => setPill(1)}>{t('משלוחים', 'Delivery')}</FilterPill>
-          {/* A search brought from the Restaurants page, shown so it can be undone. */}
-          {query.trim() && <FilterPill on onClick={() => setQuery('')}>{`“${query.trim()}” ✕`}</FilterPill>}
-        </div>
+        {!empty && (
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <label className="flex h-14 w-[340px] items-center gap-2 rounded-full border border-[#D1D1D1] bg-white px-5 focus-within:border-midblue">
+              <SearchNormal1 size={18} color="#6D6D6D" className="shrink-0" />
+              <input type="search" value={query} onChange={(e) => { setQuery(e.target.value); setShown(PAGE); }}
+                placeholder={t(`חיפוש ב${title}...`, `Search ${title}...`)} aria-label={t(`חיפוש ב${title}`, `Search ${title}`)}
+                className="h-full min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[#6D6D6D] [&::-webkit-search-cancel-button]:hidden" />
+              {query && <button type="button" onClick={() => setQuery('')} aria-label={t('ניקוי החיפוש', 'Clear the search')}><CloseCircle size={20} color="#6D6D6D" /></button>}
+            </label>
+            {hasKosher && <FilterPill on={kosher === 'kosher'} onClick={() => { setKosher(kosher === 'kosher' ? 'all' : 'kosher'); setShown(PAGE); }}>{t('כשר', 'Kosher')}</FilterPill>}
+            {hasDelivery && <FilterPill on={delivery} onClick={() => { setDelivery(!delivery); setShown(PAGE); }}>{t('משלוחים', 'Delivery')}</FilterPill>}
+            {hasRating && (
+              <Select label={t('דירוג', 'Rating')} value={String(minRating)} onChange={(v) => { setMinRating(Number(v)); setShown(PAGE); }}
+                options={[['0', t('כל הדירוגים', 'Any rating')], ...[4, 3, 2, 1].map((n): [string, string] => [String(n), `${n}★ ${t('ומעלה', '& up')}`])]} />
+            )}
+            <Select label={t('מיון', 'Sort by')} value={sort} onChange={(v) => setSort(v as Sort)}
+              options={(['newest', 'rating', 'name'] as Sort[]).map((v): [string, string] => [v, sortLabel(v)])} />
+            {(filtering || query.trim()) && (
+              <button type="button" onClick={() => { clear(); setQuery(''); }} className="px-2 text-sm font-medium text-midblue hover:underline">{t('נקו סינון', 'Clear filters')}</button>
+            )}
+          </div>
+        )}
+        {cuisines.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="me-1 text-sm font-semibold text-[#3D3D3D]">{subTitle}:</span>
+            <Chip on={picked.size === 0} onClick={() => { setPicked(new Set()); setShown(PAGE); }}>{t('הכל', 'All')}</Chip>
+            {cuisines.map((c) => <Chip key={c.slug} on={picked.has(c.slug)} onClick={() => togglePick(c.slug)}>{c.name}</Chip>)}
+          </div>
+        )}
+        <p className="mt-5 text-sm text-gray-text" aria-live="polite">
+          {list.length === 1 ? t('נמצא עסק אחד', '1 business found') : t(`נמצאו ${list.length} עסקים`, `${list.length} businesses found`)}
+          {query.trim() && t(` עבור „${query.trim()}”`, ` for “${query.trim()}”`)}
+        </p>
       </div>
 
       {/* Phone: the search box with the filter control, then the count. */}
@@ -142,38 +177,51 @@ export function BusinessList({ items, lang, title, cuisines = [] }: {
               {(filtering || sort !== 'newest') && <button type="button" onClick={clear} className="text-sm text-midblue">{t('נקו סינון', 'Clear filter')}</button>}
             </div>
             {cuisines.length > 0 && (
-              <Section title={t('סוג מטבח', 'Cuisine')}>
-                <Chip on={picked.size === 0} onClick={() => setPicked(new Set())}>{t('כל סוגי המטבח', 'All Cuisines')}</Chip>
-                {cuisines.map((c) => (
-                  <Chip key={c.slug} on={picked.has(c.slug)} onClick={() => {
-                    const next = new Set(picked);
-                    if (next.has(c.slug)) next.delete(c.slug); else next.add(c.slug);
-                    setPicked(next);
-                  }}>{c.name}</Chip>
-                ))}
+              <Section title={subTitle}>
+                <Chip on={picked.size === 0} onClick={() => setPicked(new Set())}>{t('הכל', 'All')}</Chip>
+                {cuisines.map((c) => <Chip key={c.slug} on={picked.has(c.slug)} onClick={() => togglePick(c.slug)}>{c.name}</Chip>)}
               </Section>
             )}
-            <Section title={t('כשרות', 'Kosher')}>
-              <Chip on={kosher === 'all'} onClick={() => setKosher('all')}>{t('הכל', 'All')}</Chip>
-              <Chip on={kosher === 'kosher'} onClick={() => setKosher('kosher')}>{t('כשר', 'Kosher')}</Chip>
-              <Chip on={kosher === 'not'} onClick={() => setKosher('not')}>{t('לא כשר', 'Not Kosher')}</Chip>
-            </Section>
-            <Section title={t('דירוג', 'Rating')}>
-              <Chip on={minRating === 0} onClick={() => setMinRating(0)}>{t('הכל', 'All')}</Chip>
-              {[4, 3, 2, 1].map((s) => <Chip key={s} on={minRating === s} onClick={() => setMinRating(s)}>{`${s}★ ${t('ומעלה', '& up')}`}</Chip>)}
-            </Section>
-            <Section title={t('אפשרויות הגשה', 'Dining Options')}>
-              <Chip on={delivery} onClick={() => setDelivery(!delivery)}>{t('משלוחים', 'Delivery')}</Chip>
-            </Section>
+            {hasKosher && (
+              <Section title={t('כשרות', 'Kosher')}>
+                <Chip on={kosher === 'all'} onClick={() => setKosher('all')}>{t('הכל', 'All')}</Chip>
+                <Chip on={kosher === 'kosher'} onClick={() => setKosher('kosher')}>{t('כשר', 'Kosher')}</Chip>
+                <Chip on={kosher === 'not'} onClick={() => setKosher('not')}>{t('לא כשר', 'Not Kosher')}</Chip>
+              </Section>
+            )}
+            {hasRating && (
+              <Section title={t('דירוג', 'Rating')}>
+                <Chip on={minRating === 0} onClick={() => setMinRating(0)}>{t('הכל', 'All')}</Chip>
+                {[4, 3, 2, 1].map((n) => <Chip key={n} on={minRating === n} onClick={() => setMinRating(n)}>{`${n}★ ${t('ומעלה', '& up')}`}</Chip>)}
+              </Section>
+            )}
+            {hasDelivery && (
+              <Section title={t('אפשרויות הגשה', 'Dining Options')}>
+                <Chip on={delivery} onClick={() => setDelivery(!delivery)}>{t('משלוחים', 'Delivery')}</Chip>
+              </Section>
+            )}
             <Section title={t('מיון', 'Sort by')}>
-              <Chip on={sort === 'newest'} onClick={() => setSort('newest')}>{t('חדש ביותר', 'Newest')}</Chip>
-              <Chip on={sort === 'rating'} onClick={() => setSort('rating')}>{t('דירוג', 'Rating')}</Chip>
-              <Chip on={sort === 'name'} onClick={() => setSort('name')}>{t('שם', 'Name')}</Chip>
+              {(['newest', 'rating', 'name'] as Sort[]).map((v) => <Chip key={v} on={sort === v} onClick={() => setSort(v)}>{sortLabel(v)}</Chip>)}
             </Section>
+            <button type="button" onClick={() => setSheet(false)} className="mt-7 h-12 w-full rounded-full bg-midblue text-base font-medium text-white">
+              {list.length === 1 ? t('הצגת עסק אחד', 'Show 1 business') : t(`הצגת ${list.length} עסקים`, `Show ${list.length} businesses`)}
+            </button>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+/** A labelled dropdown in the desktop's filter row, the pills' height. */
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+  return (
+    <label className="flex h-14 items-center gap-2 rounded-full border border-[#D1D1D1] bg-white px-5 text-base text-[#3D3D3D] focus-within:border-midblue">
+      <span className="text-gray-text">{label}:</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="bg-transparent font-medium text-[#1C1C1E] outline-none">
+        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+    </label>
   );
 }
 

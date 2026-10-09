@@ -33,7 +33,7 @@ function services(lang: Lang, formsUrl: string): Service[] {
   const t = tr(lang);
   return [
     { id: 'parking', label: t('חניה', 'Parking'), phoneLabel: t('חניה', 'Parking'), blurb: t('חניונים על המפה', 'Car parks on the map'), phoneIcon: '/icons/m_municipal_parking.svg', href: '/parking/', external: false },
-    { id: 'shabbat', label: t('שבת וחגים', 'Shabbat & Holidays'), phoneLabel: t('שבת\nוחגים', 'Shabbat &\nHolidays'), blurb: t('הדלקת נרות וסגירות', 'Candle lighting and closures'), phoneIcon: '/icons/m_municipal_shabbat.svg', href: '/shabbat/', external: false },
+    { id: 'shabbat', label: t('שבת וחגים', 'Shabbat & Holidays'), phoneLabel: t('שבת\nוחגים', 'Shabbat &\nHolidays'), blurb: t('הדלקת נרות וסגירות', 'Candle lighting and closures'), phoneIcon: '/icons/m_municipal_shabbat.svg', href: '/shabat-times-modiin/', external: false },
     { id: 'institutions', label: t('מוסדות ציבור', 'Public Institutions'), phoneLabel: t('מוסדות\nציבור', 'Public\nInstitutions'), blurb: t('עירייה, ספריות ומתנ״סים', 'City hall, libraries, centres'), phoneIcon: '/icons/m_municipal_institutions.svg', href: '/municipal/institutions/', external: false },
     { id: 'health', label: t('בריאות', 'Health'), phoneLabel: t('בריאות', 'Health'), blurb: t('מרפאות, בתי מרקחת ורופאי שיניים', 'Clinics, pharmacies, dentists'), phoneIcon: '/icons/m_municipal_health.svg', href: '/municipal/health/', external: false },
     { id: 'education', label: t('חינוך', 'Education'), phoneLabel: t('חינוך', 'Education'), blurb: t('בתי ספר, גנים ורישום', 'Schools, kindergartens, registration'), phoneIcon: '/icons/m_municipal_education.svg', href: '/municipal/education/', external: false },
@@ -129,7 +129,7 @@ export default async function MunicipalPage() {
           <div className="mt-6 grid grid-cols-3 gap-6">
             {/* The coming Shabbat, from Hebcal for Modi'in. Until Hebcal
                 answers, or if it cannot, the times are left out. */}
-            <QuickCard bg="#FEF8EF" border="#D6820033" accent="#D68200" icon={<Candle size={26} color="#D68200" />} title={t('שבת הקרובה', 'Upcoming Shabbat')} href="/shabbat/">
+            <QuickCard bg="#FEF8EF" border="#D6820033" accent="#D68200" icon={<Candle size={26} color="#D68200" />} title={t('שבת הקרובה', 'Upcoming Shabbat')} href="/shabat-times-modiin/">
               {week && <span className="block text-sm text-gray-text">{name ? `${shabbatDates(week, lang)} · ${name}` : shabbatDates(week, lang)}</span>}
               <span className="mt-4 block">
                 {week?.candles && <InfoRow icon={<Clock size={16} color="#6D6D6D" />} label={t('כניסת שבת', 'Candle lighting')} value={week.candles} />}
@@ -201,7 +201,7 @@ export default async function MunicipalPage() {
         <div className="mt-5"><PhoneSearchBar lang={lang} /></div>
         <h2 className="mt-5 text-base font-semibold text-[#1F1F1F]">{t('מידע מהיר', 'Quick Info')}</h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <Link href="/shabbat/" className="rounded-xl border border-[#D68200]/20 bg-[#FEF8EF] p-3">
+          <Link href="/shabat-times-modiin/" className="rounded-xl border border-[#D68200]/20 bg-[#FEF8EF] p-3">
             <span className="flex items-center gap-3 border-b border-line pb-3">
               <img src="/icons/m_municipal_shabbat_circle.svg" alt="" width={48} height={48} className="size-12 shrink-0" />
               <TwoLineTitle text={t('שבת הקרובה', 'Upcoming Shabbat')} />

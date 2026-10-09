@@ -13,7 +13,7 @@ import { BusinessList, type ListItem } from './BusinessList';
 
 /** One business category (/business-cat/<slug>/, and the old addresses that
  *  stand for one): web_business_list_screen.dart at desktop width — back to
- *  the directory, the name, the count and pills, the cards four a row — and
+ *  the directory, the name, the count and filters, the cards four a row — and
  *  business_list_screen.dart on a phone. The category's own businesses and
  *  its sub-categories'. [path] is the address being served, for its H1 and
  *  breadcrumb; [category] null lists nothing, as a category the panel has
@@ -40,12 +40,15 @@ export async function CategoryPage({ path, category }: { path: string; category:
       cuisines: [...slugs],
     };
   });
-  // The cuisine filter belongs to the restaurants list, and offers only the
-  // cuisines that have a place in it.
-  const cuisines = category?.slug === 'restaurants'
+  // The category's own sub-categories — the cuisines of the restaurants
+  // list, the trades of the professionals' — each one only while a business
+  // in the list is filed under it.
+  const cuisines = category
     ? cats.filter((c) => c.parent_id === category.id && items.some((i) => i.cuisines.includes(c.slug)))
       .map((c) => ({ slug: c.slug, name: catName(c, lang) }))
     : [];
+  const food = !!category && (category.slug === 'restaurants' || category.slug === 'cafe-bakery'
+    || cats.some((c) => c.id === category.parent_id && c.slug === 'restaurants'));
 
   const back = t('כל העסקים', 'All Businesses');
   const Arrow = lang === 'he' ? ArrowRight : ArrowLeft;
@@ -53,23 +56,23 @@ export async function CategoryPage({ path, category }: { path: string; category:
   return (
     <div className="wrap pb-8 max-desk:mx-auto max-desk:max-w-[430px] max-desk:px-4 desk:pb-[100px] desk:pt-12">
       <JsonLd data={[
-        breadcrumb([[SITE_NAME, '/'], ['עסקים', '/businesses/'], [title, path]]),
+        breadcrumb([[SITE_NAME, '/'], ['עסקים', '/business/'], [title, path]]),
         {
           '@context': 'https://schema.org', '@type': 'ItemList', name: title,
           itemListElement: rows.map((b, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE_URL + href(`/business/${b.slug}/`), name: b.name })),
         },
       ]} />
-      <Link href="/businesses/" className="hidden items-center gap-2 text-sm font-medium text-navy desk:inline-flex">
+      <Link href="/business/" className="hidden items-center gap-2 text-sm font-medium text-navy desk:inline-flex">
         <Arrow size={22} color="currentColor" />{back}
       </Link>
       <div className="relative flex h-12 items-center justify-center desk:mt-5 desk:block desk:h-auto">
-        <Link href="/businesses/" aria-label={back} className="absolute start-1 grid size-10 place-items-center text-black desk:hidden">
+        <Link href="/business/" aria-label={back} className="absolute start-1 grid size-10 place-items-center text-black desk:hidden">
           <Chevron size={24} color="currentColor" />
         </Link>
         <h1 className="truncate px-14 text-base font-semibold text-black desk:px-0 desk:font-nunito desk:text-[28px] desk:leading-[34px] desk:text-midblue">{title}</h1>
       </div>
       <Suspense>
-        <BusinessList items={items} lang={lang} title={name || title} cuisines={cuisines} />
+        <BusinessList items={items} lang={lang} title={name || title} cuisines={cuisines} food={food} />
       </Suspense>
     </div>
   );

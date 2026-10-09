@@ -16,8 +16,9 @@ import { applySearch, filterCount, priceBounds, readSearch, searchHref, sortList
 const A = '/web/realestate';
 
 /**
- * The real estate section: /realestate/ and the old WordPress addresses that
- * stand in for it (/apartments/, /real-estate-agents/, /my-avenue/ …).
+ * The real estate section: WordPress's /search-apartments/, and its other
+ * old addresses that stand in for it (/apartments/, /real-estate-agents/,
+ * /my-avenue/ …).
  *
  * Desktop (web_realestate_screen.dart): the hero with its search, the six
  * property types, a row for sale and one to let, "What We Are Providing" and
@@ -28,7 +29,7 @@ const A = '/web/realestate';
  *
  * [h1] is the page's one heading: the phone bar's title. On an old address
  * it is WordPress's H1 and the desktop shows it above the content too
- * ([oldAddress]); on /realestate/ the desktop design draws no such title,
+ * ([oldAddress]); on /search-apartments/ the desktop design draws no such title,
  * so there it is for screen readers only.
  */
 export async function RealEstateView({ path, h1, sp, oldAddress = false }: {
@@ -50,7 +51,7 @@ export async function RealEstateView({ path, h1, sp, oldAddress = false }: {
   return (
     <div>
       <JsonLd data={[
-        breadcrumb(path === '/realestate/' ? [[SITE_NAME, '/'], ['נדל״ן', '/realestate/']] : [[SITE_NAME, '/'], ['נדל״ן', '/realestate/'], [h1, path]]),
+        breadcrumb(path === '/search-apartments/' ? [[SITE_NAME, '/'], ['נדל״ן', '/search-apartments/']] : [[SITE_NAME, '/'], ['נדל״ן', '/search-apartments/'], [h1, path]]),
         {
           '@context': 'https://schema.org', '@type': 'ItemList', name: h1,
           itemListElement: shown.slice(0, 30).map((l, i) => ({
@@ -97,7 +98,7 @@ function PhoneControls({ s, lang, kind, hoods }: { s: Search; lang: Lang; kind: 
   const hood = s.neighborhood ? hoods.find((h) => h.id === s.neighborhood) : undefined;
   return (
     <div className="desk:hidden">
-      <FilterForm action="/realestate/" className="mt-[18px] px-4">
+      <FilterForm action="/search-apartments/" className="mt-[18px] px-4">
         {s.kind && <input type="hidden" name="kind" value={s.kind} />}
         {s.types.map((ty) => <input key={ty} type="hidden" name="type" value={ty} />)}
         {s.neighborhood && <input type="hidden" name="neighborhood" value={s.neighborhood} />}
@@ -265,7 +266,7 @@ function DeskLanding({ s, all, hoods, lang }: { s: Search; all: Listing[]; hoods
           <div className="absolute inset-x-0 top-28 flex flex-col items-center px-6 text-center text-white">
             <p className="font-nunito text-[44px] font-semibold leading-[54px]">{t('מצאו את הבית המושלם במודיעין', 'Find Your Perfect Home in Modiin')}</p>
             <p className="mt-3.5 text-base leading-[19px]">{t('גלו דירות ובתים למכירה ולהשכרה.', 'Discover apartments and homes available for sale and rent.')}</p>
-            <form action="/realestate/" method="get" role="search"
+            <form action="/search-apartments/" method="get" role="search"
               className="mt-12 flex w-full max-w-[848px] items-center rounded-[50px] bg-white p-4 text-start text-black shadow-[0_0_8px_rgba(0,0,0,0.25)]">
               <label className="flex flex-col gap-2 ps-0">
                 <span className="text-sm leading-[17px] text-gray-text">{t('אני מחפש', "I'm looking to")}</span>
@@ -297,7 +298,7 @@ function DeskLanding({ s, all, hoods, lang }: { s: Search; all: Listing[]; hoods
               const on = selected === type;
               const n = counts.get(type) ?? 0;
               return (
-                <Link key={type} href={on ? '/realestate/' : searchHref({ types: [type] })} scroll={false} aria-pressed={on}
+                <Link key={type} href={on ? '/search-apartments/' : searchHref({ types: [type] })} scroll={false} aria-pressed={on}
                   className={`flex flex-col items-center rounded-xl bg-white px-4 py-5 text-center ${on ? 'border-2 border-midblue' : 'border border-line hover:border-[#CFCFCF]'}`}>
                   <img src={icon} alt="" width={32} height={32} className="size-8" />
                   <span className="mt-[19px] text-base font-medium leading-[19px] text-black">{typeLabel(type, lang)}</span>
@@ -403,7 +404,7 @@ function DeskSearch({ s, all, hoods, lang }: { s: Search; all: Listing[]; hoods:
   return (
     // Keyed to the filters (not the typed text), so "Clear all filters"
     // draws the boxes afresh while typing keeps its place in the field.
-    <FilterForm key={searchHref({ ...s, q: '' })} action="/realestate/" className="flex h-[calc(100vh-80px)] min-h-[640px] border-t border-line">
+    <FilterForm key={searchHref({ ...s, q: '' })} action="/search-apartments/" className="flex h-[calc(100vh-80px)] min-h-[640px] border-t border-line">
       <input type="hidden" name="kind" value={kind} />
 
       {/* FILTERS — 294 wide */}

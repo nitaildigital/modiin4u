@@ -5,5 +5,5 @@ import { moved, slugOf } from '@/lib/old-address';
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const id = slugParam((await params).id);
   const slug = await slugOf('businesses', id);
-  return moved(req, slug ? `/business/${slug}/` : isUuid(id) ? `/business/${id}/` : '/restaurants/');
+  return moved(req, slug ? `/business/${slug}/` : isUuid(id) ? `/business/${id}/` : '/search-rest-modiin/');
 }

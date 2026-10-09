@@ -44,7 +44,7 @@ export function readSearch(sp: SearchParams): Search {
 }
 
 /** The address of a search, the empty fields left out. */
-export function searchHref(s: Partial<Search>, base = '/realestate/'): string {
+export function searchHref(s: Partial<Search>, base = '/search-apartments/'): string {
   const p = new URLSearchParams();
   if (s.kind) p.set('kind', s.kind);
   if (s.q) p.set('q', s.q);

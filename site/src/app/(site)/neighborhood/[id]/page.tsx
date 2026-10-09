@@ -114,19 +114,19 @@ export default async function NeighborhoodPage({ params }: Props) {
           containedInPlace: { '@type': 'City', name: 'מודיעין' },
           ...(rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: Number(rating.average.toFixed(1)), ratingCount: rating.count, bestRating: 5, worstRating: 1 } } : {}),
         },
-        breadcrumb([[SITE_NAME, '/'], ['נדל״ן', '/realestate/'], [n.name, path]]),
+        breadcrumb([[SITE_NAME, '/'], ['נדל״ן', '/search-apartments/'], [n.name, path]]),
       ]} />
 
       {/* PHONE — the photographs */}
       <div className="desk:hidden">
-        <PhoneGallery photos={photos} alt={name} back="/realestate/" backLabel={t('חזרה לנדל״ן', 'Back to Real Estate')} hood />
+        <PhoneGallery photos={photos} alt={name} back="/search-apartments/" backLabel={t('חזרה לנדל״ן', 'Back to Real Estate')} hood />
       </div>
 
       <div className="wrap">
         {/* HERO — name, introduction and figures; the photographs beside */}
         <div className="desk:flex desk:items-start desk:gap-[66px] desk:pt-8">
           <div className="min-w-0 desk:flex-[592]">
-            <Link href="/realestate/" aria-label={t('חזרה לנדל״ן', 'Back to Real Estate')} className="hidden w-fit desk:block">
+            <Link href="/search-apartments/" aria-label={t('חזרה לנדל״ן', 'Back to Real Estate')} className="hidden w-fit desk:block">
               <img src={`${A}/detail_back.svg`} alt="" width={24} height={24} className="rtl:-scale-x-100" />
             </Link>
             <h1 dir="auto" className={`pt-6 font-nunito text-[28px] font-semibold text-black desk:mt-10 desk:pt-0 desk:text-[36px] desk:leading-[44px] desk:text-navy ${align}`}>{h1For(path, name)}</h1>

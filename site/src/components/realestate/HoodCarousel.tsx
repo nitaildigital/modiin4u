@@ -36,7 +36,7 @@ export function HoodCarousel({ hoods, lang }: { hoods: HoodCard[]; lang: 'he' | 
       <div className="mt-[41px]">
         <Carousel arrowTop={106} lang={lang}>
           {hoods.map((h) => (
-            <Link key={h.id} href={`/realestate/?kind=${kind}&neighborhood=${h.id}`}
+            <Link key={h.id} href={`/search-apartments/?kind=${kind}&neighborhood=${h.id}`}
               className="block h-[248px] w-[calc((100%-48px)/4)] shrink-0 snap-start overflow-hidden rounded-xl border border-line bg-white min-[1099px]:w-[calc((100%-64px)/5)] min-[1538px]:w-[calc((100%-80px)/6)]">
               {h.image
                 ? <img src={photo(h.image, 300)} alt={h.name} loading="lazy" className="h-[150px] w-full object-cover" />

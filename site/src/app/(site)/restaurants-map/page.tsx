@@ -9,7 +9,7 @@ import { Photo } from '@/components/businesses/Photo';
 import { Rating } from '@/components/businesses/BusinessCard';
 
 export async function generateMetadata(): Promise<Metadata> {
-  // The restaurants on a map: /restaurants/ and the category pages are the
+  // The restaurants on a map: /search-rest-modiin/ and the category pages are the
   // ones to index.
   return pageMetadata({ path: '/restaurants-map/', title: 'מפת מסעדות במודיעין' + SUFFIX, noindex: true });
 }
@@ -92,7 +92,7 @@ export default async function RestaurantsMapPage({ searchParams }: { searchParam
     <ListMap lang={lang} items={items} facets={facets}
       sorts={[{ id: 'newest', label: t('החדשים ביותר', 'Newest') }, { id: 'rating', label: t('דירוג', 'Rating') }, { id: 'name', label: t('שם', 'Name') }]}
       heading={['{n} מסעדות', '{n} Restaurant Listings']} sub={t('במודיעין מכבים רעות', 'in Modiin Maccabim Reut')}
-      listHref="/restaurants/" placeholder={t('חיפוש מסעדה, מטבח או מקום', 'Search restaurant, cuisine or place')}
+      listHref="/search-rest-modiin/" placeholder={t('חיפוש מסעדה, מטבח או מקום', 'Search restaurant, cuisine or place')}
       initial={{ q: one(sp.q), picked: { ...(wanted.length ? { cuisine: wanted } : {}), ...(one(sp.dining) === 'delivery' ? { dining: ['delivery'] } : {}) }, sort: one(sp.sort) === 'rating' ? 'rating' : 'newest' }}
       emptyTitle={t('עדיין אין מסעדות', 'No restaurants yet')} emptyBody={t('מקומות חדשים יופיעו כאן כשיתווספו.', 'New places will appear here as they are added.')} />
   );

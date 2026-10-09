@@ -64,8 +64,8 @@ export async function DesktopHome({ lang }: { lang: Lang }) {
     [t('קהילה', 'Community'), 'community', t('קבוצות ויוזמות', 'Groups & Initiatives'), '/community/'],
     [t('בעלי מקצוע', 'Professionals'), 'professionals', t('מומחים ושירותים', 'Experts & Services'), '/professionals/'],
     [t('מפות', 'Maps'), 'maps', t('גלו את מודיעין', 'Explore Modiin'), '/map/'],
-    [t('עסקים', 'Businesses'), 'businesses', t('כל העסקים במודיעין', 'All Businesses in Modiin'), '/businesses/'],
-    [t('נדל״ן', 'Real Estate'), 'realestate', t('דירות ופרויקטים', 'Apartments & Projects'), '/realestate/'],
+    [t('עסקים', 'Businesses'), 'businesses', t('כל העסקים במודיעין', 'All Businesses in Modiin'), '/business/'],
+    [t('נדל״ן', 'Real Estate'), 'realestate', t('דירות ופרויקטים', 'Apartments & Projects'), '/search-apartments/'],
     [t('עירייה', 'Municipal'), 'municipal', t('שירותי עירייה ושבת', 'City services & Shabbat'), '/municipal/'],
   ];
 
@@ -218,7 +218,7 @@ export async function DesktopHome({ lang }: { lang: Lang }) {
             {/* The fade is drawn 200 tall and cut at 133: white from a little past halfway. */}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-[200px] bg-[linear-gradient(180deg,rgba(255,255,255,.8)_1.8%,#fff_53%,#fff)]" />
             <div className="absolute inset-x-0 top-[29px] flex justify-center">
-              <Link href="/businesses/" className="flex h-[46px] items-center gap-1 rounded-[60px] border border-midblue bg-white px-8 text-base font-medium leading-6 text-midblue hover:bg-midblue/5">
+              <Link href="/business/" className="flex h-[46px] items-center gap-1 rounded-[60px] border border-midblue bg-white px-8 text-base font-medium leading-6 text-midblue hover:bg-midblue/5">
                 {t('הצג הכל', 'View all')}
                 <img src="/web/home/chevron_right_blue20.svg" alt="" width={20} height={20} className={`size-5 ${lang === 'he' ? '-scale-x-100' : ''}`} />
               </Link>

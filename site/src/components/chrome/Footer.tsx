@@ -107,18 +107,18 @@ export async function Footer({ lang }: { lang: Lang }) {
             </div>
           </div>
 
-          <Column title={t('גלו את מודיעין', 'Explore Modiin')} more={[t('הצג הכל', 'View all'), '/businesses/']} links={[
-            [t('חדשות', 'News'), '/news/'], [t('אירועים', 'Events'), '/events/'], [t('עסקים', 'Businesses'), '/businesses/'],
-            [t('בעלי מקצוע', 'Professionals'), '/professionals/'], [t('נדל״ן', 'Real Estate'), '/realestate/'], [t('מפה', 'Map'), '/map/'],
-            [t('מסעדות', 'Restaurants'), '/restaurants/'], [t('מבצעים', 'Deals'), '/deals/'], [t('קהילה', 'Community'), '/community/'],
+          <Column title={t('גלו את מודיעין', 'Explore Modiin')} more={[t('הצג הכל', 'View all'), '/business/']} links={[
+            [t('חדשות', 'News'), '/news/'], [t('אירועים', 'Events'), '/events/'], [t('עסקים', 'Businesses'), '/business/'],
+            [t('בעלי מקצוע', 'Professionals'), '/professionals/'], [t('נדל״ן', 'Real Estate'), '/search-apartments/'], [t('מפה', 'Map'), '/map/'],
+            [t('מסעדות', 'Restaurants'), '/search-rest-modiin/'], [t('מבצעים', 'Deals'), '/deals/'], [t('קהילה', 'Community'), '/community/'],
           ]} />
-          <Column title={t('קטגוריות פופולריות', 'Popular Categories')} more={[t('הצג הכל', 'View all'), '/businesses/']} links={[
-            [t('מסעדות במודיעין', 'Restaurants in Modiin'), '/restaurants/'],
+          <Column title={t('קטגוריות פופולריות', 'Popular Categories')} more={[t('הצג הכל', 'View all'), '/business/']} links={[
+            [t('מסעדות במודיעין', 'Restaurants in Modiin'), '/search-rest-modiin/'],
             [t('בתי קפה', 'Coffee Shops'), '/business-cat/modiin-coffee/'],
             [t('ברים', 'Bars'), encodeURI('/business-cat/ברים/')],
             [t('בעלי מקצוע', 'Professionals'), '/professionals/'],
             ...realEstate.map((m): [string, string] => [m.label, encodeURI(m.path)]),
-            [t('עסקים מקומיים', 'Local Businesses'), '/businesses/'],
+            [t('עסקים מקומיים', 'Local Businesses'), '/business/'],
           ]} />
 
           <div className="flex w-[328px] max-w-full flex-col items-end text-end">

@@ -10,7 +10,7 @@ import { HebcalCredit, HolidayList, ShabbatWeekPanel } from './Shabbat';
  *  phone): the coming Shabbat with its parasha or holiday and both times,
  *  then the holidays of the next three months — all from Hebcal for
  *  Modi'in, never a time of our own. [path] is the address it is read at:
- *  /shabbat/, or WordPress's /shabat-times-modiin/ with its own H1. */
+ *  WordPress's /shabat-times-modiin/, with its own H1. */
 export async function ShabbatPage({ path }: { path: string }) {
   const lang = await getLang();
   const t = tr(lang);

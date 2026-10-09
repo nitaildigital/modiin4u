@@ -8,7 +8,7 @@ import { BROWSE_TYPES, hoodName, kindLabel, priceOf, roomsText, shekels, typeLab
 import { readSearch, searchHref } from '@/components/realestate/search';
 
 export async function generateMetadata(): Promise<Metadata> {
-  // The listings on a map: /realestate/ and its searches are the pages to index.
+  // The listings on a map: /search-apartments/ and its searches are the pages to index.
   return pageMetadata({ path: '/realestate-map/', title: 'מפת נדל״ן במודיעין' + SUFFIX, noindex: true });
 }
 

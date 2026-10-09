@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Location, Map as MapIcon, SearchNormal1, Setting4, ShieldTick, Verify } from 'iconsax-react';
 import { getLang, tr, type Lang } from '@/lib/i18n';
 import { breadcrumb, h1For, href, SITE_NAME } from '@/lib/seo';
+import { categoryPath } from '@/lib/routes';
 import { SITE_URL } from '@/lib/config';
 import {
   activeBusinesses, bizName, bizNeighborhood, bizPhoto, businessCategories, businessesInCategory, catName,
@@ -16,9 +17,9 @@ import { RotatingRow } from './RotatingRow';
 import { Rating } from './BusinessCard';
 import { Photo } from './Photo';
 
-const catHref = (slug: string) => href(`/business-cat/${slug}/`);
+const catHref = (slug: string) => href(categoryPath(slug));
 
-/** The Restaurants page (/restaurants/, and WordPress's /search-rest-modiin/):
+/** The Restaurants page (WordPress's /search-rest-modiin/):
  *  web_restaurants_screen.dart at desktop width — the photograph with the
  *  title, search and quick picks, the paid banners, the food categories, and
  *  rows of restaurants, cafés, bars, the best loved and those that deliver —

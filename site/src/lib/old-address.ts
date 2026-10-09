@@ -4,11 +4,15 @@ import { href } from '@/lib/seo';
 import { isUuid, slugParam } from '@/lib/params';
 
 /** The Flutter site's own addresses, by row id (`/article/<id>`,
- *  `/businesses/category/<id>` …): links people kept from it and the app's
+ *  `/business/category/<id>` …): links people kept from it and the app's
  *  older shares. Each answers with a 301 to the page that replaced it, and
  *  to its section when the row is gone, so nothing they kept ends in a 404. */
 export function moved(req: Request, path: string) {
-  return NextResponse.redirect(new URL(href(path), req.url), 301);
+  // A relative address: behind nginx, `req.url` is the server's own
+  // (127.0.0.1:3100), and a redirect built from it would send the reader
+  // there. What the address carried goes along: a notification's `?push=`
+  // is how its opening is counted.
+  return new NextResponse(null, { status: 301, headers: { Location: href(path) + new URL(req.url).search } });
 }
 
 /** A row's slug by its id, or by its slug when the address already had one. */

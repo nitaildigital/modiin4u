@@ -34,10 +34,10 @@ export async function Hero({ h1, lang, notice, underBar = false }: { h1: string;
   const hour = israelHour();
   const greeting = hour < 12 ? t('בוקר טוב', 'Good morning') : hour < 17 ? t('צהריים טובים', 'Good afternoon') : t('ערב טוב', 'Good evening');
   const chips: [string, string, string][] = [
-    [t('עסקים', 'Businesses'), 'businesses', '/businesses/'],
+    [t('עסקים', 'Businesses'), 'businesses', '/business/'],
     [t('חדשות', 'News'), 'news', '/news/'],
     [t('מפה', 'Map'), 'map', '/map/'],
-    [t('נדל״ן', 'Real Estate'), 'realestate', '/realestate/'],
+    [t('נדל״ן', 'Real Estate'), 'realestate', '/search-apartments/'],
     [t('בעלי מקצוע', 'Professionals'), 'professionals', '/professionals/'],
     [t('מבצעים', 'Deals'), 'deals', '/deals/'],
   ];

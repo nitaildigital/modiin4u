@@ -91,7 +91,7 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
   if ((b.review_count ?? 0) > 0 && b.rating) ld.aggregateRating = { '@type': 'AggregateRating', ratingValue: b.rating, reviewCount: b.review_count };
   const section: [string, string] = path.startsWith('/professionals/')
     ? ['אנשי מקצוע', '/professionals/']
-    : isPark ? ['פארקים', '/parks/'] : ['עסקים', '/businesses/'];
+    : isPark ? ['פארקים', '/parks/'] : ['עסקים', '/business/'];
 
   return (
     <BusinessUI businessId={b.id} photos={photos}>
@@ -475,7 +475,7 @@ function Phone({ v }: { v: View }) {
           {v.cover && <img src={sized(v.cover, 430)} alt={v.name} className="absolute inset-0 size-full object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           {!v.cover && <span className="absolute inset-0 flex items-center justify-center"><Reserve size={60} color="rgba(255,255,255,0.25)" /></span>}
-          <div className="absolute start-3 top-[7px]"><BackButton fallback={href('/businesses/')} label={t('חזרה', 'Back')} /></div>
+          <div className="absolute start-3 top-[7px]"><BackButton fallback={href('/business/')} label={t('חזרה', 'Back')} /></div>
           <ShareMenu title={v.name} he={he} nativeFirst className="!absolute end-3 top-[7px]">
             <span className="flex size-10 items-center justify-center rounded-full bg-white"><Export size={20} color="#3D3D3D" /></span>
           </ShareMenu>

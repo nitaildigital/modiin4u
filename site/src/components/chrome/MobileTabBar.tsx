@@ -11,7 +11,7 @@ export function MobileTabBar({ lang }: { lang: Lang }) {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
   const tabs = [
     { href: '/', label: t('בית', 'Home'), Icon: Home2, on: path === '/' },
-    { href: '/businesses/', label: t('עסקים', 'Businesses'), Icon: Shop, on: path.startsWith('/business') },
+    { href: '/business/', label: t('עסקים', 'Businesses'), Icon: Shop, on: path.startsWith('/business') },
     { href: '/map/', label: t('מפה', 'Map'), Icon: Map, on: path.startsWith('/map') },
     { href: '/news/', label: t('חדשות', 'News'), Icon: Clipboard, on: path.startsWith('/news') || path.startsWith('/new/') },
     { href: '/municipal/', label: t('עירייה', 'Municipal'), Icon: Bank, on: path.startsWith('/municipal') },

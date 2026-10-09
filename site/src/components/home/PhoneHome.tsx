@@ -47,9 +47,9 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
   // Jobs takes Deals' place in the frame the app follows; the site has no
   // jobs page, so the fourth shortcut stays Deals, which it has.
   const shortcuts: [string, string, string][] = [
-    [t('מסעדות', 'Restaurants'), 'restaurants', '/restaurants/'],
+    [t('מסעדות', 'Restaurants'), 'restaurants', '/search-rest-modiin/'],
     [t('אירועים', 'Events'), 'events', '/events/'],
-    [t('נדל"ן', 'Real estate'), 'realestate', '/realestate/'],
+    [t('נדל"ן', 'Real estate'), 'realestate', '/search-apartments/'],
     [t('מבצעים', 'Deals'), 'deals', '/deals/'],
   ];
 
@@ -69,7 +69,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
 
       {food.length > 0 && (
         <section className="mt-8">
-          <Header title={t('מסעדות במודיעין', 'Restaurants in Modiin')} to="/restaurants/" all={all} />
+          <Header title={t('מסעדות במודיעין', 'Restaurants in Modiin')} to="/search-rest-modiin/" all={all} />
           <Row>
             {food.slice(0, ROW_RESTAURANTS).map((b) => {
               const kind = kinds.get(b.id);
@@ -171,7 +171,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
 
       {listings.length > 0 && (
         <section className="mt-8">
-          <Header title={t('דירות בקרבתך', 'Apartments near you')} to="/realestate/" all={all} />
+          <Header title={t('דירות בקרבתך', 'Apartments near you')} to="/search-apartments/" all={all} />
           <ul className="mt-3 px-4">
             {listings.slice(0, 4).map((l) => {
               const rent = l.kind === 'rent';
