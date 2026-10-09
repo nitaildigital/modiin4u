@@ -1,0 +1,145 @@
+-- ============================================================
+-- Modiin4u — Migration 00074 (DRAFT — not applied)
+-- Urban Profile: bio, interests, favourite places, top picks, username,
+-- visibility (the client's spec, 8 Oct 2026; docs/urban-profile/PLAN.md).
+--
+-- Private by default (the client, 9 Oct): the resident turns visibility on.
+-- When final, copy to supabase/migrations/00074_urban_profile.sql.
+-- ============================================================
+
+-- ─── 1. The profile's new fields ───
+
+alter table public.profiles
+  add column if not exists bio text,
+  add column if not exists interests text[] not null default '{}',
+  add column if not exists profile_visibility text not null default 'private',
+  add column if not exists username text,
+  add column if not exists urban_profile_seen_at timestamptz,
+  add column if not exists urban_profile_completed_at timestamptz;
+
+alter table public.profiles
+  drop constraint if exists profiles_bio_length,
+  add constraint profiles_bio_length check (bio is null or char_length(bio) <= 160),
+  drop constraint if exists profiles_interests_count,
+  add constraint profiles_interests_count check (cardinality(interests) = 0 or cardinality(interests) between 3 and 8),
+  drop constraint if exists profiles_interests_known,
+  add constraint profiles_interests_known check (interests <@ array[
+    'cafes','restaurants','brunch','asian','nightlife','nature','running','cycling',
+    'fitness','family','culture','music','pets','shopping','events','local_business']::text[]),
+  drop constraint if exists profiles_visibility_values,
+  add constraint profiles_visibility_values check (profile_visibility in ('residents', 'private')),
+  drop constraint if exists profiles_username_format,
+  add constraint profiles_username_format check (username is null or username ~ '^[a-z0-9_.]{3,30}$');
+
+create unique index if not exists profiles_username_key on public.profiles (username) where username is not null;
+
+-- ─── 2. Favourite places and top picks ───
+
+create table if not exists public.profile_places (
+  profile_id  uuid not null references public.profiles(id) on delete cascade,
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  position    smallint not null check (position between 1 and 5),
+  top_pick    text check (top_pick in ('coffee', 'restaurant', 'city')),
+  created_at  timestamptz not null default now(),
+  primary key (profile_id, business_id),
+  unique (profile_id, position)
+);
+create unique index if not exists profile_places_one_pick_each
+  on public.profile_places (profile_id, top_pick) where top_pick is not null;
+
+alter table public.profile_places enable row level security;
+
+drop policy if exists profile_places_own on public.profile_places;
+create policy profile_places_own on public.profile_places
+  for all to authenticated
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid() and not is_banned_user());
+
+drop policy if exists profile_places_admin on public.profile_places;
+create policy profile_places_admin on public.profile_places
+  for all using (is_admin()) with check (is_admin());
+
+-- ─── 3. Reading someone's Urban Profile ───
+-- Public fields only, and only when visibility allows: the owner always;
+-- another signed-in resident when 'residents'. Never e-mail, phone, birth
+-- date, family status or pet.
+
+create or replace function public.urban_profile(p_username text)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'username', p.username,
+    'name', p.full_name,
+    'avatar_url', p.avatar_url,
+    'neighborhood', n.name,
+    'neighborhood_en', n.name_en,
+    'bio', p.bio,
+    'interests', to_jsonb(p.interests),
+    'member_since', p.created_at,
+    'is_owner', p.id = auth.uid(),
+    'places', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', b.id, 'slug', b.slug, 'name', b.name, 'name_en', b.name_en,
+        'image', coalesce(b.cover_url, b.logo_url), 'kind', b.kind,
+        'top_pick', pp.top_pick) order by pp.position)
+      from profile_places pp join businesses b on b.id = pp.business_id
+      where pp.profile_id = p.id and b.status = 'active'), '[]'::jsonb)
+  )
+  from profiles p
+  left join neighborhoods n on n.id = p.neighborhood_id
+  where p.username = lower(p_username)
+    and not coalesce(p.is_banned, false)
+    and (p.id = auth.uid()
+         or (p.profile_visibility = 'residents' and auth.uid() is not null));
+$$;
+
+revoke all on function public.urban_profile(text) from public;
+grant execute on function public.urban_profile(text) to anon, authenticated;
+
+-- ─── 4. Usernames ───
+
+create or replace function public.username_available(p_username text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select lower(p_username) ~ '^[a-z0-9_.]{3,30}$'
+     and not exists (select 1 from profiles where username = lower(p_username) and id <> auth.uid());
+$$;
+
+revoke all on function public.username_available(text) from public;
+grant execute on function public.username_available(text) to authenticated;
+
+-- Up to three free usernames near the one wanted: as is, with a number.
+create or replace function public.suggest_usernames(p_base text)
+returns text[]
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  base text := left(regexp_replace(lower(coalesce(p_base, '')), '[^a-z0-9_.]', '', 'g'), 24);
+  out text[] := '{}';
+  candidate text;
+  i int := 0;
+begin
+  if char_length(base) < 3 then base := 'resident'; end if;
+  if username_available(base) then out := out || base; end if;
+  while cardinality(out) < 3 and i < 50 loop
+    i := i + 1;
+    candidate := base || (case when i < 10 then i::text else (10 + floor(random() * 990))::int::text end);
+    if username_available(candidate) and not candidate = any(out) then out := out || candidate; end if;
+  end loop;
+  return out;
+end;
+$$;
+
+revoke all on function public.suggest_usernames(text) from public;
+grant execute on function public.suggest_usernames(text) to authenticated;
