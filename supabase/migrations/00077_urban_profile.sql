@@ -1,10 +1,17 @@
 -- ============================================================
--- Modiin4u — Migration 00074 (DRAFT — not applied)
+-- Modiin4u — Migration 00077
 -- Urban Profile: bio, interests, favourite places, top picks, username,
 -- visibility (the client's spec, 8 Oct 2026; docs/urban-profile/PLAN.md).
 --
--- Private by default (the client, 9 Oct): the resident turns visibility on.
--- When final, copy to supabase/migrations/00074_urban_profile.sql.
+-- After sign-up and the confirmation e-mail, the first sign-in opens three
+-- steps — a photo and a few words, interests, favourite places — then the
+-- finished profile, which can be shared. Every step can be skipped.
+--
+-- Private by default (the client, 9 Oct: "not visible by default"): the
+-- resident turns visibility on themselves. Nothing private is ever returned
+-- to anyone else — no e-mail, phone, birth date, family status or pet.
+--
+-- Needs 00054 (is_banned_user). Safe to run more than once.
 -- ============================================================
 
 -- ─── 1. The profile's new fields ───

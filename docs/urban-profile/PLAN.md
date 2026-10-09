@@ -1,9 +1,10 @@
 # Urban Profile — implementation plan
 
 From the client's spec "Modiin4U_Urban_Profile_Onboarding_Spec_EN_v2.docx"
-(8 Oct 2026). Target: the app by Monday evening, the website's profile page
-after. Nothing here is built yet; the draft migration beside this file is not
-applied.
+(8 Oct 2026). **Built 9 Oct** — migrations 00077 and 00079 (run), the app
+(`lib/features/urban_profile/`), the website's `/u/<username>`, the panel's
+user window; see PLAN.md, "Urban Profile and job messages". The design's
+frames (9 Oct) set the screens; the sections below are the plan as it was.
 
 ## 0. Waiting on the client (before building)
 
@@ -40,7 +41,7 @@ A private profile's link shows "This profile is private".
    residents can report a profile (existing Reports), the panel can clear a bio
    or a photo.
 
-## 1. Data (draft migration `00074_urban_profile.sql.draft`)
+## 1. Data (migration `00077_urban_profile.sql`)
 
 On `profiles`:
 
