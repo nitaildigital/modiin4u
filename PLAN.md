@@ -2626,6 +2626,131 @@ categories, the new one to about twenty; "near me" ordering; the App Store
 and Google Play badges link nowhere until the panel has the store addresses
 (`store_url_ios`, `store_url_android`).
 
+**WordPress's addresses, the Contact menus, search, filters, notifications — 9 Oct.**
+Harshit, after clicking through the Next.js site: Contact did nothing,
+the directory search only scrolled, every category had the same two
+filters, the site should use WordPress's addresses, and the notifications
+should be tested one kind at a time from added content.
+- **Addresses.** Every WordPress address already answered (parity), but the
+  site's own links went to the new names: `/businesses/` (WordPress
+  `/business/`), `/restaurants/` (`/search-rest-modiin/`), `/realestate/`
+  (`/search-apartments/`), `/shabbat/` (`/shabat-times-modiin/`), and the
+  categories the panel files under an English slug — `health`,
+  `sports-fitness`, `automotive` (WordPress `/business-cat/בריאות/` …), the
+  seven trades WordPress had under `/professionals-cat/<Hebrew>/`, and
+  `services` (`/professionals/`). One page at two addresses splits what
+  Google knows. Now every link goes to the WordPress address and the new
+  names answer with a 301 there, a search's `?` fields kept
+  (`src/lib/routes.ts`, `next.config.ts`). Kept as they are, because
+  WordPress had no such page: events, deals, the map, municipal, parks,
+  community, and the categories the app added (shopping, beauty, pizza …).
+- **Contact and Share menus** opened inside the card, which clipped them,
+  and the next row covered the rest: nothing was seen. All of them —
+  business cards, the home page, real estate, events, deals, articles, the
+  business page — are drawn over the page now (`components/ui/Floating.tsx`),
+  above the button when there is no room below. Checked on 11 page types.
+- **Directory search** narrowed the grid below and scrolled to it, which
+  read as "only scrolls". As on WordPress now: while typing, matching
+  categories and businesses drop down as links; Search opens
+  `/search/?q=` (WordPress's form opened `/?s=`).
+- **Category filters.** WordPress's category pages had none; its
+  restaurant search had cuisine, kosher, delivery and rating; the Flutter
+  site had Kosher and Delivery on every category. Now each list offers its
+  own sub-categories (cuisines, trades …), kosher, delivery and rating only
+  where a business in it has them, a search box and a sort — on the
+  desktop over the grid, on a phone in the sheet. Health shows its two
+  sub-categories and the sort, no Kosher or Delivery.
+- **Notifications, end to end:** see LAUNCH_TEST.md. Done without reaching
+  anyone else: each test item was published as the panel does, and the
+  notification the database queued for it (to everyone, in 5 minutes) was
+  at once set to one test device (`audience_type = 'device'`) and sent;
+  the script cancels it if that fails, and switches "send a notification"
+  off before deleting (an update with it on queues a new one). Found and
+  fixed: the redirect from `/article/<id>` (the automatic article
+  notification's link) dropped `?push=`, so an open was not counted; a
+  notification arriving with a page open showed nothing (Firebase leaves it
+  to the page) — an in-page banner now, as the Flutter site's; a step
+  competition's notification leads to `/steps`, which had no page — a
+  read-only one now (the competition, the banners, "the step counter is in
+  the app").
+- **For launch:** the `push-dispatch` function's `SITE_URL` still points at
+  the Flutter server (https://45-93-94-49.sslip.io); notifications clicked
+  in a browser open there until it is the new site's address.
+- Parity after all of it: 987 of 992. The 5 others are businesses the
+  client closed in the panel on 8 Oct after the snapshot (טקומי מע״ר, מונדו,
+  טיקי פוקי, סיני בוטיק דגים, חומוסיית עטייה): their WordPress addresses now
+  say "not listed" with a 404. Whether a closed business keeps a page for
+  Google is his decision. (Supabase was unreachable for about five minutes
+  during the run; the pages that timed out then answer in under 0.1 s.)
+
+**Keeping Supabase's load down — 9 Oct, after the restriction.** The
+project moved from Nano to Micro (Harshit). An hour later the database
+had spent about 15 s on queries in all (most of it the dashboard's own),
+with almost no traffic: the CPU readings then were Supabase's own work
+after the resize (a backup ran). What grows worst with use, from a review
+of the app, the site and the database, and what was done:
+- **Photos (app, Flutter site, panel):** `sizedPhotoUrl` returns the
+  original now, not Supabase's resized copy — no more transformations;
+  `NetworkPhoto` decodes it at the size it is drawn. Egress grows (the
+  originals are larger) against a quota at 1%. The push sender's one
+  picture per campaign still resizes — a handful a month.
+- **Step counter:** saves every 5 minutes and when the app is hidden (was
+  every minute); after a save only the person's own figures are read
+  again, the rankings and the challenge at most every 15 minutes (were six
+  lists after every save); a failed save is retried.
+- **News:** the list reads the card columns only, a thousand rows at a time
+  (was every column of every article — 1.8 MB of bodies — on each open and
+  return); search reads the card columns, 30 at most.
+- **Migration 00074 (written, not applied):** an index for the leaderboards'
+  date filter; `my_conversations` by its indexes (was a scan of every
+  conversation on each return to the app); two indexes for lookups made on
+  writes; the article notification trigger only on the columns it reads (a
+  view no longer runs it); a week of pg_cron history kept.
+- **The new site:** redirects are relative (they were built from the
+  server's own address, 127.0.0.1, behind nginx); the image optimiser
+  makes one quality and resizes our storage's files only; robots.txt
+  follows SEO_LIVE at run time; `deploy/next/cache.conf` and `proxy.conf`
+  give nginx a one-minute page cache per language (stale copies served
+  while the site or the database fails), a photo cache, and per-visitor
+  request limits — to install with the site, `nginx -t` first.
+- Still to decide or do (the review): the security points (owners of
+  unapproved businesses can publish; sign-up unconfirmed), the data
+  functions that read a failed query as "no rows", the launch items.
+
+**The project restricted for image resizing — 9 Oct.** Supabase's Pro plan
+includes 100 "storage image transformations" a month (each different
+original photo resized through `/render/image` counts once); with the spend
+cap on, passing it restricts the whole project — database, API, sign-in.
+It reached 862: the app, the Flutter website and the Next.js site all ask
+Supabase for resized copies (`network_photo.dart`, the site's photo
+helpers, the push sender's 800 px picture), and a scan of all 1,144 pages
+of the new site that day touched nearly every photo at once. Everything
+else was at about 1% (egress 2.6 of 250 GB). Harshit turned the spend cap
+off (the overage is billed: about $5 per 1,000 photos); the project then
+restarted, and the database still answered 522 an hour later.
+- **The Next.js site no longer uses Supabase's resizing:** its photos go
+  through Next's own image optimiser (`/_next/image/`, `src/lib/photos.ts`),
+  which fetches each original once as an ordinary download and keeps its
+  copies a year; only our storage's public files may be fetched through it.
+  Checked: a 110 KB cover arrives as a 33 KB WebP; a page of the directory
+  asks Supabase to resize nothing (306 photos, all our own).
+- **Fewer database calls per visitor:** the bell's feed is reused for five
+  minutes across pages, and a browser's push row is filed again only when
+  its token changes or once a day (it was every page).
+- **A database that does not answer:** the site's reads give up after ten
+  seconds, and a page under the header that fails says "הדף לא זמין כרגע"
+  with "Try again" (status 500) instead of Next's English error. Most data
+  functions still read a failed query as "no rows" and draw their empty
+  state ("לא נמצאו …") — to change one by one.
+- **Still resizing through Supabase:** the app and the Flutter website
+  (`sizedPhotoUrl`), and the push sender. Their choice is Harshit's: load
+  the originals (egress is far under its quota, the phone caches them),
+  use the new site's optimiser once it is live, or store small copies at
+  upload.
+- **Testing from now on:** browser tests block images, pages are checked
+  one at a time, and no test reloads pages in bulk against the shared
+  project.
+
 **Dark mode removed for now — 8 Oct.** The switch changed the theme, but the
 screens are drawn to the light designs with their own colours (about 2,600
 fixed whites, greys and blacks, 16 places reading the theme), so turning it

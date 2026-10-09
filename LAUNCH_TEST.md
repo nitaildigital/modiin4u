@@ -31,11 +31,11 @@ after. Mark each line ✅ / ❌ with a note. A ❌ goes to PLAN.md with the fix.
 
 - [ ] Home, language switch EN/עב (kept after reload; phone width follows)
 - [ ] Every navbar menu and footer link (About, Contact, Terms, Privacy, Accessibility, Delete account, Get notifications)
-- [ ] Businesses (10 main categories; "All categories"), category pages, business page and its buttons
+- [ ] Businesses (10 main categories; "All categories"), category pages, business page and its buttons — Next.js 9 Oct: Contact menus show over the cards ✅, directory search suggests and opens results ✅, category filters follow the list ✅
 - [ ] Old addresses: `/news/<slug>`, `/business/<slug>`, `/business-cat/<old slug>` (e.g. sushi, ברים), redirects in `seo-redirects.conf`
 - [ ] Restaurants, map, news, article, events, deals, real estate, municipal, step counter (read-only)
 - [ ] Ask opens the chat; no floating bubble
-- [ ] Notifications: allow in the browser, receive one, the bell
+- [x] Notifications: allow in the browser, receive one, the bell — Next.js site (localhost), Chrome, 9 Oct ✅: Turn on → device registered; one test device only (`audience_type = device`), each kind sent and received in the background: manual, new article, event, business, deal, listing, step competition; in the foreground the in-page banner; bell showed 8 unread, cleared on opening the list; a notification's link opened its page and counted "opened". Test content, notifications and device deleted after. Not yet: on the deployed site (the sender's `SITE_URL` still points at the Flutter server)
 - [ ] No account actions anywhere (hearts, RSVP, claim, sign-up) except `/login` for admins
 - [ ] Page titles in the tab; `view-source` shows the SEO title and description
 
