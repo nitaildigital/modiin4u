@@ -9,7 +9,7 @@ import {
 } from '@/lib/data/business';
 import { JsonLd } from '@/components/JsonLd';
 import { BusinessUI, BackButton, CallMenu, ExpandableText, GalleryStrip, PhoneTabs, PhotoThumb, ShareMenu, ShowAllPhotos, TrackedLink } from './ui';
-import { DesktopReviews, type ReviewView } from './Reviews';
+import { DesktopReviews, ReviewAvatar, ReviewPhotos, type ReviewView } from './Reviews';
 import { GoogleHours } from './GoogleHours';
 import { BusinessMap } from './BusinessMap';
 import { ShareMark, WhatsAppMark, DirectionMark } from './icons';
@@ -64,7 +64,7 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
       const author = r.author_name || r.profiles?.full_name || '';
       return {
         id: r.id, author: author || resident, initials: initials(author), date: reviewDate(r.created_at, lang),
-        rating: r.rating, body: r.body ?? '',
+        rating: r.rating, body: r.body ?? '', avatar: r.author_avatar_url || null, photos: r.photos ?? [],
         replies: (replies[r.id] ?? []).map((x) => ({
           id: x.id, author: x.author_name?.trim() || resident, date: reviewDate(x.created_at, lang), body: (x.body ?? '').trim(),
         })),
@@ -138,7 +138,7 @@ function Desktop({ v, more, kinds, inNeighborhood }: { v: View; more: BusinessCa
               </section>
             )}
             <section className="max-w-[918px]">
-              <h2 className={title}>{t(`ביקורות על ${v.name}`, `Reviews for ${v.name}`)}</h2>
+              <h2 className={title}>{t('מה חושבים תושבי העיר?', 'What Locals Are Saying')}</h2>
               <div className="mt-[39px]">
                 {v.reviews.length === 0 ? (
                   // Nothing to average, and no place on the website to write
@@ -464,7 +464,7 @@ function Phone({ v }: { v: View }) {
     { label: t('סקירה', 'Overview'), index: 0, content: <PhoneOverview v={v} /> },
     ...(!v.isPark && v.menu.length > 0 ? [{ label: t('תפריט', 'Menu'), index: 1, content: <PhoneMenu v={v} /> }] : []),
     { label: t('תמונות', 'Photos'), index: 2, content: <PhonePhotos v={v} /> },
-    { label: t('ביקורות', 'Reviews'), index: 3, content: <div className="pt-12"><PhoneSummary v={v} /><div className="mt-6"><PhoneReviewList v={v} /></div></div> },
+    { label: t('מה חושבים תושבי העיר?', 'What Locals Are Saying'), index: 3, content: <div className="pt-12"><PhoneSummary v={v} /><div className="mt-6"><PhoneReviewList v={v} /></div></div> },
   ];
 
   return (
@@ -577,7 +577,7 @@ function PhoneOverview({ v }: { v: View }) {
         </section>
       )}
       <section className="border-b border-line py-6">
-        <h2 className={`px-4 ${phoneTitle}`}>{t(`ביקורות על ${v.name}`, `Reviews for ${v.name}`)}</h2>
+        <h2 className={`px-4 ${phoneTitle}`}>{t('מה חושבים תושבי העיר?', 'What Locals Are Saying')}</h2>
         <div className="mt-4"><PhoneSummary v={v} /></div>
         <div className="mt-6"><PhoneReviewList v={v} /></div>
       </section>
@@ -638,7 +638,7 @@ function PhoneReviewList({ v }: { v: View }) {
     <ul className="px-4">
       {v.reviews.map((r) => (
         <li key={r.id} className="flex gap-3 border-b border-line py-4 last:border-b-0">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-turquoise text-[11.2px] font-semibold text-white">{r.initials}</span>
+          <ReviewAvatar r={r} className="size-8 text-[11.2px]" />
           <div className="min-w-0 flex-1">
             <p className="flex flex-wrap items-center gap-x-3">
               <span className="text-sm font-medium text-black">{r.author}</span>
@@ -646,6 +646,7 @@ function PhoneReviewList({ v }: { v: View }) {
             </p>
             <PhoneStars value={r.rating} size={14} className="mt-[7px] gap-1" />
             <p className="mt-[7px] whitespace-pre-line text-xs leading-[1.4] text-[#3D3D3D]">{r.body}</p>
+            <ReviewPhotos photos={r.photos} size={72} />
             {r.replies.map((x) => (
               <div key={x.id} className="mt-2.5 flex gap-2 border-s-2 border-line py-1 ps-2.5">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#E8EEF7] text-[9px] font-semibold text-midblue">{x.author ? initials(x.author) : '?'}</span>

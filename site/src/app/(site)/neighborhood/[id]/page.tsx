@@ -193,7 +193,7 @@ export default async function NeighborhoodPage({ params }: Props) {
         {/* The residents' rating, read only (phone), when anyone has rated. */}
         {rating && (
           <section className="mt-8 rounded-xl border border-line bg-white p-4 desk:hidden">
-            <h2 className="text-base font-semibold text-[#1F1F1F]">{t('דירוג השכונה', 'Neighbourhood rating')}</h2>
+            <h2 className="text-base font-semibold text-[#1F1F1F]">{t('מה חושבים תושבי העיר?', 'What Locals Are Saying')}</h2>
             <p className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-xl font-semibold text-black">{rating.average.toFixed(1)}</span>
               <Stars value={rating.average} size={18} />

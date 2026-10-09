@@ -59,6 +59,10 @@ export const businessGallery = cache(async (id: string): Promise<string[]> => {
 
 export type Review = {
   id: string; author_name: string | null; rating: number; body: string | null; created_at: string | null;
+  /** The author's photo, only when they agreed to show it (00076). */
+  author_avatar_url: string | null;
+  /** Photographs attached to the review (00076). */
+  photos: string[] | null;
   profiles: { full_name: string | null } | null;
 };
 
@@ -66,7 +70,7 @@ export type Review = {
  *  one's own pending review is ever among them (businessReviewsProvider). */
 export const businessReviews = cache(async (id: string): Promise<Review[]> => {
   const { data } = await db.from('reviews')
-    .select('id,author_name,rating,body,created_at,profiles!reviews_author_id_fkey(full_name)')
+    .select('id,author_name,author_avatar_url,photos,rating,body,created_at,profiles!reviews_author_id_fkey(full_name)')
     .eq('business_id', id).eq('status', 'approved').order('created_at', { ascending: false });
   return (data ?? []) as unknown as Review[];
 });

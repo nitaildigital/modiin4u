@@ -195,7 +195,7 @@ export function PhoneTabs({ tabs }: { tabs: { label: string; index: number; cont
           const on = t.index === tab;
           return (
             <button key={t.index} type="button" role="tab" aria-selected={on} onClick={() => setTab(t.index)}
-              className={`flex-1 border-b-2 text-sm ${on ? 'border-midblue font-semibold text-midblue' : 'border-transparent text-[#454545]'}`}>
+              className={`flex-1 border-b-2 px-1 text-[13px] leading-tight ${on ? 'border-midblue font-semibold text-midblue' : 'border-transparent text-[#454545]'}`}>
               {t.label}
             </button>
           );

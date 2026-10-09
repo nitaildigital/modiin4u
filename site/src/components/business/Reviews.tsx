@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export type ReviewView = {
   id: string; author: string; initials: string; date: string; rating: number; body: string;
+  avatar: string | null; photos: string[];
   replies: { id: string; author: string; date: string; body: string }[];
 };
 
@@ -132,10 +133,31 @@ export function DesktopReviews({ reviews, he }: { reviews: ReviewView[]; he: boo
   );
 }
 
+/** The author's photo when they agreed to show it (00076), else initials. */
+export function ReviewAvatar({ r, className }: { r: ReviewView; className: string }) {
+  return r.avatar
+    ? <img src={r.avatar} alt="" className={`${className} shrink-0 rounded-full object-cover`} loading="lazy" />
+    : <span className={`${className} flex shrink-0 items-center justify-center rounded-full bg-turquoise font-semibold uppercase text-white`}>{r.initials}</span>;
+}
+
+/** Photographs attached to a review, each opening full size. */
+export function ReviewPhotos({ photos, size }: { photos: string[]; size: number }) {
+  if (!photos.length) return null;
+  return (
+    <div className="mt-2.5 flex flex-wrap gap-2">
+      {photos.map((u) => (
+        <a key={u} href={u} target="_blank" rel="noopener">
+          <img src={u} alt="" width={size} height={size} style={{ width: size, height: size }} className="rounded-[10px] object-cover" loading="lazy" />
+        </a>
+      ))}
+    </div>
+  );
+}
+
 function ReviewRow({ r }: { r: ReviewView }) {
   return (
     <li className="flex gap-[15px] border-b border-line py-4">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-turquoise text-sm font-semibold uppercase text-white">{r.initials}</span>
+      <ReviewAvatar r={r} className="size-10 text-sm" />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-3">
           <span dir={dirOf(r.author)} className="text-base font-medium text-black">{r.author}</span>
@@ -143,6 +165,7 @@ function ReviewRow({ r }: { r: ReviewView }) {
         </p>
         <div className="mt-[7px]"><Stars value={r.rating} /></div>
         {r.body && <p dir={dirOf(r.body)} className="mt-[7px] whitespace-pre-line text-sm leading-[1.4] text-[#3D3D3D]">{r.body}</p>}
+        <ReviewPhotos photos={r.photos} size={96} />
         {r.replies.map((x) => (
           <div key={x.id} className="mt-3 border-s-2 border-line ps-3.5">
             <p className="flex items-center gap-3">
