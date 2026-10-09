@@ -1,7 +1,7 @@
 name: modiin4u
 description: "מודיעין בשבילך — סופר-אפליקציה עירונית מבוססת AI"
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.9.0
