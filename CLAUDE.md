@@ -10,7 +10,9 @@ decision and why — when you make one, add it there in the same plain style.
   hours, translations of legal text: from the database or not at all. If a
   design needs data the database lacks, leave it out and say so.
 - **Accounts are the app's.** The website has no resident sign-up, favourites,
-  RSVP, reviews or comments; `/login` exists for admins only.
+  RSVP, reviews or comments; `/login` exists for admins only. One exception
+  (the client, 9 Oct): the Next.js site's `/signin/` for Messages and Urban
+  Profiles.
 - **The client runs the content from the panel** (`lib/features/admin/`), so
   anything the site shows must be editable there.
 - **Removal in the panel is reversible** (cancel / expire / hide) — he asked for

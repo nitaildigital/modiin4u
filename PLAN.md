@@ -2800,6 +2800,85 @@ The test rows and files were deleted. Not checked by hand: picking a photo,
 the consent question and the Settings switch — the simulator could not be
 driven — so these wait for a phone.
 
+**Urban Profile and job messages, app, website and panel — 9 Oct.** The
+onboarding frames came (sign-up, three steps, Messages — Figma, 9 Oct) with
+Harshit's answers: the sign-up stays as it is; after it and the
+confirmation e-mail come the three steps; everything in the spec's launch
+additions is kept and must work; messages for jobs on the website too, and
+the panel reads every conversation.
+- **Migrations 00077, 00078, 00079 (run 9 Oct, Harshit's go-ahead).** 00077
+  is the Urban Profile (the draft beside docs/urban-profile/PLAN.md, private
+  by default); 00078 lets an administrator with the moderation module read
+  conversations — through two functions, not the tables, each conversation
+  opened written to the activity log once an hour per administrator (the log
+  keeps the team row, not the account: `audit_logs_stamp_actor`); 00079 adds
+  the id (for Report) and the visibility to `urban_profile()`.
+- **The onboarding** opens once, at the first sign-in of a resident's account
+  made from 9 Oct (`UrbanProfileGate`; there is no session before the
+  confirmation). Older accounts are not stopped: their Profile offers
+  "Complete your Urban Profile", which goes to the first step still missing.
+  Business accounts have none. Steps as the frames draw them (titles,
+  subtitles, chips with line icons, the places list with hearts, Skip for
+  Now / Continue); the spec's 16 interests — the frame has 15, without Parks
+  & Nature, which the spec lists. Then the finished profile: the card, the
+  link (a username is made from the name or the e-mail, changeable there),
+  "Let other residents see my Urban Profile" (off), Enter / Share. Sharing
+  sends the card as a picture with the line; the link only when the profile
+  is visible — if not, it asks first.
+- **Profile screen:** the card, the completion bar and its button while
+  something is missing, Copy Profile Link, Share Profile, Edit, Top Picks
+  (from three places), Privacy Settings. Another resident's profile at
+  `/u/<username>` in the app (read-only, Report as a report on the user) and
+  on the new site (signed-in residents only, noindex).
+- **The link is www.modiin4u.co.il/u/<username>** — it works once www is our
+  server (question 3 of docs/urban-profile/PLAN.md). iOS has the www
+  associated domain and the site serves `/u/*` in its AASA; Android has the
+  link unverified for now — one host failing verification would stop the
+  /join/ links on older Android.
+- **Messages for jobs.** The applicant's "Message the employer" — on the job
+  page once applied, and on each application in My Jobs; a Message circle on
+  a business page (only a business with an owner, never one's own), as
+  00069 already allowed any resident (Harshit: keep it). Messages has the
+  frame's search (employers, job titles, the last line), in the app and on
+  the site.
+- **The website signs residents and business owners in — for Messages only**
+  (the client agreed, 9 Oct; an exception to "accounts are the app's").
+  `/signin/` (no sign-up: accounts are made in the app, where the onboarding
+  is; forgot-password sends the same e-mail), `/messages/` and
+  `/messages/<id>/` live, the header's Messages icon with the unread count
+  (read at most once a minute), a Message button on business pages. All
+  noindex. The site has no job pages, so "Message the employer" is the app's.
+- **The panel's Messages** (Interaction): every conversation, searchable,
+  read-only, with a line saying reading is logged; the activity log names
+  it "View". The user window shows a resident's Urban Profile, and "Make
+  profile private" (reversible) — no deleting what they wrote.
+- **For the client's lawyer, before launch:** the privacy policy (8 Oct)
+  does not say the team can read conversations between businesses and
+  residents. Proposed line, to approve — not published: "Messages between
+  users and businesses are stored by us and may be reviewed by our team to
+  handle reports and prevent abuse." / "הודעות בין משתמשים לעסקים נשמרות
+  אצלנו, וצוות האתר רשאי לעיין בהן לטיפול בדיווחים ולמניעת שימוש לרעה."
+- **Tested** with throwaway accounts (a business owner, two residents, a
+  temporary admin): 50 database checks (who may open, read and write a
+  conversation; the panel's functions and their log; the profile's limits,
+  usernames, visibility and what it never shows); the website on desktop and
+  phone (sign-in, list and search, a reply arriving live, the business
+  page's button, `/u/`). A test-made pending business and job queue real
+  pushes (the team, everyone with Jobs or Businesses on): the test now
+  removes them in the statement that makes them. The dispatcher's own record
+  shows the first run's two sends reached 0 devices. The panel (local web
+  build): Messages under Interaction, the list and a conversation. The app
+  in the iOS simulator, walked by a temporary harness: the gate opened step 1
+  by itself at the first sign-in; the three steps, the finished profile (a
+  link made by itself), Profile with 20% and its button, Messages, a chat,
+  the business page's Message circle, another resident's profile, "Message
+  the employer" on an applied job and in My Jobs, Top Picks, Privacy.
+  Found and fixed: the theme's chips draw their label white, so Top Picks'
+  choices and the username suggestions showed blank — drawn in the app's
+  colours now. Not tried by hand (the simulator takes no taps): picking a
+  photo, typing the bio, choosing chips and places, sharing. Everything the
+  tests made was deleted.
+
 **The project restricted for image resizing — 9 Oct.** Supabase's Pro plan
 includes 100 "storage image transformations" a month (each different
 original photo resized through `/render/image` counts once); with the spend
