@@ -2571,6 +2571,61 @@ rewrite pages as content is published. Business pages show the panel's
 name on screen (e.g. "שיה") under WordPress's H1 ("שיה מודיעין") for
 search engines — restoring the names in the panel is the client's call.
 
+**The Next.js site brought level with the Flutter site — 9 Oct.** The three
+sites side by side (WordPress, the Flutter web build, `site/`), the Flutter
+screens read against the Next.js pages area by area, and every page type
+clicked through at 1440 and 390 px by a script (every button, toggle and
+select on a fresh page; links by a crawler, both languages). What was
+missing or dead, now in:
+- **Map pages:** `/restaurants-map/` (cuisine, kosher, rating, delivery;
+  sort; `?q=&cuisine=&sort=` as before), `/events-map/` and
+  `/realestate-map/` (sale/rent, type, rooms, neighbourhood; the search's
+  fields carry over). One component (`components/map/ListMap.tsx`): on a
+  desktop the filters, the list and the map, a row lighting its pin, a pin
+  opening a card; on a phone the map full size with search, a filter sheet
+  and "List View". noindex — the lists are the pages to index. The phone's
+  "View on Map" on Events, Restaurants and Real estate opens them (Events
+  had led to the whole city map; Restaurants had none); the desktop
+  Restaurants hero has it too.
+- **Maps:** the chosen pin is drawn larger and brought into view, a click
+  on the map closes its card, a "back to the city" button on the desktop
+  city map; the car parks map leaves the mouse wheel to the page.
+- **Web push** (live on the Flutter site since 5 Oct): the bell with its
+  unread count in the header, "Get notifications" in the footer, התראות in
+  the phone menu, `/notifications/` with Turn on and the feed
+  (`push_feed`); a notification's `?push=` address counts the open. Same
+  Firebase project, service worker address and storage keys as the Flutter
+  site, so browsers it registered carry on. Checked locally in Chrome:
+  Turn on → the browser's question → a Firebase token → a `push_devices`
+  row with the app's defaults (both test rows deleted after). **Not yet
+  checked:** a notification arriving — that needs a send, which reaches
+  every device; do it on the deployed https site with a campaign to one
+  device.
+- **Not found:** Next's English "404" without the header was what a gone
+  business, deal or event showed. Now "הדף לא נמצא" with the header, and
+  the Flutter site's own notices for a business, a deal and an event.
+- **The Flutter site's own addresses** (`/article/<id>`,
+  `/news/category/<id>`, `/restaurant/<id>`, `/businesses/category/<id>`,
+  `/businesses/all`) answer with a 301 to the page that replaced them.
+- **Article:** the byline (`credit`), the views count, Share as a menu
+  with Copy link, the `ARTICLE_INLINE` campaign under the story, and the
+  view counted (`record_article_view`, on the live build only, as business
+  statistics are).
+- **Smaller:** the phone listing's "Read More" opens the text in place; the
+  real estate phone list says when a neighbourhood narrows it, with a way
+  out, and keeps it through a search; the phone business page's Share sits
+  in the corner (its slot was the app's heart); the business photo viewer
+  swipes; the phone Restaurants page shows the booked campaigns instead of
+  an empty panel with three still dots; one database client per page.
+- Checked: SEO parity 992 of 992 on the production build after all of it.
+
+Left as they are, for Harshit or the client to decide: the header menus are
+WordPress's snapshot, not the panel's categories (the parity check holds
+them to WordPress); WordPress's footer links to dozens of businesses and
+categories, the new one to about twenty; "near me" ordering; the App Store
+and Google Play badges link nowhere until the panel has the store addresses
+(`store_url_ios`, `store_url_android`).
+
 **Dark mode removed for now — 8 Oct.** The switch changed the theme, but the
 screens are drawn to the light designs with their own colours (about 2,600
 fixed whites, greys and blacks, 16 places reading the theme), so turning it

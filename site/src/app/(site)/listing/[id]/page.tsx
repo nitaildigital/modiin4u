@@ -313,7 +313,7 @@ export default async function ListingPage({ params }: Props) {
                     ? <Link href={hoodPath} className="flex items-center justify-between gap-2 desk:inline">{t(`על ${hood}`, `About ${hood}`)}<ArrowLeft2 size={18} color="#123A72" className="shrink-0 ltr:-scale-x-100 desk:hidden" /></Link>
                     : t(`על ${hood}`, `About ${hood}`)}
                 </h2>
-                {hoodText.length > 0 && <HoodText paras={hoodText} more={hoodPath} label={t('קראו עוד', 'Read More')} align={align} />}
+                {hoodText.length > 0 && <HoodText paras={hoodText} more={hoodPath} label={t('קראו עוד', 'Read More')} less={t('הצג פחות', 'Show less')} align={align} />}
               </section>
             )}
           </div>
@@ -371,31 +371,37 @@ function AgentPhoto({ url, size }: { url: string | null; size: number }) {
     : <span className="flex shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0058B5,#010A36)] text-white/30" style={{ width: size, height: size }}><User size={size * 0.43} color="currentColor" variant="Bold" /></span>;
 }
 
-/** The neighbourhood's text, faded under a "Read More" that opens its page:
- *  five lines on a phone, about two paragraphs on the website. A short text
- *  is shown whole. */
-function HoodText({ paras, more, label, align }: { paras: string[]; more: string | null; label: string; align: string }) {
+/** The neighbourhood's text, faded under "Read More": five lines on a phone,
+ *  opened in place there (listing_detail_screen.dart); about two paragraphs
+ *  on the website, where it opens the neighbourhood's page. A short text is
+ *  shown whole. The phone's toggle is a checkbox, so it needs no script. */
+function HoodText({ paras, more, label, less, align }: { paras: string[]; more: string | null; label: string; less: string; align: string }) {
   const shownOnDesk = paras.length > 1 ? paras.slice(1) : paras;
   const long = (n: string[]) => n.join(' ').length > 240;
   const fadePhone = long(paras);
   const fadeDesk = long(shownOnDesk);
-  const fade = (fadePhone ? 'max-h-[112px] overflow-hidden' : '') + ' ' + (fadeDesk ? 'desk:max-h-[232px] desk:overflow-hidden' : 'desk:max-h-none');
+  const fade = (fadePhone ? 'max-h-[112px] overflow-hidden max-desk:group-has-[:checked]:max-h-none' : '') + ' ' + (fadeDesk ? 'desk:max-h-[232px] desk:overflow-hidden' : 'desk:max-h-none');
   return (
-    <div className="relative mt-3 desk:mt-6">
+    <div className="group relative mt-3 desk:mt-6">
+      {fadePhone && <input type="checkbox" id="hood-more" className="peer sr-only desk:hidden" />}
       <div className="relative">
         <div className={`flex flex-col gap-3 text-sm leading-[1.6] text-[#3D3D3D] desk:gap-6 desk:text-base ${fade}`}>
           {paras.map((p, i) => <p key={i} dir="auto" className={`whitespace-pre-line ${align} ${i === 0 && paras.length > 1 ? 'desk:hidden' : ''}`}>{p}</p>)}
         </div>
-        <span className={`pointer-events-none absolute inset-x-0 bottom-0 h-[60px] bg-gradient-to-b from-white/0 to-white desk:top-2.5 desk:h-auto desk:bg-[linear-gradient(to_bottom,rgba(255,255,255,0),#fff_98%)] ${fadePhone ? '' : 'hidden'} ${fadeDesk ? 'desk:block' : 'desk:hidden'}`} />
+        <span className={`pointer-events-none absolute inset-x-0 bottom-0 h-[60px] bg-gradient-to-b from-white/0 to-white max-desk:group-has-[:checked]:hidden desk:top-2.5 desk:h-auto desk:bg-[linear-gradient(to_bottom,rgba(255,255,255,0),#fff_98%)] ${fadePhone ? '' : 'hidden'} ${fadeDesk ? 'desk:block' : 'desk:hidden'}`} />
       </div>
-      {(fadePhone || fadeDesk) && (
-        <>
-          {more && (
-            <div className={`flex justify-center ${fadePhone ? '' : 'hidden'} ${fadeDesk ? 'desk:absolute desk:inset-x-0 desk:bottom-[7px] desk:flex' : 'desk:hidden'}`}>
-              <Link href={more} className="rounded-[60px] border border-midblue bg-white px-6 py-2 text-sm font-medium text-midblue desk:px-8 desk:py-2.5 desk:text-base desk:leading-6">{label}</Link>
-            </div>
-          )}
-        </>
+      {fadePhone && (
+        <div className="mt-3 flex justify-center desk:hidden">
+          <label htmlFor="hood-more" className="cursor-pointer rounded-[60px] border border-midblue bg-white px-6 py-2 text-sm font-medium text-midblue">
+            <span className="group-has-[:checked]:hidden">{label}</span>
+            <span className="hidden group-has-[:checked]:inline">{less}</span>
+          </label>
+        </div>
+      )}
+      {fadeDesk && more && (
+        <div className="hidden desk:absolute desk:inset-x-0 desk:bottom-[7px] desk:flex desk:justify-center">
+          <Link href={more} className="rounded-[60px] border border-midblue bg-white px-8 py-2.5 text-base font-medium leading-6 text-midblue">{label}</Link>
+        </div>
       )}
     </div>
   );

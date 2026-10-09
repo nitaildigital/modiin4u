@@ -139,9 +139,23 @@ export function GalleryStrip() {
   );
 }
 
-/** The photographs one at a time over the page, with arrows for a mouse. */
+/** The photographs one at a time over the page, with arrows for a mouse and
+ *  a swipe for a finger (the current site's PageView); pinching zooms the
+ *  page as the browser does. */
 function PhotoViewer({ photos, start, onClose }: { photos: string[]; start: number; onClose: () => void }) {
   const [at, setAt] = useState(start);
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const swipe = (e: React.TouchEvent) => {
+    const from = touch.current;
+    touch.current = null;
+    const end = e.changedTouches[0];
+    if (!from || !end) return;
+    const dx = end.clientX - from.x;
+    // A sideways stroke of 50 px or more, not a scroll or a tap.
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(end.clientY - from.y)) return;
+    // The viewer is laid out left to right: a stroke to the left shows the next.
+    setAt((i) => (dx < 0 ? Math.min(photos.length - 1, i + 1) : Math.max(0, i - 1)));
+  };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -155,7 +169,9 @@ function PhotoViewer({ photos, start, onClose }: { photos: string[]; start: numb
   }, [photos.length, onClose]);
   const nav = 'absolute top-1/2 -translate-y-1/2 flex size-14 items-center justify-center text-5xl leading-none text-white';
   return (
-    <div dir="ltr" role="dialog" aria-modal className="fixed inset-0 z-[70] bg-black/90" onClick={onClose}>
+    <div dir="ltr" role="dialog" aria-modal className="fixed inset-0 z-[70] bg-black/90" onClick={onClose}
+      onTouchStart={(e) => { const p = e.touches[0]; touch.current = e.touches.length === 1 && p ? { x: p.clientX, y: p.clientY } : null; }}
+      onTouchEnd={swipe}>
       <div className="flex size-full items-center justify-center px-4 py-16 desk:px-24" onClick={(e) => e.stopPropagation()}>
         <img src={photos[at]} alt="" className="max-h-full max-w-full object-contain" />
       </div>

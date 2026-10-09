@@ -476,7 +476,7 @@ function Phone({ v }: { v: View }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           {!v.cover && <span className="absolute inset-0 flex items-center justify-center"><Reserve size={60} color="rgba(255,255,255,0.25)" /></span>}
           <div className="absolute start-3 top-[7px]"><BackButton fallback={href('/businesses/')} label={t('חזרה', 'Back')} /></div>
-          <ShareMenu title={v.name} he={he} nativeFirst className="!absolute end-[68px] top-[7px]">
+          <ShareMenu title={v.name} he={he} nativeFirst className="!absolute end-3 top-[7px]">
             <span className="flex size-10 items-center justify-center rounded-full bg-white"><Export size={20} color="#3D3D3D" /></span>
           </ShareMenu>
           {v.photos.length > 0 && <div className="absolute bottom-3.5 end-[13px]"><ShowAllPhotos phone label={t('הצג את כל התמונות', 'Show all photos')} /></div>}

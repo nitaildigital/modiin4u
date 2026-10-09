@@ -6,11 +6,13 @@ export type Article = {
   id: string; slug: string; title: string; subtitle: string | null;
   excerpt: string | null; body: string | null; featured_image: string | null; og_image: string | null;
   seo_title: string | null; meta_description: string | null; published_at: string | null;
-  updated_at: string | null; noindex: boolean | null; view_count: number | null;
+  updated_at: string | null; noindex: boolean | null; view_count: number | null; share_count: number | null;
+  /** The byline the newsroom types in the panel; empty on the imported rows. */
+  credit: string | null;
   og_title: string | null; og_description: string | null; meta_keywords: string | null;
 };
 
-const FIELDS = 'id,slug,title,subtitle,excerpt,body,featured_image,og_image,seo_title,meta_description,published_at,updated_at,noindex,view_count,og_title,og_description,meta_keywords';
+const FIELDS = 'id,slug,title,subtitle,excerpt,body,featured_image,og_image,seo_title,meta_description,published_at,updated_at,noindex,view_count,share_count,credit,og_title,og_description,meta_keywords';
 const LIST_FIELDS = 'id,slug,title,excerpt,featured_image,published_at';
 
 /** One published article by its slug — or by its old address's slug. */

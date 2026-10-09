@@ -48,3 +48,15 @@ export function track(businessId: string, stat: BusinessStat): void {
     }).then(() => undefined, () => undefined);
   } catch { /* never fails the page */ }
 }
+
+/** Counts a view of an article through record_article_view (00066): once
+ *  per visitor per article per half hour, by the database — as the current
+ *  site counts it. Only on the live site, as above. */
+export function trackArticleView(articleId: string): void {
+  if (process.env.NEXT_PUBLIC_RECORD_STATS !== '1') return;
+  try {
+    void (client ??= browserDb()).rpc('record_article_view', {
+      p_article: articleId, p_platform: 'web', p_visitor: visitorId(),
+    }).then(() => undefined, () => undefined);
+  } catch { /* never fails the page */ }
+}

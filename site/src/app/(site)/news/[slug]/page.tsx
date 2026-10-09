@@ -11,6 +11,7 @@ import { banners } from '@/lib/data/banners';
 import { JsonLd } from '@/components/JsonLd';
 import { BannerImage } from '@/components/ui/Banner';
 import { ShareBar } from '@/components/ui/ShareBar';
+import { ArticleView } from '@/components/news/ArticleView';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -43,13 +44,14 @@ export default async function ArticlePage({ params }: Props) {
   const lang = await getLang();
   const t = tr(lang);
   const path = `/news/${slug}/`;
-  const [cats, comments, side] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR')]);
+  const [cats, comments, side, inline] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR'), banners('ARTICLE_INLINE')]);
   const related = await relatedArticles(a.id, cats.map((c) => c.id), 4);
   const cat = cats[0];
   const image = a.featured_image || a.og_image;
 
   return (
     <article className="wrap py-8 desk:py-15">
+      <ArticleView id={a.id} />
       <JsonLd data={[
         {
           '@context': 'https://schema.org', '@type': 'NewsArticle', headline: a.title.slice(0, 110),
@@ -72,10 +74,17 @@ export default async function ArticlePage({ params }: Props) {
           )}
           <h1 className="text-2xl font-medium leading-snug text-ink desk:text-[34px]">{h1For(path, a.title)}</h1>
           {a.subtitle && <p className="mt-3 text-base text-gray-text">{a.subtitle}</p>}
-          {a.published_at && (
-            <p className="mt-6 flex items-center gap-2 text-base text-gray-meta">
-              <Calendar size={18} color="currentColor" />
-              <time dateTime={a.published_at}>{formatDate(a.published_at, lang, true)}</time>
+          {(a.published_at || a.credit?.trim()) && (
+            <p className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-2 text-base text-gray-meta">
+              {a.published_at && (
+                <span className="flex items-center gap-2">
+                  <Calendar size={18} color="currentColor" />
+                  <time dateTime={a.published_at}>{formatDate(a.published_at, lang, true)}</time>
+                </span>
+              )}
+              {a.credit?.trim() && (
+                <span className="flex items-center gap-2"><img src="/web/news/meta_author.svg" alt="" className="size-[18px]" />{a.credit.trim()}</span>
+              )}
             </p>
           )}
         </div>
@@ -83,10 +92,12 @@ export default async function ArticlePage({ params }: Props) {
 
       <div className="mt-8 grid gap-12 desk:grid-cols-[1fr_426px] desk:gap-[150px]">
         <div className="min-w-0">
-          <ShareBar url={SITE_URL + href(path)} title={a.title} label={t('שיתוף', 'Share')} />
+          <ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} />
           {/* The page's one H1 is the headline above: a heading the story's own
               text opens with an h1 is set as an h2. */}
           <div className="prose-site mt-8" dangerouslySetInnerHTML={{ __html: (a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2') }} />
+          {/* The campaign booked under the story; nothing when none is. */}
+          {inline[0] && <div className="mt-14 max-w-[796px]"><BannerImage banner={inline[0]} /></div>}
 
           {comments.length > 0 && (
             <section className="mt-12 border-t border-line pt-8">
