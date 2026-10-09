@@ -496,7 +496,7 @@
   "tabOverview": "סקירה",
   "tabMenu": "תפריט",
   "tabPhotos": "תמונות",
-  "tabReviews": "ביקורות",
+  "tabReviews": "מה חושבים תושבי העיר?",
   "callNow": "התקשרו עכשיו",
   "uploadPhoto": "העלאת תמונה",
   "shareYourExperience": "שתפו את החוויה שלכם עם הקהילה",
@@ -926,5 +926,6 @@
   "parkingPhotoBy": "צילום: {name}",
   "@parkingPhotoBy": {"placeholders": {"name": {"type": "String"}}},
   "parkingWebsite": "אתר",
-  "parkingNotFound": "החניון לא נמצא"
+  "parkingNotFound": "החניון לא נמצא",
+  "whatLocalsSay": "מה חושבים תושבי העיר?"
 }

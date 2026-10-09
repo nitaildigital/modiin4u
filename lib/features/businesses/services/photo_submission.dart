@@ -122,6 +122,30 @@ abstract final class PhotoSubmissions {
     return List<Map<String, dynamic>>.from(rows).map(PhotoSubmission.fromJson).toList();
   }
 
+  /// A photograph for a review, uploaded to `reviews/<your id>/` (00076);
+  /// its address goes into the review, which the panel approves as a whole.
+  static Future<String> uploadForReview({
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    if (bytes.lengthInBytes > maxBytes) throw const PhotoTooLarge();
+    final client = SupabaseConfig.client;
+    final uid = client.auth.currentUser?.id;
+    if (uid == null) throw StateError('signed-out');
+    final ext = _extensionOf(fileName);
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    final tail = Random().nextInt(0x7fffffff).toRadixString(16);
+    final path = 'reviews/$uid/${stamp}_$tail$ext';
+    await client.storage
+        .from('media')
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(contentType: _mimeOf(ext), upsert: false),
+        );
+    return client.storage.from('media').getPublicUrl(path);
+  }
+
   static String _extensionOf(String name) {
     final dot = name.lastIndexOf('.');
     if (dot == -1) return '.jpg';

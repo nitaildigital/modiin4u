@@ -238,6 +238,7 @@ class BusinessRepository {
     required String businessId,
     required int rating,
     String? body,
+    List<String> photos = const [],
   }) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) {
@@ -257,7 +258,31 @@ class BusinessRepository {
       'author_id': uid,
       'rating': rating,
       'body': (body ?? '').trim().isEmpty ? null : body!.trim(),
+      if (photos.isNotEmpty) 'photos': photos,
     });
+  }
+
+  /// Whether this person agreed to show their profile photo next to what
+  /// they write (true / false), or has not been asked (null) — and whether
+  /// they have a photo at all.
+  Future<({bool? consent, bool hasPhoto})> postPhotoConsent() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return (consent: null, hasPhoto: false);
+    final row = await _client
+        .from('profiles')
+        .select('show_photo_on_posts, avatar_url')
+        .eq('id', uid)
+        .maybeSingle();
+    return (
+      consent: row?['show_photo_on_posts'] as bool?,
+      hasPhoto: ((row?['avatar_url'] as String?) ?? '').isNotEmpty,
+    );
+  }
+
+  Future<void> setPostPhotoConsent(bool show) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return;
+    await _client.from('profiles').update({'show_photo_on_posts': show}).eq('id', uid);
   }
 
   /// Whether this person has already reviewed this business, approved or

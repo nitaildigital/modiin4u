@@ -576,7 +576,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _title(_t('Reviews for ${b.name}', 'ביקורות על ${b.name}')),
+          _title(_t('What Locals Are Saying', 'מה חושבים תושבי העיר?')),
           const SizedBox(height: 39),
           if (reviews.isEmpty)
             // Nothing to average, and no place on the website to write the

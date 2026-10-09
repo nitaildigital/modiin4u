@@ -2260,7 +2260,7 @@ abstract class L {
   /// No description provided for @tabReviews.
   ///
   /// In he, this message translates to:
-  /// **'ביקורות'**
+  /// **'מה חושבים תושבי העיר?'**
   String get tabReviews;
 
   /// No description provided for @callNow.
@@ -4182,6 +4182,12 @@ abstract class L {
   /// In he, this message translates to:
   /// **'החניון לא נמצא'**
   String get parkingNotFound;
+
+  /// No description provided for @whatLocalsSay.
+  ///
+  /// In he, this message translates to:
+  /// **'מה חושבים תושבי העיר?'**
+  String get whatLocalsSay;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

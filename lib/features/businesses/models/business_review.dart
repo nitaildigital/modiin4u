@@ -9,7 +9,11 @@ class BusinessReview {
   /// in the reader's language. It used to be filled with the Hebrew word
   /// here, which the English website printed as it was.
   final String authorName;
+  /// The author's photo, only when they agreed to show it (00076).
   final String? authorAvatarUrl;
+
+  /// Photographs the author attached, up to four (00076).
+  final List<String> photos;
   final int rating;
   final String? title;
   final String body;
@@ -36,6 +40,7 @@ class BusinessReview {
     required this.rating,
     required this.body,
     this.authorAvatarUrl,
+    this.photos = const [],
     this.title,
     this.isVerified = false,
     this.createdAt,
@@ -55,14 +60,20 @@ class BusinessReview {
     final author = json['profiles!reviews_author_id_fkey'] ?? json['profiles'];
     final name = (json['author_name'] as String?) ??
         (author is Map ? author['full_name'] as String? : null);
-    final avatar = (json['author_avatar_url'] as String?) ??
-        (author is Map ? author['avatar_url'] as String? : null);
+    // The review's own copy only: it is filled when the author agreed to
+    // show their photo (00076). The profile's, through the join, would show
+    // it to its author and to admins whatever they had answered.
+    final avatar = json['author_avatar_url'] as String?;
 
     return BusinessReview(
       id: json['id'] as String,
       authorId: json['author_id'] as String?,
       authorName: name ?? '',
       authorAvatarUrl: avatar,
+      photos: [
+        for (final p in (json['photos'] as List?) ?? const [])
+          if (p is String && p.isNotEmpty) p,
+      ],
       rating: (json['rating'] as num?)?.toInt() ?? 0,
       title: json['title'] as String?,
       body: (json['body'] as String?) ?? '',

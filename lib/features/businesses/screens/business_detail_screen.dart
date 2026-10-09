@@ -162,6 +162,11 @@ class _BusinessDetailContentState
   bool _savingReview = false;
   final _reviewTextController = TextEditingController();
 
+  /// Photographs picked for the review being written, up to four (00076).
+  /// Uploaded only when the review is sent.
+  final _reviewPhotos = <({Uint8List bytes, String name})>[];
+  static const _maxReviewPhotos = 4;
+
   @override
   void dispose() {
     _reviewTextController.dispose();
@@ -820,11 +825,17 @@ class _BusinessDetailContentState
                   ),
                 ),
                 child: Center(
+                  // Two lines at most: "מה חושבים תושבי העיר?" is longer
+                  // than a third of a phone.
                   child: Text(
                     tab.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
-                      fontSize: 14,
+                      fontSize: 13,
+                      height: 1.15,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                       color: isActive
                           ? AppColors.midBlue
@@ -1007,109 +1018,18 @@ class _BusinessDetailContentState
           // businessGalleryProvider. A resident's own photograph joins them
           // once the panel approves it (00071); until then only its sender
           // sees it, marked as waiting.
+          // A resident's photographs come with their review now (the
+          // client's TestFlight note, 8 Oct): the button that sent one on its
+          // own is gone. Photographs already sent that way still show here,
+          // waiting, to their sender.
           _GalleryGrid(
             businessId: business.id,
             pending: pending,
-            addButton: canAdd
-                ? _AddPhotoButton(busy: _sendingPhoto, onTap: _addPhoto)
-                : null,
+            addButton: null,
           ),
         ],
       ),
     );
-  }
-
-  bool _sendingPhoto = false;
-
-  /// A resident's photograph of this business, sent to the panel's queue
-  /// (Resident photos). Signed out, it says sign-in is needed, as a review
-  /// does; the photograph reaches the gallery only once approved.
-  Future<void> _addPhoto() async {
-    if (_sendingPhoto) return;
-    if (ref.read(authProvider) == null) {
-      _reviewToast(
-        mTr(context, 'Sign in to add a photo', 'יש להתחבר כדי להוסיף תמונה'),
-        error: true,
-        signIn: true,
-      );
-      return;
-    }
-
-    final XFile? picked;
-    try {
-      picked = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 2000,
-        imageQuality: 85,
-      );
-    } catch (_) {
-      if (mounted) {
-        _reviewToast(
-          mTr(context, 'Could not open your photos', 'לא ניתן לפתוח את התמונות'),
-          error: true,
-        );
-      }
-      return;
-    }
-    if (picked == null || !mounted) return;
-    final bytes = await picked.readAsBytes();
-    if (!mounted) return;
-    if (bytes.lengthInBytes > PhotoSubmissions.maxBytes) {
-      _reviewToast(
-        mTr(
-          context,
-          'This photo is too large — up to 10 MB',
-          'התמונה גדולה מדי — עד 10MB',
-        ),
-        error: true,
-      );
-      return;
-    }
-
-    // A last look at the photograph, with room for a caption; leaving the
-    // caption empty sends it without one.
-    final caption = await showDialog<String>(
-      context: context,
-      builder: (_) => _PhotoCaptionDialog(bytes: bytes),
-    );
-    if (caption == null || !mounted) return;
-
-    setState(() => _sendingPhoto = true);
-    try {
-      await PhotoSubmissions.send(
-        businessId: business.id,
-        bytes: bytes,
-        fileName: picked.name,
-        caption: caption,
-      );
-      ref.invalidate(myPendingPhotosProvider(business.id));
-      if (mounted) {
-        _reviewToast(
-          mTr(
-            context,
-            'Thanks! Your photo will appear after approval',
-            'תודה! התמונה תופיע לאחר אישור',
-          ),
-        );
-      }
-    } on PhotoSenderBlocked {
-      if (mounted) _reviewToast(accountBlockedMessage(context), error: true);
-    } catch (e) {
-      final blocked = await refusedAsBlocked(e);
-      if (!mounted) return;
-      _reviewToast(
-        blocked
-            ? accountBlockedMessage(context)
-            : mTr(
-                context,
-                'The photo was not sent. Please try again.',
-                'התמונה לא נשלחה. נסו שוב.',
-              ),
-        error: true,
-      );
-    } finally {
-      if (mounted) setState(() => _sendingPhoto = false);
-    }
   }
 
   // ─────────────────────────────────────────────
@@ -1160,13 +1080,30 @@ class _BusinessDetailContentState
 
     setState(() => _savingReview = true);
     try {
-      await ref
-          .read(businessRepositoryProvider)
-          .addReview(
-            businessId: business.id,
-            rating: _userRating,
-            body: _reviewTextController.text,
-          );
+      final repo = ref.read(businessRepositoryProvider);
+      // Asked once, the first time someone with a profile photo writes:
+      // show it next to their reviews and comments? (00076; Settings can
+      // change it later.) Not answering keeps it hidden.
+      try {
+        final consent = await repo.postPhotoConsent();
+        if (consent.consent == null && consent.hasPhoto && mounted) {
+          final show = await _askShowPhoto();
+          if (show != null) await repo.setPostPhotoConsent(show);
+        }
+      } catch (_) {
+        // The review matters more than the question.
+      }
+
+      final photos = <String>[];
+      for (final p in _reviewPhotos) {
+        photos.add(await PhotoSubmissions.uploadForReview(bytes: p.bytes, fileName: p.name));
+      }
+      await repo.addReview(
+        businessId: business.id,
+        rating: _userRating,
+        body: _reviewTextController.text,
+        photos: photos,
+      );
 
       ref.invalidate(hasReviewedProvider(business.id));
       ref.invalidate(businessReviewsProvider(business.id));
@@ -1175,6 +1112,7 @@ class _BusinessDetailContentState
         _savingReview = false;
         _showReviewForm = false;
         _userRating = 0;
+        _reviewPhotos.clear();
       });
       _reviewTextController.clear();
       // It arrives as `pending`, so saying "thank you" alone would leave
@@ -1196,6 +1134,63 @@ class _BusinessDetailContentState
         error: true,
       );
     }
+  }
+
+  /// "Show your profile photo next to your reviews?" — once (00076).
+  Future<bool?> _askShowPhoto() {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          mTr(ctx, 'Show your profile photo?', 'להציג את תמונת הפרופיל שלך?'),
+          style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          mTr(
+            ctx,
+            'Your photo will appear next to your reviews and comments. You can change this in Settings.',
+            'התמונה שלך תופיע ליד הביקורות והתגובות שתכתוב/י. אפשר לשנות זאת בהגדרות.',
+          ),
+          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(mTr(ctx, 'No thanks', 'לא תודה')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(mTr(ctx, 'Yes, show it', 'כן, להציג')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A photograph for the review being written.
+  Future<void> _pickReviewPhoto() async {
+    if (_reviewPhotos.length >= _maxReviewPhotos) return;
+    final XFile? picked;
+    try {
+      picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2000,
+        imageQuality: 85,
+      );
+    } catch (_) {
+      if (mounted) {
+        _reviewToast(mTr(context, 'Could not open your photos', 'לא ניתן לפתוח את התמונות'), error: true);
+      }
+      return;
+    }
+    if (picked == null || !mounted) return;
+    final bytes = await picked.readAsBytes();
+    if (!mounted) return;
+    if (bytes.lengthInBytes > PhotoSubmissions.maxBytes) {
+      _reviewToast(mTr(context, 'This photo is too large — up to 10 MB', 'התמונה גדולה מדי — עד 10MB'), error: true);
+      return;
+    }
+    setState(() => _reviewPhotos.add((bytes: bytes, name: picked!.name)));
   }
 
   /// Opens the reply box for one review. Signed out, it says sign-in is
@@ -1401,6 +1396,65 @@ class _BusinessDetailContentState
                 contentPadding: const EdgeInsets.all(14),
               ),
             ),
+            const SizedBox(height: 12),
+            // Photographs with the review, up to four (00076).
+            SizedBox(
+              height: 64,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (var i = 0; i < _reviewPhotos.length; i++)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 8),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(_reviewPhotos[i].bytes, width: 64, height: 64, fit: BoxFit.cover),
+                          ),
+                          PositionedDirectional(
+                            top: 2,
+                            end: 2,
+                            child: GestureDetector(
+                              onTap: _savingReview ? null : () => setState(() => _reviewPhotos.removeAt(i)),
+                              child: Container(
+                                width: 22,
+                                height: 22,
+                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                child: const Icon(Icons.close, size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_reviewPhotos.length < _maxReviewPhotos)
+                    GestureDetector(
+                      onTap: _savingReview ? null : _pickReviewPhoto,
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F9FB),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE7E7E7)),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(IconsaxPlusLinear.gallery_add, size: 20, color: AppColors.midBlue),
+                            const SizedBox(height: 2),
+                            Text(
+                              mTr(context, 'Photo', 'תמונה'),
+                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: AppColors.midBlue),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -1414,6 +1468,7 @@ class _BusinessDetailContentState
                           _showReviewForm = false;
                           _userRating = 0;
                           _reviewTextController.clear();
+                          _reviewPhotos.clear();
                         });
                       },
                       style: OutlinedButton.styleFrom(
@@ -1749,7 +1804,9 @@ class _BusinessDetailContentState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              L.of(context).reviewsFor(business.name),
+              // The client's name for the section (8 Oct): what residents
+              // think, not "reviews".
+              L.of(context).whatLocalsSay,
               style: TextStyle(
                 fontFamily: AppFonts.inter,
                 fontSize: 16,
@@ -1828,6 +1885,8 @@ class _BusinessDetailContentState
               for (var i = 0; i < list.length; i++)
                 _ReviewCard(
                   initials: list[i].initials,
+                  avatarUrl: list[i].authorAvatarUrl,
+                  photos: list[i].photos,
                   name: list[i].authorName.isEmpty
                       ? L.of(context).resident
                       : list[i].authorName,
@@ -2140,6 +2199,12 @@ class _RatingBar extends StatelessWidget {
 // ═══════════════════════════════════════════════
 class _ReviewCard extends StatefulWidget {
   final String initials;
+
+  /// The author's photo when they agreed to show it; initials otherwise.
+  final String? avatarUrl;
+
+  /// Photographs attached to the review.
+  final List<String> photos;
   final String name;
   final String date;
   final int rating;
@@ -2169,6 +2234,8 @@ class _ReviewCard extends StatefulWidget {
 
   const _ReviewCard({
     required this.initials,
+    this.avatarUrl,
+    this.photos = const [],
     required this.name,
     required this.date,
     required this.rating,
@@ -2194,6 +2261,18 @@ class _ReviewCard extends StatefulWidget {
 }
 
 class _ReviewCardState extends State<_ReviewCard> {
+  Widget _initials() => Center(
+    child: Text(
+      widget.initials,
+      style: TextStyle(
+        fontFamily: AppFonts.inter,
+        fontSize: 11.2,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     // Animated, so the mark a notification put here fades rather than blinks.
@@ -2209,25 +2288,23 @@ class _ReviewCardState extends State<_ReviewCard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar circle
+          // Avatar circle: the author's photo when they agreed to show it
+          // (00076), else their initials.
           Container(
             width: 32,
             height: 32,
+            clipBehavior: Clip.antiAlias,
             decoration: const BoxDecoration(
               color: AppColors.turquoise,
               shape: BoxShape.circle,
             ),
-            child: Center(
-              child: Text(
-                widget.initials,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 11.2,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            child: widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: widget.avatarUrl!,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, _, _) => _initials(),
+                  )
+                : _initials(),
           ),
 
           const SizedBox(width: 12),
@@ -2310,6 +2387,31 @@ class _ReviewCardState extends State<_ReviewCard> {
                     height: 1.4,
                   ),
                 ),
+                if (widget.photos.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 72,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: widget.photos.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (context, i) => GestureDetector(
+                        onTap: () => showDialog<void>(
+                          context: context,
+                          barrierColor: Colors.black.withValues(alpha: 0.92),
+                          builder: (_) => _PhotoViewer(urls: widget.photos, start: i),
+                        ),
+                        child: NetworkPhoto(
+                          url: widget.photos[i],
+                          width: 72,
+                          height: 72,
+                          radius: BorderRadius.circular(10),
+                          icon: IconsaxPlusLinear.gallery,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 for (final reply in widget.replies)
                   _ReplyTile(
                     key: reply.id == widget.focusReplyId ? widget.focusReplyKey : null,
@@ -2771,46 +2873,6 @@ class _NoPhotosYet extends StatelessWidget {
           ),
           if (action != null) ...[const SizedBox(height: 16), action!],
         ],
-      ),
-    );
-  }
-}
-
-/// "Add photo" on the Photos tab.
-class _AddPhotoButton extends StatelessWidget {
-  final bool busy;
-  final VoidCallback onTap;
-  const _AddPhotoButton({required this.busy, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 42,
-      child: OutlinedButton.icon(
-        onPressed: busy ? null : onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.midBlue,
-          side: const BorderSide(color: AppColors.midBlue),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(50),
-          ),
-        ),
-        icon: busy
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(IconsaxPlusLinear.gallery_add, size: 18),
-        label: Text(
-          mTr(context, 'Add photo', 'הוספת תמונה'),
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
       ),
     );
   }

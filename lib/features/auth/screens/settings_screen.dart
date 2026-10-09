@@ -14,7 +14,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
 import '../../settings/models/notification_preferences.dart';
 import '../../settings/providers/preferences_provider.dart';
-import '../../businesses/providers/business_providers.dart' show enableLocation;
+import '../../businesses/providers/business_providers.dart' show enableLocation, businessRepositoryProvider;
 import 'web_settings_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -352,6 +352,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         onTap: () => context.push('/change-password'),
                       ),
+                      // Asked once when writing the first review (00076);
+                      // here to change the answer.
+                      if (signedIn) const _PostPhotoRow(),
                     ],
                   ),
                   gap,
@@ -563,6 +566,54 @@ class _SignInPrompt extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+/// "Show my photo on reviews and comments" — the resident's answer to the
+/// question the first review asks (00076). Off until they say yes.
+class _PostPhotoRow extends ConsumerStatefulWidget {
+  const _PostPhotoRow();
+
+  @override
+  ConsumerState<_PostPhotoRow> createState() => _PostPhotoRowState();
+}
+
+class _PostPhotoRowState extends ConsumerState<_PostPhotoRow> {
+  bool? _on;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(businessRepositoryProvider).postPhotoConsent().then((c) {
+      if (mounted) setState(() => _on = c.consent ?? false);
+    }).catchError((_) {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MSettingsRow(
+      leading: const MIconCircle(icon: IconsaxPlusLinear.profile_circle),
+      title: mTr(context, 'Show my photo', 'הצגת התמונה שלי'),
+      subtitle: mTr(
+        context,
+        'Your profile photo next to your reviews and comments',
+        'תמונת הפרופיל שלך ליד הביקורות והתגובות שלך',
+      ),
+      trailing: MSwitch(
+        value: _on ?? false,
+        onChanged: _on == null
+            ? null
+            : (v) async {
+                setState(() => _on = v);
+                try {
+                  await ref.read(businessRepositoryProvider).setPostPhotoConsent(v);
+                } catch (_) {
+                  if (mounted) setState(() => _on = !v);
+                }
+              },
       ),
     );
   }

@@ -402,7 +402,7 @@ class _RatingCardState extends ConsumerState<_RatingCard> {
     if (kIsWeb) {
       if (average == null) return const SizedBox.shrink();
       return _frame(
-        title: mTr(context, 'Neighbourhood rating', 'דירוג השכונה'),
+        title: L.of(context).whatLocalsSay,
         children: [_averageRow(average)],
       );
     }
@@ -411,7 +411,8 @@ class _RatingCardState extends ConsumerState<_RatingCard> {
     final mine = _pending ? _pendingValue : stored;
 
     return _frame(
-      title: mTr(context, 'Rate this neighbourhood', 'דרגו את השכונה'),
+      // The client's name for what residents think (8 Oct).
+      title: L.of(context).whatLocalsSay,
       children: [
         // Nothing while the figures load, so "no ratings yet" does not flash
         // up before an average that exists.

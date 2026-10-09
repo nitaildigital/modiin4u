@@ -250,6 +250,35 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                         : AppColors.grayText,
                   ),
                 ),
+                // Photographs the resident attached (00076), to look at
+                // before approving; a click opens one full size.
+                if ((r['photos'] as List?)?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final url in (r['photos'] as List).whereType<String>())
+                        InkWell(
+                          onTap: () => showDialog<void>(
+                            context: context,
+                            builder: (_) => Dialog(
+                              child: InteractiveViewer(
+                                child: NetworkPhoto(url: url, fit: BoxFit.contain, icon: IconsaxPlusLinear.gallery),
+                              ),
+                            ),
+                          ),
+                          child: NetworkPhoto(
+                            url: url,
+                            width: 88,
+                            height: 88,
+                            radius: BorderRadius.circular(8),
+                            icon: IconsaxPlusLinear.gallery,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
                 if (created != null) ...[
                   const SizedBox(height: 4),
                   Text(_date(created), style: small),

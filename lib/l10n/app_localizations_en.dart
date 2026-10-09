@@ -1164,7 +1164,7 @@ class LEn extends L {
   String get tabPhotos => 'Photos';
 
   @override
-  String get tabReviews => 'Reviews';
+  String get tabReviews => 'What Locals Are Saying';
 
   @override
   String get callNow => 'Call Now';
@@ -2250,4 +2250,7 @@ class LEn extends L {
 
   @override
   String get parkingNotFound => 'This car park could not be found';
+
+  @override
+  String get whatLocalsSay => 'What Locals Are Saying';
 }

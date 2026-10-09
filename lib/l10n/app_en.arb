@@ -496,7 +496,7 @@
   "tabOverview": "Overview",
   "tabMenu": "Menu",
   "tabPhotos": "Photos",
-  "tabReviews": "Reviews",
+  "tabReviews": "What Locals Are Saying",
   "callNow": "Call Now",
   "uploadPhoto": "Upload a Photo",
   "shareYourExperience": "Share your experience with the community",
@@ -905,5 +905,6 @@
   "parkingPhotoBy": "Photo: {name}",
   "@parkingPhotoBy": {"placeholders": {"name": {"type": "String"}}},
   "parkingWebsite": "Website",
-  "parkingNotFound": "This car park could not be found"
+  "parkingNotFound": "This car park could not be found",
+  "whatLocalsSay": "What Locals Are Saying"
 }

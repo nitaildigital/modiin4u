@@ -685,8 +685,12 @@ class _CuisineCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // The card's full width: given a height alone, the photograph
+            // took its own width and left the rest of the card white beside
+            // it (the client's TestFlight note, 8 Oct).
             NetworkPhoto(
               url: cuisine.imageUrl,
+              width: double.infinity,
               height: 90,
               radius: const BorderRadius.vertical(top: Radius.circular(11)),
               icon: IconsaxPlusBold.reserve,

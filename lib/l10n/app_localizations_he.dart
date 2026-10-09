@@ -1151,7 +1151,7 @@ class LHe extends L {
   String get tabPhotos => 'תמונות';
 
   @override
-  String get tabReviews => 'ביקורות';
+  String get tabReviews => 'מה חושבים תושבי העיר?';
 
   @override
   String get callNow => 'התקשרו עכשיו';
@@ -2222,4 +2222,7 @@ class LHe extends L {
 
   @override
   String get parkingNotFound => 'החניון לא נמצא';
+
+  @override
+  String get whatLocalsSay => 'מה חושבים תושבי העיר?';
 }
