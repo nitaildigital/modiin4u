@@ -86,9 +86,14 @@ class StepState {
 /// carries what was counted so far.
 ///
 /// What is counted goes to `daily_steps` (which keeps each day's highest
-/// figure): today's at most once a minute while it changes, and the month
-/// from the health store when it is read, so a group sees the morning walk
-/// even if the app was opened only in the evening.
+/// figure), when it matters rather than on a clock (9 Oct): as the app
+/// goes to the background or closes, the moment a goal is reached (the
+/// day's 10,000, or the running challenge's), when the Steps screen opens,
+/// and every half hour while the app stays open, so a group sees a long
+/// walk before it ends. The month from the health store goes when it is
+/// read, so a group sees the morning walk even if the app was opened only
+/// in the evening. Nothing is lost between: the count stays on the phone
+/// and the day keeps its highest.
 class StepCounter extends StateNotifier<StepState> {
   StepCounter(this._ref) : super(const StepState()) {
     _start();
@@ -126,14 +131,13 @@ class StepCounter extends StateNotifier<StepState> {
     await refreshHealth(upload: true);
     await _startSensor();
 
-    // Today's count is saved every five minutes while it changes, and once
-    // more as the app goes to the background, so nothing walked is lost. It
-    // was every minute, with six lists read again after each save — the
-    // database's busiest writer for one person walking (9 Oct). Coming back
-    // to the app re-reads the health store, which went on counting meanwhile.
-    _tick = Timer.periodic(const Duration(minutes: 5), (t) {
-      if (t.tick % 3 == 0) refreshHealth();
-      _uploadToday();
+    // Every half hour while the app stays open (it was every minute, with
+    // six lists read again after each save — the database's busiest writer
+    // for one person walking, 9 Oct). Coming back to the app re-reads the
+    // health store, which went on counting meanwhile; leaving it saves.
+    _tick = Timer.periodic(const Duration(minutes: 30), (_) async {
+      await refreshHealth();
+      await _uploadToday();
     });
     _lifecycle = AppLifecycleListener(
       onResume: () => refreshHealth(),
@@ -189,6 +193,7 @@ class StepCounter extends StateNotifier<StepState> {
       ..setInt(_kLast, r);
 
     state = state.copyWith(sensorToday: carried + r - base);
+    _checkGoals();
   }
 
   /// Re-reads the health store if it is allowed, and with [upload] sends
@@ -204,6 +209,7 @@ class StepCounter extends StateNotifier<StepState> {
     final days = await _healthSteps.readDays(_healthDays);
     if (!mounted) return;
     state = state.copyWith(healthDays: days);
+    _checkGoals();
     if (upload) {
       await _upload({
         for (final e in days.entries)
@@ -223,18 +229,58 @@ class StepCounter extends StateNotifier<StepState> {
   /// Health Connect's Play Store page, for an Android 13 phone without it.
   Future<void> installHealthConnect() => _healthSteps.install();
 
-  Future<void> _uploadToday() async {
+  /// The day's goal, the one the Steps screen's ring fills against.
+  static const dailyGoal = 10000;
+
+  /// The goals already saved for, today, so each sends once.
+  final Set<String> _goalsSent = {};
+
+  /// Saves today's count the moment it reaches a goal: the day's 10,000,
+  /// or the running challenge's — a day's target, or its total since it
+  /// began — so a win is recorded at once (00058).
+  void _checkGoals() {
+    final today = state.today;
+    if (today == null || today <= 0) return;
+    final day = dateKey(DateTime.now());
+    var reached = <String>[if (today >= dailyGoal) '$day:day'];
+    final challenge = _ref.read(activeChallengeProvider).valueOrNull;
+    final goal = (challenge?['goal'] as num?)?.toInt();
+    if (goal != null && goal > 0) {
+      final key = '$day:challenge:${challenge!['id']}';
+      if (challenge['goal_per_day'] == true) {
+        if (today >= goal) reached.add(key);
+      } else {
+        // The total as last read, which holds today's saved figure; the
+        // phone's count takes its place.
+        final total = _ref.read(myChallengeStepsProvider).valueOrNull;
+        if (total != null && total - (_lastUploaded ?? 0) + today >= goal) reached.add(key);
+      }
+    }
+    reached = reached.where((k) => !_goalsSent.contains(k)).toList();
+    if (reached.isEmpty) return;
+    _goalsSent.addAll(reached);
+    _uploadToday(refreshRanks: true);
+  }
+
+  /// Saves today's count now and reads the rankings again — the Steps
+  /// screen calls it as it opens.
+  Future<void> syncNow() async {
+    await refreshHealth();
+    await _uploadToday(refreshRanks: true);
+  }
+
+  Future<void> _uploadToday({bool refreshRanks = false}) async {
     final value = state.today;
     if (value == null || value <= 0 || value == _lastUploaded) return;
     // Remembered only once it is saved: offline, or before signing in, the
-    // next tick sends it again.
-    if (await _upload({dateKey(DateTime.now()): value})) _lastUploaded = value;
+    // next occasion sends it again.
+    if (await _upload({dateKey(DateTime.now()): value}, refreshRanks: refreshRanks)) _lastUploaded = value;
   }
 
   DateTime? _ranksReadAt;
 
   /// Saves [days]; true once they are in the database.
-  Future<bool> _upload(Map<String, int> days) async {
+  Future<bool> _upload(Map<String, int> days, {bool refreshRanks = false}) async {
     if (days.isEmpty || _ref.read(authProvider) == null) return false;
     try {
       await _ref.read(stepsRepositoryProvider).recordDays(days);
@@ -243,11 +289,10 @@ class StepCounter extends StateNotifier<StepState> {
       _ref.invalidate(myStepMonthProvider);
       _ref.invalidate(myChallengeStepsProvider);
       // The rankings and the challenge (a save can make someone the winner,
-      // 00058) read every resident's days: again at most every quarter of an
-      // hour, not after every save. Opening the screen or pulling it down
-      // reads them anyway.
+      // 00058) read every resident's days: again on a goal or as the screen
+      // opens, otherwise at most every quarter of an hour.
       final now = DateTime.now();
-      if (_ranksReadAt == null || now.difference(_ranksReadAt!) >= const Duration(minutes: 15)) {
+      if (refreshRanks || _ranksReadAt == null || now.difference(_ranksReadAt!) >= const Duration(minutes: 15)) {
         _ranksReadAt = now;
         _ref.invalidate(activeChallengeProvider);
         _ref.invalidate(peopleLeaderboardProvider);

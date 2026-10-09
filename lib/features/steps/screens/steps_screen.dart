@@ -57,6 +57,17 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
   /// because the app does not know anyone's height.
   static const _metresPerStep = 0.762;
 
+  @override
+  void initState() {
+    super.initState();
+    // Opening the screen saves today's count and reads the rankings, so
+    // what it shows is current (the counter saves on occasions, not on a
+    // clock).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(stepCounterProvider.notifier).syncNow();
+    });
+  }
+
   /// Consecutive days up to today with any steps recorded.
   ///
   /// The card said "5 Streak" to everybody. This counts.
