@@ -21,6 +21,13 @@ const VAPID = 'BGpBJqyhxlvkhpxOy6zQf6ZkW7pJRDWWQZAoMzBICt4LjU-WXnuxcpImChlzGs7Yz
 const SDK = 'https://www.gstatic.com/firebasejs/12.19.0';
 
 const TOKEN = 'flutter.push_token';
+/** When this browser's row was last filed, and the feed as last read. */
+const FILED = 'modiin4u.push_filed_at';
+const FEED = 'modiin4u.push_feed';
+/** How long a page reuses the feed another page read: every page draws the
+ *  bell, and the bell need not ask the database on each one. */
+const FEED_FOR_MS = 5 * 60 * 1000;
+const FILE_EVERY_MS = 24 * 60 * 60 * 1000;
 const SEEN = 'flutter.push_seen_at';
 const OPENED = 'flutter.push_opened_ids';
 /** Fired on window whenever the feed, the seen time or the opened set changes. */
@@ -67,12 +74,40 @@ export function savedToken(): string | null {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const load = new Function('u', 'return import(u)') as (u: string) => Promise<any>;
 
+/** A notification that came while a page of the site is open in front: the
+ *  browser leaves it to the page (Firebase shows nothing then), and the
+ *  page shows its own banner, as the current site does. */
+export type ForegroundPush = { campaignId: string | null; link: string | null; title: string; body: string };
+
+let listening = false;
+
+async function listen(app: unknown) {
+  if (listening) return;
+  listening = true;
+  const { getMessaging, onMessage } = await load(`${SDK}/firebase-messaging.js`);
+  onMessage(getMessaging(app), (m: { notification?: { title?: string; body?: string }; data?: Record<string, string> }) => {
+    const detail: ForegroundPush = {
+      campaignId: m.data?.campaign_id ?? null, link: m.data?.link ?? null,
+      title: m.notification?.title ?? '', body: m.notification?.body ?? '',
+    };
+    window.dispatchEvent(new CustomEvent<ForegroundPush>(PUSH_FOREGROUND, { detail }));
+    // The bell's list and count read again.
+    forgetFeed();
+    changed();
+  });
+}
+
+/** Fired on window with a [ForegroundPush] as its detail. */
+export const PUSH_FOREGROUND = 'modiin4u-push-foreground';
+
 async function firebaseToken(): Promise<string | null> {
   const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/firebase-cloud-messaging-push-scope' });
   const { initializeApp, getApps } = await load(`${SDK}/firebase-app.js`);
   const { getMessaging, getToken } = await load(`${SDK}/firebase-messaging.js`);
   const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE);
-  return (await getToken(getMessaging(app), { vapidKey: VAPID, serviceWorkerRegistration: reg })) || null;
+  const token = (await getToken(getMessaging(app), { vapidKey: VAPID, serviceWorkerRegistration: reg })) || null;
+  if (token) void listen(app);
+  return token;
 }
 
 /** Files the token with the app's default switches (PushSettings): all on
@@ -94,8 +129,13 @@ export async function refreshPush(lang: 'he' | 'en'): Promise<void> {
     if (!token) return;
     const had = savedToken();
     write(TOKEN, token);
+    // The row is filed again when the token changed, and otherwise once a
+    // day (to say the browser is still here) — not on every page.
+    const filed = read<{ at: number; token: string; lang: string }>(FILED);
+    if (had === token && filed && filed.token === token && filed.lang === lang && Date.now() - filed.at < FILE_EVERY_MS) return;
     await register(token, lang);
-    if (had !== token) changed();
+    write(FILED, { at: Date.now(), token, lang });
+    if (had !== token) { forgetFeed(); changed(); }
   } catch (e) {
     // The next visit tries again; said in the console, as the app's debug log does.
     console.warn('Push registration:', e);
@@ -108,7 +148,10 @@ export async function turnOnPush(lang: 'he' | 'en'): Promise<boolean> {
   if (!pushSupported()) return false;
   const answer = await Notification.requestPermission();
   if (answer !== 'granted') { changed(); return false; }
+  // A first "Turn on" files the row whatever was filed before.
+  try { localStorage.removeItem(FILED); } catch { /* filed anyway */ }
   await refreshPush(lang);
+  forgetFeed();
   changed();
   return true;
 }
@@ -116,8 +159,22 @@ export async function turnOnPush(lang: 'he' | 'en'): Promise<boolean> {
 /** What the bell lists: sent to this browser, or to everyone before it has
  *  a token; the last 60 days. */
 export async function pushFeed(): Promise<PushItem[]> {
-  const { data } = await client().rpc('push_feed', { p_token: savedToken(), p_limit: 50 });
-  return (data ?? []) as PushItem[];
+  const token = savedToken();
+  try {
+    const kept = JSON.parse(sessionStorage.getItem(FEED) ?? 'null') as { at: number; token: string | null; items: PushItem[] } | null;
+    if (kept && kept.token === token && Date.now() - kept.at < FEED_FOR_MS) return kept.items;
+  } catch { /* read it */ }
+  const { data, error } = await client().rpc('push_feed', { p_token: token, p_limit: 50 });
+  if (error) throw error;
+  const items = (data ?? []) as PushItem[];
+  try { sessionStorage.setItem(FEED, JSON.stringify({ at: Date.now(), token, items })); } catch { /* not kept */ }
+  return items;
+}
+
+/** A new notification, or a new token: the next look at the bell reads the
+ *  feed again. */
+function forgetFeed() {
+  try { sessionStorage.removeItem(FEED); } catch { /* nothing kept */ }
 }
 
 /** When the bell was last opened. The first visit sets it to now, so a new
