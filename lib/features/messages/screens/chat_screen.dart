@@ -6,6 +6,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../shared/widgets/m_kit.dart';
 import '../../../shared/widgets/m_step_form.dart';
+import '../../../shared/widgets/report_sheet.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/widgets/m_account_widgets.dart';
 import '../data/messages.dart';
@@ -21,8 +22,10 @@ const _avatarSize = 32.0;
 /// the newest at the foot, and a field to write in.
 ///
 /// Left out of the drawing because nothing backs them: the "Online" line and
-/// its green dot (there is no presence data), the attachment and emoji icons
-/// (messages are text only), and the "⋯" menu (it would have no action).
+/// its green dot (there is no presence data) and the attachment and emoji
+/// icons (messages are text only). The "⋯" menu reports the conversation or
+/// blocks it (00080 — App Review asks it of an app where people write to one
+/// another).
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
   const ChatScreen({super.key, required this.conversationId});
@@ -108,6 +111,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  /// Blocks the conversation, after asking, or unblocks it at once.
+  Future<void> _setBlocked(bool block) async {
+    if (block) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(mTr(ctx, 'Block this conversation?', 'לחסום את השיחה?'), style: mText(17, weight: FontWeight.w600)),
+          content: Text(
+            mTr(
+              ctx,
+              'Nobody will be able to write in it until you unblock it. The messages stay.',
+              'אף צד לא יוכל לכתוב בה עד שתבטלו את החסימה. ההודעות נשארות.',
+            ),
+            style: mText(14, height: 1.45),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(mTr(ctx, 'Cancel', 'ביטול'))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(mTr(ctx, 'Block', 'חסימה'), style: const TextStyle(color: mKitRed)),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+    try {
+      await _repo.setBlocked(widget.conversationId, block);
+      ref.invalidate(conversationsProvider);
+      if (mounted) {
+        mToast(context, block
+            ? mTr(context, 'Conversation blocked', 'השיחה נחסמה')
+            : mTr(context, 'Conversation unblocked', 'החסימה בוטלה'));
+      }
+    } catch (_) {
+      if (mounted) mToast(context, mTr(context, 'Could not save. Please try again.', 'לא ניתן היה לשמור. נסו שוב.'), error: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider);
@@ -152,7 +194,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             constraints: const BoxConstraints(maxWidth: 430),
             child: Column(
               children: [
-                _Header(conversation: conversation, loading: conversations.isLoading && conversation == null),
+                _Header(
+                  conversation: conversation,
+                  loading: conversations.isLoading && conversation == null,
+                  onReport: () => showReportSheet(context, entityType: 'conversation', entityId: widget.conversationId),
+                  onBlock: conversation == null || conversation.blockedByThem
+                      ? null
+                      : () => _setBlocked(!conversation!.blockedByMe),
+                ),
                 Expanded(
                   // A dropped realtime channel surfaces as an error; while the
                   // history is on screen it stays there rather than blanking.
@@ -178,7 +227,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           ),
                   ),
                 ),
-                _InputBar(controller: _field, sending: _sending, onSend: _send),
+                if (conversation != null && conversation.blocked)
+                  _BlockedBar(byMe: conversation.blockedByMe, onUnblock: () => _setBlocked(false))
+                else
+                  _InputBar(controller: _field, sending: _sending, onSend: _send),
               ],
             ),
           ),
@@ -194,7 +246,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 class _Header extends StatelessWidget {
   final Conversation? conversation;
   final bool loading;
-  const _Header({required this.conversation, required this.loading});
+  final VoidCallback onReport;
+
+  /// Block or unblock; null while the other side has blocked it, which only
+  /// they can undo.
+  final VoidCallback? onBlock;
+  const _Header({required this.conversation, required this.loading, required this.onReport, this.onBlock});
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +293,75 @@ class _Header extends StatelessWidget {
                 ],
               ),
             ),
+            PopupMenuButton<String>(
+              tooltip: mTr(context, 'More', 'עוד'),
+              icon: const Icon(IconsaxPlusLinear.more, size: 22, color: Color(0xFF3D3D3D)),
+              color: Colors.white,
+              onSelected: (v) => v == 'report' ? onReport() : onBlock?.call(),
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: 'report',
+                  child: Row(
+                    children: [
+                      const Icon(IconsaxPlusLinear.flag, size: 18, color: mStepInk),
+                      const SizedBox(width: 10),
+                      Text(mTr(ctx, 'Report', 'דיווח'), style: mText(14)),
+                    ],
+                  ),
+                ),
+                if (onBlock != null)
+                  PopupMenuItem(
+                    value: 'block',
+                    child: Row(
+                      children: [
+                        Icon(IconsaxPlusLinear.slash, size: 18, color: c.blockedByMe ? mStepInk : mKitRed),
+                        const SizedBox(width: 10),
+                        Text(
+                          c.blockedByMe ? mTr(ctx, 'Unblock', 'ביטול חסימה') : mTr(ctx, 'Block', 'חסימה'),
+                          style: mText(14, color: c.blockedByMe ? mStepInk : mKitRed),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// In place of the field while the conversation is blocked: who blocked it,
+/// and — for the one who did — the way to undo it.
+class _BlockedBar extends StatelessWidget {
+  final bool byMe;
+  final VoidCallback onUnblock;
+  const _BlockedBar({required this.byMe, required this.onUnblock});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF7F7F7),
+        border: Border(top: BorderSide(color: mStepHairline)),
+      ),
+      child: Row(
+        children: [
+          const Icon(IconsaxPlusLinear.slash, size: 18, color: mStepGrey),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              byMe
+                  ? mTr(context, 'You blocked this conversation.', 'חסמתם את השיחה הזו.')
+                  : mTr(context, 'You can no longer write in this conversation.', 'לא ניתן עוד לכתוב בשיחה הזו.'),
+              style: mText(13.5, color: mStepGrey),
+            ),
+          ),
+          if (byMe)
+            TextButton(onPressed: onUnblock, child: Text(mTr(context, 'Unblock', 'ביטול חסימה'), style: mText(13.5, weight: FontWeight.w600, color: mStepMid))),
         ],
       ),
     );

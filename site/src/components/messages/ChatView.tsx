@@ -5,6 +5,7 @@ import { ArrowRight2, ArrowLeft2, Briefcase, Send2 } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import { sessionDb, unreadChanged, useSession } from '@/lib/session';
 import { Avatar, SignInFirst, SignOutLink } from './parts';
+import { ChatMenu } from './ChatMenu';
 import type { Conversation } from './ConversationList';
 
 type Message = { id: string; conversation_id: string; sender_id: string | null; body: string; created_at: string };
@@ -26,6 +27,7 @@ export function ChatView({ lang, id }: { lang: Lang; id: string }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
+  const [reload, setReload] = useState(0);
   const readTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // A burst of replies is one "read", not several.
@@ -69,7 +71,7 @@ export function ChatView({ lang, id }: { lang: Lang; id: string }) {
       db.removeChannel(channel);
       if (readTimer.current) clearTimeout(readTimer.current);
     };
-  }, [session, id, markRead]);
+  }, [session, id, markRead, reload]);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: 'end' });
@@ -113,6 +115,11 @@ export function ChatView({ lang, id }: { lang: Lang; id: string }) {
             </>
           )}
           {!conversation && <h1 className="flex-1 text-base font-semibold text-black">{t('הודעות', 'Messages')}</h1>}
+          {session && conversation && (
+            <ChatMenu lang={lang} conversationId={id} userId={session.user.id}
+              blockedByMe={!!conversation.blocked_by_me} blockedByThem={!!conversation.blocked_by_them}
+              onChanged={() => setReload((n) => n + 1)} />
+          )}
           {session && <SignOutLink lang={lang} />}
         </div>
 
@@ -147,6 +154,21 @@ export function ChatView({ lang, id }: { lang: Lang; id: string }) {
               )}
               <div ref={bottom} />
             </div>
+            {/* Nothing to write in until the conversation is known: it may be blocked. */}
+            {!conversation ? null : (conversation.blocked_by_me || conversation.blocked_by_them) ? (
+              <div className="sticky bottom-[76px] flex items-center gap-3 border-t border-line bg-[#F7F7F7] px-4 py-3.5 text-sm text-[#6D6D6D] desk:bottom-0">
+                <span className="flex-1">
+                  {conversation.blocked_by_me ? t('חסמתם את השיחה הזו.', 'You blocked this conversation.')
+                    : t('לא ניתן עוד לכתוב בשיחה הזו.', 'You can no longer write in this conversation.')}
+                </span>
+                {conversation.blocked_by_me && (
+                  <button type="button" className="font-semibold text-midblue"
+                    onClick={async () => { await sessionDb().rpc('set_conversation_blocked', { p_conversation: id, p_blocked: false }); setReload((n) => n + 1); }}>
+                    {t('ביטול חסימה', 'Unblock')}
+                  </button>
+                )}
+              </div>
+            ) : (
             <form onSubmit={send} className="sticky bottom-[76px] flex items-end gap-2 border-t border-line bg-white py-3 desk:bottom-0">
               <textarea value={text} onChange={(e) => setText(e.target.value.slice(0, MAX))} rows={1}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
@@ -157,6 +179,7 @@ export function ChatView({ lang, id }: { lang: Lang; id: string }) {
                 <Send2 size={20} color="currentColor" className={lang === 'he' ? '-scale-x-100' : ''} />
               </button>
             </form>
+            )}
             {error && <p role="alert" className="pb-3 text-sm text-[#C0392B]">{error}</p>}
           </>
         )}

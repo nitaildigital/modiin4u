@@ -23,6 +23,12 @@ class Conversation {
   final DateTime lastMessageAt;
   final int unread;
 
+  /// Blocked (00080): by the caller, who may unblock it, or by the other
+  /// side. Either way nobody can write in it.
+  final bool blockedByMe;
+  final bool blockedByThem;
+  bool get blocked => blockedByMe || blockedByThem;
+
   const Conversation({
     required this.id,
     required this.businessId,
@@ -34,6 +40,8 @@ class Conversation {
     this.lastMessage,
     required this.lastMessageAt,
     this.unread = 0,
+    this.blockedByMe = false,
+    this.blockedByThem = false,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> j) => Conversation(
@@ -47,6 +55,8 @@ class Conversation {
     lastMessage: j['last_message'] as String?,
     lastMessageAt: DateTime.tryParse(j['last_message_at'] as String? ?? '') ?? DateTime.now(),
     unread: (j['unread'] as num?)?.toInt() ?? 0,
+    blockedByMe: j['blocked_by_me'] == true,
+    blockedByThem: j['blocked_by_them'] == true,
   );
 }
 
@@ -122,6 +132,14 @@ class MessageRepository {
       'conversation_id': conversationId,
       'sender_id': uid,
       'body': body.trim(),
+    });
+  }
+
+  /// Blocks the conversation from the caller's side, or unblocks it.
+  Future<void> setBlocked(String conversationId, bool blocked) async {
+    await _client.rpc('set_conversation_blocked', params: {
+      'p_conversation': conversationId,
+      'p_blocked': blocked,
     });
   }
 

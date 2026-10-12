@@ -12,6 +12,8 @@ export type Conversation = {
   id: string; business_id: string; profile_id: string; as_business: boolean;
   other_name: string | null; other_avatar: string | null; job_title: string | null;
   last_message: string | null; last_message_at: string; unread: number;
+  /** Blocked (00080) by this person, or by the other side. */
+  blocked_by_me?: boolean; blocked_by_them?: boolean;
 };
 
 /** Messages (the onboarding designs' Messages frame, 9 Oct): the search over

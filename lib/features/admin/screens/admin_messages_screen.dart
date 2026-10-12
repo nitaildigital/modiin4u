@@ -26,6 +26,10 @@ class _AdminConversation {
   final DateTime lastMessageAt;
   final int messageCount;
 
+  /// Blocked by either side (00080), and reports still open on it.
+  final bool blocked;
+  final int openReports;
+
   const _AdminConversation({
     required this.id,
     required this.businessName,
@@ -36,6 +40,8 @@ class _AdminConversation {
     this.lastMessage,
     required this.lastMessageAt,
     required this.messageCount,
+    this.blocked = false,
+    this.openReports = 0,
   });
 
   factory _AdminConversation.fromJson(Map<String, dynamic> j) => _AdminConversation(
@@ -50,6 +56,8 @@ class _AdminConversation {
     lastMessage: j['last_message'] as String?,
     lastMessageAt: DateTime.tryParse(j['last_message_at'] as String? ?? '')?.toLocal() ?? DateTime.now(),
     messageCount: (j['message_count'] as num?)?.toInt() ?? 0,
+    blocked: j['blocked'] == true,
+    openReports: (j['open_reports'] as num?)?.toInt() ?? 0,
   );
 }
 
@@ -331,6 +339,14 @@ class _ConversationTile extends StatelessWidget {
                             style: k.body.copyWith(fontSize: 13, color: k.inkSoft),
                           ),
                         ),
+                        if (c.openReports > 0) ...[
+                          const SizedBox(width: 6),
+                          AdminPill(tr('דווח (${c.openReports})', 'Reported (${c.openReports})'), k.danger),
+                        ],
+                        if (c.blocked) ...[
+                          const SizedBox(width: 6),
+                          AdminPill(tr('חסום', 'Blocked'), k.warning),
+                        ],
                         const SizedBox(width: 8),
                         AdminPill('${c.messageCount}', k.muted),
                       ],

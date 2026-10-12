@@ -159,6 +159,11 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                 _entityFilter == 'user',
                 () => _toggleEntity('user'),
               ),
+              AdminFilterChip(
+                tr('שיחות', 'Conversations'),
+                _entityFilter == 'conversation',
+                () => _toggleEntity('conversation'),
+              ),
             ],
           ],
           count: loaded != null ? tr('${loaded.length} דיווחים', '${loaded.length} reports') : null,
@@ -488,6 +493,11 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
       final client = SupabaseConfig.client;
       String? path;
       switch (type) {
+        // A conversation is not on the site: it is read in the panel's
+        // Messages, where a reported one is marked.
+        case 'conversation':
+          _toast(tr('פתחו את השיחה ב״הודעות״ — היא מסומנת ״דווח״.', 'Open it under Messages — it is marked "Reported".'));
+          return;
         case 'business':
           path = '/business/$id';
         case 'listing':
@@ -531,6 +541,8 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
     'comment' => tr('תגובה', 'Comment'),
     'article' => tr('כתבה', 'Article'),
     'user' => tr('משתמש', 'User'),
+    // 00080: read it in Messages.
+    'conversation' => tr('שיחה', 'Conversation'),
     _ => t,
   };
   IconData _entityIcon(String t) => switch (t) {
@@ -540,6 +552,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
     'comment' => Icons.comment,
     'article' => Icons.article,
     'user' => Icons.person,
+    'conversation' => Icons.forum_outlined,
     _ => Icons.help_outline,
   };
   String _shortDate(String iso) {
