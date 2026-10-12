@@ -2929,6 +2929,30 @@ Google Play today.
   "of 20,000", which needs a phone that counts steps. The test row and the
   admin were removed; the setting is unset, so the goal is 10,000 until the
   client sets one.
+- **WordPress's SEO, what the Next.js site still lacked.** Twelve pages of
+  each kind read side by side, WordPress against `site/`, tag by tag:
+  title, description, H1 and canonical were already the same; the
+  structured data is richer here (NewsArticle, LocalBusiness with address
+  and position, ItemList). Two things were missing:
+  - **WordPress's noindex.** The snapshot read robots only in double quotes
+    and Yoast writes it in single, so every page came out with none. Two
+    are `noindex, follow` on WordPress — the contact page and
+    `/search-apartments/` — and would have gone into Google at launch.
+    `pageMetadata` now keeps them out (links followed) and the sitemap
+    leaves them out (989 WordPress addresses).
+  - **The share picture (og:image).** 781 pages had one; where a page has
+    no picture of its own (home, Shabbat times, the section pages), it now
+    shares WordPress's, with its size. 761 of the 763 are on the server;
+    `2024/02/new.png` (`/modiin-news/`) and one uploaded in October are not
+    — `tool/copy_wp_uploads.py` again takes them.
+  The snapshot was taken again (12 Oct): titles, descriptions, H1s and the
+  menu unchanged since 8 Oct; one article new on WordPress
+  (`/news/modiin-news-524/`), one business gone from its sitemap
+  (`/business/דר-אורי-ליבוביץ-וטרינר-עד-הבית/`). Checked with SEO_LIVE on
+  (the metadata for both noindex pages, the home page, a business, Shabbat
+  times) and the share tags on the running site. The full parity check was
+  not run again — nothing it measures changed, and 992 pages on a dev
+  server is that many rounds of database reads.
 
 **Urban Profile and job messages, app, website and panel — 9 Oct.** The
 onboarding frames came (sign-up, three steps, Messages — Figma, 9 Oct) with
