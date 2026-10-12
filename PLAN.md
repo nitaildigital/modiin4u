@@ -2953,6 +2953,46 @@ Google Play today.
   times) and the share tags on the running site. The full parity check was
   not run again — nothing it measures changed, and 992 pages on a dev
   server is that many rounds of database reads.
+- **Yoast's tools, in the panel (12 Oct, Harshit: "yes do it").** Yoast is
+  a WordPress plugin and cannot run in Next.js; what it gave the client is
+  built here instead, with no migration — every column already existed.
+  - **SEO for events and categories.** Events get an SEO card (title, meta
+    description, keywords, share title, text and image, noindex); business
+    and article categories an SEO title and description (event and job
+    categories have no page of their own, so no fields). The site read all
+    of these already. 70 of the 82 business categories carry Yoast's,
+    copied over, which the panel could neither show nor change.
+  - **Redirects** (System → הפניות, table `redirects` from 00010): old
+    address, new one, 301 or 302, on or off — switched off, never deleted.
+    The panel keeps the path only, decoded, with the trailing slash (a
+    pasted full link is cut), and refuses the home page, an address to
+    itself, a second active one from the same address, and a loop of any
+    length. The site applies them in `site/src/middleware.ts`, after
+    next.config's own (WordPress's win), reading the list at most every
+    five minutes and keeping the last one if the database does not answer;
+    a destination without its own `?…` keeps the visitor's. The Location is
+    built from nginx's Host and X-Forwarded-Proto — Next refuses a relative
+    one in middleware (500s at first). The sitemap leaves out an address
+    that is redirected.
+  - **The Google preview and Yoast's checks** (`widgets/seo_preview.dart`)
+    in the SEO card of articles, businesses, events and categories: the
+    result as Google will show it, worked out as the site does (SEO title,
+    else the name with the suffix; meta description, else the start of the
+    text), and lights for the title (about 60 characters) and description
+    (120–160) lengths, a missing SEO title or description, and — articles,
+    which have a focus keyword — the keyword in the title, description,
+    address and text, and the text's length.
+  - **Canonical override** for articles, businesses and events
+    (`canonical_url`): empty, the page's own address; a full https link
+    otherwise, which the site puts in the canonical and og:url.
+  Checked in the panel as a temporary admin: Redirects (list, filters, a
+  loop refused, a pasted full link saved as its path), an event's SEO card
+  and a category's (Yoast's title and text shown, with the preview) —
+  looked at and cancelled, not saved. On the site: 301 and 302, a Hebrew
+  address, utm_ tags kept, an off one ignored, WordPress's own redirect
+  first, and the https address behind nginx's headers. Not seen: an
+  article's SEO card — the local web build was removed mid-test by a store
+  build in the same folder. The test redirects and the admin were deleted.
 
 **Urban Profile and job messages, app, website and panel — 9 Oct.** The
 onboarding frames came (sign-up, three steps, Messages — Figma, 9 Oct) with

@@ -9,6 +9,7 @@ import '../providers/admin_businesses_provider.dart';
 import '../widgets/business_stats_dialog.dart';
 import '../widgets/admin_gallery_editor.dart';
 import '../widgets/admin_load_error.dart';
+import '../widgets/seo_preview.dart';
 import '../widgets/image_upload_field.dart';
 import '../admin_language.dart';
 
@@ -675,6 +676,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
   late final TextEditingController _metaKeywords;
   late final TextEditingController _ogTitle;
   late final TextEditingController _ogDesc;
+  late final TextEditingController _canonical;
 
   // The homepage's recommended strip shows a featured business only inside
   // this window; empty means no limit on that side.
@@ -880,6 +882,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
     _ogDesc = TextEditingController(
       text: b?['og_description'] as String? ?? '',
     );
+    _canonical = TextEditingController(text: b?['canonical_url'] as String? ?? '');
     _featuredStart = TextEditingController(
       text: _dateText(b?['featured_start'] as String?),
     );
@@ -944,6 +947,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
     _metaKeywords.dispose();
     _ogTitle.dispose();
     _ogDesc.dispose();
+    _canonical.dispose();
     super.dispose();
   }
 
@@ -1588,6 +1592,20 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
       children: [
+        AdminSeoPreview(
+          listenTo: Listenable.merge([_name, _slug, _metaTitle, _metaDesc, _shortDesc, _fullDesc]),
+          read: () => (
+            title: _metaTitle.text.trim().isNotEmpty ? _metaTitle.text.trim() : _name.text.trim() + seoTitleSuffix,
+            ownTitle: _metaTitle.text.trim().isNotEmpty,
+            description: _metaDesc.text.trim().isNotEmpty
+                ? _metaDesc.text.trim()
+                : seoPlain(_shortDesc.text.trim().isNotEmpty ? _shortDesc.text : _fullDesc.text, 160),
+            ownDescription: _metaDesc.text.trim().isNotEmpty,
+            path: '/business/${_slug.text.trim()}/',
+            keyword: null,
+            text: null,
+          ),
+        ),
         _field('SEO Title', _metaTitle),
         _field('Meta Description', _metaDesc, maxLines: 3),
         _field('Meta Keywords', _metaKeywords),
@@ -1611,6 +1629,12 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
           folder: 'businesses/og',
         ),
         const SizedBox(height: 12),
+        // Empty: the page's own address. Only for a page that copies another.
+        _field(
+          tr('כתובת קנונית (ריק — כתובת העמוד עצמו)', "Canonical URL (empty — the page's own address)"),
+          _canonical,
+          validator: (v) => (v ?? '').trim().isEmpty || RegExp(r'^https?://').hasMatch(v!.trim()) ? null : tr('קישור מלא, מתחיל ב-https://', 'A full link, starting with https://'),
+        ),
         _toggle('Noindex', _noindex, (v) => setState(() => _noindex = v)),
       ],
     );
@@ -2139,6 +2163,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
       'meta_keywords': _t(_metaKeywords),
       'og_title': _t(_ogTitle),
       'og_description': _t(_ogDesc),
+      'canonical_url': _t(_canonical),
     };
 
     try {

@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: b.meta_description || plain(b.short_description || b.full_description, 160),
     image: b.og_image_url || b.cover_url,
     noindex: !!b.noindex,
+    canonical: b.canonical_url,
     modifiedTime: b.updated_at,
     ogTitle: b.og_title,
     ogDescription: b.og_description,

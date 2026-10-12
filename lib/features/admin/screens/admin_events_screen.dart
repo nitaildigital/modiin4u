@@ -8,6 +8,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../events/models/event_labels.dart';
 import '../providers/admin_events_provider.dart';
 import '../widgets/admin_events_form_fields.dart';
+import '../widgets/seo_preview.dart';
 import '../widgets/image_upload_field.dart';
 import '../admin_language.dart';
 import '../ui/admin_kit.dart';
@@ -604,6 +605,18 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
   late final TextEditingController _ticketUrl;
   late final TextEditingController _maxAttendees;
 
+  // SEO: what Google and a share show for the event's page. The site has
+  // read these since it was built (event/[id]/page.tsx); until now nothing in
+  // the panel wrote them.
+  late final TextEditingController _seoTitle;
+  late final TextEditingController _metaDescription;
+  late final TextEditingController _metaKeywords;
+  late final TextEditingController _ogTitle;
+  late final TextEditingController _ogDescription;
+  late final TextEditingController _ogImage;
+  late final TextEditingController _canonical;
+  bool _noindex = false;
+
   /// The description as it was opened, split the way it is shown — to tell
   /// whether it was edited. An untouched one is saved exactly as it was
   /// rather than re-assembled.
@@ -674,6 +687,14 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
     _price = TextEditingController(text: number('price'));
     _ticketUrl = TextEditingController(text: text('ticket_url'));
     _maxAttendees = TextEditingController(text: number('max_attendees'));
+    _seoTitle = TextEditingController(text: text('seo_title'));
+    _metaDescription = TextEditingController(text: text('meta_description'));
+    _metaKeywords = TextEditingController(text: text('meta_keywords'));
+    _ogTitle = TextEditingController(text: text('og_title'));
+    _ogDescription = TextEditingController(text: text('og_description'));
+    _ogImage = TextEditingController(text: text('og_image'));
+    _canonical = TextEditingController(text: text('canonical_url'));
+    _noindex = e?['noindex'] as bool? ?? false;
 
     _status = e?['status'] as String? ?? 'draft';
     if (!_statuses.containsKey(_status)) _status = 'draft';
@@ -714,6 +735,13 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       _price,
       _ticketUrl,
       _maxAttendees,
+      _seoTitle,
+      _metaDescription,
+      _metaKeywords,
+      _ogTitle,
+      _ogDescription,
+      _ogImage,
+      _canonical,
     ]) {
       c.dispose();
     }
@@ -1088,6 +1116,68 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
               ],
             ),
           ),
+
+          // ── Google and sharing ──
+          AdminCard(
+            title: 'SEO',
+            subtitle: tr('כותרת ותיאור לגוגל ולשיתוף', 'Title and description for Google and sharing'),
+            collapsible: true,
+            initiallyOpen: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AdminSeoPreview(
+                  listenTo: Listenable.merge([_title, _seoTitle, _metaDescription, _shortDescription, _body]),
+                  read: () => (
+                    title: _seoTitle.text.trim().isNotEmpty ? _seoTitle.text.trim() : _title.text.trim() + seoTitleSuffix,
+                    ownTitle: _seoTitle.text.trim().isNotEmpty,
+                    description: _metaDescription.text.trim().isNotEmpty
+                        ? _metaDescription.text.trim()
+                        : seoPlain(_shortDescription.text.trim().isNotEmpty ? _shortDescription.text : _body.text, 160),
+                    ownDescription: _metaDescription.text.trim().isNotEmpty,
+                    // A new event has its address once it is saved.
+                    path: '/event/${_id ?? '…'}/',
+                    keyword: null,
+                    text: null,
+                  ),
+                ),
+                AdminField(
+                  label: tr('כותרת SEO', 'SEO title'),
+                  controller: _seoTitle,
+                  helper: tr('ריק — שם האירוע עם סיומת האתר.', "Empty — the event's name with the site's suffix."),
+                ),
+                AdminField(
+                  label: tr('תיאור מטא', 'Meta description'),
+                  controller: _metaDescription,
+                  maxLines: 3,
+                  helper: tr('ריק — תחילת התיאור הקצר.', 'Empty — the start of the short description.'),
+                ),
+                AdminField(label: tr('מילות מפתח', 'Meta keywords'), controller: _metaKeywords),
+                AdminField(label: tr('כותרת לשיתוף (OG)', 'Share title (OG)'), controller: _ogTitle),
+                AdminField(label: tr('תיאור לשיתוף (OG)', 'Share description (OG)'), controller: _ogDescription, maxLines: 3),
+                // The site also shows it on the event's card when there is no
+                // image above.
+                ImageUploadField(
+                  label: tr('תמונת שיתוף (OG)', 'Share image (OG)'),
+                  controller: _ogImage,
+                  folder: 'events/og',
+                ),
+                const SizedBox(height: 8),
+                AdminField(
+                  label: tr('כתובת קנונית', 'Canonical URL'),
+                  controller: _canonical,
+                  textDirection: TextDirection.ltr,
+                  helper: tr('ריק — כתובת העמוד עצמו. רק כשהעמוד מעתיק עמוד אחר, הקישור המלא אליו.', "Empty — the page's own address. Only when this page copies another: the full link to that one."),
+                  validator: (v) => (v ?? '').trim().isEmpty || RegExp(r'^https?://').hasMatch(v!.trim()) ? null : tr('קישור מלא, מתחיל ב-https://', 'A full link, starting with https://'),
+                ),
+                AdminSwitchRow(
+                  label: tr('להסתיר מגוגל (noindex)', 'Hide from Google (noindex)'),
+                  value: _noindex,
+                  onChanged: (v) => setState(() => _noindex = v),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1359,6 +1449,14 @@ class _EventEditorDialogState extends ConsumerState<_EventEditorDialog> {
       'status': _status,
       'is_featured': _isFeatured,
       'notify_on_publish': _notifyOnPublish,
+      'seo_title': nullIfEmpty(_seoTitle),
+      'meta_description': nullIfEmpty(_metaDescription),
+      'meta_keywords': nullIfEmpty(_metaKeywords),
+      'og_title': nullIfEmpty(_ogTitle),
+      'og_description': nullIfEmpty(_ogDescription),
+      'og_image': nullIfEmpty(_ogImage),
+      'canonical_url': nullIfEmpty(_canonical),
+      'noindex': _noindex,
       // Stamped the first time it goes out, and never moved after: the site's
       // "Newest" sort reads it.
       if (_status == 'published' && publishedAt == null)

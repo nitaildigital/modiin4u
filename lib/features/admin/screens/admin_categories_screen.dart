@@ -7,6 +7,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_categories_provider.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../widgets/seo_preview.dart';
 import '../admin_language.dart';
 import '../ui/admin_kit.dart';
 
@@ -373,7 +374,17 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
   late final TextEditingController _description;
   late final TextEditingController _sortOrder;
   late final TextEditingController _imageUrl;
+
+  /// What Google shows for the category's page — `/business-cat/<slug>/` or
+  /// `/new/<slug>/`. Most business categories carry Yoast's, copied over;
+  /// the panel could not show or change them.
+  late final TextEditingController _metaTitle;
+  late final TextEditingController _metaDescription;
   String _scope = 'business';
+
+  /// Only business and article categories have a page of their own on the
+  /// site; for the others these fields would change nothing.
+  bool get _hasPage => _scope == 'business' || _scope == 'article';
 
   /// Why the last save failed, shown in the dialog rather than behind it.
   String? _error;
@@ -417,6 +428,8 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
       text: (c?['sort_order'] as int?)?.toString() ?? '0',
     );
     _imageUrl = TextEditingController(text: c?['image_url'] as String? ?? '');
+    _metaTitle = TextEditingController(text: c?['meta_title'] as String? ?? '');
+    _metaDescription = TextEditingController(text: c?['meta_description'] as String? ?? '');
     _scope = c?['scope'] as String? ?? 'business';
     _parentId = c?['parent_id'] as String?;
     _isActive = c?['is_active'] as bool? ?? true;
@@ -432,6 +445,8 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
     _description.dispose();
     _sortOrder.dispose();
     _imageUrl.dispose();
+    _metaTitle.dispose();
+    _metaDescription.dispose();
     super.dispose();
   }
 
@@ -693,6 +708,45 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
                           onChanged: (v) => setState(() => _inMenus = v),
                           contentPadding: EdgeInsets.zero,
                         ),
+                      if (_hasPage) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          'SEO',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          tr('ריק — שם הקטגוריה עם סיומת האתר, ותחילת התיאור.',
+                              "Empty — the category's name with the site's suffix, and the start of the description."),
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 12,
+                            color: AppColors.adminTextLight,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        AdminSeoPreview(
+                          listenTo: Listenable.merge([_name, _slug, _metaTitle, _metaDescription, _description]),
+                          read: () => (
+                            title: _metaTitle.text.trim().isNotEmpty ? _metaTitle.text.trim() : _name.text.trim() + seoTitleSuffix,
+                            ownTitle: _metaTitle.text.trim().isNotEmpty,
+                            description: _metaDescription.text.trim().isNotEmpty
+                                ? _metaDescription.text.trim()
+                                : seoPlain(_description.text, 160),
+                            ownDescription: _metaDescription.text.trim().isNotEmpty,
+                            path: _scope == 'business' ? '/business-cat/${_slug.text.trim()}/' : '/new/${_slug.text.trim()}/',
+                            keyword: null,
+                            text: null,
+                          ),
+                        ),
+                        _field(tr('כותרת SEO', 'SEO title'), _metaTitle),
+                        _field(tr('תיאור מטא', 'Meta description'), _metaDescription, maxLines: 3),
+                      ],
                     ],
                   ),
                 ),
@@ -820,6 +874,10 @@ class _CategoryEditorDialogState extends ConsumerState<_CategoryEditorDialog> {
       'is_active': _isActive,
       if (_hasInMenus) 'in_menus': _scope != 'business' || _inMenus,
       if (_hasNameEn) 'name_en': _nameEn.text.trim().isEmpty ? null : _nameEn.text.trim(),
+      if (_hasPage) ...{
+        'meta_title': _metaTitle.text.trim().isEmpty ? null : _metaTitle.text.trim(),
+        'meta_description': _metaDescription.text.trim().isEmpty ? null : _metaDescription.text.trim(),
+      },
     };
 
     try {

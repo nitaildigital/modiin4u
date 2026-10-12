@@ -17,7 +17,7 @@ export type Business = {
   has_parking: boolean | null; pet_friendly: boolean | null; open_on_shabbat: boolean | null;
   hours_text: string | null; google_place_id: string | null;
   meta_title: string | null; meta_description: string | null; meta_keywords: string | null;
-  og_title: string | null; og_description: string | null; noindex: boolean | null;
+  og_title: string | null; og_description: string | null; noindex: boolean | null; canonical_url: string | null;
   updated_at: string | null; neighborhood_id: string | null;
   /** The account that runs the business, if any — who reads its Messages. */
   owner_id: string | null;
@@ -28,7 +28,7 @@ export type Business = {
 const FIELDS = 'id,slug,kind,name,name_en,short_description,full_description,phone,website,whatsapp,instagram,'
   + 'address,latitude,longitude,logo_url,cover_url,og_image_url,rating,review_count,kosher_level,'
   + 'has_delivery,has_outdoor,is_accessible,has_parking,pet_friendly,open_on_shabbat,hours_text,google_place_id,'
-  + 'meta_title,meta_description,meta_keywords,og_title,og_description,noindex,updated_at,neighborhood_id,owner_id,'
+  + 'meta_title,meta_description,meta_keywords,og_title,og_description,noindex,canonical_url,updated_at,neighborhood_id,owner_id,'
   + 'neighborhoods!businesses_neighborhood_id_fkey(id,name,name_en,slug),business_hours(day_of_week,open_time,close_time)';
 
 /** One active business or park, by its slug or by its id — the app takes

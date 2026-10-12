@@ -45,13 +45,14 @@ export type EventDetail = EventCard & {
   og_title: string | null;
   og_description: string | null;
   noindex: boolean | null;
+  canonical_url: string | null;
   updated_at: string | null;
 };
 
 export type EventCategory = { id: string; name: string; name_en: string | null; slug: string; image_url: string | null };
 
 const CARD = 'id,title,image_url,og_image,start_date,start_time,end_time,is_all_day,venue_name,address,latitude,longitude,is_online,is_free,price,rsvp_count,published_at';
-const DETAIL = CARD + ',slug,status,short_description,full_description,end_date,waze_url,online_url,ticket_url,is_sold_out,business_id,seo_title,meta_description,meta_keywords,og_title,og_description,noindex,updated_at';
+const DETAIL = CARD + ',slug,status,short_description,full_description,end_date,waze_url,online_url,ticket_url,is_sold_out,business_id,seo_title,meta_description,meta_keywords,og_title,og_description,noindex,canonical_url,updated_at';
 
 type Row = Record<string, unknown>;
 
@@ -176,6 +177,7 @@ export const eventById = cache(async (id: string): Promise<EventDetail | null> =
     og_title: str(r.og_title),
     og_description: str(r.og_description),
     noindex: (r.noindex as boolean | null) ?? null,
+    canonical_url: str(r.canonical_url),
     updated_at: str(r.updated_at),
   };
 });

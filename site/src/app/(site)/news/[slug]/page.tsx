@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     image: a.og_image || a.featured_image,
     type: 'article',
     noindex: !!a.noindex,
+    canonical: a.canonical_url,
     publishedTime: a.published_at,
     modifiedTime: a.updated_at,
     ogTitle: a.og_title,

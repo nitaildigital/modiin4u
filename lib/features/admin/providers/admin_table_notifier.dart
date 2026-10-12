@@ -294,7 +294,8 @@ class AdminTableNotifier
   /// the log is not a second copy of who they are.
   String? _labelOf(Map<String, dynamic>? row) {
     if (row == null || _unnamedTables.contains(table)) return null;
-    for (final key in const ['title', 'name', 'label', 'code']) {
+    // A redirect has no name; its old address says which one it is.
+    for (final key in const ['title', 'name', 'label', 'code', 'old_path']) {
       final v = row[key];
       if (v is String && v.trim().isNotEmpty) return v.trim();
     }

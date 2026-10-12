@@ -8,6 +8,7 @@ import '../ui/admin_kit.dart';
 import '../widgets/admin_rich_editor.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
+import '../widgets/seo_preview.dart';
 import '../admin_language.dart';
 
 class AdminArticlesScreen extends ConsumerStatefulWidget {
@@ -617,6 +618,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
   late final TextEditingController _focusKeyword;
   late final TextEditingController _ogTitle;
   late final TextEditingController _ogDesc;
+  late final TextEditingController _canonical;
 
   String _status = 'draft';
   bool _isBreaking = false;
@@ -673,6 +675,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
     _ogDesc = TextEditingController(
       text: a?['og_description'] as String? ?? '',
     );
+    _canonical = TextEditingController(text: a?['canonical_url'] as String? ?? '');
 
     _status = a?['status'] as String? ?? 'draft';
     _isBreaking = a?['is_breaking'] as bool? ?? false;
@@ -733,6 +736,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
     _focusKeyword.dispose();
     _ogTitle.dispose();
     _ogDesc.dispose();
+    _canonical.dispose();
     super.dispose();
   }
 
@@ -954,12 +958,33 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
                   validator: (v) => v == null || v.isEmpty ? tr('שדה חובה', 'Required field') : null,
                   onChanged: (_) => _slugTouched = true,
                 ),
+                AdminSeoPreview(
+                  listenTo: Listenable.merge([_title, _slug, _seoTitle, _metaDesc, _focusKeyword, _excerpt, _body]),
+                  read: () => (
+                    title: _seoTitle.text.trim().isNotEmpty ? _seoTitle.text.trim() : _title.text.trim() + seoTitleSuffix,
+                    ownTitle: _seoTitle.text.trim().isNotEmpty,
+                    description: _metaDesc.text.trim().isNotEmpty
+                        ? _metaDesc.text.trim()
+                        : seoPlain(_excerpt.text.trim().isNotEmpty ? _excerpt.text : _body.text, 160),
+                    ownDescription: _metaDesc.text.trim().isNotEmpty,
+                    path: '/news/${_slug.text.trim()}/',
+                    keyword: _focusKeyword.text,
+                    text: seoPlain(_body.text),
+                  ),
+                ),
                 AdminField(label: 'SEO Title', controller: _seoTitle),
                 AdminField(label: 'Meta Description', controller: _metaDesc, maxLines: 3),
                 AdminField(label: 'Meta Keywords', controller: _metaKeywords),
                 AdminField(label: 'Focus Keyword', controller: _focusKeyword),
                 AdminField(label: 'OG Title', controller: _ogTitle),
                 AdminField(label: 'OG Description', controller: _ogDesc, maxLines: 3),
+                AdminField(
+                  label: tr('כתובת קנונית', 'Canonical URL'),
+                  controller: _canonical,
+                  textDirection: TextDirection.ltr,
+                  helper: tr('ריק — כתובת העמוד עצמו. רק כשהעמוד מעתיק עמוד אחר, הקישור המלא אליו.', "Empty — the page's own address. Only when this page copies another: the full link to that one."),
+                  validator: (v) => (v ?? '').trim().isEmpty || RegExp(r'^https?://').hasMatch(v!.trim()) ? null : tr('קישור מלא, מתחיל ב-https://', 'A full link, starting with https://'),
+                ),
                 AdminSwitchRow(label: 'Noindex', value: _noindex, onChanged: (v) => setState(() => _noindex = v)),
                 AdminSwitchRow(label: 'Nofollow', value: _nofollow, onChanged: (v) => setState(() => _nofollow = v)),
               ],
@@ -1333,6 +1358,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
       'focus_keyword': text(_focusKeyword),
       'og_title': text(_ogTitle),
       'og_description': text(_ogDesc),
+      'canonical_url': _canonical.text.trim().isEmpty ? null : _canonical.text.trim(),
       'noindex': _noindex,
       'nofollow': _nofollow,
     };

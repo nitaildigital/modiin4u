@@ -56,13 +56,17 @@ type Meta = {
   ogTitle?: string | null;
   ogDescription?: string | null;
   keywords?: string | null;
+  /** The panel's canonical override: this page copies another, and Google
+   *  should credit that one. Empty, the page's own address. */
+  canonical?: string | null;
 };
 
 export function pageMetadata(m: Meta): Metadata {
   const wpp = wpPage(m.path);
   const title = m.title || wpp?.title || SITE_NAME;
   const description = m.description || wpp?.description || undefined;
-  const url = SITE_URL + href(m.path);
+  const own = SITE_URL + href(m.path);
+  const url = m.canonical && /^https?:\/\//i.test(m.canonical.trim()) ? m.canonical.trim() : own;
   // WordPress kept a few pages out of Google (the contact page, the
   // apartment search: `noindex, follow`); they stay out here, links still
   // followed, as Yoast had them.

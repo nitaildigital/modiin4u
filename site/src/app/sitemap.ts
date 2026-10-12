@@ -3,6 +3,7 @@ import { SITE_URL } from '@/lib/config';
 import { href, wpPage, wpPaths } from '@/lib/seo';
 import { db } from '@/lib/supabase';
 import { categoryPath } from '@/lib/routes';
+import { redirectKey } from '@/lib/redirects';
 
 export const revalidate = 600;
 
@@ -37,11 +38,12 @@ async function allRows<T>(page: (from: number, to: number) => PromiseLike<{ data
  *  category from the database, the sections, and every address the
  *  WordPress site had. One entry per address. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [arts, biz, cats, used] = await Promise.all([
+  const [arts, biz, cats, used, moved] = await Promise.all([
     allRows((a, b) => db.from('articles').select('slug, updated_at, published_at, noindex').eq('status', 'published').order('id').range(a, b)),
     allRows((a, b) => db.from('businesses').select('slug, updated_at, noindex').eq('status', 'active').order('id').range(a, b)),
     db.from('categories').select('id, slug, scope, updated_at').eq('is_active', true).in('scope', ['business', 'article']),
     filedCategories(),
+    db.from('redirects').select('old_path').eq('is_active', true),
   ]);
   const out = new Map<string, string | undefined>();
   for (const p of ['/', '/news/', '/business/', '/search-rest-modiin/', '/events/', '/deals/', '/search-apartments/', '/municipal/', '/parks/', '/shabat-times-modiin/', '/community/']) out.set(p, undefined);
@@ -51,5 +53,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const p of wpPaths()) if (!out.has(p)) out.set(p, undefined);
   // An address WordPress redirects is redirected here too: not listed.
   for (const p of [...out.keys()]) if (wpPage(p)?.redirect_to) out.delete(p);
+  // So is one the panel redirects (Redirects): Google is told of its new
+  // address by the redirect, not asked to crawl the old one.
+  for (const r of moved.data ?? []) out.delete(redirectKey(r.old_path));
   return [...out].map(([path, lastmod]) => ({ url: SITE_URL + href(path), ...(lastmod ? { lastModified: lastmod } : {}) }));
 }

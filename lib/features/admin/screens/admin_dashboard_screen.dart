@@ -31,6 +31,7 @@ import 'admin_ad_placements_screen.dart';
 import 'admin_campaigns_screen.dart';
 import 'admin_comments_screen.dart';
 import 'admin_messages_screen.dart';
+import 'admin_redirects_screen.dart';
 import 'admin_reports_screen.dart';
 import 'admin_push_screen.dart';
 import 'admin_team_screen.dart';
@@ -98,6 +99,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     ('Feature Flags', IconsaxPlusLinear.toggle_on_circle),
     (tr('עמודי מידע', 'Info pages'), IconsaxPlusLinear.document_1),
     (tr('הגדרות', 'Settings'), IconsaxPlusLinear.setting_2),
+    // Last, so no section before it moves: the indexes below are counted.
+    (tr('הפניות', 'Redirects'), IconsaxPlusLinear.arrow_swap_horizontal),
   ];
 
   /// The permission module ([AdminPermissions]) behind each of [_sections],
@@ -125,6 +128,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     // Messages (00078) go with moderation, as its functions ask.
     'moderation', 'moderation', 'moderation', 'moderation', 'push', 'settings', //
     'team', 'audit', 'settings', 'settings', 'settings', 'articles', null,
+    // Redirects go with settings: they change where the site's addresses lead.
+    'settings',
   ];
 
   /// Whether the signed-in administrator's role may open section [i].
@@ -346,6 +351,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       31 => const AdminFlagsScreen(),
       32 => const AdminSitePagesScreen(),
       33 => const _SettingsSection(),
+      34 => const AdminRedirectsScreen(),
       _ => const SizedBox(),
     };
   }
