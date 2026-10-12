@@ -6,8 +6,9 @@ Google ranks may change — addresses, titles, headings, menus. This reads the
 live WordPress site as a crawler does and writes tool/seo/wp_pages.json:
 
   pages   every address in WordPress's sitemaps and every address its menu
-          links to, each with its <title>, meta description, robots and the
-          first H1 — or, where WordPress redirects it, `redirect_to`
+          links to, each with its <title>, meta description, robots, the
+          first H1 and the share image (og:image) — or, where WordPress
+          redirects it, `redirect_to`
   menu    the header menu's links, in order, with their text — the internal
           links every WordPress page carries
 
@@ -78,8 +79,17 @@ def read_page(url):
     return {
         'title': text(first(r'<title[^>]*>([\s\S]*?)</title>')),
         'description': html.unescape(first(r'<meta name="description" content="([^"]*)"') or ''),
-        'robots': first(r'<meta name="robots" content="([^"]*)"') or '',
+        # Yoast writes this one in single quotes (`content='noindex, follow'`),
+        # the description in double; read with only double quotes, every
+        # page came out with no robots and the contact page's noindex was lost.
+        'robots': first(r'<meta name=["\']robots["\'] content=["\']([^"\']*)["\']') or '',
         'h1': next((x for x in h1s if x), ''),
+        # The picture a share of this address shows (Yoast's og:image),
+        # where the page had one; served from /wp-content/uploads/ after the
+        # move as before.
+        **({'og_image': og, 'og_image_width': first(r'<meta property="og:image:width" content="(\d+)"'),
+            'og_image_height': first(r'<meta property="og:image:height" content="(\d+)"')}
+           if (og := html.unescape(first(r'<meta property="og:image" content="([^"]+)"') or '')) else {}),
     }
 
 

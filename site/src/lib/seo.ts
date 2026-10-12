@@ -3,7 +3,10 @@ import wp from '@/data/wp_pages.json';
 import site from '@/data/site.json';
 import { SEO_LIVE, SITE_URL } from './config';
 
-type WpPage = { title?: string; description?: string; robots?: string; h1?: string; redirect_to?: string };
+type WpPage = {
+  title?: string; description?: string; robots?: string; h1?: string; redirect_to?: string;
+  og_image?: string; og_image_width?: string; og_image_height?: string;
+};
 const WP_PAGES = (wp as unknown as { pages: Record<string, WpPage> }).pages;
 
 /** The old site's header menu, link for link (path, text): every page carries
@@ -60,7 +63,16 @@ export function pageMetadata(m: Meta): Metadata {
   const title = m.title || wpp?.title || SITE_NAME;
   const description = m.description || wpp?.description || undefined;
   const url = SITE_URL + href(m.path);
-  const index = SEO_LIVE && !m.noindex;
+  // WordPress kept a few pages out of Google (the contact page, the
+  // apartment search: `noindex, follow`); they stay out here, links still
+  // followed, as Yoast had them.
+  const wpNoindex = /noindex/i.test(wpp?.robots ?? '');
+  const index = SEO_LIVE && !m.noindex && !wpNoindex;
+  const follow = SEO_LIVE && !m.noindex && !/nofollow/i.test(wpp?.robots ?? '');
+  // The page's own picture, else the one WordPress shared this address with.
+  const image = m.image || wpp?.og_image || null;
+  const imageSize = !m.image && wpp?.og_image_width && wpp?.og_image_height
+    ? { width: Number(wpp.og_image_width), height: Number(wpp.og_image_height) } : {};
   const ogTitle = m.ogTitle || title;
   const ogDescription = m.ogDescription || description;
   return {
@@ -70,7 +82,7 @@ export function pageMetadata(m: Meta): Metadata {
     alternates: { canonical: url },
     robots: index
       ? { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } }
-      : { index: false, follow: false },
+      : { index: false, follow },
     openGraph: {
       locale: 'he_IL',
       siteName: site.og_site_name,
@@ -78,11 +90,11 @@ export function pageMetadata(m: Meta): Metadata {
       description: ogDescription,
       url,
       type: m.type ?? 'website',
-      ...(m.image ? { images: [{ url: m.image }] } : {}),
+      ...(image ? { images: [{ url: image, ...imageSize }] } : {}),
       ...(m.publishedTime ? { publishedTime: m.publishedTime } : {}),
       ...(m.modifiedTime ? { modifiedTime: m.modifiedTime } : {}),
     },
-    twitter: { card: 'summary_large_image', title: ogTitle, description: ogDescription, ...(m.image ? { images: [m.image] } : {}) },
+    twitter: { card: 'summary_large_image', title: ogTitle, description: ogDescription, ...(image ? { images: [image] } : {}) },
   };
 }
 
@@ -115,7 +127,9 @@ export function breadcrumb(items: [string, string][]) {
 }
 
 /** Every address WordPress had that answers with a page here (not its
- *  redirects), for the sitemap. */
+ *  redirects, nor the pages it kept out of Google), for the sitemap. */
 export function wpPaths(): string[] {
-  return Object.entries(WP_PAGES).filter(([, p]) => !p.redirect_to).map(([path]) => path);
+  return Object.entries(WP_PAGES)
+    .filter(([, p]) => !p.redirect_to && !/noindex/i.test(p.robots ?? ''))
+    .map(([path]) => path);
 }
