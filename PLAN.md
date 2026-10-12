@@ -2800,6 +2800,43 @@ The test rows and files were deleted. Not checked by hand: picking a photo,
 the consent question and the Settings switch — the simulator could not be
 driven — so these wait for a phone.
 
+**The client's TestFlight notes, 9–11 Oct — fixed 12 Oct.**
+- **Share did nothing on his iPhone** (article; the step group's Invite):
+  iOS 26 presents the share sheet from a point on the screen, and share_plus
+  refuses a share without one. Every share now goes through
+  `shared/share_text.dart`, anchored at the button tapped (nine places).
+- **Hebrew search** missed "נאיתאי" typed "נאי תאי", and "אנג׳ל" typed with
+  an apostrophe: words are joined by a wildcard and geresh/gershayim match
+  any one character (`shared/search_text.dart`) — in the database searches
+  and the phone's in-memory ones.
+- **Restaurants' banner "does not scroll":** it was a blue placeholder with
+  three dots that never moved. It is now the panel's RESTAURANTS_TOP slot,
+  swiped like Deals'; with nothing booked, nothing is drawn.
+- **Category lists:** a business without a cover photo goes to the foot of
+  its list (a running promotion still first).
+- **Business page:** the logo fills its circle (no white ring); the reviews
+  tab is "מה חושבים / תושבי העיר?" on two centred lines. The Urban Profile
+  card's photo has no white ring. **Profile** scrolls as one page — the
+  header no longer stands still over the content.
+- **Writing a review** opens a sheet (`businesses/widgets/review_composer
+  .dart`), "a funner UX, like Google's": the place and who writes, large
+  stars with their word, one-tap phrases (praise from four stars, what to
+  improve below), the text with a nudge to say more, photos, and a thank-you.
+  The photo question, uploads and approval are as before.
+- **A business publishes events (migration 00081, run 12 Oct):** My Events in
+  the business menu, Create Event in Create Deal's design (image, name, one
+  line, description, date and times, place and address from the business,
+  free or price, ticket link). Each waits for the panel (Events → Pending →
+  Publish); an edit to a published one goes back to the queue; the owner
+  may withdraw one (reversible), not delete it. The team is told of one
+  waiting, the owner when it is published.
+- Tested: 17 database checks for 00081; on the Samsung — Profile scrolling,
+  the logo and the tab, share, the review sheet (tags, star change, posting
+  to a throwaway business, the thank-you), My Events → Create Event → pending
+  in the list. The search was checked against the live names. Every team
+  push the tests made was cancelled before sending (0 sent). Not seen on an
+  iPhone: the share sheet's anchor — the next TestFlight build.
+
 **Before the stores — 12 Oct.** Harshit is submitting to the App Store and
 Google Play today.
 - **Report and block in a conversation (migration 00080, run 12 Oct with
