@@ -10,6 +10,13 @@
 #
 #   tool/build_android.sh              # debug APK
 #   tool/build_android.sh --release    # release APK
+#   tool/build_android.sh --aab        # release App Bundle, for Google Play
+#
+# For Play, set ANDROID_CERT_SHA1 to the *app signing* key's SHA-1 from Play
+# Console (Setup → App signing): Play re-signs the bundle with that key, and
+# it is the certificate Google sees on the Places requests. The same SHA-1
+# must be on the Android Places key in Google Cloud. The upload key
+# (android/key.properties) only signs what is sent to Play.
 #
 # The website's Maps key is never used here (CLAUDE.md).
 set -euo pipefail
@@ -28,7 +35,9 @@ for line in open('.env.local', encoding='utf-8'):
 }
 
 MODE=debug
+KIND=apk
 [ "${1:-}" = "--release" ] && MODE=release
+[ "${1:-}" = "--aab" ] && { MODE=release; KIND=appbundle; }
 
 CERT="${ANDROID_CERT_SHA1:-}"
 if [ -z "$CERT" ]; then
@@ -37,6 +46,6 @@ if [ -z "$CERT" ]; then
     | sed -n 's/.*SHA1: //p' | head -1)
 fi
 
-flutter build apk --"$MODE" \
+flutter build "$KIND" --"$MODE" \
   --dart-define=PLACES_ANDROID_KEY="$(get GOOGLE_PLACES_ANDROID_KEY)" \
   --dart-define=PLACES_ANDROID_CERT="$CERT"

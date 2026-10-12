@@ -2800,6 +2800,43 @@ The test rows and files were deleted. Not checked by hand: picking a photo,
 the consent question and the Settings switch — the simulator could not be
 driven — so these wait for a phone.
 
+**Before the stores — 12 Oct.** Harshit is submitting to the App Store and
+Google Play today.
+- **Report and block in a conversation (migration 00080, run 12 Oct with
+  Harshit's go-ahead).** Apple's guideline 1.2 asks an app where people write
+  to one another for both. The chat's ⋯ (app and site): Report files a row
+  in `reports` (type `conversation`, one per person; the team hears of the
+  first); Block stops anyone writing in it until the one who blocked
+  unblocks — the other side sees "You can no longer write in this
+  conversation" and cannot lift it; nothing is deleted. The panel's Messages
+  marks a conversation Blocked or Reported, and Reports has a Conversations
+  filter. `my_conversations()` and `admin_conversations()` return the block,
+  so both were made again (00074's and 00078's bodies). Tested: 16 database
+  checks; on the Samsung as the business owner (block, the bar, report,
+  unblock) and on the website as the resident (blocked, Report only).
+- **Android signing** was already in place (`android/key.properties`, the
+  upload keystore, gradle's release config). `tool/build_android.sh --aab`
+  builds the App Bundle for Play. The Places key's certificate must be Play's
+  *app signing* key (Play Console → App signing), set as
+  `ANDROID_CERT_SHA1` and on the key in Google Cloud.
+- **On the phones (OnePlus 6T, Samsung A12), 12 Oct:** delete account from
+  Settings (asked, signed out, account and profile gone); forgot password
+  (the app sends it; the link's page sets the new one, which signs in — the
+  page then lands on the site's home with no "back to the app" line); a
+  review with a photo and the photo question (pending, photo attached, the
+  profile photo shown after Yes; Settings' switch follows); a resident
+  writing to a business, the push reaching the owner's phone, the reply.
+  Every push the tests made to the team (review, report) was cancelled
+  before the dispatcher's minute; the test accounts, business, review,
+  photo and reports were deleted.
+- **Sign-up confirmation:** the e-mail's link opens
+  `http://45.93.94.49/auth/confirm` (Supabase's Site URL), which confirms
+  and says "go back to the app and sign in". No notification is sent on
+  confirming; the first sign-in then opens the Urban Profile steps.
+- **Removing the sample content** (runbook C) empties Events (all 26 are
+  sample), Deals (all 12) and the real-estate listings (all 22); each screen
+  has its empty state. Waiting for Harshit's go-ahead.
+
 **Urban Profile and job messages, app, website and panel — 9 Oct.** The
 onboarding frames came (sign-up, three steps, Messages — Figma, 9 Oct) with
 Harshit's answers: the sign-up stays as it is; after it and the
