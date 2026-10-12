@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import 'web_reset_password_screen.dart';
+import '../widgets/password_changed_view.dart';
 
 /// Shown after someone follows the reset link in their email.
 ///
@@ -27,6 +29,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _confirm = TextEditingController();
   bool _obscure = true;
   bool _saving = false;
+
+  /// Saved in a browser: PasswordChangedView in place of the form.
+  bool _done = false;
 
   @override
   void dispose() {
@@ -54,6 +59,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           .completePasswordReset(_password.text);
       if (!mounted) return;
       ref.read(passwordResetPendingProvider.notifier).state = false;
+      if (kIsWeb) {
+        // A browser: the link's session ends and the page says to go back
+        // to the app. In the app the person is signed in and goes on.
+        await ref.read(authProvider.notifier).logout().catchError((_) {});
+        if (!mounted) return;
+        setState(() => _done = true);
+        return;
+      }
       _toast(l.passwordChanged);
       context.go('/');
     } catch (_) {
@@ -88,6 +101,22 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   Widget _buildMobile(BuildContext context) {
     final l = L.of(context);
+    if (_done) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: PasswordChangedView(
+                hebrew: Localizations.localeOf(context).languageCode == 'he',
+                onHome: () => context.go('/'),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,

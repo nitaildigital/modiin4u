@@ -2800,6 +2800,31 @@ The test rows and files were deleted. Not checked by hand: picking a photo,
 the consent question and the Settings switch — the simulator could not be
 driven — so these wait for a phone.
 
+**Every decision reaches the person — 12 Oct (migration 00082, run with
+Harshit's go-ahead).** "When we get the confirmation e-mail or anything, we
+need to send a notification for approved or declined — all things." Already
+told before: a review, a reply or a photo approved; a business approved; a
+promotion approved or declined; an application's status; an event published;
+a report answered; a listing expired. Added, each to the person it is about:
+a welcome when the e-mail is confirmed (the bell shows it at their first
+sign-in — no device is registered before); a review not approved, or hidden
+after being shown; a comment on an article published; any comment not
+approved or hidden; a listing approved or not; a business not approved, or
+suspended after being live; a business's event not approved. Only the
+panel's decisions: someone withdrawing their own content is not told.
+Tested with throwaway accounts, 12 of 12; every alert to the team or to
+residents the test set off was cancelled, none reached a real person.
+
+**The password-reset page** (where the e-mail's link opens) said "changed"
+in a passing toast and went to the site's home. It now ends the link's
+session and says "Your password has been changed — go back to the app and
+sign in with your new password" (`auth/widgets/password_changed_view.dart`,
+desktop and phone widths). Live with the next Flutter web deploy.
+
+**On the Samsung, 12 Oct:** Restaurants' banner swipes between the panel's
+RESTAURANTS_TOP banners with the dots following; the restaurants list puts
+the places with a cover photo first.
+
 **The client's TestFlight notes, 9–11 Oct — fixed 12 Oct.**
 - **Share did nothing on his iPhone** (article; the step group's Invite):
   iOS 26 presents the share sheet from a point on the screen, and share_plus
@@ -2892,6 +2917,18 @@ Google Play today.
   day's step count (`record_daily_steps`, `daily_steps`), which the
   leaderboards, groups and challenges show to other residents. Distance and
   calories stay on the phone.
+- **The daily step goal comes from the panel** (Settings → Daily step goal,
+  `app_settings.daily_step_goal`; 0 or never set, 10,000). It was a 10,000
+  written into the Steps screens and the save on reaching it; the client
+  had asked for it to be his to set. The app's Steps screen, the web one
+  and the goal save all read `dailyStepGoalProvider`; a challenge's own goal
+  is still set in Challenges. No migration: `app_settings` is readable by
+  everyone and the panel writes it. Checked: saved 8,000 from the panel as
+  a temporary admin (only that key changed), then 20,000 — the Steps
+  chart's scale went to 24K on the Android 15 emulator. Not seen: the ring's
+  "of 20,000", which needs a phone that counts steps. The test row and the
+  admin were removed; the setting is unset, so the goal is 10,000 until the
+  client sets one.
 
 **Urban Profile and job messages, app, website and panel — 9 Oct.** The
 onboarding frames came (sign-up, three steps, Messages — Figma, 9 Oct) with

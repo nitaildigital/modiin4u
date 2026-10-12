@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/password_changed_view.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Reset Password — desktop
@@ -46,6 +47,9 @@ class _WebResetPasswordContentState extends ConsumerState<WebResetPasswordConten
   bool _obscure = true;
   bool _saving = false;
 
+  /// Saved: the page says so and where to go next (PasswordChangedView).
+  bool _done = false;
+
   @override
   void dispose() {
     _password.dispose();
@@ -81,8 +85,10 @@ class _WebResetPasswordContentState extends ConsumerState<WebResetPasswordConten
           .completePasswordReset(_password.text);
       if (!mounted) return;
       ref.read(passwordResetPendingProvider.notifier).state = false;
-      _toast(_t('Your password has been changed.', 'הסיסמה שלכם שונתה.'));
-      context.go('/');
+      // The link's session is spent: residents sign in in the app.
+      await ref.read(authProvider.notifier).logout().catchError((_) {});
+      if (!mounted) return;
+      setState(() => _done = true);
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -126,7 +132,17 @@ class _WebResetPasswordContentState extends ConsumerState<WebResetPasswordConten
                       child: Center(
                         child: SizedBox(
                           width: _kCardWidth,
-                          child: _buildCard(),
+                          child: _done
+                              ? Container(
+                                  padding: const EdgeInsets.all(40),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: _kBorder),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: PasswordChangedView(hebrew: _isHebrew, onHome: () => context.go('/')),
+                                )
+                              : _buildCard(),
                         ),
                       ),
                     ),
