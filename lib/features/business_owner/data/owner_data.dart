@@ -8,6 +8,7 @@ import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../businesses/models/business.dart';
 import '../../deals/models/offer.dart';
+import '../../events/models/event.dart';
 
 /// What a business owner reads and writes about their own business: its page,
 /// hours, photos, deals, and requests to promote them. The rules are 00051's
@@ -250,6 +251,54 @@ class OwnerRepository {
   }
 }
 
+/// One of the business's own events (00081), with where it stands: waiting
+/// for the panel ('pending'), shown ('published'), withdrawn ('cancelled'),
+/// or over ('past').
+class OwnerEvent {
+  final Event event;
+  final String status;
+  const OwnerEvent(this.event, this.status);
+
+  bool get isPending => status == 'pending';
+  bool get isPublished => status == 'published';
+  bool get isCancelled => status == 'cancelled';
+}
+
+/// The business's events: read, saved (each waits for the panel), withdrawn.
+extension OwnerEvents on OwnerRepository {
+  SupabaseClient get _db => SupabaseConfig.client;
+
+  Future<List<OwnerEvent>> fetchEvents(String businessId) async {
+    final rows = await _db
+        .from('events')
+        .select()
+        .eq('business_id', businessId)
+        .order('start_date', ascending: false);
+    return [
+      for (final r in List<Map<String, dynamic>>.from(rows))
+        OwnerEvent(Event.fromJson(r), (r['status'] as String?) ?? 'pending'),
+    ];
+  }
+
+  Future<OwnerEvent?> fetchEvent(String id) async {
+    final r = await _db.from('events').select().eq('id', id).maybeSingle();
+    return r == null ? null : OwnerEvent(Event.fromJson(r), (r['status'] as String?) ?? 'pending');
+  }
+
+  /// A new event, or changes to one; either way it goes to the panel's queue
+  /// (the database sets the status).
+  Future<String> saveEvent({String? id, required Map<String, dynamic> row}) async {
+    final saved = id == null
+        ? await _db.from('events').insert(row).select('id').single()
+        : await _db.from('events').update(row).eq('id', id).select('id').single();
+    return saved['id'] as String;
+  }
+
+  /// Withdrawn, not deleted: the panel can bring it back.
+  Future<void> cancelEvent(String id) =>
+      _db.from('events').update({'status': 'cancelled'}).eq('id', id);
+}
+
 final ownerRepositoryProvider = Provider((ref) => OwnerRepository());
 
 /// The id of the business the signed-in person owns, or null.
@@ -280,4 +329,10 @@ final myPromotionRequestsProvider = FutureProvider.autoDispose<List<PromotionReq
 final pendingPromotionProvider = Provider.autoDispose.family<PromotionRequest?, String>((ref, entityId) {
   final list = ref.watch(myPromotionRequestsProvider).valueOrNull ?? const [];
   return list.where((r) => r.entityId == entityId && r.status == 'pending').firstOrNull;
+});
+
+final myEventsProvider = FutureProvider.autoDispose<List<OwnerEvent>>((ref) {
+  final id = ref.watch(myBusinessIdProvider);
+  if (id == null) return const [];
+  return ref.watch(ownerRepositoryProvider).fetchEvents(id);
 });

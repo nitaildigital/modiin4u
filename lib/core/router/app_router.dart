@@ -79,6 +79,8 @@ import '../../l10n/app_localizations.dart';
 import '../../features/urban_profile/screens/urban_profile_steps.dart';
 import '../../features/urban_profile/screens/urban_profile_done_screen.dart';
 import '../../features/urban_profile/screens/urban_profile_more_screens.dart';
+import '../../features/business_owner/screens/business_events_screen.dart';
+import '../../features/business_owner/screens/create_event_screen.dart';
 
 
 /// The six destinations that live inside the bottom-navigation shell.
@@ -180,6 +182,7 @@ const _appOnlyPaths = {
   '/my-profile',
   '/business-jobs',
   '/business-deals',
+  '/business-events',
   '/my-business',
   '/messages',
 };
@@ -192,6 +195,7 @@ const _appOnlyPrefixes = [
   '/my-profile/',
   '/business-jobs/',
   '/business-deals/',
+  '/business-events/',
   '/applicant/',
   '/promote/',
   '/messages/',
@@ -760,6 +764,22 @@ final appRouter = GoRouter(
       path: '/business-deals',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(const BusinessDealsScreen(), state),
+    ),
+    // A business's own events (00081): each waits for the panel.
+    GoRoute(
+      path: '/business-events',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const BusinessEventsScreen(), state),
+    ),
+    GoRoute(
+      path: '/business-events/new',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const CreateEventScreen(), state),
+    ),
+    GoRoute(
+      path: '/business-events/:id/edit',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(CreateEventScreen(eventId: state.pathParameters['id']!), state),
     ),
     GoRoute(
       path: '/business-deals/new',

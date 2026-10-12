@@ -138,6 +138,12 @@ class _SideMenuPanel extends ConsumerWidget {
                       label: l.deals,
                       onTap: () => _go(context, '/business-deals'),
                     ),
+                    // The business's own events (00081, TestFlight 11 Oct).
+                    _MenuRow(
+                      icon: IconsaxPlusLinear.calendar_1,
+                      label: mTr(context, 'My Events', 'האירועים שלי'),
+                      onTap: () => _go(context, '/business-events'),
+                    ),
                     _MenuRow(
                       svg: 'assets/icons/m_menu_heart.svg',
                       label: l.favorites,
