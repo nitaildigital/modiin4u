@@ -1101,6 +1101,17 @@ class _SettingsSection extends StatelessWidget {
           icon: IconsaxPlusLinear.briefcase,
           number: true,
         ),
+        // The Steps screen's daily ring and the save on reaching it; a
+        // challenge's own goal is set in Challenges.
+        _EditableSetting(
+          settingKey: AppSettingKeys.dailyStepGoal,
+          label: tr('יעד צעדים יומי (0 = 10,000)', 'Daily step goal (0 = 10,000)'),
+          hint: '10000',
+          icon: IconsaxPlusLinear.activity,
+          number: true,
+          numberMax: 100000,
+          rangeMessage: tr('מספר צעדים, 0 עד 100,000', 'A number of steps, 0 to 100,000'),
+        ),
         // Whether residents' replies to reviews wait for approval. Off by
         // default since 00063: replies appear at once, and the panel hides
         // one afterwards (Comments) or acts on a report.

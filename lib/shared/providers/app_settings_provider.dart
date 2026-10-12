@@ -12,11 +12,22 @@ final appSettingsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   };
 });
 
+/// The daily step goal from the panel, or 10,000 until one is set.
+final dailyStepGoalProvider = Provider<int>((ref) {
+  final v = ref.watch(appSettingsProvider).valueOrNull?[AppSettingKeys.dailyStepGoal];
+  final n = v is num ? v.toInt() : int.tryParse('${v ?? ''}');
+  return n != null && n > 0 ? n : 10000;
+});
+
 /// The keys the panel edits.
 abstract final class AppSettingKeys {
   static const androidStoreUrl = 'store_url_android';
   static const iosStoreUrl = 'store_url_ios';
   static const jobApplicationsKeepDays = 'job_applications_keep_days';
+
+  /// The day's step goal, the one the Steps screen's ring fills against.
+  /// 0, or never set, 10,000.
+  static const dailyStepGoal = 'daily_step_goal';
 
   /// Whether residents' replies to reviews wait for approval (00063). Off,
   /// or never set, they appear at once.

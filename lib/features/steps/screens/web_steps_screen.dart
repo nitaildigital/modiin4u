@@ -7,6 +7,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../shared/providers/app_settings_provider.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/web_banner_row.dart';
 import '../../../shared/widgets/web_chrome.dart';
@@ -43,8 +44,8 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
   bool get _isHebrew => webIsHebrew.value;
 
   /// The daily target the ring fills against — the same figure the mobile
-  /// screen uses.
-  static const _goal = 10000;
+  /// screen uses, set in the panel's Settings.
+  int get _goal => ref.watch(dailyStepGoalProvider);
 
   /// An average stride, for turning a step count into a distance. It is the
   /// usual figure used for this and is stated as an estimate on screen,

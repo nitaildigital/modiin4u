@@ -13,6 +13,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/month_names.dart';
+import '../../../shared/providers/app_settings_provider.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../deals/widgets/m_deals_sections.dart' show MDealsBanner;
 import '../../auth/providers/auth_provider.dart';
@@ -49,8 +50,8 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
   final _leaderboardKey = GlobalKey();
   bool _month = false;
 
-  /// The daily target the ring fills against.
-  static const _goal = 10000;
+  /// The daily target the ring fills against, set in the panel's Settings.
+  int get _goal => ref.watch(dailyStepGoalProvider);
 
   /// An average stride, for turning a step count into a distance. It is the
   /// usual figure used for this and is stated as an estimate on screen,
@@ -651,7 +652,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
     // The ceiling rounds up to a multiple of 6,000 because the axis draws
     // seven labels — six gaps — so every label lands on a whole thousand.
     // A week under the 10,000 goal therefore tops out at 12K, which is the
-    // scale the design drew.
+    // scale the design drew; another goal from the panel moves it with it.
     final best = data.map((d) => d.steps).reduce((a, b) => a > b ? a : b);
     final ceiling = best < _goal ? _goal : best;
     final maxSteps = ((ceiling / 6000).ceil() * 6000).toDouble();

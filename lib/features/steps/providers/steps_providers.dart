@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../../shared/providers/app_settings_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/step_entry.dart';
 import '../repositories/steps_repository.dart';
@@ -229,9 +230,6 @@ class StepCounter extends StateNotifier<StepState> {
   /// Health Connect's Play Store page, for an Android 13 phone without it.
   Future<void> installHealthConnect() => _healthSteps.install();
 
-  /// The day's goal, the one the Steps screen's ring fills against.
-  static const dailyGoal = 10000;
-
   /// The goals already saved for, today, so each sends once.
   final Set<String> _goalsSent = {};
 
@@ -242,6 +240,8 @@ class StepCounter extends StateNotifier<StepState> {
     final today = state.today;
     if (today == null || today <= 0) return;
     final day = dateKey(DateTime.now());
+    // The panel's daily goal, the one the Steps screen's ring fills against.
+    final dailyGoal = _ref.read(dailyStepGoalProvider);
     var reached = <String>[if (today >= dailyGoal) '$day:day'];
     final challenge = _ref.read(activeChallengeProvider).valueOrNull;
     final goal = (challenge?['goal'] as num?)?.toInt();
