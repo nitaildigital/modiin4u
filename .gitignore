@@ -76,3 +76,6 @@ package-lock.json
 *-firebase-adminsdk-*.json
 business_side/
 user_side/
+
+# The client's TestFlight feedback exports (screenshots, device data): kept locally, not in the repo.
+testflight_feedback_all/

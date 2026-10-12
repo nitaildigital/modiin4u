@@ -1,9 +1,9 @@
 {
-  "id" : "AE6cxiaAb1y9R1gCn8VrJkw",
-  "timestamp" : "2026-10-08T18:33:51.691Z[UTC]",
+  "id" : "AOoZJ_jyd8WpjgL0_R0-mtA",
+  "timestamp" : "2026-10-11T18:56:29.973Z[UTC]",
   "appAppleId" : 6810195885,
   "cfBundleShortVersion" : "1.0.0",
-  "cfBundleVersion" : "2",
+  "cfBundleVersion" : "3",
   "deviceModel" : "iPhone17,1",
   "osVersion" : "26.6.2",
   "locale" : "he-IL",
@@ -13,12 +13,12 @@
   "connectionStatus" : "WI_FI",
   "pairedAppleWatch" : "",
   "appUptimeMillis" : null,
-  "availableDiskBytes" : 43837480960,
-  "totalDiskBytes" : 244454608896,
+  "availableDiskBytes" : 40537931776,
+  "totalDiskBytes" : 245887213568,
   "networkType" : null,
-  "batteryPercentage" : 30,
+  "batteryPercentage" : 40,
   "screenWidth" : 402,
   "screenHeight" : 874,
   "emailAddress" : "modiin4uoffice@gmail.com",
-  "comment" : "On the business/neighborhood/park page, instead of calling it \"Reviews,\" call it:\n\"What Locals Are Saying\"\n\nOther options for the label:\n\n\t•\t\"What Residents Say\"\n\t•\t\"Word from the Locals\"\n\t•\t\"Local Voices\"\n\nIn Hebrew: מה חושבים  תושבי העיר?\n\n"
+  "comment" : "In addition, the business needs the ability to upload events. There's no need for a new design here—just take the existing design language and functionality required for an event, and give the business the option to publish events as well. I believe it should be straightforward."
 }
