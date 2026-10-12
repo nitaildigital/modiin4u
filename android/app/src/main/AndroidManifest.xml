@@ -130,8 +130,8 @@
             </intent-filter>
         </activity>
         <!-- Android 14's Health Connect settings link to how the app uses
-             the data. Google requires the link; it opens the app, whose
-             Step Counter says what is read and why. -->
+             the data. Google requires the link; MainActivity opens the
+             Privacy Policy for it, as for the rationale link above. -->
         <activity-alias
             android:name="ViewPermissionUsageActivity"
             android:exported="true"

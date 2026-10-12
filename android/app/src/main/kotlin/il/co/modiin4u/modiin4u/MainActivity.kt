@@ -2,6 +2,8 @@ package il.co.modiin4u.modiin4u
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -25,8 +27,32 @@ class MainActivity : FlutterFragmentActivity() {
         // engine reads the display's refresh rate — set it afterwards and the
         // engine keeps pacing at whatever it saw first.
         requestFastestRefreshRate()
+        openPrivacyForHealthConnect(intent)
         super.onCreate(savedInstanceState)
         createNotificationChannel()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        openPrivacyForHealthConnect(intent)
+        super.onNewIntent(intent)
+    }
+
+    /**
+     * Health Connect opens the app from its "why does this app ask" link
+     * (Android 13 and older) and from Android 14's permission usage link,
+     * and Google's review expects the privacy policy there. Neither intent
+     * carries an address, so the app used to open on its home screen.
+     * Giving it the scheme link that step group invitations use lets
+     * Flutter's own deep linking take it to /privacy, at launch or while
+     * the app is already open.
+     */
+    private fun openPrivacyForHealthConnect(intent: Intent?) {
+        val action = intent?.action ?: return
+        if (action == "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" ||
+            action == Intent.ACTION_VIEW_PERMISSION_USAGE
+        ) {
+            intent.data = Uri.parse("il.co.modiin4u://app/privacy")
+        }
     }
 
     /**

@@ -2836,6 +2836,25 @@ Google Play today.
 - **Removing the sample content** (runbook C) empties Events (all 26 are
   sample), Deals (all 12) and the real-estate listings (all 22); each screen
   has its empty state. Waiting for Harshit's go-ahead.
+- **Health Connect's links open the Privacy Policy.** The manifest declared
+  the "why does this app ask" link and Android 14's permission usage link,
+  but nothing handled them, so both opened the home screen; Google's review
+  expects the privacy policy there. MainActivity now gives either intent the
+  scheme link `il.co.modiin4u://app/privacy`, and Flutter's deep linking
+  opens `/privacy`, at launch or over an open app; Back returns to it.
+  Checked on the Android 15 emulator, both ways (the Samsung had no
+  network). Android only; nothing changes on the iPhone.
+- **ACCESS_FINE_LOCATION stays.** Without it Android gives only an
+  approximate position, blurred to about 2 km, which would make "nearest
+  car park" and "near you" wrong across a city Modiin's size. Play's
+  scrutiny is for background location, which the app does not use; the
+  position never leaves the phone (distances are worked out on it).
+- **Health Connect, what the app does with it:** reads steps, distance and
+  active calories, per day, for the last 30 days, only after the person
+  taps Connect on the Steps screen; shows all three there; saves only the
+  day's step count (`record_daily_steps`, `daily_steps`), which the
+  leaderboards, groups and challenges show to other residents. Distance and
+  calories stay on the phone.
 
 **Urban Profile and job messages, app, website and panel — 9 Oct.** The
 onboarding frames came (sign-up, three steps, Messages — Figma, 9 Oct) with
