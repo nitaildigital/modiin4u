@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
 import '../models/job.dart';
+import '../../../shared/search_text.dart';
 
 /// Filters on the residents' Jobs list — the design's chips and filter sheet.
 class JobFilters {
@@ -90,7 +91,7 @@ class JobRepository {
     if (f.categoryId != null) q = q.eq('category_id', f.categoryId!);
     final s = f.search.trim().replaceAll(RegExp(r'[,()%]'), ' ');
     if (s.isNotEmpty) {
-      q = q.or('title.ilike.%$s%,description.ilike.%$s%,location.ilike.%$s%');
+      q = q.or('title.ilike.%${searchPattern(s)}%,description.ilike.%${searchPattern(s)}%,location.ilike.%${searchPattern(s)}%');
     }
     final rows = await q
         .order('promoted_until', ascending: false, nullsFirst: false)
@@ -120,7 +121,7 @@ class JobRepository {
     final rows = await _client
         .from('businesses')
         .select('id')
-        .or('name.ilike.%$s%,name_en.ilike.%$s%')
+        .or('name.ilike.%${searchPattern(s)}%,name_en.ilike.%${searchPattern(s)}%')
         .limit(50);
     return [for (final r in List<Map<String, dynamic>>.from(rows)) r['id'] as String];
   }

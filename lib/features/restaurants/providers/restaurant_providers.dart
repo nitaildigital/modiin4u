@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../businesses/models/business.dart';
 import '../../businesses/providers/business_providers.dart';
+import '../../../shared/search_text.dart';
 
 /// Every business category, keyed by slug, so screens can ask for one by name
 /// instead of carrying ids around.
@@ -253,9 +254,9 @@ final filteredFoodMapPlacesProvider = FutureProvider<List<FoodPlace>>((
   return places
       .where(
         (p) =>
-            p.business.name.toLowerCase().contains(query) ||
-            p.business.address.toLowerCase().contains(query) ||
-            p.categoryName.toLowerCase().contains(query),
+            searchKey(p.business.name).contains(searchKey(query)) ||
+            searchKey(p.business.address).contains(searchKey(query)) ||
+            searchKey(p.categoryName).contains(searchKey(query)),
       )
       .toList();
 });

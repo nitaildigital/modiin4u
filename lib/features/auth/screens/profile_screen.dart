@@ -180,139 +180,149 @@ class ProfileScreen extends ConsumerWidget {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 430),
-          child: Stack(
-            children: [
-              // ── Header: blurred photo under a 50% black veil ──
-              Positioned(
-                top: -225 + shift,
-                left: -28,
-                right: -28,
-                height: 397,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(168.5),
-                  ),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (hasPhoto)
-                        ImageFiltered(
-                          imageFilter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                          child: CachedNetworkImage(
-                            imageUrl: user.avatarUrl!,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, _, _) =>
-                                const ColoredBox(color: AppColors.midBlue),
-                          ),
-                        )
-                      else
-                        const DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [AppColors.midBlue, AppColors.navy],
+          // The whole page scrolls as one — header, photo and name with the
+          // rest. The header stood still while the content slid under it,
+          // which the client found clunky (TestFlight, 9 Oct).
+          child: SingleChildScrollView(
+            child: Stack(
+              children: [
+                // ── Header: blurred photo under a 50% black veil ──
+                Positioned(
+                  top: -225 + shift,
+                  left: -28,
+                  right: -28,
+                  height: 397,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(168.5),
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (hasPhoto)
+                          ImageFiltered(
+                            imageFilter: ImageFilter.blur(
+                              sigmaX: 25,
+                              sigmaY: 25,
                             ),
-                          ),
-                        ),
-                      const ColoredBox(color: Color(0x80000000)),
-                    ],
-                  ),
-                ),
-              ),
-
-              SafeArea(
-                bottom: false,
-                child: Column(
-                  children: [
-                    MAccountTopBar(title: l.profile, color: Colors.white),
-                    const SizedBox(height: 28),
-
-                    // ── Avatar ──
-                    Container(
-                      width: 120,
-                      height: 120,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-                        ),
-                      ),
-                      child: hasPhoto
-                          ? CachedNetworkImage(
+                            child: CachedNetworkImage(
                               imageUrl: user.avatarUrl!,
                               fit: BoxFit.cover,
-                              errorWidget: (_, _, _) => _Initials(user),
-                            )
-                          : _Initials(user),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Name ──
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        user.name,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // ── Role badge ──
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD67E00).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          user.isBusinessOwner || user.isBroker
-                              ? SvgPicture.asset(
-                                  'assets/icons/m_account_briefcase.svg',
-                                  width: 14,
-                                  height: 14,
-                                )
-                              : const Icon(
-                                  IconsaxPlusLinear.user,
-                                  size: 14,
-                                  color: Color(0xFFD47D00),
-                                ),
-                          const SizedBox(width: 6),
-                          Text(
-                            user.isBusinessOwner
-                                ? mTr(context, 'Business Account', 'חשבון עסקי')
-                                : user.isBroker
-                                ? l.realEstateBroker
-                                : l.resident,
-                            style: TextStyle(
-                              fontFamily: AppFonts.inter,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFFD47D00),
+                              errorWidget: (_, _, _) =>
+                                  const ColoredBox(color: AppColors.midBlue),
+                            ),
+                          )
+                        else
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [AppColors.midBlue, AppColors.navy],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
+                        const ColoredBox(color: Color(0x80000000)),
+                      ],
                     ),
-                    const SizedBox(height: 20),
+                  ),
+                ),
 
-                    // ── Scrolling part ──
-                    Expanded(
-                      child: SingleChildScrollView(
+                SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      MAccountTopBar(title: l.profile, color: Colors.white),
+                      const SizedBox(height: 28),
+
+                      // ── Avatar ──
+                      Container(
+                        width: 120,
+                        height: 120,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF0058B5), Color(0xFF010A36)],
+                          ),
+                        ),
+                        child: hasPhoto
+                            ? CachedNetworkImage(
+                                imageUrl: user.avatarUrl!,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, _, _) => _Initials(user),
+                              )
+                            : _Initials(user),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Name ──
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          user.name,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // ── Role badge ──
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD67E00).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            user.isBusinessOwner || user.isBroker
+                                ? SvgPicture.asset(
+                                    'assets/icons/m_account_briefcase.svg',
+                                    width: 14,
+                                    height: 14,
+                                  )
+                                : const Icon(
+                                    IconsaxPlusLinear.user,
+                                    size: 14,
+                                    color: Color(0xFFD47D00),
+                                  ),
+                            const SizedBox(width: 6),
+                            Text(
+                              user.isBusinessOwner
+                                  ? mTr(
+                                      context,
+                                      'Business Account',
+                                      'חשבון עסקי',
+                                    )
+                                  : user.isBroker
+                                  ? l.realEstateBroker
+                                  : l.resident,
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFFD47D00),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── The rest of the page ──
+                      Padding(
                         padding: EdgeInsets.fromLTRB(
                           20,
                           0,
@@ -354,11 +364,11 @@ class ProfileScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

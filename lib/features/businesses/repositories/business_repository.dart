@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../../shared/search_text.dart';
 
 class BusinessRepository {
   final SupabaseClient _client = SupabaseConfig.client;
@@ -42,7 +43,7 @@ class BusinessRepository {
     if (search != null && search.isNotEmpty) {
       query = query.or(
         // The English name too (00062 — run it before this is deployed).
-        'name.ilike.%$search%,name_en.ilike.%$search%,short_description.ilike.%$search%',
+        'name.ilike.%${searchPattern(search)}%,name_en.ilike.%${searchPattern(search)}%,short_description.ilike.%${searchPattern(search)}%',
       );
     }
 
@@ -53,12 +54,28 @@ class BusinessRepository {
       final data = await query
           .order('promoted_until', ascending: false, nullsFirst: false)
           .order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(data);
+      return _coverlessLast(List<Map<String, dynamic>>.from(data));
     } on PostgrestException catch (e) {
       if (!e.message.contains('promoted_until')) rethrow;
       final data = await query.order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(data);
+      return _coverlessLast(List<Map<String, dynamic>>.from(data));
     }
+  }
+
+  /// A business without a cover photo goes to the foot of its list (the
+  /// client, TestFlight 11 Oct: in every category, the ones showing only the
+  /// blue placeholder last). A running promotion still stands first; within
+  /// each group the order the database gave is kept.
+  static List<Map<String, dynamic>> _coverlessLast(List<Map<String, dynamic>> rows) {
+    final now = DateTime.now();
+    bool promoted(Map<String, dynamic> r) =>
+        (DateTime.tryParse(r['promoted_until'] as String? ?? '')?.isAfter(now)) ?? false;
+    bool hasCover(Map<String, dynamic> r) => ((r['cover_url'] as String?) ?? '').trim().isNotEmpty;
+    return [
+      ...rows.where(promoted),
+      ...rows.where((r) => !promoted(r) && hasCover(r)),
+      ...rows.where((r) => !promoted(r) && !hasCover(r)),
+    ];
   }
 
   /// Business ids linked to a category, named by its id or its slug — the

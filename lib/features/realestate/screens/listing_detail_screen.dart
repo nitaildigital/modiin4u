@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:share_plus/share_plus.dart';
 import '../../../shared/widgets/web_share_menu.dart';
 import '../providers/detail_providers.dart';
 import 'my_apartments_screen.dart' show formatShekels;
@@ -25,6 +24,7 @@ import '../../../shared/widgets/app_map.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../core/supabase/supabase_config.dart';
 import '../../../shared/widgets/report_sheet.dart';
+import '../../../shared/share_text.dart';
 
 /// One apartment listing.
 ///
@@ -427,7 +427,7 @@ class _MobileListingDetailContentState
       listing.address ?? listing.neighborhoodName,
     ].whereType<String>().where((s) => s.isNotEmpty).join('\n');
     if (!kIsWeb) {
-      await Share.share(message, subject: listing.title);
+      await shareText(anchor, message, subject: listing.title);
       return;
     }
     await showWebShareMenu(

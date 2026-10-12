@@ -10,6 +10,7 @@ import '../../news/models/article.dart';
 import '../../news/providers/news_providers.dart';
 import '../../deals/providers/offer_providers.dart';
 import '../../realestate/providers/listing_providers.dart';
+import '../../../shared/search_text.dart';
 
 /// One row in the search results, whatever it came from.
 class SearchHit {
@@ -49,12 +50,12 @@ final searchResultsProvider =
     ref.watch(eventRepositoryProvider).fetchAll(search: q),
   ]);
   final listings = await ref.watch(listingRepositoryProvider).fetchActive(search: q);
-  final needle = q.toLowerCase();
+  final needle = searchKey(q);
   final offers = (await ref.watch(activeOffersProvider.future)).where(
     (o) =>
         !o.hasExpired &&
         [o.name, o.businessName, o.description]
-            .any((t) => (t ?? '').toLowerCase().contains(needle)),
+            .any((t) => searchKey(t ?? '').contains(needle)),
   );
 
   final businesses = results[0].map(Business.fromJson);

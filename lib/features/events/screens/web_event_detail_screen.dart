@@ -7,7 +7,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/network_photo.dart';
@@ -22,6 +21,7 @@ import '../providers/event_providers.dart';
 import '../../../shared/widgets/web_map_tiles.dart';
 import 'web_events_screen.dart'
     show WebEventCard, WebEventCategoryPill, kWebEventGridGap, webEventCardWidth, webEventGridColumns;
+import '../../../shared/share_text.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Web Event Detail — from the Figma frame "Event Detail"
@@ -203,7 +203,7 @@ class _WebEventDetailContentState extends ConsumerState<WebEventDetailContent>
       _labels.venue(event),
     ].whereType<String>().where((s) => s.isNotEmpty).join('\n');
     if (!kIsWeb) {
-      await Share.share('$message\n$link', subject: event.title);
+      await shareText(anchor, '$message\n$link', subject: event.title);
       return;
     }
     await showWebShareMenu(anchor, title: event.title, link: link, message: message, isHebrew: _isHebrew);

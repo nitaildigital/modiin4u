@@ -15,6 +15,7 @@ import '../../../shared/providers/nav_categories_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../restaurants/providers/restaurant_providers.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
+import '../../../shared/search_text.dart';
 
 /// Businesses in one category, or all of them when [categoryId] is null.
 class BusinessListScreen extends ConsumerWidget {
@@ -138,8 +139,9 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
         return false;
       }
       if (q.isEmpty) return true;
-      return b.name.toLowerCase().contains(q) ||
-          b.address.toLowerCase().contains(q);
+      final key = searchKey(q);
+      return searchKey(b.name).contains(key) ||
+          searchKey(b.address).contains(key);
     }).toList();
 
     // The rows arrive newest first; the website sorts the same three ways,

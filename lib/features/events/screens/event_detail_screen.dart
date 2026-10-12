@@ -3,7 +3,6 @@ import '../../../shared/widgets/sign_in_action.dart';
 import 'package:flutter/material.dart';
 import '../../../core/supabase/account_blocked.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +26,7 @@ import '../../../core/theme/app_colors.dart';
 import '../models/event_labels.dart';
 import '../widgets/m_event_card.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
+import '../../../shared/share_text.dart';
 
 /// Event detail screen — responsive wrapper.
 /// Desktop (> 1100px) renders the web detail layout; mobile keeps the app UI.
@@ -333,7 +333,7 @@ class _MobileEventDetailContentState
     // On a device, what the business page shares: the words, no link —
     // the app has no public address for an event to point at.
     if (!kIsWeb) {
-      await Share.share(message, subject: event.title);
+      await shareText(anchor, message, subject: event.title);
       return;
     }
     await showWebShareMenu(

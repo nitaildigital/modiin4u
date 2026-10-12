@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_config.dart';
+import '../../../shared/search_text.dart';
 
 class ArticleRepository {
   final SupabaseClient _client = SupabaseConfig.client;
@@ -37,7 +38,7 @@ class ArticleRepository {
         .from('articles')
         .select(listColumns)
         .eq('status', 'published')
-        .or('title.ilike.%$q%,slug.ilike.%$q%')
+        .or('title.ilike.%${searchPattern(q)}%,slug.ilike.%${searchPattern(q)}%')
         .order('published_at', ascending: false, nullsFirst: false)
         .limit(limit);
     return List<Map<String, dynamic>>.from(data);
@@ -53,7 +54,7 @@ class ArticleRepository {
       query = query.eq('status', status);
     }
     if (search != null && search.isNotEmpty) {
-      query = query.or('title.ilike.%$search%,slug.ilike.%$search%');
+      query = query.or('title.ilike.%${searchPattern(search)}%,slug.ilike.%${searchPattern(search)}%');
     }
 
     // `published_at`, not `created_at`. Every one of the 669 imported

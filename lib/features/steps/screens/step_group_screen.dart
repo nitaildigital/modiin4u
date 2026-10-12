@@ -3,7 +3,6 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -15,6 +14,7 @@ import '../providers/step_groups_providers.dart';
 import '../services/health_steps.dart' show dateKey;
 import '../widgets/step_groups_tab.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
+import '../../../shared/share_text.dart';
 
 const _border = Color(0xFFE7E7E7);
 const _muted = Color(0xFF6D6D6D);
@@ -64,7 +64,9 @@ class _StepGroupScreenState extends ConsumerState<StepGroupScreen> {
     final l = L.of(context);
     final site = await ref.read(siteUrlProvider.future);
     final link = '$site/join/${group.inviteCode}';
-    await Share.share(
+    if (!mounted) return;
+    await shareText(
+      context,
       l.sgInviteMessage(group.name, link, group.inviteCode),
       subject: group.name,
     );

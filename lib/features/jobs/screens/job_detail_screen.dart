@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/m_kit.dart';
@@ -15,6 +14,7 @@ import '../../messages/open_conversation.dart';
 import '../models/job.dart';
 import '../providers/job_providers.dart';
 import '../widgets/m_job_card.dart';
+import '../../../shared/share_text.dart';
 
 /// Job Detail (`user_side/Job Detail.png`, `Job Detail Applied.png`): the
 /// job, what it asks, its pictures and the business behind it, with Share and
@@ -38,7 +38,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
   void _share(Job job) {
     ref.read(jobRepositoryProvider).recordEvent(job.id, 'share');
-    Share.share(
+    shareText(context, 
       '${job.title}\nhttps://app.modiin4u.co.il/jobs/${job.id}',
       subject: job.title,
     );

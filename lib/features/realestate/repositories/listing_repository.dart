@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
 import '../models/listing.dart';
+import '../../../shared/search_text.dart';
 
 /// Reads and writes `listings`.
 ///
@@ -46,7 +47,7 @@ class ListingRepository {
     if (minRooms != null) query = query.gte('rooms', minRooms);
     if (search != null && search.trim().isNotEmpty) {
       final q = search.trim();
-      query = query.or('title.ilike.%$q%,address.ilike.%$q%');
+      query = query.or('title.ilike.%${searchPattern(q)}%,address.ilike.%${searchPattern(q)}%');
     }
 
     // A rental is priced in `price_per_month` and a sale in `price`, so the

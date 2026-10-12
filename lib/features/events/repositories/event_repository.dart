@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../../shared/search_text.dart';
 
 class EventRepository {
   final SupabaseClient _client = SupabaseConfig.client;
@@ -16,7 +17,7 @@ class EventRepository {
     }
     if (search != null && search.isNotEmpty) {
       query = query.or(
-        'title.ilike.%$search%,short_description.ilike.%$search%',
+        'title.ilike.%${searchPattern(search)}%,short_description.ilike.%${searchPattern(search)}%',
       );
     }
 

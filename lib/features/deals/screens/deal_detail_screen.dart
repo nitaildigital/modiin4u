@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:share_plus/share_plus.dart';
 import '../../../shared/widgets/web_share_menu.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -26,6 +25,7 @@ import '../widgets/m_deal_detail_parts.dart';
 import 'deal_voucher_screen.dart';
 import 'web_deal_detail_screen.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
+import '../../../shared/share_text.dart';
 
 /// One deal.
 ///
@@ -110,7 +110,7 @@ class _MobileDealDetailContent extends ConsumerWidget {
         .where((s) => s.isNotEmpty)
         .join(' — ');
     if (!kIsWeb) {
-      await Share.share(message, subject: offer.name);
+      await shareText(anchor, message, subject: offer.name);
       return;
     }
     await showWebShareMenu(

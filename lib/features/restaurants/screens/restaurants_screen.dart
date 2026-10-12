@@ -15,6 +15,7 @@ import 'web_restaurants_screen.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
+import '../../deals/widgets/m_deals_sections.dart' show MDealsBanner;
 
 /// Restaurants discovery screen — responsive wrapper.
 /// Desktop (> 1100px) renders the full web layout; mobile keeps the app UI.
@@ -48,8 +49,6 @@ class _MobileRestaurantsContent extends ConsumerStatefulWidget {
 
 class _MobileRestaurantsContentState
     extends ConsumerState<_MobileRestaurantsContent> {
-  final int _bannerPage = 1; // 0-indexed, starts on second dot active
-
   // ── Popular Restaurants ──
 
   // ── Coffee Shops ──
@@ -78,13 +77,12 @@ class _MobileRestaurantsContentState
                       const SizedBox(height: 100), // space for sticky header
                       const SizedBox(height: 16),
 
-                      // Hero banner
-                      _buildHeroBanner(),
-                      const SizedBox(height: 12),
-
-                      // Page dots
-                      _buildPageDots(),
-                      const SizedBox(height: 16),
+                      // The panel's RESTAURANTS_TOP banners, swiped like
+                      // Deals' (MDealsBanner). This was a blue placeholder
+                      // with three dots that never moved (TestFlight, 11
+                      // Oct: "not scroll"); with nothing booked the slot
+                      // draws nothing.
+                      const MDealsBanner(code: 'RESTAURANTS_TOP', bottom: 16),
 
                       // "Explore Modiin"
                       Padding(
@@ -289,56 +287,6 @@ class _MobileRestaurantsContentState
           ],
         ),
       ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════
-  // Hero banner
-  // ═══════════════════════════════════════════════
-  Widget _buildHeroBanner() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0058B5), Color(0xFF010A36)],
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            IconsaxPlusBold.reserve,
-            size: 48,
-            color: Colors.white.withValues(alpha: 0.12),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════
-  // Page dots
-  // ═══════════════════════════════════════════════
-  Widget _buildPageDots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(3, (i) {
-        return Container(
-          width: 20,
-          height: 4,
-          margin: EdgeInsets.only(right: i < 2 ? 3 : 0),
-          decoration: BoxDecoration(
-            color: i == _bannerPage
-                ? const Color(0xFF123A72)
-                : const Color(0xFFD9D9D9),
-            borderRadius: BorderRadius.circular(50),
-          ),
-        );
-      }),
     );
   }
 

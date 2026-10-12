@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/error_retry.dart';
@@ -16,6 +15,7 @@ import '../widgets/m_article_parts.dart';
 import 'web_article_screen.dart';
 import '../../businesses/repositories/business_stats.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
+import '../../../shared/share_text.dart';
 
 /// News article detail – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News Detail web layout;
@@ -28,7 +28,11 @@ class ArticleScreen extends StatefulWidget {
   /// opens.
   final String? focusCommentId;
 
-  const ArticleScreen({super.key, required this.articleId, this.focusCommentId});
+  const ArticleScreen({
+    super.key,
+    required this.articleId,
+    this.focusCommentId,
+  });
 
   @override
   State<ArticleScreen> createState() => _ArticleScreenState();
@@ -70,7 +74,10 @@ class _ArticleScreenState extends State<ArticleScreen> {
         if (constraints.maxWidth > 1100) {
           return WebArticleContent(articleId: articleId);
         }
-        return _MobileArticleContent(articleId: articleId, focusCommentId: focus);
+        return _MobileArticleContent(
+          articleId: articleId,
+          focusCommentId: focus,
+        );
       },
     );
   }
@@ -89,7 +96,8 @@ class _MobileArticleContent extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: article.maybeWhen(
-        data: (a) => MArticleBottomBar(article: a, onShare: () => _share(a)),
+        data: (a) =>
+            MArticleBottomBar(article: a, onShare: () => _share(context, a)),
         orElse: () => null,
       ),
       body: article.when(
@@ -106,8 +114,7 @@ class _MobileArticleContent extends ConsumerWidget {
               ),
               Expanded(
                 child: ErrorRetry(
-                  onRetry: () =>
-                      ref.invalidate(articleByIdProvider(articleId)),
+                  onRetry: () => ref.invalidate(articleByIdProvider(articleId)),
                 ),
               ),
             ],
@@ -123,10 +130,17 @@ class _MobileArticleContent extends ConsumerWidget {
     );
   }
 
-  void _share(Article a) {
+  void _share(BuildContext context, Article a) {
     final link = mShareLink(a);
-    Share.share(
-      [a.title, if (link != null) link else if ((a.excerpt ?? '').isNotEmpty) a.excerpt!].join('\n\n'),
+    shareText(
+      context,
+      [
+        a.title,
+        if (link != null)
+          link
+        else if ((a.excerpt ?? '').isNotEmpty)
+          a.excerpt!,
+      ].join('\n\n'),
       subject: a.title,
     );
   }
@@ -147,7 +161,8 @@ class _ArticleView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final related =
-        ref.watch(relatedArticlesProvider(article.id)).valueOrNull ?? const <Article>[];
+        ref.watch(relatedArticlesProvider(article.id)).valueOrNull ??
+        const <Article>[];
 
     return SingleChildScrollView(
       child: Column(
@@ -235,7 +250,9 @@ class _CircleButton extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         // Material's back arrow turns to face the reading direction.
-        child: const Center(child: Icon(Icons.arrow_back, size: 20, color: Colors.black)),
+        child: const Center(
+          child: Icon(Icons.arrow_back, size: 20, color: Colors.black),
+        ),
       ),
     );
   }
@@ -275,11 +292,20 @@ class _Header extends ConsumerWidget {
                 const Spacer(),
                 // Only a counted row shows its views, as on the website.
                 if (article.viewCount > 0) ...[
-                  SvgPicture.asset('assets/web/news/stat_views.svg', width: 20, height: 20),
+                  SvgPicture.asset(
+                    'assets/web/news/stat_views.svg',
+                    width: 20,
+                    height: 20,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '${article.viewCount}',
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 17 / 14, color: Colors.black),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 14,
+                      height: 17 / 14,
+                      color: Colors.black,
+                    ),
                   ),
                 ],
               ],
@@ -297,7 +323,8 @@ class _Header extends ConsumerWidget {
               color: Colors.black,
             ),
           ),
-          if (article.subtitle != null && article.subtitle!.trim().isNotEmpty) ...[
+          if (article.subtitle != null &&
+              article.subtitle!.trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               article.subtitle!,

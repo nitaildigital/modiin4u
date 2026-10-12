@@ -6,6 +6,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/supabase/supabase_config.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../shared/search_text.dart';
 
 /// The Urban Profile (the client's spec, 8 Oct 2026; migration 00077): a
 /// photo and a few words, interests, favourite places with up to three top
@@ -338,7 +339,7 @@ class UrbanProfileRepository {
     final q = query.trim().replaceAll(RegExp(r'[,()%*]'), ' ');
     var request = _client.from('businesses').select(_placeColumns).eq('status', 'active');
     if (q.isNotEmpty) {
-      request = request.or('name.ilike.%$q%,name_en.ilike.%$q%');
+      request = request.or('name.ilike.%${searchPattern(q)}%,name_en.ilike.%${searchPattern(q)}%');
     } else {
       request = request.or('is_recommended.eq.true,is_featured.eq.true,kind.eq.park');
     }

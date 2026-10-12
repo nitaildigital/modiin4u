@@ -13,6 +13,7 @@ import '../data/map_pois.dart';
 import '../providers/map_providers.dart';
 import '../../../shared/widgets/app_map.dart';
 import 'web_map_screen.dart';
+import '../../../shared/search_text.dart';
 
 /// Map – responsive wrapper.
 /// Desktop (> 1100px) renders the "Explore Modiin" web map; mobile keeps the
@@ -116,13 +117,13 @@ class _MobileMapContentState extends ConsumerState<_MobileMapContent> {
     final all = ref.watch(mapPoisProvider).valueOrNull ?? const <MapPoi>[];
     var pois = all.where((p) => _activeLayers.contains(p.layer));
     if (_mapSearchQuery.isNotEmpty) {
-      final q = _mapSearchQuery.toLowerCase();
+      final q = searchKey(_mapSearchQuery);
       pois = pois.where(
         (p) =>
-            p.name.toLowerCase().contains(q) ||
-            (p.nameEn ?? '').toLowerCase().contains(q) ||
-            p.category.toLowerCase().contains(q) ||
-            (p.address ?? '').toLowerCase().contains(q),
+            searchKey(p.name).contains(q) ||
+            searchKey(p.nameEn ?? '').contains(q) ||
+            searchKey(p.category).contains(q) ||
+            searchKey(p.address ?? '').contains(q),
       );
     }
     return pois.toList();

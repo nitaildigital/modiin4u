@@ -74,10 +74,12 @@ class UrbanProfileCard extends StatelessWidget {
                     width: 92,
                     height: 92,
                     clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
+                    // No white ring round the photo (the client, 9 Oct); a
+                    // soft shadow parts it from the band instead.
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 4),
-                      gradient: const LinearGradient(colors: [Color(0xFF0058B5), Color(0xFF010A36)]),
+                      gradient: LinearGradient(colors: [Color(0xFF0058B5), Color(0xFF010A36)]),
+                      boxShadow: [BoxShadow(color: Color(0x33000000), blurRadius: 10, offset: Offset(0, 3))],
                     ),
                     child: p.hasPhoto
                         ? CachedNetworkImage(

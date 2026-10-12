@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../shared/widgets/error_retry.dart';
 import '../../../shared/widgets/m_kit.dart';
@@ -14,6 +13,7 @@ import '../models/job.dart';
 import '../providers/job_providers.dart';
 import 'applicant_profile_screen.dart' show confirmJobAction, contactApplicant, experienceYearsLabel;
 import 'business_jobs_screen.dart' show shownJobStatus;
+import '../../../shared/share_text.dart';
 
 /// The owner's page for one job (`business_side/Job Detail*.png`): the job as
 /// residents see it, who applied, and how it is doing — with Share and Boost
@@ -282,7 +282,7 @@ class _BottomBar extends ConsumerWidget {
         // nothing to send them.
         if (job.isLive) ...[
           GestureDetector(
-            onTap: () => Share.share(
+            onTap: () => shareText(context, 
               '${job.title}\nhttps://app.modiin4u.co.il/jobs/${job.id}',
               subject: job.title,
             ),
