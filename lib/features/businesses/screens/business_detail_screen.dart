@@ -12,7 +12,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
@@ -35,6 +34,8 @@ import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../shared/widgets/web_chrome.dart' show WebFooter, WebNavbar, webIsHebrew;
 import '../repositories/business_repository.dart' show BusinessNotFound;
 import '../../messages/open_conversation.dart';
+import '../../../shared/share_text.dart';
+import '../widgets/review_composer.dart';
 
 class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
@@ -141,7 +142,7 @@ class _BusinessDetailContentState
   /// Share, from the control on the photograph.
   void _shareBusiness() {
     BusinessStats.record(business.id, BusinessStat.share);
-    Share.share(
+    shareText(context, 
       [
         business.name,
         business.description,
@@ -157,20 +158,11 @@ class _BusinessDetailContentState
   /// are written in both languages here.
   bool get _isHe => Localizations.localeOf(context).languageCode == 'he';
 
-  // Review creation state
-  int _userRating = 0;
-  bool _showReviewForm = false;
-  bool _savingReview = false;
-  final _reviewTextController = TextEditingController();
-
-  /// Photographs picked for the review being written, up to four (00076).
-  /// Uploaded only when the review is sent.
-  final _reviewPhotos = <({Uint8List bytes, String name})>[];
-  static const _maxReviewPhotos = 4;
+  // The stars on the prompt; writing happens in the sheet (ReviewComposer).
+  final int _userRating = 0;
 
   @override
   void dispose() {
-    _reviewTextController.dispose();
     super.dispose();
   }
 
@@ -809,7 +801,9 @@ class _BusinessDetailContentState
       (label: l.tabOverview, index: 0),
       if (hasMenu) (label: l.tabMenu, index: 1),
       (label: l.tabPhotos, index: 2),
-      (label: l.tabReviews, index: 3),
+      // Two balanced lines in its tab (the client, 11 Oct: on one line it
+      // read too large and sat at the far edge).
+      (label: mTr(context, 'What Locals\nAre Saying', 'מה חושבים\nתושבי העיר?'), index: 3),
     ];
   }
 
@@ -848,8 +842,8 @@ class _BusinessDetailContentState
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: AppFonts.inter,
-                      fontSize: 13,
-                      height: 1.15,
+                      fontSize: 12.5,
+                      height: 1.2,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                       color: isActive
                           ? AppColors.midBlue
@@ -1063,8 +1057,6 @@ class _BusinessDetailContentState
 
         const SizedBox(height: 16),
 
-        // ── Review form (expanded when tapped) ──
-        if (_showReviewForm) _buildReviewForm(),
 
         const SizedBox(height: 8),
 
@@ -1081,18 +1073,38 @@ class _BusinessDetailContentState
     );
   }
 
-  Future<void> _submitReview(Business business) async {
+  /// Opens the review sheet (ReviewComposer) at the stars tapped. Signed
+  /// out, it says sign-in is needed instead.
+  Future<void> _openComposer(Business business, int stars) async {
     final l = L.of(context);
-    if (_userRating == 0) {
-      _reviewToast(l.chooseRating, error: true);
-      return;
-    }
-    if (ref.read(authProvider) == null) {
+    final user = ref.read(authProvider);
+    if (user == null) {
       _reviewToast(l.signInToReview, error: true, signIn: true);
       return;
     }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ReviewComposer(
+        businessName: business.name,
+        businessLogo: business.logoUrl,
+        userName: user.name,
+        userAvatar: user.avatarUrl,
+        initialRating: stars,
+        onPickPhoto: _pickPhotoFile,
+        onSubmit: (rating, text, photos) => _saveReview(business, rating, text, photos),
+      ),
+    );
+  }
 
-    setState(() => _savingReview = true);
+  /// Saves a review from the sheet; null when it went through, else what to
+  /// say. It arrives as `pending` (the panel approves it), which the sheet's
+  /// thank-you says.
+  Future<String?> _saveReview(Business business, int rating, String text, List<ReviewPhoto> picked) async {
+    final l = L.of(context);
+    final blockedText = accountBlockedMessage(context);
     try {
       final repo = ref.read(businessRepositoryProvider);
       // Asked once, the first time someone with a profile photo writes:
@@ -1109,44 +1121,17 @@ class _BusinessDetailContentState
       }
 
       final photos = <String>[];
-      for (final p in _reviewPhotos) {
+      for (final p in picked) {
         photos.add(await PhotoSubmissions.uploadForReview(bytes: p.bytes, fileName: p.name));
       }
-      await repo.addReview(
-        businessId: business.id,
-        rating: _userRating,
-        body: _reviewTextController.text,
-        photos: photos,
-      );
-
+      await repo.addReview(businessId: business.id, rating: rating, body: text, photos: photos);
       ref.invalidate(hasReviewedProvider(business.id));
       ref.invalidate(businessReviewsProvider(business.id));
-      if (!mounted) return;
-      setState(() {
-        _savingReview = false;
-        _showReviewForm = false;
-        _userRating = 0;
-        _reviewPhotos.clear();
-      });
-      _reviewTextController.clear();
-      // It arrives as `pending`, so saying "thank you" alone would leave
-      // someone wondering why their review is not on the page.
-      _reviewToast(l.reviewSubmitted);
+      return null;
     } on StateError catch (e) {
-      if (!mounted) return;
-      setState(() => _savingReview = false);
-      _reviewToast(
-        e.message == 'already-reviewed' ? l.alreadyReviewed : l.signInToReview,
-        error: true,
-      );
+      return e.message == 'already-reviewed' ? l.alreadyReviewed : l.signInToReview;
     } catch (e) {
-      final blocked = await refusedAsBlocked(e);
-      if (!mounted) return;
-      setState(() => _savingReview = false);
-      _reviewToast(
-        blocked ? accountBlockedMessage(context) : l.errCouldNotSave,
-        error: true,
-      );
+      return await refusedAsBlocked(e) ? blockedText : l.errCouldNotSave;
     }
   }
 
@@ -1182,8 +1167,9 @@ class _BusinessDetailContentState
   }
 
   /// A photograph for the review being written.
-  Future<void> _pickReviewPhoto() async {
-    if (_reviewPhotos.length >= _maxReviewPhotos) return;
+  /// One photo for a review, from the gallery; null when cancelled or too
+  /// large (said here).
+  Future<ReviewPhoto?> _pickPhotoFile() async {
     final XFile? picked;
     try {
       picked = await ImagePicker().pickImage(
@@ -1195,16 +1181,17 @@ class _BusinessDetailContentState
       if (mounted) {
         _reviewToast(mTr(context, 'Could not open your photos', 'לא ניתן לפתוח את התמונות'), error: true);
       }
-      return;
+      return null;
     }
-    if (picked == null || !mounted) return;
+    if (picked == null) return null;
     final bytes = await picked.readAsBytes();
-    if (!mounted) return;
     if (bytes.lengthInBytes > PhotoSubmissions.maxBytes) {
-      _reviewToast(mTr(context, 'This photo is too large — up to 10 MB', 'התמונה גדולה מדי — עד 10MB'), error: true);
-      return;
+      if (mounted) {
+        _reviewToast(mTr(context, 'This photo is too large — up to 10 MB', 'התמונה גדולה מדי — עד 10MB'), error: true);
+      }
+      return null;
     }
-    setState(() => _reviewPhotos.add((bytes: bytes, name: picked!.name)));
+    return (bytes: bytes, name: picked.name);
   }
 
   /// Opens the reply box for one review. Signed out, it says sign-in is
@@ -1303,12 +1290,7 @@ class _BusinessDetailContentState
               children: List.generate(5, (i) {
                 final starIndex = i + 1;
                 return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _userRating = starIndex;
-                      _showReviewForm = true;
-                    });
-                  },
+                  onTap: () => _openComposer(business, starIndex),
                   // The gap and the star's motion lines follow the reading
                   // direction: set on the right, the last two stars touched
                   // in Hebrew, their lines running into each other.
@@ -1351,188 +1333,6 @@ class _BusinessDetailContentState
                 ),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Expanded review form ──
-  Widget _buildReviewForm() {
-    final l = L.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE7E7E7)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l.writeYourReview,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _reviewTextController,
-              maxLines: 4,
-              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: l.reviewHint,
-                hintStyle: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  color: const Color(0xFF9E9E9E),
-                ),
-                filled: true,
-                fillColor: const Color(0xFFF8F9FB),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE7E7E7)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE7E7E7)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.midBlue),
-                ),
-                contentPadding: const EdgeInsets.all(14),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Photographs with the review, up to four (00076).
-            SizedBox(
-              height: 64,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (var i = 0; i < _reviewPhotos.length; i++)
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(end: 8),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.memory(_reviewPhotos[i].bytes, width: 64, height: 64, fit: BoxFit.cover),
-                          ),
-                          PositionedDirectional(
-                            top: 2,
-                            end: 2,
-                            child: GestureDetector(
-                              onTap: _savingReview ? null : () => setState(() => _reviewPhotos.removeAt(i)),
-                              child: Container(
-                                width: 22,
-                                height: 22,
-                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                child: const Icon(Icons.close, size: 14, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (_reviewPhotos.length < _maxReviewPhotos)
-                    GestureDetector(
-                      onTap: _savingReview ? null : _pickReviewPhoto,
-                      child: Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FB),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE7E7E7)),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(IconsaxPlusLinear.gallery_add, size: 20, color: AppColors.midBlue),
-                            const SizedBox(height: 2),
-                            Text(
-                              mTr(context, 'Photo', 'תמונה'),
-                              style: TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: AppColors.midBlue),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                // Cancel button
-                Expanded(
-                  child: SizedBox(
-                    height: 42,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          _showReviewForm = false;
-                          _userRating = 0;
-                          _reviewTextController.clear();
-                          _reviewPhotos.clear();
-                        });
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFE7E7E7)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                      ),
-                      child: Text(
-                        l.cancel,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF6D6D6D),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Submit button
-                Expanded(
-                  child: SizedBox(
-                    height: 42,
-                    child: ElevatedButton(
-                      onPressed: _savingReview
-                          ? null
-                          : () => _submitReview(business),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.midBlue,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                      ),
-                      child: Text(
-                        l.submit,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -2636,7 +2436,6 @@ class _BusinessLogo extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white,
-        border: Border.all(color: Colors.white, width: 3),
         gradient: has
             ? null
             : const LinearGradient(
@@ -2652,16 +2451,17 @@ class _BusinessLogo extends StatelessWidget {
         ],
       ),
       child: has
+          // The logo fills its circle, with no white ring or margin round it
+          // (the client, 11 Oct).
           ? ClipOval(
-              child: Padding(
-                padding: EdgeInsets.all(size * 0.12),
-                child: NetworkPhoto(
-                  url: url,
-                  fit: BoxFit.contain,
-                  gradient: const [Colors.white, Colors.white],
-                  icon: IconsaxPlusLinear.shop,
-                  iconColor: const Color(0xFFB0B0B0),
-                ),
+              child: NetworkPhoto(
+                url: url,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                gradient: const [Colors.white, Colors.white],
+                icon: IconsaxPlusLinear.shop,
+                iconColor: const Color(0xFFB0B0B0),
               ),
             )
           : Center(
