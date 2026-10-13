@@ -30,14 +30,16 @@ function Phone({ screen, frame, w, className = '', style }: {
 /** The App Store and Google Play badges, linked where the panel holds the
  *  stores' addresses (store_url_ios / store_url_android). */
 function Badges({ ios, android }: { ios: string | null; android: string | null }) {
-  const badge = (href: string | null, src: string, alt: string) => {
+  // data-store: the Meta Pixel counts a tap on either store (StoreClick,
+  // LandingPixel), the nearest the ads can see of a download.
+  const badge = (href: string | null, src: string, alt: string, store: string) => {
     const img = <img src={`${A}/${src}`} alt={alt} width={179} height={56} className="block h-11 w-auto desk:h-14" />;
-    return href ? <a href={href} target="_blank" rel="noopener">{img}</a> : <span>{img}</span>;
+    return href ? <a href={href} target="_blank" rel="noopener" data-store={store}>{img}</a> : <span>{img}</span>;
   };
   return (
     <div dir="ltr" className="flex flex-wrap gap-3 desk:gap-[18px]">
-      {badge(ios, 'badge_app_store.svg', 'Download on the App Store')}
-      {badge(android, 'badge_google_play.svg', 'Get it on Google Play')}
+      {badge(ios, 'badge_app_store.svg', 'Download on the App Store', 'ios')}
+      {badge(android, 'badge_google_play.svg', 'Get it on Google Play', 'android')}
     </div>
   );
 }
