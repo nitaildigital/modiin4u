@@ -31,8 +31,15 @@ export function UrbanSteps({ lang, step }: { lang: Lang; step: Step }) {
   const next = useRef('/messages/');
 
   useEffect(() => {
+    // A page of this site only: resolved against it, so "/\evil.com" (which
+    // browsers read as "//evil.com") or a full address elsewhere is refused.
     const n = new URLSearchParams(window.location.search).get('next');
-    if (n && n.startsWith('/') && !n.startsWith('//')) next.current = n;
+    if (n) {
+      try {
+        const u = new URL(n, window.location.origin);
+        if (u.origin === window.location.origin) next.current = u.pathname + u.search + u.hash;
+      } catch { /* not an address: stay with Messages */ }
+    }
   }, []);
   useEffect(() => {
     if (!ready || !session) return;

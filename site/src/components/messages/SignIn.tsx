@@ -10,8 +10,15 @@ import { markSeen, mine, opensSteps } from '@/lib/urban';
 /** Where to go after signing in: a page of this site only, never another
  *  address someone put in the link. */
 function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/messages/';
-  return raw;
+  if (!raw) return '/messages/';
+  // Resolved against this site, so "/\evil.com" (which browsers read as
+  // "//evil.com") or a full address elsewhere falls back to Messages.
+  try {
+    const u = new URL(raw, window.location.origin);
+    return u.origin === window.location.origin ? u.pathname + u.search + u.hash : '/messages/';
+  } catch {
+    return '/messages/';
+  }
 }
 
 /** Sign in, for Messages and the Urban Profile (the app's Login frame, on
