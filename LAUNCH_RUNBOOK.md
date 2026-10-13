@@ -6,9 +6,14 @@ each line as it is done.
 
 ## A. A week before
 
-- [ ] **DNS at uPress:** lower the TTL of `www`, the bare domain and `app` to
-      300 s, so the switch takes minutes. Leave the MX, SPF and DKIM records
-      as they are — mail stays where it is.
+- [ ] **DNS at uPress:** first screenshot the whole Manage DNS list (clear
+      the search box), to compare against after every change — on 13 Oct a
+      delete there took four A records with it (@, mail, ftp, pop). Then lower
+      the TTL of `www`, the bare domain and `app` to 300 s, so the switch takes
+      minutes. Leave the MX, SPF, DKIM (`brevo1`/`brevo2._domainkey`), DMARC and
+      `brevo-code` records as they are — mail stays where it is. Check the
+      result over HTTPS DNS (dns.google/resolve); plain `dig` from the office
+      network gave false "does not exist" answers that day.
 - [ ] **Decide the panel's address** (its own subdomain, e.g. `panel.`) and
       ask the client for its DNS record with the others.
 - [ ] **Supabase → Authentication → URL configuration:** Site URL

@@ -2898,7 +2898,16 @@ sites (modiinadlan, kosherz, digitalix).
   Gmail address sent from Brevo's servers fails the Gmail domain's checks, so
   more of them land in spam; a sender on the domain (e.g.
   `no-reply@modiin4u.co.il`, authenticated in Brevo with its DKIM and SPF
-  records in uPress's DNS) would not. To decide.
+  records in uPress's DNS) would not. **Done 13 Oct:** modiin4u.co.il is a
+  Brevo domain — `brevo-code` TXT on the root, CNAMEs
+  `brevo1`/`brevo2._domainkey`, and a DMARC TXT `_dmarc` (`p=none`, reports
+  to Brevo); SPF unchanged, Brevo did not ask for it. Supabase's SMTP sender
+  is `no-reply@modiin4u.co.il`, "Modiin4U - מודיעין בשבילך". The address has
+  no mailbox: replies bounce, and Brevo's own sender check (a code sent to it)
+  is left undone — Supabase's mail through Brevo's SMTP goes out without it
+  (a test sign-up, deleted after). uPress mailboxes and forwards live at
+  Inbox.co.il; not opened. While editing the DNS, a delete took the A records
+  for @, mail, ftp and pop with it; they were put back the same hour.
 
 **WordPress's real reviews and image alt texts — 13 Oct (Harshit's go-ahead).**
 - **Reviews.** WordPress's JetReviews plugin held 130 real ratings on 59
