@@ -18,7 +18,8 @@ const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito', display: 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: SITE_NAME,
-  icons: { icon: '/favicon.png', apple: '/icons/Icon-192.png' },
+  // The app's icon (13 Oct): the tab, and a phone's home screen.
+  icons: { icon: [{ url: '/favicon.png', sizes: '96x96', type: 'image/png' }], apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }] },
 };
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
