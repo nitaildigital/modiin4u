@@ -68,11 +68,14 @@ export type Biz = {
 const BIZ = 'id,slug,name,name_en,short_description,full_description,cover_url,og_image_url,logo_url,address,phone,whatsapp,email,rating,review_count,kosher_level,latitude,longitude,promoted_until,neighborhoods!businesses_neighborhood_id_fkey(name,name_en)';
 
 /** Every active business (not parks), a running promotion first, then the
- *  newest — BusinessRepository.fetchAll(status: 'active'). */
+ *  newest, those without a picture at the foot —
+ *  BusinessRepository.fetchAll(status: 'active'). */
 export const activeBusinesses = cache(async (): Promise<Biz[]> => {
   const { data } = await db.from('businesses').select(BIZ).eq('status', 'active').eq('kind', 'business')
     .order('promoted_until', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
-  return (data ?? []) as unknown as Biz[];
+  const rows = (data ?? []) as unknown as Biz[];
+  const rest = rows.filter((b) => !isPromoted(b));
+  return [...rows.filter(isPromoted), ...rest.filter((b) => bizImage(b)), ...rest.filter((b) => !bizImage(b))];
 });
 
 /** The photograph a card shows: the cover, else the sharing image. */

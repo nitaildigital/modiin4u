@@ -3,6 +3,7 @@ import { createContext, useContext, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight2, ArrowLeft2, Bank, Book1, Bus, Candle, Clock, CloseCircle, Danger, DocumentText, Health, SearchNormal1, Tree } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
+import { matches, searchFields } from '@/lib/search-text';
 
 /** One of the Municipal page's nine tiles (web_municipal_screen.dart and
  *  municipal_screen.dart): its words, its icons and where it leads. */
@@ -83,8 +84,7 @@ export function DeskServiceGrid({ services, lang }: { services: Service[]; lang:
   const { q, set } = useContext(Query);
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
   const query = q.trim();
-  const needle = query.toLowerCase();
-  const shown = needle ? services.filter((s) => s.label.toLowerCase().includes(needle) || s.blurb.toLowerCase().includes(needle)) : services;
+  const shown = services.filter((s) => matches(searchFields(s.label, s.blurb), query));
   const Chevron = lang === 'he' ? ArrowLeft2 : ArrowRight2;
   return (
     <>
@@ -128,8 +128,7 @@ export function DeskServiceGrid({ services, lang }: { services: Service[]; lang:
 /** The phone's 3 × 3 grid of tiles, each the frame's drawing over its name. */
 export function PhoneServiceGrid({ services }: { services: Service[] }) {
   const { q } = useContext(Query);
-  const needle = q.trim().toLowerCase();
-  const shown = needle ? services.filter((s) => s.phoneLabel.toLowerCase().includes(needle)) : services;
+  const shown = services.filter((s) => matches(searchFields(s.phoneLabel), q));
   return (
     <ul className="mt-[15px] grid grid-cols-3 gap-2">
       {shown.map((s) => (

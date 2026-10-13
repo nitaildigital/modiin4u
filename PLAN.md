@@ -2963,6 +2963,30 @@ the places with a cover photo first.
   in the list. The search was checked against the live names. Every team
   push the tests made was cancelled before sending (0 sent). Not seen on an
   iPhone: the share sheet's anchor — the next TestFlight build.
+- **The same notes on the Next.js site — 13 Oct.** Every note was tested on
+  the site at 1440 and 390 px; five had the app's fault there too and are
+  fixed as in the app:
+  - **Hebrew search:** `site/src/lib/search-text.ts` is the app's
+    search_text.dart — the site search in the database (words joined by a
+    wildcard, a quote mark matching any one character) and every list
+    filtered on the page (directory, categories, the three maps, the city
+    map, events, parks, municipal places and services, apartments), which
+    now ignore spaces and quote marks, field by field.
+  - **No picture, at the foot:** the directory's list (every category and
+    Restaurants) and the home page's rows, a running promotion still first.
+    "No picture" is the site's: no cover and no sharing image.
+  - **The logo fills its circle** on the business page, phone and desktop,
+    with no white ring or margin; **the reviews tab** on two centred lines;
+    **the Urban Profile photo** without its white ring, a soft shadow
+    instead.
+  Checked on a production build: "נאי תאי" and "אנג'ל" found in the site
+  search, the directory, the restaurants category and the restaurants map;
+  the restaurants category opening on photos; the logo, the tab and the
+  Urban Profile (signed in as a temporary account, deleted after) looked
+  at. The rest were already right on the site or are app-only: the share
+  menu, Restaurants' banner and cuisine cards, the "What Locals Are Saying"
+  label, the reviewer's photo with consent, the invitation page. A review's
+  photos were not seen — no published review has any yet.
 
 **Before the stores — 12 Oct.** Harshit is submitting to the App Store and
 Google Play today.

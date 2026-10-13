@@ -6,6 +6,7 @@ import type { Lang } from '@/lib/i18n';
 import { useDesk } from '@/components/municipal/useDesk';
 import { useDebounced } from '@/lib/useDebounced';
 import { MapView, type MapPin } from './MapView';
+import { matches } from '@/lib/search-text';
 
 /** One place on a list-and-map page. The server draws its list row and its
  *  map card; the browser only narrows, orders and points. */
@@ -52,8 +53,7 @@ export function ListMap({ lang, items, facets = [], sorts = [], heading, sub, li
   // typing pauses.
   const query = useDebounced(q);
   const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    const rows = items.filter((it) => (!needle || it.text.includes(needle))
+    const rows = items.filter((it) => matches(it.text, query)
       && facets.every((f) => !(picked[f.id]?.length) || picked[f.id].some((v) => it.tags.includes(`${f.id}:${v}`))));
     if (!sort) return rows;
     return rows.map((r, i) => [r, i] as const)

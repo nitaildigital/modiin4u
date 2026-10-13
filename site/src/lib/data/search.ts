@@ -1,17 +1,12 @@
 import { db } from '../supabase';
 import type { Lang } from '../i18n';
 import { href } from '../seo';
+import { searchKey, searchPattern } from '@/lib/search-text';
 
 export type HitKind = 'business' | 'event' | 'deal' | 'listing' | 'news';
 
 /** One row of the results, whatever it came from (SearchHit). */
 export type Hit = { kind: HitKind; title: string; subtitle: string; href: string; image: string | null };
-
-/** The words as they go into a PostgREST `or=(…)` filter: its own commas,
- *  brackets and quotes would end the filter early, so they are left out. */
-function term(q: string): string {
-  return q.replace(/[,()"\\*%]/g, ' ').replace(/\s+/g, ' ').trim();
-}
 
 /** Today's date in Israel, "2026-10-08". */
 function israelToday(): string {
@@ -27,7 +22,9 @@ const join = (parts: (string | null | undefined)[]) => parts.map((p) => (p ?? ''
  *  text; listings by title or address; articles by title or slug. In
  *  that order: businesses, events, deals, listings, news. */
 export async function search(query: string, lang: Lang): Promise<Hit[]> {
-  const q = term(query);
+  // The words joined by a wildcard, quote marks matching any one
+  // character (search-text.ts): "נאי תאי" finds נאיתאי.
+  const q = searchPattern(query);
   if (!q) return [];
   const like = `%${q}%`;
 
@@ -55,7 +52,7 @@ export async function search(query: string, lang: Lang): Promise<Hit[]> {
   type Hood = { name: string | null; name_en: string | null } | null;
   const hood = (h: Hood) => (lang === 'en' && h?.name_en?.trim()) || h?.name || '';
   const today = israelToday();
-  const needle = query.trim().toLowerCase();
+  const needle = searchKey(query);
   const now = Date.now();
 
   const businesses = ((biz.data ?? []) as unknown as { id: string; slug: string; name: string; name_en: string | null; short_description: string | null; full_description: string | null; cover_url: string | null; og_image_url: string | null; neighborhoods: Hood }[])
@@ -82,7 +79,7 @@ export async function search(query: string, lang: Lang): Promise<Hit[]> {
 
   const deals = ((offs.data ?? []) as unknown as { id: string; name: string; description: string | null; image_url: string | null; end_at: string | null; businesses: { name: string | null; name_en: string | null } | null }[])
     .filter((o) => (!o.end_at || Date.parse(o.end_at) > now)
-      && [o.name, o.businesses?.name, o.description].some((t) => (t ?? '').toLowerCase().includes(needle)))
+      && [o.name, o.businesses?.name, o.description].some((t) => searchKey(t).includes(needle)))
     .map((o): Hit => ({
       kind: 'deal', title: o.name,
       subtitle: (lang === 'en' && o.businesses?.name_en?.trim()) || o.businesses?.name || '',

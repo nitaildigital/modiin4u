@@ -6,6 +6,7 @@ import type { Lang } from '@/lib/i18n';
 import type { EventCard, EventCategory } from '@/lib/data/events';
 import { MEventCard, WebEventCard } from './EventCards';
 import { categoryLabel } from './labels';
+import { matches as answers, searchFields } from '@/lib/search-text';
 
 /** One circle in "Event Categories": All, each category with something
  *  coming up, then Free. [filter] is what follows `?category=`. */
@@ -96,9 +97,7 @@ export function EventsHome({ lang, heading, headingIsH1, events, categories, byE
 
   // The search looks at the title, the venue and the address.
   const found = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return events;
-    return events.filter((e) => e.title.toLowerCase().includes(q) || (e.venue_name ?? '').toLowerCase().includes(q) || (e.address ?? '').toLowerCase().includes(q));
+    return events.filter((e) => answers(searchFields(e.title, e.venue_name, e.address), query));
   }, [events, query]);
   const searching = query.trim().length > 0;
 

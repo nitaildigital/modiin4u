@@ -2,6 +2,7 @@ import type { Lang } from '@/lib/i18n';
 import { isUuid } from '@/lib/params';
 import type { Listing, ListingKind, PropertyType } from '@/lib/data/realestate';
 import { hoodName, priceOf } from './format';
+import { matches, searchFields } from '@/lib/search-text';
 
 // The real estate search as the address carries it — the filters of
 // web_realestate_search_screen.dart (and the phone tab's), each a `?` field,
@@ -72,10 +73,8 @@ const FLOORS: Record<Floor, [number, number | null]> = { low: [1, 3], mid: [4, 7
  *  price range — a listing with no price drops out once a range is set; the
  *  floor bucket — an unrecorded floor sits in none; the neighbourhood. */
 export function applySearch(rows: Listing[], s: Search, lang: Lang): Listing[] {
-  const q = s.q.toLowerCase();
   return rows.filter((l) => {
-    if (q && !l.title.toLowerCase().includes(q) && !(l.address ?? '').toLowerCase().includes(q)
-      && !(hoodName(l, lang) ?? '').toLowerCase().includes(q) && !(l.neighborhoods?.name ?? '').toLowerCase().includes(q)) return false;
+    if (!matches(searchFields(l.title, l.address, hoodName(l, lang), l.neighborhoods?.name), s.q)) return false;
     if (s.types.length && !s.types.includes(l.property_type)) return false;
     if (s.rooms.length) {
       if (l.rooms == null) return false;

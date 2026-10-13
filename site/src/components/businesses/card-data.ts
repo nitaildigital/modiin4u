@@ -5,6 +5,7 @@ import {
   type BizCategory, type BizRow, type PrimaryCategory,
 } from '@/lib/data/businesses';
 import type { BizCard } from './BusinessCard';
+import { searchFields } from '@/lib/search-text';
 
 /** A business row as the cards draw it, in the reader's language. [primary]
  *  is the row's most specific category (primaryCategories()). */
@@ -40,6 +41,5 @@ export function searchText(b: BizRow, lang: Lang, cats: BizCategory[] | undefine
   // A pizzeria is filed under both "restaurants" and "pizza"; the child is
   // the truer word for it.
   const cat = cats?.length ? (cats.find((c) => c.parent_id) ?? cats[0]) : null;
-  return [b.name, b.name_en, cat ? catName(cat, lang) : '', bizNeighborhood(b, lang) || b.address]
-    .filter(Boolean).join(' ').toLowerCase();
+  return searchFields(b.name, b.name_en, cat ? catName(cat, lang) : '', bizNeighborhood(b, lang) || b.address);
 }

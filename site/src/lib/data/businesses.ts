@@ -57,7 +57,9 @@ export function isPromoted(b: Pick<BizRow, 'promoted_until'>): boolean {
 }
 
 /** Every active business in the directory (businessesProvider): a promotion
- *  running first, then newest first. The database orders by promoted_until,
+ *  running first, then newest first, and those without a picture at the
+ *  foot (the client, TestFlight 11 Oct: in every category, the ones showing
+ *  only the blue placeholder last). The database orders by promoted_until,
  *  which 00069 clears when it ends; the stable pass after it keeps a lapsed
  *  one from standing first should the clearing lag. */
 export const activeBusinesses = cache(async (): Promise<BizRow[]> => {
@@ -67,7 +69,8 @@ export const activeBusinesses = cache(async (): Promise<BizRow[]> => {
     .order('created_at', { ascending: false });
   if (error) throw new Error(`businesses: ${error.message}`);
   const rows = (data ?? []) as unknown as BizRow[];
-  return [...rows.filter(isPromoted), ...rows.filter((b) => !isPromoted(b))];
+  const rest = rows.filter((b) => !isPromoted(b));
+  return [...rows.filter(isPromoted), ...rest.filter((b) => bizPhoto(b)), ...rest.filter((b) => !bizPhoto(b))];
 });
 
 /** The ids filed under a category or directly under one of its children —

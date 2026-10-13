@@ -15,6 +15,7 @@ import { DesktopSearch, DirectorySearchProvider, PhoneSearch } from './Directory
 import { DirectoryResults } from './DirectoryResults';
 import { ContactButton } from './ContactButton';
 import { Photo } from './Photo';
+import { searchFields } from '@/lib/search-text';
 
 /** A "professional" is no record of its own — there is no such table — but a
  *  business filed under one of these (web_businesses_screen _serviceSlugs). */
@@ -59,7 +60,7 @@ export async function DirectoryPage({ path }: { path: string }) {
       ]} />
       <DirectorySearchProvider
         businesses={items.map(({ card, search }) => ({ name: card.name, href: card.href, line: card.kind, search }))}
-        categories={allTiles.filter((c) => c.count > 0).map((c) => ({ name: c.name, href: c.href, line: t(`${c.count} עסקים`, `${c.count} businesses`), search: c.name.toLowerCase() }))}>
+        categories={allTiles.filter((c) => c.count > 0).map((c) => ({ name: c.name, href: c.href, line: t(`${c.count} עסקים`, `${c.count} businesses`), search: searchFields(c.name) }))}>
         <header className="pt-3.5 text-center desk:pt-14">
           <h1 className="text-base font-semibold text-black desk:font-nunito desk:text-[44px] desk:leading-[1.23]">{title}</h1>
           <p className="mt-3.5 hidden text-base text-[#6D6D6D] desk:block">

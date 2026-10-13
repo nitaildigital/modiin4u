@@ -8,6 +8,7 @@ import { useDesk } from '@/components/municipal/useDesk';
 import type { Lang } from '@/lib/i18n';
 import { LAYER_LOOK, type CityPin, type MapLayer, type MapSlide } from '@/lib/data/map-shared';
 import { ownPhoto } from '@/lib/photos';
+import { matches } from '@/lib/search-text';
 
 const CENTER: [number, number] = [31.8928, 35.0104];
 
@@ -147,8 +148,8 @@ export function CityMap({ pins, lang, title, intro }: { pins: CityPin[]; lang: L
   const [selected, setSelected] = useState<CityPin | null>(null);
 
   // The pins follow the search box when typing pauses.
-  const needle = useDebounced(q).trim().toLowerCase();
-  const visible = useMemo(() => pins.filter((p) => layers.has(p.layer) && (!needle || p.search.includes(needle))), [pins, layers, needle]);
+  const needle = useDebounced(q);
+  const visible = useMemo(() => pins.filter((p) => layers.has(p.layer) && matches(p.search, needle)), [pins, layers, needle]);
   const mapPins = useMemo<MapPin[]>(() => visible.map((p) => ({ id: p.id, lat: p.lat, lng: p.lng, icon: LAYER_LOOK[p.layer].pin, size: [40, 43] })), [visible]);
   const byId = useMemo(() => new Map(pins.map((p) => [p.id, p])), [pins]);
 

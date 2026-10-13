@@ -232,12 +232,13 @@ function Hero({ v }: { v: View }) {
   );
 }
 
-/** The logo in a white circle, 140 across; a park's badge, or the shop mark,
+/** The logo filling a circle 140 across, with no white ring or margin round
+ *  it (the client, TestFlight 11 Oct); a park's badge, or the shop mark,
  *  where there is none. */
 function HeroLogo({ url, isPark }: { url: string | null; isPark: boolean }) {
   return (
     <span className="flex size-[140px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
-      {url ? <img src={sized(url, 140)} alt="" className="size-full object-contain" />
+      {url ? <img src={sized(url, 140)} alt="" className="size-full object-cover" />
         : isPark ? <img src="/icons/m_municipal_parks.svg" alt="" width={56} height={56} />
           : <Shop size={48} color="#123A72" />}
     </span>
@@ -473,7 +474,9 @@ function Phone({ v }: { v: View }) {
     { label: t('סקירה', 'Overview'), index: 0, content: <PhoneOverview v={v} /> },
     ...(!v.isPark && v.menu.length > 0 ? [{ label: t('תפריט', 'Menu'), index: 1, content: <PhoneMenu v={v} /> }] : []),
     { label: t('תמונות', 'Photos'), index: 2, content: <PhonePhotos v={v} /> },
-    { label: t('מה חושבים תושבי העיר?', 'What Locals Are Saying'), index: 3, content: <div className="pt-12"><PhoneSummary v={v} /><div className="mt-6"><PhoneReviewList v={v} /></div></div> },
+    // Two balanced lines in its tab (the client, TestFlight 11 Oct: on one
+    // line it read too large and sat at the far edge).
+    { label: t('מה חושבים\nתושבי העיר?', 'What Locals\nAre Saying'), index: 3, content: <div className="pt-12"><PhoneSummary v={v} /><div className="mt-6"><PhoneReviewList v={v} /></div></div> },
   ];
 
   return (
@@ -490,8 +493,10 @@ function Phone({ v }: { v: View }) {
           </ShareMenu>
           {v.photos.length > 0 && <div className="absolute bottom-3.5 end-[13px]"><ShowAllPhotos phone label={t('הצג את כל התמונות', 'Show all photos')} /></div>}
         </div>
-        <span className={`absolute start-4 top-[210px] flex size-[100px] items-center justify-center overflow-hidden rounded-full border-[3px] border-white shadow-[0_0_12px_rgba(0,0,0,0.08)] ${b.logo_url ? 'bg-white' : 'bg-gradient-to-br from-[#0058B5] to-[#010A36]'}`}>
-          {b.logo_url ? <img src={sized(b.logo_url, 100)} alt="" className="size-full object-contain p-3" /> : <Shop size={36} color="rgba(255,255,255,0.6)" />}
+        {/* The logo fills its circle, with no white ring or margin (the
+            client, TestFlight 11 Oct); a soft shadow parts it from the photo. */}
+        <span className={`absolute start-4 top-[210px] flex size-[100px] items-center justify-center overflow-hidden rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.18)] ${b.logo_url ? 'bg-white' : 'bg-gradient-to-br from-[#0058B5] to-[#010A36]'}`}>
+          {b.logo_url ? <img src={sized(b.logo_url, 100)} alt="" className="size-full object-cover" /> : <Shop size={36} color="rgba(255,255,255,0.6)" />}
         </span>
         {kosher && (
           <span className="absolute end-[15px] top-[276px] flex items-center gap-1.5 rounded-md border border-line bg-white px-2 py-1.5 text-sm font-medium text-midblue">

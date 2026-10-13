@@ -3,6 +3,7 @@ import type { Lang } from '../i18n';
 import { href, plain } from '../seo';
 import { parkingLots, lotName } from './municipal';
 import { LAYER_LOOK, type CityPin } from './map-shared';
+import { searchFields } from '@/lib/search-text';
 
 export * from './map-shared';
 
@@ -94,7 +95,7 @@ export async function cityPins(lang: Lang): Promise<CityPin[]> {
     const photo = b.cover_url || b.og_image_url;
     pins.push({
       id: 'b-' + b.id, layer: 'Businesses', lat, lng,
-      search: [name, kind, address ?? ''].join(' ').toLowerCase(),
+      search: searchFields(name, kind, address),
       slide: {
         photos: photo ? [photo] : [],
         badge: kind, badgeColor: LAYER_LOOK.Businesses.color, badgeIcon: LAYER_LOOK.Businesses.icon,
@@ -128,7 +129,7 @@ export async function cityPins(lang: Lang): Promise<CityPin[]> {
     const interested = Number(e.rsvp_count ?? 0);
     pins.push({
       id: 'e-' + e.id, layer: 'Events', lat, lng,
-      search: [e.title, t('אירוע', 'Event'), address ?? ''].join(' ').toLowerCase(),
+      search: searchFields(e.title, t('אירוע', 'Event'), address),
       slide: {
         photos: e.image_url ? [e.image_url] : [],
         badge: t('אירוע', 'Event'), badgeColor: LAYER_LOOK.Events.color, badgeIcon: LAYER_LOOK.Events.icon,
@@ -165,7 +166,7 @@ export async function cityPins(lang: Lang): Promise<CityPin[]> {
     const address = l.address?.trim() || neighborhood || null;
     pins.push({
       id: 'l-' + l.id, layer: 'Real Estate', lat: Number(l.latitude), lng: Number(l.longitude),
-      search: [price != null ? shekels(price) : l.title, neighborhood ?? '', address ?? ''].join(' ').toLowerCase(),
+      search: searchFields(price != null ? shekels(price) : l.title, neighborhood, address),
       slide: {
         photos: [...(l.cover_url ? [l.cover_url] : []), ...gallery],
         badge: type, badgeColor: LAYER_LOOK['Real Estate'].color, badgeIcon: '/web/map/slide_badge.svg',
@@ -197,7 +198,7 @@ export async function cityPins(lang: Lang): Promise<CityPin[]> {
     const spaces = lot.capacity == null ? null : t(`${lot.capacity} מקומות`, `${lot.capacity} spaces`);
     pins.push({
       id: 'p-' + lot.id, layer: 'Parkings', lat: lot.latitude, lng: lot.longitude,
-      search: [lot.name, lot.name_en ?? '', lot.address ?? ''].join(' ').toLowerCase(),
+      search: searchFields(lot.name, lot.name_en, lot.address),
       slide: {
         photos: lot.image_url ? [lot.image_url] : [],
         badge: t('חניון', 'Car park'), badgeColor: LAYER_LOOK.Parkings.color, badgeIcon: null,

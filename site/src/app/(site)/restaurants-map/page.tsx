@@ -7,6 +7,7 @@ import {
 import { ListMap, type Facet, type ListMapItem } from '@/components/map/ListMap';
 import { Photo } from '@/components/businesses/Photo';
 import { Rating } from '@/components/businesses/BusinessCard';
+import { searchFields } from '@/lib/search-text';
 
 export async function generateMetadata(): Promise<Metadata> {
   // The restaurants on a map: /search-rest-modiin/ and the category pages are the
@@ -71,8 +72,7 @@ export default async function RestaurantsMapPage({ searchParams }: { searchParam
       id: b.id, href: href(`/business/${b.slug || b.id}/`), title: bizName(b, lang),
       lat: b.latitude, lng: b.longitude,
       icon: '/web/restaurants/map_pin.svg', size: [40, 43],
-      text: [b.name, b.name_en, b.short_description, b.address, ...[...p.slugs].map((s) => cats.find((c) => c.slug === s)).filter(Boolean).map((c) => catName(c!, lang))]
-        .filter(Boolean).join(' ').toLowerCase(),
+      text: searchFields(b.name, b.name_en, b.short_description, b.address, ...[...p.slugs].map((s) => cats.find((c) => c.slug === s)).filter(Boolean).map((c) => catName(c!, lang))),
       tags: [
         ...[...p.slugs].map((s) => `cuisine:${s}`),
         `kosher:${kosherLabel(b.kosher_level) ? 'yes' : 'no'}`,

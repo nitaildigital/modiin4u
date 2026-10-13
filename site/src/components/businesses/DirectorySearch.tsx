@@ -3,6 +3,7 @@ import { createContext, useContext, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CloseCircle, SearchNormal1, Shop, Category } from 'iconsax-react';
+import { matches, searchKey } from '@/lib/search-text';
 
 /** What the directory's search suggests from: every business and category
  *  on the page, with what it is matched on, lower case. */
@@ -27,10 +28,9 @@ const MAX_CATEGORIES = 3;
 function useSuggest(query: string) {
   const { businesses, categories } = useContext(Ctx);
   return useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 2) return { cats: [], biz: [], more: 0 };
-    const cats = categories.filter((c) => c.search.includes(q)).slice(0, MAX_CATEGORIES);
-    const all = businesses.filter((b) => b.search.includes(q));
+    if (searchKey(query).length < 2) return { cats: [], biz: [], more: 0 };
+    const cats = categories.filter((c) => matches(c.search, query)).slice(0, MAX_CATEGORIES);
+    const all = businesses.filter((b) => matches(b.search, query));
     return { cats, biz: all.slice(0, MAX_BUSINESSES), more: all.length };
   }, [businesses, categories, query]);
 }

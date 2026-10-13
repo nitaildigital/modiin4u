@@ -8,6 +8,7 @@ import { MapView, type MapPin } from '@/components/map/MapView';
 import { useDebounced } from '@/lib/useDebounced';
 import { Photo } from './Photo';
 import { address, categoryLabel, dayOfMonth, eventPrice, shortMonth, timeRange } from './labels';
+import { matches, searchFields } from '@/lib/search-text';
 
 type Sort = 'newest' | 'soonest';
 
@@ -53,12 +54,11 @@ export function EventsCategoryBrowser({ lang, events, categories, byEvent, initi
   // The list and the map follow the location box when typing pauses.
   const placeQuery = useDebounced(place);
   const visible = useMemo(() => {
-    const q = placeQuery.trim().toLowerCase();
     const rows = events.filter((e) =>
       (picked.size === 0 || (byEvent[e.id] ?? []).some((c) => picked.has(c.slug))) &&
       (price === 'all' || (price === 'free' ? e.is_free : !e.is_free)) &&
       // "Search by location" looks at the venue and the address, nothing else.
-      (!q || (e.venue_name ?? '').toLowerCase().includes(q) || (e.address ?? '').toLowerCase().includes(q)));
+      matches(searchFields(e.venue_name, e.address), placeQuery));
     return rows.sort((a, b) => {
       if (sort === 'soonest') return bySoonest(a, b);
       // Newest: the most recently published first.

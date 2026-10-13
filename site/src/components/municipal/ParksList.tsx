@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Location, SearchNormal1, Setting4, Star1, Tree } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
+import { matches, searchFields } from '@/lib/search-text';
 
 export type ParkItem = {
   id: string; href: string; name: string;
@@ -35,9 +36,8 @@ export function ParksList({ parks, lang, title }: { parks: ParkItem[]; lang: Lan
   const [minRating, setMinRating] = useState(0);
   const [sort, setSort] = useState<Sort>('newest');
 
-  const needle = q.trim().toLowerCase();
   let list = parks.filter((p) => (!minRating || p.rating >= minRating)
-    && (!needle || p.name.toLowerCase().includes(needle) || p.address.toLowerCase().includes(needle)));
+    && matches(searchFields(p.name, p.address), q));
   if (sort === 'rating') list = [...list].sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
   if (sort === 'name') list = [...list].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   const filtering = minRating > 0;

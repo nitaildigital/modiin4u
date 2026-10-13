@@ -6,6 +6,7 @@ import { ListMap, type Facet, type ListMapItem } from '@/components/map/ListMap'
 import { ListingPhoto } from '@/components/realestate/ListingCard';
 import { BROWSE_TYPES, hoodName, kindLabel, priceOf, roomsText, shekels, typeLabel } from '@/components/realestate/format';
 import { readSearch, searchHref } from '@/components/realestate/search';
+import { searchFields } from '@/lib/search-text';
 
 export async function generateMetadata(): Promise<Metadata> {
   // The listings on a map: /search-apartments/ and its searches are the pages to index.
@@ -66,7 +67,7 @@ export default async function RealEstateMapPage({ searchParams }: { searchParams
     return {
       id: l.id, href: href(`/listing/${l.id}/`), title: l.title,
       lat: l.latitude, lng: l.longitude, icon: '/web/realestate/listing_pin.svg', size: [40, 44],
-      text: [l.title, l.address, l.neighborhoods?.name, l.neighborhoods?.name_en].filter(Boolean).join(' ').toLowerCase(),
+      text: searchFields(l.title, l.address, l.neighborhoods?.name, l.neighborhoods?.name_en),
       tags: [
         `kind:${l.kind}`, `type:${l.property_type}`,
         ...[1, 2, 3, 4, 5].filter((n) => (l.rooms ?? 0) >= n).map((n) => `rooms:${n}`),

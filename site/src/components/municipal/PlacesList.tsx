@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Call, Routing2, SearchNormal1 } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import { MUNICIPAL_CATEGORIES, placeName, type MunicipalPlace } from '@/lib/data/municipal-shared';
+import { matches, searchFields } from '@/lib/search-text';
 
 const tel = (phone: string) => `tel:${phone.replace(/[^\d+*#]/g, '')}`;
 
@@ -29,10 +30,7 @@ function Round({ href, label, filled = false, color = '#17A9D0', children }: { h
 export function PlacesList({ places, lang }: { places: MunicipalPlace[]; lang: Lang }) {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
   const [q, setQ] = useState('');
-  const needle = q.trim().toLowerCase();
-  const shown = needle
-    ? places.filter((p) => p.name.toLowerCase().includes(needle) || (p.name_en ?? '').toLowerCase().includes(needle) || (p.address ?? '').toLowerCase().includes(needle))
-    : places;
+  const shown = places.filter((p) => matches(searchFields(p.name, p.name_en, p.address), q));
   const multiple = new Set(shown.map((p) => p.category)).size > 1;
 
   if (!places.length) {

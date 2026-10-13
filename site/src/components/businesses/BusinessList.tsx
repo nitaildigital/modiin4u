@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { CloseCircle, FilterRemove, SearchNormal1, Setting4, Shop } from 'iconsax-react';
 import { BusinessCard, type BizCard } from './BusinessCard';
 import { Chip, FilterPill, ShowMore } from './ListControls';
+import { matches } from '@/lib/search-text';
 
 export type ListItem = {
   card: BizCard;
@@ -47,12 +48,11 @@ export function BusinessList({ items, lang, title, cuisines = [], food = false }
   const clear = () => { setKosher('all'); setDelivery(false); setMinRating(0); setPicked(new Set()); setSort('newest'); };
 
   const list = useMemo(() => {
-    const q = query.trim().toLowerCase();
     const kept = items.filter(({ card, search, cuisines: mine }) =>
       (kosher !== 'kosher' || !!card.kosher) && (kosher !== 'not' || !card.kosher)
       && (!delivery || card.delivery) && (minRating === 0 || card.rating >= minRating)
       && (picked.size === 0 || mine.some((c) => picked.has(c)))
-      && (!q || search.includes(q)));
+      && matches(search, query));
     // They arrive newest first; rating ties go to the place with more reviews.
     if (sort === 'rating') kept.sort((a, b) => b.card.rating - a.card.rating || b.card.reviews - a.card.reviews);
     if (sort === 'name') kept.sort((a, b) => a.card.name.localeCompare(b.card.name, lang));

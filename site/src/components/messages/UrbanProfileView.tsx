@@ -80,7 +80,9 @@ export function UrbanProfileView({ lang, username, stores }: {
           <article className="overflow-hidden rounded-[22px] border border-[#E9EDF3] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
             <div className="relative h-[132px]">
               <div className="h-[84px] bg-gradient-to-br from-midblue to-navy" />
-              <div className="absolute start-5 top-9 rounded-full border-4 border-white">
+              {/* No white ring round the photo (the client, TestFlight 9 Oct);
+                  a soft shadow parts it from the band, as in the app. */}
+              <div className="absolute start-5 top-9 rounded-full shadow-[0_3px_10px_rgba(0,0,0,0.2)]">
                 <Avatar url={profile.avatar_url} name={profile.name} size={84} />
               </div>
             </div>

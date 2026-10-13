@@ -10,6 +10,7 @@ import {
 import { JsonLd } from '@/components/JsonLd';
 import { toCard } from './card-data';
 import { BusinessList, type ListItem } from './BusinessList';
+import { searchFields } from '@/lib/search-text';
 
 /** One business category (/business-cat/<slug>/, and the old addresses that
  *  stand for one): web_business_list_screen.dart at desktop width — back to
@@ -36,7 +37,7 @@ export async function CategoryPage({ path, category }: { path: string; category:
     const slugs = new Set(mine.flatMap((c) => [c.slug, ...(c.parent_id && byId.get(c.parent_id) ? [byId.get(c.parent_id)!.slug] : [])]));
     return {
       card: toCard(b, lang, primary.get(b.id)),
-      search: [b.name, b.name_en, b.address].filter(Boolean).join(' ').toLowerCase(),
+      search: searchFields(b.name, b.name_en, b.address),
       cuisines: [...slugs],
     };
   });

@@ -6,6 +6,7 @@ import { eventCategories, eventCategoryLinks, upcomingEvents, type EventCard } f
 import { ListMap, type Facet, type ListMapItem } from '@/components/map/ListMap';
 import { Photo } from '@/components/events/Photo';
 import { address, categoryLabel, dayOfMonth, eventPrice, shortMonth, timeRange } from '@/components/events/labels';
+import { searchFields } from '@/lib/search-text';
 
 export async function generateMetadata(): Promise<Metadata> {
   // The events list on a map: the list's own page is the one to index.
@@ -58,7 +59,7 @@ export default async function EventsMapPage({ searchParams }: { searchParams: Pr
       id: e.id, href: href(`/event/${e.id}/`), title: e.title,
       lat: onMap ? e.latitude : null, lng: onMap ? e.longitude : null,
       icon: '/web/events/map_pin.svg', size: [40, 43],
-      text: [e.title, e.venue_name, e.address].filter(Boolean).join(' ').toLowerCase(),
+      text: searchFields(e.title, e.venue_name, e.address),
       tags: [...(links[e.id] ?? []).map((c) => `cat:${c.slug}`), `price:${e.is_free ? 'free' : 'paid'}`],
       sort: { soonest: e.starts ?? Number.MAX_SAFE_INTEGER, newest: -(e.published_at ? Date.parse(e.published_at) : 0) },
       row: <EventRow e={e} lang={lang} />,
