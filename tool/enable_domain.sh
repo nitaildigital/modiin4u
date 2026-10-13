@@ -290,19 +290,30 @@ check() {  # description, expected, actual
 # the certificate is good as well as the page.
 code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${PIN[@]}" "https://$NAME/" || true)
 # The panel's address opens on its dashboard: its front page is a redirect.
-front=200; case "$NAME" in panel.*) front=302 ;; esac
+front=200; case "$NAME" in panel.*) front=302 ;; modiin4u.co.il) front=301 ;; esac
 check "https://$NAME/ with a trusted certificate" "$front" "$code"
 
 echo "$(echo | openssl s_client -connect "$SERVER:443" -servername "$NAME" 2>/dev/null \
   | openssl x509 -noout -subject -issuer -enddate 2>/dev/null | sed 's/^/           /')"
 
-body=$(curl -s --max-time 20 "${PIN[@]}" "https://$NAME/deals" || true)
-if echo "$body" | grep -q flutter_bootstrap.js; then served=app; else served=other; fi
-check "https://$NAME/deals answered with the app (index.html)" app "$served"
+# What a deep link is answered with: the panel's Flutter build, the bare
+# domain's redirect to www, or the Next.js site everywhere else.
+body=$(curl -s --max-time 20 "${PIN[@]}" "https://$NAME/deals/" || true)
+case "$NAME" in
+  panel.*) want=app ;;
+  modiin4u.co.il) want=redirect ;;
+  *) want=site ;;
+esac
+if echo "$body" | grep -q flutter_bootstrap.js; then served=app
+elif [ -z "$body" ] || echo "$body" | grep -qi "301 Moved"; then served=redirect
+elif echo "$body" | grep -q "_next/static"; then served=site
+else served=other; fi
+check "https://$NAME/deals/ answered by the right build ($want)" "$want" "$served"
 
 redirect=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 20 "${PIN[@]}" \
   "http://$NAME/deals" || true)
-check "http://$NAME/deals sent to https" "301 https://$NAME/deals" "$redirect"
+to=$NAME; [ "$NAME" = modiin4u.co.il ] && to=www.modiin4u.co.il
+check "http://$NAME/deals sent to https" "301 https://$to/deals" "$redirect"
 
 code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "http://$SERVER/" || true)
 check "http://$SERVER/ still plain http" 200 "$code"

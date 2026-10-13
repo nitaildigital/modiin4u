@@ -2937,6 +2937,49 @@ the main addresses 301 there. Signed in there with a temporary admin
   באפליקציה" opens the app's invitation screen, and the link itself opens
   the app directly. The test group was deleted.
 
+**What the app had and the website did not — 13 Oct (Harshit: "fix
+everything").** Compared screen by screen; what accounts need stays the
+app's. Built:
+- **Job pages**, `/jobs/` and `/jobs/<id>/` (the 9 Oct "no job pages" is
+  undone): the open jobs, each with what the business entered, its ways to
+  apply that work from a browser (call, WhatsApp, e-mail — where it turned
+  them on) and the form's "in the app" with the stores; JobPosting data for
+  Google from those fields only; open jobs in the sitemap; Jobs in the phone
+  home's shortcuts, as the app has. **Migration 00083** (run 13 Oct): `anon`
+  may run `applied_to_job()` — every SELECT policy is checked, and that one
+  failed the whole read for a visitor. Tested with a job made for it, whose
+  "new job" announcement was made cancelled first so the trigger sent none;
+  both deleted.
+- **Near me**: a "קרוב אליי" button on the phone home's restaurants, deals and
+  apartments rows sorts them by distance; every interactive map has "my
+  location" and a blue dot (LeafletMap). Asked on the tap only, kept in the
+  browser; https only, so not on the bare IP.
+- **App-only addresses** that notifications use — `/my-apartments`,
+  `/business-events`, `/business-deals`, `/business-jobs/…` — say it is in the
+  app, with the stores, instead of "not found".
+- The www and bare-domain nginx files for launch
+  (`https-www.modiin4u.co.il.conf`, `https-modiin4u.co.il.conf`, the bare one
+  301 to www), and `https-app.modiin4u.co.il.conf` serving the Next.js site
+  (the app's job shares use that host).
+
+**The Urban Profile's three steps on the website — 13 Oct (Harshit chose
+"Add them to the website").** Until now the site signed in for Messages only
+and the onboarding was the app's. Now `/urban-profile/1/`, `/2/`, `/3/` and
+`/done/` (`components/urban/UrbanSteps.tsx`, `lib/urban.ts`): the app's
+steps, texts and limits — a photo and a few words (160), 3 to 8 interests,
+up to 5 places in order — each skippable, then the ready page: a username
+made from the name if there is none, the link, Change, Copy, and "let other
+residents see it". Saved with the resident's own session to the same rows
+as the app (`profiles`, `profile_places`, a photo in `media/avatars/<id>/`).
+The first sign-in on the site of a resident's account made from 9 Oct opens
+step 1 once, as the app's UrbanProfileGate does (`urban_profile_seen_at`); a
+business account (one that owns a business) has none. "My Urban Profile"
+on Messages goes to the first step still missing, and one's own `/u/` page
+has Edit. Still no sign-up on the site. Tested with an account made
+confirmed through the admin API (so no e-mail and no welcome): sign-in
+opened step 1, each step saved, a second sign-in went to Messages, and the
+rows were as the app writes them; account, places and photo deleted after.
+
 **uPress, looked at with Harshit — 13 Oct.** DNS is uPress's (ns1/ns2.upress.io);
 the zone: A `@`, `www`, `mail`, `smtp`, `pop`, `ftp` → 185.108.148.183, MX
 mail, TXT `google-site-verification` (how Search Console is verified — keep
