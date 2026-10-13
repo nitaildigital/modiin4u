@@ -34,21 +34,40 @@ async function allRows<T>(page: (from: number, to: number) => PromiseLike<{ data
   }
 }
 
-/** Every page search engines should know: each article, business, park and
- *  category from the database, the sections, and every address the
- *  WordPress site had. One entry per address. */
+/** Yesterday's date in Israel, "2026-10-12". */
+function yesterday(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(new Date(Date.now() - 86_400_000));
+}
+
+/** Every page search engines should know: each article, business, park,
+ *  coming event, neighbourhood and category from the database, the
+ *  sections, and every address the WordPress site had. One entry per
+ *  address. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [arts, biz, cats, used, moved] = await Promise.all([
+  const [arts, biz, evs, hoods, cats, used, moved] = await Promise.all([
     allRows((a, b) => db.from('articles').select('slug, updated_at, published_at, noindex').eq('status', 'published').order('id').range(a, b)),
     allRows((a, b) => db.from('businesses').select('slug, updated_at, noindex').eq('status', 'active').order('id').range(a, b)),
+    // Events still to come (or undated), from yesterday in Israel so one
+    // running today is kept: a past one stays a page, but is not offered.
+    allRows((a, b) => db.from('events').select('id, updated_at, noindex').eq('status', 'published')
+      .or(`start_date.gte.${yesterday()},end_date.gte.${yesterday()},start_date.is.null`).order('id').range(a, b)),
+    db.from('neighborhoods').select('id, updated_at').eq('is_active', true),
     db.from('categories').select('id, slug, scope, updated_at').eq('is_active', true).in('scope', ['business', 'article']),
     filedCategories(),
     db.from('redirects').select('old_path').eq('is_active', true),
   ]);
   const out = new Map<string, string | undefined>();
-  for (const p of ['/', '/news/', '/business/', '/search-rest-modiin/', '/events/', '/deals/', '/search-apartments/', '/municipal/', '/parks/', '/shabat-times-modiin/', '/community/']) out.set(p, undefined);
+  // The sections, but not one WordPress kept out of Google (the apartment
+  // search is `noindex, follow`): listing a page that asks not to be indexed
+  // is an error in Search Console.
+  for (const p of ['/', '/news/', '/business/', '/search-rest-modiin/', '/events/', '/deals/', '/search-apartments/', '/municipal/', '/parks/', '/shabat-times-modiin/', '/community/']) {
+    if (!/noindex/i.test(wpPage(p)?.robots ?? '')) out.set(p, undefined);
+  }
   for (const a of arts) if (a.slug && !a.noindex) out.set(`/news/${a.slug}/`, a.updated_at ?? a.published_at);
   for (const b of biz) if (b.slug && !b.noindex) out.set(`/business/${b.slug}/`, b.updated_at);
+  for (const e of evs) if (!e.noindex) out.set(`/event/${e.id}/`, e.updated_at);
+  for (const n of hoods.data ?? []) out.set(`/neighborhood/${n.id}/`, n.updated_at);
   for (const c of cats.data ?? []) if (c.slug && used.has(c.id)) out.set(c.scope === 'business' ? categoryPath(c.slug) : `/new/${c.slug}/`, c.updated_at);
   for (const p of wpPaths()) if (!out.has(p)) out.set(p, undefined);
   // An address WordPress redirects is redirected here too: not listed.

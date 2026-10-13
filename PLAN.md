@@ -2829,6 +2829,56 @@ driven — so these wait for a phone.
   WordPress, and one custom share image — a 169×300 thumbnail, smaller than
   the article's own picture.
 
+**Ready to rank at launch: what Google reads beyond parity — 13 Oct.**
+Harshit: the site must rank on Google once it is on the domain. Parity
+keeps what WordPress had; this is what Google measures past it, read off a
+production build with SEO_LIVE=1, as Googlebot and as a throttled phone
+(4× CPU, slow 4G). Supabase kept healthy: one page of each kind, not a
+crawl, and health checked before and after.
+- **robots.txt shut out the restaurants page.** Its rules are prefixes, and
+  `Disallow: /search` also matched `/search-rest-modiin/` — indexed on
+  WordPress, Google's page for "מסעדות במודיעין". Each rule now ends in
+  its slash (`/search/`, as WordPress had it); none of the sitemap's 1,143
+  addresses is blocked.
+- **Yoast's sitemaps answer.** WordPress's robots.txt named
+  `/sitemap_index.xml`, which Search Console has on file, over ten lists
+  (`news-sitemap.xml` …). Each, and their page-2 forms, is a 301 to
+  `/sitemap.xml` (next.config.ts).
+- **The sitemap** no longer lists `/search-apartments/` (WordPress's
+  `noindex`: Search Console calls that an error), and now lists the
+  events still to come (14) and the neighbourhoods (15), which were pages
+  without an entry.
+- **An article's author** in its NewsArticle data: the panel's credit
+  where there is one (none of the 673 has one yet), else the site, its
+  publisher. WordPress gave Google no article data at all.
+- **Photos straight from Supabase.** Most cards outside the business pages
+  sent the browser the original file: `/news/` on a phone loaded 12.5 MB of
+  photos, the home page 6.5 MB, an article's own picture was a 1 MB PNG
+  drawn 375 px wide. Every stored photo now goes through `ownPhoto` (the
+  site's own resizer, cached by nginx), at about twice the size it is drawn
+  — 1600 px for a page's main picture. Speed is part of Google's ranking,
+  and each original now leaves Supabase once instead of once per visitor.
+  The first card on the phone home page and the first top banner on
+  Restaurants load at once, not lazily: each is the largest thing on the
+  screen as the page opens. Measured, before → after (LCP, the moment the
+  main content shows; Google's "good" is under 2.5 s): home 14.9 → 2.3 s,
+  `/news/` 1.8 s (photos 12.5 MB → 1.1 MB), an article 1.5 s (photos
+  3.4 MB → 56 KB), Restaurants 5.4 → 3.1 s — its largest element is a
+  sample banner, which leaves with the sample content. No layout shift
+  anywhere (CLS 0.002); every image has its alt text; one H1 a page.
+- **Already right, left alone:** titles, descriptions and canonicals on
+  www; a missing page is a real 404 with noindex; the nginx page cache is
+  keyed on the language cookie, so Googlebot (no cookie) always gets
+  Hebrew; events already name their organizer when a business publishes
+  one.
+- **Left for launch** (LAUNCH_RUNBOOK.md, F): how Search Console proves
+  the site is the client's — WordPress carries no verification tag, so it
+  is DNS, Google Analytics or a file; a Domain property (DNS) survives the
+  move untouched. WordPress's `/feed/` (RSS) has no counterpart here.
+  Three section pages have no description on WordPress or here (`/news/`,
+  `/business-cat/restaurants/`, `/professionals/`): the client writes them
+  in the panel's SEO fields if he wants one.
+
 **WordPress's real reviews and image alt texts — 13 Oct (Harshit's go-ahead).**
 - **Reviews.** WordPress's JetReviews plugin held 130 real ratings on 59
   businesses (2024–2026; stars only — none has text; 118 of them five

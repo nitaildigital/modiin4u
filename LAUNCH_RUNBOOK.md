@@ -80,7 +80,20 @@ each line as it is done.
 
 ## F. After
 
+- [ ] Google Search Console, **before the switch:** ask the client how the
+      property is verified. WordPress carries no verification tag, so it is
+      DNS, Google Analytics or an HTML file; a file must be copied into
+      `site/public/`. Add a Domain property (DNS TXT at uPress) if there is
+      none — it survives the move untouched.
 - [ ] Google Search Console: the new sitemap; watch Coverage for a week.
+      The old `/sitemap_index.xml` already 301s to it. Check
+      `https://www.modiin4u.co.il/robots.txt` has no `Disallow: /search`
+      without its slash (it would block `/search-rest-modiin/`).
+- [ ] Search Console → URL inspection → Request indexing for the home page,
+      `/search-rest-modiin/`, `/news/` and `/business/`.
+- [ ] PageSpeed Insights (pagespeed.web.dev) on the home page, an article
+      and `/search-rest-modiin/` on the live domain: LCP under 2.5 s on
+      mobile.
 - [ ] The Flutter website on sslip.io and the bare IP: retired; its
       certificate, nginx block and app-link entries removed.
 - [ ] Supabase: billing alerts on; the spend cap back on after the 22 Oct

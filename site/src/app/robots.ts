@@ -8,8 +8,11 @@ export const dynamic = 'force-dynamic';
 /** Until launch nothing may be indexed beside the WordPress site. */
 export default function robots(): MetadataRoute.Robots {
   if (!SEO_LIVE) return { rules: { userAgent: '*', disallow: '/' } };
+  // Each rule is a prefix, so each ends in its slash: "/search" alone also
+  // shut out /search-rest-modiin/, the restaurants page Google sends people
+  // to for "מסעדות במודיעין" (WordPress's own rule was /search/).
   return {
-    rules: { userAgent: '*', allow: '/', disallow: ['/admin', '/login', '/join/', '/search', '/steps'] },
+    rules: { userAgent: '*', allow: '/', disallow: ['/admin/', '/login/', '/join/', '/search/', '/steps/'] },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

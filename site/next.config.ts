@@ -66,6 +66,13 @@ const nextConfig: NextConfig = {
       // The Flutter site's own search addresses, in links people kept.
       { source: '/apartments-sale', destination: '/search-apartments/?kind=sale', statusCode: 301 as const },
       { source: '/apartments-rent', destination: '/search-apartments/?kind=rent', statusCode: 301 as const },
+      // Yoast's sitemaps: the index WordPress's robots.txt named, which
+      // Search Console has on file, and the ten lists under it
+      // (news-sitemap.xml, business-cat-sitemap.xml, …, page 2 and on as
+      // news-sitemap2.xml). Each goes to the one list here, so the sitemap
+      // Google already reads keeps working after the move.
+      { source: '/sitemap_index.xml', destination: '/sitemap.xml', statusCode: 301 as const },
+      { source: '/:list([a-z-]+-sitemap[0-9]*\\.xml)', destination: '/sitemap.xml', statusCode: 301 as const },
       // A link in an article's own text that led nowhere on WordPress either:
       // the business is here under another address.
       { source: encodeURI('/business/ג׳פטו-בר'), destination: '/business/geppeto-bar-modiin/', statusCode: 301 as const },
