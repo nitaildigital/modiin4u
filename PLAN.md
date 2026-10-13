@@ -2879,6 +2879,27 @@ crawl, and health checked before and after.
   `/business-cat/restaurants/`, `/professionals/`): the client writes them
   in the panel's SEO fields if he wants one.
 
+**uPress, looked at with Harshit — 13 Oct.** DNS is uPress's (ns1/ns2.upress.io);
+the zone: A `@`, `www`, `mail`, `smtp`, `pop`, `ftp` → 185.108.148.183, MX
+mail, TXT `google-site-verification` (how Search Console is verified — keep
+it), TXT SPF; TTL one hour. No mailboxes (0 e-mail accounts; ports 25 and
+993 closed), no domain aliases, no server redirects, no `.htaccess` in the
+root (nginx); the root holds WordPress's files and a robots.txt that is
+Yoast's (the new site's live robots.txt already blocks `/search/`). On launch
+day: A `@` and `www` → 45.93.94.49, add A `app` (and `panel`, once decided);
+lower the TTL the day before. The hosting package also carries three other
+sites (modiinadlan, kosherz, digitalix).
+- **The five closed businesses** now 301 to their Yoast primary category
+  (panel Redirects; e.g. מונדו → `/business-cat/אוכל-ביתי/`), and the sitemap
+  leaves them out. Checked on a production build. Seen: the first request
+  after a restart, before the redirect list is read, answers 404 once
+  (`site/src/lib/redirects.ts`) — not changed here.
+- **Sign-up e-mails** go through Brevo from `modiin4uoffice@gmail.com`. A
+  Gmail address sent from Brevo's servers fails the Gmail domain's checks, so
+  more of them land in spam; a sender on the domain (e.g.
+  `no-reply@modiin4u.co.il`, authenticated in Brevo with its DKIM and SPF
+  records in uPress's DNS) would not. To decide.
+
 **WordPress's real reviews and image alt texts — 13 Oct (Harshit's go-ahead).**
 - **Reviews.** WordPress's JetReviews plugin held 130 real ratings on 59
   businesses (2024–2026; stars only — none has text; 118 of them five
