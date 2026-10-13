@@ -2829,6 +2829,29 @@ driven — so these wait for a phone.
   WordPress, and one custom share image — a 169×300 thumbnail, smaller than
   the article's own picture.
 
+**WordPress's real reviews and image alt texts — 13 Oct (Harshit's go-ahead).**
+- **Reviews.** WordPress's JetReviews plugin held 130 real ratings on 59
+  businesses (2024–2026; stars only — none has text; 118 of them five
+  stars), never imported: the site showed the sample reviews instead. Read
+  from the plugin's public list (one call per business, e-mails dropped)
+  and added as approved, with their dates and the reviewers' names as
+  WordPress showed them, under one system account
+  (`wordpress-reviews@modiin4u.co.il`, never signed in to — a review needs
+  an author). The ratings recount from them (`sync_business_rating`); the
+  business page's AggregateRating carries them (e.g. 5.0 from 23, 5.0 from
+  19). The 41 sample reviews are hidden, not deleted. The notifications
+  this set off (owners' "new review", the sample accounts' "hidden") were
+  removed in the same transaction. Listed in
+  `tool/seo/wp_reviews_registry.json`, to undo by.
+- **Privacy, on WordPress:** that plugin's public list returns each
+  reviewer's e-mail to anyone; it stops with WordPress.
+- **Alt texts.** 641 WordPress images have one; 119 are our gallery photos
+  (matched by the importers' hash of the WordPress address) and were empty
+  here — filled (`media.alt_text`, `tool/seo/wp_alt_text_registry.json`).
+  The site does not draw them yet: its gallery writes `alt=""`; the change
+  waits for the other session's edits to the same files.
+- Supabase stayed healthy before and after each write.
+
 **Every decision reaches the person — 12 Oct (migration 00082, run with
 Harshit's go-ahead).** "When we get the confirmation e-mail or anything, we
 need to send a notification for approved or declined — all things." Already
