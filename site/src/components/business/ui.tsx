@@ -10,6 +10,8 @@ import { ownPhoto } from '@/lib/photos';
 type UI = {
   businessId: string;
   photos: string[];
+  /** Each photo's alt text, in the same order. */
+  alts: string[];
   openPhotos: (index: number) => void;
   tab: number;
   setTab: (tab: number) => void;
@@ -22,7 +24,7 @@ const useUI = () => useContext(Ctx)!;
 /** What the page's interactive parts share: the photo viewer, the phone
  *  layout's tab, a short message at the bottom. Records the view once
  *  (BusinessStats.record(view) in initState). */
-export function BusinessUI({ businessId, photos, children }: { businessId: string; photos: string[]; children: React.ReactNode }) {
+export function BusinessUI({ businessId, photos, alts, children }: { businessId: string; photos: string[]; alts: string[]; children: React.ReactNode }) {
   const [viewer, setViewer] = useState<number | null>(null);
   const [tab, setTab] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
@@ -37,9 +39,9 @@ export function BusinessUI({ businessId, photos, children }: { businessId: strin
   }, []);
 
   return (
-    <Ctx.Provider value={{ businessId, photos, openPhotos: setViewer, tab, setTab, toast }}>
+    <Ctx.Provider value={{ businessId, photos, alts, openPhotos: setViewer, tab, setTab, toast }}>
       {children}
-      {viewer != null && photos.length > 0 && <PhotoViewer photos={photos} start={viewer} onClose={() => setViewer(null)} />}
+      {viewer != null && photos.length > 0 && <PhotoViewer photos={photos} alts={alts} start={viewer} onClose={() => setViewer(null)} />}
       {message && (
         <div role="status" className="fixed inset-x-0 bottom-24 z-[60] flex justify-center px-4 desk:bottom-8">
           <p className="max-w-[90vw] break-all rounded-xl bg-[#323232] px-5 py-3.5 text-sm text-white shadow-lg">{message}</p>
@@ -96,10 +98,10 @@ export function ShowAllPhotos({ label, phone = false }: { label: string; phone?:
 
 /** A photograph that opens the viewer at itself. */
 export function PhotoThumb({ index, width, className = '' }: { index: number; width: number; className?: string }) {
-  const { photos, openPhotos } = useUI();
+  const { photos, alts, openPhotos } = useUI();
   return (
     <button type="button" onClick={() => openPhotos(index)} className={`block shrink-0 overflow-hidden bg-section ${className}`}>
-      <img src={sized(photos[index], width)} alt="" loading="lazy" className="size-full object-cover" />
+      <img src={sized(photos[index], width)} alt={alts[index] ?? ''} loading="lazy" className="size-full object-cover" />
     </button>
   );
 }
@@ -144,7 +146,7 @@ export function GalleryStrip() {
 /** The photographs one at a time over the page, with arrows for a mouse and
  *  a swipe for a finger (the current site's PageView); pinching zooms the
  *  page as the browser does. */
-function PhotoViewer({ photos, start, onClose }: { photos: string[]; start: number; onClose: () => void }) {
+function PhotoViewer({ photos, alts, start, onClose }: { photos: string[]; alts: string[]; start: number; onClose: () => void }) {
   const [at, setAt] = useState(start);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const swipe = (e: React.TouchEvent) => {
@@ -175,7 +177,7 @@ function PhotoViewer({ photos, start, onClose }: { photos: string[]; start: numb
       onTouchStart={(e) => { const p = e.touches[0]; touch.current = e.touches.length === 1 && p ? { x: p.clientX, y: p.clientY } : null; }}
       onTouchEnd={swipe}>
       <div className="flex size-full items-center justify-center px-4 py-16 desk:px-24" onClick={(e) => e.stopPropagation()}>
-        <img src={ownPhoto(photos[at], 1600) ?? photos[at]} alt="" className="max-h-full max-w-full object-contain" />
+        <img src={ownPhoto(photos[at], 1600) ?? photos[at]} alt={alts[at] ?? ''} className="max-h-full max-w-full object-contain" />
       </div>
       <button type="button" aria-label="Close" onClick={onClose} className="absolute right-6 top-6 text-4xl leading-none text-white">×</button>
       {at > 0 && <button type="button" aria-label="Previous" onClick={(e) => { e.stopPropagation(); setAt(at - 1); }} className={`${nav} left-3 desk:left-6`}>‹</button>}

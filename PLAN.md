@@ -2919,8 +2919,12 @@ sites (modiinadlan, kosherz, digitalix).
 - **Alt texts.** 641 WordPress images have one; 119 are our gallery photos
   (matched by the importers' hash of the WordPress address) and were empty
   here — filled (`media.alt_text`, `tool/seo/wp_alt_text_registry.json`).
-  The site does not draw them yet: its gallery writes `alt=""`; the change
-  waits for the other session's edits to the same files.
+  The business gallery and its photo viewer now draw them; a photo without
+  one is described by the business's name, not left empty.
+- **Redirects after a failed read.** The site reads the panel's redirects
+  every 5 minutes; when the first read failed it went without them for those
+  5 minutes. Now, until a list has loaded, it tries again after 15 seconds;
+  once it has one, a failed read keeps the old list.
 - Supabase stayed healthy before and after each write.
 
 **Every decision reaches the person — 12 Oct (migration 00082, run with

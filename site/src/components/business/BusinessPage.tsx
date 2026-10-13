@@ -43,7 +43,7 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
   const lang = await getLang();
   const t = tr(lang);
   const he = lang === 'he';
-  const [photos, raw, menuRows, kinds, more] = await Promise.all([
+  const [gallery, raw, menuRows, kinds, more] = await Promise.all([
     businessGallery(b.id), businessReviews(b.id), businessMenu(b.id), primaryKinds(), moreBusinesses(b),
   ]);
   const replies = await reviewReplies(raw.map((r) => r.id));
@@ -52,6 +52,9 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
   const name = localName(b.name, b.name_en, lang);
   const k = kinds[b.id];
   const isPark = b.kind === 'park';
+  const photos = gallery.map((p) => p.url);
+  // A photo WordPress gave no alt text is described by the business's name.
+  const alts = gallery.map((p) => p.alt ?? name);
   const full = b.full_description?.trim() || null;
   const v: View = {
     b, lang, he, t, path, name,
@@ -98,7 +101,7 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
     : isPark ? ['פארקים', '/parks/'] : ['עסקים', '/business/'];
 
   return (
-    <BusinessUI businessId={b.id} photos={photos}>
+    <BusinessUI businessId={b.id} photos={photos} alts={alts}>
       <JsonLd data={[ld, breadcrumb([[SITE_NAME, '/'], section, [b.name, path]])]} />
       <div className="hidden desk:block"><Desktop v={v} kinds={more.kinds} more={more.cards} inNeighborhood={more.inNeighborhood} /></div>
       <div className="desk:hidden"><Phone v={v} /></div>

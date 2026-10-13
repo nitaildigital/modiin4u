@@ -51,12 +51,14 @@ export function localName(he: string, en: string | null | undefined, lang: Lang)
   return lang === 'en' && e ? e : he;
 }
 
-/** The photographs WordPress had for it, in their order (businessGalleryProvider). */
-export const businessGallery = cache(async (id: string): Promise<string[]> => {
-  const { data } = await db.from('entity_media').select('sort_order,media(url)')
+/** The photographs WordPress had for it, in their order (businessGalleryProvider),
+ *  each with the alt text WordPress's media library gave it, where it had one. */
+export const businessGallery = cache(async (id: string): Promise<{ url: string; alt: string | null }[]> => {
+  const { data } = await db.from('entity_media').select('sort_order,media(url,alt_text)')
     .eq('entity_type', 'business').eq('entity_id', id).eq('role', 'gallery').order('sort_order', { ascending: true });
-  return ((data ?? []) as unknown as { media: { url: string | null } | null }[])
-    .map((r) => r.media?.url).filter((u): u is string => typeof u === 'string' && !!u);
+  return ((data ?? []) as unknown as { media: { url: string | null; alt_text: string | null } | null }[])
+    .filter((r) => !!r.media?.url)
+    .map((r) => ({ url: r.media!.url!, alt: r.media!.alt_text?.trim() || null }));
 });
 
 export type Review = {
