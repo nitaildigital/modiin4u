@@ -27,9 +27,11 @@ export const CONTACT = {
   tiktok: 'https://www.tiktok.com/@modiin4u',
 };
 
-/** The old site's analytics, kept for continuity (GA4, Clarity, Hotjar). */
+/** The old site's analytics, kept for continuity (GA4, Clarity, Hotjar), and
+ *  the client's Meta Pixel for his Facebook and Instagram ads (13 Oct). */
 export const ANALYTICS = {
   ga4: 'G-NVPTYVDZ40',
   clarity: 't0xe9flxif',
   hotjar: '4988942',
+  metaPixel: '1111528234569898',
 };
