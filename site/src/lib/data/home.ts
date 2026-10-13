@@ -311,12 +311,12 @@ export const eventCategoryNames = cache(async (lang: Lang): Promise<Map<string, 
 
 // ── Deals ────────────────────────────────────────────────────────────────
 
-export type HomeOffer = { id: string; name: string; image_url: string | null; end_at: string | null; businesses: { logo_url: string | null; cover_url: string | null } | null };
+export type HomeOffer = { id: string; name: string; image_url: string | null; end_at: string | null; businesses: { logo_url: string | null; cover_url: string | null; latitude?: number | null; longitude?: number | null } | null };
 
 /** Active deals whose time is not up (activeOffersProvider, !hasExpired):
  *  a running promotion first, then the featured, then the soonest to end. */
 export const liveOffers = cache(async (): Promise<HomeOffer[]> => {
-  const { data } = await db.from('offers').select('id,name,image_url,end_at,businesses(logo_url,cover_url)')
+  const { data } = await db.from('offers').select('id,name,image_url,end_at,businesses(logo_url,cover_url,latitude,longitude)')
     .eq('status', 'active')
     .order('promoted_until', { ascending: false, nullsFirst: false })
     .order('is_featured', { ascending: false })

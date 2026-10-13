@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
+import { CircleMarker, MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { canLocate, locate, watchPosition, type Position } from '@/lib/near';
 import type { MapPin } from './MapView';
 
 const KEY = process.env.NEXT_PUBLIC_MAPS_WEB_KEY ?? '';
@@ -101,6 +102,36 @@ function Recenter({ center, zoom, label }: { center: [number, number]; zoom: num
   );
 }
 
+/** "My location" (the app's map has it): the visitor's position as a blue
+ *  dot, and the map brought to it. Asked for on the tap only; once allowed,
+ *  the dot is there on every map, and "near you" lists sort by it. Shown only
+ *  where the browser can give a position (https). */
+function LocateMe({ label, refused, bottom }: { label: string; refused: string; bottom: number }) {
+  const map = useMap();
+  const [at, setAt] = useState<Position | null>(null);
+  const [can, setCan] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => { setCan(canLocate()); return watchPosition(setAt); }, []);
+  if (!can) return null;
+  return (
+    <>
+      {at && <CircleMarker center={[at.lat, at.lng]} radius={8} pathOptions={{ color: '#fff', weight: 3, fillColor: '#1A73E8', fillOpacity: 1 }} />}
+      <div className="leaflet-bottom leaflet-right" style={{ marginBottom: bottom }}>
+        <button type="button" aria-label={label} title={label}
+          onClick={(e) => {
+            e.stopPropagation(); setNote(null);
+            locate().then((p) => map.setView([p.lat, p.lng], Math.max(map.getZoom(), 15)), () => setNote(refused));
+          }}
+          className="leaflet-control flex size-[34px] items-center justify-center rounded-[4px] border-2 border-black/20 bg-white bg-clip-padding text-[#1A73E8] hover:bg-[#f4f4f4]"
+          style={{ pointerEvents: 'auto' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M21 3 3 10.5l7.5 3L13.5 21z" /></svg>
+        </button>
+        {note && <p className="leaflet-control mr-[10px] max-w-[200px] rounded bg-white px-2 py-1 text-[11px] text-[#333] shadow" style={{ pointerEvents: 'auto' }}>{note}</p>}
+      </div>
+    </>
+  );
+}
+
 const MODIIN: [number, number] = [31.8969, 35.0095];
 /** Modi'in-Maccabim-Re'ut with a margin: the map stays around the city, so
  *  nobody pans or zooms out across the country loading tiles no page needs. */
@@ -149,6 +180,10 @@ export default function LeafletMap({ pins, center, zoom = 14, interactive = true
       <FollowPick pin={selectedId ? pins.find((p) => p.id === selectedId) : undefined} />
       {onMapClick && <MapClick onClick={onMapClick} />}
       {recenter && interactive && <Recenter center={center ?? MODIIN} zoom={zoom} label={lang === 'he' ? 'חזרה למודיעין' : 'Back to Modiin'} />}
+      {interactive && (
+        <LocateMe bottom={recenter ? 126 : 84} label={lang === 'he' ? 'המיקום שלי' : 'My location'}
+          refused={lang === 'he' ? 'לא ניתן לקבל את המיקום. אפשרו גישה למיקום בדפדפן.' : 'Could not get your location. Allow location access in the browser.'} />
+      )}
     </MapContainer>
   );
 }

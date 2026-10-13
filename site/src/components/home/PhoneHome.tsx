@@ -8,6 +8,8 @@ import {
 } from '@/lib/data/home';
 import { dayBadge, phoneDateLine, tintOf } from './format';
 import { ownPhoto } from '@/lib/photos';
+import { NearRow } from '@/components/near/NearRow';
+import { NearButton } from '@/components/near/NearButton';
 
 // How many cards a phone row carries. The app's rows scroll through every
 // restaurant and every article; a page has to send what it shows, so the
@@ -17,11 +19,15 @@ const ROW_RESTAURANTS = 20;
 const ROW_NEWS = 12;
 
 /** A row's heading and its "See all". */
-function Header({ title, to, all }: { title: string; to: string; all: string }) {
+function Header({ title, to, all, near }: { title: string; to: string; all: string; near?: [string, string] }) {
   return (
-    <div className="flex items-center justify-between px-4">
+    <div className="flex items-center justify-between gap-2 px-4">
       <h2 className="text-base font-semibold leading-[1.21] text-[#1F1F1F]">{title}</h2>
-      <Link href={to} className="text-xs font-medium text-midblue">{all}</Link>
+      <span className="flex shrink-0 items-center gap-2.5">
+        {/* "Near me": once the visitor allows it, the rows sort by distance. */}
+        {near && <NearButton label={near[0]} done={near[1]} />}
+        <Link href={to} className="text-xs font-medium text-midblue">{all}</Link>
+      </span>
     </div>
   );
 }
@@ -41,17 +47,18 @@ function Row({ children, gap = 'gap-3' }: { children: React.ReactNode; gap?: str
 export async function PhoneHome({ lang }: { lang: Lang }) {
   const t = tr(lang);
   const all = t('ראה הכל', 'See all');
+  const near: [string, string] = [t('קרוב אליי', 'Near me'), t('לפי מרחק', 'By distance')];
   const [food, kinds, offers, events, eventCats, listings, articles] = await Promise.all([
     foodPlaces(), primaryCategories(), liveOffers(), upcomingEvents(), eventCategoryNames(lang), activeListings(), homeArticles(ROW_NEWS),
   ]);
 
-  // Jobs takes Deals' place in the frame the app follows; the site has no
-  // jobs page, so the fourth shortcut stays Deals, which it has.
+  // The four the app's frame has: Jobs in Deals' place, now that the site
+  // has job pages (13 Oct).
   const shortcuts: [string, string, string][] = [
     [t('מסעדות', 'Restaurants'), 'restaurants', '/search-rest-modiin/'],
     [t('אירועים', 'Events'), 'events', '/events/'],
     [t('נדל"ן', 'Real estate'), 'realestate', '/search-apartments/'],
-    [t('מבצעים', 'Deals'), 'deals', '/deals/'],
+    [t('משרות', 'Jobs'), 'jobs', '/jobs/'],
   ];
 
   return (
@@ -70,8 +77,9 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
 
       {food.length > 0 && (
         <section className="mt-8">
-          <Header title={t('מסעדות במודיעין', 'Restaurants in Modiin')} to="/search-rest-modiin/" all={all} />
+          <Header title={t('מסעדות במודיעין', 'Restaurants in Modiin')} to="/search-rest-modiin/" all={all} near={near} />
           <Row>
+            <NearRow points={food.slice(0, ROW_RESTAURANTS).map((b) => (b.latitude && b.longitude ? [b.latitude, b.longitude] : null))}>
             {food.slice(0, ROW_RESTAURANTS).map((b, i) => {
               const kind = kinds.get(b.id);
               const type = kind ? catName(kind.category, lang) : bizDescription(b);
@@ -109,14 +117,16 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
                 </Link>
               );
             })}
+            </NearRow>
           </Row>
         </section>
       )}
 
       {offers.length > 0 && (
         <section className="mt-8">
-          <Header title={t('מבצעים בקרבתך', 'Deals near you')} to="/deals/" all={all} />
+          <Header title={t('מבצעים בקרבתך', 'Deals near you')} to="/deals/" all={all} near={near} />
           <Row>
+            <NearRow points={offers.map((o) => (o.businesses?.latitude && o.businesses?.longitude ? [o.businesses.latitude, o.businesses.longitude] : null))}>
             {offers.map((o) => {
               const img = o.image_url || o.businesses?.logo_url || o.businesses?.cover_url;
               return (
@@ -127,6 +137,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
                 </Link>
               );
             })}
+            </NearRow>
           </Row>
         </section>
       )}
@@ -174,9 +185,11 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
 
       {listings.length > 0 && (
         <section className="mt-8">
-          <Header title={t('דירות בקרבתך', 'Apartments near you')} to="/search-apartments/" all={all} />
+          <Header title={t('דירות בקרבתך', 'Apartments near you')} to="/search-apartments/" all={all} near={near} />
           <ul className="mt-3 px-4">
-            {listings.slice(0, 4).map((l) => {
+            {/* All of them in the row, so the nearest four can be the ones shown. */}
+            <NearRow limit={4} points={listings.map((l) => (l.latitude && l.longitude ? [l.latitude, l.longitude] : null))}>
+            {listings.map((l) => {
               const rent = l.kind === 'rent';
               const price = rent ? l.price_per_month : l.price;
               const address = l.address || (lang === 'en' && l.neighborhoods?.name_en) || l.neighborhoods?.name;
@@ -209,6 +222,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
                 </li>
               );
             })}
+            </NearRow>
           </ul>
         </section>
       )}
