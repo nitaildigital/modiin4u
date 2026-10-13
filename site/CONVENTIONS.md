@@ -75,3 +75,12 @@ description, H1, menu links) and must stay at 992/992.
     npm run typecheck
     npm run build && npm start
     python3 ../tool/check_seo_parity.py http://localhost:3100
+
+The Google map and the Places details need the browser keys, which
+`tool/deploy_site.sh` compiles in for the server. Locally they come from
+`site/.env.local` (gitignored, never committed), holding
+`NEXT_PUBLIC_MAPS_WEB_KEY` and `NEXT_PUBLIC_PLACES_WEB_KEY` — the values of
+`GOOGLE_MAPS_WEB_KEY` and `GOOGLE_PLACES_WEB_KEY` in the repo's
+`.env.local`. Without the file the maps show their pins on a plain
+background. Google accepts the keys from localhost:3100. Restart
+`npm run dev` after adding it.

@@ -28,8 +28,9 @@ function stored(lang: 'he' | 'en'): Session | null {
 
 /** A Google Map Tiles session for the page's language (as web_map_tiles.dart):
  *  a Hebrew map for the Hebrew site, an English one for the English. The key
- *  is restricted to the site's addresses, so elsewhere — a local build — the
- *  session is refused and the map shows its pins on a plain background. */
+ *  is restricted to the site's addresses and localhost:3100. A build without
+ *  it (a local one with no site/.env.local, CONVENTIONS.md), or an address
+ *  Google refuses, shows the pins on a plain background. */
 function session(lang: 'he' | 'en'): Promise<Session | null> {
   if (!KEY) return Promise.resolve(null);
   sessions[lang] ??= (async () => {
