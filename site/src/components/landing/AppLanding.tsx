@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { tr, type Lang } from '@/lib/i18n';
+import { LandingMenu } from './LandingMenu';
 
 const A = '/web/app-landing';
 
@@ -30,11 +31,11 @@ function Phone({ screen, frame, w, className = '', style }: {
  *  stores' addresses (store_url_ios / store_url_android). */
 function Badges({ ios, android }: { ios: string | null; android: string | null }) {
   const badge = (href: string | null, src: string, alt: string) => {
-    const img = <img src={`${A}/${src}`} alt={alt} width={179} height={56} className="block h-12 w-auto desk:h-14" />;
+    const img = <img src={`${A}/${src}`} alt={alt} width={179} height={56} className="block h-11 w-auto desk:h-14" />;
     return href ? <a href={href} target="_blank" rel="noopener">{img}</a> : <span>{img}</span>;
   };
   return (
-    <div dir="ltr" className="flex flex-wrap gap-[18px]">
+    <div dir="ltr" className="flex flex-wrap gap-3 desk:gap-[18px]">
       {badge(ios, 'badge_app_store.svg', 'Download on the App Store')}
       {badge(android, 'badge_google_play.svg', 'Get it on Google Play')}
     </div>
@@ -98,7 +99,7 @@ export function AppLanding({ lang, ios, android }: { lang: Lang; ios: string | n
   return (
     <div className="relative overflow-x-clip">
 
-      <header className={`${column} flex h-[72px] items-center justify-between pt-4 desk:h-[84px] desk:pt-7`}>
+      <header className={`${column} relative flex h-[72px] items-center justify-between gap-3 pt-4 desk:h-[84px] desk:pt-7`}>
         <Link href="/" aria-label="מודיעין בשבילך" className="shrink-0">
           <img src={`${A}/logo.svg`} alt="" width={106} height={56} className="h-10 w-auto desk:h-14" />
         </Link>
@@ -107,9 +108,12 @@ export function AppLanding({ lang, ios, android }: { lang: Lang; ios: string | n
             <a key={href} href={href} className="p-4 text-[15px] font-medium text-[#3D3D3D] hover:text-midblue">{label}</a>
           ))}
         </nav>
-        <a href="#download" className="flex h-10 items-center rounded-full bg-midblue px-5 text-sm font-medium uppercase text-white hover:bg-midblue/90 desk:h-[46px] desk:px-6 desk:text-base">
-          {t('הורידו את האפליקציה', 'Download App')}
-        </a>
+        <div className="flex items-center gap-1">
+          <a href="#download" className="flex h-10 items-center rounded-full bg-midblue px-5 text-sm font-medium uppercase text-white hover:bg-midblue/90 desk:h-[46px] desk:px-6 desk:text-base">
+            {t('הורידו את האפליקציה', 'Download App')}
+          </a>
+          <LandingMenu links={nav} label={t('תפריט', 'Menu')} />
+        </div>
       </header>
 
       {/* Hero */}
@@ -190,13 +194,16 @@ export function AppLanding({ lang, ios, android }: { lang: Lang; ios: string | n
       {/* The app's screens */}
       <section id="screenshots" className="scroll-mt-6 pt-20 text-center desk:pt-[120px]">
         <h2 className={`${column} ${title}`}>{t('גלו את חוויית M4U', 'Discover the M4U Experience')}</h2>
-        <div dir="ltr" className="mt-10 overflow-x-auto [scrollbar-width:none] desk:mt-[63px] desk:overflow-hidden">
+        <div dir="ltr" className="mt-10 snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] desk:mt-[63px] desk:snap-none desk:overflow-hidden">
           <div className="flex w-max items-center gap-[26px] px-4 desk:relative desk:left-1/2 desk:-translate-x-1/2 desk:px-0">
+            {/* On a phone the strip starts with the main phone, swipes a screen
+                at a time, and leaves out the repeats that only fill the
+                desktop's edges. */}
             {strip.map((s, i) => s ? (
               <img key={i} src={`${A}/${s}.webp`} alt="" loading="lazy" width={232} height={504}
-                className="h-[504px] w-[232px] rounded-2xl border border-line object-cover shadow-[0_0_16px_rgba(0,0,0,0.05)]" />
+                className={`h-[504px] w-[232px] snap-center rounded-2xl border border-line object-cover shadow-[0_0_16px_rgba(0,0,0,0.05)] ${i === 0 || i === strip.length - 1 ? 'hidden desk:block' : ''}`} />
             ) : (
-              <Phone key={i} screen="screen_home_full" frame="frame_strip_center" w={295} />
+              <Phone key={i} screen="screen_home_full" frame="frame_strip_center" w={295} className="order-first snap-center desk:order-none" />
             ))}
           </div>
         </div>
