@@ -2899,6 +2899,43 @@ and dashboard (a temporary admin, deleted), and a password reset from the
 e-mail's link to "הסיסמה שלכם שונתה" (the test account's password restored).
 Notification links to app-only screens (`/my-apartments`, `/business-events`,
 `/jobs`) are 404 on the website; on a phone the app opens them.
+Later the same day the panel moved to its own address,
+**https://panel.45-93-94-49.sslip.io** (Let's Encrypt, renewing itself;
+`deploy/nginx/https-panel.45-93-94-49.sslip.io.conf`, snippet
+`modiin4u-admin.conf`): a build for the root, in /var/www/modiin4u-admin,
+its front page sent to /admin, noindex. `/panel…`, `/admin…` and `/login…` on
+the main addresses 301 there. Signed in there with a temporary admin
+(deleted). Also that day:
+- **The page cache served gzip to clients that had not asked for it**: Next.js
+  compressed for the first visitor, nginx kept that copy and gave it to the
+  next one whatever it accepted — a crawler without gzip read bytes, and the
+  SEO check saw a home page with no title. nginx now asks Next.js for plain
+  pages and compresses itself; requests marked `RSC` (Next's navigation data,
+  at the page's own address) bypass the cache. Page cache emptied.
+- **SEO against WordPress, on 45:** 985 of 992 the same. The rest: the five
+  closed businesses' 301s (wanted) and article 524 (the freeze-day import).
+  A crawl of 600 of the site's own links: none broken. Business keywords,
+  NewsArticle / LocalBusiness / breadcrumbs, review stars (5.0 from 23 on the
+  football academy) and the sharing tags are in the pages; Yoast's focus
+  keyphrases are not printed, as Yoast never did.
+- **The landing page's link preview:** a description and a 1200 × 630 image
+  from its own hero (`public/web/app-landing/og_landing.jpg`). The Meta Pixel
+  is the WordPress one (the client confirmed the ID), site-wide from launch;
+  the landing page adds `StoreClick` on a store badge. Checked on a local
+  build with SEO_LIVE=1: PageView, SubscribedButtonClick and StoreClick
+  reached Meta (Meta drops headless browsers' visits as bots).
+- **App links:** `assetlinks.json` lists the upload key besides the debug
+  one; Play's app-signing key is still to add (from Play Console). Android 9
+  on the OnePlus left the app's links unverified ("ask"): it verifies every
+  claimed host at once, and `www` (WordPress) and `app.modiin4u.co.il` (no
+  such address) fail. www passes after the switch; `app.` keeps failing
+  until it exists or an app build stops claiming it.
+- **Invitations from the app:** `site_url` was empty, so the app's invite
+  links pointed at `app.modiin4u.co.il`, which does not exist; set to
+  https://45-93-94-49.sslip.io (to www at launch). On the OnePlus: the app's
+  Invite shares that link, the site shows the invitation, its "פתיחה
+  באפליקציה" opens the app's invitation screen, and the link itself opens
+  the app directly. The test group was deleted.
 
 **uPress, looked at with Harshit — 13 Oct.** DNS is uPress's (ns1/ns2.upress.io);
 the zone: A `@`, `www`, `mail`, `smtp`, `pop`, `ftp` → 185.108.148.183, MX

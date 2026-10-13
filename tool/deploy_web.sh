@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
 # Builds the web app and copies it to the server — since 13 Oct as the
-# admin panel, under /panel/ (the public website is the Next.js site,
-# tool/deploy_site.sh).
+# admin panel, on its own address (panel.45-93-94-49.sslip.io); the public
+# website is the Next.js site (tool/deploy_site.sh).
 #
 # The build is static: nginx hands out files, and everything the app does
 # goes straight to Supabase from the browser. So a deploy is a build and an
@@ -81,9 +81,9 @@ if [ -n "$MAPS_WEB_KEY" ]; then
 else
   echo "   maps: OpenStreetMap — no GOOGLE_MAPS_WEB_KEY in .env.local"
 fi
-# Under /panel/: nginx serves the Next.js site at the root and this build
-# from /var/www/modiin4u-panel/panel/ (deploy/nginx/snippets/modiin4u-public.conf).
-flutter build web --release --base-href /panel/ \
+# At the root of the panel's address, served from /var/www/modiin4u-admin
+# (deploy/nginx/snippets/modiin4u-admin.conf).
+flutter build web --release --base-href / \
   --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT_URL" \
   --dart-define=MAPS_WEB_KEY="$MAPS_WEB_KEY" \
   --dart-define=PLACES_WEB_KEY="$PLACES_WEB_KEY"
@@ -113,7 +113,7 @@ HOST=$(get DEPLOY_HOST)
 USER=$(get DEPLOY_USER)
 # The panel's folder, whatever DEPLOY_PATH says (it names the old root,
 # /var/www/modiin4u, which stays on the server for going back).
-REMOTE_PATH=/var/www/modiin4u-panel/panel
+REMOTE_PATH=/var/www/modiin4u-admin
 KEY=$(get DEPLOY_SSH_KEY)
 KEY="${KEY/#\~/$HOME}"
 if [ -z "$KEY" ] && [ -f "$HOME/.ssh/modiin4u_deploy" ]; then

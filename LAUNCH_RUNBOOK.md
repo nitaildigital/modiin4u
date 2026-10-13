@@ -77,14 +77,21 @@ each line as it is done.
       `https://www.modiin4u.co.il` (`tool/setup_push.py` sets it — check its
       default is no longer sslip.io before re-running it).
 - [ ] **Invitations:** the `site_url` setting (step-group links) → www.
+      (Set to https://45-93-94-49.sslip.io on 13 Oct; it was empty, and the
+      app then used app.modiin4u.co.il, which does not exist.)
 - [ ] **App sign-up links:** `AUTH_REDIRECT_URL` for app builds →
       `https://www.modiin4u.co.il/auth/callback` (in the allow-list above).
 - [ ] **App links:** add www to `ios/Runner/Runner.entitlements` and
       `android/app/src/main/AndroidManifest.xml`; `apple-app-site-association`
       and `assetlinks.json` (with Play's signing certificate) served from www.
-- [ ] **The panel** on its own https address. Since 13 Oct it is the Flutter
-      build at `http://45.93.94.49/panel/` (`/admin` and `/login` 301 there),
-      and the Next.js site is what the IP serves.
+- [ ] **The panel** on its own https address. Since 13 Oct it is
+      https://panel.45-93-94-49.sslip.io (`/panel`, `/admin`, `/login` on the
+      main addresses 301 there); for panel.modiin4u.co.il copy its conf and
+      change the name in snippets/modiin4u-public.conf's redirects.
+- [ ] **App links on Android:** Play's app-signing SHA-256 into both
+      `assetlinks.json` (site/public and web/); `app.modiin4u.co.il` either
+      set up or dropped from AndroidManifest's intent filter in the next
+      build — Android verifies all claimed hosts or none.
 
 ## F. After
 

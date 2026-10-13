@@ -183,6 +183,8 @@ put "$STAGE/snippets/modiin4u-site.conf" /etc/nginx/snippets/modiin4u-site.conf
 # The Next.js site and the panel under /panel/ (13 Oct): the server blocks
 # include modiin4u-public.conf, which includes the proxy to Next.js.
 put "$STAGE/snippets/modiin4u-public.conf" /etc/nginx/snippets/modiin4u-public.conf
+# The panel's own address (https-panel.*.conf).
+put "$STAGE/snippets/modiin4u-admin.conf" /etc/nginx/snippets/modiin4u-admin.conf
 put "$STAGE/next/proxy.conf" /etc/nginx/snippets/modiin4u-next.conf
 put "$STAGE/next/cache.conf" /etc/nginx/conf.d/modiin4u-cache.conf
 for f in "$STAGE"/*.conf; do
@@ -287,7 +289,9 @@ check() {  # description, expected, actual
 # curl refuses an untrusted or mismatched certificate, so a 200 here means
 # the certificate is good as well as the page.
 code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${PIN[@]}" "https://$NAME/" || true)
-check "https://$NAME/ with a trusted certificate" 200 "$code"
+# The panel's address opens on its dashboard: its front page is a redirect.
+front=200; case "$NAME" in panel.*) front=302 ;; esac
+check "https://$NAME/ with a trusted certificate" "$front" "$code"
 
 echo "$(echo | openssl s_client -connect "$SERVER:443" -servername "$NAME" 2>/dev/null \
   | openssl x509 -noout -subject -issuer -enddate 2>/dev/null | sed 's/^/           /')"
