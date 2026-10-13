@@ -11,8 +11,15 @@ type Rule = { to: string; code: 301 | 302 };
  *  one small read every five minutes, whatever the traffic. */
 const TTL = 5 * 60 * 1000;
 
+/** How soon a failed read is tried again while no list has been read at
+ *  all — a server starting while the database is slow to answer would
+ *  otherwise send every redirected address to a 404 for five minutes. */
+const RETRY = 15 * 1000;
+
 let rules = new Map<string, Rule>();
 let readAt = 0;
+/** Whether a list has ever been read; until then a failure retries soon. */
+let loaded = false;
 let reading: Promise<void> | null = null;
 
 /** An address as the panel keeps it (lib/features/admin/providers/
@@ -39,11 +46,17 @@ async function read(): Promise<void> {
     if (!res.ok) return;
     const rows: { old_path: string; new_path: string; status_code: number }[] = await res.json();
     rules = new Map(rows.map((r) => [redirectKey(r.old_path), { to: r.new_path, code: r.status_code === 302 ? 302 : 301 }]));
+    loaded = true;
+    readAt = Date.now();
   } catch {
     // The database did not answer: the last list stays, and the next read
-    // is tried after the same wait rather than on every request.
+    // is tried after the same wait rather than on every request — or, with
+    // no list yet, after RETRY.
   } finally {
-    readAt = Date.now();
+    // The next read comes after TTL — or after RETRY while there is no list
+    // yet. (A successful read set readAt itself, just above.)
+    if (!loaded) readAt = Date.now() - TTL + RETRY;
+    else if (Date.now() - readAt > TTL) readAt = Date.now();
   }
 }
 
@@ -52,7 +65,7 @@ async function read(): Promise<void> {
 export async function redirectFor(path: string): Promise<Rule | undefined> {
   if (Date.now() - readAt > TTL) {
     reading ??= read().finally(() => { reading = null; });
-    if (readAt === 0) await reading;
+    if (!loaded) await reading;
   }
   return rules.get(redirectKey(path));
 }
