@@ -2912,12 +2912,14 @@ sites (modiinadlan, kosherz, digitalix).
   itself); they were re-added in Manage DNS the same afternoon.
 
 **The app's landing page — 13 Oct (Kamal's design, Figma "App Landing Page").**
-Built on the Next.js site at `/app/` (`site/src/app/(landing)/app/`,
+Built on the Next.js site at `/landing-page/` (`site/src/app/(landing)/landing-page/`,
 `components/landing/AppLanding.tsx`), outside the (site) group: it has its own
 bar (Home, Features, Screenshots, Contact Us, Download App) instead of the
-site's header; the site's own footer follows. The address is provisional and
-the page is `noindex` — where it lives and how people reach it is the client's
-to say (asked 13 Oct). The badges link to the panel's `store_url_ios` /
+site's header; the site's own footer follows. The client (13 Oct): people
+reach it "just from ads" — so nothing on the site links to it, it stays
+`noindex` and out of the sitemap, and the ads point at
+`https://www.modiin4u.co.il/landing-page/` once the Next.js site is live there
+(the address Harshit chose, 13 Oct). The badges link to the panel's `store_url_ios` /
 `store_url_android`, empty until the apps are approved, so they are not links
 yet. The design is English only; the Hebrew lines are ours, to be checked by
 the client. The design is drawn at 1920 only; below 1100 the sections stack.

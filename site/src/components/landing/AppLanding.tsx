@@ -97,8 +97,6 @@ export function AppLanding({ lang, ios, android }: { lang: Lang; ios: string | n
 
   return (
     <div className="relative overflow-x-clip">
-      <img src={`${A}/glow_left.svg`} alt="" aria-hidden className="pointer-events-none absolute left-[-179px] top-[1019px] hidden w-[888px] max-w-none desk:block" />
-      <img src={`${A}/glow_right.svg`} alt="" aria-hidden className="pointer-events-none absolute right-[-178px] top-[2026px] hidden w-[888px] max-w-none -scale-x-100 desk:block" />
 
       <header className={`${column} flex h-[72px] items-center justify-between pt-4 desk:h-[84px] desk:pt-7`}>
         <Link href="/" aria-label="מודיעין בשבילך" className="shrink-0">
@@ -141,7 +139,10 @@ export function AppLanding({ lang, ios, android }: { lang: Lang; ios: string | n
         <p className={`mx-auto mt-4 max-w-[608px] desk:mt-6 ${lead}`}>
           {t('כל מה שצריך כדי לגלות, לחקור ולהתחבר לעיר — במקום אחד.', 'Everything you need to discover, explore, and connect with your city — all in one place.')}
         </p>
-        <div className="mt-10 grid gap-6 text-start desk:mt-12 desk:grid-cols-3">
+        <div className="relative mt-10 grid gap-6 text-start desk:mt-12 desk:grid-cols-3">
+          {/* The design's soft glows hang off the content, not the window:
+              this one centred 40 px outside the cards' left edge, behind them. */}
+          <img src={`${A}/glow_left.svg`} alt="" aria-hidden className="pointer-events-none absolute left-[-496px] top-[-14px] -z-10 hidden w-[888px] max-w-none desk:block" />
           {cards.map((c) => (
             <div key={c.icon} className="relative h-[480px] overflow-hidden rounded-3xl bg-[#F6F6F6] p-8 desk:h-[604px] desk:p-10">
               <span className="flex size-14 items-center justify-center rounded-full bg-midblue">
@@ -163,6 +164,8 @@ export function AppLanding({ lang, ios, android }: { lang: Lang; ios: string | n
             'Access essential municipal information, services, and updates whenever you need them — right from your phone.')}
         </p>
         <div className="relative mt-[120px] rounded-3xl bg-midblue px-6 pb-10 desk:mt-[138px] desk:h-[673px] desk:p-0">
+          {/* …and this one 42 px outside the block's right edge, behind it. */}
+          <img src={`${A}/glow_right.svg`} alt="" aria-hidden className="pointer-events-none absolute right-[-498px] top-[2px] -z-10 hidden w-[888px] max-w-none -scale-x-100 desk:block" />
           <img src={`${A}/deco_sparkle.svg`} alt="" aria-hidden width={34} height={45} className="absolute start-8 top-[-16px] desk:start-[128px]" />
           <img src={`${A}/deco_hearts.svg`} alt="" aria-hidden width={77} height={84} className="absolute bottom-4 end-6 hidden desk:block desk:bottom-auto desk:end-auto desk:start-[1065px] desk:top-[573px]" />
           <div className="flex flex-col items-center gap-10 desk:absolute desk:left-1/2 desk:top-[-83px] desk:-translate-x-1/2 desk:flex-row desk:items-start desk:gap-[31px]">
