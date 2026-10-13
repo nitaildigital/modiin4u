@@ -48,7 +48,9 @@ decision and why — when you make one, add it there in the same plain style.
 - Never run `certbot --nginx` on the server; use `tool/enable_domain.sh`.
 - Homebrew's `python3` has no Pillow — image scripts need
   `/Library/Frameworks/Python.framework/Versions/3.13/bin/python3`.
-- Deploy: `AUTH_REDIRECT_URL=http://45.93.94.49/auth/callback tool/deploy_web.sh`.
+- Deploy (since 13 Oct, 45.93.94.49): the website is the Next.js site,
+  `tool/deploy_site.sh`; the panel is the Flutter build under `/panel/`,
+  `AUTH_REDIRECT_URL=http://45.93.94.49/auth/callback tool/deploy_web.sh`.
 - Figma file `4mO5MlsuSDY2E0A7JFqqQx`: web page `0:1`, mobile page `412:6567`.
   Figma asset URLs expire after 7 days — download what you use.
 - With the Playwright MCP, open your own browser context for each check and

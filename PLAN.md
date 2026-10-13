@@ -2879,6 +2879,27 @@ crawl, and health checked before and after.
   `/business-cat/restaurants/`, `/professionals/`): the client writes them
   in the panel's SEO fields if he wants one.
 
+**The Next.js site on 45.93.94.49; the panel under /panel/ — 13 Oct
+(Harshit: "move the Next.js site to 45 and remove the Flutter website").**
+The server answers http://45.93.94.49 and https://45-93-94-49.sslip.io with
+the Next.js site (service `modiin4u-site`, /srv/modiin4u-site, 127.0.0.1:3100
+behind nginx, `deploy/next/`). The Flutter build could not simply go: the
+admin panel is in it and the Next.js site has none — so it was rebuilt with
+`--base-href /panel/` and is served from /var/www/modiin4u-panel/panel/
+(`deploy/nginx/snippets/modiin4u-public.conf`); `/admin…` and `/login…` 301
+there. The old root build and nginx files stay on the server for going back
+(/var/www/modiin4u, /root/*.bak-20261013114039). Not `--live`: no statistics,
+and robots.txt still disallows all until launch. The image library (sharp)
+is per platform, so the server keeps its own Linux copy, which
+deploy_site.sh no longer deletes. The server was reached with its password
+(the deploy key is not on this Mac). Checked from outside: the site's pages,
+the landing page with ad parameters, old article and business addresses
+from notifications, the app-link files (JSON), photos, the panel's sign-in
+and dashboard (a temporary admin, deleted), and a password reset from the
+e-mail's link to "הסיסמה שלכם שונתה" (the test account's password restored).
+Notification links to app-only screens (`/my-apartments`, `/business-events`,
+`/jobs`) are 404 on the website; on a phone the app opens them.
+
 **uPress, looked at with Harshit — 13 Oct.** DNS is uPress's (ns1/ns2.upress.io);
 the zone: A `@`, `www`, `mail`, `smtp`, `pop`, `ftp` → 185.108.148.183, MX
 mail, TXT `google-site-verification` (how Search Console is verified — keep
@@ -2922,10 +2943,24 @@ reach it "just from ads" — so nothing on the site links to it, it stays
 (the address Harshit chose, 13 Oct). The badges link to the panel's `store_url_ios` /
 `store_url_android`, empty until the apps are approved, so they are not links
 yet. The design is English only; the Hebrew lines are ours, to be checked by
-the client. The design is drawn at 1920 only; below 1100 the sections stack.
+the client. The design is drawn at 1920 only; below 1100 the sections stack, the bar's
+links move into a menu button, the strip starts with the main phone and
+swipes a screen at a time. The Google Play link (`store_url_android`) was
+set in the panel's settings on 13 Oct, while the app is still in review, so
+the buttons work the day it is published; the App Store link waits for the
+app's Apple ID.
 Its images are in `public/web/app-landing/` (screens as WebP, 640 wide); the
 strip's screenshots show the designer's sample content (a chat, jobs,
 "Urban Plate Kitchen & Bar"), not the directory's.
+
+**The Meta Pixel — 13 Oct.** The client made a pixel in his Meta Events
+Manager for the ads (ID 1111528234569898). It is in `ANALYTICS.metaPixel`
+and loads with GA4, Clarity and Hotjar in `chrome/Analytics.tsx`, so on
+every page and only with `SEO_LIVE=1`: nothing is counted until launch,
+the landing page included. Browser pixel only — no automatic advanced
+matching (it reads what people type into forms; his decision, not ours) and
+no Conversions API (Meta offered a paid partner, Madgicx, for it). Checked
+locally: the pixel is in the page with `SEO_LIVE=1` and absent without it.
 
 **WordPress's real reviews and image alt texts — 13 Oct (Harshit's go-ahead).**
 - **Reviews.** WordPress's JetReviews plugin held 130 real ratings on 59

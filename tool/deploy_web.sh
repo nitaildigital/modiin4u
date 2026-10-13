@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
-# Builds the web app and copies it to the server.
+# Builds the web app and copies it to the server — since 13 Oct as the
+# admin panel, under /panel/ (the public website is the Next.js site,
+# tool/deploy_site.sh).
 #
 # The build is static: nginx hands out files, and everything the app does
 # goes straight to Supabase from the browser. So a deploy is a build and an
@@ -79,7 +81,9 @@ if [ -n "$MAPS_WEB_KEY" ]; then
 else
   echo "   maps: OpenStreetMap — no GOOGLE_MAPS_WEB_KEY in .env.local"
 fi
-flutter build web --release \
+# Under /panel/: nginx serves the Next.js site at the root and this build
+# from /var/www/modiin4u-panel/panel/ (deploy/nginx/snippets/modiin4u-public.conf).
+flutter build web --release --base-href /panel/ \
   --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT_URL" \
   --dart-define=MAPS_WEB_KEY="$MAPS_WEB_KEY" \
   --dart-define=PLACES_WEB_KEY="$PLACES_WEB_KEY"
@@ -88,8 +92,8 @@ flutter build web --release \
 # descriptions, canonical links and the text itself — plus sitemap.xml and
 # robots.txt (tool/build_seo_pages.py). noindex until launch; SEO_LIVE=1 at
 # launch opens the site to search engines.
-echo "── pages for search engines"
-python3 tool/build_seo_pages.py ${SEO_LIVE:+--live}
+# (The search-engine pages, tool/build_seo_pages.py, were for this build as
+# the public site; Next.js is that now, so they are no longer made.)
 
 SIZE=$(du -sh build/web | cut -f1)
 echo "   build/web is $SIZE (nginx serves it gzipped, so the transfer is far less)"
@@ -107,7 +111,9 @@ fi
 
 HOST=$(get DEPLOY_HOST)
 USER=$(get DEPLOY_USER)
-REMOTE_PATH=$(get DEPLOY_PATH)
+# The panel's folder, whatever DEPLOY_PATH says (it names the old root,
+# /var/www/modiin4u, which stays on the server for going back).
+REMOTE_PATH=/var/www/modiin4u-panel/panel
 KEY=$(get DEPLOY_SSH_KEY)
 KEY="${KEY/#\~/$HOME}"
 if [ -z "$KEY" ] && [ -f "$HOME/.ssh/modiin4u_deploy" ]; then

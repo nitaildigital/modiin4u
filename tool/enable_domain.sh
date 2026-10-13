@@ -152,6 +152,7 @@ echo "── 2. nginx files from deploy/nginx"
 STAGE=/root/modiin4u-nginx-incoming
 remote "rm -rf '$STAGE' && mkdir -p '$STAGE'"
 rsync -a --delete -e "${SSH_CMD[*]}" deploy/nginx/ "$SSH_USER@$SERVER:$STAGE/"
+rsync -a -e "${SSH_CMD[*]}" deploy/next/proxy.conf deploy/next/cache.conf "$SSH_USER@$SERVER:$STAGE/next/"
 
 # Each file that differs from what is installed is backed up under /root,
 # replaced, and put back if `nginx -t` then fails. Files that match are left
@@ -179,6 +180,11 @@ put() {
 }
 
 put "$STAGE/snippets/modiin4u-site.conf" /etc/nginx/snippets/modiin4u-site.conf
+# The Next.js site and the panel under /panel/ (13 Oct): the server blocks
+# include modiin4u-public.conf, which includes the proxy to Next.js.
+put "$STAGE/snippets/modiin4u-public.conf" /etc/nginx/snippets/modiin4u-public.conf
+put "$STAGE/next/proxy.conf" /etc/nginx/snippets/modiin4u-next.conf
+put "$STAGE/next/cache.conf" /etc/nginx/conf.d/modiin4u-cache.conf
 for f in "$STAGE"/*.conf; do
   put "$f" "/etc/nginx/sites-available/$(basename "$f")"
 done

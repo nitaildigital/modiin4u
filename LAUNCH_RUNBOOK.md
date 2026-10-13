@@ -82,7 +82,9 @@ each line as it is done.
 - [ ] **App links:** add www to `ios/Runner/Runner.entitlements` and
       `android/app/src/main/AndroidManifest.xml`; `apple-app-site-association`
       and `assetlinks.json` (with Play's signing certificate) served from www.
-- [ ] **The panel** on its own https address; the bare IP no longer serves it.
+- [ ] **The panel** on its own https address. Since 13 Oct it is the Flutter
+      build at `http://45.93.94.49/panel/` (`/admin` and `/login` 301 there),
+      and the Next.js site is what the IP serves.
 
 ## F. After
 

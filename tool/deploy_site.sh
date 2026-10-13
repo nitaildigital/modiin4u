@@ -54,6 +54,21 @@ $BUILD_ONLY && { echo "── built only, server untouched"; exit 0; }
 
 HOST=$(get DEPLOY_HOST); USR=$(get DEPLOY_USER)
 echo "── uploading to $USR@$HOST:/srv/modiin4u-site"
-rsync -az --delete "$OUT/" "$USR@$HOST:/srv/modiin4u-site/"
-ssh "$USR@$HOST" "chown -R www-data:www-data /srv/modiin4u-site && systemctl restart modiin4u-site && sleep 2 && systemctl is-active modiin4u-site"
+# The image library is per platform: this Mac's build carries the macOS
+# one, the server needs Linux's. Those are installed on the server once and
+# kept out of --delete; a server without them gets them here.
+rsync -az --delete --exclude 'node_modules/@img/sharp-linux-x64' --exclude 'node_modules/@img/sharp-libvips-linux-x64' \
+  "$OUT/" "$USR@$HOST:/srv/modiin4u-site/"
+ssh "$USR@$HOST" bash -s <<'REMOTE'
+set -e
+cd /srv/modiin4u-site
+if [ ! -d node_modules/@img/sharp-linux-x64 ]; then
+  V=$(node -p 'require("./node_modules/sharp/package.json").version')
+  LV=$(node -p 'require("./node_modules/sharp/package.json").optionalDependencies["@img/sharp-libvips-linux-x64"]')
+  T=$(mktemp -d); (cd "$T" && npm init -y >/dev/null && npm install --no-audit --no-fund "@img/sharp-linux-x64@$V" "@img/sharp-libvips-linux-x64@$LV" >/dev/null)
+  cp -r "$T"/node_modules/@img/sharp-linux-x64 "$T"/node_modules/@img/sharp-libvips-linux-x64 node_modules/@img/ && rm -rf "$T"
+  echo "   installed the Linux image library"
+fi
+chown -R www-data:www-data /srv/modiin4u-site && systemctl restart modiin4u-site && sleep 2 && systemctl is-active modiin4u-site
+REMOTE
 echo "── done"
