@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/params';
 import { communityNews, communitySettings, type CommunityArticle } from '@/lib/data/community';
 import { JsonLd } from '@/components/JsonLd';
 import { PhoneBar } from '@/components/municipal/BackLink';
+import { ownPhoto } from '@/lib/photos';
 
 /** A card that leads off the site: the client's Facebook group, or his
  *  "share with us" form (CommunityLinkCard). */
@@ -35,7 +36,7 @@ function NewsCard({ a, lang }: { a: CommunityArticle; lang: Lang }) {
   return (
     <Link href={href(`/news/${a.slug}/`)} className="block w-[250px] shrink-0 desk:w-[300px]">
       {a.featured_image
-        ? <img src={a.featured_image} alt="" loading="lazy" className="h-[150px] w-full rounded-xl object-cover desk:h-[180px]" />
+        ? <img src={ownPhoto(a.featured_image, 600) ?? a.featured_image} alt="" loading="lazy" className="h-[150px] w-full rounded-xl object-cover desk:h-[180px]" />
         : <span className="block h-[150px] w-full rounded-xl bg-section desk:h-[180px]" />}
       <span dir="auto" className="mt-3 line-clamp-2 text-base font-medium leading-[1.2] text-black">{a.title}</span>
       {a.published_at && (

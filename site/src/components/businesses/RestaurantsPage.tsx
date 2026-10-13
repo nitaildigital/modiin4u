@@ -217,9 +217,9 @@ export async function RestaurantsPage({ path }: { path: string }) {
             here); nothing booked, nothing drawn. */}
         {top.length > 0 && (
           <ul className="mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 [scrollbar-width:none]">
-            {top.map((b) => (
+            {top.map((b, i) => (
               <li key={b.id} className="w-full shrink-0 snap-center [&_img]:h-[200px] [&_img]:w-full [&_img]:rounded-xl [&_img]:object-cover">
-                <BannerImage banner={b} />
+                <BannerImage banner={b} eager={i === 0} />
               </li>
             ))}
           </ul>

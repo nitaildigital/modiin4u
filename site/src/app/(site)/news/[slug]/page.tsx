@@ -12,6 +12,7 @@ import { JsonLd } from '@/components/JsonLd';
 import { BannerImage } from '@/components/ui/Banner';
 import { ShareBar } from '@/components/ui/ShareBar';
 import { ArticleView } from '@/components/news/ArticleView';
+import { ownPhoto } from '@/lib/photos';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -57,6 +58,10 @@ export default async function ArticlePage({ params }: Props) {
         {
           '@context': 'https://schema.org', '@type': 'NewsArticle', headline: a.title.slice(0, 110),
           mainEntityOfPage: SITE_URL + href(path), publisher: organization(),
+          // Google asks an article for its author: the byline where the
+          // panel has one, else the site that publishes it — no name is
+          // made up.
+          author: a.credit?.trim() ? { '@type': 'Person', name: a.credit.trim() } : organization(),
           ...(a.published_at ? { datePublished: a.published_at } : {}),
           ...(a.updated_at ? { dateModified: a.updated_at } : {}),
           ...(image ? { image: [image] } : {}),
@@ -66,7 +71,11 @@ export default async function ArticlePage({ params }: Props) {
 
       {/* The picture and the headline card. */}
       <div className="grid overflow-hidden rounded-2xl desk:grid-cols-2 desk:items-center">
-        {image && <img src={image} alt={a.title} className="aspect-[16/10] w-full object-cover desk:aspect-auto desk:max-h-[440px]" />}
+        {/* What a phone paints first, so asked for at once and at the size it
+            is drawn: the original here was up to a megabyte. The share tags
+            and the structured data keep the original, which Google wants
+            large. */}
+        {image && <img src={ownPhoto(image, 1200) ?? image} alt={a.title} fetchPriority="high" className="aspect-[16/10] w-full object-cover desk:aspect-auto desk:max-h-[440px]" />}
         <div className="bg-section p-5 desk:flex desk:min-h-[436px] desk:flex-col desk:justify-center desk:rounded-2xl desk:p-10">
           {cat && (
             <Link href={href(`/new/${cat.slug}/`)} className="mb-5 inline-block w-fit rounded-md bg-turquoise px-3 py-2 text-sm font-semibold text-white">
@@ -130,7 +139,7 @@ export default async function ArticlePage({ params }: Props) {
                 {related.map((r) => (
                   <li key={r.id} className="border-b border-line py-5 first:pt-0">
                     <Link href={href(`/news/${r.slug}/`)} className="flex items-center gap-4">
-                      {r.featured_image && <img src={r.featured_image} alt="" className="h-20 w-[110px] shrink-0 rounded-md object-cover" loading="lazy" />}
+                      {r.featured_image && <img src={ownPhoto(r.featured_image, 400) ?? r.featured_image} alt="" className="h-20 w-[110px] shrink-0 rounded-md object-cover" loading="lazy" />}
                       <span className="min-w-0">
                         <span className="line-clamp-2 text-lg leading-snug text-ink">{r.title}</span>
                         <span className="mt-1 flex items-center gap-2 text-sm text-gray-meta"><Calendar size={16} color="currentColor" />{formatDate(r.published_at, lang)}</span>

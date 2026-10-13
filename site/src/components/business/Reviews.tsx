@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { ownPhoto } from '@/lib/photos';
 
 export type ReviewView = {
   id: string; author: string; initials: string; date: string; rating: number; body: string;
@@ -136,7 +137,7 @@ export function DesktopReviews({ reviews, he }: { reviews: ReviewView[]; he: boo
 /** The author's photo when they agreed to show it (00076), else initials. */
 export function ReviewAvatar({ r, className }: { r: ReviewView; className: string }) {
   return r.avatar
-    ? <img src={r.avatar} alt="" className={`${className} shrink-0 rounded-full object-cover`} loading="lazy" />
+    ? <img src={ownPhoto(r.avatar, 200) ?? r.avatar} alt="" className={`${className} shrink-0 rounded-full object-cover`} loading="lazy" />
     : <span className={`${className} flex shrink-0 items-center justify-center rounded-full bg-turquoise font-semibold uppercase text-white`}>{r.initials}</span>;
 }
 
@@ -147,7 +148,7 @@ export function ReviewPhotos({ photos, size }: { photos: string[]; size: number 
     <div className="mt-2.5 flex flex-wrap gap-2">
       {photos.map((u) => (
         <a key={u} href={u} target="_blank" rel="noopener">
-          <img src={u} alt="" width={size} height={size} style={{ width: size, height: size }} className="rounded-[10px] object-cover" loading="lazy" />
+          <img src={ownPhoto(u, size * 2) ?? u} alt="" width={size} height={size} style={{ width: size, height: size }} className="rounded-[10px] object-cover" loading="lazy" />
         </a>
       ))}
     </div>

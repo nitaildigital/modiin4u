@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { ownPhoto } from '@/lib/photos';
 
 /** "Show all photos" on the phone's deal page: the business's gallery, one
  *  photograph at a time on black, with a close button and a counter
@@ -29,7 +30,7 @@ export function PhotoGallery({ photos, label, className }: { photos: string[]; l
             onScroll={(e) => setPage(Math.round(e.currentTarget.scrollLeft / Math.max(1, e.currentTarget.clientWidth)))}>
             {photos.map((url) => (
               <div key={url} className="flex h-full w-full shrink-0 snap-center items-center justify-center">
-                <img src={url} alt="" className="max-h-full max-w-full object-contain" />
+                <img src={ownPhoto(url, 1600) ?? url} alt="" className="max-h-full max-w-full object-contain" />
               </div>
             ))}
           </div>

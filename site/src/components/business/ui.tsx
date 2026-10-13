@@ -5,6 +5,7 @@ import { track, type BusinessStat } from './stats';
 import { FacebookMark, MailMark, WhatsAppMark, XMark } from './icons';
 import { sized } from './format';
 import { Floating, useFloating } from '@/components/ui/Floating';
+import { ownPhoto } from '@/lib/photos';
 
 type UI = {
   businessId: string;
@@ -174,7 +175,7 @@ function PhotoViewer({ photos, start, onClose }: { photos: string[]; start: numb
       onTouchStart={(e) => { const p = e.touches[0]; touch.current = e.touches.length === 1 && p ? { x: p.clientX, y: p.clientY } : null; }}
       onTouchEnd={swipe}>
       <div className="flex size-full items-center justify-center px-4 py-16 desk:px-24" onClick={(e) => e.stopPropagation()}>
-        <img src={photos[at]} alt="" className="max-h-full max-w-full object-contain" />
+        <img src={ownPhoto(photos[at], 1600) ?? photos[at]} alt="" className="max-h-full max-w-full object-contain" />
       </div>
       <button type="button" aria-label="Close" onClick={onClose} className="absolute right-6 top-6 text-4xl leading-none text-white">×</button>
       {at > 0 && <button type="button" aria-label="Previous" onClick={(e) => { e.stopPropagation(); setAt(at - 1); }} className={`${nav} left-3 desk:left-6`}>‹</button>}

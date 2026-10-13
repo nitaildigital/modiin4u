@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
 import type { Banner } from '@/lib/data/banners';
+import { ownPhoto } from '@/lib/photos';
 
 function Creative({ banner, className }: { banner: Banner; className: string }) {
-  const img = <img src={banner.image_url} alt={banner.name} loading="lazy" className={`block w-full rounded-xl object-cover ${className}`} />;
+  const img = <img src={ownPhoto(banner.image_url, 1200) ?? banner.image_url} alt={banner.name} loading="lazy" className={`block w-full rounded-xl object-cover ${className}`} />;
   return banner.destination_url
     ? <a href={banner.destination_url} target="_blank" rel="noopener sponsored" className="block min-w-0 flex-1">{img}</a>
     : <span className="block min-w-0 flex-1">{img}</span>;

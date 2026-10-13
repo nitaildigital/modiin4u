@@ -5,6 +5,7 @@ import { tr } from '@/lib/i18n';
 import { href, plain } from '@/lib/seo';
 import type { NewsCard, NewsCategory } from '@/lib/data/news';
 import { newsCategoryName } from '@/lib/data/news';
+import { ownPhoto } from '@/lib/photos';
 
 // The pieces of the news lists: the desktop's hero and cards
 // (web_news_screen.dart) and the phone's (news_screen.dart,
@@ -50,7 +51,7 @@ const GRADIENTS = [
 
 export function Photo({ card, className = '', glyph = 40, eager = false }: { card: NewsCard; className?: string; glyph?: number | null; eager?: boolean }) {
   if (card.image) {
-    return <img src={card.image} alt={card.title} className={`object-cover ${className}`} loading={eager ? 'eager' : 'lazy'} />;
+    return <img src={ownPhoto(card.image, eager ? 1600 : 800) ?? card.image} alt={card.title} className={`object-cover ${className}`} loading={eager ? 'eager' : 'lazy'} />;
   }
   let h = 0;
   for (const ch of card.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;

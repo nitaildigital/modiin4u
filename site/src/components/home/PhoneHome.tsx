@@ -7,6 +7,7 @@ import {
   foodPlaces, homeArticles, kosherLabel, liveOffers, primaryCategories, roomsText, shekels, upcomingEvents,
 } from '@/lib/data/home';
 import { dayBadge, phoneDateLine, tintOf } from './format';
+import { ownPhoto } from '@/lib/photos';
 
 // How many cards a phone row carries. The app's rows scroll through every
 // restaurant and every article; a page has to send what it shows, so the
@@ -71,7 +72,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
         <section className="mt-8">
           <Header title={t('מסעדות במודיעין', 'Restaurants in Modiin')} to="/search-rest-modiin/" all={all} />
           <Row>
-            {food.slice(0, ROW_RESTAURANTS).map((b) => {
+            {food.slice(0, ROW_RESTAURANTS).map((b, i) => {
               const kind = kinds.get(b.id);
               const type = kind ? catName(kind.category, lang) : bizDescription(b);
               const address = [b.address?.trim(), bizNeighborhood(b, lang)].filter(Boolean).join(', ');
@@ -79,7 +80,9 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
               return (
                 <Link key={b.id} href={href(`/business/${b.slug || b.id}/`)} className="w-[270px] shrink-0 snap-start rounded-xl border border-line bg-white p-2">
                   <span className="relative block h-[140px] overflow-hidden rounded-lg" style={img ? undefined : { background: tintOf(b.id) }}>
-                    {img && <img src={img} alt={bizName(b, lang)} loading="lazy" className="size-full object-cover" />}
+                    {/* The first card is in view as the page opens, and the largest thing
+                        in it: fetched at once, not when scrolled to. */}
+                    {img && <img src={ownPhoto(img, 600) ?? img} alt={bizName(b, lang)} loading={i === 0 ? 'eager' : 'lazy'} className="size-full object-cover" />}
                     {kosherLabel(b.kosher_level) && (
                       <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-[50px] bg-[#0033AC] px-2 py-1.5 text-[10px] font-medium leading-none text-white">
                         <Verify size={12} color="#fff" variant="Bold" />{t('כשר', 'Kosher')}
@@ -118,7 +121,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
               const img = o.image_url || o.businesses?.logo_url || o.businesses?.cover_url;
               return (
                 <Link key={o.id} href={href(`/deal/${o.id}/`)} className="relative h-[130px] w-[230px] shrink-0 snap-start overflow-hidden rounded-xl bg-[#E0E8F0]">
-                  {img && <img src={img} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />}
+                  {img && <img src={ownPhoto(img, 600) ?? img} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />}
                   <span className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.55))]" />
                   <span dir="auto" className="absolute bottom-3 right-3 left-3 line-clamp-2 text-right font-rubik text-base font-bold leading-tight text-white">{o.name}</span>
                 </Link>
@@ -139,7 +142,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
               return (
                 <Link key={e.id} href={href(`/event/${e.id}/`)} className="w-[270px] shrink-0 snap-start rounded-xl border border-line bg-white p-2">
                   <span className="relative block h-[140px] overflow-hidden rounded-lg" style={img ? undefined : { background: tintOf(e.id) }}>
-                    {img && <img src={img} alt={e.title} loading="lazy" className="size-full object-cover" />}
+                    {img && <img src={ownPhoto(img, 600) ?? img} alt={e.title} loading="lazy" className="size-full object-cover" />}
                     {day && (
                       <span className="absolute bottom-2.5 left-2.5 flex w-[57px] flex-col items-center rounded-lg bg-white p-2 leading-[1.21]">
                         <span className="text-sm font-medium text-midblue">{month}</span>
@@ -181,7 +184,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
                 <li key={l.id} className="border-b border-line">
                   <Link href={href(`/listing/${l.id}/`)} className="flex items-start gap-3 py-3">
                     {l.cover_url
-                      ? <img src={l.cover_url} alt={l.title} loading="lazy" className="h-20 w-[95px] shrink-0 rounded-md object-cover" />
+                      ? <img src={ownPhoto(l.cover_url, 200) ?? l.cover_url} alt={l.title} loading="lazy" className="h-20 w-[95px] shrink-0 rounded-md object-cover" />
                       : <span className="flex h-20 w-[95px] shrink-0 items-center justify-center rounded-md bg-[#E0E8F0]"><House2 size={28} color="#9AA0A6" variant="Bold" /></span>}
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
@@ -217,7 +220,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
             {articles.map((a) => (
               <Link key={a.id} href={href(`/news/${a.slug}/`)} className="w-[250px] shrink-0 snap-start">
                 {a.image
-                  ? <img src={a.image} alt="" loading="lazy" className="h-[150px] w-[250px] rounded-xl object-cover" />
+                  ? <img src={ownPhoto(a.image, 600) ?? a.image} alt="" loading="lazy" className="h-[150px] w-[250px] rounded-xl object-cover" />
                   : <span className="block h-[150px] w-[250px] rounded-xl" style={{ background: tintOf(a.id) }} />}
                 <span dir="rtl" className="mt-3 line-clamp-2 text-right text-base font-medium leading-[1.19] text-black">{a.title}</span>
                 <span className="mt-3 flex items-center gap-2 text-sm text-[#6D6D6D]">

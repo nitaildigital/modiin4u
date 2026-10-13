@@ -7,6 +7,7 @@ import { useDebounced } from '@/lib/useDebounced';
 import { useDesk } from '@/components/municipal/useDesk';
 import type { Lang } from '@/lib/i18n';
 import { LAYER_LOOK, type CityPin, type MapLayer, type MapSlide } from '@/lib/data/map-shared';
+import { ownPhoto } from '@/lib/photos';
 
 const CENTER: [number, number] = [31.8928, 35.0104];
 
@@ -38,7 +39,7 @@ function Slide({ s, lang, onClose }: { s: MapSlide; lang: Lang; onClose: () => v
   return (
     <div className="relative max-h-full w-[356px] overflow-y-auto rounded-2xl bg-white p-4 shadow-[0_0_4px_rgba(0,0,0,0.2)]">
       <div className="relative h-[190px] w-[324px] overflow-hidden rounded-xl">
-        {count ? <img src={s.photos[index % count]} alt="" className="size-full object-cover" /> : <div className={`size-full ${placeholder}`} />}
+        {count ? <img src={ownPhoto(s.photos[index % count], 800) ?? s.photos[index % count]} alt="" className="size-full object-cover" /> : <div className={`size-full ${placeholder}`} />}
         {count > 1 && (
           <>
             <span dir="ltr" className="absolute bottom-3 end-3 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white">{`${index % count + 1} / ${count}`}</span>
@@ -76,7 +77,7 @@ function Slide({ s, lang, onClose }: { s: MapSlide; lang: Lang; onClose: () => v
             <div className="mt-3 flex gap-2">
               {thumbs.map((p, i) => (
                 <button key={p + i} type="button" onClick={() => setIndex(i + 1)} className="relative size-[75px] overflow-hidden rounded-[7px]">
-                  <img src={p} alt="" className="size-full object-cover" />
+                  <img src={ownPhoto(p, 400) ?? p} alt="" className="size-full object-cover" />
                   {i === thumbs.length - 1 && hidden > 0 && <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-base font-semibold text-white">+{hidden + 1}</span>}
                 </button>
               ))}
@@ -113,7 +114,7 @@ function PhoneCard({ s, layer, lang, onClose }: { s: MapSlide; layer: MapLayer; 
     <div className="rounded-xl bg-white p-3 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
       <div className="flex gap-3">
         <div className="relative h-[140px] w-[120px] shrink-0 overflow-hidden rounded-lg" style={{ background: `linear-gradient(135deg, ${color}29, ${color}14)` }}>
-          {s.photos[0] && <img src={s.photos[0]} alt="" className="size-full object-cover" />}
+          {s.photos[0] && <img src={ownPhoto(s.photos[0], 400) ?? s.photos[0]} alt="" className="size-full object-cover" />}
           <button type="button" onClick={onClose} aria-label={t('סגירה', 'Close')} className="absolute end-1 top-1 flex size-6 items-center justify-center rounded-full bg-white text-sm leading-none text-[#3D3D3D]">×</button>
         </div>
         <div className="flex min-w-0 flex-1 flex-col">

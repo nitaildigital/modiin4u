@@ -1,4 +1,5 @@
 import { ContactButton } from './ContactButton';
+import { ownPhoto } from '@/lib/photos';
 
 /** What a business card prints, worked out on the server: only what the
  *  row carries. No view count (`businesses` has no such column) and no
@@ -20,7 +21,7 @@ export function DataText({ text, lang, className = '' }: { text: string; lang: '
 
 /** The photograph, or the soft panel with the shop glyph where there is none. */
 function Photo({ src, alt, className }: { src: string | null; alt: string; className: string }) {
-  if (src) return <img src={src} alt={alt} loading="lazy" className={`object-cover ${className}`} />;
+  if (src) return <img src={ownPhoto(src, 800) ?? src} alt={alt} loading="lazy" className={`object-cover ${className}`} />;
   return (
     <span className={`flex items-center justify-center bg-[linear-gradient(135deg,#E0E8F0,#C8D4E0)] ${className}`}>
       <img src="/web/home/card_businesses.svg" alt="" width={40} height={40} className="size-10 opacity-40" />
@@ -101,7 +102,7 @@ export function ProfessionalCard({ b, trade, lang }: { b: BizCardData; trade: st
   return (
     <article className="group/card relative flex h-[302px] flex-col items-center rounded-xl border border-line p-5">
       {face
-        ? <img src={face} alt={b.name} loading="lazy" className="size-[120px] shrink-0 rounded-full object-cover" />
+        ? <img src={ownPhoto(face, 400) ?? face} alt={b.name} loading="lazy" className="size-[120px] shrink-0 rounded-full object-cover" />
         : <span className="flex size-[120px] shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#DDE4EC,#C0CCD8)]" />}
       <h3 className="mt-4 w-full">
         <a href={b.href} className="block after:absolute after:inset-0 after:content-['']">

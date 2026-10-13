@@ -11,6 +11,7 @@ import { BusinessCard } from './Cards';
 import { MapTeaser, type Layer } from './MapTeaser';
 import { ProfessionalsRow, type Pro } from './ProfessionalsRow';
 import { cardOf, newsDateLine } from './format';
+import { ownPhoto } from '@/lib/photos';
 
 /** A section's title in Mid blue, its line of copy under it, and anything
  *  that belongs at the far end of the heading. */
@@ -40,7 +41,7 @@ function ViewAll({ to, label, lang }: { to: string; label: string; lang: Lang })
 function Slot({ b, w, h, bordered = false }: { b: Banner; w: number; h: number; bordered?: boolean }) {
   const img = (
     <span className="relative block" style={{ width: w, height: h, maxWidth: '100%' }}>
-      <img src={b.image_url} alt={b.name} loading="lazy" className="size-full object-cover" />
+      <img src={ownPhoto(b.image_url, w * 2) ?? b.image_url} alt={b.name} loading="lazy" className="size-full object-cover" />
       {bordered && <span className="absolute inset-0 border border-line" />}
     </span>
   );
@@ -269,6 +270,6 @@ function DateRow({ iso, lang }: { iso: string | null; lang: Lang }) {
 
 function Thumb({ src, className }: { src: string | null; className: string }) {
   return src
-    ? <img src={src} alt="" loading="lazy" className={`shrink-0 rounded-xl object-cover ${className}`} />
+    ? <img src={ownPhoto(src, 600) ?? src} alt="" loading="lazy" className={`shrink-0 rounded-xl object-cover ${className}`} />
     : <span className={`shrink-0 rounded-xl bg-[linear-gradient(135deg,#E0E8F0,#C8D4E0)] ${className}`} />;
 }

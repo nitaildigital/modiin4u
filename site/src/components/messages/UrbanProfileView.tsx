@@ -5,6 +5,7 @@ import { Location, Lock1 } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import { sessionDb, useSession } from '@/lib/session';
 import { Avatar } from './parts';
+import { ownPhoto } from '@/lib/photos';
 
 type Place = { id: string; slug: string | null; name: string; name_en: string | null; image: string | null; kind: string; top_pick: string | null };
 type Profile = {
@@ -106,7 +107,7 @@ export function UrbanProfileView({ lang, username, stores }: {
                       <li key={p.id}>
                         <Link href={placeHref(p)} className="block">
                           {p.image
-                            ? <img src={p.image} alt="" loading="lazy" className="aspect-[4/3] w-full rounded-xl bg-surface object-cover" />
+                            ? <img src={ownPhoto(p.image, 600) ?? p.image} alt="" loading="lazy" className="aspect-[4/3] w-full rounded-xl bg-surface object-cover" />
                             : <span className="block aspect-[4/3] w-full rounded-xl bg-[#EEF2F7]" />}
                           <span className="mt-1.5 line-clamp-2 text-xs font-medium text-ink">{local(p.name, p.name_en)}</span>
                         </Link>
@@ -125,7 +126,7 @@ export function UrbanProfileView({ lang, username, stores }: {
                       return (
                         <li key={pick}>
                           <Link href={placeHref(p)} className="flex items-center gap-3 rounded-xl border border-line p-2">
-                            {p.image ? <img src={p.image} alt="" className="size-12 rounded-lg object-cover" /> : <span className="size-12 rounded-lg bg-[#EEF2F7]" />}
+                            {p.image ? <img src={ownPhoto(p.image, 200) ?? p.image} alt="" className="size-12 rounded-lg object-cover" /> : <span className="size-12 rounded-lg bg-[#EEF2F7]" />}
                             <span>
                               <span className="block text-xs font-medium text-midblue">{lang === 'he' ? PICKS[pick][0] : PICKS[pick][1]}</span>
                               <span className="block text-[15px] font-semibold text-ink">{local(p.name, p.name_en)}</span>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Notification } from 'iconsax-react';
 import { isUnread, markSeen, recordOpen, turnOnPush, type PushItem } from '@/lib/push';
 import { usePush } from './usePush';
+import { ownPhoto } from '@/lib/photos';
 
 /** The notifications page (web_notifications_screen.dart): "Turn on" while
  *  this browser has not allowed them, then what was sent — to this browser,
@@ -95,7 +96,7 @@ export function NotificationsView({ lang }: { lang: 'he' | 'en' }) {
                 const inner = (
                   <span className="flex gap-3 p-4">
                     {i.image_url
-                      ? <img src={i.image_url} alt="" loading="lazy" className="size-14 shrink-0 rounded-lg object-cover" />
+                      ? <img src={ownPhoto(i.image_url, 200) ?? i.image_url} alt="" loading="lazy" className="size-14 shrink-0 rounded-lg object-cover" />
                       : <span className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-surface"><Notification size={22} color="#123A72" /></span>}
                     <span className="min-w-0 flex-1">
                       <span className="flex items-start justify-between gap-3">

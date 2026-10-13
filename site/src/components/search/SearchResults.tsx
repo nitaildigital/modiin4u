@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft2, ArrowRight2, Building3, Calendar1, DocumentText, SearchNormal1, SearchStatus, Shop, TicketDiscount } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import type { Hit, HitKind } from '@/lib/data/search';
+import { ownPhoto } from '@/lib/photos';
 
 const ICON: Record<HitKind, typeof Shop> = { business: Shop, event: Calendar1, deal: TicketDiscount, listing: Building3, news: DocumentText };
 
@@ -22,7 +23,7 @@ export function kindLabel(kind: HitKind, lang: Lang, plural = false): string {
 function HitImage({ hit, size, radius, iconSize }: { hit: Hit; size: number; radius: number; iconSize: number }) {
   const Icon = ICON[hit.kind];
   return hit.image
-    ? <img src={hit.image} alt="" loading="lazy" className="shrink-0 object-cover" style={{ width: size, height: size, borderRadius: radius }} />
+    ? <img src={ownPhoto(hit.image, size * 2) ?? hit.image} alt="" loading="lazy" className="shrink-0 object-cover" style={{ width: size, height: size, borderRadius: radius }} />
     : (
       <span className="flex shrink-0 items-center justify-center bg-[linear-gradient(135deg,rgba(23,169,208,.10),rgba(23,169,208,.06))]" style={{ width: size, height: size, borderRadius: radius }}>
         <Icon size={iconSize} color="#17A9D0" />

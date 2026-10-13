@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation';
 import { Messages2 } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import { sessionDb } from '@/lib/session';
+import { ownPhoto } from '@/lib/photos';
 
 /** A round photo, or the name's first letter on the brand's pale blue. */
 export function Avatar({ url, name, size }: { url: string | null | undefined; name: string; size: number }) {
   const initial = name.trim().charAt(0) || '?';
   return url ? (
-    <img src={url} alt="" loading="lazy" className="shrink-0 rounded-full bg-surface object-cover" style={{ width: size, height: size }} />
+    <img src={ownPhoto(url, size * 2) ?? url} alt="" loading="lazy" className="shrink-0 rounded-full bg-surface object-cover" style={{ width: size, height: size }} />
   ) : (
     <span className="flex shrink-0 items-center justify-center rounded-full bg-midblue/[0.08] font-semibold text-midblue"
       style={{ width: size, height: size, fontSize: size * 0.38 }}>{initial}</span>
