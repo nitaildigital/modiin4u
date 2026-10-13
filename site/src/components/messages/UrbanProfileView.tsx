@@ -10,7 +10,7 @@ import { ownPhoto } from '@/lib/photos';
 type Place = { id: string; slug: string | null; name: string; name_en: string | null; image: string | null; kind: string; top_pick: string | null };
 type Profile = {
   username: string; name: string; avatar_url: string | null; neighborhood: string | null; neighborhood_en: string | null;
-  bio: string | null; interests: string[]; places: Place[];
+  bio: string | null; interests: string[]; places: Place[]; is_owner?: boolean;
 };
 
 // The app's list (urban_profile.dart): the keys 00077 stores, as the card
@@ -77,6 +77,13 @@ export function UrbanProfileView({ lang, username, stores }: {
             </div>
           </div>
         ) : (
+          <>
+          {/* One's own profile: edited on the website too (13 Oct). */}
+          {profile.is_owner && (
+            <div className="mb-3 flex justify-end">
+              <Link href="/urban-profile/done/" className="rounded-full border border-line px-4 py-2 text-sm font-medium text-midblue hover:bg-midblue/[0.04]">{t('עריכה', 'Edit')}</Link>
+            </div>
+          )}
           <article className="overflow-hidden rounded-[22px] border border-[#E9EDF3] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
             <div className="relative h-[132px]">
               <div className="h-[84px] bg-gradient-to-br from-midblue to-navy" />
@@ -142,6 +149,7 @@ export function UrbanProfileView({ lang, username, stores }: {
               )}
             </div>
           </article>
+          </>
         )}
       </div>
     </div>

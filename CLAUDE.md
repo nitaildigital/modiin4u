@@ -12,7 +12,8 @@ decision and why — when you make one, add it there in the same plain style.
 - **Accounts are the app's.** The website has no resident sign-up, favourites,
   RSVP, reviews or comments; `/login` exists for admins only. One exception
   (the client, 9 Oct): the Next.js site's `/signin/` for Messages and Urban
-  Profiles.
+  Profiles — since 13 Oct also filling one in (`/urban-profile/`, Harshit's
+  call). Still no sign-up on the site.
 - **The client runs the content from the panel** (`lib/features/admin/`), so
   anything the site shows must be editable there.
 - **Removal in the panel is reversible** (cancel / expire / hide) — he asked for

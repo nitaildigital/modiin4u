@@ -49,7 +49,14 @@ export function ConversationList({ lang }: { lang: Lang }) {
       <div className="mx-auto max-w-[720px] py-6 desk:py-10">
         <div className="flex items-center justify-between gap-4">
           <h1 className="font-rubik text-2xl font-semibold text-ink desk:text-[28px]">{t('הודעות', 'Messages')}</h1>
-          {session && <SignOutLink lang={lang} />}
+          {session && (
+            <span className="flex items-center gap-4">
+              {/* A resident's own Urban Profile: the three steps, or the
+                  finished profile (a business account sees a short note). */}
+              <Link href="/urban-profile/" className="text-sm font-medium text-midblue hover:underline">{t('הפרופיל העירוני שלי', 'My Urban Profile')}</Link>
+              <SignOutLink lang={lang} />
+            </span>
+          )}
         </div>
         {!ready ? (
           <Spinner />

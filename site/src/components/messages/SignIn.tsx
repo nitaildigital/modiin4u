@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeSlash, Messages2, TickCircle } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import { sessionDb, useSession } from '@/lib/session';
+import { markSeen, mine, opensSteps } from '@/lib/urban';
 
 /** Where to go after signing in: a page of this site only, never another
  *  address someone put in the link. */
@@ -13,8 +14,8 @@ function safeNext(raw: string | null): string {
   return raw;
 }
 
-/** Sign in, for Messages (the app's Login frame, on the site's card). No
- *  sign-up here: accounts are made in the app, where the onboarding is. */
+/** Sign in, for Messages and the Urban Profile (the app's Login frame, on
+ *  the site's card). No sign-up here: accounts are made in the app. */
 export function SignIn({ lang, stores }: { lang: Lang; stores: { android: string | null; ios: string | null } }) {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
   const router = useRouter();
@@ -43,7 +44,19 @@ export function SignIn({ lang, stores }: { lang: Lang; stores: { android: string
     setError(null);
     const { error: failed } = await sessionDb().auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
-    if (!failed) return router.replace(next);
+    if (!failed) {
+      // The first sign-in of a resident's account made from the launch on
+      // opens the Urban Profile's three steps once, as the app does
+      // (UrbanProfileGate); then on to where they were going.
+      try {
+        const me = await mine();
+        if (me && opensSteps(me)) {
+          await markSeen();
+          return router.replace(`/urban-profile/1/?next=${encodeURIComponent(next)}`);
+        }
+      } catch { /* not this time; "My Urban Profile" offers it all the same */ }
+      return router.replace(next);
+    }
     const m = failed.message.toLowerCase();
     if (m.includes('not confirmed')) {
       setError(t('יש לאשר קודם את כתובת האימייל — הקישור נשלח אליכם בהרשמה.', 'Confirm your e-mail address first — the link was sent when you signed up.'));
