@@ -2906,8 +2906,24 @@ sites (modiinadlan, kosherz, digitalix).
   no mailbox: replies bounce, and Brevo's own sender check (a code sent to it)
   is left undone — Supabase's mail through Brevo's SMTP goes out without it
   (a test sign-up, deleted after). uPress mailboxes and forwards live at
-  Inbox.co.il; not opened. While editing the DNS, a delete took the A records
-  for @, mail, ftp and pop with it; they were put back the same hour.
+  Inbox.co.il; not opened. While the records were added, the A records for
+  @, mail, ftp and pop went missing from the zone — cause not established (a
+  delete in Manage DNS, or uPress republishing without records it manages
+  itself); they were re-added in Manage DNS the same afternoon.
+
+**The app's landing page — 13 Oct (Kamal's design, Figma "App Landing Page").**
+Built on the Next.js site at `/app/` (`site/src/app/(landing)/app/`,
+`components/landing/AppLanding.tsx`), outside the (site) group: it has its own
+bar (Home, Features, Screenshots, Contact Us, Download App) instead of the
+site's header; the site's own footer follows. The address is provisional and
+the page is `noindex` — where it lives and how people reach it is the client's
+to say (asked 13 Oct). The badges link to the panel's `store_url_ios` /
+`store_url_android`, empty until the apps are approved, so they are not links
+yet. The design is English only; the Hebrew lines are ours, to be checked by
+the client. The design is drawn at 1920 only; below 1100 the sections stack.
+Its images are in `public/web/app-landing/` (screens as WebP, 640 wide); the
+strip's screenshots show the designer's sample content (a chat, jobs,
+"Urban Plate Kitchen & Bar"), not the directory's.
 
 **WordPress's real reviews and image alt texts — 13 Oct (Harshit's go-ahead).**
 - **Reviews.** WordPress's JetReviews plugin held 130 real ratings on 59

@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame">
+<path id="Vector" d="M16 14.6667V20" stroke="#123A72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M18.6663 17.3333H13.333" stroke="#123A72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M21.3337 8.00002V5.33335C21.3337 4.62611 21.0527 3.94783 20.5526 3.44774C20.0525 2.94764 19.3742 2.66669 18.667 2.66669H13.3337C12.6264 2.66669 11.9481 2.94764 11.448 3.44774C10.9479 3.94783 10.667 4.62611 10.667 5.33335V8.00002" stroke="#123A72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_4" d="M24 8V26.6667" stroke="#123A72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_5" d="M8 8V26.6667" stroke="#123A72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_6" d="M26.667 8H5.33366C3.8609 8 2.66699 9.19391 2.66699 10.6667V24C2.66699 25.4728 3.8609 26.6667 5.33366 26.6667H26.667C28.1398 26.6667 29.3337 25.4728 29.3337 24V10.6667C29.3337 9.19391 28.1398 8 26.667 8Z" stroke="#123A72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
