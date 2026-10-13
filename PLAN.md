@@ -2800,6 +2800,35 @@ The test rows and files were deleted. Not checked by hand: picking a photo,
 the consent question and the Settings switch — the simulator could not be
 driven — so these wait for a phone.
 
+**WordPress's SEO, social tags and keywords, against the new site — 13 Oct.**
+- **Parity** (`tool/check_seo_parity.py`, a production build on localhost,
+  `--workers 2` so Supabase serves it from the two-minute cache): 986 of
+  992 pages the same — address, canonical, title, description, H1, menu.
+  The 6 others: five businesses the client closed on 8 Oct (404 here —
+  his call: leave them, or 301 each to its category in the panel's
+  Redirects) and `/news/modiin-news-524/`, published on WordPress after the
+  last import. The header, menus and footer (133 links) and one page of each
+  kind (26) answer at 1440 and 390 px, with no console error and no
+  sideways scroll. Supabase stayed healthy throughout.
+- **Social tags (SMO):** Yoast's for every article, business, page and
+  category, read from WordPress's REST API (`yoast_head_json`, 13 calls):
+  no og:title or og:description differs from the SEO title and description
+  anywhere, and no Twitter overrides exist — the site already sends the
+  same. The share picture is the same file for 643 of 647 articles and 127
+  of 128 businesses (the importers name a file by a hash of its WordPress
+  address); the rest are the same pictures in another size.
+- **Keywords:** WordPress shows none on its pages; Yoast's focus keyphrase
+  lives only in its database. Read from an export of WordPress (signed in
+  as the client's admin, Tools → Export; nothing changed there): 626
+  articles and 205 businesses have one. Filled, only where the field was
+  empty: `articles.focus_keyword` for 622 (the panel's Yoast checks read
+  it; the site does not show it) and `businesses.meta_keywords` for 203
+  (the business page's keywords tag). The rows filled are listed in
+  `tool/seo/yoast_keywords_registry.json`, to undo by. Not taken: the 524th
+  article (the freeze-day import brings it), two businesses deleted in
+  WordPress, and one custom share image — a 169×300 thumbnail, smaller than
+  the article's own picture.
+
 **Every decision reaches the person — 12 Oct (migration 00082, run with
 Harshit's go-ahead).** "When we get the confirmation e-mail or anything, we
 need to send a notification for approved or declined — all things." Already

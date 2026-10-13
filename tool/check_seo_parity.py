@@ -17,6 +17,9 @@ Prints a table and every difference, and exits 1 if there are any.
 
     python3 tool/check_seo_parity.py                         # the server by IP
     python3 tool/check_seo_parity.py https://www.modiin4u.co.il   # after the move
+    python3 tool/check_seo_parity.py http://localhost:3100 --workers 2
+                       # fewer pages at once: each page is several database
+                       # reads, and a dev or fresh server caches none yet
 """
 import concurrent.futures as cf
 import html
@@ -96,10 +99,15 @@ def check(base, path, wp, menu):
 
 
 def main():
-    base = (sys.argv[1] if len(sys.argv) > 1 else 'http://45.93.94.49').rstrip('/')
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    workers = 8
+    if '--workers' in sys.argv:
+        workers = max(1, int(sys.argv[sys.argv.index('--workers') + 1]))
+        args = [a for a in args if a != str(workers)]
+    base = (args[0] if args else 'http://45.93.94.49').rstrip('/')
     snap = json.load(open(os.path.join(ROOT, 'tool', 'seo', 'wp_pages.json'), encoding='utf-8'))
     pages, menu = snap['pages'], [p for p, _ in snap['menu']]
-    with cf.ThreadPoolExecutor(8) as ex:
+    with cf.ThreadPoolExecutor(workers) as ex:
         results = dict(zip(pages, ex.map(lambda p: check(base, p, pages[p], menu), pages)))
 
     kinds = {}
