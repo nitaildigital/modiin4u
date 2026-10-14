@@ -3183,6 +3183,49 @@ Report with "hide it now" added the same day. What 1.2 still lacked:
   (it mixed the filtered list's index with the full list). Replies to a
   review are now filtered too; before, hiding a reported reply did nothing.
 
+**Search Console, and what Google knows against the new site — 14 Oct.**
+We have user access (not owner) to the client's Domain property
+`modiin4u.co.il`, verified by his TXT record at uPress (keep it). The
+exports are in `all exports/` (not committed).
+- **Every address Google knows** — 947 indexed, the 877 with search
+  traffic, the 2 from Discover, the 8 it calls 404: 969 in all. 941 are
+  in our sitemap and all answer 200 on 45 (one at a time, Supabase health
+  every 200 — healthy throughout) except `modiin-news-524`, not yet
+  imported. Of the 28 others: five closed businesses already 301; 13 are
+  404 on WordPress too (misspelt business addresses, `/filter/`); 8 are
+  WordPress's own paths. Two answer on WordPress and are 404 here, no
+  clicks: `/business/בנק-הפועלים-מודיעין-סניף-582-/` (a stray hyphen) and
+  `/category/uncategorized/` — now 301 to the bank's page and to `/news/`
+  (panel Redirects, added 14 Oct).
+- **`modiin-news-524` imported** (`tool/import_new_wordpress.py`, 14 Oct:
+  one article, no business). Its guard refuses while the 1 Oct registry
+  exists, so the registry was set aside for the run and the two merged —
+  `--undo` still removes all seven articles and eight businesses. With it,
+  every address that answers on WordPress answers here.
+- **The sitemap lists WordPress's addresses from the snapshot**, so an
+  article published there after the last import (524) is in it and 404s
+  until it is imported.
+- **Traffic:** search ~8,700 clicks in three months, 83% from phones;
+  Discover 28,158, all but one from `/news/modiin-news-508/`.
+- **Added, nothing taken away** (from the data, and the claude-seo
+  plugin's checklists, read but not installed — its `/seo audit` crawls
+  in parallel with no rate limit):
+  - **Shabbat times in the snippet.** `/shabat-times-modiin/` was shown
+    57,465 times and clicked 0.1%: the snippet never said the time. Its
+    title and description now carry this week's times from Hebcal, as
+    the page does; WordPress's text stays after them, and alone when
+    Hebcal does not answer. The share tags keep WordPress's text.
+  - **Business structured data:** opening hours from `business_hours`
+    and `sameAs` (site, Instagram; a link with a query — ordering or
+    tracking — left out). Only one row has hours, a suspended test
+    business, so the hours appear once the client fills them in.
+  - **`/feed/`** (RSS, WordPress had one): the newest 30 articles, built
+    at most every ten minutes, named on every page.
+  - Already in place, so not touched: the article's author, dates and
+    publisher; robots.txt lets the AI search crawlers in. Not done:
+    `llms.txt` and FAQ markup — Google says neither helps (FAQ rich
+    results retired May 2026).
+
 **Before the stores — 12 Oct.** Harshit is submitting to the App Store and
 Google Play today.
 - **Report and block in a conversation (migration 00080, run 12 Oct with

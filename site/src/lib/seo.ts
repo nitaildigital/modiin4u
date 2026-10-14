@@ -83,7 +83,9 @@ export function pageMetadata(m: Meta): Metadata {
     title: { absolute: title },
     description,
     ...(m.keywords ? { keywords: m.keywords } : {}),
-    alternates: { canonical: url },
+    // The news feed (app/feed/route.ts) beside the canonical: a page's
+    // alternates replace the layout's, so it is named here.
+    alternates: { canonical: url, types: { 'application/rss+xml': [{ url: '/feed/', title: SITE_NAME }] } },
     robots: index
       ? { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } }
       : { index: false, follow },

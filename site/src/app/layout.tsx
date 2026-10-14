@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   title: SITE_NAME,
   // The app's icon (13 Oct): the tab, and a phone's home screen.
   icons: { icon: [{ url: '/favicon.png', sizes: '96x96', type: 'image/png' }], apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }] },
+  // The news feed for pages without their own metadata; pageMetadata names
+  // it on the rest.
+  alternates: { types: { 'application/rss+xml': [{ url: '/feed/', title: SITE_NAME }] } },
 };
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };

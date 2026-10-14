@@ -95,11 +95,12 @@ each line as it is done.
 
 ## F. After
 
-- [ ] Google Search Console, **before the switch:** ask the client how the
-      property is verified. WordPress carries no verification tag, so it is
-      DNS, Google Analytics or an HTML file; a file must be copied into
-      `site/public/`. Add a Domain property (DNS TXT at uPress) if there is
-      none — it survives the move untouched.
+- [x] Google Search Console, **before the switch:** how the property is
+      verified. It is a Domain property, `modiin4u.co.il`, verified by the
+      client's TXT `google-site-verification=Pbe-6…` at uPress — it survives
+      the move untouched; never remove that record when the A records
+      change. We have user access (not owner) since 14 Oct; the client
+      adds anyone else.
 - [ ] Google Search Console: the new sitemap; watch Coverage for a week.
       The old `/sitemap_index.xml` already 301s to it. Check
       `https://www.modiin4u.co.il/robots.txt` has no `Disallow: /search`

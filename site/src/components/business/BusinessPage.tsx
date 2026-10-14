@@ -24,6 +24,26 @@ const CITY = 'מודיעין-מכבים-רעות';
 
 type T = (he: string, en: string) => string;
 
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** The stored hours as schema.org's OpeningHoursSpecification. The table
+ *  counts 0 = Sunday; a row without a day or a time is left out, as the
+ *  page leaves it out. */
+function openingHours(b: Business) {
+  const byTime = new Map<string, string[]>();
+  for (const h of b.business_hours ?? []) {
+    if (h.day_of_week == null || h.day_of_week < 0 || h.day_of_week > 6 || !h.open_time || !h.close_time) continue;
+    const key = `${h.open_time.slice(0, 5)}-${h.close_time.slice(0, 5)}`;
+    const days = byTime.get(key) ?? [];
+    if (!days.includes(WEEKDAYS[h.day_of_week])) days.push(WEEKDAYS[h.day_of_week]);
+    byTime.set(key, days);
+  }
+  return [...byTime].map(([key, days]) => {
+    const [opens, closes] = key.split('-');
+    return { '@type': 'OpeningHoursSpecification', dayOfWeek: days, opens, closes };
+  });
+}
+
 /** Everything the two layouts read, worked out once. */
 type View = {
   b: Business; lang: Lang; he: boolean; t: T; path: string;
@@ -96,6 +116,16 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
   if (b.latitude && b.longitude) ld.geo = { '@type': 'GeoCoordinates', latitude: b.latitude, longitude: b.longitude };
   if (image) ld.image = image;
   if ((b.review_count ?? 0) > 0 && b.rating) ld.aggregateRating = { '@type': 'AggregateRating', ratingValue: b.rating, reviewCount: b.review_count };
+  // The hours the panel keeps (not Google's, which the page reads live), so
+  // search can show them under the result; days with the same hours share
+  // one entry.
+  const spec = openingHours(b);
+  if (spec.length) ld.openingHoursSpecification = spec;
+  // The business's own site and Instagram, for Google to tie the page to
+  // them. A link with a query is an ordering or tracking link (a few
+  // businesses' "website" is one), not where the business lives: left out.
+  const links = [v.website, v.instagram].filter(Boolean).map(webLink).filter((u) => !u.includes('?'));
+  if (links.length) ld.sameAs = links;
   const section: [string, string] = path.startsWith('/professionals/')
     ? ['אנשי מקצוע', '/professionals/']
     : isPark ? ['פארקים', '/parks/'] : ['עסקים', '/business/'];
