@@ -130,6 +130,7 @@ computer only: `185.108.148.183  www.modiin4u.co.il modiin4u.co.il` in
       `assetlinks.json` (site/public and web/); `app.modiin4u.co.il` either
       set up or dropped from AndroidManifest's intent filter in the next
       build — Android verifies all claimed hosts or none.
+      — 14 Oct: Play's key (`08:CE:11:…:72:B6`) added to both files and live on www; Google's Digital Asset Links API lists all three keys. Still open: `app.modiin4u.co.il` (record added at uPress that evening, not yet served).
 
 ## F. After
 
