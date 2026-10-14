@@ -3155,6 +3155,34 @@ the places with a cover photo first.
   label, the reviewer's photo with consent, the invitation page. A review's
   photos were not seen — no published review has any yet.
 
+**After App Review's rejection — 14 Oct.** Apple turned the iPhone app down
+on 5.1.1(v) (account deletion), 1.2 (user content) and 5.1.1(ix) (the
+developer account must be an organization's — with Apple Support, case
+102996117461, nothing to do in code). Deletion was moved into Profile and
+Report with "hide it now" added the same day. What 1.2 still lacked:
+- **Block a person, not only a conversation.** "Block" sits beside Report
+  under someone else's article comment, business review and reply to a
+  review (app only, where there are accounts). After asking, everything
+  that person wrote leaves this phone's comments and reviews at once, and a
+  report on them (`reports`, entity_type `user`, reason `other`) reaches
+  the panel's Reports, whose "User" filter already existed; the first one
+  notifies the moderators (00064). The list is kept on the phone, like
+  hidden content — no migration — so it does not follow the person to
+  another device. Profile → Blocked users lists them, with Unblock; the
+  block dialog says so. Listings are left out: their posters are often
+  agents, and a listing already has Report and hide.
+- **A box to tick on the app's sign-in.** The Terms of Use (EULA) and
+  Privacy Policy are agreed to before Sign In, as at sign-up; Sign In says
+  so until the box is ticked. The website's `/login` is the panel's and
+  keeps its line.
+- **The terms themselves** were already the client's: the `terms` page
+  (panel → עמודי מידע, updated 14 Oct) carries the EULA, zero tolerance,
+  reporting, blocking and the 24-hour review. Nothing was written into it.
+- **A bug in the hide-after-report change:** once a review was hidden, the
+  list below it took its replies, Reply and Report from the wrong review
+  (it mixed the filtered list's index with the full list). Replies to a
+  review are now filtered too; before, hiding a reported reply did nothing.
+
 **Before the stores — 12 Oct.** Harshit is submitting to the App Store and
 Google Play today.
 - **Report and block in a conversation (migration 00080, run 12 Oct with

@@ -28,6 +28,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _rememberMe = true;
   bool _isLoading = false;
 
+  /// The Terms of Use (EULA) ticked, in the app: Apple's guideline 1.2 asks
+  /// that residents agree to them before signing in, not only at sign-up.
+  bool _agreedToTerms = false;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -48,6 +52,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     if (_passwordController.text.isEmpty) {
       _showError(l.errEnterPassword);
+      return;
+    }
+    if (!kIsWeb && !_agreedToTerms) {
+      _showError(l.errAgreeToTerms);
       return;
     }
 
@@ -259,6 +267,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ],
                           ),
                         ),
+                        // In the app the Terms are agreed to here, with a
+                        // box to tick, before Sign In; the website's /login
+                        // is the panel's, and keeps the line at the foot.
+                        if (!kIsWeb) ...[
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: _termsAgreement(context),
+                          ),
+                        ],
                         const SizedBox(height: 40),
                         // Sign In button
                         Padding(
@@ -332,7 +350,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         const SizedBox(height: 24),
                         // Terms of Use / EULA agreement required by Apple Guideline 1.2
-                        Padding(
+                        if (kIsWeb) Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text.rich(
                             TextSpan(
@@ -393,6 +411,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// The box to tick and the Terms of Use (EULA) and Privacy Policy it
+  /// agrees to, each opening the client's page.
+  Widget _termsAgreement(BuildContext context) {
+    final linkStyle = TextStyle(
+      fontFamily: AppFonts.inter,
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      color: AppColors.midBlue,
+      decoration: TextDecoration.underline,
+    );
+    return GestureDetector(
+      onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 18,
+            height: 18,
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              color: _agreedToTerms ? AppColors.midBlue : Colors.white,
+              border: Border.all(color: _agreedToTerms ? AppColors.midBlue : const Color(0xFF7B899A)),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: _agreedToTerms ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                text: mTr(context, 'I agree to the ', 'אני מסכים/ה ל'),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: Colors.black, height: 1.4),
+                children: [
+                  TextSpan(
+                    text: mTr(context, 'Terms of Use (EULA)', 'תנאי השימוש (EULA)'),
+                    style: linkStyle,
+                    recognizer: TapGestureRecognizer()..onTap = () => context.push('/terms'),
+                  ),
+                  TextSpan(text: mTr(context, ' and the ', ' ול')),
+                  TextSpan(
+                    text: mTr(context, 'Privacy Policy', 'מדיניות הפרטיות'),
+                    style: linkStyle,
+                    recognizer: TapGestureRecognizer()..onTap = () => context.push('/privacy'),
+                  ),
+                  TextSpan(
+                    text: mTr(
+                      context,
+                      '. There is zero tolerance for objectionable content or abusive users.',
+                      '. חל איסור מוחלט על תוכן פוגעני או התנהגות בלתי הולמת.',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
