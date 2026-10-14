@@ -3187,6 +3187,39 @@ Report with "hide it now" added the same day. What 1.2 still lacked:
   reply to Apple; the password is in that reply, not here. Not one of the
   temporary test accounts — it stays until the app is approved, then goes.
 
+**Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
+Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
+step ticked with what happened, and its Rollback section the old DNS values.
+- **Before:** WordPress frozen (last edit 9 Oct); snapshot identical to 13
+  Oct; nothing new to import; images re-copied on the server; sample
+  content removed (the placeholders of `seed_remote.sql` kept, the client's
+  call); the SEO session's `c17affe` deployed with `--live`; 178 of 180
+  sampled pages the same as WordPress, the two on purpose.
+- **The switch:** at uPress only `@` and `www` → 45.93.94.49, TTL 5 minutes;
+  mail (`mail`, `smtp`, `pop`, `ftp` on 185.108.148.183), the Brevo records,
+  SPF, DMARC and `google-site-verification` untouched. uPress's nameservers
+  took about three minutes to serve it and disagreed meanwhile, so the first
+  www certificate failed (Let's Encrypt asks them directly); five minutes of
+  certificate warnings for visitors already moved. Then www, and the bare
+  domain (301 → www) once Google's cached hour ran out.
+- **After:** `SEO_LIVE=1` in /etc/modiin4u-site.env (indexing, GA4, Pixel),
+  the service warmed on 127.0.0.1 before the page cache was emptied so the
+  404-after-restart could not be cached; Supabase's Site URL, the push
+  `SITE_URL` secret and `site_url` → www. Search Console: the sitemap
+  (Success, 1,122) and the four main pages requested. WordPress stays live
+  at uPress, its package kept; a full backup requested from uPress.
+- **Slow from far away — fixed:** from India, 20% packet loss and 220 ms to
+  Israel, pages took up to a minute while WordPress took three seconds. The
+  server ran TCP cubic, which collapses under loss; uPress clearly does not.
+  BBR with fq since 14 Oct (`/etc/sysctl.d/99-modiin4u-bbr.conf`, module in
+  /etc/modules-load.d/bbr.conf): the home page 2.7 s and the map 4.9 s on the
+  same network, where they were ~55 s and 51 s. From Israel the HTML answers
+  in under 0.1 s (check-host.net, 50 locations).
+- **Seen and harmless:** `a[c] is not a function` in the console is
+  Microsoft Clarity's own script.
+- **Supabase** healthy throughout (reads 0.2–0.9 s, one 2 s blip while
+  Googlebot and the parity check crawled).
+
 **WordPress → new site, checked end to end — 14 Oct.** Every item WordPress
 publishes (REST: 666 news, 204 businesses, 6 professionals, 13 pages, the
 category lists) against our rows; article texts and business details field
