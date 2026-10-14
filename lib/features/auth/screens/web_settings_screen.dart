@@ -111,6 +111,47 @@ class _WebSettingsContentState extends ConsumerState<WebSettingsContent>
       await ref.read(authProvider.notifier).deleteAccount();
       if (!mounted) return;
       Navigator.of(context).pop(); // the spinner
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Directionality(
+          textDirection: Directionality.of(context),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              _t('Account Deleted', 'החשבון נמחק'),
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: Text(
+              _t(
+                'Your account has been deleted.',
+                'חשבונך נמחק בהצלחה.',
+              ),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  _t('OK', 'אישור'),
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.midBlue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (!mounted) return;
       context.go('/');
     } catch (_) {
       if (!mounted) return;

@@ -96,9 +96,13 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     if (user == null) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => context.pushReplacement('/login'),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+        if (isCurrent) {
+          context.pushReplacement('/login');
+        }
+      });
       return const SizedBox.shrink();
     }
 

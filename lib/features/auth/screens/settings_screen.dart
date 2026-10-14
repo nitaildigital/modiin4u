@@ -31,9 +31,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    PackageInfo.fromPlatform().then((info) {
-      if (mounted) setState(() => _version = info.version);
-    }).catchError((_) {});
+    PackageInfo.fromPlatform()
+        .then((info) {
+          if (mounted) setState(() => _version = info.version);
+        })
+        .catchError((_) {});
   }
 
   /// The switches write to the profile now, so leaving the screen puts the
@@ -60,35 +62,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: AlertDialog(
           title: Text(
             l.deleteAccount,
-            style: TextStyle(
-              fontFamily: AppFonts.rubik,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700),
           ),
-          content: Text(
-            l.deleteAccountConfirm,
-            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-          ),
+          content: Text(l.deleteAccountConfirm, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(
                 l.cancel,
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  color: AppColors.grayMeta,
-                ),
+                style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayMeta),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(
                 l.delete,
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  color: AppColors.error,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -100,27 +89,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
+      useRootNavigator: true,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
     try {
       await ref.read(authProvider.notifier).deleteAccount();
       if (!mounted) return;
-      Navigator.of(context).pop(); // the spinner
+      Navigator.of(context, rootNavigator: true).pop(); // the spinner
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (ctx) => Directionality(
+          textDirection: Directionality.of(context),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              mTr(ctx, 'Account Deleted', 'החשבון נמחק'),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700),
+            ),
+            content: Text(
+              mTr(ctx, 'Your account has been deleted.', 'חשבונך נמחק בהצלחה.'),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                child: Text(
+                  mTr(ctx, 'OK', 'אישור'),
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600, color: AppColors.midBlue),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (!mounted) return;
       context.go('/');
     } catch (e) {
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            l.deleteAccountFailed,
-            style: TextStyle(fontFamily: AppFonts.rubik),
-          ),
+          content: Text(l.deleteAccountFailed, style: TextStyle(fontFamily: AppFonts.rubik)),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -149,7 +164,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       required bool value,
       required bool enabled,
       required ValueChanged<bool> onChanged,
-    }) toggle,
+    })
+    toggle,
   ) {
     final l = L.of(context);
     final s = ref.watch(pushSettingsProvider);
@@ -167,10 +183,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // Refused in the phone's settings, the switch alone cannot bring
           // them back; saying so beats a switch that seems to do nothing.
           subtitle: on && isAllowed == false
-              ? mTr(context, 'Blocked in the phone\'s settings — tap to allow',
-                  'חסומות בהגדרות הטלפון — הקישו כדי לאפשר')
-              : mTr(context, 'Manage push notification preferences',
-                  'ניהול העדפות התראות פוש'),
+              ? mTr(
+                  context,
+                  'Blocked in the phone\'s settings — tap to allow',
+                  'חסומות בהגדרות הטלפון — הקישו כדי לאפשר',
+                )
+              : mTr(context, 'Manage push notification preferences', 'ניהול העדפות התראות פוש'),
           value: on && isAllowed != false,
           enabled: true,
           onChanged: (v) => setPushEnabled(ref, v),
@@ -237,8 +255,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         icon: IconsaxPlusLinear.messages_2,
         title: mTr(context, 'Replies to my reviews', 'תגובות לביקורות שלי'),
         subtitle: ref.watch(isLoggedInProvider)
-            ? mTr(context, 'When someone replies in a conversation you\'re in',
-                'כשמישהו מגיב בשיחה שאתם חלק ממנה')
+            ? mTr(context, 'When someone replies in a conversation you\'re in', 'כשמישהו מגיב בשיחה שאתם חלק ממנה')
             : mTr(context, 'Sign in to get these', 'יש להתחבר כדי לקבל אותן'),
         value: s.replies,
         enabled: on,
@@ -247,8 +264,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       MSettingsRow(
         leading: const MIconCircle(icon: IconsaxPlusLinear.map_1),
         title: mTr(context, 'My neighbourhood', 'השכונה שלי'),
-        subtitle: mTr(context, 'Which neighbourhood\'s updates you get',
-            'על איזו שכונה לקבל עדכונים'),
+        subtitle: mTr(context, 'Which neighbourhood\'s updates you get', 'על איזו שכונה לקבל עדכונים'),
         value: hood ?? mTr(context, 'Not chosen', 'לא נבחרה'),
         enabled: on && s.neighborhood,
         onTap: on && s.neighborhood
@@ -267,13 +283,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// choice a person could make before is lost.
   Widget _buildMobile(BuildContext context) {
     final signedIn = ref.watch(isLoggedInProvider);
-    final prefs =
-        ref.watch(preferencesProvider) ?? const NotificationPreferences();
+    final prefs = ref.watch(preferencesProvider) ?? const NotificationPreferences();
     final l = L.of(context);
     final isHebrew = ref.watch(localeProvider).languageCode == 'he';
 
-    void set(NotificationPreferences next) =>
-        ref.read(preferencesProvider.notifier).update(next);
+    void set(NotificationPreferences next) => ref.read(preferencesProvider.notifier).update(next);
 
     Widget toggle({
       String? svg,
@@ -303,53 +317,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 22),
             Expanded(
               child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  0,
-                  16,
-                  30 + MediaQuery.paddingOf(context).bottom,
-                ),
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 30 + MediaQuery.paddingOf(context).bottom),
                 children: [
-                  MSection(
-                    label: l.notifications,
-                    children: _pushRows(context, toggle),
-                  ),
+                  MSection(label: l.notifications, children: _pushRows(context, toggle)),
                   gap,
 
                   // Signed out there is no row to write a choice to, so the
                   // access switches below say so rather than appearing to
                   // remember anything. Notifications above are the device's
                   // and need no account.
-                  if (!signedIn) ...[
-                    _SignInPrompt(onTap: () => context.push('/login')),
-                    const SizedBox(height: 12),
-                  ],
+                  if (!signedIn) ...[_SignInPrompt(onTap: () => context.push('/login')), const SizedBox(height: 12)],
 
                   MSection(
                     label: l.account,
                     children: [
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          icon: IconsaxPlusLinear.user,
-                        ),
+                        leading: const MIconCircle(icon: IconsaxPlusLinear.user),
                         title: l.profile,
-                        subtitle: mTr(
-                          context,
-                          'View and edit your profile',
-                          'צפייה ועריכה של הפרופיל',
-                        ),
+                        subtitle: mTr(context, 'View and edit your profile', 'צפייה ועריכה של הפרופיל'),
                         onTap: () => context.push('/profile'),
                       ),
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          svg: 'assets/icons/m_account_c_lock.svg',
-                        ),
+                        leading: const MIconCircle(svg: 'assets/icons/m_account_c_lock.svg'),
                         title: l.password,
-                        subtitle: mTr(
-                          context,
-                          'Change your password',
-                          'שינוי הסיסמה שלך',
-                        ),
+                        subtitle: mTr(context, 'Change your password', 'שינוי הסיסמה שלך'),
                         onTap: () => context.push('/change-password'),
                       ),
                       // Asked once when writing the first review (00076);
@@ -363,15 +354,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     label: mTr(context, 'Preferences', 'העדפות'),
                     children: [
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          svg: 'assets/icons/m_account_c_translate.svg',
-                        ),
+                        leading: const MIconCircle(svg: 'assets/icons/m_account_c_translate.svg'),
                         title: l.language,
-                        subtitle: mTr(
-                          context,
-                          'Set your preferred language',
-                          'בחירת השפה המועדפת',
-                        ),
+                        subtitle: mTr(context, 'Set your preferred language', 'בחירת השפה המועדפת'),
                         value: isHebrew ? 'עברית' : 'English',
                         onTap: () => context.push('/change-language'),
                       ),
@@ -410,55 +395,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     label: mTr(context, 'Support', 'תמיכה'),
                     children: [
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          svg: 'assets/icons/m_account_c_help.svg',
-                        ),
+                        leading: const MIconCircle(svg: 'assets/icons/m_account_c_help.svg'),
                         title: l.helpSupport,
-                        subtitle: mTr(
-                          context,
-                          'Get help and contact support',
-                          'עזרה ופנייה לתמיכה',
-                        ),
+                        subtitle: mTr(context, 'Get help and contact support', 'עזרה ופנייה לתמיכה'),
                         onTap: () => context.push('/help-support'),
                       ),
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          svg: 'assets/icons/m_account_c_terms.svg',
-                        ),
-                        title: mTr(
-                          context,
-                          'Terms & Conditions',
-                          'תנאים והגבלות',
-                        ),
-                        subtitle: mTr(
-                          context,
-                          'Read our terms and conditions',
-                          'קריאת התנאים וההגבלות',
-                        ),
+                        leading: const MIconCircle(svg: 'assets/icons/m_account_c_terms.svg'),
+                        title: mTr(context, 'Terms & Conditions', 'תנאים והגבלות'),
+                        subtitle: mTr(context, 'Read our terms and conditions', 'קריאת התנאים וההגבלות'),
                         onTap: () => context.push('/terms'),
                       ),
                       // The other pages the website's footer links: the app
                       // reached only Terms (Privacy only from sign-up).
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          svg: 'assets/icons/m_account_c_terms.svg',
-                        ),
+                        leading: const MIconCircle(svg: 'assets/icons/m_account_c_terms.svg'),
                         title: mTr(context, 'Privacy Policy', 'מדיניות פרטיות'),
                         subtitle: mTr(context, 'How your information is used', 'איך המידע שלכם נשמר ומשמש'),
                         onTap: () => context.push('/privacy'),
                       ),
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          svg: 'assets/icons/m_account_c_terms.svg',
-                        ),
+                        leading: const MIconCircle(svg: 'assets/icons/m_account_c_terms.svg'),
                         title: mTr(context, 'Accessibility Statement', 'הצהרת נגישות'),
                         subtitle: mTr(context, 'Accessibility of the app and the website', 'נגישות האפליקציה והאתר'),
                         onTap: () => context.push('/accessibility'),
                       ),
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          svg: 'assets/icons/m_account_c_terms.svg',
-                        ),
+                        leading: const MIconCircle(svg: 'assets/icons/m_account_c_terms.svg'),
                         title: mTr(context, 'About Modiin4u', 'אודות מודיעין בשבילך'),
                         subtitle: mTr(context, 'Who we are', 'מי אנחנו'),
                         onTap: () => context.push('/about'),
@@ -471,9 +434,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     label: mTr(context, 'About', 'אודות'),
                     children: [
                       MSettingsRow(
-                        leading: const MIconCircle(
-                          svg: 'assets/icons/m_account_c_info.svg',
-                        ),
+                        leading: const MIconCircle(svg: 'assets/icons/m_account_c_info.svg'),
                         // "About Modiin4u" is the page above; this row is
                         // the version, and read as the same entry twice.
                         // Read from the build, so it follows pubspec.
@@ -512,11 +473,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         onPressed: _confirmDelete,
                         child: Text(
                           l.deleteAccount,
-                          style: TextStyle(
-                            fontFamily: AppFonts.inter,
-                            fontSize: 13,
-                            color: AppColors.error,
-                          ),
+                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: AppColors.error),
                         ),
                       ),
                     ),
@@ -548,20 +505,12 @@ class _SignInPrompt extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              IconsaxPlusLinear.info_circle,
-              size: 18,
-              color: AppColors.midBlue,
-            ),
+            const Icon(IconsaxPlusLinear.info_circle, size: 18, color: AppColors.midBlue),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 L.of(context).signInToSavePrefs,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  color: AppColors.midBlue,
-                ),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: AppColors.midBlue),
               ),
             ),
           ],
@@ -570,7 +519,6 @@ class _SignInPrompt extends StatelessWidget {
     );
   }
 }
-
 
 /// "Show my photo on reviews and comments" — the resident's answer to the
 /// question the first review asks (00076). Off until they say yes.
@@ -587,9 +535,13 @@ class _PostPhotoRowState extends ConsumerState<_PostPhotoRow> {
   @override
   void initState() {
     super.initState();
-    ref.read(businessRepositoryProvider).postPhotoConsent().then((c) {
-      if (mounted) setState(() => _on = c.consent ?? false);
-    }).catchError((_) {});
+    ref
+        .read(businessRepositoryProvider)
+        .postPhotoConsent()
+        .then((c) {
+          if (mounted) setState(() => _on = c.consent ?? false);
+        })
+        .catchError((_) {});
   }
 
   @override
