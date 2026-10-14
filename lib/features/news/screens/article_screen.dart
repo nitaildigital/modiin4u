@@ -16,6 +16,7 @@ import 'web_article_screen.dart';
 import '../../businesses/repositories/business_stats.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../shared/share_text.dart';
+import '../../../shared/widgets/report_sheet.dart';
 
 /// News article detail – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News Detail web layout;
@@ -221,9 +222,27 @@ class _Hero extends StatelessWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 7, 12, 12),
-              child: Align(
-                alignment: AlignmentDirectional.topStart,
-                child: _CircleButton(onTap: () => context.back('/news')),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _CircleButton(
+                    icon: Icons.arrow_back,
+                    onTap: () => context.back('/news'),
+                  ),
+                  _CircleButton(
+                    icon: IconsaxPlusLinear.flag,
+                    onTap: () => showReportSheet(
+                      context,
+                      entityType: 'article',
+                      entityId: article.id,
+                      onHidden: () {
+                        if (context.mounted && context.canPop()) {
+                          context.pop();
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -234,9 +253,10 @@ class _Hero extends StatelessWidget {
 }
 
 class _CircleButton extends StatelessWidget {
+  final IconData icon;
   final VoidCallback onTap;
 
-  const _CircleButton({required this.onTap});
+  const _CircleButton({required this.onTap, this.icon = Icons.arrow_back});
 
   @override
   Widget build(BuildContext context) {
@@ -249,9 +269,8 @@ class _CircleButton extends StatelessWidget {
           color: Colors.white,
           shape: BoxShape.circle,
         ),
-        // Material's back arrow turns to face the reading direction.
-        child: const Center(
-          child: Icon(Icons.arrow_back, size: 20, color: Colors.black),
+        child: Center(
+          child: Icon(icon, size: 20, color: Colors.black),
         ),
       ),
     );

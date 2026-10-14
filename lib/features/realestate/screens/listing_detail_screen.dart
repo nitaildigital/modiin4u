@@ -268,6 +268,11 @@ class _MobileListingDetailContentState
                         context,
                         entityType: 'listing',
                         entityId: listing.id,
+                        onHidden: () {
+                          if (context.mounted && context.canPop()) {
+                            context.pop();
+                          }
+                        },
                       ),
                       icon: const Icon(Icons.flag_outlined, size: 16, color: Color(0xFF6D6D6D)),
                       label: Text(

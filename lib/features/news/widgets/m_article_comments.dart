@@ -17,6 +17,7 @@ import '../../auth/widgets/m_account_widgets.dart';
 import '../models/article_comment.dart';
 import '../providers/article_comments_provider.dart';
 import 'm_article_parts.dart';
+import '../../../shared/providers/hidden_content_provider.dart';
 
 // ═══════════════════════════════════════════════════════════
 // Comments under an article, on the phone layout (00071).
@@ -214,7 +215,18 @@ class _MArticleCommentsState extends ConsumerState<MArticleComments> {
   @override
   Widget build(BuildContext context) {
     final value = ref.watch(articleCommentsProvider(widget.articleId));
-    final threads = value.valueOrNull;
+    final hidden = ref.watch(hiddenContentProvider);
+    final rawThreads = value.valueOrNull;
+    final threads = rawThreads == null
+        ? null
+        : [
+            for (final t in rawThreads)
+              if (!hidden.contains(t.comment.id))
+                ArticleCommentThread(
+                  comment: t.comment,
+                  replies: t.replies.where((r) => !hidden.contains(r.id)).toList(),
+                ),
+          ];
 
     // The website shows the conversation and nothing when there is none:
     // an empty "Comments (0)" there would invite what it cannot offer.

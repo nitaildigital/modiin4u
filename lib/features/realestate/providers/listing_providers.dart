@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../../shared/providers/hidden_content_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/listing.dart';
 import '../repositories/listing_repository.dart';
@@ -101,7 +102,8 @@ final listingFilterProvider = StateProvider<ListingFilter>(
 /// Active listings matching the current filter.
 final listingsProvider = FutureProvider<List<Listing>>((ref) async {
   final f = ref.watch(listingFilterProvider);
-  return ref
+  final hiddenIds = ref.watch(hiddenContentProvider);
+  final list = await ref
       .watch(listingRepositoryProvider)
       .fetchActive(
         kind: f.kind,
@@ -112,6 +114,8 @@ final listingsProvider = FutureProvider<List<Listing>>((ref) async {
         maxPrice: f.maxPrice,
         minRooms: f.minRooms,
       );
+  if (hiddenIds.isEmpty) return list;
+  return list.where((item) => !hiddenIds.contains(item.id)).toList();
 });
 
 /// Every active listing, unfiltered.
@@ -122,13 +126,22 @@ final listingsProvider = FutureProvider<List<Listing>>((ref) async {
 /// tab drives, which is not any of those, so the web reads this instead and
 /// the pages share one fetch.
 final allActiveListingsProvider = FutureProvider<List<Listing>>(
-  (ref) => ref.watch(listingRepositoryProvider).fetchActive(),
+  (ref) async {
+    final hiddenIds = ref.watch(hiddenContentProvider);
+    final list = await ref.watch(listingRepositoryProvider).fetchActive();
+    if (hiddenIds.isEmpty) return list;
+    return list.where((item) => !hiddenIds.contains(item.id)).toList();
+  },
 );
 
 /// One listing. Null when it was removed, or when it is not active and does
 /// not belong to whoever is asking — row level security decides, not this.
 final listingByIdProvider = FutureProvider.family<Listing?, String>(
-  (ref, id) => ref.watch(listingRepositoryProvider).fetchById(id),
+  (ref, id) async {
+    final hiddenIds = ref.watch(hiddenContentProvider);
+    if (hiddenIds.contains(id)) return null;
+    return ref.watch(listingRepositoryProvider).fetchById(id);
+  },
 );
 
 /// Other listings in the same neighbourhood as the one being viewed.

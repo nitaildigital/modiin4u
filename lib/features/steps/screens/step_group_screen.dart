@@ -8,7 +8,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/network_photo.dart';
-import '../../auth/widgets/m_account_widgets.dart' show MBackArrow;
+import '../../../shared/widgets/report_sheet.dart';
+import '../../auth/widgets/m_account_widgets.dart' show MBackArrow, mTr;
 import '../models/step_group.dart';
 import '../providers/step_groups_providers.dart';
 import '../services/health_steps.dart' show dateKey;
@@ -214,6 +215,16 @@ class _StepGroupScreenState extends ConsumerState<StepGroupScreen> {
                           onNewInvite: _newInvite,
                           onDelete: _delete,
                           onLeave: () => _leave(isOwner),
+                          onReport: () => showReportSheet(
+                            context,
+                            entityType: 'step_group',
+                            entityId: group.id,
+                            onHidden: () {
+                              if (context.mounted && context.canPop()) {
+                                context.pop();
+                              }
+                            },
+                          ),
                         )
                       else
                         const SizedBox(width: 40),
@@ -270,12 +281,14 @@ class _Menu extends StatelessWidget {
   final VoidCallback onNewInvite;
   final VoidCallback onDelete;
   final VoidCallback onLeave;
+  final VoidCallback onReport;
   const _Menu({
     required this.isOwner,
     required this.onRename,
     required this.onNewInvite,
     required this.onDelete,
     required this.onLeave,
+    required this.onReport,
   });
 
   @override
@@ -326,6 +339,12 @@ class _Menu extends StatelessWidget {
             onDelete,
             color: AppColors.error,
           ),
+        item(
+          IconsaxPlusLinear.flag,
+          mTr(context, 'Report Group', 'דיווח על קבוצה'),
+          onReport,
+          color: AppColors.error,
+        ),
       ],
     );
   }

@@ -645,6 +645,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                           color: AppColors.midBlue,
                                         ),
                                       ),
+                                      TextSpan(
+                                        text: mTr(
+                                          context,
+                                          ' (Zero tolerance for objectionable content)',
+                                          ' (אפס סובלנות לתוכן פוגעני)',
+                                        ),
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.inter,
+                                          fontSize: 12,
+                                          color: const Color(0xFF6D6D6D),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),

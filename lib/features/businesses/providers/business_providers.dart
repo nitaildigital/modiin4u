@@ -12,6 +12,7 @@ import '../repositories/business_repository.dart';
 import '../services/photo_submission.dart';
 import '../../municipal/services/google_place.dart';
 import '../../../core/providers/content_language.dart';
+import '../../../shared/providers/hidden_content_provider.dart';
 
 final businessRepositoryProvider = Provider<BusinessRepository>(
   (ref) => BusinessRepository(),
@@ -25,10 +26,13 @@ int promotedFirst(Business a, Business b) =>
 
 /// Every active business, newest first.
 final businessesProvider = FutureProvider<List<Business>>((ref) async {
+  final hiddenIds = ref.watch(hiddenContentProvider);
   final rows = await ref
       .watch(businessRepositoryProvider)
       .fetchAll(status: 'active');
-  return rows.map(Business.fromJson).toList();
+  final list = rows.map(Business.fromJson).toList();
+  if (hiddenIds.isEmpty) return list;
+  return list.where((b) => !hiddenIds.contains(b.id)).toList();
 });
 
 /// The city's parks: rows the client files as a park in the panel, shown on

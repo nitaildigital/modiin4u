@@ -298,6 +298,127 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent>
     );
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: _isHebrew ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          title: Text(
+            _t('Delete account', 'מחיקת חשבון'),
+            style: TextStyle(
+              fontFamily: AppFonts.nunito,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            _t(
+              'This permanently deletes all of your data. Continue?',
+              'פעולה זו תמחק את כל הנתונים שלך לצמיתות. האם להמשיך?',
+            ),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                _t('Cancel', 'ביטול'),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  color: AppColors.grayMeta,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                _t('Delete', 'מחיקה'),
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      await ref.read(authProvider.notifier).deleteAccount();
+      if (!mounted) return;
+      Navigator.of(context).pop(); // the spinner
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Directionality(
+          textDirection: Directionality.of(context),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              _t('Account Deleted', 'החשבון נמחק'),
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: Text(
+              _t(
+                'Your account has been deleted.',
+                'חשבונך נמחק בהצלחה.',
+              ),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  _t('OK', 'אישור'),
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.midBlue,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (!mounted) return;
+      context.go('/');
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _t(
+              'Could not delete the account. Try again later.',
+              'לא ניתן היה למחוק את החשבון. נסו שוב מאוחר יותר.',
+            ),
+            style: TextStyle(fontFamily: AppFonts.inter),
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
+  }
+
   // ─────────────────────────────────────────────
   // ACCOUNT — the menu, as a grid
   // ─────────────────────────────────────────────
@@ -352,6 +473,22 @@ class _WebProfileContentState extends ConsumerState<WebProfileContent>
                   .toList(),
             );
           },
+        ),
+        const SizedBox(height: 36),
+        Center(
+          child: TextButton.icon(
+            onPressed: _confirmDelete,
+            icon: const Icon(IconsaxPlusLinear.trash, size: 16, color: AppColors.error),
+            label: Text(
+              _t('Delete account', 'מחיקת חשבון'),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.error,
+              ),
+            ),
+          ),
         ),
       ],
     );

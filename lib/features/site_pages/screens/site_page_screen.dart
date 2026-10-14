@@ -14,31 +14,48 @@ import 'web_site_page_screen.dart';
 ///
 /// Until he publishes one, it says the content will be published soon: the
 /// words are his to write, and nothing is shown in their place.
-class SitePageScreen extends ConsumerWidget {
+class SitePageScreen extends ConsumerStatefulWidget {
   final String slug;
   const SitePageScreen({super.key, required this.slug});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SitePageScreen> createState() => _SitePageScreenState();
+}
+
+class _SitePageScreenState extends ConsumerState<SitePageScreen> {
+  bool? _selectedHebrew;
+
+  @override
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1100) {
-          return WebSitePageContent(slug: slug);
+          return WebSitePageContent(slug: widget.slug);
         }
-        return _buildMobile(context, ref);
+        return _buildMobile(context);
       },
     );
   }
 
-  Widget _buildMobile(BuildContext context, WidgetRef ref) {
+  Widget _buildMobile(BuildContext context) {
     final l = L.of(context);
-    final wantHebrew = Localizations.localeOf(context).languageCode == 'he';
-    final async = ref.watch(sitePageProvider(slug));
+    final localeHebrew = Localizations.localeOf(context).languageCode == 'he';
+    final async = ref.watch(sitePageProvider(widget.slug));
     final page = async.valueOrNull;
-    final contentHebrew = page?.contentIsHebrew(wantHebrew);
-    final title = contentHebrew == null
-        ? sitePageFallbackTitle(l, slug)
-        : page!.title(contentHebrew);
+
+    final hasBoth = (page?.bodyHe.isNotEmpty ?? false) && (page?.bodyEn.isNotEmpty ?? false);
+
+    final bool currentHebrew;
+    if (_selectedHebrew != null) {
+      currentHebrew = _selectedHebrew!;
+    } else if (widget.slug == 'terms') {
+      // The authoritative terms and conditions document is in Hebrew
+      currentHebrew = true;
+    } else {
+      currentHebrew = page?.contentIsHebrew(localeHebrew) ?? localeHebrew;
+    }
+
+    final title = page == null ? sitePageFallbackTitle(l, widget.slug) : page.title(currentHebrew);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -74,50 +91,112 @@ class SitePageScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                if (hasBoth) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F2F5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _selectedHebrew = true),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: currentHebrew ? Colors.white : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: currentHebrew
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.06),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    widget.slug == 'terms' ? 'עברית (תקנון)' : 'עברית',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
+                                      fontSize: 13,
+                                      fontWeight: currentHebrew ? FontWeight.w600 : FontWeight.w500,
+                                      color: currentHebrew ? const Color(0xFF1F1F1F) : const Color(0xFF6D6D6D),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _selectedHebrew = false),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: !currentHebrew ? Colors.white : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: !currentHebrew
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.06),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    widget.slug == 'terms' ? 'English (EULA)' : 'English',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.inter,
+                                      fontSize: 13,
+                                      fontWeight: !currentHebrew ? FontWeight.w600 : FontWeight.w500,
+                                      color: !currentHebrew ? const Color(0xFF1F1F1F) : const Color(0xFF6D6D6D),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
                 Expanded(
                   child: async.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                    loading: () => const Center(child: CircularProgressIndicator()),
                     error: (_, _) => _error(context, ref, l),
                     data: (_) => ListView(
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        0,
-                        16,
-                        MediaQuery.paddingOf(context).bottom + 24,
-                      ),
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.paddingOf(context).bottom + 24),
                       children: [
-                        if (contentHebrew == null) ...[
-                          SitePageComingSoon(
-                            message: l.sitePageComingSoon,
-                            fontSize: 14,
-                          ),
-                          if (slug == 'delete-account') ...[
+                        if (page == null || (currentHebrew ? page.bodyHe.isEmpty : page.bodyEn.isEmpty)) ...[
+                          SitePageComingSoon(message: l.sitePageComingSoon, fontSize: 14),
+                          if (widget.slug == 'delete-account') ...[
                             const SizedBox(height: 24),
-                            SiteDeletionRequestButton(
-                              hebrew: wantHebrew,
-                              fontSize: 14,
-                            ),
+                            SiteDeletionRequestButton(hebrew: currentHebrew, fontSize: 14),
                           ],
                         ] else
-                          // Laid out in the language it was written in,
-                          // which is the other one when the client has
-                          // written only that.
                           Directionality(
-                            textDirection: contentHebrew
-                                ? TextDirection.rtl
-                                : TextDirection.ltr,
+                            textDirection: currentHebrew ? TextDirection.rtl : TextDirection.ltr,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (page!.updatedAt != null) ...[
+                                if (page.updatedAt != null) ...[
                                   Text(
                                     lookupL(
-                                      Locale(contentHebrew ? 'he' : 'en'),
-                                    ).sitePageLastUpdated(
-                                      sitePageDate(page.updatedAt!),
-                                    ),
+                                      Locale(currentHebrew ? 'he' : 'en'),
+                                    ).sitePageLastUpdated(sitePageDate(page.updatedAt!)),
                                     style: TextStyle(
                                       fontFamily: AppFonts.inter,
                                       fontSize: 12,
@@ -126,17 +205,10 @@ class SitePageScreen extends ConsumerWidget {
                                   ),
                                   const SizedBox(height: 16),
                                 ],
-                                SitePageBody(
-                                  text: page.body(contentHebrew),
-                                  fontSize: 14,
-                                  lineHeight: 1.6,
-                                ),
-                                if (slug == 'delete-account') ...[
+                                SitePageBody(text: page.body(currentHebrew), fontSize: 14, lineHeight: 1.6),
+                                if (widget.slug == 'delete-account') ...[
                                   const SizedBox(height: 28),
-                                  SiteDeletionRequestButton(
-                                    hebrew: contentHebrew,
-                                    fontSize: 14,
-                                  ),
+                                  SiteDeletionRequestButton(hebrew: currentHebrew, fontSize: 14),
                                 ],
                               ],
                             ),
@@ -160,17 +232,10 @@ class SitePageScreen extends ConsumerWidget {
         children: [
           Text(
             l.sitePageLoadError,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 14,
-              color: MAccountColors.value,
-            ),
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: MAccountColors.value),
           ),
           const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () => ref.invalidate(sitePageProvider(slug)),
-            child: Text(l.tryAgain),
-          ),
+          OutlinedButton(onPressed: () => ref.invalidate(sitePageProvider(widget.slug)), child: Text(l.tryAgain)),
         ],
       ),
     );

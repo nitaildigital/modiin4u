@@ -51,96 +51,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mounted) context.go('/');
   }
 
-  /// Deleting is irreversible and asked for twice on purpose: once here, and
-  /// again by typing, so it cannot happen by a stray tap.
-  Future<void> _confirmDelete() async {
-    final l = L.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: Directionality.of(context),
-        child: AlertDialog(
-          title: Text(
-            l.deleteAccount,
-            style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700),
-          ),
-          content: Text(l.deleteAccountConfirm, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                l.cancel,
-                style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayMeta),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(
-                l.delete,
-                style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      useRootNavigator: true,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-    try {
-      await ref.read(authProvider.notifier).deleteAccount();
-      if (!mounted) return;
-      Navigator.of(context, rootNavigator: true).pop(); // the spinner
-
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        useRootNavigator: true,
-        builder: (ctx) => Directionality(
-          textDirection: Directionality.of(context),
-          child: AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text(
-              mTr(ctx, 'Account Deleted', 'החשבון נמחק'),
-              style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700),
-            ),
-            content: Text(
-              mTr(ctx, 'Your account has been deleted.', 'חשבונך נמחק בהצלחה.'),
-              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                child: Text(
-                  mTr(ctx, 'OK', 'אישור'),
-                  style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600, color: AppColors.midBlue),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-      if (!mounted) return;
-      context.go('/');
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l.deleteAccountFailed, style: TextStyle(fontFamily: AppFonts.rubik)),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -464,16 +374,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             fontWeight: FontWeight.w500,
                             color: AppColors.error,
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: TextButton(
-                        onPressed: _confirmDelete,
-                        child: Text(
-                          l.deleteAccount,
-                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: AppColors.error),
                         ),
                       ),
                     ),

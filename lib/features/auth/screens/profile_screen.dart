@@ -19,70 +19,131 @@ import '../../urban_profile/widgets/urban_profile_section.dart';
 
 /// Profile screen – blurred-photo header with avatar, name & badge, the
 /// person's details, the "Edit Profile" CTA and the ACCOUNT menu card.
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _isDeleting = false;
 
   // ── Menu items ──
   //
   // Built per call rather than held in a static, because the labels come from
   // the translations and those depend on the locale in effect.
   static List<_MenuItem> _menuItems(L l) => [
-    _MenuItem(
-      IconsaxPlusLinear.user,
-      l.personalDetails,
-      l.editProfile,
-      '/edit-profile',
-    ),
-    _MenuItem(
-      IconsaxPlusLinear.notification,
-      l.manageYourAlerts,
-      l.notifications,
-      '/notifications',
-    ),
-    _MenuItem(
-      IconsaxPlusLinear.heart,
-      l.savedPlacesListings,
-      l.favorites,
-      '/favorites',
-    ),
-    _MenuItem(
-      IconsaxPlusLinear.setting_2,
-      l.appPreferences,
-      l.settings,
-      '/settings',
-    ),
-    _MenuItem(
-      IconsaxPlusLinear.activity,
-      l.stepsReviewsRewards,
-      l.myActivity,
-      '/steps',
-    ),
-    _MenuItem(
-      IconsaxPlusLinear.building_3,
-      l.propertiesYouPosted,
-      l.myApartments,
-      '/my-apartments',
-    ),
-    _MenuItem(
-      IconsaxPlusLinear.info_circle,
-      l.faqsContactUs,
-      l.helpSupport,
-      '/help-support',
-    ),
+    _MenuItem(IconsaxPlusLinear.user, l.personalDetails, l.editProfile, '/edit-profile'),
+    _MenuItem(IconsaxPlusLinear.notification, l.manageYourAlerts, l.notifications, '/notifications'),
+    _MenuItem(IconsaxPlusLinear.heart, l.savedPlacesListings, l.favorites, '/favorites'),
+    _MenuItem(IconsaxPlusLinear.setting_2, l.appPreferences, l.settings, '/settings'),
+    _MenuItem(IconsaxPlusLinear.activity, l.stepsReviewsRewards, l.myActivity, '/steps'),
+    _MenuItem(IconsaxPlusLinear.building_3, l.propertiesYouPosted, l.myApartments, '/my-apartments'),
+    _MenuItem(IconsaxPlusLinear.info_circle, l.faqsContactUs, l.helpSupport, '/help-support'),
   ];
 
   /// Appended for administrators only. The admin area had no way in from the
   /// app at all; a resident never sees this row, and the gate on the route
   /// turns them away even if they reach it another way.
-  static _MenuItem _adminItem(L l) => _MenuItem(
-    IconsaxPlusLinear.setting_4,
-    l.manageContentUsers,
-    l.controlCenter,
-    '/admin',
-  );
+  static _MenuItem _adminItem(L l) =>
+      _MenuItem(IconsaxPlusLinear.setting_4, l.manageContentUsers, l.controlCenter, '/admin');
+
+  Future<void> _confirmDelete() async {
+    final l = L.of(context);
+    final textDir = Directionality.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      useRootNavigator: true,
+      builder: (ctx) => Directionality(
+        textDirection: textDir,
+        child: AlertDialog(
+          title: Text(
+            l.deleteAccount,
+            style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700),
+          ),
+          content: Text(l.deleteAccountConfirm, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                l.cancel,
+                style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayMeta),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                l.delete,
+                style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.error, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isDeleting = true);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      await ref.read(authProvider.notifier).deleteAccount();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // the spinner
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (ctx) => Directionality(
+          textDirection: textDir,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              mTr(ctx, 'Account Deleted', 'החשבון נמחק'),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700),
+            ),
+            content: Text(
+              mTr(ctx, 'Your account has been deleted.', 'חשבונך נמחק בהצלחה.'),
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                child: Text(
+                  mTr(ctx, 'OK', 'אישור'),
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600, color: AppColors.midBlue),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (!mounted) return;
+      context.go('/');
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      setState(() => _isDeleting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l.deleteAccountFailed, style: TextStyle(fontFamily: AppFonts.rubik)),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l = L.of(context);
     final user = ref.watch(authProvider);
 
@@ -96,13 +157,15 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     if (user == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) return;
-        final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
-        if (isCurrent) {
-          context.pushReplacement('/login');
-        }
-      });
+      if (!_isDeleting) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+          if (isCurrent) {
+            context.pushReplacement('/login');
+          }
+        });
+      }
       return const SizedBox.shrink();
     }
 
@@ -162,9 +225,7 @@ class ProfileScreen extends ConsumerWidget {
       MInfoRow(
         leading: const MIconTile(svg: 'assets/icons/m_account_calendar.svg'),
         label: l.dateOfBirth,
-        value: dob == null
-            ? '-'
-            : '${dob.day} ${l.monthShort(dob.month)} ${dob.year}',
+        value: dob == null ? '-' : '${dob.day} ${l.monthShort(dob.month)} ${dob.year}',
       ),
       MInfoRow(
         leading: const MIconTile(svg: 'assets/icons/m_account_location.svg'),
@@ -197,23 +258,17 @@ class ProfileScreen extends ConsumerWidget {
                   right: -28,
                   height: 397,
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(168.5),
-                    ),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(168.5)),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
                         if (hasPhoto)
                           ImageFiltered(
-                            imageFilter: ImageFilter.blur(
-                              sigmaX: 25,
-                              sigmaY: 25,
-                            ),
+                            imageFilter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
                             child: CachedNetworkImage(
                               imageUrl: user.avatarUrl!,
                               fit: BoxFit.cover,
-                              errorWidget: (_, _, _) =>
-                                  const ColoredBox(color: AppColors.midBlue),
+                              errorWidget: (_, _, _) => const ColoredBox(color: AppColors.midBlue),
                             ),
                           )
                         else
@@ -280,10 +335,7 @@ class ProfileScreen extends ConsumerWidget {
 
                       // ── Role badge ──
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: const Color(0xFFD67E00).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -292,24 +344,12 @@ class ProfileScreen extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             user.isBusinessOwner || user.isBroker
-                                ? SvgPicture.asset(
-                                    'assets/icons/m_account_briefcase.svg',
-                                    width: 14,
-                                    height: 14,
-                                  )
-                                : const Icon(
-                                    IconsaxPlusLinear.user,
-                                    size: 14,
-                                    color: Color(0xFFD47D00),
-                                  ),
+                                ? SvgPicture.asset('assets/icons/m_account_briefcase.svg', width: 14, height: 14)
+                                : const Icon(IconsaxPlusLinear.user, size: 14, color: Color(0xFFD47D00)),
                             const SizedBox(width: 6),
                             Text(
                               user.isBusinessOwner
-                                  ? mTr(
-                                      context,
-                                      'Business Account',
-                                      'חשבון עסקי',
-                                    )
+                                  ? mTr(context, 'Business Account', 'חשבון עסקי')
                                   : user.isBroker
                                   ? l.realEstateBroker
                                   : l.resident,
@@ -327,27 +367,15 @@ class ProfileScreen extends ConsumerWidget {
 
                       // ── The rest of the page ──
                       Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          20,
-                          0,
-                          20,
-                          24 + MediaQuery.paddingOf(context).bottom,
-                        ),
+                        padding: EdgeInsets.fromLTRB(20, 0, 20, 24 + MediaQuery.paddingOf(context).bottom),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             // A business account is a business, not a
                             // resident with an Urban Profile.
-                            if (!user.isBusinessOwner) ...[
-                              const UrbanProfileSection(),
-                              const SizedBox(height: 24),
-                            ],
+                            if (!user.isBusinessOwner) ...[const UrbanProfileSection(), const SizedBox(height: 24)],
                             MSection(
-                              label: mTr(
-                                context,
-                                'Personal Information',
-                                'מידע אישי',
-                              ),
+                              label: mTr(context, 'Personal Information', 'מידע אישי'),
                               gap: 8,
                               children: details,
                             ),
@@ -361,10 +389,25 @@ class ProfileScreen extends ConsumerWidget {
                             MSection(
                               label: l.account,
                               gap: 8,
-                              children: [
-                                for (final item in menu) _MenuRow(item: item),
-                              ],
+                              children: [for (final item in menu) _MenuRow(item: item)],
                             ),
+                            const SizedBox(height: 16),
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: _confirmDelete,
+                                icon: const Icon(IconsaxPlusLinear.trash, size: 16, color: AppColors.error),
+                                label: Text(
+                                  l.deleteAccount,
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.inter,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.error,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
                           ],
                         ),
                       ),
@@ -390,12 +433,7 @@ class _Initials extends StatelessWidget {
     return Center(
       child: Text(
         user.initials,
-        style: TextStyle(
-          fontFamily: AppFonts.inter,
-          fontSize: 42,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
+        style: TextStyle(fontFamily: AppFonts.inter, fontSize: 42, fontWeight: FontWeight.w600, color: Colors.white),
       ),
     );
   }

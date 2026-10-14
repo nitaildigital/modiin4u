@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:modiin4u/core/supabase/supabase_config.dart';
 
 import '../../../shared/widgets/m_kit.dart';
 import '../../../shared/widgets/m_step_form.dart';
@@ -117,7 +119,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text(mTr(ctx, 'Block this conversation?', 'לחסום את השיחה?'), style: mText(17, weight: FontWeight.w600)),
+          title: Text(
+            mTr(ctx, 'Block this conversation?', 'לחסום את השיחה?'),
+            style: mText(17, weight: FontWeight.w600),
+          ),
           content: Text(
             mTr(
               ctx,
@@ -139,14 +144,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
     try {
       await _repo.setBlocked(widget.conversationId, block);
+      if (block) {
+        final uid = SupabaseConfig.client.auth.currentUser?.id;
+        if (uid != null) {
+          SupabaseConfig.client
+              .from('reports')
+              .insert({
+                'reporter_id': uid,
+                'entity_type': 'conversation',
+                'entity_id': widget.conversationId,
+                'reason': 'harassment',
+                'details': 'User blocked conversation',
+              })
+              .catchError((_) {});
+        }
+      }
       ref.invalidate(conversationsProvider);
       if (mounted) {
-        mToast(context, block
-            ? mTr(context, 'Conversation blocked', 'השיחה נחסמה')
-            : mTr(context, 'Conversation unblocked', 'החסימה בוטלה'));
+        mToast(
+          context,
+          block
+              ? mTr(context, 'Conversation blocked', 'השיחה נחסמה')
+              : mTr(context, 'Conversation unblocked', 'החסימה בוטלה'),
+        );
       }
     } catch (_) {
-      if (mounted) mToast(context, mTr(context, 'Could not save. Please try again.', 'לא ניתן היה לשמור. נסו שוב.'), error: true);
+      if (mounted) {
+        mToast(context, mTr(context, 'Could not save. Please try again.', 'לא ניתן היה לשמור. נסו שוב.'), error: true);
+      }
     }
   }
 
@@ -197,7 +222,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 _Header(
                   conversation: conversation,
                   loading: conversations.isLoading && conversation == null,
-                  onReport: () => showReportSheet(context, entityType: 'conversation', entityId: widget.conversationId),
+                  onReport: () => showReportSheet(
+                    context,
+                    entityType: 'conversation',
+                    entityId: widget.conversationId,
+                    onHidden: () {
+                      _setBlocked(true);
+                      if (context.mounted && context.canPop()) {
+                        context.pop();
+                      }
+                    },
+                  ),
                   onBlock: conversation == null || conversation.blockedByThem
                       ? null
                       : () => _setBlocked(!conversation!.blockedByMe),
@@ -219,12 +254,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             title: mTr(context, 'No messages yet', 'אין הודעות עדיין'),
                             text: mTr(context, 'Write the first one below.', 'כתבו את ההודעה הראשונה למטה.'),
                           )
-                        : _MessageList(
-                            messages: list,
-                            myId: myId,
-                            other: conversation,
-                            controller: _scroll,
-                          ),
+                        : _MessageList(messages: list, myId: myId, other: conversation, controller: _scroll),
                   ),
                 ),
                 if (conversation != null && conversation.blocked)
@@ -288,7 +318,12 @@ class _Header extends StatelessWidget {
                   Text(c.otherName, maxLines: 1, overflow: TextOverflow.ellipsis, style: mHeading(17)),
                   if (job.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(job, maxLines: 1, overflow: TextOverflow.ellipsis, style: mText(12, color: mStepGrey)),
+                    Text(
+                      job,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: mText(12, color: mStepGrey),
+                    ),
                   ],
                 ],
               ),
@@ -361,7 +396,13 @@ class _BlockedBar extends StatelessWidget {
             ),
           ),
           if (byMe)
-            TextButton(onPressed: onUnblock, child: Text(mTr(context, 'Unblock', 'ביטול חסימה'), style: mText(13.5, weight: FontWeight.w600, color: mStepMid))),
+            TextButton(
+              onPressed: onUnblock,
+              child: Text(
+                mTr(context, 'Unblock', 'ביטול חסימה'),
+                style: mText(13.5, weight: FontWeight.w600, color: mStepMid),
+              ),
+            ),
         ],
       ),
     );
@@ -388,12 +429,7 @@ class _MessageList extends StatelessWidget {
   final Conversation? other;
   final ScrollController controller;
 
-  const _MessageList({
-    required this.messages,
-    required this.myId,
-    required this.other,
-    required this.controller,
-  });
+  const _MessageList({required this.messages, required this.myId, required this.other, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -481,10 +517,7 @@ class _Bubble extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Container(
         padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 10),
-        decoration: BoxDecoration(
-          color: mine ? _mineBubble : _theirBubble,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(color: mine ? _mineBubble : _theirBubble, borderRadius: BorderRadius.circular(16)),
         // Sized to the longer of the text and the time, so a short message
         // makes a small bubble with its time still at the bottom-end.
         child: IntrinsicWidth(

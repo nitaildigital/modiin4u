@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../../shared/providers/hidden_content_provider.dart';
 import '../../favorites/providers/favorite_providers.dart';
 import '../../favorites/repositories/favorite_repository.dart';
 import '../models/job.dart';
@@ -11,13 +12,20 @@ final jobRepositoryProvider = Provider((ref) => JobRepository());
 /// The filters on the residents' Jobs list.
 final jobFiltersProvider = StateProvider<JobFilters>((ref) => const JobFilters());
 
-final liveJobsProvider = FutureProvider.autoDispose<List<Job>>((ref) {
+final liveJobsProvider = FutureProvider.autoDispose<List<Job>>((ref) async {
   final filters = ref.watch(jobFiltersProvider);
-  return ref.watch(jobRepositoryProvider).fetchLive(filters);
+  final hiddenIds = ref.watch(hiddenContentProvider);
+  final jobs = await ref.watch(jobRepositoryProvider).fetchLive(filters);
+  if (hiddenIds.isEmpty) return jobs;
+  return jobs.where((j) => !hiddenIds.contains(j.id)).toList();
 });
 
 final jobProvider = FutureProvider.autoDispose.family<Job?, String>(
-  (ref, id) => ref.watch(jobRepositoryProvider).fetchById(id),
+  (ref, id) async {
+    final hiddenIds = ref.watch(hiddenContentProvider);
+    if (hiddenIds.contains(id)) return null;
+    return ref.watch(jobRepositoryProvider).fetchById(id);
+  },
 );
 
 final businessPhotosProvider = FutureProvider.autoDispose.family<List<String>, String>(

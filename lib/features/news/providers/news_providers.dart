@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../../shared/providers/hidden_content_provider.dart';
 
 import '../models/article.dart';
 import '../repositories/article_repository.dart';
@@ -11,9 +12,12 @@ final articleRepositoryProvider =
 
 /// Published articles, newest first.
 final publishedArticlesProvider = FutureProvider<List<Article>>((ref) async {
+  final hiddenIds = ref.watch(hiddenContentProvider);
   final rows =
       await ref.watch(articleRepositoryProvider).fetchPublishedList();
-  return rows.map(Article.fromJson).toList();
+  final list = rows.map(Article.fromJson).toList();
+  if (hiddenIds.isEmpty) return list;
+  return list.where((a) => !hiddenIds.contains(a.id)).toList();
 });
 
 /// The articles filed under one category.

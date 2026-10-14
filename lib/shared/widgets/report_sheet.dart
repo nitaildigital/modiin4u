@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../../core/supabase/account_blocked.dart';
 import '../../core/supabase/supabase_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_fonts.dart';
+import '../providers/hidden_content_provider.dart';
 import 'sign_in_action.dart';
 
 /// "Report" on something a resident sees — a review, a business, a listing.
@@ -14,10 +16,11 @@ import 'sign_in_action.dart';
 /// `reports`. The reasons are the table's own (`report_reason`, 00001), so
 /// the panel labels them as it already does. App only: the website has no
 /// resident accounts, and a report needs one (`reporter_id`).
-Future<void> showReportSheet(
+Future<bool> showReportSheet(
   BuildContext context, {
   required String entityType,
   required String entityId,
+  VoidCallback? onHidden,
 }) async {
   final he = Localizations.localeOf(context).languageCode == 'he';
   String t(String en, String hebrew) => he ? hebrew : en;
@@ -37,16 +40,14 @@ Future<void> showReportSheet(
 
   if (SupabaseConfig.client.auth.currentUser == null) {
     toast(t('Sign in to report', 'יש להתחבר כדי לדווח'), signIn: true);
-    return;
+    return false;
   }
 
   final sent = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (_) => _ReportForm(
       entityType: entityType,
       entityId: entityId,
@@ -61,11 +62,67 @@ Future<void> showReportSheet(
     ),
   );
   if (sent == true) {
-    toast(t(
-      'Thank you. The team will look at it.',
-      'תודה. הצוות יבדוק את הדיווח.',
-    ));
+    if (!context.mounted) return false;
+    ProviderContainer? container;
+    try {
+      container = ProviderScope.containerOf(context, listen: false);
+    } catch (_) {}
+
+    final textDir = Directionality.of(context);
+    final shouldHide = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (ctx) => Directionality(
+        textDirection: textDir,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            t('Report Submitted', 'הדיווח התקבל'),
+            style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            t(
+              'Thank you. The moderation team will review this within 24 hours.\n\nDo you want to immediately hide this content from your view?',
+              'תודה. צוות הפיקוח יבדוק את הדיווח תוך 24 שעות.\n\nהאם ברצונך להסתיר תוכן זה מהמסך באופן מיידי?',
+            ),
+            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(false),
+              child: Text(
+                t('No', 'לא'),
+                style: TextStyle(fontFamily: AppFonts.rubik, color: AppColors.grayMeta),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(true),
+              child: Text(
+                t('Yes, hide it', 'כן, הסתר'),
+                style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w600, color: AppColors.error),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (shouldHide == true) {
+      if (container != null) {
+        await container.read(hiddenContentProvider.notifier).hide(entityId);
+      } else {
+        await HiddenContentNotifier().hide(entityId);
+      }
+      toast(t('Content has been hidden from your view.', 'התוכן הוסתר מהמסך שלך.'));
+      onHidden?.call();
+      return true;
+    } else {
+      toast(t('Thank you. The team will look at it.', 'תודה. הצוות יבדוק את הדיווח.'));
+      return false;
+    }
   }
+  return false;
 }
 
 /// One report per person per item (00064): a second one is refused as a
@@ -78,12 +135,7 @@ class _ReportForm extends StatefulWidget {
   final String Function(String en, String he) t;
   final VoidCallback onBlocked;
 
-  const _ReportForm({
-    required this.entityType,
-    required this.entityId,
-    required this.t,
-    required this.onBlocked,
-  });
+  const _ReportForm({required this.entityType, required this.entityId, required this.t, required this.onBlocked});
 
   @override
   State<_ReportForm> createState() => _ReportFormState();
@@ -134,10 +186,7 @@ class _ReportFormState extends State<_ReportForm> {
         if (!mounted) return;
         setState(() {
           _sending = false;
-          _error = widget.t(
-            'You have already reported this. The team has it.',
-            'כבר דיווחת על זה. הדיווח אצל הצוות.',
-          );
+          _error = widget.t('You have already reported this. The team has it.', 'כבר דיווחת על זה. הדיווח אצל הצוות.');
         });
         return;
       }
@@ -149,10 +198,7 @@ class _ReportFormState extends State<_ReportForm> {
       if (!mounted) return;
       setState(() {
         _sending = false;
-        _error = widget.t(
-          'Could not send. Please try again.',
-          'לא ניתן היה לשלוח. נסו שוב.',
-        );
+        _error = widget.t('Could not send. Please try again.', 'לא ניתן היה לשלוח. נסו שוב.');
       });
     }
   }
@@ -185,11 +231,7 @@ class _ReportFormState extends State<_ReportForm> {
                   'What is wrong with it? The team sees your report; the person who wrote it does not.',
                   'מה הבעיה? הדיווח מגיע לצוות בלבד, לא למי שכתב את התוכן.',
                 ),
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  color: const Color(0xFF6D6D6D),
-                ),
+                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: const Color(0xFF6D6D6D)),
               ),
               const SizedBox(height: 8),
               RadioGroup<String>(
@@ -202,10 +244,7 @@ class _ReportFormState extends State<_ReportForm> {
                         value: value,
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          label,
-                          style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
-                        ),
+                        title: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14)),
                       ),
                   ],
                 ),

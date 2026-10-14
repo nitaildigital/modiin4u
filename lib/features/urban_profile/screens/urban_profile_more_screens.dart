@@ -36,7 +36,16 @@ class UrbanProfileViewScreen extends ConsumerWidget {
               icon: const Icon(IconsaxPlusLinear.flag, size: 20, color: Color(0xFF3D3D3D)),
               // A profile is reported as its owner's account (reports'
               // `user` type), which the panel opens from Reports.
-              onPressed: () => showReportSheet(context, entityType: 'user', entityId: p.id!),
+              onPressed: () => showReportSheet(
+                context,
+                entityType: 'user',
+                entityId: p.id!,
+                onHidden: () {
+                  if (context.mounted && context.canPop()) {
+                    context.pop();
+                  }
+                },
+              ),
             ),
       body: async.isLoading || restoring
           ? const Center(child: CircularProgressIndicator(color: mStepMid))

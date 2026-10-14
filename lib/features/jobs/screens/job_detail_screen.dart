@@ -8,6 +8,7 @@ import '../../../shared/widgets/m_kit.dart';
 import '../../../shared/widgets/m_step_form.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/sign_in_action.dart';
+import '../../../shared/widgets/report_sheet.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/widgets/m_account_widgets.dart';
 import '../../messages/open_conversation.dart';
@@ -69,7 +70,28 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     final appliedAt = ref.watch(appliedAtProvider(widget.jobId));
 
     return MPage(
-      action: job == null ? null : MJobHeart(jobId: job.id, iconSize: 24),
+      action: job == null
+          ? null
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: mTr(context, 'Report Job', 'דיווח על משרה'),
+                  icon: const Icon(IconsaxPlusLinear.flag, size: 20, color: Color(0xFF3D3D3D)),
+                  onPressed: () => showReportSheet(
+                    context,
+                    entityType: 'job',
+                    entityId: job.id,
+                    onHidden: () {
+                      if (context.mounted && context.canPop()) {
+                        context.pop();
+                      }
+                    },
+                  ),
+                ),
+                MJobHeart(jobId: job.id, iconSize: 24),
+              ],
+            ),
       bottom: job == null ? null : _bottomBar(job, appliedAt),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator(color: mStepMid)),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import '../../../shared/widgets/sign_in_action.dart';
 import '../../../core/supabase/account_blocked.dart';
 import '../../../shared/widgets/report_sheet.dart';
+import '../../../shared/providers/hidden_content_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../repositories/business_stats.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -350,6 +351,25 @@ class _BusinessDetailContentState
             child: _CircleButton(
               icon: AppIcons.back,
               onTap: () => context.back('/businesses'),
+            ),
+          ),
+
+          // Report button
+          PositionedDirectional(
+            end: 56 + 12 + 48,
+            top: topPadding + 7,
+            child: _CircleButton(
+              icon: IconsaxPlusLinear.flag,
+              onTap: () => showReportSheet(
+                context,
+                entityType: 'business',
+                entityId: business.id,
+                onHidden: () {
+                  if (context.mounted && context.canPop()) {
+                    context.pop();
+                  }
+                },
+              ),
             ),
           ),
 
@@ -888,6 +908,11 @@ class _BusinessDetailContentState
                       context,
                       entityType: 'business',
                       entityId: business.id,
+                      onHidden: () {
+                        if (context.mounted && context.canPop()) {
+                          context.pop();
+                        }
+                      },
                     ),
                     icon: const Icon(Icons.flag_outlined, size: 16, color: Color(0xFF6D6D6D)),
                     label: Text(
@@ -1678,7 +1703,9 @@ class _BusinessDetailContentState
         ),
       ),
       data: (list) {
-        if (list.isEmpty) return const _NoReviewsYet();
+        final hidden = ref.watch(hiddenContentProvider);
+        final visibleList = list.where((r) => !hidden.contains(r.id)).toList();
+        if (visibleList.isEmpty) return const _NoReviewsYet();
         final repliesValue = ref.watch(reviewRepliesProvider(business.id));
         final replies =
             repliesValue.valueOrNull ?? const <String, List<ReviewReply>>{};
@@ -1696,21 +1723,21 @@ class _BusinessDetailContentState
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              for (var i = 0; i < list.length; i++)
+              for (var i = 0; i < visibleList.length; i++)
                 _ReviewCard(
-                  initials: list[i].initials,
-                  avatarUrl: list[i].authorAvatarUrl,
-                  photos: list[i].photos,
-                  name: list[i].authorName.isEmpty
+                  initials: visibleList[i].initials,
+                  avatarUrl: visibleList[i].authorAvatarUrl,
+                  photos: visibleList[i].photos,
+                  name: visibleList[i].authorName.isEmpty
                       ? L.of(context).resident
-                      : list[i].authorName,
-                  date: _formatReviewDate(list[i].createdAt),
-                  rating: list[i].rating,
-                  text: list[i].body,
-                  pending: !list[i].isApproved,
-                  removed: list[i].isRemoved,
+                      : visibleList[i].authorName,
+                  date: _formatReviewDate(visibleList[i].createdAt),
+                  rating: visibleList[i].rating,
+                  text: visibleList[i].body,
+                  pending: !visibleList[i].isApproved,
+                  removed: visibleList[i].isRemoved,
                   // The review itself is the target unless a reply is.
-                  key: list[i].id == widget.focusReviewId && widget.focusReplyId == null
+                  key: visibleList[i].id == widget.focusReviewId && widget.focusReplyId == null
                       ? _focusKey
                       : null,
                   marked: _focusMarked &&
