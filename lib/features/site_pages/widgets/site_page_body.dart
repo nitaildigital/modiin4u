@@ -49,12 +49,16 @@ class _Bullet extends _Block {
   const _Bullet(this.text);
 }
 
+class _Divider extends _Block {
+  const _Divider();
+}
+
 class _Paragraph extends _Block {
   final String text;
   const _Paragraph(this.text);
 }
 
-/// Splits the text into headings, list items and paragraphs.
+/// Splits the text into headings, list items, dividers and paragraphs.
 List<_Block> _parse(String text) {
   final blocks = <_Block>[];
   final paragraph = <String>[];
@@ -70,6 +74,9 @@ List<_Block> _parse(String text) {
     final line = raw.trim();
     if (line.isEmpty) {
       flush();
+    } else if (line == '---' || line == '***' || line == '___' || line == '--') {
+      flush();
+      blocks.add(const _Divider());
     } else if (line.startsWith('## ')) {
       flush();
       blocks.add(_Heading(line.substring(3).trim(), 2));
@@ -116,17 +123,17 @@ class _SitePageBodyState extends State<SitePageBody> {
     return Uri.parse(link.startsWith('www.') ? 'https://$link' : link);
   }
 
-  /// [text] with its web and e-mail addresses made into links. A full stop
-  /// or comma closing a sentence is left out of the link.
-  List<InlineSpan> _spans(String text, TextStyle style) {
+  /// Turns URLs and emails into clickable links.
+  List<InlineSpan> _linkify(String text, TextStyle style) {
     final spans = <InlineSpan>[];
     var start = 0;
     for (final m in _linkPattern.allMatches(text)) {
       var link = m.group(0)!;
-      final trailing = RegExp(r'[.,;:!?)\]]+$').firstMatch(link)?.group(0) ?? '';
+      final trailing =
+          RegExp(r'[.,;:!?)\]]+$').firstMatch(link)?.group(0) ?? '';
       link = link.substring(0, link.length - trailing.length);
       if (m.start > start) {
-        spans.add(TextSpan(text: text.substring(start, m.start)));
+        spans.add(TextSpan(text: text.substring(start, m.start), style: style));
       }
       final recognizer = TapGestureRecognizer()
         ..onTap = () => launchUrl(_uriFor(link));
@@ -145,7 +152,35 @@ class _SitePageBodyState extends State<SitePageBody> {
       );
       start = m.start + link.length;
     }
-    if (start < text.length) spans.add(TextSpan(text: text.substring(start)));
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start), style: style));
+    }
+    return spans;
+  }
+
+  /// [text] with **bold** markers rendered as bold text and web/email addresses made into links.
+  List<InlineSpan> _spans(String text, TextStyle style) {
+    final spans = <InlineSpan>[];
+    final boldPattern = RegExp(r'\*\*(.+?)\*\*');
+    var start = 0;
+
+    for (final m in boldPattern.allMatches(text)) {
+      if (m.start > start) {
+        spans.addAll(_linkify(text.substring(start, m.start), style));
+      }
+      final boldText = m.group(1)!;
+      final boldStyle = style.copyWith(
+        fontWeight: FontWeight.w700,
+        color: const Color(0xFF0A1230),
+      );
+      spans.addAll(_linkify(boldText, boldStyle));
+      start = m.end;
+    }
+
+    if (start < text.length) {
+      spans.addAll(_linkify(text.substring(start), style));
+    }
+
     return spans;
   }
 
@@ -169,6 +204,7 @@ class _SitePageBodyState extends State<SitePageBody> {
               top: i == 0
                   ? 0
                   : switch (blocks[i]) {
+                      _Divider() => widget.fontSize * 0.75,
                       _Heading() => widget.fontSize * 1.75,
                       _Bullet() when blocks[i - 1] is _Bullet =>
                         widget.fontSize * 0.35,
@@ -183,6 +219,15 @@ class _SitePageBodyState extends State<SitePageBody> {
 
   Widget _buildBlock(_Block block, TextStyle base) {
     switch (block) {
+      case _Divider():
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFE5E5EA),
+          ),
+        );
       case _Heading(:final text, :final level):
         final style = base.copyWith(
           fontSize: widget.fontSize * (level == 1 ? 1.5 : 1.25),

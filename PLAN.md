@@ -3182,6 +3182,54 @@ Report with "hide it now" added the same day. What 1.2 still lacked:
   list below it took its replies, Reply and Report from the wrong review
   (it mixed the filtered list's index with the full list). Replies to a
   review are now filtered too; before, hiding a reported reply did nothing.
+- **App Review's demo account:** `appreview@modiin4u.co.il` ("App Review", a
+  resident, Urban Profile prompt already marked seen), made 14 Oct for the
+  reply to Apple; the password is in that reply, not here. Not one of the
+  temporary test accounts — it stays until the app is approved, then goes.
+
+**WordPress → new site, checked end to end — 14 Oct.** Every item WordPress
+publishes (REST: 666 news, 204 businesses, 6 professionals, 13 pages, the
+category lists) against our rows; article texts and business details field
+by field; one crawl of all 1,012 old addresses on 45 (two at a time, Supabase
+health after every 150 — healthy throughout); every picture on those pages
+(1,896 originals, HEAD only, none through Supabase's resizer); the 89 linked
+pages the crawl did not visit; 14 pages in a browser at 1440 and 390.
+- **The same as WordPress:** title, description, H1, canonical and menu on
+  all 992 addresses; 664 of 665 articles' text and pictures; all 209
+  businesses' phone, address, description and site; every category's
+  members (closed businesses aside); every picture loads; no broken link.
+- **Not the same:** `/news/modiin-parking/` holds the version before
+  WordPress's 18 Sep rewrite (the export predates it); 10 articles with
+  Hebrew addresses have no category here (nine עדכוני עירייה, one
+  attractions); `modiin-news-524` not yet imported; WordPress's four
+  real-estate agents were never brought across, so `/real-astate-agents/…`
+  lists nothing; 17 empty business categories (not in WordPress's sitemap)
+  are 404 here; the closed סיני דגים redirects to חנות דגים, now empty.
+- **The accessibility statement** is in `site_pages`, copied from WordPress
+  on 30 Sep, but still a draft (left for the client to review), so
+  `/accessibility/` says it is coming.
+- **Icons refused with 429:** `/web/…` files fall under the page limit
+  (10 a second, bursts of 40); a first visit to the home page asks for more,
+  and 15 came back 429 (70 icons blank below the fold; the real-estate page
+  too). They need a location of their own in `deploy/next/proxy.conf`.
+- **Fixed the same day (Harshit's go-ahead):** `tool/fix_transfer_gaps.py
+  --apply` published the accessibility statement as WordPress has it, took
+  the parking article's title, text and excerpt from WordPress (its search
+  title and description already matched), and filed the ten articles —
+  matched by category name, since url_map.csv files `/new/municipal/` under
+  the older, empty עירייה; 12 changes in tool/transfer_gaps_registry.json,
+  `--undo` puts them back. nginx now serves `/web/`, `/icons/`, `/brand/`
+  and `/images/` from /srv/modiin4u-site/public with a week's cache and no
+  request limit (only the snippet was installed, no site deploy; the old one
+  is /root/modiin4u-next.conf.bak-20261014111601). Checked: the four pages
+  show the change; the home page and real estate at 1440 and 390 in a fresh
+  browser, every response 200 and no blank picture.
+- **Left on purpose:** the agents — the site shows an agent only on a
+  listing that names one, and theirs (four apartments, July 2024) are long
+  gone; their WordPress pages carried only a name. `זאב שומאכר` in
+  `real_estate_agents` is the sample content's. Article 524 comes with the
+  freeze-day import. The empty categories and the fish shop's redirect are
+  the client's call.
 
 **Search Console, and what Google knows against the new site — 14 Oct.**
 We have user access (not owner) to the client's Domain property

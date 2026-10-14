@@ -1,0 +1,118 @@
+[
+ {
+  "what": "publish /accessibility/",
+  "table": "site_pages",
+  "match": "slug=eq.accessibility",
+  "before": {
+   "is_published": false
+  },
+  "after": {
+   "is_published": true
+  }
+ },
+ {
+  "what": "/news/modiin-parking/: title, body, excerpt from WordPress",
+  "table": "articles",
+  "match": "id=eq.2e797af0-9f3b-4b4b-9254-53eb484e0951",
+  "before": {
+   "title": "חנייה בלב מודיעין: המדריך המלא והעדכני לכל החניונים במע\"ר!",
+   "body": "<p><b>נמאס לכם לחפש חנייה במרכז העיר? מידע לא מדויק גורם לכם לשלם שלא לצורך? עשינו לכם סדר! בדקנו עבורכם את כל החניונים במע\"ר מודיעין (המרכז העירוני הראשי) – כמה עולה, מתי חינם, ואיפה בדיוק כדאי לכם לחנות בביקור הבא.</b></p>\n<p>מרכז העיר הוא לב ליבה הפועם של מודיעין, ובעקבות כך עומד במוקד תנועה רבה. כדי להקל על התושבים והמבקרים, הנה הפירוט המלא והעדכני של כלל אפשרויות החנייה:</p>\n<h3>1. חניון השדרה (מתחת למועדון הגריי)  שעתיים עלינו!</h3>\n<p>&nbsp;</p>\n<p>זהו החניון התת-קרקעי המרכזי במע\"ר, ונחשב לאחד הנוחים והמרווחים ביותר.</p>\n<ul>\n<li><b>מיקום:</b> כניסה מרחוב תלתן 26 (בצמוד למועדון הגריי).</li>\n<li><b>קיבולת:</b> כ-500 מקומות חנייה, פרושים על פני 5 קומות תת-קרקעיות.</li>\n<li><b>שעות פעילות:</b> כל יום (א'–שבת), בין השעות 07:00 ל-24:00.</li>\n<li><b>עלות ופטורים:</b>\n<ul>\n<li><b>שעתיים ראשונות – חינם!</b></li>\n<li>לאחר שעתיים – 8 ₪ לשעת חנייה.</li>\n<li>החל מהשעה הרביעית – 4 ₪ לכל רבע שעה.</li>\n<li>יום חניה שלם – 88 ₪.</li>\n<li><b>מנוי חודשי:</b> 300 ₪.</li>\n</ul>\n</li>\n</ul>\n<h3>2. חניון <a href=\"https://www.modiin4u.co.il/business/azrieli-modiin-mall/\">קניון עזריאלי</a> – הכי זול לשלוש שעות</h3>\n<p>&nbsp;</p>\n<p>חניון זה אידיאלי לקופצים לביקור קצר או למי שמבלה בקניון עצמו, ומציע תעריף תחרותי במיוחד לשעות הראשונות.</p>\n<ul>\n<li><b>מיקום:</b> תת-קרקעי, צמוד למרכז העיר.</li>\n<li><b>קיבולת:</b> כ-1,300 מקומות חנייה.</li>\n<li><b>עלות (חדש!):</b>\n<ul>\n<li><b>20 הדקות הראשונות – חינם!</b></li>\n<li><b>3 השעות הראשונות – 5 ₪ בלבד!</b></li>\n<li>לאחר מכן יחל תעריף הקניון.</li>\n</ul>\n</li>\n</ul>\n<h3>3. חניון בזק – החניון החינמי של המע\"ר</h3>\n<p>&nbsp;</p>\n<p>אם אתם מחפשים פתרון חנייה קצר וחינמי 24/7, חניון בזק הוא הפתרון. הוא ממוקם ממש מאחורי השדרה המרכזית.</p>\n<ul>\n<li><b>מיקום:</b> רחוב תלתן 12 (ליד בניין בזק הישן).</li>\n<li><b>קיבולת:</b> כ-50 מקומות חנייה (מוגבל).</li>\n<li><b>עלות:</b> <b>חינם 24/7</b>.</li>\n<li><b>יתרון:</b> גישה מהירה ונוחה לחלק הצפוני של השדרה המרכזית.</li>\n</ul>\n<h3>4. חניון ה<a href=\"https://www.modiin4u.co.il/business/modiin-muni/\">עירייה</a> – הטבה משמעותית לתושבים</h3>\n<p>&nbsp;</p>\n<p>חניון ציבורי זה פועל במודל תשלום שונה, ומעניק יתרון ברור לתושבי מודיעין.</p>\n<ul>\n<li><b>מיקום:</b> דם המכבים פינת תלתן (מול בניין העירייה).</li>\n<li><b>קיבולת:</b> כ-250 מקומות חנייה.</li>\n<li><b>עלות ופטורים:</b>\n<ul>\n<li><b>לתושבי העיר:</b> <b>חינם 24/7</b> (בהצגת תו חנייה תקף).</li>\n<li><b>לאורחים:</b> בתשלום בימים א'–ה' בין השעות 07:00 ל-19:00 (תעריף עירוני).</li>\n</ul>\n</li>\n</ul>\n<h3>5. חניון מתתיהו הכהן – כחול-לבן עם הטבות</h3>\n<p>&nbsp;</p>\n<p>זהו חניון קטן יותר הפועל במתכונת \"כחול-לבן\" עירונית, אך עם תנאים משתלמים לשעות ספציפיות.</p>\n<ul>\n<li><b>מיקום:</b> רחוב מתתיהו הכהן.</li>\n<li><b>קיבולת:</b> כ-30 מקומות חנייה.</li>\n<li><b>עלות ופטורים:</b>\n<ul>\n<li><b>חינם:</b> בסופי שבוע (מיום שישי ב-13:00) ובשעות הלילה (21:00 עד 07:00).</li>\n<li><b>לתושבי העיר:</b> זכאים ל<b>שעתיים ראשונות חינם</b> בשעות התשלום (בהפעלת אמצעי תשלום אלקטרוני).</li>\n</ul>\n</li>\n</ul>\n<p><b>שימו לב!</b></p>\n<ul>\n<li><b>תושבי מודיעין:</b> הקפידו להציג <b>תו חנייה עירוני</b> תקף על השמשה הקדמית כדי ליהנות מהפטורים וההנחות בחניונים העירוניים.</li>\n<li><b>כחול-לבן ברחובות המע\"ר:</b> החנייה בתשלום בימים א'-ה' (07:00–21:00) ובימי ו' וערבי חג (07:00–13:00). שעתיים ראשונות חינם לבעלי תו חנייה בהפעלת אפליקציה!</li>\n</ul>\n<p>&nbsp;</p>\n<h2><b>סעו בזהירות, החנו בחוכמה, ותהנו מהמע\"ר</b></h2>",
+   "excerpt": "נמאס לכם לחפש חנייה במרכז העיר? מידע לא מדויק גורם לכם לשלם שלא לצורך? עשינו לכם סדר! בדקנו עבורכם את כל החניונים במע\"ר מודיעין (המרכז העירוני הראשי) – כמה עולה, מתי חינם, ואיפה בדיוק כדאי לכם לחנות בביקור הבא. מרכז העיר הוא לב ליבה הפועם של מודיעין, ובעקבות כך עומד במוקד תנועה רבה. כדי להקל […]"
+  },
+  "after": {
+   "title": "חנייה במע״ר מודיעין: המדריך המלא והעדכני לכל החניונים במע\"ר! (2027)",
+   "body": "<h1 data-path-to-node=\"2\">חנייה בלב מודיעין: המדריך המלא והעדכני לכל החניונים במע&quot;ר!</h1>\n<p data-path-to-node=\"3\"><b data-path-to-node=\"3\" data-index-in-node=\"0\">נמאס לכם לחפש חנייה במרכז העיר? מידע לא מדויק גורם לכם לשלם שלא לצורך? עשינו לכם סדר! בדקנו עבורכם את כל החניונים במע&quot;ר מודיעין (המרכז העירוני הראשי) – כולל החניונים החדשים שנפתחו, כמה עולה, מתי חינם, ואיפה בדיוק כדאי לכם לחנות בביקור הבא.</b></p>\n<p data-path-to-node=\"4\">מרכז העיר הוא לב ליבה הפועם של מודיעין, ובעקבות כך עומד במוקד תנועה רבה. כדי להקל על התושבים והמבקרים, הנה הפירוט המלא והעדכני של כלל אפשרויות החנייה:</p>\n<h3 data-path-to-node=\"6\">1. חניון השדרה (מתחת למועדון הגריי) – <i data-path-to-node=\"6\" data-index-in-node=\"38\">הנוח והמרכזי</i></h3>\n<p data-path-to-node=\"7\"><span class=\"citation-5221 citation-5222 citation-5223 citation-5224 citation-5225 citation-5226 citation-5227 citation-end-5227\">זהו החניון התת-קרקעי המרכזי במע&quot;ר, ונחשב לאחד הנוחים והמרווחים ביותר.</span></p>\n<div class=\"source-inline-chip-container luminous-sources ng-star-inserted\"></div>\n<ul data-path-to-node=\"8\">\n<li>\n<p data-path-to-node=\"8,0,0\"><b data-path-to-node=\"8,0,0\" data-index-in-node=\"0\"><span class=\"citation-5214 citation-5215 citation-5216 citation-5217 citation-5218 citation-5219 citation-5220\">מיקום:</span></b><span class=\"citation-5214 citation-5215 citation-5216 citation-5217 citation-5218 citation-5219 citation-5220 citation-end-5220\"> כניסה מרחוב תלתן 26 (בצמוד למועדון הגריי).</span></p>\n<div class=\"source-inline-chip-container luminous-sources ng-star-inserted\"></div>\n</li>\n<li>\n<p data-path-to-node=\"8,1,0\"><b data-path-to-node=\"8,1,0\" data-index-in-node=\"0\"><span class=\"citation-5207 citation-5208 citation-5209 citation-5210 citation-5211 citation-5212 citation-5213\">קיבולת:</span></b><span class=\"citation-5207 citation-5208 citation-5209 citation-5210 citation-5211 citation-5212 citation-5213 citation-end-5213\"> כ-500 מקומות חנייה, פרושים על פני 5 קומות תת-קרקעיות.</span></p>\n<div class=\"source-inline-chip-container luminous-sources ng-star-inserted\"></div>\n</li>\n<li>\n<p data-path-to-node=\"8,2,0\"><b data-path-to-node=\"8,2,0\" data-index-in-node=\"0\"><span class=\"citation-5200 citation-5201 citation-5202 citation-5203 citation-5204 citation-5205 citation-5206\">שעות פעילות:</span></b><span class=\"citation-5200 citation-5201 citation-5202 citation-5203 citation-5204 citation-5205 citation-5206 citation-end-5206\"> כל יום (א'–שבת), בין השעות 07:00 ל-24:0</span><span class=\"citation-5200 citation-5201 citation-5202 citation-5203 citation-5204 citation-5205 citation-end-5205\">0.</span></p>\n<div class=\"source-inline-chip-container luminous-sources ng-star-inserted\"></div>\n</li>\n<li>\n<p data-path-to-node=\"8,3,0\"><b data-path-to-node=\"8,3,0\" data-index-in-node=\"0\"><span class=\"citation-5194 citation-5195 citation-5196 citation-5197 citation-5198 citation-5199 citation-end-5199\">עלות ופטורים</span><span class=\"citation-5194 citation-5195 citation-5196 citation-5197 citation-5198 citation-end-5198\">:</span></b></p>\n<div class=\"source-inline-chip-container luminous-sources ng-star-inserted\"></div>\n<ul data-path-to-node=\"8,3,1\">\n<li>\n<p id=\"p-rc_694434c318336449-34\" data-path-to-node=\"8,3,1,0,0\"><b data-path-to-node=\"8,3,1,0,0\" data-index-in-node=\"0\"><span class=\"citation-5189 citation-5190 citation-5191 citation-5192 citation-5193 citation-end-5193\">שעתיים ראשונות – חינ</span><span class=\"citation-5189 citation-5190 citation-5191 citation-5192 citation-end-5192\">ם!</span></b></p>\n</li>\n<li>\n<p id=\"p-rc_694434c318336449-35\" data-path-to-node=\"8,3,1,1,0\"><span class=\"citation-5185 citation-5186 citation-5187 citation-5188 citation-end-5188\">לאחר שעתיים – 8 ₪ לשעת חנייה</span><span class=\"citation-5185 citation-5186 citation-5187 citation-end-5187\">.</span></p>\n</li>\n<li>\n<p id=\"p-rc_694434c318336449-36\" data-path-to-node=\"8,3,1,2,0\"><span class=\"citation-5182 citation-5183 citation-5184 citation-end-5184\">החל מהשעה הרביעית – 4 ₪ לכל רבע שעה</span><span class=\"citation-5182 citation-5183 citation-end-5183\">.</span></p>\n</li>\n<li>\n<p id=\"p-rc_694434c318336449-37\" data-path-to-node=\"8,3,1,3,0\"><span class=\"citation-5180 citation-5181 citation-end-5181\">יום חניה שלם – 88 ₪</span><span class=\"citation-5180 citation-end-5180\">.</span></p>\n</li>\n<li>\n<p id=\"p-rc_694434c318336449-38\" data-path-to-node=\"8,3,1,4,0\"><span class=\"citation-5179 citation-end-5179\">מנוי חודשי: 300 ₪.</span></p>\n</li>\n</ul>\n</li>\n</ul>\n<h3 data-path-to-node=\"10\">2. חניון קניון עזריאלי – <i data-path-to-node=\"10\" data-index-in-node=\"25\">המשתלם לשעות הראשונות</i></h3>\n<p data-path-to-node=\"11\">חניון זה אידיאלי לקופצים לביקור קצר או למי שמבלה בקניון ובסביבתו, ומציע תעריף תחרותי במיוחד לשעות הראשונות.</p>\n<ul data-path-to-node=\"12\">\n<li>\n<p data-path-to-node=\"12,0,0\"><b data-path-to-node=\"12,0,0\" data-index-in-node=\"0\">מיקום:</b> תת-קרקעי, צמוד למרכז העיר.</p>\n</li>\n<li>\n<p data-path-to-node=\"12,1,0\"><b data-path-to-node=\"12,1,0\" data-index-in-node=\"0\">קיבולת:</b> כ-1,300 מקומות חנייה.</p>\n</li>\n<li>\n<p data-path-to-node=\"12,2,0\"><b data-path-to-node=\"12,2,0\" data-index-in-node=\"0\">עלות:</b></p>\n<ul data-path-to-node=\"12,2,1\">\n<li>\n<p data-path-to-node=\"12,2,1,0,0\"><b data-path-to-node=\"12,2,1,0,0\" data-index-in-node=\"0\">20 הדקות הראשונות – חינם!</b></p>\n</li>\n<li>\n<p data-path-to-node=\"12,2,1,1,0\"><b data-path-to-node=\"12,2,1,1,0\" data-index-in-node=\"0\">3 השעות הראשונות – 5 ₪ בלבד!</b> לאחר מכן יחל תעריף הקניון הרגיל.</p>\n</li>\n</ul>\n</li>\n</ul>\n<h3 data-path-to-node=\"14\">3. חניון זילברמינץ (מתחם המע&quot;ר / רחוב הרכבת) – <i data-path-to-node=\"14\" data-index-in-node=\"47\">התוספת החדשה למרכז העיר</i></h3>\n<p data-path-to-node=\"15\">חניון תת-קרקעי חדש ומודרני שנפתח לרווחת הציבור בלב פרויקט י. זילברמינץ במע&quot;ר.</p>\n<ul data-path-to-node=\"16\">\n<li>\n<p data-path-to-node=\"16,0,0\"><b data-path-to-node=\"16,0,0\" data-index-in-node=\"0\">מיקום:</b> מתחם הפרויקט באזור רחוב הרכבת.</p>\n</li>\n<li>\n<p data-path-to-node=\"16,1,0\"><b data-path-to-node=\"16,1,0\" data-index-in-node=\"0\">יתרון בולט:</b> מספק פתרון חנייה מרווח ונוח נוסף בסמוך לצירי המסחר המרכזיים, מקל משמעותית על העומסים באזור ומאפשר גישה ישירה ומהירה לעסקים ולבתי האוכל שבסביבה.</p>\n</li>\n</ul>\n<h3 data-path-to-node=\"18\">4. חניון בזק – <i data-path-to-node=\"18\" data-index-in-node=\"15\">החניון החינמי של המע&quot;ר</i></h3>\n<p data-path-to-node=\"19\">אם אתם מחפשים פתרון חנייה קצר וחינמי מסביב לשעון, חניון בזק הוא הכתובת. הוא ממוקם ממש מאחורי השדרה המרכזית.</p>\n<ul data-path-to-node=\"20\">\n<li>\n<p data-path-to-node=\"20,0,0\"><b data-path-to-node=\"20,0,0\" data-index-in-node=\"0\">מיקום:</b> רחוב תלתן 12 (ליד בניין בזק הישן).</p>\n</li>\n<li>\n<p data-path-to-node=\"20,1,0\"><b data-path-to-node=\"20,1,0\" data-index-in-node=\"0\">קיבולת:</b> כ-50 מקומות חנייה (מוגבל).</p>\n</li>\n<li>\n<p data-path-to-node=\"20,2,0\"><b data-path-to-node=\"20,2,0\" data-index-in-node=\"0\">עלות:</b> <b data-path-to-node=\"20,2,0\" data-index-in-node=\"6\">חינם 24/7</b>.</p>\n</li>\n<li>\n<p data-path-to-node=\"20,3,0\"><b data-path-to-node=\"20,3,0\" data-index-in-node=\"0\">יתרון:</b> גישה מהירה ונוחה לחלק הצפוני של השדרה המרכזית.</p>\n</li>\n</ul>\n<h3 data-path-to-node=\"22\">5. חניון העירייה – <i data-path-to-node=\"22\" data-index-in-node=\"19\">הטבה משמעותית לתושבים</i></h3>\n<p data-path-to-node=\"23\">חניון ציבורי זה פועל במודל תשלום ייחודי, ומעניק יתרון ברור לתושבי מודיעין.</p>\n<ul data-path-to-node=\"24\">\n<li>\n<p data-path-to-node=\"24,0,0\"><b data-path-to-node=\"24,0,0\" data-index-in-node=\"0\">מיקום:</b> דם המכבים פינת תלתן (מול בניין העירייה).</p>\n</li>\n<li>\n<p data-path-to-node=\"24,1,0\"><b data-path-to-node=\"24,1,0\" data-index-in-node=\"0\">קיבולת:</b> כ-250 מקומות חנייה.</p>\n</li>\n<li>\n<p data-path-to-node=\"24,2,0\"><b data-path-to-node=\"24,2,0\" data-index-in-node=\"0\">עלות ופטורים:</b></p>\n<ul data-path-to-node=\"24,2,1\">\n<li>\n<p data-path-to-node=\"24,2,1,0,0\"><b data-path-to-node=\"24,2,1,0,0\" data-index-in-node=\"0\">לתושבי העיר:</b> חינם 24/7 (בהצגת תו חנייה תקף).</p>\n</li>\n<li>\n<p data-path-to-node=\"24,2,1,1,0\"><b data-path-to-node=\"24,2,1,1,0\" data-index-in-node=\"0\">לאורחים:</b> בתשלום בימים א'–ה' בין השעות 07:00 ל-19:00 (תעריף עירוני).</p>\n</li>\n</ul>\n</li>\n</ul>\n<h3 data-path-to-node=\"26\">6. חניון מתתיהו הכהן – <i data-path-to-node=\"26\" data-index-in-node=\"23\">כחול-לבן עם הטבות</i></h3>\n<p data-path-to-node=\"27\">חניון קטן יותר הפועל במתכונת &quot;כחול-לבן&quot; עירונית, עם תנאים משתלמים בשעות ספציפיות.</p>\n<ul data-path-to-node=\"28\">\n<li>\n<p data-path-to-node=\"28,0,0\"><b data-path-to-node=\"28,0,0\" data-index-in-node=\"0\">מיקום:</b> רחוב מתתיהו הכהן.</p>\n</li>\n<li>\n<p data-path-to-node=\"28,1,0\"><b data-path-to-node=\"28,1,0\" data-index-in-node=\"0\">קיבולת:</b> כ-30 מקומות חנייה.</p>\n</li>\n<li>\n<p data-path-to-node=\"28,2,0\"><b data-path-to-node=\"28,2,0\" data-index-in-node=\"0\">עלות ופטורים:</b></p>\n<ul data-path-to-node=\"28,2,1\">\n<li>\n<p data-path-to-node=\"28,2,1,0,0\"><b data-path-to-node=\"28,2,1,0,0\" data-index-in-node=\"0\">חינם:</b> בסופי שבוע (מיום שישי ב-13:00) ובשעות הלילה (21:00 עד 07:00).</p>\n</li>\n<li>\n<p data-path-to-node=\"28,2,1,1,0\"><b data-path-to-node=\"28,2,1,1,0\" data-index-in-node=\"0\">לתושבי העיר:</b> זכאים לשעתיים ראשונות חינם בשעות התשלום (בהפעלת אמצעי תשלום אלקטרוני באפליקציה).</p>\n</li>\n</ul>\n</li>\n</ul>\n<h3 data-path-to-node=\"30\">📌 שימו לב! דגשים חשובים לנהגים:</h3>\n<ul data-path-to-node=\"31\">\n<li>\n<p data-path-to-node=\"31,0,0\"><b data-path-to-node=\"31,0,0\" data-index-in-node=\"0\">תו חנייה עירוני:</b> הקפידו להציג תו חנייה עירוני תקף על השמשה הקדמית (או לוודא שהוא מקושר באפליקציות החנייה) כדי ליהנות מהפטורים וההנחות בחניונים העירוניים.</p>\n</li>\n<li>\n<p data-path-to-node=\"31,1,0\"><b data-path-to-node=\"31,1,0\" data-index-in-node=\"0\">כחול-לבן ברחובות המע&quot;ר:</b> החנייה בתשלום בימים א'–ה' (07:00–21:00) ובימי שישי וערבי חג (07:00–13:00). בעלי תו חנייה זכאים לשעתיים ראשונות חינם בהפעלת אפליקציה.</p>\n</li>\n</ul>\n<p data-path-to-node=\"32\">סעו בזהירות, החנו בחוכמה, ותיהנו מהמע&quot;ר!</p>",
+   "excerpt": "חנייה בלב מודיעין: המדריך המלא והעדכני לכל החניונים במע\"ר! נמאס לכם לחפש חנייה במרכז העיר? מידע לא מדויק גורם לכם לשלם שלא לצורך? עשינו לכם סדר! בדקנו עבורכם את כל החניונים במע\"ר מודיעין (המרכז העירוני הראשי) – כולל החניונים החדשים שנפתחו, כמה עולה, מתי חינם, ואיפה בדיוק כדאי לכם לחנות בביקור הבא. מרכז העיר הוא […]"
+  }
+ },
+ {
+  "what": "/news/חורבת-נכס/ → אטרקציות וטיולים במודיעין",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "ffd774fb-2e68-4bf9-b1fd-f73caf58df60",
+   "category_id": "55df5a8c-ded9-43ae-84d8-588990c239d2"
+  }
+ },
+ {
+  "what": "/news/כיתת-הוותיקים-חזרה-לספסל-הלימודים/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "48582ee0-47b3-4bd8-b0c2-e1e35ac042ae",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ },
+ {
+  "what": "/news/מוקירים-את-מאבטחי-מוסדות-החינוך/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "214229c4-7b73-4bde-9ff5-d8858ab6fd5c",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ },
+ {
+  "what": "/news/הסתיים-קורס-להכשרת-פעילי-נחל-ענבה/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "ecbfde5f-bd24-4b87-bcd4-1f22f827c61a",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ },
+ {
+  "what": "/news/הסתיימו-עבודות-ברמזורים-ובגלאים-לווי/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "bc4e846f-9846-46a5-8350-515bb3a47067",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ },
+ {
+  "what": "/news/מרחב-חדש-בבית-ספר-אלונים/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "0b61ee4e-5eec-49c7-831c-31e415025c8e",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ },
+ {
+  "what": "/news/פרויקט-בוחרים-בשישי-בית-ספר-עמית/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "b7e719f9-457c-4f77-a34c-e5aba1a7e7c3",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ },
+ {
+  "what": "/news/חנוכת-ספריית-בית-ספר-נוף-הרים-עש-סרן-או/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "c41a9fbe-2c76-4e3d-88e9-eeade96b3829",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ },
+ {
+  "what": "/news/טורניר-הסטריטבול-המסורתי/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "17a86f5b-f6fd-423b-823d-213c37ce679f",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ },
+ {
+  "what": "/news/פסטיבל-צלילי-הסתיו-חוזר/ → עדכוני עירייה",
+  "table": "entity_categories",
+  "insert": {
+   "entity_type": "article",
+   "entity_id": "0334036c-a2c0-4b57-93c5-b89dc01fb7d8",
+   "category_id": "4e07fcf3-20c1-46fb-a9d4-fb2abd26b0a0"
+  }
+ }
+]
