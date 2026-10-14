@@ -122,10 +122,11 @@ computer only: `185.108.148.183  www.modiin4u.co.il modiin4u.co.il` in
 - [ ] **App links:** add www to `ios/Runner/Runner.entitlements` and
       `android/app/src/main/AndroidManifest.xml`; `apple-app-site-association`
       and `assetlinks.json` (with Play's signing certificate) served from www.
-- [ ] **The panel** on its own https address. Since 13 Oct it is
+- [x] **The panel** on its own https address. Since 13 Oct it is
       https://panel.45-93-94-49.sslip.io (`/panel`, `/admin`, `/login` on the
       main addresses 301 there); for panel.modiin4u.co.il copy its conf and
       change the name in snippets/modiin4u-public.conf's redirects.
+      — done 14 Oct 19:41: https://panel.modiin4u.co.il (certificate to 12 Jan 2027, admin only, noindex); `/panel`, `/admin`, `/login` on www and the whole sslip.io panel address 301 there; added to Supabase's redirect allow-list. The DNS record flickered between uPress's nameservers; Cloudflare's cached NXDOMAIN was cleared at one.one.one.one/purge-cache.
 - [ ] **App links on Android:** Play's app-signing SHA-256 into both
       `assetlinks.json` (site/public and web/); `app.modiin4u.co.il` either
       set up or dropped from AndroidManifest's intent filter in the next
