@@ -3250,6 +3250,18 @@ exports are in `all exports/` (not committed).
   exists, so the registry was set aside for the run and the two merged —
   `--undo` still removes all seven articles and eight businesses. With it,
   every address that answers on WordPress answers here.
+- **The rest of the report** (every "Why pages aren't indexed" row,
+  exported): the 1,000 canonical examples, 129 crawled-not-indexed and
+  two 5xx are WordPress's addresses with plugin parameters (`?nocache`,
+  `?jet_blog_ajax`, `?jet_form_builder_submit`) over 223 pages — 218 in
+  our sitemap, the others the closed businesses and two WordPress files;
+  each pattern answers 200 here with the canonical on the clean address.
+  Of 58 "Page with redirect", 55 end where WordPress's do; two more went
+  into the panel's Redirects (`/news/anabe-park-mpdiin/`, an old slug of
+  `anabe-park-modiin`, and `/business-cat/open-lion-war-modiin/` with a
+  stray trailing space), the third is `/category/uncategorized/` → `/news/`.
+  The noindex pages stay noindex (contact, apartment search) or redirect
+  (accessibility, terms); `wp-login`, `wp-json`, `admin-ajax` are 404.
 - **The sitemap lists WordPress's addresses from the snapshot**, so an
   article published there after the last import (524) is in it and 404s
   until it is imported.
