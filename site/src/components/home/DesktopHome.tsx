@@ -4,7 +4,7 @@ import { href } from '@/lib/seo';
 import { CONTACT } from '@/lib/config';
 import { banners, type Banner } from '@/lib/data/banners';
 import {
-  activeBusinesses, activeListings, bizName, catName, homeArticles, primaryCategories, professionals,
+  activeBusinesses, activeListings, bizName, catName, foodPlaces, homeArticles, primaryCategories, professionals,
   publishedEvents, recommendedBusinesses, shekels,
 } from '@/lib/data/home';
 import { BusinessCard } from './Cards';
@@ -12,6 +12,8 @@ import { MapTeaser, type Layer } from './MapTeaser';
 import { ProfessionalsRow, type Pro } from './ProfessionalsRow';
 import { cardOf, newsDateLine } from './format';
 import { ownPhoto } from '@/lib/photos';
+import { NearRow } from '@/components/near/NearRow';
+import { NearButton } from '@/components/near/NearButton';
 
 /** A section's title in Mid blue, its line of copy under it, and anything
  *  that belongs at the far end of the heading. */
@@ -49,15 +51,21 @@ function Slot({ b, w, h, bordered = false }: { b: Banner; w: number; h: number; 
 }
 
 /** The home page's desktop layout below the hero (web_home_screen.dart):
- *  the eight category cards, the top banner, the news, the map with its
+ *  the eight category cards, the top banner, the restaurants, the news, the map with its
  *  banners, the recommended businesses, the community banner, TikTok, and
  *  the professionals. Every row from the database or not at all. */
 export async function DesktopHome({ lang }: { lang: Lang }) {
   const t = tr(lang);
-  const [top, side, articles, kinds, picks, all, events, listings, pros] = await Promise.all([
+  const [top, side, articles, kinds, picks, all, events, listings, pros, food] = await Promise.all([
     banners('HOME_TOP'), banners('HOME_MAP_SIDE'), homeArticles(7), primaryCategories(), recommendedBusinesses(12),
-    activeBusinesses(), publishedEvents(), activeListings(), professionals(),
+    activeBusinesses(), publishedEvents(), activeListings(), professionals(), foodPlaces(),
   ]);
+  // Restaurants lead the home page (the client, 1 Oct): the phone's first row
+  // since then, and on the desktop from launch day (14 Oct), where the
+  // design began with the news. The same order as the phone — photo first,
+  // then rating — and, once the visitor allows it, the nearest eight of the
+  // first two dozen.
+  const restaurants = food.slice(0, 24);
 
   const cards: [string, string, string, string][] = [
     [t('חדשות', 'News'), 'news', t('מה קורה במודיעין', 'What’s happening in Modiin'), '/news/'],
@@ -138,8 +146,26 @@ export async function DesktopHome({ lang }: { lang: Lang }) {
       {/* The 728 × 90 banner between the cards and the news, when one is booked. */}
       {top[0] ? <div className="flex justify-center pb-16 pt-14"><Slot b={top[0]} w={728} h={90} bordered /></div> : <div className="h-16" />}
 
-      {articles.length > 0 && (
+      {restaurants.length > 0 && (
         <section className="wrap">
+          <Heading title={t('מסעדות במודיעין', 'Restaurants in Modiin')}
+            subtitle={t('המסעדות, בתי הקפה והמאפיות של העיר.', 'The city’s restaurants, cafés and bakeries.')}
+            action={
+              <span className="flex shrink-0 items-center gap-4">
+                <NearButton label={t('קרוב אליי', 'Near me')} done={t('לפי מרחק', 'By distance')} />
+                <ViewAll to="/search-rest-modiin/" label={t('הצג הכל', 'View all')} lang={lang} />
+              </span>
+            } />
+          <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-8 min-[1320px]:grid-cols-4">
+            <NearRow limit={8} points={restaurants.map((b) => (b.latitude && b.longitude ? [b.latitude, b.longitude] : null))}>
+              {restaurants.map((b) => <BusinessCard key={b.id} b={cardOf(b, kinds.get(b.id), lang)} lang={lang} />)}
+            </NearRow>
+          </div>
+        </section>
+      )}
+
+      {articles.length > 0 && (
+        <section className={`wrap ${restaurants.length > 0 ? 'mt-20' : ''}`}>
           <Heading title={t('חדשות מודיעין', 'Modiin News')}
             subtitle={t('קבלו את החדשות, הסיפורים והעדכונים החשובים ברחבי העיר.', 'Get the latest news, stories and important updates happening across the city.')}
             action={<ViewAll to="/news/" label={t('הצג הכל', 'View all')} lang={lang} />} />

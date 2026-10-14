@@ -3217,6 +3217,12 @@ step ticked with what happened, and its Rollback section the old DNS values.
   in under 0.1 s (check-host.net, 50 locations).
 - **Seen and harmless:** `a[c] is not a function` in the console is
   Microsoft Clarity's own script.
+- **Restaurants first on the desktop home too** (the client's 1 Oct request,
+  until now only on the phone): "מסעדות במודיעין" right after the category
+  cards and the top banner, before the news — `foodPlaces()` in the phone
+  row's order, eight cards, "קרוב אליי" re-sorting the first two dozen by
+  distance, View all → `/search-rest-modiin/`. Checked on a local production
+  build at 1440, 1200 and 390, then live; deployed the same evening.
 - **Supabase** healthy throughout (reads 0.2–0.9 s, one 2 s blip while
   Googlebot and the parity check crawled).
 
