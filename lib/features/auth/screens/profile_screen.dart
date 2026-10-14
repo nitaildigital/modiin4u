@@ -236,6 +236,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final menu = [
       ..._menuItems(l),
+      // The people blocked from a comment or a review, and the way to
+      // unblock them. App only, where blocking is.
+      if (!kIsWeb)
+        _MenuItem(
+          IconsaxPlusLinear.slash,
+          mTr(context, 'People you blocked', 'אנשים שחסמתם'),
+          mTr(context, 'Blocked users', 'משתמשים חסומים'),
+          '/blocked-users',
+        ),
       // Web only: the panel is not in the mobile build at all.
       if (kIsWeb && user.isAdmin) _adminItem(l),
     ];

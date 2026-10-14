@@ -48,6 +48,7 @@ import '../../features/auth/screens/auth_confirm_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/auth/screens/change_language_screen.dart';
 import '../../features/auth/screens/help_support_screen.dart';
+import '../../features/auth/screens/blocked_users_screen.dart';
 import '../../features/site_pages/screens/site_page_screen.dart';
 import '../../features/events/screens/events_screen.dart';
 import '../../features/events/screens/events_map_screen.dart';
@@ -175,6 +176,7 @@ const _appOnlyPaths = {
   '/change-password',
   '/favorites',
   '/settings',
+  '/blocked-users',
   '/my-apartments',
   '/add-apartment',
   '/jobs',
@@ -924,6 +926,11 @@ final appRouter = GoRouter(
       path: '/help-support',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => _slideTransition(const HelpSupportScreen(), state),
+    ),
+    GoRoute(
+      path: '/blocked-users',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => _slideTransition(const BlockedUsersScreen(), state),
     ),
     GoRoute(
       path: '/terms',

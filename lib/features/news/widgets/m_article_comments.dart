@@ -9,6 +9,7 @@ import '../../../core/supabase/account_blocked.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/block_user.dart';
 import '../../../shared/widgets/m_kit.dart' show mAgo;
 import '../../../shared/widgets/report_sheet.dart';
 import '../../../shared/widgets/sign_in_action.dart';
@@ -17,6 +18,7 @@ import '../../auth/widgets/m_account_widgets.dart';
 import '../models/article_comment.dart';
 import '../providers/article_comments_provider.dart';
 import 'm_article_parts.dart';
+import '../../../shared/providers/blocked_users_provider.dart';
 import '../../../shared/providers/hidden_content_provider.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -169,6 +171,16 @@ class _MArticleCommentsState extends ConsumerState<MArticleComments> {
     }
   }
 
+  /// Blocks the writer of [c]; the list drops their comments as it rebuilds.
+  Future<void> _block(ArticleComment c) => confirmBlockUser(
+    context,
+    ref,
+    userId: c.authorId,
+    name: c.authorName.isEmpty ? L.of(context).resident : c.authorName,
+    entityType: 'comment',
+    entityId: c.id,
+  );
+
   Future<void> _delete(ArticleComment c, {required bool hasReplies}) async {
     final l = L.of(context);
     final sure = await showDialog<bool>(
@@ -216,15 +228,19 @@ class _MArticleCommentsState extends ConsumerState<MArticleComments> {
   Widget build(BuildContext context) {
     final value = ref.watch(articleCommentsProvider(widget.articleId));
     final hidden = ref.watch(hiddenContentProvider);
+    // Nothing from someone this resident blocked — a blocked writer's
+    // comment goes with its thread, as a hidden one does.
+    final blocked = ref.watch(blockedUsersProvider);
+    bool shown(ArticleComment c) => !hidden.contains(c.id) && !blocked.containsKey(c.authorId);
     final rawThreads = value.valueOrNull;
     final threads = rawThreads == null
         ? null
         : [
             for (final t in rawThreads)
-              if (!hidden.contains(t.comment.id))
+              if (shown(t.comment))
                 ArticleCommentThread(
                   comment: t.comment,
-                  replies: t.replies.where((r) => !hidden.contains(r.id)).toList(),
+                  replies: t.replies.where(shown).toList(),
                 ),
           ];
 
@@ -307,6 +323,7 @@ class _MArticleCommentsState extends ConsumerState<MArticleComments> {
                       marked: _focusMarked && threads[i].comment.id == widget.focusCommentId,
                       isMine: threads[i].comment.authorId == me,
                       onReply: () => _startReply(threads[i].comment),
+                      onBlock: () => _block(threads[i].comment),
                       onDelete: () => _delete(
                         threads[i].comment,
                         hasReplies: threads[i].replies.isNotEmpty,
@@ -320,6 +337,7 @@ class _MArticleCommentsState extends ConsumerState<MArticleComments> {
                         marked: _focusMarked && r.id == widget.focusCommentId,
                         isMine: r.authorId == me,
                         onReply: () => _startReply(r),
+                        onBlock: () => _block(r),
                         // A reply may have replies of its own, drawn beside
                         // it in the thread; the table drops those with it.
                         onDelete: () => _delete(
@@ -450,6 +468,7 @@ class _CommentTile extends StatelessWidget {
   final bool marked;
   final VoidCallback onReply;
   final VoidCallback onDelete;
+  final VoidCallback onBlock;
 
   const _CommentTile({
     super.key,
@@ -459,6 +478,7 @@ class _CommentTile extends StatelessWidget {
     this.marked = false,
     required this.onReply,
     required this.onDelete,
+    required this.onBlock,
   });
 
   @override
@@ -482,6 +502,7 @@ class _CommentTile extends StatelessWidget {
           () => showReportSheet(context, entityType: 'comment', entityId: comment.id),
           actionStyle,
         ),
+      if (!kIsWeb && !isMine) _action(mTr(context, 'Block', 'חסימה'), onBlock, actionStyle),
     ];
 
     return AnimatedContainer(

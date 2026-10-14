@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import '../../../shared/widgets/sign_in_action.dart';
 import '../../../core/supabase/account_blocked.dart';
 import '../../../shared/widgets/report_sheet.dart';
+import '../../../shared/providers/blocked_users_provider.dart';
 import '../../../shared/providers/hidden_content_provider.dart';
+import '../../../shared/widgets/block_user.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../repositories/business_stats.dart';
 import '../../../core/theme/app_fonts.dart';
@@ -1703,12 +1705,21 @@ class _BusinessDetailContentState
         ),
       ),
       data: (list) {
+        // Not what this resident hid after reporting it, nor anything by
+        // someone they blocked — the reviews and the replies under them.
         final hidden = ref.watch(hiddenContentProvider);
-        final visibleList = list.where((r) => !hidden.contains(r.id)).toList();
+        final blocked = ref.watch(blockedUsersProvider);
+        final visibleList = list
+            .where((r) => !hidden.contains(r.id) && !blocked.containsKey(r.authorId))
+            .toList();
         if (visibleList.isEmpty) return const _NoReviewsYet();
         final repliesValue = ref.watch(reviewRepliesProvider(business.id));
-        final replies =
-            repliesValue.valueOrNull ?? const <String, List<ReviewReply>>{};
+        final replies = {
+          for (final e in (repliesValue.valueOrNull ?? const <String, List<ReviewReply>>{}).entries)
+            e.key: e.value
+                .where((r) => !hidden.contains(r.id) && !blocked.containsKey(r.authorId))
+                .toList(),
+        };
         // Scroll once both the reviews and their replies are on screen, and
         // not while they are being read again (a notification reloads them).
         if (widget.focusReviewId != null &&
@@ -1741,33 +1752,56 @@ class _BusinessDetailContentState
                       ? _focusKey
                       : null,
                   marked: _focusMarked &&
-                      list[i].id == widget.focusReviewId &&
+                      visibleList[i].id == widget.focusReviewId &&
                       widget.focusReplyId == null,
-                  focusReplyId: widget.focusReviewId == list[i].id
+                  focusReplyId: widget.focusReviewId == visibleList[i].id
                       ? widget.focusReplyId
                       : null,
                   focusReplyKey: _focusKey,
                   replyMarked: _focusMarked,
-                  replies: replies[list[i].id] ?? const [],
+                  replies: replies[visibleList[i].id] ?? const [],
                   myId: me,
                   formatDate: _formatReviewDate,
                   // Replying needs an account, and accounts are the app's:
                   // the website shows the replies but offers no button. Nor
                   // on one's own review still waiting: nobody else sees it.
-                  onReply: kIsWeb || !list[i].isApproved
+                  onReply: kIsWeb || !visibleList[i].isApproved
                       ? null
-                      : () => _replyTo(list[i].id),
+                      : () => _replyTo(visibleList[i].id),
                   onDeleteReply: _deleteReply,
                   // Someone else's review, in the app (accounts are the
                   // app's): to the panel's Reports queue.
-                  onReport: kIsWeb || list[i].authorId == me
+                  onReport: kIsWeb || visibleList[i].authorId == me
                       ? null
                       : () => showReportSheet(
                           context,
                           entityType: 'review',
-                          entityId: list[i].id,
+                          entityId: visibleList[i].id,
                         ),
-                  isLast: i == list.length - 1,
+                  // Its writer, in the app, out of this resident's view.
+                  onBlock: kIsWeb || visibleList[i].authorId == null || visibleList[i].authorId == me
+                      ? null
+                      : () => confirmBlockUser(
+                          context,
+                          ref,
+                          userId: visibleList[i].authorId!,
+                          name: visibleList[i].authorName.isEmpty
+                              ? L.of(context).resident
+                              : visibleList[i].authorName,
+                          entityType: 'review',
+                          entityId: visibleList[i].id,
+                        ),
+                  onBlockReply: kIsWeb
+                      ? null
+                      : (reply) => confirmBlockUser(
+                          context,
+                          ref,
+                          userId: reply.authorId,
+                          name: reply.authorName.isEmpty ? L.of(context).resident : reply.authorName,
+                          entityType: 'comment',
+                          entityId: reply.id,
+                        ),
+                  isLast: i == visibleList.length - 1,
                 ),
             ],
           ),
@@ -2070,6 +2104,11 @@ class _ReviewCard extends StatefulWidget {
   final String Function(DateTime?) formatDate;
   final VoidCallback? onReply;
   final VoidCallback? onReport;
+
+  /// Blocks the review's writer, or a reply's; null where blocking is not
+  /// offered (the website, one's own).
+  final VoidCallback? onBlock;
+  final void Function(ReviewReply reply)? onBlockReply;
   final void Function(String replyId) onDeleteReply;
   final bool isLast;
 
@@ -2093,6 +2132,8 @@ class _ReviewCard extends StatefulWidget {
     required this.formatDate,
     this.onReply,
     this.onReport,
+    this.onBlock,
+    this.onBlockReply,
     required this.onDeleteReply,
     this.isLast = false,
   });
@@ -2261,6 +2302,7 @@ class _ReviewCardState extends State<_ReviewCard> {
                     date: widget.formatDate(reply.createdAt),
                     isMine: reply.authorId == widget.myId,
                     onDelete: () => widget.onDeleteReply(reply.id),
+                    onBlock: widget.onBlockReply == null ? null : () => widget.onBlockReply!(reply),
                   ),
                 if (widget.onReply != null || widget.onReport != null)
                   Padding(
@@ -2305,6 +2347,25 @@ class _ReviewCardState extends State<_ReviewCard> {
                               ),
                             ),
                           ),
+                        if (widget.onBlock != null) ...[
+                          const SizedBox(width: 20),
+                          GestureDetector(
+                            onTap: widget.onBlock,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Text(
+                                mTr(context, 'Block', 'חסימה'),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.inter,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF6D6D6D),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -3103,6 +3164,9 @@ class _ReplyTile extends StatelessWidget {
   final bool isMine;
   final VoidCallback onDelete;
 
+  /// Blocks the reply's writer; null on the website.
+  final VoidCallback? onBlock;
+
   /// Highlighted because a notification pointed here.
   final bool marked;
 
@@ -3113,6 +3177,7 @@ class _ReplyTile extends StatelessWidget {
     required this.date,
     required this.isMine,
     required this.onDelete,
+    this.onBlock,
   });
 
   @override
@@ -3224,26 +3289,49 @@ class _ReplyTile extends StatelessWidget {
                 // send one that should not be there to the Reports queue.
                 // In the app only, where there are accounts.
                 else if (!kIsWeb)
-                  GestureDetector(
-                    onTap: () => showReportSheet(
-                      context,
-                      entityType: 'comment',
-                      entityId: reply.id,
-                    ),
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        Localizations.localeOf(context).languageCode == 'he'
-                            ? 'דיווח'
-                            : 'Report',
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 11,
-                          color: const Color(0xFF6D6D6D),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () => showReportSheet(
+                          context,
+                          entityType: 'comment',
+                          entityId: reply.id,
+                        ),
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            Localizations.localeOf(context).languageCode == 'he'
+                                ? 'דיווח'
+                                : 'Report',
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 11,
+                              color: const Color(0xFF6D6D6D),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      if (onBlock != null) ...[
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: onBlock,
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              mTr(context, 'Block', 'חסימה'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.inter,
+                                fontSize: 11,
+                                color: const Color(0xFF6D6D6D),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
               ],
             ),
