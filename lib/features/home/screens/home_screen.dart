@@ -1508,7 +1508,9 @@ class _NewsData {
   });
 
   factory _NewsData.from(Article a, L l) {
-    final d = a.publishedAt;
+    // On the phone's clock, as the News tab shows it: published_at is UTC,
+    // and printed as it came the card read three hours early in Israel.
+    final d = a.publishedAt.toLocal();
     final time =
         '${d.hour.toString().padLeft(2, '0')}:'
         '${d.minute.toString().padLeft(2, '0')}';

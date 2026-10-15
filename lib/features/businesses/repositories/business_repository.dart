@@ -119,7 +119,25 @@ class BusinessRepository {
         .from('entity_categories')
         .select('entity_id, category_id')
         .eq('entity_type', 'business');
-    final categories = await _client.from('categories').select('id, parent_id');
+    final categories = await _client
+        .from('categories')
+        .select('id, parent_id, is_active');
+    // Only the businesses a list shows: a category's links stay when the
+    // client closes or suspends a business, or switches a category off, and
+    // the cards counted them ("7 places" over a list of 5; Restaurants 58
+    // over 56, two from the switched-off "כשר לפסח").
+    final active = await _client
+        .from('businesses')
+        .select('id')
+        .eq('status', 'active')
+        .eq('kind', 'business');
+    final shown = {
+      for (final b in List<Map<String, dynamic>>.from(active)) b['id'] as String,
+    };
+    final switchedOff = {
+      for (final c in List<Map<String, dynamic>>.from(categories))
+        if (c['is_active'] == false) c['id'] as String,
+    };
     final parentOf = {
       for (final c in List<Map<String, dynamic>>.from(categories))
         c['id'] as String: c['parent_id'] as String?,
@@ -128,7 +146,9 @@ class BusinessRepository {
     final members = <String, Set<String>>{};
     for (final row in List<Map<String, dynamic>>.from(data)) {
       final business = row['entity_id'] as String;
+      if (!shown.contains(business)) continue;
       final id = row['category_id'] as String;
+      if (switchedOff.contains(id)) continue;
       members.putIfAbsent(id, () => {}).add(business);
       final parent = parentOf[id];
       if (parent != null) members.putIfAbsent(parent, () => {}).add(business);

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
+import '../hours_text.dart';
 import '../../../shared/widgets/sign_in_action.dart';
 import '../../../core/supabase/account_blocked.dart';
 import '../../../shared/widgets/report_sheet.dart';
@@ -3011,7 +3012,7 @@ class _HoursText extends StatelessWidget {
       children: [
         for (final line in text.split('\n'))
           Text(
-            line,
+            readableHoursLine(line),
             textDirection: _hebrew.hasMatch(line) ? TextDirection.rtl : TextDirection.ltr,
             textAlign: pageRtl ? TextAlign.right : TextAlign.left,
             style: style,
@@ -3027,7 +3028,10 @@ class _NoReviewsYet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    // The full width, centred: under the reviews tab's start-aligned column
+    // it shrank to its own width and sat at the side (15 Oct).
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
       child: Column(
         children: [
@@ -3047,6 +3051,7 @@ class _NoReviewsYet extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             L.of(context).noReviewsYet,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 16,

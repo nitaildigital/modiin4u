@@ -12,6 +12,9 @@ final neighborhoodNamesProvider = FutureProvider<List<String>>((ref) async {
   final rows = await SupabaseConfig.client
       .from('neighborhoods')
       .select('name')
+      // The ones the panel switched off (in its Trash) are not offered:
+      // שילת, כפר הנוער and רמת מודיעין were still in the list on 15 Oct.
+      .eq('is_active', true)
       .order('sort_order')
       .order('name');
   return [

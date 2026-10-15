@@ -7,6 +7,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../hours_text.dart';
 import '../../../shared/widgets/web_share_menu.dart';
 import '../models/menu_item.dart' as menu_item;
 import '../repositories/business_stats.dart';
@@ -813,7 +814,7 @@ class _WebBusinessDetailContentState extends ConsumerState<WebBusinessDetailCont
                   // "08:00 - 18:00" as "18:00 - 08:00".
                   for (final line in b.hoursText!.split('\n'))
                     Text(
-                      line,
+                      readableHoursLine(line),
                       textDirection: _dirOf(line),
                       textAlign: _isHebrew ? TextAlign.right : TextAlign.left,
                       style: _inter(14, weight: FontWeight.w500, color: _kBody, height: 1.6),

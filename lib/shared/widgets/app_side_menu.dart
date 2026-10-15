@@ -112,10 +112,12 @@ class _SideMenuPanel extends ConsumerWidget {
                       businessName: business?.name,
                       businessLogo: business?.logoUrl,
                       onProfile: () => _go(context, isBusiness ? '/my-business' : '/profile'),
-                      // The design's Edit: the business's page for a business
-                      // account, My Profile (the job profile, whose pencil
-                      // opens name and photo) for a resident.
-                      onEdit: () => _go(context, isBusiness ? '/my-business' : '/my-profile'),
+                      // Edit: the business's page for a business account,
+                      // Edit Profile (name, photo, neighbourhood) for a
+                      // resident. It opened My Profile, the job CV, from 7
+                      // Oct — not what a resident tapping Edit by their name
+                      // expects (15 Oct); the CV stays under Jobs.
+                      onEdit: () => _go(context, isBusiness ? '/my-business' : '/edit-profile'),
                     )
                   else
                     _SignedOutHeader(onSignIn: () => _go(context, '/login')),
