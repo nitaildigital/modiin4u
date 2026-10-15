@@ -3397,6 +3397,30 @@ after it); on the site the phone drawer's last link under the tab bar,
 `/terms/` showing raw `**`, a broken phone link (אודי ויפ), the phone's
 "ניווט" going to Waze.
 
+**Those faults fixed — 15 Oct (Harshit: "fix all, and test").** App (a debug
+build on the OnePlus, each checked there): Home's news cards `.toLocal()`;
+category counts only active `kind = business` rows in active categories
+(Restaurants 56 = 56, Asian 5 = 5); WordPress hours lines through
+`features/businesses/hours_text.dart` — a space after the day, each time
+range isolated left to right (test/hours_text_test.dart); the neighbourhood
+picker active only; the side menu's Edit → Edit Profile for a resident (the
+CV stays under Jobs); "No reviews yet" centred. The lead story, app and site:
+a featured story leads only within 14 days of the newest (two featured
+August samples led until now) — the client's featuring still wins while it
+is news. Site (deployed, checked live): the ☰ drawer ends clear of the tab
+bar; info pages draw `**bold**` and `---` as the app does (SitePageBody.tsx);
+phone and WhatsApp links through `lib/contact.ts`, which strips bidi marks
+(five businesses had them; short numbers like 106 and *3304 dial); the phone
+"ניווט" and the municipal places go to Google Maps directions, hidden without
+an address; English menus take a category's `name_en` (old WordPress slugs
+mapped in `lib/old-slugs.ts`), Hebrew kept where there is none and in Hebrew
+mode unchanged (60 of 60 menu addresses the same on a local build); the
+desktop "No reviews yet" centred. Left: the one-off English "page not
+available" (no error logged; not reproduced); stored data for the client —
+אודי ויפ's number "5220719050", סבן-אקספרס's leading colon, a "נסעדה" typo.
+During the site work a mistaken `check_seo_parity.py --help` crawled 45 for
+~2 minutes (8 at a time) before it was stopped; Supabase was healthy after.
+
 **Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
 Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
 step ticked with what happened, and its Rollback section the old DNS values.
