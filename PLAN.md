@@ -3375,6 +3375,28 @@ the window was a real resident's welcome.
   visible slot (each would reach real people), deal claims and review
   moderation (tested 5–7 Oct), the client's own sign-in and forgot password.
 
+**The rest of LAUNCH_TEST.md on the OnePlus 6T and the live site — 15 Oct
+(Harshit: "test them now"; real people only through this phone, his choice).**
+Results line by line in LAUNCH_TEST.md. How: the installed build (1.0.0+4, 14
+Oct) driven over adb; pushes to this one device as `audience_type = device`
+(the panel has no single-device audience, so its "Send now" was not pressed);
+a challenge running ~5 minutes with its notification off, then ended; a
+temporary resident (made confirmed through the admin API, password in a file,
+typed from it), deleted at the end from the app's own Delete account. The
+website by a separate read-only browser run with the statistics and analytics
+calls blocked. Removed after: the challenge, the four device pushes, the
+phone's six statistics rows, and the "welcome" pushes each temporary account
+had queued (0 sent; one per temporary admin or resident — **every temporary
+account makes one**, tmp_admin.py does not remove it). Left: another
+session's web-push test and older statistics rows from this phone (5–8 Oct).
+New faults found, none fixed here: Home's news cards in UTC; category counts
+include closed businesses; Hebrew hours backwards in the English app; the
+neighbourhood picker offers switched-off neighbourhoods; the side menu's
+"עריכה" opens the job CV; this build has no Terms box at sign-in (added
+after it); on the site the phone drawer's last link under the tab bar,
+`/terms/` showing raw `**`, a broken phone link (אודי ויפ), the phone's
+"ניווט" going to Waze.
+
 **Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
 Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
 step ticked with what happened, and its Rollback section the old DNS values.
