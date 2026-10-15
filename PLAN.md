@@ -3200,6 +3200,10 @@ announcement) and a job inserted as the app would: `on_job_change` queued
 otherwise goes to every device with jobs on), the dispatcher sent it at its
 minute (1 accepted), and it showed on his Mac. Job, business, account, the
 cancelled welcome and the campaigns deleted after; his browser's row kept.
+The bell's list (`push_feed`, sent to this browser in the last 60 days)
+was empty after that only because the cleanup deleted the campaign: a
+second one sent to his browser alone ("Notification test", kept) showed
+on the Mac and on /notifications/.
 Each visitor turns notifications on at www once (the bell or
 /notifications/). Still to change: `notificationImage()` in push-dispatch
 asks Supabase's `/render/image` for each notification's picture — the
@@ -3309,6 +3313,18 @@ Checked on the live site as an iPhone (390 and 360 wide), 25 pages:
   purpose.
 - **Points and levels** are not wanted (the client, 15 Oct): struck from
   item 42.
+- **Google's hours for the businesses with none** (`tool/link_business_google.py
+  --apply`, Harshit's go-ahead). A scripts-only key, `GOOGLE_PLACES_SERVER_KEY`
+  in .env.local — Places API (New) only, limited to this Mac's address
+  (115.246.126.178; it stops working if that changes). Of 61 active
+  businesses with no hours: 24 matched, 36 unsure, 1 not on Google. Two of the
+  24 cleared again as doubtful — אלדד נונה (matched only on "טכנאי מקררים",
+  no pin of ours to compare) and צ'יטה שופס (Google's place is the DHL counter
+  in it) — so 22 linked, all in `tool/business_google_registry.json` for
+  `--undo`. Checked live: הוט סינמה shows Google's week. Left to the client
+  in the panel: the near misses (בון תור, בית הכרם, Japan Japan and Root&Bloom,
+  whose pins may be wrong); the rest of the unsure list is mostly
+  `seed_remote.sql`'s invented businesses, which Google does not know.
 
 **Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
 Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
