@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../deals/models/offer.dart' show offerBadge;
@@ -234,9 +235,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                         final maxClaims = (o['max_claims'] as num?)?.toInt();
                         final isFeatured = o['is_featured'] as bool? ?? false;
                         final residentsOnly = o['audience'] == 'verified';
-                        final endAt = DateTime.tryParse(
-                          o['end_at'] as String? ?? '',
-                        )?.toLocal();
+                        final endAt = israelFromStored(o['end_at'] as String? ?? '');
 
                         return InkWell(
                           onTap: () => _showEditor(context, offer: o),
@@ -362,7 +361,7 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                                         fontSize: 12,
                                         color:
                                             endAt != null &&
-                                                endAt.isBefore(DateTime.now())
+                                                endAt.isBefore(israelNow())
                                             ? AppColors.error
                                             : AppColors.grayText,
                                       ),
@@ -545,9 +544,9 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     String number(String key, {String fallback = ''}) =>
         (o?[key] as num?)?.toInt().toString() ?? fallback;
 
-    // Stored in UTC; edited in the admin's own clock.
-    final start = DateTime.tryParse(text('start_at'))?.toLocal();
-    final end = DateTime.tryParse(text('end_at'))?.toLocal();
+    // Stored in UTC; edited on Israel's clock, wherever the panel is open.
+    final start = israelFromStored(text('start_at'));
+    final end = israelFromStored(text('end_at'));
 
     _name = TextEditingController(text: text('name'));
     _description = TextEditingController(text: text('description'));
@@ -915,13 +914,7 @@ class _OfferEditorDialogState extends ConsumerState<_OfferEditorDialog> {
     final t =
         parseAdminTime(time.text) ??
         (endOfDay ? (hour: 23, minute: 59) : (hour: 0, minute: 0));
-    return DateTime(
-      d.year,
-      d.month,
-      d.day,
-      t.hour,
-      t.minute,
-    ).toUtc().toIso8601String();
+    return israelToStored(DateTime(d.year, d.month, d.day, t.hour, t.minute));
   }
 
   /// Said at the top of the page and in a message at the bottom, since the
@@ -1217,7 +1210,7 @@ class _ClaimsDialogState extends State<_ClaimsDialog> {
   }
 
   String _when(String? iso) {
-    final d = DateTime.tryParse(iso ?? '')?.toLocal();
+    final d = israelFromStored(iso ?? '');
     if (d == null) return '—';
     return '${formatAdminDate(d)} ${formatAdminTime(d.hour, d.minute)}';
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
@@ -566,8 +567,8 @@ class _ArticleTable extends StatelessWidget {
   String _formatDate(String iso) {
     try {
       // Stored in UTC; an article published after 21:00 in Modiin belongs to
-      // the next day in UTC, so the date is taken in the reader's zone.
-      final d = DateTime.parse(iso).toLocal();
+      // the next day in UTC, so the date is taken on Israel's clock.
+      final d = toIsrael(DateTime.parse(iso));
       return '${d.day}/${d.month}/${d.year}';
     } catch (_) {
       return iso;
@@ -687,9 +688,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
     _noindex = a?['noindex'] as bool? ?? false;
     _nofollow = a?['nofollow'] as bool? ?? false;
 
-    _publishedAt = DateTime.tryParse(
-      a?['published_at'] as String? ?? '',
-    )?.toLocal();
+    _publishedAt = israelFromStored(a?['published_at'] as String? ?? '');
 
     _baseline = _collect();
 
@@ -1119,7 +1118,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
   }
 
   Future<void> _pickPublishedAt() async {
-    final now = DateTime.now();
+    final now = israelNow();
     final initial = _publishedAt ?? now;
     final date = await showDatePicker(
       locale: adminLocale,
@@ -1369,7 +1368,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
 
     final fields = _collect(asDraft: asDraft);
     if (_publishedAtChanged && _publishedAt != null) {
-      fields['published_at'] = _publishedAt!.toUtc().toIso8601String();
+      fields['published_at'] = israelToStored(_publishedAt!);
     }
 
     // Null when the links could not be read: then they are not touched.

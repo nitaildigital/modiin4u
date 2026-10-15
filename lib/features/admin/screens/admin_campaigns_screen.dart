@@ -1,3 +1,4 @@
+import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -569,8 +570,8 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
     _businessId = c?['business_id'] as String?;
     _businessName = (c?['businesses'] as Map?)?['name'] as String?;
     _salespersonId = c?['salesperson_id'] as String?;
-    _startAt = DateTime.tryParse(c?['start_at'] as String? ?? '')?.toLocal();
-    _endAt = DateTime.tryParse(c?['end_at'] as String? ?? '')?.toLocal();
+    _startAt = israelFromStored(c?['start_at'] as String? ?? '');
+    _endAt = israelFromStored(c?['end_at'] as String? ?? '');
     _status = c?['status'] as String? ?? 'draft';
     // The preview of what the site will do follows the picture as it is
     // uploaded or removed.
@@ -909,8 +910,8 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
   Map<String, dynamic> _asRow() => {
     'status': _status,
     'desktop_image': _desktopImage.text.trim(),
-    'start_at': _startAt?.toUtc().toIso8601String(),
-    'end_at': _endAt?.toUtc().toIso8601String(),
+    'start_at': _startAt == null ? null : israelToStored(_startAt!),
+    'end_at': _endAt == null ? null : israelToStored(_endAt!),
   };
 
   /// A sentence on whether, and when, the banner will be on the site once
@@ -924,11 +925,11 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
       if (slot['is_active'] != true) tr('המיקום מושבת', 'The placement is disabled'),
       if (!placementIsDrawn(slot['code'] as String?))
         tr('המיקום הזה לא מוצג באף עמוד באתר כרגע', 'This placement is not shown on any page of the site right now'),
-      if (_endAt != null && !_endAt!.isAfter(DateTime.now())) tr('תאריך הסיום עבר', 'The end date has passed'),
+      if (_endAt != null && !_endAt!.isAfter(israelNow())) tr('תאריך הסיום עבר', 'The end date has passed'),
     ];
     if (reasons.isNotEmpty) return tr('לא יוצג באתר: ${reasons.join(' · ')}.', 'Not shown on the site: ${reasons.join(' · ')}.');
     final until = _endAt == null ? '' : tr(' ועד ${_fmtDate(_endAt!)}', ' to ${_fmtDate(_endAt!)}');
-    if (_startAt != null && _startAt!.isAfter(DateTime.now())) {
+    if (_startAt != null && _startAt!.isAfter(israelNow())) {
       return tr('יוצג באתר מ-${_fmtDate(_startAt!)}$until.', 'Shown on the site from ${_fmtDate(_startAt!)}$until.');
     }
     return tr('יוצג באתר מיד עם השמירה$until.', 'Shown on the site as soon as it is saved$until.');
@@ -971,8 +972,8 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
       'desktop_image': orNull(_desktopImage),
       'mobile_image': orNull(_mobileImage),
       'destination_url': _normalizeUrl(_destinationUrl.text.trim()),
-      'start_at': _startAt?.toUtc().toIso8601String(),
-      'end_at': _endAt?.toUtc().toIso8601String(),
+      'start_at': _startAt == null ? null : israelToStored(_startAt!),
+      'end_at': _endAt == null ? null : israelToStored(_endAt!),
       'priority': int.tryParse(_priority.text.trim()) ?? 0,
       'salesperson_id': _salespersonId,
       'status': _status,
@@ -1059,7 +1060,7 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
       InkWell(
         borderRadius: BorderRadius.circular(8),
         onTap: () async {
-          final now = DateTime.now();
+          final now = israelNow();
           final picked = await showDatePicker(
             locale: adminLocale,
             context: context,
@@ -1355,9 +1356,9 @@ class _SiteState extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = campaign;
     final slot = c['ad_placements'] as Map?;
-    final now = DateTime.now();
-    final start = DateTime.tryParse(c['start_at'] as String? ?? '')?.toLocal();
-    final end = DateTime.tryParse(c['end_at'] as String? ?? '')?.toLocal();
+    final now = israelNow();
+    final start = israelFromStored(c['start_at'] as String? ?? '');
+    final end = israelFromStored(c['end_at'] as String? ?? '');
     final image = (c['desktop_image'] as String? ?? '').isNotEmpty;
     final (String text, Color color) = switch (c['status']) {
       'active' when !image => (tr('ללא תמונה — לא מוצג', 'No image — not shown'), AppColors.error),

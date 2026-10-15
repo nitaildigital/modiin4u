@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_challenges_provider.dart';
@@ -310,8 +311,8 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
     _prizeEn = TextEditingController(text: c?['prize_en'] as String? ?? '');
     _perDay = c?['goal_per_day'] as bool? ?? false;
     _notify = c == null || (c['notify_on_publish'] as bool? ?? false);
-    _startAt = DateTime.tryParse(c?['start_at'] as String? ?? '');
-    _endAt = DateTime.tryParse(c?['end_at'] as String? ?? '');
+    _startAt = israelFromStored(c?['start_at'] as String?);
+    _endAt = israelFromStored(c?['end_at'] as String?);
     _isActive = c?['is_active'] as bool? ?? true;
   }
 
@@ -327,7 +328,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
   }
 
   Future<void> _pickDate(bool start) async {
-    final now = DateTime.now();
+    final now = israelNow();
     final picked = await showDatePicker(
       locale: adminLocale,
       context: context,
@@ -366,17 +367,16 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
       'goal_per_day': _perDay,
       'notify_on_publish': _notify,
       'challenge_type': 'steps',
-      'start_at': _startAt!.toIso8601String(),
+      // Days on Israel's clock: sent without a zone, these were read as UTC,
+      // so a challenge began at 02:00 in Israel and ran into the next day.
+      'start_at': israelToStored(
+        DateTime(_startAt!.year, _startAt!.month, _startAt!.day),
+      ),
       // Inclusive of the closing day: a challenge ending on the 30th should
       // still be running on the evening of the 30th.
-      'end_at': DateTime(
-        _endAt!.year,
-        _endAt!.month,
-        _endAt!.day,
-        23,
-        59,
-        59,
-      ).toIso8601String(),
+      'end_at': israelToStored(
+        DateTime(_endAt!.year, _endAt!.month, _endAt!.day, 23, 59, 59),
+      ),
       'is_active': _isActive,
     };
 

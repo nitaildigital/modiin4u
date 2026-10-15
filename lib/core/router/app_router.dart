@@ -284,6 +284,11 @@ final appRouter = GoRouter(
   // how an administrator gets into the control centre, which is web-only.
   redirect: (context, state) {
     final path = state.uri.path;
+    // Since 13 Oct the web build is only the admin panel (the public site is
+    // the Next.js one, site/). nginx sends a fresh visit to `/` on to /admin,
+    // but a move inside the app — after signing in, or a back button — went
+    // to the old resident home page instead of the dashboard.
+    if (kIsWeb && path == '/') return '/admin';
     if (kIsWeb &&
         (_appOnlyPaths.contains(path) || _appOnlyPrefixes.any(path.startsWith))) {
       return '/';

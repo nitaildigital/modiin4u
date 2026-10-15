@@ -3356,6 +3356,20 @@ the window was a real resident's welcome.
   challenge's dates are stored at UTC midnight (02:00 in Israel); a suspended
   business "ללללחחח ללללחחח" heads the businesses list (someone's test row —
   not ours, left).
+- **Fixed and deployed the same day** (`tool/deploy_web.sh`): in the web
+  build `/` now redirects to `/admin` (app_router.dart) — the build is only
+  the panel since 13 Oct — so signing in lands on the dashboard; the gate's
+  "back to the home page" opens www instead. Every date the panel saves or
+  shows is Israel's clock (`core/time/israel_time.dart`, Israel's summer-time
+  rule written out, tested in test/israel_time_test.dart): campaigns, push
+  schedules, deals, articles' publish time, challenges (start at Israel
+  midnight, end 23:59:59), home-builder blocks, business promotions. Checked
+  from a browser in India's time zone on a local build: a push picked for
+  1/1/2027 11:33 stored 09:33 UTC and reopened at 11:33; a challenge for
+  1–28 Feb 2027 stored 31 Jan 22:00 to 28 Feb 21:59:59 UTC; a campaign ending
+  14 Oct stored 20:59 UTC (was 18:29). Test rows deleted. Each temporary admin
+  also gets the 00082 welcome push (to that account only, 0 sent) — three
+  today, left in push_campaigns.
 - **Not covered:** the business menu editor (its name field would not take
   input from the harness), "send now", a running challenge, a banner drawn in a
   visible slot (each would reach real people), deal claims and review

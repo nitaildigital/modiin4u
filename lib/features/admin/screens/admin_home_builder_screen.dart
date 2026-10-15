@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
@@ -554,8 +555,8 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
     _audience = b?['audience'] as String? ?? 'all';
     _isActive = b?['is_active'] as bool? ?? true;
     _published = b?['published'] as bool? ?? false;
-    _startAt = DateTime.tryParse(b?['start_at'] as String? ?? '')?.toLocal();
-    _endAt = DateTime.tryParse(b?['end_at'] as String? ?? '')?.toLocal();
+    _startAt = israelFromStored(b?['start_at'] as String? ?? '');
+    _endAt = israelFromStored(b?['end_at'] as String? ?? '');
     for (final c in [
       _labelHe,
       _messageHe,
@@ -987,7 +988,7 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
   /// single notice: the first published, active one, by order, whose dates
   /// hold today.
   String _siteHint() {
-    final now = DateTime.now();
+    final now = israelNow();
     final reasons = <String>[
       if (!_published) tr('לא מפורסם (טיוטה)', 'Not published (draft)'),
       if (!_isActive) tr('מושבת', 'Disabled'),
@@ -1128,8 +1129,8 @@ class _BlockEditorDialogState extends ConsumerState<_BlockEditorDialog> {
       'sort_order': _orderToSave,
       'audience': _audience,
       'is_active': _isActive,
-      'start_at': _startAt?.toUtc().toIso8601String(),
-      'end_at': _endAt?.toUtc().toIso8601String(),
+      'start_at': _startAt == null ? null : israelToStored(_startAt!),
+      'end_at': _endAt == null ? null : israelToStored(_endAt!),
       'published': _published,
       // Stamped when a block goes live, not on every edit of a live one.
       if (_published && !wasPublished) ...{

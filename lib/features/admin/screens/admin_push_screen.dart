@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_config.dart';
@@ -627,12 +628,16 @@ class _PushTable extends StatelessWidget {
       );
 }
 
+/// A stored timestamp, as Israel's clock shows it.
 String _formatDate(String iso) {
-  final d = DateTime.tryParse(iso)?.toLocal();
-  if (d == null) return iso;
-  return '${d.day}/${d.month}/${d.year} '
-      '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+  final d = israelFromStored(iso);
+  return d == null ? iso : _formatWall(d);
 }
+
+/// A time already on Israel's clock (the schedule being picked).
+String _formatWall(DateTime d) =>
+    '${d.day}/${d.month}/${d.year} '
+    '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
 // ─── Push Editor Dialog ───
 
@@ -690,9 +695,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
     _neighborhoodId = filter?['neighborhood_id'] as String?;
     final topic = filter?['topic'] as String?;
     if (_topics.containsKey(topic)) _topic = topic!;
-    _scheduledAt = DateTime.tryParse(
-      n?['scheduled_at'] as String? ?? '',
-    )?.toLocal();
+    _scheduledAt = israelFromStored(n?['scheduled_at'] as String? ?? '');
   }
 
   @override
@@ -744,7 +747,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
   );
 
   Future<void> _pickSchedule() async {
-    final now = DateTime.now();
+    final now = israelNow();
     final start = _scheduledAt ?? now.add(const Duration(hours: 1));
     final date = await showDatePicker(
       locale: adminLocale,
@@ -944,9 +947,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
                               child: Text(
                                 _scheduledAt == null
                                     ? tr('בחירת תאריך ושעה', 'Choose date and time')
-                                    : _formatDate(
-                                        _scheduledAt!.toIso8601String(),
-                                      ),
+                                    : _formatWall(_scheduledAt!),
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubik,
                                   fontSize: 13,
@@ -1137,7 +1138,7 @@ class _PushEditorDialogState extends ConsumerState<_PushEditorDialog> {
       'status': _status == 'draft' ? 'draft' : 'scheduled',
       'scheduled_at': switch (_status) {
         'now' => DateTime.now().toUtc().toIso8601String(),
-        'scheduled' => _scheduledAt!.toUtc().toIso8601String(),
+        'scheduled' => israelToStored(_scheduledAt!),
         _ => null,
       },
       'audience_type': _audience,

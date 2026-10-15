@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
@@ -1554,9 +1555,9 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
 
   // ── Featured window ──
 
-  /// `2026-10-01` for a stored timestamp, in the admin's own time zone.
+  /// `2026-10-01` for a stored timestamp, on Israel's clock.
   static String _dateText(String? stored) {
-    final d = DateTime.tryParse(stored ?? '')?.toLocal();
+    final d = israelFromStored(stored);
     if (d == null) return '';
     String two(int n) => n.toString().padLeft(2, '0');
     return '${d.year}-${two(d.month)}-${two(d.day)}';
@@ -1583,7 +1584,7 @@ class _BusinessEditorDialogState extends ConsumerState<_BusinessEditorDialog> {
     final d = _parseDate(text);
     if (d == null) return null;
     final at = endOfDay ? DateTime(d.year, d.month, d.day, 23, 59, 59) : d;
-    return at.toUtc().toIso8601String();
+    return israelToStored(at);
   }
 
   Widget _buildSeoTab() {
