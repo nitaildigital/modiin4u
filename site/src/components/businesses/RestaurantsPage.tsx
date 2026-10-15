@@ -255,7 +255,7 @@ export async function RestaurantsPage({ path }: { path: string }) {
             <ul className="mt-3 flex gap-5 overflow-x-auto px-[18px] pb-1 [scrollbar-width:none]">
               {topRated.map((b) => (
                 <li key={b.id} className="relative w-[250px] shrink-0">
-                  <Photo src={sizedPhoto(bizPhoto(b), 600)} alt={bizName(b, lang)} icon={32} className="h-[150px] w-full rounded-xl" />
+                  <Photo src={sizedPhoto(bizPhoto(b), 400)} alt={bizName(b, lang)} icon={32} className="h-[150px] w-full rounded-xl" />
                   <h3 dir="auto" className="mt-3 truncate font-nunito text-xl font-semibold text-navy">
                     <Link href={href(`/business/${b.slug}/`)} className="after:absolute after:inset-0">{bizName(b, lang)}</Link>
                   </h3>
@@ -332,7 +332,9 @@ function PhoneSection({ title, more, to, rows, kindOf, lang, lead = false }: {
         {rows.map((b, i) => (
           <article key={b.id} className="relative">
             <div className="relative">
-              <Photo src={sizedPhoto(bizPhoto(b), 800)} alt={bizName(b, lang)} className="h-[200px] w-full rounded-xl" priority={lead && i === 0} />
+              {/* 600 wide for a card a phone draws ~360 wide: 800 was most of
+                  the page's 1.4 MB of photos on PageSpeed's phone (15 Oct). */}
+              <Photo src={sizedPhoto(bizPhoto(b), 600)} alt={bizName(b, lang)} className="h-[200px] w-full rounded-xl" priority={lead && i === 0} />
               {kosherLabel(b.kosher_level) && (
                 <span className="absolute bottom-3 start-3 flex h-[27px] items-center gap-1.5 rounded-full bg-[#0033AC] px-2 text-xs font-medium text-white">
                   <ShieldTick size={14} color="#fff" />{lang === 'he' ? 'כשר' : 'Kosher'}

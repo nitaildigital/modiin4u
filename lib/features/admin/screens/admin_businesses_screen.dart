@@ -3,7 +3,8 @@ import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
-    show PostgrestException, StorageException;
+    show FunctionException, PostgrestException, StorageException;
+import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../ui/admin_kit.dart';
 import '../providers/admin_businesses_provider.dart';
@@ -178,6 +179,92 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
     );
   }
 
+  /// The business's owner by e-mail (O4): the owner-invite function invites
+  /// an address with no account (Supabase's invitation e-mail, whose link
+  /// lets them choose a password) or links an existing one, and makes it the
+  /// business's owner. A business with another owner asks before replacing.
+  Future<void> _inviteOwner(Map<String, dynamic> biz, {bool replace = false, String? email, String? name}) async {
+    final emailCtl = TextEditingController(text: email ?? '');
+    final nameCtl = TextEditingController(text: name ?? '');
+    if (!replace) {
+      final go = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(tr('הזמנת בעלים במייל', 'Invite the owner by e-mail'), style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700)),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  tr('בעלי "${biz['name']}" יקבלו מייל לבחירת סיסמה ויוכלו לנהל את העסק מהאפליקציה. מי שכבר יש לו חשבון יוגדר כבעלים בלי מייל.',
+                      'The owner of "${biz['name']}" gets an e-mail to choose a password and can then manage the business in the app. Someone who already has an account is made the owner without an e-mail.'),
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
+                ),
+                const SizedBox(height: 14),
+                TextField(controller: emailCtl, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr,
+                    decoration: InputDecoration(labelText: tr('אימייל', 'E-mail'))),
+                const SizedBox(height: 10),
+                TextField(controller: nameCtl, decoration: InputDecoration(labelText: tr('שם (לא חובה)', 'Name (optional)'))),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('ביטול', 'Cancel'))),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('שליחה', 'Send'))),
+          ],
+        ),
+      );
+      if (go != true || !mounted) return;
+    }
+    final address = emailCtl.text.trim();
+    final who = nameCtl.text.trim();
+    Map<String, dynamic>? result;
+    int status = 200;
+    try {
+      final res = await SupabaseConfig.client.functions.invoke('owner-invite', body: {
+        'business_id': biz['id'],
+        'email': address,
+        if (who.isNotEmpty) 'full_name': who,
+        if (replace) 'replace': true,
+      });
+      result = (res.data as Map?)?.cast<String, dynamic>();
+    } on FunctionException catch (e) {
+      status = e.status;
+      result = (e.details is Map) ? (e.details as Map).cast<String, dynamic>() : {'error': '${e.details}'};
+    } catch (e) {
+      status = 0;
+      result = {'error': '$e'};
+    }
+    if (!mounted) return;
+    final error = result?['error'] as String?;
+    if (status == 409 && error == 'business-has-owner') {
+      final swap = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          content: Text(tr('לעסק כבר יש בעלים. להחליף אותו ב-$address?', 'The business already has an owner. Replace them with $address?'),
+              style: TextStyle(fontFamily: AppFonts.rubik)),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('ביטול', 'Cancel'))),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('החלפה', 'Replace'))),
+          ],
+        ),
+      );
+      if (swap == true && mounted) await _inviteOwner(biz, replace: true, email: address, name: who);
+      return;
+    }
+    final message = switch ((status, error)) {
+      (200, _) when result?['invited'] == true => tr('נשלחה הזמנה ל-$address, והוא/היא מוגדר/ת כבעלי העסק.', 'An invitation went to $address, now set as the owner.'),
+      (200, _) => tr('$address כבר רשום/ה באפליקציה והוגדר/ה כבעלי העסק.', '$address already has an account and is now the owner.'),
+      (_, 'bad-input') => tr('כתובת המייל אינה תקינה.', 'That e-mail address is not valid.'),
+      (_, 'not-allowed') => tr('אין לכם הרשאה לערוך עסקים.', 'You may not edit businesses.'),
+      _ => tr('ההזמנה לא נשלחה: ${error ?? status}', 'The invitation was not sent: ${error ?? status}'),
+    };
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    if (status == 200) ref.invalidate(adminBusinessListProvider);
+  }
+
   /// Row actions wait for the write and say so when it is refused; they
   /// used to fire and forget, so a failure left the row as it was with no
   /// word why.
@@ -189,6 +276,8 @@ class _AdminBusinessesScreenState extends ConsumerState<AdminBusinessesScreen> {
         _showBusinessEditor(context, ref, business: biz);
       case 'stats':
         showBusinessStats(context, id, biz['name'] as String? ?? '');
+      case 'invite_owner':
+        await _inviteOwner(biz);
       case 'activate':
         await runAdminAction(
           context,
@@ -505,6 +594,13 @@ class _BusinessTable extends StatelessWidget {
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
                               ),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'invite_owner',
+                            child: Text(
+                              tr('הזמנת בעלים במייל', 'Invite owner by e-mail'),
+                              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                             ),
                           ),
                           // Views and clicks on the business's page (00048).

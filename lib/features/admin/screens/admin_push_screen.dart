@@ -34,6 +34,9 @@ Map<String, String> get _topics => {
   'businesses': tr('עסקים חדשים', 'New businesses'),
   'deals': tr('מבצעים', 'Deals'),
   'realestate': tr('נדל״ן', 'Real estate'),
+  // The Jobs switch in the app's Settings (push_devices.notify_jobs, 00069):
+  // the panel could not reach it by hand until 15 Oct.
+  'jobs': tr('משרות', 'Jobs'),
 };
 
 class AdminPushScreen extends ConsumerStatefulWidget {

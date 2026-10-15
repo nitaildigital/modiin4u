@@ -48,7 +48,10 @@ export function AuthLanding({ lang }: { lang: Lang }) {
     const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
     const tokenHash = url.searchParams.get('token_hash');
     const type = (url.searchParams.get('type') ?? hash.get('type') ?? '') as EmailOtpType;
-    const recovery = type === 'recovery';
+    // An invitation (an owner the panel invited, owner-invite) arrives with
+    // no password yet, so it chooses one here, as a reset does; signing it
+    // out as a confirmed address would leave an account nobody can open.
+    const recovery = type === 'recovery' || type === 'invite';
 
     // A reset link signs the person in; that session must be spent on the
     // new password before anything else.

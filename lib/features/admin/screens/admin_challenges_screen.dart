@@ -285,6 +285,8 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
   // message (00058).
   late final TextEditingController _prize;
   late final TextEditingController _prizeEn;
+  late final TextEditingController _terms;
+  late final TextEditingController _termsEn;
   bool _perDay = false;
   /// "Notify everyone when it starts" (00060).
   bool _notify = true;
@@ -309,6 +311,8 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
     );
     _prize = TextEditingController(text: c?['prize'] as String? ?? '');
     _prizeEn = TextEditingController(text: c?['prize_en'] as String? ?? '');
+    _terms = TextEditingController(text: c?['terms'] as String? ?? '');
+    _termsEn = TextEditingController(text: c?['terms_en'] as String? ?? '');
     _perDay = c?['goal_per_day'] as bool? ?? false;
     _notify = c == null || (c['notify_on_publish'] as bool? ?? false);
     _startAt = israelFromStored(c?['start_at'] as String?);
@@ -324,6 +328,8 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
     _reward.dispose();
     _prize.dispose();
     _prizeEn.dispose();
+    _terms.dispose();
+    _termsEn.dispose();
     super.dispose();
   }
 
@@ -364,6 +370,8 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
       'reward_points': int.tryParse(_reward.text.trim()) ?? 0,
       'prize': _prize.text.trim().isEmpty ? null : _prize.text.trim(),
       'prize_en': _prizeEn.text.trim().isEmpty ? null : _prizeEn.text.trim(),
+      'terms': _terms.text.trim().isEmpty ? null : _terms.text.trim(),
+      'terms_en': _termsEn.text.trim().isEmpty ? null : _termsEn.text.trim(),
       'goal_per_day': _perDay,
       'notify_on_publish': _notify,
       'challenge_type': 'steps',
@@ -500,6 +508,20 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                           ),
                         ),
                       ],
+                    ),
+                    // The competition's terms (00084), shown under its banner
+                    // in the app and on the site; the same plain text as the
+                    // information pages (**bold**, # headings, - lists).
+                    _field(
+                      tr('תקנון התחרות', 'Competition terms (Hebrew)'),
+                      _terms,
+                      hint: tr('מי משתתף, איך נקבע הזוכה, מתי ואיך מקבלים את הפרס…', 'Who takes part, how the winner is decided, when and how the prize is given…'),
+                      maxLines: 6,
+                    ),
+                    _field(
+                      tr('תקנון התחרות (אנגלית)', 'Competition terms (English)'),
+                      _termsEn,
+                      maxLines: 4,
                     ),
                     SwitchListTile(
                       value: _perDay,

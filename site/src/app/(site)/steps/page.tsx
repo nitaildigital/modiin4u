@@ -7,6 +7,7 @@ import { banners } from '@/lib/data/banners';
 import { activeChallenge } from '@/lib/data/challenges';
 import { storeLinks } from '@/lib/data/steps';
 import { BannerImage } from '@/components/ui/Banner';
+import { SitePageBody } from '@/components/info/SitePageBody';
 
 export async function generateMetadata(): Promise<Metadata> {
   // A page of the app's, for the notifications that lead here.
@@ -25,6 +26,9 @@ export default async function StepsPage() {
   const t = tr(lang);
   const [top, inline, challenge, stores] = await Promise.all([banners('STEPS_TOP'), banners('STEPS_INLINE'), activeChallenge(), storeLinks()]);
   const prize = challenge ? (lang === 'en' ? (challenge.prize_en?.trim() || challenge.prize?.trim()) : (challenge.prize?.trim() || challenge.prize_en?.trim())) : null;
+  // The competition's own terms (00084), in the page's language where the
+  // panel has them, else the other one.
+  const terms = challenge ? (lang === 'en' ? (challenge.terms_en?.trim() || challenge.terms?.trim()) : (challenge.terms?.trim() || challenge.terms_en?.trim())) : null;
   return (
     <div className="wrap pb-20 pt-6 desk:pt-12">
       <div className="mx-auto max-w-[960px]">
@@ -50,6 +54,13 @@ export default async function StepsPage() {
             </div>
             {prize && <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-sm">🏆 {t('הפרס: ', 'Prize: ')}{prize}</p>}
           </section>
+        )}
+
+        {terms && (
+          <details className="mt-4 rounded-2xl border border-line px-6 py-4">
+            <summary className="cursor-pointer font-nunito text-lg font-semibold text-navy">{t('תקנון התחרות', 'Competition terms')}</summary>
+            <div className="mt-4"><SitePageBody text={terms} /></div>
+          </details>
         )}
 
         {inline[0] && <div className="mt-8 [&_img]:w-full [&_img]:rounded-xl"><BannerImage banner={inline[0]} /></div>}

@@ -86,3 +86,13 @@ something is genuine.
 the "forgot password" mail. The other templates Supabase offers — magic link,
 e-mail change, re-authentication — are not reached by anything the app does
 today; if they are turned on later they want the same treatment.
+
+## invite.html — an owner invited from the panel (15 Oct)
+
+The panel's "Invite owner by e-mail" (Businesses → ⋮) calls the
+`owner-invite` function, which sends Supabase's **Invite user** e-mail to an
+address with no account. Its link opens the website's /auth/confirm with
+`type=invite`, which shows the choose-a-password form (as a reset does);
+then the owner signs in to the app. Subject: "הוזמנתם לנהל את דף העסק שלכם —
+מודיעין בשבילך". Set through the Management API with the others
+(`mailer_subjects_invite`, `mailer_templates_invite_content`).

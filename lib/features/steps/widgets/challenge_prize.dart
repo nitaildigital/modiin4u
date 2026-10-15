@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../site_pages/widgets/site_page_body.dart';
 
 /// The step competition's prize, as the panel words it, in the page's
 /// language; null when the challenge has none.
@@ -12,6 +13,51 @@ String? challengePrize(Map<String, dynamic> c, bool hebrew) {
   final he = clean(c['prize']);
   final en = clean(c['prize_en']);
   return hebrew ? (he ?? en) : (en ?? he);
+}
+
+/// The competition's terms (00084) in the page's language, else the other
+/// one; null when the panel has none.
+String? challengeTerms(Map<String, dynamic> c, bool hebrew) {
+  String? clean(Object? v) => (v as String?)?.trim().isEmpty ?? true ? null : (v as String).trim();
+  final he = clean(c['terms']);
+  final en = clean(c['terms_en']);
+  return hebrew ? (he ?? en) : (en ?? he);
+}
+
+/// The terms in a sheet over the steps page, drawn as the information pages
+/// are (bold, headings, lists).
+void showChallengeTerms(BuildContext context, String terms, bool hebrew) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.75,
+      maxChildSize: 0.95,
+      builder: (ctx, scroll) => ListView(
+        controller: scroll,
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: const Color(0xFFDADADA), borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            hebrew ? 'תקנון התחרות' : 'Competition terms',
+            style: TextStyle(fontFamily: AppFonts.nunito, fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.navy),
+          ),
+          const SizedBox(height: 12),
+          SitePageBody(text: terms, fontSize: 15),
+        ],
+      ),
+    ),
+  );
 }
 
 String _thousands(int n) => n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
@@ -104,6 +150,23 @@ class ChallengePrizeBanner extends StatelessWidget {
                     rule,
                     style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: Colors.white.withValues(alpha: 0.85), height: 1.35),
                   ),
+                  if (challengeTerms(challenge, hebrew) case final terms?) ...[
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      onTap: () => showChallengeTerms(context, terms, hebrew),
+                      child: Text(
+                        t('Competition terms ›', 'תקנון התחרות ›'),
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFFFC107),
+                          decoration: TextDecoration.underline,
+                          decorationColor: const Color(0xFFFFC107),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   if (winner != null && winner.isNotEmpty)
                     _Pill(

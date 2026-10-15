@@ -152,6 +152,68 @@ class _JobRowState extends ConsumerState<_JobRow> {
     }
   }
 
+  Future<void> _promote(Job j) async {
+    final days = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(tr('קידום "${j.title}"', 'Promote "${j.title}"')),
+        children: [
+          for (final d in const [7, 14, 30])
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, d),
+              child: Text(tr('$d ימים', '$d days')),
+            ),
+        ],
+      ),
+    );
+    if (days == null) return;
+    // From now, or from the end of a promotion still running.
+    final now = DateTime.now().toUtc();
+    final from = j.promotedUntil != null && j.promotedUntil!.isAfter(now) ? j.promotedUntil!.toUtc() : now;
+    await _run(() => SupabaseConfig.client
+        .from('jobs')
+        .update({'promoted_until': from.add(Duration(days: days)).toIso8601String()})
+        .eq('id', j.id));
+  }
+
+  Future<void> _announce(Job j) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('לשלוח התראה על המשרה?', 'Send a notification about this job?')),
+        content: Text(tr(
+          'ההתראה תישלח עכשיו לכל מי שהפעיל "משרות" בהגדרות האפליקציה.',
+          'It goes now to everyone who turned on Jobs in the app\'s settings.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('ביטול', 'Cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('שלח', 'Send'))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final where = [if (j.businessName != null) j.businessName!].join();
+    await _run(() => SupabaseConfig.client.from('push_campaigns').insert({
+          'title': 'משרה מומלצת',
+          'body': where.isEmpty ? j.title : '${j.title} · $where',
+          'title_en': 'Featured job',
+          'body_en': where.isEmpty ? j.title : '${j.title} · $where',
+          'image_url': j.coverImage ?? j.businessLogo,
+          'deep_link': '/jobs/${j.id}',
+          'status': 'scheduled',
+          'scheduled_at': DateTime.now().toUtc().toIso8601String(),
+          'audience_type': 'topic',
+          'audience_filter': {'topic': 'jobs'},
+          'source_type': 'job_boost',
+          'source_id': j.id,
+        }));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('ההתראה נשלחת', 'The notification is on its way'))),
+      );
+    }
+  }
+
   String _date(DateTime d) {
     final l = d.toLocal();
     return '${l.day}/${l.month}/${l.year}';
@@ -254,6 +316,21 @@ class _JobRowState extends ConsumerState<_JobRow> {
                         ? null
                         : () => _run(() => client.from('jobs').update({'status': 'active'}).eq('id', j.id)),
                   ),
+                // The panel's own boost (J5): first in the jobs lists for the
+                // days chosen, as an approved promotion request would make it,
+                // and a notification to whoever turned Jobs on in the app.
+                if (j.status == JobStatus.active) ...[
+                  const SizedBox(height: 8),
+                  AdminButton.secondary(
+                    label: j.isPromoted ? tr('הארך קידום', 'Extend promotion') : tr('קדם משרה', 'Promote job'),
+                    onPressed: _busy ? null : () => _promote(j),
+                  ),
+                  const SizedBox(height: 8),
+                  AdminButton.secondary(
+                    label: tr('שלח התראה', 'Send notification'),
+                    onPressed: _busy ? null : () => _announce(j),
+                  ),
+                ],
                 if (j.isPromoted) ...[
                   const SizedBox(height: 8),
                   AdminButton.secondary(
