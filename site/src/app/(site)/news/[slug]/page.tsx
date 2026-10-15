@@ -108,7 +108,7 @@ export default async function ArticlePage({ params }: Props) {
           <ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} />
           {/* The page's one H1 is the headline above: a heading the story's own
               text opens with an h1 is set as an h2. */}
-          <div className="prose-site mt-8" dangerouslySetInnerHTML={{ __html: (a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2') }} />
+          <div className="prose-site mt-8" dangerouslySetInnerHTML={{ __html: storyPhotos((a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2')) }} />
           {/* The campaign booked under the story; nothing when none is. */}
           {inline[0] && <div className="mt-14 max-w-[796px]"><BannerImage banner={inline[0]} /></div>}
 
@@ -158,4 +158,21 @@ export default async function ArticlePage({ params }: Props) {
       </div>
     </article>
   );
+}
+
+/** The pictures inside a story, as WordPress wrote them: full-size files from
+ *  our storage, all fetched as the page opened — 850 KB on one article,
+ *  competing with the story's own picture (PageSpeed, 15 Oct). Each now goes
+ *  through the site's resizer at 800 px and loads when scrolled near; its
+ *  width and height stay, so nothing shifts as it arrives. WordPress's
+ *  srcset/sizes name its own copies, so they go. */
+function storyPhotos(html: string): string {
+  return html.replace(/<img\b([^>]*)>/gi, (tag, attrs: string) => {
+    let a = attrs.replace(/\s*\/\s*$/, '').replace(/\s(?:srcset|sizes|loading|decoding)=(["'])[^"']*\1/gi, '');
+    a = a.replace(/\ssrc=(["'])([^"']+)\1/i, (m, q: string, src: string) => {
+      const own = ownPhoto(src.replace(/&amp;/g, '&'), 800);
+      return own && own !== src ? ` src=${q}${own.replace(/&/g, '&amp;')}${q}` : m;
+    });
+    return `<img${a} loading="lazy" decoding="async">`;
+  });
 }

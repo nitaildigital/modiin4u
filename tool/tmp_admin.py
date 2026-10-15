@@ -26,6 +26,7 @@ import secrets
 import sys
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -55,6 +56,16 @@ def http(method, path, body=None, extra=None):
         raise SystemExit(f'{method} {path.split("?")[0]} -> {e.code}: {e.read().decode()[:200]}')
 
 
+def drop_welcome(uid):
+    """The welcome push the account queued when it was made confirmed (00082):
+    to that account alone, so nobody else ever saw it, but it stayed in the
+    panel's Push list — three in a day on 15 Oct. Removed with the account."""
+    match = urllib.parse.quote(json.dumps({'profile_ids': [uid]}, separators=(',', ':')))
+    gone = http('DELETE', f'/rest/v1/push_campaigns?source_type=eq.welcome&audience_filter=cs.{match}',
+                extra={'Prefer': 'return=representation'}) or []
+    return len(gone)
+
+
 if '--create' in sys.argv:
     if os.path.exists(CREDS):
         raise SystemExit(f'{CREDS} exists — delete the previous admin first (--delete)')
@@ -73,10 +84,12 @@ elif '--delete' in sys.argv:
     c = json.load(open(CREDS))
     http('DELETE', f"/rest/v1/admin_users?profile_id=eq.{c['id']}")
     http('DELETE', f"/auth/v1/admin/users/{c['id']}")
+    welcome = drop_welcome(c['id'])
     left_admin = http('GET', f"/rest/v1/admin_users?select=id&profile_id=eq.{c['id']}")
     left_profile = http('GET', f"/rest/v1/profiles?select=id&id=eq.{c['id']}")
     os.remove(CREDS)
-    print('deleted', c['email'], '| admin_users left:', len(left_admin), '| profiles left:', len(left_profile))
+    print('deleted', c['email'], '| admin_users left:', len(left_admin), '| profiles left:', len(left_profile),
+          '| welcome pushes removed:', welcome)
 elif '--list' in sys.argv or '--purge' in sys.argv:
     import re
     found, page = [], 1
@@ -93,6 +106,7 @@ elif '--list' in sys.argv or '--purge' in sys.argv:
         for u in found:
             http('DELETE', f"/rest/v1/admin_users?profile_id=eq.{u['id']}")
             http('DELETE', f"/auth/v1/admin/users/{u['id']}")
+            drop_welcome(u['id'])
             left = http('GET', f"/rest/v1/admin_users?select=id&profile_id=eq.{u['id']}")
             print('deleted', u['email'], '| admin_users left:', len(left))
         if os.path.exists(CREDS):

@@ -57,7 +57,13 @@ echo "── uploading to $USR@$HOST:/srv/modiin4u-site"
 # The image library is per platform: this Mac's build carries the macOS
 # one, the server needs Linux's. Those are installed on the server once and
 # kept out of --delete; a server without them gets them here.
+# The resized photos (.next/cache/images) are kept too: --delete emptied
+# them on every deploy, so each first visit had every photo made again
+# (PageSpeed swung 4 s to 12 s after the 15 Oct deploy). They are images
+# only and stay right across builds; the rest of .next/cache (page and
+# data copies) goes, as a new build may have dropped what an old page names.
 rsync -az --delete --exclude 'node_modules/@img/sharp-linux-x64' --exclude 'node_modules/@img/sharp-libvips-linux-x64' \
+  --exclude '.next/cache/images' \
   "$OUT/" "$USR@$HOST:/srv/modiin4u-site/"
 ssh "$USR@$HOST" bash -s <<'REMOTE'
 set -e

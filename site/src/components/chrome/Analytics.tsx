@@ -5,7 +5,10 @@ import { ANALYTICS, SEO_LIVE } from '@/lib/config';
  *  Meta Pixel, on the live site only, so the copies on other addresses never
  *  count as visits. The pixel sends no advanced matching (form contents): the
  *  client has not decided on it. It counts page changes inside the site by
- *  itself, from the browser's history. */
+ *  itself, from the browser's history. Clarity and Hotjar, recordings rather
+ *  than counts, load once the page has (lazyOnload): they were a third of
+ *  the main thread's blocking time on a phone (15 Oct). GA4 and the pixel
+ *  stay early, so a quick visit, and the landing page's store taps, count. */
 export function Analytics() {
   if (!SEO_LIVE) return null;
   return (
@@ -15,12 +18,12 @@ export function Analytics() {
         window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date()); gtag('config', '${ANALYTICS.ga4}');
       `}</Script>
-      <Script id="clarity" strategy="afterInteractive">{`
+      <Script id="clarity" strategy="lazyOnload">{`
         (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${ANALYTICS.clarity}");
       `}</Script>
-      <Script id="hotjar" strategy="afterInteractive">{`
+      <Script id="hotjar" strategy="lazyOnload">{`
         (function(h,o,t,j,a,r){h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
         h._hjSettings={hjid:${ANALYTICS.hotjar},hjsv:6};a=o.getElementsByTagName('head')[0];
         r=o.createElement('script');r.async=1;r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;a.appendChild(r);

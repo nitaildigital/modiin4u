@@ -35,6 +35,10 @@ const nextConfig: NextConfig = {
   // render, which Google copes with but Bing, Facebook, WhatsApp and most
   // other crawlers do not: they read the head only.
   htmlLimitedBots: /.*/,
+  // Not experimental.inlineCss: tried 15 Oct against the stylesheet's 1.9 s
+  // of render blocking on PageSpeed's phone, but Next writes the 108 KB of
+  // CSS into each page twice (the <style> and its own page data) — an
+  // article went from 26 KB to 74 KB gzipped, every visit.
   images: {
     // The widths ownPhoto asks for (src/lib/photos.ts), and nothing else.
     deviceSizes: [800, 1200, 1600, 2000, 2500],
