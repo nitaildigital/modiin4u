@@ -3187,6 +3187,24 @@ Report with "hide it now" added the same day. What 1.2 still lacked:
   reply to Apple; the password is in that reply, not here. Not one of the
   temporary test accounts — it stays until the app is approved, then goes.
 
+**Web notifications on www — 15 Oct.** Harshit: "the notifications in the
+web are not working". They were: the sender went out on time and Firebase
+accepted the site's key from www. What was missing was a browser: a
+browser's "allow notifications" belongs to the address, and since the move
+not one had been turned on at www.modiin4u.co.il (push_devices held one web
+row, the 9 Oct localhost test). On www, Turn on → token from Firebase →
+`register_push_device` takes ~10 s on a slow line. Tested end to end with a
+throwaway business owner, its business (active, noindex, no "new business"
+announcement) and a job inserted as the app would: `on_job_change` queued
+"משרה חדשה", a watcher narrowed it to Harshit's browser alone (a new job
+otherwise goes to every device with jobs on), the dispatcher sent it at its
+minute (1 accepted), and it showed on his Mac. Job, business, account, the
+cancelled welcome and the campaigns deleted after; his browser's row kept.
+Each visitor turns notifications on at www once (the bell or
+/notifications/). Still to change: `notificationImage()` in push-dispatch
+asks Supabase's `/render/image` for each notification's picture — the
+transformations quota the site was moved off on 9 Oct.
+
 **"Coming soon" anywhere, and the lawyer's two documents — 15 Oct.**
 - **"The content of this page will be published soon"** (site:
   `components/info/InfoPage.tsx`; app: `sitePageComingSoon`, the
@@ -3265,6 +3283,32 @@ Checked on the live site as an iPhone (390 and 360 wide), 25 pages:
   serve its fetch cache from an earlier build once (it showed the
   accessibility page "coming soon" and the removed sample banners): a
   check of a local build needs a second load.
+
+**PageSpeed on the live domain, and redirects after a restart — 15 Oct.**
+- **PageSpeed Insights, phone** (pagespeed.web.dev; the API's free quota was
+  spent): home 81 (LCP 3.5 s), an article 65 (6.8 s), `/search-rest-modiin/`
+  64 (13.2 s). Google's real-visitor data for the domain passes (LCP 2.2 s)
+  but is 28 days, mostly WordPress's. Restaurants' largest picture, the
+  first card, was lazy, so it was fetched last; it is now fetched at once
+  and first (`Photo`'s `priority`). An article's picture went to a phone at
+  1200 px; it now offers 800/1200/1600 (`ownPhotoSet`) and a phone takes
+  800. The phone home's first restaurant card asks to come first. The rest
+  of what PageSpeed lists is third parties' caching (PersonaAI, Meta,
+  Hotjar) and Next's own CSS and scripts. Not yet measured live — needs the
+  deploy.
+- **Redirects after a restart.** The first request after a restart waits
+  for the panel's redirects, but when that read fails (5 s) a closed
+  business's address fell through to its 404, which nginx keeps a minute.
+  The build now carries the list as it stood (`scripts/sync-data.mjs` →
+  `src/data/redirects.json`, 9 rows), which answers until the live list is
+  read. Checked with the live read pointed at a dead address: still 301.
+- **"Failed reads draw no rows"** (9 Oct) was already settled the same day
+  in lib/supabase.ts: every server read throws, the page is a 500 and nginx
+  serves the last good copy. The reads that still catch — banners, the site
+  notice, a neighbourhood's rating, the forms link — draw nothing on
+  purpose.
+- **Points and levels** are not wanted (the client, 15 Oct): struck from
+  item 42.
 
 **Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
 Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
@@ -3676,7 +3720,7 @@ panel against the database (59 tables; 20 never written by the code).
 | 39 | Article views never counted; "most viewed" shows imported numbers | ⬜ | Same recording as businesses (00048) |
 | 40 | No save button on articles; Favourites' News tab always empty | ⬜ | |
 | 41 | A ban keeps no reason and no history row | ⬜ | |
-| 42 | Medium: points and levels never move; views and shares of events, deals, apartments not counted; banner impressions and clicks not recorded; apartments get no published or expiry date and no rejection reason; terms acceptance not recorded (date, version); last login and app version never saved; role rights not editable in the panel; review replies, hiding a step group and merging tags write no history; panel settings (maintenance mode…) not connected; no admin alerts for new pending items | ⬜ | After launch, in that order of weight |
+| 42 | Medium: ~~points and levels never move~~ (not wanted — the client, through Harshit, 15 Oct: leave them out); views and shares of events, deals, apartments not counted; banner impressions and clicks not recorded; apartments get no published or expiry date and no rejection reason; terms acceptance not recorded (date, version); last login and app version never saved; role rights not editable in the panel; review replies, hiding a step group and merging tags write no history; panel settings (maintenance mode…) not connected; no admin alerts for new pending items | ⬜ | After launch, in that order of weight |
 | 43 | `/new-listing` saves nothing — but nothing opens it; the real form is `/add-apartment` | ⬜ | Delete the screen and route |
 
 **Tested after 00046–00049 and the category import (5 Oct, 16:45–17:15).**
