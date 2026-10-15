@@ -3421,6 +3421,21 @@ available" (no error logged; not reproduced); stored data for the client —
 During the site work a mistaken `check_seo_parity.py --help` crawled 45 for
 ~2 minutes (8 at a time) before it was stopped; Supabase was healthy after.
 
+**The launch screen showed the old icon — 15 Oct.** The app icons were
+replaced on 8 Oct afternoon (5302d0a: Android's mipmaps from
+`ic_launcher-playstore.png`, iOS's AppIcon set), but the launch-screen logos
+had been made that morning from the old `assets/images/app_icon.png` (the
+glowing badge), and nothing remade them. Now `app_icon.png` is the new icon
+(from iOS's 1024, flattened on its blue), `splash_logo.png` and
+`splash_logo_android12.png` are remade from it to the same layout (512 with
+rounded corners; 540 on a 1152 canvas for Android 12), and
+`dart run flutter_native_splash:create` regenerated Android's and iOS's
+launch images — its web and Info.plist changes reverted, as on 8 Oct. Checked
+on the OnePlus. **iOS had lost its launch logo altogether:**
+`Assets.xcassets/LaunchImage.imageset`, which LaunchScreen.storyboard names,
+was added on 8 Oct (4cceeb8) and deleted with the Next.js commit (4eb8ea9),
+so iPhone builds since showed an empty navy screen; it is back, to commit.
+
 **Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
 Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
 step ticked with what happened, and its Rollback section the old DNS values.
