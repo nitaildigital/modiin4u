@@ -246,7 +246,7 @@ export async function RestaurantsPage({ path }: { path: string }) {
           </section>
         )}
         <PhoneSection title={t('מסעדות במודיעין', 'Restaurants in Modiin')} more={t('לכל המסעדות', 'All restaurants')} to={catHref('restaurants')}
-          rows={phoneRestaurants.slice(0, 3)} kindOf={phoneKind} lang={lang} />
+          rows={phoneRestaurants.slice(0, 3)} kindOf={phoneKind} lang={lang} lead />
         <PhoneSection title={t('בתי קפה ומאפיות', 'Cafés & Bakeries')} more={t('לכל בתי הקפה', 'All cafés')} to={catHref('cafe-bakery')}
           rows={phoneCafes.slice(0, 3)} kindOf={phoneKind} lang={lang} />
         {topRated.length > 0 && (
@@ -318,19 +318,21 @@ function PhoneAddress({ b, lang }: { b: BizRow; lang: Lang }) {
 }
 
 /** A phone section (restaurants_screen _buildVerticalSection): three cards,
- *  the last fading out under "View all". */
-function PhoneSection({ title, more, to, rows, kindOf, lang }: {
-  title: string; more: string; to: string; rows: BizRow[]; kindOf: (b: BizRow) => string; lang: Lang;
+ *  the last fading out under "View all". [lead]: the section that opens the
+ *  page, whose first photo is the largest thing on the screen — lazy, it
+ *  was PageSpeed's slowest paint on a phone (LCP 13 s, 15 Oct). */
+function PhoneSection({ title, more, to, rows, kindOf, lang, lead = false }: {
+  title: string; more: string; to: string; rows: BizRow[]; kindOf: (b: BizRow) => string; lang: Lang; lead?: boolean;
 }) {
   if (!rows.length) return null;
   return (
     <section className="mt-6 px-4 [&+section]:mt-10">
       <h2 className="text-base font-semibold text-[#1F1F1F]">{title}</h2>
       <div className="relative mt-3 flex flex-col gap-4">
-        {rows.map((b) => (
+        {rows.map((b, i) => (
           <article key={b.id} className="relative">
             <div className="relative">
-              <Photo src={sizedPhoto(bizPhoto(b), 800)} alt={bizName(b, lang)} className="h-[200px] w-full rounded-xl" />
+              <Photo src={sizedPhoto(bizPhoto(b), 800)} alt={bizName(b, lang)} className="h-[200px] w-full rounded-xl" priority={lead && i === 0} />
               {kosherLabel(b.kosher_level) && (
                 <span className="absolute bottom-3 start-3 flex h-[27px] items-center gap-1.5 rounded-full bg-[#0033AC] px-2 text-xs font-medium text-white">
                   <ShieldTick size={14} color="#fff" />{lang === 'he' ? 'כשר' : 'Kosher'}

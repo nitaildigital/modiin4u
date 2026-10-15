@@ -1,3 +1,4 @@
+import snapshot from '@/data/redirects.json';
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from './config';
 
 /** The panel's redirects (Redirects section, table `redirects`): an old
@@ -16,7 +17,19 @@ const TTL = 5 * 60 * 1000;
  *  otherwise send every redirected address to a 404 for five minutes. */
 const RETRY = 15 * 1000;
 
-let rules = new Map<string, Rule>();
+type Row = { old_path: string; new_path: string; status_code: number };
+
+function toRules(rows: Row[]): Map<string, Rule> {
+  return new Map(rows.map((r) => [redirectKey(r.old_path), { to: r.new_path, code: r.status_code === 302 ? 302 : 301 }]));
+}
+
+/** Starts from the list as it stood at build time (scripts/sync-data.mjs).
+ *  After a restart the first read can fail — the database slow to answer a
+ *  cold connection — and without it a redirected address (a closed
+ *  business's) fell through to its page's 404, which nginx then kept for a
+ *  minute. A redirect added or switched off in the panel since the build
+ *  takes effect at the first good read, as before. */
+let rules = toRules(snapshot as Row[]);
 let readAt = 0;
 /** Whether a list has ever been read; until then a failure retries soon. */
 let loaded = false;
@@ -44,8 +57,7 @@ async function read(): Promise<void> {
       },
     );
     if (!res.ok) return;
-    const rows: { old_path: string; new_path: string; status_code: number }[] = await res.json();
-    rules = new Map(rows.map((r) => [redirectKey(r.old_path), { to: r.new_path, code: r.status_code === 302 ? 302 : 301 }]));
+    rules = toRules(await res.json());
     loaded = true;
     readAt = Date.now();
   } catch {

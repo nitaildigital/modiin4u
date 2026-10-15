@@ -18,10 +18,12 @@ export function ShopMarkStyle() {
 /** A listing's photograph over the brand gradient (NetworkPhoto): the
  *  gradient, with the shop mark, is what shows while the photo loads, where
  *  there is none — 90 of the businesses have no cover — and where it fails.
- *  [bg] (classes) or [style] replace the gradient, [glyph] the mark. */
-export function Photo({ src, alt, className = '', bg = BRAND_BG, style, icon = 40, glyph = 'shop', iconClass = 'text-white/30' }: {
+ *  [bg] (classes) or [style] replace the gradient, [glyph] the mark.
+ *  [priority]: the largest thing on the screen as the page opens — fetched
+ *  at once and first, not when the browser gets round to it. */
+export function Photo({ src, alt, className = '', bg = BRAND_BG, style, icon = 40, glyph = 'shop', iconClass = 'text-white/30', priority = false }: {
   src: string | null; alt: string; className?: string; bg?: string; style?: React.CSSProperties;
-  icon?: number; glyph?: 'shop' | 'image' | null; iconClass?: string;
+  icon?: number; glyph?: 'shop' | 'image' | null; iconClass?: string; priority?: boolean;
 }) {
   // Once the photo is in, the stand-in goes: a logo with a transparent
   // ground sits on white, as the app draws it, not on the gradient.
@@ -33,7 +35,8 @@ export function Photo({ src, alt, className = '', bg = BRAND_BG, style, icon = 4
       {!loaded && glyph === 'shop' && <><ShopMarkStyle /><span className={`biz-shop absolute inset-0 m-auto ${iconClass}`} style={{ width: icon, height: icon }} /></>}
       {!loaded && glyph === 'image' && <ImageIcon size={icon} color="currentColor" className={`absolute inset-0 m-auto ${iconClass}`} />}
       {src && (
-        <img ref={img} src={src} alt={alt} loading="lazy" decoding="async"
+        <img ref={img} src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async"
+          fetchPriority={priority ? 'high' : undefined}
           className="absolute inset-0 size-full object-cover"
           onLoad={() => setLoaded(true)}
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />

@@ -20,3 +20,12 @@ export function ownPhoto(url: string | null | undefined, px: number): string | n
   // it every photo would first be a redirect.
   return `/_next/image/?url=${encodeURIComponent(url)}&w=${w}&q=75`;
 }
+
+/** The same photo at several of [PHOTO_WIDTHS], for an `<img srcSet>`: the
+ *  browser takes the smallest that fills the box on its screen, so a phone
+ *  does not download the copy made for a desktop. Undefined for a photo
+ *  ownPhoto leaves as it is — there is only the one file. */
+export function ownPhotoSet(url: string | null | undefined, widths: number[]): string | undefined {
+  if (!url || !ownPhoto(url, widths[0])?.startsWith('/_next/image/')) return undefined;
+  return widths.map((w) => `${ownPhoto(url, w)} ${w}w`).join(', ');
+}

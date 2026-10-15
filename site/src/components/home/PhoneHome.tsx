@@ -89,8 +89,9 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
                 <Link key={b.id} href={href(`/business/${b.slug || b.id}/`)} className="w-[270px] shrink-0 snap-start rounded-xl border border-line bg-white p-2">
                   <span className="relative block h-[140px] overflow-hidden rounded-lg" style={img ? undefined : { background: tintOf(b.id) }}>
                     {/* The first card is in view as the page opens, and the largest thing
-                        in it: fetched at once, not when scrolled to. */}
-                    {img && <img src={ownPhoto(img, 600) ?? img} alt={bizName(b, lang)} loading={i === 0 ? 'eager' : 'lazy'} className="size-full object-cover" />}
+                        in it: fetched at once and before the rest, not when
+                        scrolled to. */}
+                    {img && <img src={ownPhoto(img, 600) ?? img} alt={bizName(b, lang)} loading={i === 0 ? 'eager' : 'lazy'} fetchPriority={i === 0 ? 'high' : undefined} className="size-full object-cover" />}
                     {kosherLabel(b.kosher_level) && (
                       <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-[50px] bg-[#0033AC] px-2 py-1.5 text-[10px] font-medium leading-none text-white">
                         <Verify size={12} color="#fff" variant="Bold" />{t('כשר', 'Kosher')}
