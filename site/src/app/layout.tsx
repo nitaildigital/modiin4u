@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Nunito, Rubik } from 'next/font/google';
 import Script from 'next/script';
+import { Suspense } from 'react';
 import './globals.css';
 import { getLang } from '@/lib/i18n';
 import { SITE_URL } from '@/lib/config';
 import { SITE_NAME } from '@/lib/seo';
 import { Footer } from '@/components/chrome/Footer';
 import { MobileTabBar } from '@/components/chrome/MobileTabBar';
+import { NavProgress } from '@/components/chrome/NavProgress';
 import { Analytics } from '@/components/chrome/Analytics';
 import { PushBoot } from '@/components/push/PushBoot';
 import { PushBanner } from '@/components/push/PushBanner';
@@ -35,6 +37,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {children}
         <Footer lang={lang} />
         <MobileTabBar lang={lang} />
+        {/* It reads the query string, which needs a boundary of its own. */}
+        <Suspense fallback={null}><NavProgress /></Suspense>
         <Analytics />
         <PushBoot lang={lang} />
         <PushBanner lang={lang} />

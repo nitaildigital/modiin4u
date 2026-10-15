@@ -3187,6 +3187,36 @@ Report with "hide it now" added the same day. What 1.2 still lacked:
   reply to Apple; the password is in that reply, not here. Not one of the
   temporary test accounts — it stays until the app is approved, then goes.
 
+**The phone site after the client's check — 15 Oct.** Nitai, the evening
+after the launch: the home page and footer "don't display very well" on
+the phone, and the bottom menu's buttons "are not working properly".
+Checked on the live site as an iPhone (390 and 360 wide), 25 pages:
+- **The bottom menu.** Home did nothing on almost every page: PersonaAI's
+  widget now wraps its (hidden) button in `#personaai-btn-wrap`, an
+  invisible 60 × 60 box fixed bottom right — over the Home tab in Hebrew —
+  which took the tap. Hidden with the rest of the widget's own chrome in
+  globals.css; the "Ask" buttons still open the chat (checked). The other
+  tabs worked but showed nothing for 2–10 s after a tap: Next.js keeps the
+  old page until the new one arrives. Now the tapped tab lights at once
+  (MobileTabBar) and a thin bar runs along the top for any link to another
+  page of the site until it lands (`NavProgress`, a client component in the
+  root layout — no `loading.tsx`, so the HTML Google reads is unchanged).
+  Live: every tab answers with the bar and the highlight within 0.15 s, the
+  page in 0.4–3 s from India, Home free on every page tried.
+- **The footer** was the desktop's columns stacked: ~2,400 px on a phone,
+  longer than the home page. On the phone now: contact, socials, the three
+  link groups as sections that open on a tap (two columns inside), the
+  badges side by side, a smaller logo, the legal line centred — 982 px. The
+  desktop footer is unchanged; both read the same link lists, and the links
+  are in the page either way.
+- **No other fault** on the 25 pages: no sideways scroll, no broken
+  picture, no page error. The home page is short on the phone because its
+  deals, events and apartments rows draw only when they have something, and
+  the sample content that filled them went on the 14th. A local build can
+  serve its fetch cache from an earlier build once (it showed the
+  accessibility page "coming soon" and the removed sample banners): a
+  check of a local build needs a second load.
+
 **Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
 Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
 step ticked with what happened, and its Rollback section the old DNS values.
