@@ -1,4 +1,37 @@
-# Modiin4u — handover (29 September 2026)
+# Modiin4u — handover
+
+## Where things stand — 15 October 2026 (after the launch)
+
+**Live since 14 Oct, ~18:25.** WordPress is frozen and kept at uPress
+(rollback: LAUNCH_RUNBOOK.md, top).
+
+| What | Where |
+|---|---|
+| Website (Next.js, `site/`) | https://www.modiin4u.co.il — the bare domain 301s to it |
+| Admin panel (Flutter, `lib/features/admin/`) | https://panel.modiin4u.co.il — `/admin`, `/login`, `/panel` on www and the old sslip.io panel 301 there; noindex |
+| App links | https://app.modiin4u.co.il — the two app-link files only; every page 301s to www |
+| Server | 45.93.94.49 (Kamatera), nginx files in `deploy/`; TCP BBR since 14 Oct |
+| Deploy | site: `tool/deploy_site.sh --live`; nginx and certificates: `tool/enable_domain.sh <name>` |
+
+**Done around the launch (PLAN.md, 14–15 Oct entries):** WordPress
+checked against the new site item by item and fixed (992/992 old addresses
+keep their SEO); sample content removed; Search Console sitemap (1,122) and
+the main pages requested; GA4 and the Meta Pixel on; restaurants lead the
+desktop home; the phone's bottom menu and footer fixed; all five
+information pages show content (About from WordPress's text); the Play
+signing key in `assetlinks.json`; App Store review fixes in the app (block
+a user, EULA box at sign-in, delete account in Profile).
+
+**Still open:** LAUNCH_RUNBOOK.md (unticked) and LAUNCH_TEST.md (28 journeys);
+for the App Store, Apple's organization-account conversion (case
+102996117461) and recordings on a physical device; the next app build
+(sign-up link and app links for www); the placeholder businesses, articles
+and events from `seed_remote.sql` (kept by the client); the client's own
+panel password; tomorrow's list in the work log.
+
+---
+
+## The handover of 29 September 2026
 
 For Harshit, taking over from Arvindra. PLAN.md is the long record of every
 decision and why; this is the short map of where things stand and what is

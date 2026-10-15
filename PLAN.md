@@ -3187,6 +3187,43 @@ Report with "hide it now" added the same day. What 1.2 still lacked:
   reply to Apple; the password is in that reply, not here. Not one of the
   temporary test accounts — it stays until the app is approved, then goes.
 
+**"Coming soon" anywhere, and the lawyer's two documents — 15 Oct.**
+- **"The content of this page will be published soon"** (site:
+  `components/info/InfoPage.tsx`; app: `sitePageComingSoon`, the
+  site_pages screens) can only show on the five information pages, when
+  the page is unpublished or empty in both languages. Checked live in
+  Hebrew and English: only About showed it, now filled (below). Terms,
+  Privacy, Accessibility and Delete account have content; a page written in
+  one language shows that one to readers of the other, on the site and in
+  the app alike.
+- **The Word files** ("מדיניות פרטיות…" and "תקנון ותנאי שימוש…", 5 Oct, in
+  the repo's root and Downloads) against the live rows, word by word: every
+  publishable paragraph is live. Not live, as decided on 8 Oct: the
+  "נספחים פנימיים – לא לפרסום", the lawyer's bracketed notes and
+  placeholders (filled with the client's details), and Privacy's rows for
+  services the app does not use. The Terms row also carries the EULA and
+  zero-tolerance sections added for Apple on the 14th, and an English
+  version (Privacy has none). The app reads the same rows.
+- **The municipal "בקרוב" (Coming soon)** is another label: the app's
+  tiles show it only without a destination, and all nine have one now
+  (parking, Shabbat, institutions, health, education, transport,
+  emergency, parks, forms) — the comment above `_servicesFor` in
+  `municipal_screen.dart` saying eight have none is out of date. On the
+  site none of the nine municipal pages says "coming soon"; `/parking/`
+  would only with no car parks (26 active). Data behind them: 26 car
+  parks, 70 parks, 472 municipal places.
+
+**About Us, from WordPress — 15 Oct (Harshit: "scrap from the wordpress").**
+`/about/` was the only page still saying "the content of this page will be
+published soon" (site and app; every other information page has text in at
+least one language, which both fall back to). WordPress has no About page;
+its about text is the "מודיעין בשבילך" block every page carries (the
+introduction, news / business index / community, and the closing line).
+That text, word for word, is now `site_pages.about.body_he`, published; the
+three points as a list. No English — not translated; English readers see the
+Hebrew until the client writes one in the panel (עמודי מידע). Written only
+if the page was still empty and unpublished; undo: empty it and unpublish.
+
 **app.modiin4u.co.il — 15 Oct.** The address both apps claim for their
 links (AndroidManifest's intent filter, Runner.entitlements), and Android
 verifies every claimed host or none — so www links could not open the app
