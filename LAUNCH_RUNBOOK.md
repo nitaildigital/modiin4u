@@ -127,11 +127,12 @@ computer only: `185.108.148.183  www.modiin4u.co.il modiin4u.co.il` in
       main addresses 301 there); for panel.modiin4u.co.il copy its conf and
       change the name in snippets/modiin4u-public.conf's redirects.
       — done 14 Oct 19:41: https://panel.modiin4u.co.il (certificate to 12 Jan 2027, admin only, noindex); `/panel`, `/admin`, `/login` on www and the whole sslip.io panel address 301 there; added to Supabase's redirect allow-list. The DNS record flickered between uPress's nameservers; Cloudflare's cached NXDOMAIN was cleared at one.one.one.one/purge-cache.
-- [ ] **App links on Android:** Play's app-signing SHA-256 into both
+- [x] **App links on Android:** Play's app-signing SHA-256 into both
       `assetlinks.json` (site/public and web/); `app.modiin4u.co.il` either
       set up or dropped from AndroidManifest's intent filter in the next
       build — Android verifies all claimed hosts or none.
       — 14 Oct: Play's key (`08:CE:11:…:72:B6`) added to both files and live on www; Google's Digital Asset Links API lists all three keys. Still open: `app.modiin4u.co.il` (record added at uPress that evening, not yet served).
+      — 15 Oct: `app.modiin4u.co.il` live (uPress published the record overnight); https with its own certificate (to 13 Jan 2027); both app-link files served there with all three keys and the iOS app ID. Google's Digital Asset Links API had not fetched the new host yet at first check.
 
 ## F. After
 

@@ -3187,6 +3187,18 @@ Report with "hide it now" added the same day. What 1.2 still lacked:
   reply to Apple; the password is in that reply, not here. Not one of the
   temporary test accounts — it stays until the app is approved, then goes.
 
+**app.modiin4u.co.il — 15 Oct.** The address both apps claim for their
+links (AndroidManifest's intent filter, Runner.entitlements), and Android
+verifies every claimed host or none — so www links could not open the app
+until this one answered. uPress served the record overnight; https by
+`tool/enable_domain.sh` (certificate to 13 Jan 2027). It now proves
+ownership and nothing else: the two app-link files are served from the
+site's public folder (all three Android keys, the iOS app ID), and every
+other address 301s to the same page on www, path and query kept — one copy
+of the site for Google; a phone with the app opens it without fetching the
+page. `enable_domain.sh`'s last check expects a 200 from the site there and
+reports the 301s as FAILED; that is this change, not a fault.
+
 **The phone site after the client's check — 15 Oct.** Nitai, the evening
 after the launch: the home page and footer "don't display very well" on
 the phone, and the bottom menu's buttons "are not working properly".
