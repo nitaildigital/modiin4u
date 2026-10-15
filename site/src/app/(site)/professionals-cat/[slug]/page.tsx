@@ -4,19 +4,9 @@ import { slugParam } from '@/lib/params';
 import { pageMetadata, wpPage } from '@/lib/seo';
 import { businessCategoryBySlug } from '@/lib/data/businesses';
 import { CategoryPage } from '@/components/businesses/CategoryPage';
+import { PROFESSIONALS_MOVED as MOVED } from '@/lib/old-slugs';
 
 type Props = { params: Promise<{ slug: string }> };
-
-/** WordPress's professional categories that became business categories. */
-const MOVED: Record<string, string> = {
-  'בונה-אתרים': 'web-design',
-  'הנדימן': 'handyman',
-  'חשמלאי': 'electrician',
-  'טכנאי-מקררים': 'fridge-technician',
-  'לק-ג׳ל': 'gel-nails',
-  'עורך-דין': 'lawyer',
-  'שיפוצניק': 'renovations',
-};
 
 /** The category an old address lists: the one it became, or for the nine
  *  WordPress kept empty, the professionals (Services). Null for an address

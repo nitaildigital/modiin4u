@@ -6,6 +6,7 @@ import { FacebookMark, MailMark, WhatsAppMark, XMark } from './icons';
 import { sized } from './format';
 import { Floating, useFloating } from '@/components/ui/Floating';
 import { ownPhoto } from '@/lib/photos';
+import { telNumber } from '@/lib/contact';
 
 type UI = {
   businessId: string;
@@ -260,16 +261,18 @@ async function copy(text: string): Promise<boolean> {
 export function CallMenu({ phone, children, he }: { phone: string; children: React.ReactNode; he: boolean }) {
   const { businessId, toast } = useUI();
   const t = (h: string, e: string) => (he ? h : e);
-  const tel = phone.replace(/[^\d+]/g, '');
+  const tel = telNumber(phone);
   return (
     <Popover button={(toggle) => (
       <button type="button" className="block w-full text-start" onClick={() => { track(businessId, 'call'); toggle(); }}>{children}</button>
     )}>
       {(close) => (
         <>
-          <a href={`tel:${tel}`} className={itemCls} onClick={close}>
-            <Call size={20} color="#123A72" /><span dir="ltr">{phone}</span>
-          </a>
+          {tel && (
+            <a href={`tel:${tel}`} className={itemCls} onClick={close}>
+              <Call size={20} color="#123A72" /><span dir="ltr">{phone}</span>
+            </a>
+          )}
           <button type="button" className={itemCls} onClick={async () => {
             close();
             toast((await copy(phone)) ? t('המספר הועתק', 'Number copied') : `${t('מספר', 'Number')}: ${phone}`);

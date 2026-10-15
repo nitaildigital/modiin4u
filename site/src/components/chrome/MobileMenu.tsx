@@ -25,7 +25,11 @@ export function MobileMenu({ lang, menus, items }: { lang: Lang; menus: Menus; i
       {open && (
         <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal>
           <button type="button" className="flex-1 bg-black/40" aria-label={t('סגירה', 'Close')} onClick={() => setOpen(false)} />
-          <div className="h-full w-[86%] max-w-sm overflow-y-auto bg-white p-5">
+          {/* The bottom tab bar (MobileTabBar: 76 px and the safe area) is
+              drawn over the menu's foot, since the menu sits inside the top
+              bar's layer; the extra space at the end lets the last link
+              scroll clear of it. */}
+          <div className="h-full w-[86%] max-w-sm overflow-y-auto bg-white p-5 pb-[calc(96px+env(safe-area-inset-bottom))]">
             <div className="mb-5 flex items-center justify-between">
               <LangToggle lang={lang} />
               <button type="button" onClick={() => setOpen(false)} aria-label={t('סגירה', 'Close')}><CloseCircle size={28} color="#123A72" /></button>

@@ -4,15 +4,10 @@ import { Call, Routing2, SearchNormal1 } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
 import { MUNICIPAL_CATEGORIES, placeName, type MunicipalPlace } from '@/lib/data/municipal-shared';
 import { matches, searchFields } from '@/lib/search-text';
+import { directionsUrl } from '@/lib/contact';
 
 const tel = (phone: string) => `tel:${phone.replace(/[^\d+*#]/g, '')}`;
 
-/** Waze to the place's point, or to its address when it has no point. */
-function navigate(p: MunicipalPlace): string | null {
-  if (p.latitude != null && p.longitude != null) return `https://waze.com/ul?ll=${p.latitude},${p.longitude}&navigate=yes`;
-  if (p.address) return `https://waze.com/ul?q=${encodeURIComponent(`${p.address}, מודיעין`)}&navigate=yes`;
-  return null;
-}
 
 function Round({ href, label, filled = false, color = '#17A9D0', children }: { href: string; label: string; filled?: boolean; color?: string; children: React.ReactNode }) {
   return (
@@ -56,7 +51,8 @@ export function PlacesList({ places, lang }: { places: MunicipalPlace[]; lang: L
             )}
             <ul>
               {inIt.map((p) => {
-                const nav = navigate(p);
+                // Directions on Google Maps, the client's choice of maps.
+                const nav = directionsUrl(p);
                 if (category === 'emergency') {
                   return (
                     <li key={p.id} className="mb-3 flex items-center gap-3 rounded-xl border border-[#F5C2C2] bg-[#FFF5F5] p-4">

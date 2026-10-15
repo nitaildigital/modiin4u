@@ -5,23 +5,18 @@ import { pageMetadata, plain, SUFFIX, wpPage } from '@/lib/seo';
 import { businessCategoryBySlug, sizedPhoto } from '@/lib/data/businesses';
 import { CategoryPage } from '@/components/businesses/CategoryPage';
 import { DirectoryPage } from '@/components/businesses/DirectoryPage';
+import { BUSINESS_CAT_RENAMED } from '@/lib/old-slugs';
 
 type Props = { params: Promise<{ slug: string }> };
-
-/** WordPress's addresses for three categories that have English slugs now:
- *  each keeps its own address, title and H1, and lists the category. */
-const RENAMED: Record<string, string> = {
-  'בריאות': 'health',
-  'ספורט-וכושר': 'sports-fitness',
-  'רכב': 'automotive',
-};
 
 /** What an address under /business-cat/ shows: a category by its slug or its
  *  old one, or — for a category WordPress had and the directory does not,
  *  such as the empty "הטבות" and "חוגים" in the old menu — the directory. */
 async function resolve(slug: string) {
   const path = `/business-cat/${slug}/`;
-  const renamed = RENAMED[slug];
+  // WordPress's addresses for three categories that have English slugs now:
+  // each keeps its own address, title and H1, and lists the category.
+  const renamed = BUSINESS_CAT_RENAMED[slug];
   const category = await businessCategoryBySlug(renamed ?? slug);
   if (category) return { path, category, old: !!renamed };
   if (wpPage(path)) return { path, category: null, old: true };

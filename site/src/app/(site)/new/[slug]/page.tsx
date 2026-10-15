@@ -4,26 +4,18 @@ import { slugParam } from '@/lib/params';
 import { pageMetadata, h1For, plain, SUFFIX } from '@/lib/seo';
 import { newsCategoryBySlug } from '@/lib/data/news';
 import { CategoryListing, pageParam, pagedMetadata } from '@/components/news/NewsListing';
+import { NEWS_OLD_SLUGS } from '@/lib/old-slugs';
 
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-/** WordPress's names for categories the panel has since renamed: their old
- *  addresses show the category under its new slug, with WordPress's title,
- *  description and heading. WordPress's "עירוני" (/new/municipal/) holds the
- *  municipal stories, which are filed under `municipal-news` here; the
- *  panel's own `municipal` category is empty. */
-const OLD_SLUGS: Record<string, string> = {
-  business: 'business-news',
-  culinary: 'food',
-  municipal: 'municipal-news',
-};
-
 async function resolve(params: Props['params']) {
   const slug = slugParam((await params).slug);
-  const old = OLD_SLUGS[slug];
+  // A category the panel has renamed: its old address shows it under its new
+  // slug, with WordPress's title, description and heading.
+  const old = NEWS_OLD_SLUGS[slug];
   const category = await newsCategoryBySlug(old ?? slug);
   return { path: `/new/${slug}/`, category, old: !!old };
 }

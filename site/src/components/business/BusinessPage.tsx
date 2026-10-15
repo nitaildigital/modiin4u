@@ -9,13 +9,14 @@ import {
   type Business, type BusinessCard, type Kind, type MenuItem,
 } from '@/lib/data/business';
 import { JsonLd } from '@/components/JsonLd';
+import { directionsUrl, shownPhone, telNumber, waNumber } from '@/lib/contact';
 import { BusinessUI, BackButton, CallMenu, ExpandableText, GalleryStrip, PhoneTabs, PhotoThumb, ShareMenu, ShowAllPhotos, TrackedLink } from './ui';
 import { DesktopReviews, ReviewAvatar, ReviewPhotos, type ReviewView } from './Reviews';
 import { GoogleHours } from './GoogleHours';
 import { BusinessMap } from './BusinessMap';
 import { ShareMark, WhatsAppMark, DirectionMark } from './icons';
 import {
-  clock, dirOf, highlights, hoursOf, initials, kosherLabel, openNow, price, reviewDate, shownUrl, sized, waNumber, webLink,
+  clock, dirOf, highlights, hoursOf, initials, kosherLabel, openNow, price, reviewDate, shownUrl, sized, webLink,
   type Hours,
 } from './format';
 
@@ -51,6 +52,8 @@ type View = {
   cover: string | null; photos: string[]; hours: Hours[]; hoursText: string | null;
   reviews: ReviewView[]; menu: MenuItem[]; isPark: boolean; hasPlace: boolean;
   phone: string; website: string; whatsapp: string; instagram: string;
+  /** The phone and the WhatsApp as their links take them; null for none. */
+  tel: string | null; wa: string | null;
   /** Who reads the business's Messages; none for a park or a business no one runs. */
   owner: string | null;
 };
@@ -99,9 +102,11 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
     menu: menuRows.filter((m) => m.is_available !== false),
     isPark,
     hasPlace: !!b.latitude && !!b.longitude,
-    phone: isPark ? '' : (b.phone ?? '').trim(),
+    phone: isPark ? '' : shownPhone(b.phone),
     website: isPark ? '' : (b.website ?? '').trim(),
-    whatsapp: isPark ? '' : (b.whatsapp ?? '').trim(),
+    whatsapp: isPark ? '' : shownPhone(b.whatsapp),
+    tel: isPark ? null : telNumber(b.phone),
+    wa: isPark ? null : waNumber(b.whatsapp),
     instagram: isPark ? '' : (b.instagram ?? '').trim(),
     owner: isPark ? null : b.owner_id,
   };
@@ -112,7 +117,7 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
     name: b.name, url: SITE_URL + href(path),
   };
   if (b.address) ld.address = { '@type': 'PostalAddress', streetAddress: b.address, addressLocality: CITY, addressCountry: 'IL' };
-  if (b.phone && !isPark) ld.telephone = b.phone;
+  if (v.tel) ld.telephone = v.phone;
   if (b.latitude && b.longitude) ld.geo = { '@type': 'GeoCoordinates', latitude: b.latitude, longitude: b.longitude };
   if (image) ld.image = image;
   if ((b.review_count ?? 0) > 0 && b.rating) ld.aggregateRating = { '@type': 'AggregateRating', ratingValue: b.rating, reviewCount: b.review_count };
@@ -180,7 +185,11 @@ function Desktop({ v, more, kinds, inNeighborhood }: { v: View; more: BusinessCa
                 {v.reviews.length === 0 ? (
                   // Nothing to average, and no place on the website to write
                   // the first one: reviews are written in the app.
-                  <p className="text-base text-[#3D3D3D]">{t('עדיין אין ביקורות. תושבים כותבים ביקורות באפליקציית מודיעין בשבילך.', 'No reviews yet. Reviews are written by residents in the Modiin4u app.')}</p>
+                  // Centred, as the phone's empty state (15 Oct).
+                  <div className="flex flex-col items-center py-8 text-center">
+                    <span className="flex size-16 items-center justify-center rounded-full bg-[#F5F5F5]"><MessageText1 size={28} color="#6D6D6D" /></span>
+                    <p className="mt-4 text-base text-[#3D3D3D]">{t('עדיין אין ביקורות. תושבים כותבים ביקורות באפליקציית מודיעין בשבילך.', 'No reviews yet. Reviews are written by residents in the Modiin4u app.')}</p>
+                  </div>
                 ) : <DesktopReviews reviews={v.reviews} he={he} />}
               </div>
             </section>
@@ -417,13 +426,13 @@ function MoreInfo({ v }: { v: View }) {
           <InfoRow icon={<img src="/web/business/website.svg" alt="" width={20} height={20} />} label={t('אתר', 'Website')} value={shownUrl(v.website)} blue external />
         </TrackedLink>
       )}
-      {v.phone && (
+      {v.tel && (
         <CallMenu phone={v.phone} he={he}>
           <InfoRow icon={<img src="/web/business/call.svg" alt="" width={20} height={20} />} label={t('טלפון', 'Call')} value={v.phone} />
         </CallMenu>
       )}
-      {v.whatsapp && (
-        <TrackedLink stat="whatsapp" href={`https://wa.me/${waNumber(v.whatsapp)}`}>
+      {v.wa && (
+        <TrackedLink stat="whatsapp" href={`https://wa.me/${v.wa}`}>
           <InfoRow icon={<WhatsAppMark size={20} />} label="WhatsApp" value={v.whatsapp} />
         </TrackedLink>
       )}
@@ -496,11 +505,9 @@ function Phone({ v }: { v: View }) {
   const now = v.hours.length ? openNow(v.hours) : null;
   const neighborhood = b.neighborhoods ? localName(b.neighborhoods.name, b.neighborhoods.name_en, v.lang) : '';
   const place = [b.address ?? '', neighborhood].filter(Boolean).join(', ');
-  const hasPlace = b.latitude || b.longitude;
-  const waze = hasPlace
-    ? `https://waze.com/ul?ll=${b.latitude},${b.longitude}&navigate=yes`
-    // No location on record: Waze searches the address, not 0,0.
-    : `https://waze.com/ul?q=${encodeURIComponent(`${(b.address ?? '').trim()}, מודיעין`)}&navigate=yes`;
+  // Google Maps, as on the desktop (the client's choice of maps); no button
+  // for a place with neither a point nor a street address.
+  const directions = directionsUrl(b);
   const circle = 'flex size-10 items-center justify-center rounded-full border border-line bg-white';
 
   const tabs = [
@@ -567,14 +574,16 @@ function Phone({ v }: { v: View }) {
       {/* Directions at the start; the phone, the website and the rest at the
           end, each only where the business has one (none for a park). */}
       <div className="mt-7 flex items-center gap-3 px-4">
-        <TrackedLink stat="directions" href={waze} className="flex h-10 items-center gap-1.5 rounded-full bg-midblue px-6 text-sm font-medium text-white">
-          <DirectionMark size={16} className="text-white" />{t('ניווט', 'Get Directions')}
-        </TrackedLink>
+        {directions && (
+          <TrackedLink stat="directions" href={directions} className="flex h-10 items-center gap-1.5 rounded-full bg-midblue px-6 text-sm font-medium text-white">
+            <DirectionMark size={16} className="text-white" />{t('ניווט', 'Get Directions')}
+          </TrackedLink>
+        )}
         <span className="flex-1" />
         {v.owner && <MessageBusiness lang={v.lang} businessId={v.b.id} ownerId={v.owner} className={circle}><MessageText size={20} color="#17A9D0" /></MessageBusiness>}
-        {v.phone && <TrackedLink stat="call" href={`tel:${v.phone}`} newTab={false} className={circle} label={t('התקשרו', 'Call')}><Call size={20} color="#17A9D0" /></TrackedLink>}
+        {v.tel && <TrackedLink stat="call" href={`tel:${v.tel}`} newTab={false} className={circle} label={t('התקשרו', 'Call')}><Call size={20} color="#17A9D0" /></TrackedLink>}
         {v.website && <TrackedLink stat="website" href={webLink(v.website)} className={circle} label={t('אתר', 'Website')}><Global size={20} color="#17A9D0" /></TrackedLink>}
-        {v.whatsapp && <TrackedLink stat="whatsapp" href={`https://wa.me/${waNumber(v.whatsapp)}`} className={circle} label="WhatsApp"><Messages2 size={20} color="#17A9D0" /></TrackedLink>}
+        {v.wa && <TrackedLink stat="whatsapp" href={`https://wa.me/${v.wa}`} className={circle} label="WhatsApp"><Messages2 size={20} color="#17A9D0" /></TrackedLink>}
         {v.instagram && <TrackedLink stat="instagram" href={webLink(v.instagram)} className={circle} label="Instagram"><Instagram size={20} color="#17A9D0" /></TrackedLink>}
       </div>
 

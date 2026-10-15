@@ -58,12 +58,20 @@ export async function newsCards(ids: string[]): Promise<NewsCard[]> {
   return ids.map((id) => byId.get(id)).filter(Boolean) as NewsCard[];
 }
 
+const FEATURED_DAYS = 14;
+
 /** The story in the hero slot (news_providers.dart, pickHeroArticle): a
  *  featured story with a picture, else any featured one, else the newest
  *  with a picture, else the newest. Which story is featured is the client's
  *  call in the panel. */
-export function pickHero<T extends { is_featured: boolean; pic: boolean }>(rows: T[]): T | undefined {
-  return rows.find((a) => a.is_featured && a.pic) ?? rows.find((a) => a.is_featured) ?? rows.find((a) => a.pic) ?? rows[0];
+export function pickHero<T extends { is_featured: boolean; pic: boolean; published_at: string | null }>(rows: T[]): T | undefined {
+  // A featured story leads while it is news — within FEATURED_DAYS of the
+  // newest: nothing un-features one, and two August sample stories led over
+  // October's (15 Oct). Featuring one in the panel still puts it first.
+  const time = (a: T) => (a.published_at ? Date.parse(a.published_at) : 0);
+  const newest = Math.max(0, ...rows.map(time));
+  const featured = (a: T) => a.is_featured && newest - time(a) <= FEATURED_DAYS * 86_400_000;
+  return rows.find((a) => featured(a) && a.pic) ?? rows.find(featured) ?? rows.find((a) => a.pic) ?? rows[0];
 }
 
 export type NewsCategory = {

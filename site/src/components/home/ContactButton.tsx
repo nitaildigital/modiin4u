@@ -2,19 +2,7 @@
 import { useState } from 'react';
 import { Floating, useFloating } from '@/components/ui/Floating';
 import { Call, Copy, Message, Sms } from 'iconsax-react';
-
-/** Digits and a leading +, or null when there is no number. */
-const telOf = (raw: string | null) => {
-  const s = (raw ?? '').replace(/[^\d+]/g, '');
-  return s.length >= 7 ? s : null;
-};
-
-/** A number as wa.me wants it: Israel's code for the leading nought. */
-const waOf = (raw: string | null) => {
-  let d = (raw ?? '').replace(/\D/g, '');
-  if (d.startsWith('0')) d = '972' + d.slice(1);
-  return d.length >= 9 ? d : null;
-};
+import { shownPhone, telNumber, waNumber } from '@/lib/contact';
 
 /** Contact / Call Now (web_contact_menu.dart): a small menu by the button,
  *  over the page (Floating), with the number itself, copying it, WhatsApp
@@ -27,19 +15,20 @@ export function ContactButton({ phone, whatsapp, email, label, lang, wide = fals
   const [copied, setCopied] = useState<string | null>(null);
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
 
-  const tel = telOf(phone);
-  const wa = waOf(whatsapp);
+  const tel = telNumber(phone);
+  const shown = shownPhone(phone);
+  const wa = waNumber(whatsapp);
   const mail = (email ?? '').trim();
   if (!tel && !wa && !mail) return null;
 
   const copy = async () => {
     setOpen(false);
     try {
-      await navigator.clipboard.writeText(phone!.trim());
+      await navigator.clipboard.writeText(shown);
       setCopied(t('המספר הועתק', 'Number copied'));
     } catch {
       // The clipboard exists only on a secure page; the number is on screen.
-      setCopied(`${t('מספר', 'Number')}: ${phone!.trim()}`);
+      setCopied(`${t('מספר', 'Number')}: ${shown}`);
     }
     setTimeout(() => setCopied(null), 2500);
   };
@@ -55,7 +44,7 @@ export function ContactButton({ phone, whatsapp, email, label, lang, wide = fals
         {label}
       </button>
       <Floating open={open} anchor={anchor} menu={menu}>
-          {tel && <a role="menuitem" href={`tel:${tel}`} className={row}><Call size={20} color="#123A72" /><span dir="ltr">{phone!.trim()}</span></a>}
+          {tel && <a role="menuitem" href={`tel:${tel}`} className={row}><Call size={20} color="#123A72" /><span dir="ltr">{shown}</span></a>}
           {tel && <button role="menuitem" type="button" onClick={copy} className={row}><Copy size={20} color="#123A72" />{t('העתקת המספר', 'Copy number')}</button>}
           {wa && <a role="menuitem" href={`https://wa.me/${wa}`} target="_blank" rel="noopener" className={row}><Message size={20} color="#123A72" />WhatsApp</a>}
           {mail && <a role="menuitem" href={`mailto:${mail}`} className={row}><Sms size={20} color="#123A72" /><span dir="ltr" className="truncate">{mail}</span></a>}

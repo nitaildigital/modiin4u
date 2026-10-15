@@ -6,6 +6,7 @@ import { getLang, tr, type Lang } from '@/lib/i18n';
 import { slugParam } from '@/lib/params';
 import { pageMetadata, h1For, plain, breadcrumb, href, SITE_NAME, SUFFIX } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
+import { shownPhone, telNumber } from '@/lib/contact';
 import { businessGallery, dealById, hasExpired, liveDeals, type Deal } from '@/lib/data/deals';
 import { JsonLd } from '@/components/JsonLd';
 import { Photo } from '@/components/events/Photo';
@@ -94,7 +95,7 @@ export default async function DealPage({ params }: Props) {
           ...(b ? {
             offeredBy: {
               '@type': 'LocalBusiness', name: b.name, url: SITE_URL + href(`/business/${b.slug}/`),
-              ...(b.address ? { address: b.address } : {}), ...(b.phone ? { telephone: b.phone } : {}), ...(b.logo ? { image: b.logo } : {}),
+              ...(b.address ? { address: b.address } : {}), ...(telNumber(b.phone) ? { telephone: shownPhone(b.phone) } : {}), ...(b.logo ? { image: b.logo } : {}),
             },
           } : {}),
         },
@@ -296,7 +297,7 @@ export default async function DealPage({ params }: Props) {
 function PhoneBar({ d, lang, ended }: { d: Deal; lang: Lang; ended: boolean }) {
   const t = tr(lang);
   const address = d.business?.address;
-  const phone = d.business?.phone?.trim();
+  const phone = telNumber(d.business?.phone);
   if (!address && !phone && ended) return null;
   return (
     <div className="sticky bottom-[76px] z-30 order-7 border-t border-line bg-white px-4 py-3 desk:hidden">

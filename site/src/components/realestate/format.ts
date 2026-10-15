@@ -1,5 +1,6 @@
 import type { Lang } from '@/lib/i18n';
 import { ownPhoto } from '@/lib/photos';
+import { shownPhone, telNumber, waNumber } from '@/lib/contact';
 import type { ContactOption } from './Menus';
 import { localName, type Listing, type ListingKind, type PropertyType } from '@/lib/data/realestate';
 
@@ -66,15 +67,14 @@ export function kindLabel(k: ListingKind, lang: Lang, caps = true): string {
  *  number (Call), Copy number, WhatsApp, e-mail. */
 export function contactOptions(c: { phone?: string | null; whatsapp?: string | null; email?: string | null }, lang: Lang, copy = true): ContactOption[] {
   const out: ContactOption[] = [];
-  const phone = c.phone?.trim();
-  const tel = phone?.replace(/[^\d+]/g, '');
+  const phone = shownPhone(c.phone);
+  const tel = telNumber(phone);
   if (phone && tel) {
     out.push({ kind: 'phone', label: phone, href: `tel:${tel}` });
     if (copy) out.push({ kind: 'copy', label: lang === 'he' ? 'העתקת המספר' : 'Copy number', href: phone, done: lang === 'he' ? 'המספר הועתק' : 'Number copied' });
   }
-  let wa = (c.whatsapp ?? '').replace(/\D/g, '');
-  if (wa.startsWith('0')) wa = '972' + wa.slice(1);
-  if (wa.length >= 9) out.push({ kind: 'whatsapp', label: 'WhatsApp', href: `https://wa.me/${wa}` });
+  const wa = waNumber(c.whatsapp);
+  if (wa) out.push({ kind: 'whatsapp', label: 'WhatsApp', href: `https://wa.me/${wa}` });
   const mail = c.email?.trim();
   if (mail) out.push({ kind: 'email', label: mail, href: `mailto:${mail}` });
   return out;

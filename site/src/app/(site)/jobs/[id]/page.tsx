@@ -6,6 +6,7 @@ import { getLang, tr } from '@/lib/i18n';
 import { slugParam } from '@/lib/params';
 import { pageMetadata, plain, breadcrumb, href, SITE_NAME, SUFFIX } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
+import { telNumber, waNumber } from '@/lib/contact';
 import { jobById, jobBusiness, jobExperience, jobFlags, jobPlace, jobSalary, jobSchedule, jobType, type Job } from '@/lib/data/jobs';
 import { storeLinks } from '@/lib/data/steps';
 import { ownPhoto } from '@/lib/photos';
@@ -92,8 +93,8 @@ export default async function JobPage({ params }: Props) {
     [t('תחומי אחריות', 'Responsibilities'), j.responsibilities],
     [t('דרישות', 'Requirements'), j.requirements],
   ];
-  const phone = j.contact_phone?.trim();
-  const whatsapp = (j.contact_whatsapp || j.contact_phone)?.replace(/\D/g, '').replace(/^0/, '972');
+  const phone = telNumber(j.contact_phone);
+  const whatsapp = waNumber(j.contact_whatsapp || j.contact_phone);
   const email = j.contact_email?.trim();
   const direct: [React.ReactNode, string, string][] = [
     ...(j.apply_by_call && phone ? [[<Call key="c" size={18} color="currentColor" />, t('התקשרו', 'Call'), `tel:${phone}`] as [React.ReactNode, string, string]] : []),

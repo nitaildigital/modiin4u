@@ -123,13 +123,6 @@ export function shownUrl(url: string): string {
   return url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
 }
 
-/** A WhatsApp number as wa.me takes it: digits, Israel's 972 for a leading 0. */
-export function waNumber(raw: string): string {
-  let d = raw.replace(/\D/g, '');
-  if (d.startsWith('0')) d = '972' + d.slice(1);
-  return d;
-}
-
 /** A stored photo at about the size it is drawn, twice over for a sharp
  *  screen (sizedPhotoUrl): a 4 MB cover reaches a 200-pixel thumbnail as a
  *  few kilobytes. Made by the site itself (ownPhoto). */
