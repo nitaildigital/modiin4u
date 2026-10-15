@@ -43,17 +43,17 @@ after. Mark each line ✅ / ❌ with a note. A ❌ goes to PLAN.md with the fix.
 ## Client — admin panel
 
 - [ ] Sign in (his account); forgot password works
-- [ ] Each section opens: create, edit, publish/unpublish, archive/hide, restore from Trash — and the change shows on the site and in the app — every section opens after the redesign ✅ 7 Oct; create/edit/restore per section not yet
-- [ ] Articles and events: "send a notification" box → the automatic push arrives
-- [ ] Businesses: edit, hours, gallery, menu, categories; ⋮ → Statistics (day / week / month)
-- [ ] Categories: "Shown in menus" switch
+- [x] Each section opens: create, edit, publish/unpublish, archive/hide, restore from Trash — and the change shows on the site and in the app — every section opens after the redesign ✅ 7 Oct; 15 Oct on panel.modiin4u.co.il ✅ all 35 sections open with no error; an article and an event each created, edited, published (live on www at once), taken down (gone from www within ~2.5 min, the page cache), archived/cancelled, restored from Trash (to the state before removal, as the log recorded it); a business and a category likewise. Not seen in the app (no device this pass)
+- [ ] Articles and events: "send a notification" box → the automatic push arrives — 15 Oct: with the box off nothing is queued (article, event); with it on, approving a business queued "עסק חדש בעיר" for 5 min later (cancelled by the test's watcher before sending). Arrival on a phone not checked this pass
+- [ ] Businesses: edit, hours, gallery, menu, categories; ⋮ → Statistics (day / week / month) — 15 Oct ✅ edit, hours (Sun–Thu via "א׳–ה׳ בלבד"), gallery upload, category, Statistics (day/week/month, chart), approve → live on www with hours and photo, close → Trash → restore; **menu not verified** — the item's name field would not take input from the test browser, so nothing saved; check by hand
+- [x] Categories: "Shown in menus" switch — 15 Oct ✅ saved off → on → off on a test category; disable works
 - [ ] Deals: claim counts and the max-claims limit
-- [ ] Campaigns: a banner in each slot (home, deals, steps top / inline …) shows, and stops at its end date
-- [ ] Push: write, schedule, send, cancel; opened count
-- [ ] Challenges: create, run, end
+- [ ] Campaigns: a banner in each slot (home, deals, steps top / inline …) shows, and stops at its end date — 15 Oct ✅ in the GAMES_HOME slot (drawn on no page, so no visitor saw it): draft not served, active served by `active_banners()`, an end date in the past stops it. Not seen drawn in each slot
+- [ ] Push: write, schedule, send, cancel; opened count — 15 Oct ✅ write (draft), schedule (1 Jan 2027, picker), cancel with confirmation; the list shows sent/opened. "Send now" not tried — it reaches every device
+- [ ] Challenges: create, run, end — 15 Oct ✅ create (goal, prize, dates, notification off) and deactivate; "run" not tried — a running challenge shows to every resident
 - [x] Info pages: publish Terms, Privacy, Accessibility, Delete account → visible on the site — all five published and visible on the site and in the app 15 Oct ✅ (Accessibility published 14 Oct, About from WordPress 15 Oct)
 - [x] Team: a limited role sees only its sections and cannot write others (00050); Roles & rights editable by the main admin only (00066) — 7 Oct ✅
-- [ ] Reviews / comments moderation; Activity log records each action — reviews, replies, reports (Hide it) ✅ 7 Oct; activity log not checked
+- [x] Reviews / comments moderation; Activity log records each action — reviews, replies, reports (Hide it) ✅ 7 Oct; activity log ✅ 15 Oct: every create, edit, status change and restore, with who and the before/after
 
 ## Before going live
 

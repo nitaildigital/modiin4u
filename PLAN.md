@@ -3325,6 +3325,41 @@ Checked on the live site as an iPhone (390 and 360 wide), 25 pages:
   in the panel: the near misses (בון תור, בית הכרם, Japan Japan and Root&Bloom,
   whose pins may be wrong); the rest of the unsure list is mostly
   `seed_remote.sql`'s invented businesses, which Google does not know.
+- **Deployed** (`274c94c`, `tool/deploy_site.sh --live`; the server reached
+  with KAMATERA_SERVER_PASSWORD through an askpass helper — the deploy key is
+  still not on this Mac). Live: pages 200, a closed business 301s, the
+  article's `srcSet`. PageSpeed (phone) afterwards swings run to run on the
+  same code — Restaurants LCP 3.7 s, then 11.9 s; the article 5.8 s, then
+  12.5 s — while its 47 KB photo comes from nginx's cache in about a second.
+  Not settled; the next look is PageSpeed's LCP breakdown (load delay against
+  render delay). The deploy's `rsync --delete` empties Next's own data and
+  image caches on the server (`.next/cache` was 3.5 MB after it), so the
+  first visits after every deploy rebuild them.
+
+**The panel, clicked through on panel.modiin4u.co.il — 15 Oct (Harshit: "test
+the panel").** A temporary admin and a local Playwright harness reading its
+credentials from the file (never typed into a tool call); Flutter's
+accessibility tree to find the controls. Every test row was named QATEST, and a
+watcher cancelled every 2 s any queued notification about a QATEST row — it
+caught one ("עסק חדש בעיר", queued by approving the test business). Results in
+LAUNCH_TEST.md (client section). Afterwards every test row, the 34 log rows,
+the test photo in storage, four statistics rows from our own visits (Hot
+Cinema, קפה רומי) and the admin were deleted; the only notification sent in
+the window was a real resident's welcome.
+- **Fine, by design:** Trash's Restore puts an item back as it was before
+  removal (a cancelled published event comes back published); restoring a
+  closed business leaves `closed_at` set — nothing reads it but the "new
+  business" notification, which then is not sent again.
+- **Found:** signing in on the panel's address lands on the old website's home
+  (`/`), not `/admin`; the panel's dates follow the browser's clock — a
+  campaign's end day saved from India ends at 23:59 India (18:29 UTC), a
+  challenge's dates are stored at UTC midnight (02:00 in Israel); a suspended
+  business "ללללחחח ללללחחח" heads the businesses list (someone's test row —
+  not ours, left).
+- **Not covered:** the business menu editor (its name field would not take
+  input from the harness), "send now", a running challenge, a banner drawn in a
+  visible slot (each would reach real people), deal claims and review
+  moderation (tested 5–7 Oct), the client's own sign-in and forgot password.
 
 **Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
 Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
