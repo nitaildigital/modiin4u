@@ -47,6 +47,12 @@ class _AdminFlagsScreenState extends ConsumerState<AdminFlagsScreen>
           ),
           child: TabBar(
             controller: _tabController,
+            // As the other pages' tabs: from the start, under the heading,
+            // the icon beside the words. They were two halves of the width,
+            // the icon over the words.
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            padding: const EdgeInsetsDirectional.only(start: 8),
             labelColor: AppColors.midBlue,
             unselectedLabelColor: AppColors.grayText,
             indicatorColor: AppColors.midBlue,
@@ -59,12 +65,14 @@ class _AdminFlagsScreenState extends ConsumerState<AdminFlagsScreen>
               fontFamily: AppFonts.rubik,
               fontSize: 14,
             ),
-            tabs: const [
-              Tab(text: 'Feature Flags', icon: Icon(Icons.flag, size: 18)),
-              Tab(
-                text: 'Remote Config',
-                icon: Icon(Icons.settings_remote, size: 18),
-              ),
+            tabs: [
+              for (final (icon, label) in const [(Icons.flag, 'Feature Flags'), (Icons.settings_remote, 'Remote Config')])
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [Icon(icon, size: 17), const SizedBox(width: 8), Text(label)],
+                  ),
+                ),
             ],
           ),
         ),

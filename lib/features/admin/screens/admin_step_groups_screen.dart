@@ -28,6 +28,8 @@ class AdminStepsSection extends StatelessWidget {
             child: TabBar(
               isScrollable: true,
               tabAlignment: TabAlignment.start,
+              // The first tab's words under the heading's first letter.
+              padding: const EdgeInsetsDirectional.only(start: 8),
               labelStyle: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 14,

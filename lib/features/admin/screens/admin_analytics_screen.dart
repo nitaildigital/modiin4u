@@ -62,6 +62,11 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen>
           child: TabBar(
             controller: _tabs,
             isScrollable: true,
+            // From the page's edge, the first tab's words under the title's
+            // first letter (4 + the 20 of each tab's padding = the 24 of the
+            // heading). Material 3 started a scrollable bar 52 px in.
+            tabAlignment: TabAlignment.start,
+            padding: const EdgeInsetsDirectional.only(start: 4),
             labelStyle: TextStyle(
               fontFamily: AppFonts.inter,
               fontSize: 14,
