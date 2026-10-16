@@ -106,221 +106,128 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
                   ),
                 );
               }
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                itemCount: list.length,
-                itemBuilder: (_, i) {
-                  final e = list[i];
-                  final action = e['action'] as String? ?? '';
-                  final after = e['after_data'] is Map
-                      ? e['after_data'] as Map
-                      : const {};
-                  final before = e['before_data'] is Map
-                      ? e['before_data'] as Map
-                      : const {};
-                  final admin = e['admin_users'] is Map
-                      ? e['admin_users'] as Map
-                      : const {};
-                  final adminName = admin['profiles'] is Map
-                      ? ((admin['profiles'] as Map)['full_name'] as String? ??
-                                '')
-                            .trim()
-                      : '';
-                  final label = (after['label'] as String? ?? '').trim();
-                  final summary = _summary(after, before);
-                  final isLast = i == list.length - 1;
+              // As a table, as the CRM's activity lists: what was done, to
+              // what, by whom, when. It was a timeline of cards.
+              return Column(
+                children: [
+                  AdminTableHeader(
+                    children: [
+                      SizedBox(width: 150, child: Text(tr('פעולה', 'Action'))),
+                      Expanded(flex: 5, child: Text(tr('פריט', 'Item'))),
+                      if (isWide) Expanded(flex: 2, child: Text(tr('מנהל', 'Admin'))),
+                      SizedBox(width: 110, child: Text(tr('מתי', 'When'))),
+                    ],
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: list.length,
+                      itemBuilder: (_, i) {
+                        final e = list[i];
+                        final action = e['action'] as String? ?? '';
+                        final after = e['after_data'] is Map ? e['after_data'] as Map : const {};
+                        final before = e['before_data'] is Map ? e['before_data'] as Map : const {};
+                        final admin = e['admin_users'] is Map ? e['admin_users'] as Map : const {};
+                        final adminName = admin['profiles'] is Map
+                            ? ((admin['profiles'] as Map)['full_name'] as String? ?? '').trim()
+                            : '';
+                        final label = (after['label'] as String? ?? '').trim();
+                        final summary = _summary(after, before);
+                        final k = AdminKit.of(context);
+                        final who = adminName.isEmpty ? tr('מנהל שהוסר', 'A removed admin') : adminName;
 
-                  return IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Timeline rail
-                        SizedBox(
-                          width: 40,
-                          child: Column(
+                        return AdminTableRow(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _actionColor(action),
-                                ),
-                              ),
-                              if (!isLast)
-                                Expanded(
-                                  child: Container(
-                                    width: 2,
-                                    color: AppColors.border.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        // Content
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColors.border.withValues(
-                                    alpha: 0.3,
-                                  ),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        _actionIcon(action),
-                                        size: 16,
-                                        color: _actionColor(action),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _actionLabel(action),
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: _actionColor(action),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surfaceLight,
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          _entityLabel(
-                                            e['entity_type'] as String? ?? '',
-                                          ),
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 10,
-                                            color: AppColors.grayText,
-                                          ),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        _timeAgo(
-                                          e['created_at'] as String? ?? '',
-                                        ),
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 11,
-                                          color: AppColors.grayLight,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    label.isEmpty
-                                        ? (e['entity_id'] as String? ?? '')
-                                        : label,
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.navy,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 10,
-                                        backgroundColor: AppColors.midBlue
-                                            .withValues(alpha: 0.1),
-                                        child: Text(
-                                          adminName.isEmpty
-                                              ? '?'
-                                              : adminName.characters.first,
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.midBlue,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        adminName.isEmpty
-                                            ? tr('מנהל שהוסר', 'A removed admin')
-                                            : adminName,
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 12,
-                                          color: AppColors.grayText,
-                                        ),
-                                      ),
-                                      if (isWide &&
-                                          e['ip_address'] != null) ...[
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          e['ip_address'] as String,
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 11,
-                                            color: AppColors.grayLight,
-                                            fontFeatures: [
-                                              const FontFeature.tabularFigures(),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  if (summary.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
+                              SizedBox(
+                                width: 150,
+                                child: Row(
+                                  children: [
                                     Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(8),
+                                      width: 28,
+                                      height: 28,
                                       decoration: BoxDecoration(
-                                        color: AppColors.surfaceLight,
-                                        borderRadius: BorderRadius.circular(6),
+                                        color: _actionColor(action).withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(7),
                                       ),
+                                      child: Icon(_actionIcon(action), size: 15, color: _actionColor(action)),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
                                       child: Text(
-                                        summary,
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 11,
-                                          height: 1.5,
-                                          color: AppColors.navy,
-                                        ),
+                                        _actionLabel(action),
+                                        overflow: TextOverflow.ellipsis,
+                                        style: k.label.copyWith(color: _actionColor(action), fontWeight: FontWeight.w600),
                                       ),
                                     ),
                                   ],
-                                ],
+                                ),
                               ),
-                            ),
+                              Expanded(
+                                flex: 5,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Wrap(
+                                      spacing: 8,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Text(
+                                          label.isEmpty ? (e['entity_id'] as String? ?? '') : label,
+                                          style: k.body.copyWith(fontWeight: FontWeight.w500),
+                                        ),
+                                        AdminPill(_entityLabel(e['entity_type'] as String? ?? ''), k.inkSoft),
+                                      ],
+                                    ),
+                                    if (!isWide) Text(who, style: k.hint.copyWith(fontSize: 12)),
+                                    if (summary.isNotEmpty) ...[
+                                      const SizedBox(height: 6),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: k.subtle,
+                                          border: Border.all(color: k.border),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(summary, style: k.hint.copyWith(fontSize: 12, height: 1.5, color: k.inkSoft)),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (isWide)
+                                Expanded(
+                                  flex: 2,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(who, style: k.body.copyWith(fontSize: 13.5, color: k.inkSoft)),
+                                      if (e['ip_address'] != null)
+                                        Text(
+                                          e['ip_address'] as String,
+                                          style: k.hint.copyWith(
+                                            fontSize: 11,
+                                            fontFeatures: [const FontFeature.tabularFigures()],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              SizedBox(
+                                width: 110,
+                                child: Text(
+                                  _timeAgo(e['created_at'] as String? ?? ''),
+                                  style: k.hint.copyWith(fontSize: 12.5),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ],
               );
             },
           ),

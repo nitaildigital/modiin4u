@@ -231,13 +231,8 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                   ),
                 );
               }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+              return ListView.builder(
                 itemCount: list.length,
-                separatorBuilder: (_, _) => Divider(
-                  height: 1,
-                  color: AppColors.border.withValues(alpha: 0.3),
-                ),
                 itemBuilder: (_, i) {
                   final c = list[i];
                   final id = c['id'] as String;
@@ -248,16 +243,12 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                             .trim()
                       : '';
 
-                  return Container(
+                  return AdminTableRow(
                     color: reports > 0
-                        ? AppColors.error.withValues(alpha: 0.04)
+                        ? Color.alphaBlend(AppColors.error.withValues(alpha: 0.05), Colors.white)
                         : (status == 'pending'
-                              ? AppColors.gold.withValues(alpha: 0.04)
+                              ? Color.alphaBlend(AppColors.gold.withValues(alpha: 0.06), Colors.white)
                               : null),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

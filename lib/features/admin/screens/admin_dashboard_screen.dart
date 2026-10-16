@@ -1312,12 +1312,28 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
                   message: tr('אין משתמשים להצגה', 'No users to show'),
                 );
               }
-              return ListView.separated(
-                padding: EdgeInsets.zero,
-                itemCount: rows.length,
-                separatorBuilder: (_, _) =>
-                    const Divider(height: 1, color: AppColors.adminCardBorder),
-                itemBuilder: (context, i) => _profileTile(rows[i]),
+              // As the CRM's Leads: a column for each fact, under a header.
+              final wide = MediaQuery.sizeOf(context).width > 1000;
+              return Column(
+                children: [
+                  if (wide)
+                    AdminTableHeader(
+                      children: [
+                        const SizedBox(width: 48),
+                        Expanded(flex: 4, child: Text(tr('שם', 'Name'))),
+                        Expanded(flex: 2, child: Text(tr('טלפון', 'Phone'))),
+                        Expanded(flex: 3, child: Text(tr('אימייל', 'Email'))),
+                        Expanded(flex: 2, child: Text(tr('שכונה', 'Neighbourhood'))),
+                        const SizedBox(width: 40),
+                      ],
+                    ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: rows.length,
+                      itemBuilder: (context, i) => _profileTile(rows[i], wide),
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -1331,110 +1347,108 @@ class _UsersSectionState extends ConsumerState<_UsersSection> {
     ref.read(adminProfilesProvider.notifier).setFilter(filter);
   }
 
-  Widget _profileTile(Map<String, dynamic> p) {
+  Widget _profileTile(Map<String, dynamic> p, bool wide) {
+    final k = AdminKit.of(context);
     final id = p['id'] as String;
     final name = (p['full_name'] as String?)?.trim();
     final isBanned = p['is_banned'] == true;
     final neighborhood = p['neighborhoods'] is Map
         ? (p['neighborhoods'] as Map)['name'] as String?
         : null;
+    final phone = (p['phone'] as String?)?.trim() ?? '';
+    final email = (p['email'] as String?)?.trim() ?? '';
+    final cell = k.body.copyWith(fontSize: 13.5, color: k.inkSoft);
+    String orDash(String? v) => v == null || v.isEmpty ? '—' : v;
 
-    return Container(
-      color: Colors.white,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: isBanned
-                ? AppColors.error.withValues(alpha: 0.1)
-                : AppColors.midBlue.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: Center(
-            child: Text(
-              _initials(name),
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                color: isBanned ? AppColors.error : AppColors.midBlue,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-        title: Row(
+    final nameCell = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
           children: [
             Flexible(
               child: Text(
                 // A profile can only be created with a name, but an empty
                 // string gets through; saying so beats printing nothing.
                 name == null || name.isEmpty ? tr('ללא שם', 'Untitled') : name,
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                  color: AppColors.adminTextDark,
-                ),
+                style: k.body.copyWith(fontWeight: FontWeight.w500),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             if (p['is_verified'] == true) ...[
               const SizedBox(width: 8),
-              AdminPill(tr('מאומת', 'Verified'), AdminKit.of(context).success),
+              AdminPill(tr('מאומת', 'Verified'), k.success),
             ],
             if (p['is_broker'] == true) ...[
               const SizedBox(width: 6),
-              AdminPill(tr('מתווך', 'Agent'), AdminKit.of(context).accent),
+              AdminPill(tr('מתווך', 'Agent'), k.accent),
             ],
             if (isBanned) ...[
               const SizedBox(width: 6),
-              AdminPill(tr('חסום', 'Blocked'), AdminKit.of(context).danger),
+              AdminPill(tr('חסום', 'Blocked'), k.danger),
             ],
           ],
         ),
-        subtitle: Text(
-          [
-            if ((p['phone'] as String?)?.isNotEmpty ?? false) p['phone'],
-            if ((p['email'] as String?)?.isNotEmpty ?? false) p['email'],
-            if (neighborhood != null) neighborhood,
-          ].join(' • '),
-          style: TextStyle(
-            fontFamily: AppFonts.inter,
-            fontSize: 12,
-            color: AppColors.adminTextLight,
+        // Narrow: the facts under the name, as before.
+        if (!wide)
+          Text(
+            [if (phone.isNotEmpty) phone, if (email.isNotEmpty) email, ?neighborhood].join(' • '),
+            style: k.hint.copyWith(fontSize: 12),
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (v) => _handleUserAction(v, id, isBanned),
-          icon: Icon(
-            IconsaxPlusLinear.more,
-            size: 20,
-            color: AppColors.adminTextLight,
+      ],
+    );
+
+    return AdminTableRow(
+      onTap: () => _showProfileDialog(context, ref, profile: p),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isBanned ? k.danger.withValues(alpha: 0.1) : k.accentSoft,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              _initials(name),
+              style: k.label.copyWith(fontSize: 12.5, fontWeight: FontWeight.w600, color: isBanned ? k.danger : k.accent),
+            ),
           ),
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'edit',
-              child: Text(
-                tr('עריכה', 'Edit'),
-                style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
+          const SizedBox(width: 14),
+          Expanded(flex: 4, child: nameCell),
+          if (wide) ...[
+            // Digits read left to right; the cell still starts where the
+            // panel's columns start, or in Hebrew it sat against the email.
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(orDash(phone), style: cell, textDirection: TextDirection.ltr),
               ),
             ),
-            PopupMenuItem(
-              value: 'ban',
-              child: Text(
-                isBanned ? tr('בטל חסימה', 'Unblock') : tr('חסום משתמש', 'Block user'),
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 14,
-                  color: isBanned ? null : AppColors.error,
-                ),
-              ),
-            ),
+            Expanded(flex: 3, child: Text(orDash(email), style: cell, overflow: TextOverflow.ellipsis)),
+            Expanded(flex: 2, child: Text(orDash(neighborhood), style: cell, overflow: TextOverflow.ellipsis)),
           ],
-        ),
-        onTap: () => _showProfileDialog(context, ref, profile: p),
+          SizedBox(
+            width: 40,
+            child: PopupMenuButton<String>(
+              onSelected: (v) => _handleUserAction(v, id, isBanned),
+              icon: Icon(IconsaxPlusLinear.more, size: 20, color: k.muted),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'edit', child: Text(tr('עריכה', 'Edit'))),
+                PopupMenuItem(
+                  value: 'ban',
+                  child: Text(
+                    isBanned ? tr('בטל חסימה', 'Unblock') : tr('חסום משתמש', 'Block user'),
+                    style: isBanned ? null : TextStyle(color: k.danger),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

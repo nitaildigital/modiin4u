@@ -125,12 +125,8 @@ class _AdminMunicipalPlacesScreenState
                   ),
                 );
               }
-              return ListView.separated(
+              return ListView.builder(
                 itemCount: rows.length,
-                separatorBuilder: (_, _) => Divider(
-                  height: 1,
-                  color: AppColors.border.withValues(alpha: 0.3),
-                ),
                 itemBuilder: (_, i) => _buildRow(rows[i], isWide),
               );
             },
@@ -152,70 +148,67 @@ class _AdminMunicipalPlacesScreenState
       fontSize: 12,
       color: AppColors.grayText,
     );
-    return InkWell(
+    return AdminTableRow(
       onTap: () => _showEditor(place: p),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p['name'] as String? ?? '',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.navy,
-                    ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p['name'] as String? ?? '',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navy,
                   ),
-                  Text(category, style: small),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Text(
-                [p['address'], p['phone']]
-                    .whereType<String>()
-                    .where((s) => s.trim().isNotEmpty)
-                    .join(' · '),
-                style: small,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (isWide)
-              Expanded(
-                flex: 1,
-                child: Text(
-                  switch (source) {
-                    'panel' => tr('הוזן בפאנל', 'Entered in the panel'),
-                    'national' => tr('מספר ארצי', 'National number'),
-                    'osm' => 'OpenStreetMap',
-                    'gov' => tr('מידע ממשלתי', 'Government information'),
-                    _ => source,
-                  },
-                  style: small.copyWith(color: AppColors.grayLight),
                 ),
-              ),
-            AdminPill(
-              active ? tr('מוצג', 'Shown') : tr('מוסתר', 'Hidden'),
-              active ? AdminKit.of(context).success : AdminKit.of(context).muted,
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
-              onSelected: (v) => v == 'edit' ? _showEditor(place: p) : _toggle(p),
-              itemBuilder: (_) => [
-                _menuItem('edit', tr('עריכה', 'Edit')),
-                _menuItem('toggle', active ? tr('הסתרה', 'Hide') : tr('הצגה מחדש', 'Show again')),
+                Text(category, style: small),
               ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              [p['address'], p['phone']]
+                  .whereType<String>()
+                  .where((s) => s.trim().isNotEmpty)
+                  .join(' · '),
+              style: small,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isWide)
+            Expanded(
+              flex: 1,
+              child: Text(
+                switch (source) {
+                  'panel' => tr('הוזן בפאנל', 'Entered in the panel'),
+                  'national' => tr('מספר ארצי', 'National number'),
+                  'osm' => 'OpenStreetMap',
+                  'gov' => tr('מידע ממשלתי', 'Government information'),
+                  _ => source,
+                },
+                style: small.copyWith(color: AppColors.grayLight),
+              ),
+            ),
+          AdminPill(
+            active ? tr('מוצג', 'Shown') : tr('מוסתר', 'Hidden'),
+            active ? AdminKit.of(context).success : AdminKit.of(context).muted,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, size: 18, color: AppColors.grayLight),
+            onSelected: (v) => v == 'edit' ? _showEditor(place: p) : _toggle(p),
+            itemBuilder: (_) => [
+              _menuItem('edit', tr('עריכה', 'Edit')),
+              _menuItem('toggle', active ? tr('הסתרה', 'Hide') : tr('הצגה מחדש', 'Show again')),
+            ],
+          ),
+        ],
       ),
     );
   }

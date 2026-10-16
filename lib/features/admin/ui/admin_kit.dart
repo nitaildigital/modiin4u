@@ -1047,13 +1047,17 @@ class AdminTableHeader extends StatelessWidget {
 class AdminTableRow extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
-  const AdminTableRow({super.key, required this.child, this.onTap});
+
+  /// A row that needs telling apart — a review waiting for approval — in
+  /// place of white.
+  final Color? color;
+  const AdminTableRow({super.key, required this.child, this.onTap, this.color});
 
   @override
   Widget build(BuildContext context) {
     final k = AdminKit.of(context);
     return Material(
-      color: k.surface,
+      color: color ?? k.surface,
       child: InkWell(
         onTap: onTap,
         child: Container(

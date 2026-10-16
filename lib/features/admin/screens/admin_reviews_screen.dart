@@ -111,11 +111,8 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                   detail: tr('ביקורות שתושבים יכתבו על עסקים יופיעו כאן.', 'Reviews residents write about businesses appear here.'),
                 );
               }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+              return ListView.builder(
                 itemCount: rows.length + (notifier.hasMore ? 1 : 0),
-                separatorBuilder: (_, _) =>
-                    const Divider(height: 1, color: AppColors.adminCardBorder),
                 itemBuilder: (context, i) => i == rows.length
                     ? Padding(
                         padding: const EdgeInsets.all(12),
@@ -158,11 +155,10 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
       color: AppColors.adminTextLight,
     );
 
-    return Container(
+    return AdminTableRow(
       color: status == 'pending'
-          ? AppColors.gold.withValues(alpha: 0.04)
+          ? Color.alphaBlend(AppColors.gold.withValues(alpha: 0.06), Colors.white)
           : null,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

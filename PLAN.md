@@ -3461,8 +3461,16 @@ stays; the layout is theirs:
   heading over their tabs; the toolbars inside them keep the single bar.
 - **Tables** of articles, businesses, events, real estate, deals, car parks
   and campaigns: the CRM's grey header row and roomy white rows, grey under
-  the pointer (`AdminTableHeader`, `AdminTableRow`). The others keep their
-  own rows for now. `AdminPill` keeps its size in a wide column.
+  the pointer (`AdminTableHeader`, `AdminTableRow`). Then the rest the same
+  day (Harshit: "do these also"): users as the CRM's Leads (a column each
+  for phone, email, neighbourhood), the team as a table (member, role,
+  access) instead of cards, the activity log as a table (action, item,
+  admin, when) instead of a timeline, and agents, municipal places, jobs,
+  reviews and comments as white rows; a review or comment waiting for
+  approval keeps its tint. Messages was already the CRM's inbox. `AdminPill`
+  keeps its size in a wide column. Escape closes the panel's dialogs and
+  menus (checked; it failed only while the sidebar's search held the
+  keyboard).
 - **Editors** are the CRM's detail page: "Back to Articles", the title with
   its status, the actions beside it — and the sidebar and top bar stay. The
   editor is still a page of its own on the navigator, drawn inside the

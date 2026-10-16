@@ -113,23 +113,31 @@ class _AdminTeamScreenState extends ConsumerState<AdminTeamScreen> {
                   ),
                 );
               }
-              return GridView.builder(
-                padding: const EdgeInsets.all(20),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isWide ? 3 : 1,
-                  childAspectRatio: isWide ? 2.2 : 3.5,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: list.length,
-                itemBuilder: (_, i) => _TeamCard(
-                  member: list[i],
-                  isSelf:
-                      list[i]['profile_id'] ==
-                      AdminTeamNotifier.currentProfileId,
-                  onEdit: () => _showRoleEditor(context, list[i]),
-                  onToggle: (active) => _setActive(list[i], active),
-                ),
+              // A table, as the CRM's team page: who, their role, access.
+              return Column(
+                children: [
+                  AdminTableHeader(
+                    children: [
+                      Expanded(flex: 4, child: Text(tr('חבר צוות', 'Member'))),
+                      if (isWide) Expanded(flex: 2, child: Text(tr('תפקיד', 'Role'))),
+                      SizedBox(width: 72, child: Text(tr('גישה', 'Access'))),
+                    ],
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: list.length,
+                      itemBuilder: (_, i) => _TeamCard(
+                        member: list[i],
+                        isWide: isWide,
+                        isSelf:
+                            list[i]['profile_id'] ==
+                            AdminTeamNotifier.currentProfileId,
+                        onEdit: () => _showRoleEditor(context, list[i]),
+                        onToggle: (active) => _setActive(list[i], active),
+                      ),
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -483,11 +491,13 @@ class _RoleDialogState extends ConsumerState<_RoleDialog> {
 class _TeamCard extends StatelessWidget {
   final Map<String, dynamic> member;
   final bool isSelf;
+  final bool isWide;
   final VoidCallback onEdit;
   final ValueChanged<bool> onToggle;
   const _TeamCard({
     required this.member,
     required this.isSelf,
+    required this.isWide,
     required this.onEdit,
     required this.onToggle,
   });
@@ -503,103 +513,74 @@ class _TeamCard extends StatelessWidget {
     final email = profile?['email'] as String? ?? '';
     final color = _roleColor(roleName);
 
-    return Material(
-      borderRadius: BorderRadius.circular(12),
-      color: Colors.white,
-      elevation: 1,
-      child: InkWell(
-        onTap: onEdit,
-        borderRadius: BorderRadius.circular(12),
-        child: Opacity(
-          opacity: isActive ? 1 : 0.5,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: color.withValues(alpha: 0.12),
-                  child: Text(
-                    name.isNotEmpty ? name.characters.first : '?',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: color,
+    final k = AdminKit.of(context);
+    final pill = AdminPill(
+      isActive ? roleLabel : tr('$roleLabel · מושבת', '$roleLabel · disabled'),
+      color,
+    );
+    return AdminTableRow(
+      onTap: onEdit,
+      child: Opacity(
+        opacity: isActive ? 1 : 0.5,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 4,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 17,
+                    backgroundColor: color.withValues(alpha: 0.12),
+                    child: Text(
+                      name.isNotEmpty ? name.characters.first : '?',
+                      style: k.label.copyWith(fontSize: 14, fontWeight: FontWeight.w700, color: color),
                     ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        isSelf ? tr('$name (את/ה)', '$name (you)') : name,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.navy,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        email,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 12,
-                          color: AppColors.grayText,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      AdminPill(
-                        isActive ? roleLabel : tr('$roleLabel · מושבת', '$roleLabel · disabled'),
-                        color,
-                      ),
-                    ],
-                  ),
-                ),
-                // Your own access has no switch: turning it off would shut
-                // you out of the panel with nobody signed in to undo it. A
-                // greyed switch read as "off", so it says so in words.
-                if (isSelf)
-                  Tooltip(
-                    message: tr('אי אפשר להשבית את עצמך', 'You cannot disable yourself'),
-                    child: Row(
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.lock_outline,
-                          size: 14,
-                          color: AppColors.grayText,
-                        ),
-                        const SizedBox(width: 4),
                         Text(
-                          tr('פעיל', 'Active'),
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 12,
-                            color: AppColors.grayText,
-                          ),
+                          isSelf ? tr('$name (את/ה)', '$name (you)') : name,
+                          overflow: TextOverflow.ellipsis,
+                          style: k.body.copyWith(fontWeight: FontWeight.w500),
                         ),
+                        Text(email, overflow: TextOverflow.ellipsis, style: k.hint.copyWith(fontSize: 12)),
+                        if (!isWide) ...[const SizedBox(height: 4), pill],
                       ],
                     ),
-                  )
-                else
-                  Tooltip(
-                    message: isActive ? tr('השבתת גישה', 'Disable access') : tr('החזרת גישה', 'Restore access'),
-                    child: Switch(
-                      value: isActive,
-                      onChanged: onToggle,
-                    ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
+            if (isWide) Expanded(flex: 2, child: pill),
+            // Your own access has no switch: turning it off would shut
+            // you out of the panel with nobody signed in to undo it. A
+            // greyed switch read as "off", so it says so in words.
+            SizedBox(
+              width: 72,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: isSelf ? Tooltip(
+                message: tr('אי אפשר להשבית את עצמך', 'You cannot disable yourself'),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lock_outline, size: 14, color: k.muted),
+                    const SizedBox(width: 4),
+                    Text(tr('פעיל', 'Active'), style: k.hint.copyWith(fontSize: 12)),
+                  ],
+                ),
+              )
+            : Tooltip(
+                message: isActive ? tr('השבתת גישה', 'Disable access') : tr('החזרת גישה', 'Restore access'),
+                child: Switch(value: isActive, onChanged: onToggle),
+              ),
+              ),
+            ),
+          ],
         ),
       ),
     );

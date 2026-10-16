@@ -103,13 +103,8 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                   ),
                 );
               }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+              return ListView.builder(
                 itemCount: rows.length,
-                separatorBuilder: (_, _) => Divider(
-                  height: 1,
-                  color: AppColors.border.withValues(alpha: 0.3),
-                ),
                 itemBuilder: (_, i) => _row(rows[i], counts, isWide),
               );
             },
@@ -130,63 +125,51 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
     final active = a['is_active'] as bool? ?? true;
     final listings = counts[a['id']] ?? 0;
 
-    return InkWell(
+    return AdminTableRow(
       onTap: () => _showEditor(agent: a),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            NetworkPhoto(
-              url: a['photo_url'] as String?,
-              width: 40,
-              height: 40,
-              radius: BorderRadius.circular(20),
-              icon: Icons.person_outline,
-              iconSize: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    (a['name'] as String?) ?? '',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.navy,
-                    ),
-                  ),
-                  if ((a['agency'] as String?)?.isNotEmpty ?? false) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      a['agency'] as String,
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubik,
-                        fontSize: 12,
-                        color: AppColors.grayText,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (isWide)
-              Expanded(
-                child: Text(
-                  (a['phone'] as String?) ?? '—',
+      child: Row(
+        children: [
+          NetworkPhoto(
+            url: a['photo_url'] as String?,
+            width: 40,
+            height: 40,
+            radius: BorderRadius.circular(20),
+            icon: Icons.person_outline,
+            iconSize: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  (a['name'] as String?) ?? '',
                   style: TextStyle(
                     fontFamily: AppFonts.rubik,
-                    fontSize: 13,
-                    color: AppColors.grayText,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navy,
                   ),
                 ),
-              ),
+                if ((a['agency'] as String?)?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    a['agency'] as String,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 12,
+                      color: AppColors.grayText,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (isWide)
             Expanded(
               child: Text(
-                tr('$listings מודעות', '$listings listings'),
+                (a['phone'] as String?) ?? '—',
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 13,
@@ -194,41 +177,50 @@ class _AdminAgentsScreenState extends ConsumerState<AdminAgentsScreen> {
                 ),
               ),
             ),
-            Expanded(
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: AdminPill(
-                  active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
-                  active ? AdminKit.of(context).success : AdminKit.of(context).muted,
-                ),
+          Expanded(
+            child: Text(
+              tr('$listings מודעות', '$listings listings'),
+              style: TextStyle(
+                fontFamily: AppFonts.rubik,
+                fontSize: 13,
+                color: AppColors.grayText,
               ),
             ),
-            PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.more_vert,
-                size: 18,
-                color: AppColors.grayLight,
+          ),
+          Expanded(
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: AdminPill(
+                active ? tr('פעיל', 'Active') : tr('לא פעיל', 'Inactive'),
+                active ? AdminKit.of(context).success : AdminKit.of(context).muted,
               ),
-              onSelected: (v) => _handle(v, a, listings),
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Text(
-                    tr('עריכה', 'Edit'),
-                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                  ),
-                ),
-                PopupMenuItem(
-                  value: active ? 'deactivate' : 'activate',
-                  child: Text(
-                    active ? tr('השבתה', 'Disable') : tr('הפעלה', 'Activate'),
-                    style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                  ),
-                ),
-              ],
             ),
-          ],
-        ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(
+              Icons.more_vert,
+              size: 18,
+              color: AppColors.grayLight,
+            ),
+            onSelected: (v) => _handle(v, a, listings),
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'edit',
+                child: Text(
+                  tr('עריכה', 'Edit'),
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                ),
+              ),
+              PopupMenuItem(
+                value: active ? 'deactivate' : 'activate',
+                child: Text(
+                  active ? tr('השבתה', 'Disable') : tr('הפעלה', 'Activate'),
+                  style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
