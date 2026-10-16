@@ -18,10 +18,12 @@ class AdminKit {
   static AdminKit of(BuildContext context) => _k;
 
   // Colours: the CRM's neutrals, the brand's blue for anything that acts.
-  Color get page => const Color(0xFFF7F8FA);
+  Color get page => const Color(0xFFF8F9FB);
   Color get surface => Colors.white;
   Color get subtle => const Color(0xFFF9FAFB);
-  Color get border => const Color(0xFFE6E8EC);
+  Color get border => const Color(0xFFE5E7EB);
+  /// Under the pointer: a row, a menu entry, a sidebar item.
+  Color get hover => const Color(0xFFF3F4F6);
   Color get ink => const Color(0xFF111827);
   Color get inkSoft => const Color(0xFF4B5563);
   Color get muted => const Color(0xFF9CA3AF);
@@ -32,6 +34,11 @@ class AdminKit {
   Color get warning => const Color(0xFFD97706);
 
   double get radius => 12;
+
+  /// How long the panel's own movements take — a section coming in, the
+  /// sidebar folding — short enough never to keep anyone waiting.
+  Duration get motion => const Duration(milliseconds: 220);
+  Curve get curve => Curves.easeOutCubic;
 
   TextStyle get title => TextStyle(fontFamily: AppFonts.rubik, fontSize: 22, fontWeight: FontWeight.w700, color: ink, height: 1.25);
   TextStyle get heading => TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600, color: ink);
@@ -60,11 +67,212 @@ class AdminKit {
   /// The app's theme with the panel's fields, switches and choices — for the
   /// screens' own widgets that do not use the kit yet. The app's are grey
   /// pills and a black switch when off, made for the phone.
+  ///
+  /// Since 16 Oct it also dresses the dialogs, messages, menus, buttons,
+  /// tabs and chips the 35 sections draw themselves (137 dialogs, 92
+  /// messages), the way the PersonaAI CRM's are: white, a thin border, no
+  /// Material ripple or pink tint, a soft grey under the pointer.
   ThemeData theme(ThemeData base) {
     OutlineInputBorder line(Color c, [double w = 1]) =>
         OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: c, width: w));
+    final rounded = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+    final buttonText = WidgetStatePropertyAll(
+      TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600),
+    );
+    final buttonSize = const WidgetStatePropertyAll(Size(0, 40));
+    final buttonShape = WidgetStatePropertyAll<OutlinedBorder>(rounded);
+    final menuShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+      side: BorderSide(color: border),
+    );
     return base.copyWith(
-      colorScheme: base.colorScheme.copyWith(primary: accent),
+      // A web tool: a grey under the pointer, no ink spreading on a click.
+      splashFactory: NoSplash.splashFactory,
+      hoverColor: hover,
+      highlightColor: Colors.transparent,
+      focusColor: accentSoft,
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: accent,
+        selectionColor: accent.withValues(alpha: 0.18),
+        selectionHandleColor: accent,
+      ),
+      dividerTheme: DividerThemeData(color: border, thickness: 1, space: 1),
+      dialogTheme: DialogThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 12,
+        shadowColor: const Color(0x33000000),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titleTextStyle: heading.copyWith(fontSize: 18),
+        contentTextStyle: body,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: ink,
+        contentTextStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: Colors.white, height: 1.4),
+        actionTextColor: const Color(0xFF93C5FD),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 6,
+      ),
+      cardTheme: CardThemeData(
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+          side: BorderSide(color: border),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: ButtonStyle(
+          textStyle: buttonText,
+          minimumSize: buttonSize,
+          shape: buttonShape,
+          elevation: const WidgetStatePropertyAll(0),
+          overlayColor: WidgetStatePropertyAll(Colors.white.withValues(alpha: 0.08)),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: buttonText,
+          minimumSize: buttonSize,
+          shape: buttonShape,
+          elevation: const WidgetStatePropertyAll(0),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: buttonText,
+          minimumSize: buttonSize,
+          shape: buttonShape,
+          foregroundColor: WidgetStatePropertyAll(ink),
+          side: WidgetStatePropertyAll(BorderSide(color: border)),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.hovered) ? hover : surface,
+          ),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          textStyle: buttonText,
+          minimumSize: const WidgetStatePropertyAll(Size(0, 36)),
+          shape: buttonShape,
+          foregroundColor: WidgetStatePropertyAll(accent),
+          overlayColor: WidgetStatePropertyAll(accent.withValues(alpha: 0.06)),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          shape: buttonShape,
+          overlayColor: WidgetStatePropertyAll(ink.withValues(alpha: 0.05)),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 8,
+        shadowColor: const Color(0x26000000),
+        shape: menuShape,
+        textStyle: body,
+        labelTextStyle: WidgetStatePropertyAll(body),
+      ),
+      menuTheme: MenuThemeData(
+        style: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(surface),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          shape: WidgetStatePropertyAll(menuShape),
+          elevation: const WidgetStatePropertyAll(8),
+          shadowColor: const WidgetStatePropertyAll(Color(0x26000000)),
+        ),
+      ),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(color: ink, borderRadius: BorderRadius.circular(6)),
+        textStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: Colors.white),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        waitDuration: const Duration(milliseconds: 400),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: accent,
+        linearTrackColor: border,
+        circularTrackColor: Colors.transparent,
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: accent,
+        unselectedLabelColor: inkSoft,
+        indicatorColor: accent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: border,
+        labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600),
+        unselectedLabelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w500),
+        overlayColor: WidgetStatePropertyAll(accent.withValues(alpha: 0.04)),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          shape: buttonShape,
+          side: WidgetStatePropertyAll(BorderSide(color: border)),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? accentSoft : surface,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? accent : inkSoft,
+          ),
+          textStyle: WidgetStatePropertyAll(
+            TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: surface,
+        selectedColor: accentSoft,
+        checkmarkColor: accent,
+        side: BorderSide(color: border),
+        shape: rounded,
+        labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: inkSoft),
+        secondaryLabelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: accent, fontWeight: FontWeight.w600),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      ),
+      listTileTheme: ListTileThemeData(
+        shape: rounded,
+        iconColor: inkSoft,
+        selectedColor: accent,
+        selectedTileColor: accentSoft,
+      ),
+      scrollbarTheme: ScrollbarThemeData(
+        thickness: const WidgetStatePropertyAll(6),
+        radius: const Radius.circular(6),
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.hovered) || s.contains(WidgetState.dragged)
+              ? const Color(0x55000000)
+              : const Color(0x2A000000),
+        ),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? accent : muted),
+      ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      colorScheme: base.colorScheme.copyWith(
+        primary: accent,
+        // Material 3 tints white surfaces with the primary colour (menus and
+        // dialogs came out lilac); the CRM's are plain white.
+        surfaceTint: Colors.transparent,
+        surface: surface,
+        surfaceContainerLowest: surface,
+        surfaceContainerLow: surface,
+        surfaceContainer: surface,
+        surfaceContainerHigh: surface,
+        surfaceContainerHighest: subtle,
+        outline: border,
+        outlineVariant: border,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,

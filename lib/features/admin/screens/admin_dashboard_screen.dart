@@ -1,8 +1,13 @@
 import '../../../core/theme/app_fonts.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -154,10 +159,112 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     27: tr('מערכת', 'System'),
   };
 
+  /// The heading [i] sits under, for the top bar's "Content › Articles".
+  static String _groupOf(int i) {
+    final at = _sectionGroups.keys.where((g) => g <= i);
+    return at.isEmpty ? '' : _sectionGroups[at.reduce((a, b) => a > b ? a : b)]!;
+  }
+
+  // Kept on this browser, like the panel's language: whoever reloads the
+  // panel comes back to the section they were in, the sidebar as they left it.
+  static const _sectionKey = 'admin_section';
+  static const _collapsedKey = 'admin_sidebar_collapsed';
+
+  bool _collapsed = false;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
     loadAdminLanguage();
+    _restore();
+    HardwareKeyboard.instance.addHandler(_onKey);
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
+    _searchController.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _restore() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final section = prefs.getInt(_sectionKey);
+      final collapsed = prefs.getBool(_collapsedKey) ?? false;
+      if (!mounted) return;
+      setState(() {
+        if (section != null && section >= 0 && section < _sections.length) {
+          _selectedSection = section;
+        }
+        _collapsed = collapsed;
+      });
+    } catch (_) {
+      // Storage blocked: the panel opens on the overview, sidebar open.
+    }
+  }
+
+  Future<void> _remember(String key, Object value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (value is int) await prefs.setInt(key, value);
+      if (value is bool) await prefs.setBool(key, value);
+    } catch (_) {}
+  }
+
+  void _select(int i) {
+    setState(() {
+      _selectedSection = i;
+      _query = '';
+    });
+    _searchController.clear();
+    _searchFocus.unfocus();
+    // On a narrow screen the sidebar is a drawer; a choice closes it.
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) Navigator.of(context).pop();
+    _remember(_sectionKey, i);
+  }
+
+  void _toggleCollapsed() {
+    setState(() => _collapsed = !_collapsed);
+    _remember(_collapsedKey, _collapsed);
+  }
+
+  /// Ctrl+K (⌘K on a Mac) jumps to the sidebar's search, from anywhere in
+  /// the panel: 35 sections are a long list to scroll for one name.
+  bool _onKey(KeyEvent event) {
+    final keyboard = HardwareKeyboard.instance;
+    if (event is! KeyDownEvent || event.logicalKey != LogicalKeyboardKey.keyK) return false;
+    if (!keyboard.isMetaPressed && !keyboard.isControlPressed) return false;
+    // Only when the panel is what is showing, not an editor page over it.
+    if (!(ModalRoute.of(context)?.isCurrent ?? false) &&
+        !(_scaffoldKey.currentState?.isDrawerOpen ?? false)) {
+      return false;
+    }
+    _focusSearch();
+    return true;
+  }
+
+  void _focusSearch() {
+    final wide = MediaQuery.sizeOf(context).width > 800;
+    if (wide && _collapsed) _toggleCollapsed();
+    if (!wide && !(_scaffoldKey.currentState?.isDrawerOpen ?? false)) {
+      _scaffoldKey.currentState?.openDrawer();
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _searchFocus.requestFocus());
+  }
+
+  /// The sections whose name holds what was typed in the sidebar's search.
+  List<int> get _matches {
+    final q = _query.trim().toLowerCase();
+    return [
+      for (var i = 0; i < _sections.length; i++)
+        if (_canOpen(i) && _sections[i].$1.toLowerCase().contains(q)) i,
+    ];
   }
 
   /// The panel in the language chosen in Settings. A switch rebuilds the
@@ -180,137 +287,94 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Widget _buildPanel(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 800;
+    final k = AdminKit.of(context);
+    final isWide = MediaQuery.sizeOf(context).width > 800;
+
+    Widget sidebar({required bool collapsed, required VoidCallback onToggle}) => _Sidebar(
+      sections: _sections,
+      selected: _selectedSection,
+      onSelect: _select,
+      sectionGroups: _sectionGroups,
+      visible: _canOpen,
+      collapsed: collapsed,
+      onToggle: onToggle,
+      searchController: _searchController,
+      searchFocus: _searchFocus,
+      query: _query,
+      matches: _query.trim().isEmpty ? null : _matches,
+      onQuery: (v) => setState(() => _query = v),
+      onSearchTap: _focusSearch,
+    );
 
     // The kit's fields, switches, checkboxes and chips for every screen and
     // every dialog opened from one (dialogs capture this theme), not only
     // the two editors that were rebuilt on it.
     return Theme(
-      data: AdminKit.of(context).theme(Theme.of(context)),
+      data: k.theme(Theme.of(context)),
       child: Directionality(
-      textDirection: adminDir,
-      child: Scaffold(
-        backgroundColor: AppColors.adminContentBg,
-        body: Column(
-          children: [
-            // ── CRM-style top bar ──
-            _AdminTopBar(
-              sectionName: _sections[_selectedSection].$1,
-              onOpenSettings: () =>
-                  setState(() => _selectedSection = _settingsSection),
-            ),
-            Expanded(
-              child: isWide
-                  ? Row(
-                      children: [
-                        _Sidebar(
-                          sections: _sections,
-                          selected: _selectedSection,
-                          onSelect: (i) => setState(() => _selectedSection = i),
-                          sectionGroups: _sectionGroups,
-                          visible: _canOpen,
-                        ),
-                        Expanded(
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: AppColors.adminContentBg,
-                              borderRadius: BorderRadiusDirectional.only(
-                                topStart: Radius.circular(12),
-                              ),
-                            ),
-                            child: _buildSection(),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        // Mobile nav chips
-                        Container(
-                          height: 52,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            border: Border(
-                              bottom: BorderSide(
-                                color: AppColors.adminSidebarBorder,
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            itemCount: _sections.length,
-                            separatorBuilder: (_, index) => _canOpen(index)
-                                ? const SizedBox(width: 8)
-                                : const SizedBox.shrink(),
-                            itemBuilder: (context, index) {
-                              if (!_canOpen(index)) return const SizedBox.shrink();
-                              final (label, icon) = _sections[index];
-                              final sel = index == _selectedSection;
-                              return GestureDetector(
-                                onTap: () =>
-                                    setState(() => _selectedSection = index),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: sel
-                                        ? AppColors.adminActiveBg
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: sel
-                                        ? null
-                                        : Border.all(
-                                            color: AppColors.adminSearchBorder,
-                                            width: 1,
-                                          ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        icon,
-                                        size: 16,
-                                        color: sel
-                                            ? AppColors.midBlue
-                                            : AppColors.adminTextLight,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        label,
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.inter,
-                                          fontSize: 13,
-                                          fontWeight: sel
-                                              ? FontWeight.w500
-                                              : FontWeight.w400,
-                                          color: sel
-                                              ? AppColors.midBlue
-                                              : AppColors.adminTextMedium,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        Expanded(child: _buildSection()),
-                      ],
+        textDirection: adminDir,
+        child: Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: k.page,
+          // Below 800 px the sidebar is a drawer behind the top bar's menu
+          // button; it was a row of 35 chips to scroll sideways.
+          drawer: isWide
+              ? null
+              : Drawer(
+                  width: 280,
+                  backgroundColor: k.surface,
+                  shape: const RoundedRectangleBorder(),
+                  child: sidebar(
+                    collapsed: false,
+                    onToggle: () => Navigator.of(context).pop(),
+                  ),
+                ),
+          body: Row(
+            children: [
+              if (isWide) sidebar(collapsed: _collapsed, onToggle: _toggleCollapsed),
+              Expanded(
+                child: Column(
+                  children: [
+                    _AdminTopBar(
+                      group: _groupOf(_selectedSection),
+                      sectionName: _sections[_selectedSection].$1,
+                      isWide: isWide,
+                      onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+                      onOpenSettings: () => _select(_settingsSection),
                     ),
-            ),
-          ],
+                    Expanded(
+                      // A section comes in with a short fade and rise rather
+                      // than replacing the last one in a single frame.
+                      child: AnimatedSwitcher(
+                        duration: k.motion,
+                        reverseDuration: const Duration(milliseconds: 120),
+                        switchInCurve: k.curve,
+                        switchOutCurve: Curves.easeIn,
+                        layoutBuilder: (current, previous) => Stack(
+                          fit: StackFit.expand,
+                          children: [...previous, ?current],
+                        ),
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween(begin: const Offset(0, 0.012), end: Offset.zero)
+                                .animate(animation),
+                            child: child,
+                          ),
+                        ),
+                        child: KeyedSubtree(
+                          key: ValueKey(_selectedSection),
+                          child: _buildSection(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -397,89 +461,107 @@ class _NoAccess extends StatelessWidget {
 
 // ─── Top Bar (CRM-style) ───
 
+/// The bar over the section: where you are ("Content › Articles"), and the
+/// panel's own controls — the website, the language, settings and the
+/// signed-in administrator.
 class _AdminTopBar extends ConsumerWidget {
+  final String group;
   final String sectionName;
+  final bool isWide;
+  final VoidCallback onMenu;
   final VoidCallback onOpenSettings;
-  const _AdminTopBar({required this.sectionName, required this.onOpenSettings});
+  const _AdminTopBar({
+    required this.group,
+    required this.sectionName,
+    required this.isWide,
+    required this.onMenu,
+    required this.onOpenSettings,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final k = AdminKit.of(context);
     final signedIn = ref.watch(authProvider);
 
     return Container(
-      height: 74,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: AppColors.adminSidebarBorder, width: 1),
-        ),
+      height: 64,
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 12),
+      decoration: BoxDecoration(
+        color: k.surface,
+        border: Border(bottom: BorderSide(color: k.border)),
       ),
       child: Row(
         children: [
-          // Logo area
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.navy, AppColors.midBlue],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(8),
+          if (!isWide) ...[
+            _TopBarButton(
+              icon: IconsaxPlusLinear.menu_1,
+              tooltip: tr('תפריט', 'Menu'),
+              onTap: onMenu,
             ),
-            child: Text(
-              'M4U',
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: 0.5,
-              ),
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (group.isNotEmpty)
+                  Text(
+                    group,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: k.hint.copyWith(fontSize: 12, height: 1.2),
+                  ),
+                // The section comes in with the content under it.
+                AnimatedSwitcher(
+                  duration: k.motion,
+                  child: Text(
+                    sectionName,
+                    key: ValueKey(sectionName),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: k.title.copyWith(fontSize: 19, height: 1.3),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tr('ניהול — מודיעין בשבילך', 'Admin — Modiin4U'),
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.adminTextDark,
-                ),
-              ),
-              Text(
-                sectionName,
-                style: TextStyle(
-                  fontFamily: AppFonts.inter,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.adminTextLight,
-                ),
-              ),
-            ],
+          if (isWide)
+            _TopBarButton(
+              icon: IconsaxPlusLinear.export_3,
+              label: tr('צפייה באתר', 'View site'),
+              tooltip: 'www.modiin4u.co.il',
+              onTap: () => launchUrl(Uri.parse('https://www.modiin4u.co.il/')),
+            ),
+          const SizedBox(width: 8),
+          // The language switch from Settings, one click away. It names the
+          // language the panel is in, as the CRM's "HE" does.
+          _TopBarButton(
+            icon: IconsaxPlusLinear.translate,
+            label: adminEnglish.value ? 'EN' : 'HE',
+            tooltip: adminEnglish.value ? 'עברית' : 'English',
+            onTap: () => setAdminEnglish(!adminEnglish.value),
           ),
-          const Spacer(),
-          // There was a search box here that was a Text, not a field, and a
-          // bell carrying a permanent "3". Neither was connected to anything;
-          // each section has its own search, which does run.
+          const SizedBox(width: 8),
           _TopBarButton(
             icon: IconsaxPlusLinear.setting_2,
+            tooltip: tr('הגדרות', 'Settings'),
             onTap: onOpenSettings,
           ),
-          const SizedBox(width: 16),
+          Container(
+            width: 1,
+            height: 28,
+            margin: const EdgeInsets.symmetric(horizontal: 14),
+            color: k.border,
+          ),
           // The signed-in administrator, rather than the initials of the one
           // invented person this panel used to be built around.
           // A menu on it: the panel had no way to sign out, and on the
           // website /profile and /settings lead home, so neither did the site.
           PopupMenuButton<String>(
-            tooltip: signedIn?.name ?? tr('לא מחובר', 'Not connected'),
+            tooltip: '',
             position: PopupMenuPosition.under,
+            offset: const Offset(0, 8),
             onSelected: (v) async {
               if (v != 'out') return;
               await ref.read(authProvider.notifier).logout();
@@ -489,55 +571,61 @@ class _AdminTopBar extends ConsumerWidget {
               if (signedIn != null)
                 PopupMenuItem<String>(
                   enabled: false,
-                  child: Text(
-                    '${signedIn.name}\n${signedIn.email}',
-                    style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, color: AppColors.adminTextMedium),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(signedIn.name, style: k.heading.copyWith(fontSize: 14)),
+                      Text(signedIn.email, style: k.hint.copyWith(fontSize: 12)),
+                    ],
                   ),
                 ),
+              if (signedIn != null) const PopupMenuDivider(),
               PopupMenuItem<String>(
                 value: 'out',
                 child: Row(
                   children: [
-                    const Icon(IconsaxPlusLinear.logout, size: 18, color: AppColors.error),
-                    const SizedBox(width: 8),
-                    Text(
-                      tr('התנתקות', 'Sign out'),
-                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: AppColors.error),
-                    ),
+                    Icon(IconsaxPlusLinear.logout, size: 18, color: k.danger),
+                    const SizedBox(width: 10),
+                    Text(tr('התנתקות', 'Sign out'), style: k.body.copyWith(color: k.danger)),
                   ],
                 ),
               ),
             ],
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                gradient: signedIn == null
-                    ? null
-                    : const LinearGradient(
-                        colors: [AppColors.midBlue, AppColors.midBlue],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 17,
+                    backgroundColor: signedIn == null ? k.accentSoft : k.accent,
+                    child: signedIn == null
+                        ? Icon(IconsaxPlusLinear.profile_circle, size: 18, color: k.muted)
+                        : Text(
+                            signedIn.initials,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                  if (isWide && signedIn != null) ...[
+                    const SizedBox(width: 10),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 160),
+                      child: Text(
+                        signedIn.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: k.body.copyWith(fontWeight: FontWeight.w500),
                       ),
-                color: signedIn == null ? AppColors.adminActiveBg : null,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: signedIn == null
-                    ? Icon(
-                        IconsaxPlusLinear.profile_circle,
-                        size: 18,
-                        color: AppColors.adminTextLight,
-                      )
-                    : Text(
-                        signedIn.initials,
-                        style: TextStyle(
-                          fontFamily: AppFonts.inter,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(IconsaxPlusLinear.arrow_down_1, size: 16, color: k.muted),
+                  ],
+                ],
               ),
             ),
           ),
@@ -547,25 +635,45 @@ class _AdminTopBar extends ConsumerWidget {
   }
 }
 
+/// A small bordered button in the top bar: an icon, and a word beside it
+/// when there is room for one.
 class _TopBarButton extends StatelessWidget {
   final IconData icon;
+  final String? label;
+  final String tooltip;
   final VoidCallback onTap;
-  const _TopBarButton({required this.icon, required this.onTap});
+  const _TopBarButton({required this.icon, required this.tooltip, required this.onTap, this.label});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(7),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: AppColors.adminSidebarBorder, width: 1),
+    final k = AdminKit.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: k.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: k.border),
         ),
-        child: Center(
-          child: Icon(icon, size: 18, color: AppColors.adminTextMedium),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 36,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: label == null ? 9 : 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 18, color: k.inkSoft),
+                  if (label != null) ...[
+                    const SizedBox(width: 6),
+                    Text(label!, style: k.label.copyWith(color: k.ink)),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -574,6 +682,9 @@ class _TopBarButton extends StatelessWidget {
 
 // ─── Sidebar (CRM-style) ───
 
+/// The sections, grouped under their headings, as the CRM's sidebar: the
+/// brand at the top, a search for a section by name, and a fold to a rail
+/// of icons for more room.
 class _Sidebar extends StatelessWidget {
   final List<(String, IconData)> sections;
   final int selected;
@@ -584,104 +695,273 @@ class _Sidebar extends StatelessWidget {
   /// so is a heading with nothing under it.
   final bool Function(int i) visible;
 
+  final bool collapsed;
+  final VoidCallback onToggle;
+  final TextEditingController searchController;
+  final FocusNode searchFocus;
+  final String query;
+
+  /// The sections matching [query] — null while nothing is typed.
+  final List<int>? matches;
+  final ValueChanged<String> onQuery;
+  final VoidCallback onSearchTap;
+
   const _Sidebar({
     required this.sections,
     required this.selected,
     required this.onSelect,
     required this.visible,
+    required this.collapsed,
+    required this.onToggle,
+    required this.searchController,
+    required this.searchFocus,
+    required this.query,
+    required this.matches,
+    required this.onQuery,
+    required this.onSearchTap,
     this.sectionGroups = const {},
   });
 
   @override
   Widget build(BuildContext context) {
-    // Build flat list of widgets: group headers + section tiles
+    final k = AdminKit.of(context);
+    return AnimatedContainer(
+      duration: k.motion,
+      curve: k.curve,
+      width: collapsed ? 72 : 264,
+      decoration: BoxDecoration(
+        color: k.surface,
+        border: BorderDirectional(end: BorderSide(color: k.border)),
+      ),
+      child: ClipRect(
+        // Laid out for the width it has at each frame of the fold, so the
+        // names leave before there is no room for them.
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final full = box.maxWidth > 190;
+            return Column(
+              children: [
+                _header(k, full),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(full ? 14 : 12, 4, full ? 14 : 12, 8),
+                  child: full ? _searchField(k) : _railButton(k, IconsaxPlusLinear.search_normal_1, tr('חיפוש', 'Search'), onSearchTap),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    children: matches != null && full ? _found(k) : _grouped(k, full),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _header(AdminKit k, bool full) => SizedBox(
+    height: 64,
+    child: Padding(
+      padding: EdgeInsets.symmetric(horizontal: full ? 16 : 12),
+      child: full
+          ? Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/images/logo_white.svg',
+                  height: 34,
+                  colorFilter: ColorFilter.mode(k.accent, BlendMode.srcIn),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: k.accentSoft, borderRadius: BorderRadius.circular(6)),
+                  child: Text(
+                    tr('ניהול', 'Admin'),
+                    style: k.label.copyWith(fontSize: 12, color: k.accent, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const Spacer(),
+                _railButton(k, IconsaxPlusLinear.sidebar_right, tr('צמצום התפריט', 'Collapse menu'), onToggle, size: 36),
+              ],
+            )
+          : Center(
+              child: _railButton(k, IconsaxPlusLinear.sidebar_left, tr('הרחבת התפריט', 'Expand menu'), onToggle),
+            ),
+    ),
+  );
+
+  Widget _searchField(AdminKit k) {
+    final mac = defaultTargetPlatform == TargetPlatform.macOS || defaultTargetPlatform == TargetPlatform.iOS;
+    return SizedBox(
+      height: 38,
+      child: TextField(
+        controller: searchController,
+        focusNode: searchFocus,
+        onChanged: onQuery,
+        // Enter opens the first match.
+        onSubmitted: (_) {
+          final first = matches?.firstOrNull;
+          if (first != null) onSelect(first);
+        },
+        onTapOutside: (_) => searchFocus.unfocus(),
+        style: k.body.copyWith(fontSize: 13.5, height: 1.2),
+        decoration: k
+            .input(
+              hint: tr('חיפוש בתפריט…', 'Find a section…'),
+              prefix: Icon(IconsaxPlusLinear.search_normal_1, size: 17, color: k.muted),
+              suffix: query.isNotEmpty
+                  ? IconButton(
+                      onPressed: () {
+                        searchController.clear();
+                        onQuery('');
+                      },
+                      icon: Icon(Icons.close, size: 16, color: k.muted),
+                    )
+                  : Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 8),
+                      child: Center(
+                        widthFactor: 1,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: k.subtle,
+                            border: Border.all(color: k.border),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            mac ? '⌘K' : 'Ctrl K',
+                            textDirection: TextDirection.ltr,
+                            style: k.hint.copyWith(fontSize: 11),
+                          ),
+                        ),
+                      ),
+                    ),
+            )
+            .copyWith(
+              fillColor: k.subtle,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+              prefixIconConstraints: const BoxConstraints(minWidth: 36),
+              suffixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            ),
+      ),
+    );
+  }
+
+  /// A square icon button, for the rail and the header.
+  Widget _railButton(AdminKit k, IconData icon, String tip, VoidCallback onTap, {double size = 44}) => Tooltip(
+    message: tip,
+    child: Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          width: size,
+          height: size == 44 ? 40 : size,
+          child: Icon(icon, size: 19, color: k.inkSoft),
+        ),
+      ),
+    ),
+  );
+
+  /// Every section the role may open, under its heading.
+  List<Widget> _grouped(AdminKit k, bool full) {
     final items = <Widget>[];
     String? heading;
     for (int i = 0; i < sections.length; i++) {
       if (sectionGroups.containsKey(i)) heading = sectionGroups[i];
       if (!visible(i)) continue;
       if (heading != null) {
-        if (items.isNotEmpty) items.add(const SizedBox(height: 16));
         items.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(
-              heading,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.adminTextMedium,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
+          full
+              ? Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(26, items.isEmpty ? 6 : 20, 16, 6),
+                  child: Text(
+                    heading,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: k.muted,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                )
+              : items.isEmpty
+              ? const SizedBox(height: 4)
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  child: Divider(height: 1, color: k.border),
+                ),
         );
-        items.add(const SizedBox(height: 4));
         heading = null;
       }
-      final (label, icon) = sections[i];
-      final sel = i == selected;
-      items.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => onSelect(i),
-              borderRadius: BorderRadius.circular(6),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: sel ? AppColors.adminActiveBg : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      sel ? _getFilledIcon(icon) : icon,
-                      size: 18,
-                      color: sel ? AppColors.midBlue : AppColors.adminTextLight,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          fontFamily: AppFonts.rubik,
-                          fontSize: 14,
-                          fontWeight: sel ? FontWeight.w500 : FontWeight.w400,
-                          color: sel
-                              ? AppColors.adminTextDark
-                              : AppColors.adminTextMedium,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      items.add(_item(k, i, full));
+    }
+    return items;
+  }
+
+  /// The sections found by the search, without headings.
+  List<Widget> _found(AdminKit k) => matches!.isEmpty
+      ? [
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              tr('אין חלק בשם הזה', 'No section by that name'),
+              textAlign: TextAlign.center,
+              style: k.hint,
             ),
           ),
-        ),
-      );
-    }
+        ]
+      : [for (final i in matches!) _item(k, i, true)];
 
-    return Container(
-      width: 280,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: BorderDirectional(
-          end: BorderSide(color: AppColors.adminSidebarBorder, width: 1),
+  Widget _item(AdminKit k, int i, bool full) {
+    final (label, icon) = sections[i];
+    final sel = i == selected;
+    final tile = Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => onSelect(i),
+        child: AnimatedContainer(
+          duration: k.motion,
+          curve: k.curve,
+          height: full ? 38 : 40,
+          padding: EdgeInsets.symmetric(horizontal: full ? 12 : 0),
+          decoration: BoxDecoration(color: sel ? k.accentSoft : Colors.transparent),
+          child: Row(
+            mainAxisAlignment: full ? MainAxisAlignment.start : MainAxisAlignment.center,
+            children: [
+              Icon(sel ? _getFilledIcon(icon) : icon, size: 18, color: sel ? k.accent : k.inkSoft),
+              if (full) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubik,
+                      fontSize: 13.5,
+                      fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                      color: sel ? k.accent : k.ink,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        children: items,
-      ),
+    );
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: full ? 14 : 12, vertical: 1),
+      // Folded, the name is a tooltip beside the icon.
+      child: full ? tile : Tooltip(message: label, preferBelow: false, child: tile),
     );
   }
 
